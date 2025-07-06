@@ -9,7 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          company_name: string | null
+          company_size: string | null
+          created_at: string
+          email: string
+          experience_years: number | null
+          expertise_areas: string[] | null
+          full_name: string
+          github_url: string | null
+          id: string
+          industry: string | null
+          industry_sector: string | null
+          skills: string[] | null
+          updated_at: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+          website_url: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          company_name?: string | null
+          company_size?: string | null
+          created_at?: string
+          email: string
+          experience_years?: number | null
+          expertise_areas?: string[] | null
+          full_name: string
+          github_url?: string | null
+          id?: string
+          industry?: string | null
+          industry_sector?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+          website_url?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          company_name?: string | null
+          company_size?: string | null
+          created_at?: string
+          email?: string
+          experience_years?: number | null
+          expertise_areas?: string[] | null
+          full_name?: string
+          github_url?: string | null
+          id?: string
+          industry?: string | null
+          industry_sector?: string | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+          website_url?: string | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +77,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_type: "developer" | "expert" | "company"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +192,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_type: ["developer", "expert", "company"],
+    },
   },
 } as const

@@ -24,9 +24,11 @@ const Header = () => {
           <a href="#casos-de-uso" className="text-muted-foreground hover:text-primary transition-smooth">
             Casos de Uso
           </a>
-          <Button variant="cta" size="lg">
-            Solicitar Demo
-          </Button>
+          <a href="/auth">
+            <Button variant="cta" size="lg">
+              Únete Ahora
+            </Button>
+          </a>
         </div>
         <div className="md:hidden">
           <Button variant="ghost" size="icon">

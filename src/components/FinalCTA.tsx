@@ -11,13 +11,15 @@ const FinalCTA = () => {
           Hable con uno de nuestros especialistas y descubra cómo la automatización inteligente puede transformar su negocio. Sin compromiso.
         </p>
         <div className="mt-8">
-          <Button 
-            variant="secondary" 
-            size="xl"
-            className="bg-background text-primary hover:bg-background/90 shadow-glow"
-          >
-            Solicitar una Demo Gratuita
-          </Button>
+          <a href="/auth">
+            <Button 
+              variant="secondary" 
+              size="xl"
+              className="bg-background text-primary hover:bg-background/90 shadow-glow"
+            >
+              Solicitar una Demo Gratuita
+            </Button>
+          </a>
         </div>
       </div>
     </section>

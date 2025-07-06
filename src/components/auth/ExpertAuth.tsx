@@ -213,7 +213,7 @@ const ExpertAuth = ({ mode }: ExpertAuthProps) => {
 
         <div className="space-y-4">
           <HCaptcha
-            sitekey="10000000-ffff-ffff-ffff-000000000001" // Clave de prueba
+            sitekey="YOUR_HCAPTCHA_SITE_KEY" // Reemplaza con tu clave de sitio real
             onVerify={(token) => setCaptchaToken(token)}
             onExpire={() => setCaptchaToken(null)}
             onError={() => setCaptchaToken(null)}

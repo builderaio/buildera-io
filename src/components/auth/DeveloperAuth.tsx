@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +15,7 @@ interface DeveloperAuthProps {
 const DeveloperAuth = ({ mode }: DeveloperAuthProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [skills, setSkills] = useState("");
@@ -27,6 +29,15 @@ const DeveloperAuth = ({ mode }: DeveloperAuthProps) => {
 
     try {
       if (mode === "signup") {
+        if (password !== confirmPassword) {
+          toast({
+            title: "Error",
+            description: "Las contraseñas no coinciden",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
         // Redirigir a lista de espera para desarrolladores
         window.location.href = `/waitlist?type=developer&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`;
         return;
@@ -168,15 +179,27 @@ const DeveloperAuth = ({ mode }: DeveloperAuthProps) => {
         
         <div className="space-y-2">
           <Label htmlFor="password">Contraseña</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             placeholder="Tu contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
+        
+        {mode === "signup" && (
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+            <PasswordInput
+              id="confirmPassword"
+              placeholder="Confirma tu contraseña"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+        )}
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}

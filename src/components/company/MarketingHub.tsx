@@ -19,12 +19,67 @@ const MarketingHub = () => {
 
       <Card>
         <CardContent className="p-8">
-          <Tabs defaultValue="calendario" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="performance" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="performance">Performance</TabsTrigger>
               <TabsTrigger value="calendario">Calendario</TabsTrigger>
               <TabsTrigger value="creacion">Creación con IA</TabsTrigger>
               <TabsTrigger value="pauta">Gestión de Pauta</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="performance" className="mt-6">
+              <h3 className="text-xl font-bold text-primary mb-4">Performance de Marketing</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="bg-card p-4 rounded-lg border text-center">
+                  <p className="text-sm text-muted-foreground">Alcance Total</p>
+                  <p className="text-3xl font-bold text-primary">125,340</p>
+                  <p className="text-xs text-green-600">+12% vs mes anterior</p>
+                </div>
+                <div className="bg-card p-4 rounded-lg border text-center">
+                  <p className="text-sm text-muted-foreground">Engagement Rate</p>
+                  <p className="text-3xl font-bold text-secondary">4.8%</p>
+                  <p className="text-xs text-green-600">+0.3% vs mes anterior</p>
+                </div>
+                <div className="bg-card p-4 rounded-lg border text-center">
+                  <p className="text-sm text-muted-foreground">Leads Generados</p>
+                  <p className="text-3xl font-bold text-accent">89</p>
+                  <p className="text-xs text-red-600">-5% vs mes anterior</p>
+                </div>
+              </div>
+              
+              <div className="bg-card p-6 rounded-lg border">
+                <h4 className="font-bold mb-4">Performance por Plataforma</h4>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium">LinkedIn</span>
+                      <span>ROI: 3.5x | Leads: 45</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3">
+                      <div className="bg-primary h-3 rounded-full" style={{width: "70%"}}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium">Instagram</span>
+                      <span>ROI: 2.1x | Leads: 28</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3">
+                      <div className="bg-secondary h-3 rounded-full" style={{width: "45%"}}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium">Facebook</span>
+                      <span>ROI: 1.8x | Leads: 16</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-3">
+                      <div className="bg-accent h-3 rounded-full" style={{width: "30%"}}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
 
             <TabsContent value="calendario" className="mt-6">
               <h3 className="text-xl font-bold text-primary mb-4">Calendario de Contenido - Enero 2025</h3>

@@ -12,7 +12,7 @@ const MandoCentral = ({ profile }: MandoCentralProps) => {
       change: "+15% vs mes anterior",
       trend: "up",
       icon: Activity,
-      color: "bg-blue-100 text-primary"
+      color: "bg-primary/10 text-primary"
     },
     {
       title: "Horas Ahorradas", 
@@ -21,7 +21,7 @@ const MandoCentral = ({ profile }: MandoCentralProps) => {
       change: "+25 horas vs mes anterior",
       trend: "up",
       icon: Clock,
-      color: "bg-orange-100 text-accent"
+      color: "bg-secondary/10 text-secondary"
     },
     {
       title: "Leads Calificados",
@@ -29,7 +29,7 @@ const MandoCentral = ({ profile }: MandoCentralProps) => {
       change: "Esta semana",
       trend: "neutral",
       icon: Users,
-      color: "bg-green-100 text-green-600"
+      color: "bg-accent/20 text-accent-foreground"
     },
     {
       title: "Eficiencia Operativa",
@@ -37,7 +37,7 @@ const MandoCentral = ({ profile }: MandoCentralProps) => {
       change: "-0.2% vs mes anterior",
       trend: "down",
       icon: Zap,
-      color: "bg-purple-100 text-purple-600"
+      color: "bg-muted text-muted-foreground"
     }
   ];
 
@@ -96,15 +96,15 @@ const MandoCentral = ({ profile }: MandoCentralProps) => {
             </button>
           </div>
           <div className="space-y-4">
-            <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border-l-4 border-primary">
+            <div className="bg-primary/5 p-4 rounded-lg border-l-4 border-primary">
               <p className="font-bold text-primary">Oportunidad de Contenido</p>
               <p className="text-sm text-muted-foreground mt-1">
                 El 25% de las búsquedas en su sitio se relacionan con "políticas de garantía". 
                 Considere crear un Agente FAQ o una página dedicada para reducir consultas de soporte.
               </p>
             </div>
-            <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg border-l-4 border-accent">
-              <p className="font-bold text-accent">Optimización de Ventas</p>
+            <div className="bg-secondary/5 p-4 rounded-lg border-l-4 border-secondary">
+              <p className="font-bold text-secondary">Optimización de Ventas</p>
               <p className="text-sm text-muted-foreground mt-1">
                 Hemos detectado que los clientes que compran el Producto A, a menudo compran el Producto B dos semanas después. 
                 Sugerimos un Agente de Email Marketing para una campaña de cross-selling.

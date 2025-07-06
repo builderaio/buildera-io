@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,6 +17,7 @@ interface CompanyAuthProps {
 const CompanyAuth = ({ mode }: CompanyAuthProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [companySize, setCompanySize] = useState("");
@@ -54,6 +56,15 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
 
     try {
       if (mode === "signup") {
+        if (password !== confirmPassword) {
+          toast({
+            title: "Error",
+            description: "Las contraseñas no coinciden",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -249,15 +260,27 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
         
         <div className="space-y-2">
           <Label htmlFor="password">Contraseña</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             placeholder="Tu contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
+        
+        {mode === "signup" && (
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+            <PasswordInput
+              id="confirmPassword"
+              placeholder="Confirma tu contraseña"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+        )}
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}

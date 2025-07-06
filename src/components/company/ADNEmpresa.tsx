@@ -22,6 +22,16 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // Mostrar información de la empresa registrada
+  const companyInfo = {
+    name: profile?.company_name || "No especificado",
+    size: profile?.company_size || "No especificado", 
+    sector: profile?.industry_sector || "No especificado",
+    website: profile?.website_url || "No especificado",
+    contact: profile?.full_name || "No especificado",
+    email: profile?.email || "No especificado"
+  };
+
   const handleSave = async (field: string) => {
     setLoading(true);
     try {
@@ -58,6 +68,22 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           Centralice la identidad y estrategia de su empresa para alinear a nuestros agentes de IA.
         </p>
       </header>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Información de la Empresa</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div><strong>Empresa:</strong> {companyInfo.name}</div>
+            <div><strong>Tamaño:</strong> {companyInfo.size}</div>
+            <div><strong>Sector:</strong> {companyInfo.sector}</div>
+            <div><strong>Sitio web:</strong> {companyInfo.website}</div>
+            <div><strong>Contacto:</strong> {companyInfo.contact}</div>
+            <div><strong>Email:</strong> {companyInfo.email}</div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-8">

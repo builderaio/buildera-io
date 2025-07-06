@@ -101,9 +101,10 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/company-dashboard`,
+          redirectTo: `${window.location.origin}/company-dashboard?from=oauth`,
           queryParams: {
-            user_type: 'company'
+            access_type: 'offline',
+            prompt: 'consent'
           }
         }
       });

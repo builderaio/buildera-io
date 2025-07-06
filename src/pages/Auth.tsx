@@ -54,7 +54,7 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="developer" className="w-full">
+            <Tabs defaultValue="company" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="developer">Desarrollador</TabsTrigger>
                 <TabsTrigger value="expert">Experto</TabsTrigger>

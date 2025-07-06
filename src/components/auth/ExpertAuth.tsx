@@ -41,29 +41,9 @@ const ExpertAuth = ({ mode }: ExpertAuthProps) => {
 
     try {
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            data: {
-              full_name: fullName,
-              user_type: 'expert',
-              industry,
-              expertise_areas: expertiseAreas.split(',').map(s => s.trim()),
-              years_experience: parseInt(yearsExperience) || 0
-            }
-          }
-        });
-
-        if (error) throw error;
-        
-        if (data.user) {
-          toast({
-            title: "¡Registro exitoso!",
-            description: "Revisa tu email para confirmar tu cuenta.",
-          });
-        }
+        // Redirigir a lista de espera para expertos
+        window.location.href = `/waitlist?type=expert&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`;
+        return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,

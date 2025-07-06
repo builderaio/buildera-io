@@ -27,29 +27,9 @@ const DeveloperAuth = ({ mode }: DeveloperAuthProps) => {
 
     try {
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            data: {
-              full_name: fullName,
-              user_type: 'developer',
-              github_url: githubUrl,
-              skills: skills.split(',').map(s => s.trim()),
-              experience_years: parseInt(experienceYears) || 0
-            }
-          }
-        });
-
-        if (error) throw error;
-        
-        if (data.user) {
-          toast({
-            title: "¡Registro exitoso!",
-            description: "Revisa tu email para confirmar tu cuenta.",
-          });
-        }
+        // Redirigir a lista de espera para desarrolladores
+        window.location.href = `/waitlist?type=developer&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`;
+        return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,

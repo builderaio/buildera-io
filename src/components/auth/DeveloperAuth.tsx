@@ -194,7 +194,7 @@ const DeveloperAuth = ({ mode }: DeveloperAuthProps) => {
 
         <div className="space-y-4">
           <HCaptcha
-            sitekey="YOUR_HCAPTCHA_SITE_KEY" // Reemplaza con tu clave de sitio real
+            sitekey="74647664-0a00-465e-ad8c-b22a7a9675e8"
             onVerify={(token) => setCaptchaToken(token)}
             onExpire={() => setCaptchaToken(null)}
             onError={() => setCaptchaToken(null)}

@@ -90,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
     const welcomeMessage = getWelcomeMessage(userType);
 
     const emailResponse = await resend.emails.send({
-      from: "Buildera <bienvenida@resend.dev>",
+      from: "Buildera <no-reply@buildera.io>",
       to: [email],
       subject: welcomeMessage.title,
       html: `

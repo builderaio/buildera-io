@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 import { Linkedin, Mail } from "lucide-react";
 
 interface CompanyAuthProps {
@@ -22,6 +23,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { sendWelcomeEmail } = useWelcomeEmail();
 
   const companySizes = [
     "1-10 empleados",
@@ -72,27 +74,23 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
         
         if (data.user) {
           // Enviar email de bienvenida
-          try {
-            await fetch('https://ubhzzppmkhxbuiajfswa.supabase.co/functions/v1/send-welcome-email', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaHp6cHBta2h4YnVpYWpmc3dhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3NjU4MjIsImV4cCI6MjA2NzM0MTgyMn0.zWscWKJSXVFREwlkkBC0gwMNHcUlFCpakf-RZWBZ2bQ`
-              },
-              body: JSON.stringify({
-                email: data.user.email,
-                name: fullName,
-                userType: 'company'
-              })
-            });
-          } catch (emailError) {
-            console.error('Error enviando email de bienvenida:', emailError);
-          }
+          const emailResult = await sendWelcomeEmail(
+            data.user.email || '',
+            fullName,
+            'company'
+          );
 
-          toast({
-            title: "¡Registro exitoso!",
-            description: "Revisa tu email para confirmar tu cuenta y recibir la bienvenida.",
-          });
+          if (emailResult.success) {
+            toast({
+              title: "¡Registro exitoso!",
+              description: "Revisa tu email para confirmar tu cuenta y recibir la bienvenida.",
+            });
+          } else {
+            toast({
+              title: "¡Registro exitoso!",
+              description: "Tu cuenta ha sido creada. Revisa tu email para confirmarla.",
+            });
+          }
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({

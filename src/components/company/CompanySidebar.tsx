@@ -53,7 +53,7 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
       <div className="flex items-center space-x-3 pb-6 border-b border-primary/20">
         <div className="relative">
           <img 
-            src="/lovable-uploads/1e05e165-4005-40d0-942b-037c44da85b3.png" 
+            src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
             alt="Buildera Logo" 
             width="48" 
             height="48" 

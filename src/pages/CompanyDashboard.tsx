@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,33 +34,76 @@ const CompanyDashboard = () => {
 
       setUser(session.user);
       
-      // Verificar perfil de empresa
-      const { data: profileData, error } = await supabase
+      // Buscar perfil de empresa existente
+      let { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', session.user.id)
-        .eq('user_type', 'company')
         .single();
 
-      if (error || !profileData) {
+      // Si no existe perfil, crear uno básico para empresa
+      if (error && error.code === 'PGRST116') {
+        console.log('No se encontró perfil, creando uno nuevo para empresa...');
+        
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: session.user.id,
+            email: session.user.email || '',
+            full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuario',
+            user_type: 'company',
+            company_name: session.user.user_metadata?.company_name || 'Mi Empresa',
+            industry_sector: session.user.user_metadata?.industry_sector || 'Tecnología'
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creando perfil:', insertError);
+          toast({
+            title: "Error",
+            description: "No se pudo crear el perfil de empresa. Intente nuevamente.",
+            variant: "destructive",
+          });
+          navigate('/auth');
+          return;
+        }
+
+        profileData = newProfile;
+        toast({
+          title: "Perfil creado",
+          description: "Se ha creado su perfil de empresa. Complete su información en ADN de la Empresa.",
+        });
+      } else if (error) {
+        console.error('Error obteniendo perfil:', error);
         toast({
           title: "Error de acceso",
-          description: "No tiene permisos para acceder al dashboard de empresa.",
+          description: "No se pudo obtener la información del perfil.",
           variant: "destructive",
         });
-        navigate('/');
+        navigate('/auth');
+        return;
+      }
+
+      // Verificar que el perfil sea de tipo empresa
+      if (profileData && profileData.user_type !== 'company') {
+        toast({
+          title: "Acceso denegado",
+          description: "Este dashboard es solo para empresas.",
+          variant: "destructive",
+        });
+        navigate('/auth');
         return;
       }
 
       setProfile(profileData);
       
-      // Si es la primera vez (sin misión, visión o propuesta de valor), ir a ADN
-      if (!profileData.company_name || 
-          (!profileData.industry && !profileData.industry_sector)) {
+      // Si es la primera vez, ir a ADN
+      if (!profileData?.company_name || profileData.company_name === 'Mi Empresa') {
         setActiveView("adn-empresa");
         toast({
           title: "¡Bienvenido!",
-          description: "Complete el ADN de su empresa para comenzar a usar la plataforma.",
+          description: "Complete el ADN de su empresa para empezar.",
         });
       }
       

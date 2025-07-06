@@ -83,7 +83,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
         });
 
         if (error) throw error;
-        window.location.href = '/';
+        window.location.href = '/company-dashboard';
       }
     } catch (error: any) {
       toast({
@@ -101,7 +101,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/company-dashboard`,
           queryParams: {
             user_type: 'company'
           }

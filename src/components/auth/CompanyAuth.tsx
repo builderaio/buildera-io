@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Linkedin, Mail } from "lucide-react";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 interface CompanyAuthProps {
   mode: "signin" | "signup";
@@ -21,6 +22,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
   const [industrySector, setIndustrySector] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const { toast } = useToast();
 
   const companySizes = [
@@ -48,6 +50,16 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!captchaToken) {
+      toast({
+        title: "Error",
+        description: "Por favor complete el captcha.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -243,9 +255,18 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
           />
         </div>
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}
-        </Button>
+        <div className="space-y-4">
+          <HCaptcha
+            sitekey="10000000-ffff-ffff-ffff-000000000001" // Clave de prueba
+            onVerify={(token) => setCaptchaToken(token)}
+            onExpire={() => setCaptchaToken(null)}
+            onError={() => setCaptchaToken(null)}
+          />
+          
+          <Button type="submit" className="w-full" disabled={loading || !captchaToken}>
+            {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}
+          </Button>
+        </div>
       </form>
     </div>
   );

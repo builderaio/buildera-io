@@ -52,42 +52,13 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
     <aside className="w-64 bg-primary text-primary-foreground flex flex-col p-4 fixed h-full">
       <div className="flex items-center space-x-3 pb-6 border-b border-primary/20">
         <div className="relative">
-          <svg width="48" height="48" viewBox="0 0 48 48" className="text-primary-foreground">
-            {/* Base hexagonal */}
-            <path 
-              fill="currentColor" 
-              d="M24 4L36.66 12V28L24 36L11.34 28V12L24 4Z" 
-              opacity="0.2"
-            />
-            {/* Elementos de construcción */}
-            <path 
-              fill="currentColor" 
-              d="M16 16h4v4h-4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"
-            />
-            <path 
-              fill="currentColor" 
-              d="M16 22h4v4h-4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"
-            />
-            <path 
-              fill="currentColor" 
-              d="M19 28h10v4h-10v-4z"
-            />
-            {/* Acento tecnológico */}
-            <circle 
-              cx="24" 
-              cy="24" 
-              r="2" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="1.5"
-            />
-            <path 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="1" 
-              d="M24 22v-2m0 8v-2m2-2h2m-8 0h2"
-            />
-          </svg>
+          <img 
+            src="/lovable-uploads/1e05e165-4005-40d0-942b-037c44da85b3.png" 
+            alt="Buildera Logo" 
+            width="48" 
+            height="48" 
+            className="object-contain"
+          />
         </div>
         <div>
           <span className="font-bold text-2xl tracking-tight">BUILDERA</span>

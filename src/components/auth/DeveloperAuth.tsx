@@ -46,6 +46,9 @@ const DeveloperAuth = ({ mode }: DeveloperAuthProps) => {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: {
+            captchaToken
+          }
         });
 
         if (error) throw error;

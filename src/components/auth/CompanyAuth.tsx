@@ -69,6 +69,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
+            captchaToken,
             data: {
               full_name: fullName,
               user_type: 'company',
@@ -92,6 +93,9 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: {
+            captchaToken
+          }
         });
 
         if (error) throw error;

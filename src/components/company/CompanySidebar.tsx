@@ -50,11 +50,49 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
 
   return (
     <aside className="w-64 bg-primary text-primary-foreground flex flex-col p-4 fixed h-full">
-      <div className="flex items-center space-x-2 pb-4 border-b border-primary/20">
-        <svg width="40" height="40" viewBox="0 0 100 100">
-          <path fill="currentColor" d="M10,90 L10,70 L30,70 L30,50 L50,50 L50,30 L70,30 L70,50 L90,50 L90,70 L70,70 L70,90 L50,90 L50,70 L30,70 L30,90 L10,90 Z M30,10 L50,10 L50,30 L30,30 L30,10 Z"/>
-        </svg>
-        <span className="font-bold text-2xl">BUILDERA</span>
+      <div className="flex items-center space-x-3 pb-6 border-b border-primary/20">
+        <div className="relative">
+          <svg width="48" height="48" viewBox="0 0 48 48" className="text-primary-foreground">
+            {/* Base hexagonal */}
+            <path 
+              fill="currentColor" 
+              d="M24 4L36.66 12V28L24 36L11.34 28V12L24 4Z" 
+              opacity="0.2"
+            />
+            {/* Elementos de construcción */}
+            <path 
+              fill="currentColor" 
+              d="M16 16h4v4h-4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"
+            />
+            <path 
+              fill="currentColor" 
+              d="M16 22h4v4h-4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"
+            />
+            <path 
+              fill="currentColor" 
+              d="M19 28h10v4h-10v-4z"
+            />
+            {/* Acento tecnológico */}
+            <circle 
+              cx="24" 
+              cy="24" 
+              r="2" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="1.5"
+            />
+            <path 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="1" 
+              d="M24 22v-2m0 8v-2m2-2h2m-8 0h2"
+            />
+          </svg>
+        </div>
+        <div>
+          <span className="font-bold text-2xl tracking-tight">BUILDERA</span>
+          <p className="text-xs text-primary-foreground/70 mt-0.5">AI Business Platform</p>
+        </div>
       </div>
       
       <nav className="mt-8 flex-1 overflow-y-auto">

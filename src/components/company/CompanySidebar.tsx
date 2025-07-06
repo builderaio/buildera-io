@@ -8,6 +8,20 @@ interface CompanySidebarProps {
 }
 
 const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: CompanySidebarProps) => {
+  // Verificar si la información de la empresa está completa
+  const isProfileIncomplete = !profile?.company_name || 
+                               profile.company_name === 'Mi Empresa' ||
+                               !profile?.company_size ||
+                               !profile?.industry_sector ||
+                               !profile?.full_name;
+
+  const handleMenuClick = (viewId: string) => {
+    if (isProfileIncomplete && viewId !== "adn-empresa") {
+      // No permitir acceso a otras secciones si la información está incompleta
+      return;
+    }
+    setActiveView(viewId);
+  };
   const menuItems = [
     {
       category: "General",
@@ -55,15 +69,21 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
                 return (
                   <li key={item.id}>
                     <button
-                      onClick={() => setActiveView(item.id)}
+                      onClick={() => handleMenuClick(item.id)}
+                      disabled={isProfileIncomplete && item.id !== "adn-empresa"}
                       className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 text-left ${
                         activeView === item.id
                           ? "bg-primary-foreground/20 text-primary-foreground transform translate-x-1"
+                          : isProfileIncomplete && item.id !== "adn-empresa"
+                          ? "opacity-50 cursor-not-allowed text-primary-foreground/50"
                           : "hover:bg-primary-foreground/10 hover:text-primary-foreground hover:transform hover:translate-x-1"
                       }`}
                     >
                       <Icon className="w-5 h-5 mr-3" />
                       {item.label}
+                      {isProfileIncomplete && item.id !== "adn-empresa" && (
+                        <span className="ml-auto text-xs">🔒</span>
+                      )}
                     </button>
                   </li>
                 );
@@ -75,15 +95,21 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
       
       <div className="pt-4 mt-auto border-t border-primary/20">
         <button
-          onClick={() => setActiveView("configuracion")}
+          onClick={() => handleMenuClick("configuracion")}
+          disabled={isProfileIncomplete}
           className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 text-left mb-4 ${
             activeView === "configuracion"
               ? "bg-primary-foreground/20 text-primary-foreground"
+              : isProfileIncomplete
+              ? "opacity-50 cursor-not-allowed text-primary-foreground/50"
               : "hover:bg-primary-foreground/10"
           }`}
         >
           <Settings className="w-5 h-5 mr-3" />
           Administración
+          {isProfileIncomplete && (
+            <span className="ml-auto text-xs">🔒</span>
+          )}
         </button>
         
         <div className="flex items-center">

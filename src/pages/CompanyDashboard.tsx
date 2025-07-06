@@ -98,12 +98,19 @@ const CompanyDashboard = () => {
 
       setProfile(profileData);
       
-      // Si es la primera vez, ir a ADN
-      if (!profileData?.company_name || profileData.company_name === 'Mi Empresa') {
+      // Verificar si la información está completa
+      const isProfileIncomplete = !profileData?.company_name || 
+                                   profileData.company_name === 'Mi Empresa' ||
+                                   !profileData?.company_size ||
+                                   !profileData?.industry_sector ||
+                                   !profileData?.full_name;
+      
+      if (isProfileIncomplete) {
         setActiveView("adn-empresa");
         toast({
-          title: "¡Bienvenido!",
-          description: "Complete el ADN de su empresa para empezar.",
+          title: "Complete su perfil",
+          description: "Debe completar toda la información de su empresa para continuar.",
+          variant: "destructive",
         });
       }
       

@@ -56,7 +56,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
           email,
           password,
           options: {
-            emailRedirectTo: "https://buildera.lovable.app/",
+            emailRedirectTo: "https://buildera.io/",
             data: {
               full_name: fullName,
               user_type: 'company',
@@ -101,7 +101,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: "https://buildera.lovable.app/company-dashboard?from=oauth",
+          redirectTo: "https://buildera.io/company-dashboard?from=oauth",
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'

@@ -55,7 +55,7 @@ const DeveloperAuth = ({ mode }: DeveloperAuthProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: "https://buildera.lovable.app/",
+          redirectTo: "https://buildera.io/",
           queryParams: {
             user_type: 'developer'
           }

@@ -69,7 +69,7 @@ const ExpertAuth = ({ mode }: ExpertAuthProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: "https://buildera.lovable.app/",
           queryParams: {
             user_type: 'expert'
           }

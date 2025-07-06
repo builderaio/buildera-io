@@ -69,9 +69,10 @@ const ExpertAuth = ({ mode }: ExpertAuthProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: "https://buildera.io/",
+          redirectTo: "https://buildera.io/complete-profile?user_type=expert",
           queryParams: {
-            user_type: 'expert'
+            access_type: 'offline',
+            prompt: 'consent'
           }
         }
       });

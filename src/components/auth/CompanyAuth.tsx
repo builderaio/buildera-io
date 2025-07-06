@@ -71,9 +71,27 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
         if (error) throw error;
         
         if (data.user) {
+          // Enviar email de bienvenida
+          try {
+            await fetch('https://ubhzzppmkhxbuiajfswa.supabase.co/functions/v1/send-welcome-email', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViaHp6cHBta2h4YnVpYWpmc3dhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE3NjU4MjIsImV4cCI6MjA2NzM0MTgyMn0.zWscWKJSXVFREwlkkBC0gwMNHcUlFCpakf-RZWBZ2bQ`
+              },
+              body: JSON.stringify({
+                email: data.user.email,
+                name: fullName,
+                userType: 'company'
+              })
+            });
+          } catch (emailError) {
+            console.error('Error enviando email de bienvenida:', emailError);
+          }
+
           toast({
             title: "¡Registro exitoso!",
-            description: "Revisa tu email para confirmar tu cuenta.",
+            description: "Revisa tu email para confirmar tu cuenta y recibir la bienvenida.",
           });
         }
       } else {
@@ -101,7 +119,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: "https://buildera.io/company-dashboard?from=oauth",
+          redirectTo: "https://buildera.io/complete-profile?user_type=company",
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'

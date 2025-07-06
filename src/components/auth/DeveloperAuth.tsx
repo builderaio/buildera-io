@@ -55,9 +55,10 @@ const DeveloperAuth = ({ mode }: DeveloperAuthProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: "https://buildera.io/",
+          redirectTo: "https://buildera.io/complete-profile?user_type=developer",
           queryParams: {
-            user_type: 'developer'
+            access_type: 'offline',
+            prompt: 'consent'
           }
         }
       });

@@ -1,9 +1,17 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, X, Plus, Brain } from "lucide-react";
 
 const InteligenciaCompetitiva = () => {
+  const [competitorUrl, setCompetitorUrl] = useState("");
+  const [competitors, setCompetitors] = useState([
+    { name: "TechNova", url: "technova.com", status: "Analizado" },
+    { name: "InnovateCorp", url: "innovatecorp.com", status: "Pendiente" }
+  ]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   return (
     <div>
       <header className="mb-8">
@@ -13,25 +21,106 @@ const InteligenciaCompetitiva = () => {
         </p>
       </header>
 
-      <Card className="mb-8">
-        <CardContent className="p-6">
-          <label htmlFor="competitor-url" className="block text-sm font-medium text-foreground mb-2">
-            Añadir Competidor
-          </label>
-          <div className="flex gap-2">
-            <Input
-              id="competitor-url"
-              type="text"
-              placeholder="www.competidor.com o @competidor en redes"
-              className="flex-1"
-            />
-            <Button variant="outline" className="px-4">
-              <Search className="h-4 w-4 mr-2" />
-              Analizar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <Card className="lg:col-span-2">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold">Gestión de Competidores</h3>
+              <Button 
+                onClick={() => {
+                  setIsAnalyzing(true);
+                  // Simular análisis con IA
+                  setTimeout(() => {
+                    setCompetitors(prev => [...prev, 
+                      { name: "FutureSolutions", url: "futuresolutions.com", status: "Detectado por IA" }
+                    ]);
+                    setIsAnalyzing(false);
+                  }, 2000);
+                }}
+                disabled={isAnalyzing}
+                size="sm"
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                {isAnalyzing ? "Analizando..." : "Detectar con IA"}
+              </Button>
+            </div>
+            
+            <div className="flex gap-2 mb-4">
+              <Input
+                value={competitorUrl}
+                onChange={(e) => setCompetitorUrl(e.target.value)}
+                placeholder="www.competidor.com o @competidor en redes"
+                className="flex-1"
+              />
+              <Button 
+                onClick={() => {
+                  if (competitorUrl.trim()) {
+                    const name = competitorUrl.replace(/^(https?:\/\/)?(www\.)?/, '').split('.')[0];
+                    setCompetitors(prev => [...prev, { 
+                      name: name.charAt(0).toUpperCase() + name.slice(1), 
+                      url: competitorUrl, 
+                      status: "Pendiente" 
+                    }]);
+                    setCompetitorUrl("");
+                  }
+                }}
+                variant="outline"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Añadir
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {competitors.map((competitor, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="font-medium">{competitor.name}</p>
+                      <p className="text-xs text-muted-foreground">{competitor.url}</p>
+                    </div>
+                    <Badge variant={competitor.status === "Analizado" ? "default" : "secondary"}>
+                      {competitor.status}
+                    </Badge>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="outline">
+                      <Search className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => setCompetitors(prev => prev.filter((_, i) => i !== index))}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-lg font-bold mb-4">Análisis Rápido</h3>
+            <div className="space-y-3 text-sm">
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                <p className="font-medium text-blue-800 dark:text-blue-200">🎯 Oportunidades</p>
+                <p className="text-xs text-blue-600 dark:text-blue-300">3 gaps detectados en el mercado</p>
+              </div>
+              <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                <p className="font-medium text-orange-800 dark:text-orange-200">⚠️ Amenazas</p>
+                <p className="text-xs text-orange-600 dark:text-orange-300">2 competidores con nueva funcionalidad</p>
+              </div>
+              <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                <p className="font-medium text-green-800 dark:text-green-200">💪 Fortalezas</p>
+                <p className="text-xs text-green-600 dark:text-green-300">Tu precio es 20% más competitivo</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>

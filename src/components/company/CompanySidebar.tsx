@@ -49,8 +49,8 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
   ];
 
   return (
-    <aside className="w-64 bg-primary text-primary-foreground flex flex-col p-4 fixed h-full">
-      <div className="flex items-center space-x-3 pb-6 border-b border-primary/20">
+    <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col p-4 fixed h-full">
+      <div className="flex items-center space-x-3 pb-6 border-b border-sidebar-border">
         <div className="relative">
           <img 
             src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
@@ -61,15 +61,15 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
           />
         </div>
         <div>
-          <span className="font-bold text-2xl tracking-tight">BUILDERA</span>
-          <p className="text-xs text-primary-foreground/70 mt-0.5">AI Business Platform</p>
+          <span className="font-bold text-2xl tracking-tight text-sidebar-primary">BUILDERA</span>
+          <p className="text-xs text-sidebar-foreground/70 mt-0.5">AI Business Platform</p>
         </div>
       </div>
       
       <nav className="mt-8 flex-1 overflow-y-auto">
         {menuItems.map((category) => (
           <div key={category.category} className="mb-6">
-            <p className="px-3 text-xs font-bold uppercase text-primary-foreground/70 mb-2">
+            <p className="px-3 text-xs font-bold uppercase text-sidebar-foreground/70 mb-2">
               {category.category}
             </p>
             <ul className="space-y-2">
@@ -82,10 +82,10 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
                       disabled={isProfileIncomplete && item.id !== "adn-empresa"}
                       className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 text-left ${
                         activeView === item.id
-                          ? "bg-primary-foreground/20 text-primary-foreground transform translate-x-1"
+                          ? "bg-sidebar-accent text-sidebar-primary transform translate-x-1"
                           : isProfileIncomplete && item.id !== "adn-empresa"
-                          ? "opacity-50 cursor-not-allowed text-primary-foreground/50"
-                          : "hover:bg-primary-foreground/10 hover:text-primary-foreground hover:transform hover:translate-x-1"
+                          ? "opacity-50 cursor-not-allowed text-sidebar-foreground/50"
+                          : "hover:bg-sidebar-accent/80 hover:text-sidebar-primary hover:transform hover:translate-x-1"
                       }`}
                     >
                       <Icon className="w-5 h-5 mr-3" />
@@ -102,16 +102,16 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
         ))}
       </nav>
       
-      <div className="pt-4 mt-auto border-t border-primary/20">
+      <div className="pt-4 mt-auto border-t border-sidebar-border">
         <button
           onClick={() => handleMenuClick("configuracion")}
           disabled={isProfileIncomplete}
           className={`w-full flex items-center p-3 rounded-lg transition-all duration-200 text-left mb-4 ${
             activeView === "configuracion"
-              ? "bg-primary-foreground/20 text-primary-foreground"
+              ? "bg-sidebar-accent text-sidebar-primary"
               : isProfileIncomplete
-              ? "opacity-50 cursor-not-allowed text-primary-foreground/50"
-              : "hover:bg-primary-foreground/10"
+              ? "opacity-50 cursor-not-allowed text-sidebar-foreground/50"
+              : "hover:bg-sidebar-accent/80"
           }`}
         >
           <Settings className="w-5 h-5 mr-3" />
@@ -122,14 +122,14 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
         </button>
         
         <div className="flex items-center">
-          <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center text-accent-foreground font-bold">
+          <div className="w-10 h-10 bg-sidebar-accent rounded-full flex items-center justify-center text-sidebar-primary font-bold">
             {profile?.company_name?.charAt(0) || "E"}
           </div>
           <div className="ml-3 flex-1">
-            <p className="font-bold text-sm">{profile?.company_name || "Empresa"}</p>
+            <p className="font-bold text-sm text-sidebar-primary">{profile?.company_name || "Empresa"}</p>
             <button 
               onClick={onSignOut}
-              className="text-xs text-primary-foreground/70 hover:text-primary-foreground hover:underline"
+              className="text-xs text-sidebar-foreground/70 hover:text-sidebar-primary hover:underline"
             >
               Cerrar sesión
             </button>

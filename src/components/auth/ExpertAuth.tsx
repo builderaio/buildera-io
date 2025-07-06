@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Linkedin, Mail } from "lucide-react";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 interface ExpertAuthProps {
   mode: "signin" | "signup";
@@ -21,7 +20,6 @@ const ExpertAuth = ({ mode }: ExpertAuthProps) => {
   const [expertiseAreas, setExpertiseAreas] = useState("");
   const [yearsExperience, setYearsExperience] = useState("");
   const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const { toast } = useToast();
 
   const industries = [
@@ -39,16 +37,6 @@ const ExpertAuth = ({ mode }: ExpertAuthProps) => {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!captchaToken) {
-      toast({
-        title: "Error",
-        description: "Por favor complete el captcha.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     setLoading(true);
 
     try {
@@ -59,10 +47,7 @@ const ExpertAuth = ({ mode }: ExpertAuthProps) => {
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
-          password,
-          options: {
-            captchaToken
-          }
+          password
         });
 
         if (error) throw error;
@@ -211,18 +196,9 @@ const ExpertAuth = ({ mode }: ExpertAuthProps) => {
           />
         </div>
 
-        <div className="space-y-4">
-          <HCaptcha
-            sitekey="74647664-0a00-465e-ad8c-b22a7a9675e8"
-            onVerify={(token) => setCaptchaToken(token)}
-            onExpire={() => setCaptchaToken(null)}
-            onError={() => setCaptchaToken(null)}
-          />
-          
-          <Button type="submit" className="w-full" disabled={loading || !captchaToken}>
-            {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}
-          </Button>
-        </div>
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}
+        </Button>
       </form>
     </div>
   );

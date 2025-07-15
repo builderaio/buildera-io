@@ -174,7 +174,7 @@ const CompanyDashboard = () => {
       case "adn-empresa":
         return <ADNEmpresa profile={profile} onProfileUpdate={setProfile} />;
       case "marketing-hub":
-        return <MarketingHub />;
+        return <MarketingHub profile={profile} />;
       case "inteligencia-competitiva":
         return <InteligenciaCompetitiva />;
       case "base-conocimiento":

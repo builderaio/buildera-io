@@ -4,9 +4,197 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Instagram, Music, Linkedin } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-const MarketingHub = () => {
+interface MarketingHubProps {
+  profile: any;
+}
+
+const MarketingHub = ({ profile }: MarketingHubProps) => {
   const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [socialConnections, setSocialConnections] = useState({
+    instagram: false,
+    facebook: false,
+    tiktok: false,
+    linkedin: false
+  });
+  const { toast } = useToast();
+
+  // Funciones de conexión de redes sociales (reutilizadas de ADNEmpresa)
+  const handleSocialConnect = async (platform: string) => {
+    setLoading(true);
+    try {
+      console.log(`🔗 Conectando ${platform} desde Marketing Hub...`);
+      
+      const platformInfo = {
+        instagram: { name: "Instagram Business", color: "pink" },
+        facebook: { name: "Facebook Business", color: "blue" },
+        tiktok: { name: "TikTok Business", color: "black" },
+        linkedin: { name: "LinkedIn Company", color: "blue" }
+      };
+
+      const selectedPlatform = platformInfo[platform as keyof typeof platformInfo];
+      
+      toast({
+        title: "Conectando...",
+        description: `Iniciando autenticación con ${selectedPlatform.name}`,
+      });
+
+      // Simular delay de autenticación
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const shouldSucceed = Math.random() > 0.2;
+
+      if (shouldSucceed) {
+        setSocialConnections(prev => ({
+          ...prev,
+          [platform]: true
+        }));
+
+        toast({
+          title: "¡Conexión exitosa!",
+          description: `${selectedPlatform.name} conectado. Ahora puede gestionar su contenido desde Marketing Hub.`,
+        });
+      } else {
+        throw new Error("Error en la autenticación");
+      }
+
+    } catch (error: any) {
+      toast({
+        title: "Error de conexión",
+        description: `No se pudo conectar con ${platform}. ${error.message || 'Inténtelo de nuevo.'}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocialDisconnect = async (platform: string) => {
+    setSocialConnections(prev => ({
+      ...prev,
+      [platform]: false
+    }));
+    
+    toast({
+      title: "Desconectado",
+      description: `${platform.charAt(0).toUpperCase() + platform.slice(1)} desconectado del Marketing Hub`,
+    });
+  };
+
+  const getConnectedPlatforms = () => {
+    return Object.entries(socialConnections)
+      .filter(([_, connected]) => connected)
+      .map(([platform, _]) => platform);
+  };
+
+  const hasConnectedPlatforms = () => {
+    return getConnectedPlatforms().length > 0;
+  };
+
+  const renderConnectionAlert = () => {
+    if (hasConnectedPlatforms()) return null;
+
+    return (
+      <Alert className="mb-6">
+        <AlertDescription>
+          No tienes redes sociales conectadas. Conecta al menos una plataforma para acceder a todas las funcionalidades del Marketing Hub.
+        </AlertDescription>
+      </Alert>
+    );
+  };
+
+  const renderSocialConnections = () => {
+    const platforms = [
+      { key: 'instagram', name: 'Instagram Business', icon: Instagram, color: 'bg-pink-600 hover:bg-pink-700' },
+      { key: 'facebook', name: 'Facebook Business', icon: () => <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center"><span className="text-white font-bold text-xs">f</span></div>, color: 'bg-blue-600 hover:bg-blue-700' },
+      { key: 'tiktok', name: 'TikTok Business', icon: Music, color: 'bg-black hover:bg-gray-800' },
+      { key: 'linkedin', name: 'LinkedIn Company', icon: Linkedin, color: 'bg-blue-700 hover:bg-blue-800' }
+    ];
+
+    return (
+      <div className="space-y-4 mb-6">
+        <h4 className="font-semibold text-lg">Conexiones de Redes Sociales</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {platforms.map((platform) => (
+            <div key={platform.key} className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <platform.icon className="w-6 h-6" />
+                <div>
+                  <span className="font-medium">{platform.name}</span>
+                  {socialConnections[platform.key as keyof typeof socialConnections] && (
+                    <Badge variant="secondary" className="ml-2 text-xs">Conectado</Badge>
+                  )}
+                </div>
+              </div>
+              {socialConnections[platform.key as keyof typeof socialConnections] ? (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleSocialDisconnect(platform.key)}
+                  disabled={loading}
+                >
+                  Desconectar
+                </Button>
+              ) : (
+                <Button 
+                  className={`text-white ${platform.color}`}
+                  size="sm"
+                  onClick={() => handleSocialConnect(platform.key)}
+                  disabled={loading}
+                >
+                  {loading ? "Conectando..." : "Conectar"}
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderPlatformPerformance = () => {
+    const connectedPlatforms = getConnectedPlatforms();
+    
+    if (connectedPlatforms.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Conecta tus redes sociales para ver métricas de rendimiento</p>
+        </div>
+      );
+    }
+
+    const platformData = {
+      linkedin: { name: "LinkedIn", roi: "3.5x", leads: 45, width: "70%", color: "bg-primary" },
+      instagram: { name: "Instagram", roi: "2.1x", leads: 28, width: "45%", color: "bg-secondary" },
+      facebook: { name: "Facebook", roi: "1.8x", leads: 16, width: "30%", color: "bg-accent" },
+      tiktok: { name: "TikTok", roi: "2.8x", leads: 22, width: "55%", color: "bg-purple-600" }
+    };
+
+    return (
+      <div className="space-y-4">
+        {connectedPlatforms.map(platform => {
+          const data = platformData[platform as keyof typeof platformData];
+          return (
+            <div key={platform}>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="font-medium">{data.name}</span>
+                <span>ROI: {data.roi} | Leads: {data.leads}</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-3">
+                <div className={`${data.color} h-3 rounded-full`} style={{width: data.width}}></div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -17,103 +205,55 @@ const MarketingHub = () => {
         </p>
       </header>
 
+      {renderConnectionAlert()}
+      {renderSocialConnections()}
+
       <Card>
         <CardContent className="p-8">
           <Tabs defaultValue="performance" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="performance">Performance</TabsTrigger>
+              <TabsTrigger value="performance" disabled={!hasConnectedPlatforms()}>Performance</TabsTrigger>
               <TabsTrigger value="estrategias">Estrategias</TabsTrigger>
-              <TabsTrigger value="calendario">Calendario</TabsTrigger>
-              <TabsTrigger value="creacion">Creación con IA</TabsTrigger>
-              <TabsTrigger value="pauta">Gestión de Pauta</TabsTrigger>
+              <TabsTrigger value="calendario" disabled={!hasConnectedPlatforms()}>Calendario</TabsTrigger>
+              <TabsTrigger value="creacion" disabled={!hasConnectedPlatforms()}>Creación con IA</TabsTrigger>
+              <TabsTrigger value="pauta" disabled={!hasConnectedPlatforms()}>Gestión de Pauta</TabsTrigger>
             </TabsList>
 
             <TabsContent value="performance" className="mt-6">
               <h3 className="text-xl font-bold text-primary mb-4">Performance de Marketing</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="bg-card p-4 rounded-lg border text-center">
-                  <p className="text-sm text-muted-foreground">Alcance Total</p>
-                  <p className="text-3xl font-bold text-primary">125,340</p>
-                  <p className="text-xs text-green-600">+12% vs mes anterior</p>
+              {hasConnectedPlatforms() ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div className="bg-card p-4 rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground">Alcance Total</p>
+                      <p className="text-3xl font-bold text-primary">125,340</p>
+                      <p className="text-xs text-green-600">+12% vs mes anterior</p>
+                    </div>
+                    <div className="bg-card p-4 rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground">Engagement Rate</p>
+                      <p className="text-3xl font-bold text-secondary">4.8%</p>
+                      <p className="text-xs text-green-600">+0.3% vs mes anterior</p>
+                    </div>
+                    <div className="bg-card p-4 rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground">Leads Generados</p>
+                      <p className="text-3xl font-bold text-accent">89</p>
+                      <p className="text-xs text-red-600">-5% vs mes anterior</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-card p-6 rounded-lg border">
+                    <h4 className="font-bold mb-4">Performance por Plataforma Conectada</h4>
+                    {renderPlatformPerformance()}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground mb-4">Conecta tus redes sociales para ver métricas detalladas</p>
+                  <Button onClick={() => window.scrollTo(0, 0)}>
+                    Conectar Redes Sociales
+                  </Button>
                 </div>
-                <div className="bg-card p-4 rounded-lg border text-center">
-                  <p className="text-sm text-muted-foreground">Engagement Rate</p>
-                  <p className="text-3xl font-bold text-secondary">4.8%</p>
-                  <p className="text-xs text-green-600">+0.3% vs mes anterior</p>
-                </div>
-                <div className="bg-card p-4 rounded-lg border text-center">
-                  <p className="text-sm text-muted-foreground">Leads Generados</p>
-                  <p className="text-3xl font-bold text-accent">89</p>
-                  <p className="text-xs text-red-600">-5% vs mes anterior</p>
-                </div>
-              </div>
-              
-              <div className="bg-card p-6 rounded-lg border">
-                <h4 className="font-bold mb-4">Performance por Plataforma</h4>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium">LinkedIn</span>
-                      <span>ROI: 3.5x | Leads: 45</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div className="bg-primary h-3 rounded-full" style={{width: "70%"}}></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium">Instagram</span>
-                      <span>ROI: 2.1x | Leads: 28</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div className="bg-secondary h-3 rounded-full" style={{width: "45%"}}></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium">Facebook</span>
-                      <span>ROI: 1.8x | Leads: 16</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div className="bg-accent h-3 rounded-full" style={{width: "30%"}}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Insights Section */}
-              <div className="bg-card p-6 rounded-lg border mt-6">
-                <h4 className="font-bold mb-4">Insights y Recomendaciones</h4>
-                <div className="space-y-4">
-                  <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">📈 Oportunidad de Crecimiento</p>
-                      <p className="text-xs text-muted-foreground">LinkedIn muestra 40% más engagement los martes a las 2 PM</p>
-                    </div>
-                    <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                      Programar Posts
-                    </Button>
-                  </div>
-                  <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">⚠️ Atención Requerida</p>
-                      <p className="text-xs text-muted-foreground">Instagram Reels están 25% por debajo del promedio del sector</p>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      Crear Estrategia
-                    </Button>
-                  </div>
-                  <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">✅ Rendimiento Óptimo</p>
-                      <p className="text-xs text-muted-foreground">Tus posts de LinkedIn generan 3x más leads que la competencia</p>
-                    </div>
-                    <Button size="sm" variant="secondary">
-                      Amplificar
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              )}
             </TabsContent>
 
             <TabsContent value="estrategias" className="mt-6">
@@ -193,7 +333,6 @@ const MarketingHub = () => {
                   <div>LUN</div><div>MAR</div><div>MIÉ</div><div>JUE</div><div>VIE</div><div>SÁB</div><div>DOM</div>
                 </div>
                 <div className="grid grid-cols-7 gap-1">
-                  {/* Generar días del mes completo */}
                   {Array.from({ length: 31 }, (_, i) => {
                     const day = i + 1;
                     const isToday = day === new Date().getDate() && new Date().getMonth() === 0;
@@ -229,36 +368,75 @@ const MarketingHub = () => {
 
             <TabsContent value="creacion" className="mt-6">
               <h3 className="text-xl font-bold text-primary mb-4">Estudio de Creación con IA</h3>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="prompt">Idea o Tema Central</Label>
-                  <Textarea
-                    id="prompt"
-                    rows={3}
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Ej: 'Lanzamiento de nuestro nuevo producto ecológico'"
-                    className="resize-none"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                    Generar Texto para Post
-                  </Button>
-                  <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
-                    Generar Imagen
-                  </Button>
-                  <Button variant="secondary">
-                    Generar Video Corto
-                  </Button>
-                </div>
-                <div className="mt-6 border-t pt-6">
-                  <h4 className="font-bold text-foreground mb-2">Resultado Generado:</h4>
-                  <div className="bg-muted p-4 rounded-md min-h-[150px]">
-                    <p className="text-muted-foreground italic">El contenido generado por la IA aparecerá aquí...</p>
+              {hasConnectedPlatforms() ? (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg mb-4">
+                    <p className="text-sm font-medium mb-2">🎯 Plataformas Conectadas:</p>
+                    <div className="flex gap-2">
+                      {getConnectedPlatforms().map(platform => (
+                        <Badge key={platform} variant="secondary">
+                          {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="prompt">Idea o Tema Central</Label>
+                    <Textarea
+                      id="prompt"
+                      rows={3}
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="Ej: 'Lanzamiento de nuestro nuevo producto ecológico'"
+                      className="resize-none"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>Generar contenido para:</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                      <Button 
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        disabled={!prompt.trim()}
+                      >
+                        Generar Texto para Post
+                      </Button>
+                      <Button 
+                        className="bg-accent text-accent-foreground hover:bg-accent/90"
+                        disabled={!prompt.trim()}
+                      >
+                        Generar Imagen
+                      </Button>
+                      <Button 
+                        variant="secondary"
+                        disabled={!prompt.trim()}
+                      >
+                        Generar Video Corto
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 border-t pt-6">
+                    <h4 className="font-bold text-foreground mb-2">Resultado Generado:</h4>
+                    <div className="bg-muted p-4 rounded-md min-h-[150px]">
+                      <p className="text-muted-foreground italic">
+                        {prompt.trim() 
+                          ? "Ingrese una idea y presione 'Generar' para crear contenido personalizado para sus redes conectadas..." 
+                          : "El contenido generado por la IA aparecerá aquí..."
+                        }
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground mb-4">Conecta tus redes sociales para acceder al estudio de creación con IA</p>
+                  <Button onClick={() => window.scrollTo(0, 0)}>
+                    Conectar Redes Sociales
+                  </Button>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="pauta" className="mt-6">

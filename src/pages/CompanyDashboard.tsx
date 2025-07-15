@@ -98,19 +98,53 @@ const CompanyDashboard = () => {
 
       setProfile(profileData);
       
-      // Verificar si la información está completa
+      // Verificar si la información está completa y actualizar campos faltantes
       const isProfileIncomplete = !profileData?.company_name || 
-                                   profileData.company_name === 'Mi Empresa' ||
                                    !profileData?.company_size ||
                                    !profileData?.industry_sector ||
+                                   !profileData?.website_url ||
                                    !profileData?.full_name;
       
-      if (isProfileIncomplete) {
+      // Si faltan datos y están disponibles en user_metadata, actualizarlos
+      if (isProfileIncomplete && session.user.user_metadata) {
+        const updateData: any = {};
+        
+        if (!profileData?.company_size && session.user.user_metadata.company_size) {
+          updateData.company_size = session.user.user_metadata.company_size;
+        }
+        
+        if (!profileData?.website_url && session.user.user_metadata.website_url) {
+          updateData.website_url = session.user.user_metadata.website_url;
+        }
+        
+        if (Object.keys(updateData).length > 0) {
+          console.log('Actualizando campos faltantes:', updateData);
+          const { data: updatedProfile, error: updateError } = await supabase
+            .from('profiles')
+            .update(updateData)
+            .eq('user_id', session.user.id)
+            .select()
+            .single();
+            
+          if (!updateError && updatedProfile) {
+            profileData = updatedProfile;
+            setProfile(updatedProfile);
+          }
+        }
+      }
+      
+      // Verificar de nuevo si la información está completa después de la actualización
+      const stillIncomplete = !profileData?.company_name || 
+                              !profileData?.company_size ||
+                              !profileData?.industry_sector ||
+                              !profileData?.website_url ||
+                              !profileData?.full_name;
+      
+      if (stillIncomplete) {
         setActiveView("adn-empresa");
         toast({
           title: "Complete su perfil",
           description: "Debe completar toda la información de su empresa para continuar.",
-          variant: "destructive",
         });
       }
       

@@ -29,16 +29,21 @@ const Header = () => {
     getSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-        setProfile(profileData);
+        // Defer Supabase calls to prevent deadlock
+        setTimeout(() => {
+          supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single()
+            .then(({ data: profileData }) => {
+              setProfile(profileData);
+            });
+        }, 0);
       } else {
         setProfile(null);
       }

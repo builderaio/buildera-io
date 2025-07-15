@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AuthMethodManager from "@/components/auth/AuthMethodManager";
 
 interface ConfiguracionProps {
   profile: any;
@@ -19,8 +20,9 @@ const Configuracion = ({ profile }: ConfiguracionProps) => {
       <Card>
         <CardContent className="p-8">
           <Tabs defaultValue="usuarios" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="usuarios">Usuarios y Roles</TabsTrigger>
+              <TabsTrigger value="autenticacion">Autenticación</TabsTrigger>
               <TabsTrigger value="facturacion">Facturación y Suscripción</TabsTrigger>
             </TabsList>
 
@@ -68,6 +70,10 @@ const Configuracion = ({ profile }: ConfiguracionProps) => {
                   </tbody>
                 </table>
               </div>
+            </TabsContent>
+
+            <TabsContent value="autenticacion" className="mt-6">
+              <AuthMethodManager />
             </TabsContent>
 
             <TabsContent value="facturacion" className="mt-6">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthMethods } from "@/hooks/useAuthMethods";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 import { Linkedin, Mail } from "lucide-react";
@@ -26,6 +27,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { sendWelcomeEmail } = useWelcomeEmail();
+  const { authMethods, loading: authMethodsLoading } = useAuthMethods();
 
   const companySizes = [
     "1-10 empleados",
@@ -146,146 +148,181 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
     }
   };
 
+  // Determine which auth methods to show
+  const showEmailAuth = mode === "signup" || authMethods.canUseEmail;
+  const showGoogleAuth = mode === "signup" || authMethods.canUseGoogle;
+  const showLinkedInAuth = mode === "signup" || authMethods.canUseLinkedIn;
+  const showSocialAuth = showGoogleAuth || showLinkedInAuth;
+
+  if (authMethodsLoading && mode === "signin") {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <Button
-          variant="outline"
-          onClick={() => handleSocialAuth('google')}
-          className="w-full"
-        >
-          <Mail className="mr-2 h-4 w-4" />
-          Google
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => handleSocialAuth('linkedin_oidc')}
-          className="w-full"
-        >
-          <Linkedin className="mr-2 h-4 w-4" />
-          LinkedIn
-        </Button>
-      </div>
+      {showSocialAuth && (
+        <>
+          <div className="grid grid-cols-2 gap-4">
+            {showGoogleAuth && (
+              <Button
+                variant="outline"
+                onClick={() => handleSocialAuth('google')}
+                className="w-full"
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Google
+              </Button>
+            )}
+            {showLinkedInAuth && (
+              <Button
+                variant="outline"
+                onClick={() => handleSocialAuth('linkedin_oidc')}
+                className="w-full"
+              >
+                <Linkedin className="mr-2 h-4 w-4" />
+                LinkedIn
+              </Button>
+            )}
+          </div>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <Separator className="w-full" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            O continúa con email
-          </span>
-        </div>
-      </div>
+          {showEmailAuth && (
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <Separator className="w-full" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  O continúa con email
+                </span>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
-      <form onSubmit={handleEmailAuth} className="space-y-4">
-        {mode === "signup" && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nombre del contacto</Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="Tu nombre completo"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="companyName">Nombre de la empresa</Label>
-              <Input
-                id="companyName"
-                type="text"
-                placeholder="Tu Empresa S.A.S."
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="companySize">Tamaño de la empresa</Label>
-              <Select value={companySize} onValueChange={setCompanySize} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona el tamaño" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companySizes.map((size) => (
-                    <SelectItem key={size} value={size}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="industrySector">Sector de la industria</Label>
-              <Select value={industrySector} onValueChange={setIndustrySector} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona el sector" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sectors.map((sector) => (
-                    <SelectItem key={sector} value={sector}>
-                      {sector}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="websiteUrl">Sitio web (opcional)</Label>
-              <Input
-                id="websiteUrl"
-                type="url"
-                placeholder="https://tuempresa.com"
-                value={websiteUrl}
-                onChange={(e) => setWebsiteUrl(e.target.value)}
-              />
-            </div>
-          </>
-        )}
-        
-        <div className="space-y-2">
-          <Label htmlFor="email">Email corporativo</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="contacto@tuempresa.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="password">Contraseña</Label>
-          <PasswordInput
-            id="password"
-            placeholder="Tu contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        
-        {mode === "signup" && (
+      {showEmailAuth && (
+        <form onSubmit={handleEmailAuth} className="space-y-4">
+          {mode === "signup" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Nombre del contacto</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Tu nombre completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Nombre de la empresa</Label>
+                <Input
+                  id="companyName"
+                  type="text"
+                  placeholder="Tu Empresa S.A.S."
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="companySize">Tamaño de la empresa</Label>
+                <Select value={companySize} onValueChange={setCompanySize} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el tamaño" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companySizes.map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="industrySector">Sector de la industria</Label>
+                <Select value={industrySector} onValueChange={setIndustrySector} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el sector" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sectors.map((sector) => (
+                      <SelectItem key={sector} value={sector}>
+                        {sector}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="websiteUrl">Sitio web (opcional)</Label>
+                <Input
+                  id="websiteUrl"
+                  type="url"
+                  placeholder="https://tuempresa.com"
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
+                />
+              </div>
+            </>
+          )}
+          
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-            <PasswordInput
-              id="confirmPassword"
-              placeholder="Confirma tu contraseña"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+            <Label htmlFor="email">Email corporativo</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="contacto@tuempresa.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
-        )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="password">Contraseña</Label>
+            <PasswordInput
+              id="password"
+              placeholder="Tu contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          
+          {mode === "signup" && (
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <PasswordInput
+                id="confirmPassword"
+                placeholder="Confirma tu contraseña"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+          )}
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}
-        </Button>
-      </form>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}
+          </Button>
+        </form>
+      )}
+
+      {!showEmailAuth && !showSocialAuth && mode === "signin" && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">
+            No tienes métodos de autenticación configurados. 
+            Contacta al administrador para obtener ayuda.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

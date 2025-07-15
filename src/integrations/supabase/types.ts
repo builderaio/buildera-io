@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          auth_provider: string | null
           company_name: string | null
           company_size: string | null
           created_at: string
@@ -27,6 +28,7 @@ export type Database = {
           id: string
           industry: string | null
           industry_sector: string | null
+          linked_providers: string[] | null
           skills: string[] | null
           updated_at: string
           user_id: string
@@ -35,6 +37,7 @@ export type Database = {
           years_experience: number | null
         }
         Insert: {
+          auth_provider?: string | null
           company_name?: string | null
           company_size?: string | null
           created_at?: string
@@ -46,6 +49,7 @@ export type Database = {
           id?: string
           industry?: string | null
           industry_sector?: string | null
+          linked_providers?: string[] | null
           skills?: string[] | null
           updated_at?: string
           user_id: string
@@ -54,6 +58,7 @@ export type Database = {
           years_experience?: number | null
         }
         Update: {
+          auth_provider?: string | null
           company_name?: string | null
           company_size?: string | null
           created_at?: string
@@ -65,6 +70,7 @@ export type Database = {
           id?: string
           industry?: string | null
           industry_sector?: string | null
+          linked_providers?: string[] | null
           skills?: string[] | null
           updated_at?: string
           user_id?: string
@@ -79,7 +85,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_linked_provider: {
+        Args: { _user_id: string; _provider: string }
+        Returns: undefined
+      }
+      remove_linked_provider: {
+        Args: { _user_id: string; _provider: string }
+        Returns: undefined
+      }
     }
     Enums: {
       user_type: "developer" | "expert" | "company"

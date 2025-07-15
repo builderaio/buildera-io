@@ -86,7 +86,30 @@ const CompleteProfile = () => {
         setUserType(typeParam);
       }
 
+      // Check if this is a provider linking action
+      const action = searchParams.get('action');
+      if (action === 'link_provider') {
+        // User is linking a new provider, update their profile
+        await updateAuthProvider(session.user);
+      }
+
       setInitializing(false);
+    };
+
+    const updateAuthProvider = async (user: any) => {
+      try {
+        // Get the app_metadata that contains the provider info
+        const provider = user.app_metadata?.provider;
+        if (provider && provider !== 'email') {
+          // Add the new provider
+          await supabase.rpc('add_linked_provider', {
+            _user_id: user.id,
+            _provider: provider
+          });
+        }
+      } catch (error) {
+        console.error('Error updating auth provider:', error);
+      }
     };
 
     checkAuth();

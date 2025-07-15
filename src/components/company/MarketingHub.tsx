@@ -25,53 +25,199 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
   });
   const { toast } = useToast();
 
-  // Funciones de conexión de redes sociales (reutilizadas de ADNEmpresa)
-  const handleSocialConnect = async (platform: string) => {
+  // Funciones específicas para cada red social
+  const handleInstagramConnect = async () => {
     setLoading(true);
     try {
-      console.log(`🔗 Conectando ${platform} desde Marketing Hub...`);
-      
-      const platformInfo = {
-        instagram: { name: "Instagram Business", color: "pink" },
-        facebook: { name: "Facebook Business", color: "blue" },
-        tiktok: { name: "TikTok Business", color: "black" },
-        linkedin: { name: "LinkedIn Company", color: "blue" }
-      };
-
-      const selectedPlatform = platformInfo[platform as keyof typeof platformInfo];
+      console.log('🔗 Conectando Instagram Business...');
       
       toast({
-        title: "Conectando...",
-        description: `Iniciando autenticación con ${selectedPlatform.name}`,
+        title: "Conectando Instagram Business",
+        description: "Instagram Business requiere conectar Facebook primero...",
       });
 
-      // Simular delay de autenticación
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simular verificación de Facebook
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      toast({
+        title: "Redirecto a Facebook",
+        description: "Abriendo ventana de autenticación de Facebook para Instagram Business",
+      });
 
-      const shouldSucceed = Math.random() > 0.2;
+      await new Promise(resolve => setTimeout(resolve, 2500));
+
+      // Simular éxito con datos específicos de Instagram
+      const shouldSucceed = Math.random() > 0.15;
 
       if (shouldSucceed) {
-        setSocialConnections(prev => ({
-          ...prev,
-          [platform]: true
-        }));
-
+        setSocialConnections(prev => ({ ...prev, instagram: true }));
+        
         toast({
-          title: "¡Conexión exitosa!",
-          description: `${selectedPlatform.name} conectado. Ahora puede gestionar su contenido desde Marketing Hub.`,
+          title: "¡Instagram Business Conectado!",
+          description: "Acceso completo a posts, stories, reels y métricas de audiencia.",
         });
       } else {
-        throw new Error("Error en la autenticación");
+        throw new Error("Error de permisos de Instagram Business");
       }
 
     } catch (error: any) {
       toast({
-        title: "Error de conexión",
-        description: `No se pudo conectar con ${platform}. ${error.message || 'Inténtelo de nuevo.'}`,
+        title: "Error Instagram Business",
+        description: `${error.message || 'Verifique que tiene una cuenta business vinculada a Facebook'}`,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFacebookConnect = async () => {
+    setLoading(true);
+    try {
+      console.log('🔗 Conectando Facebook Business...');
+      
+      toast({
+        title: "Conectando Facebook Business",
+        description: "Verificando páginas empresariales disponibles...",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Simular selección de página
+      toast({
+        title: "Seleccionar Página",
+        description: "Seleccionando página empresarial principal",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const shouldSucceed = Math.random() > 0.1;
+
+      if (shouldSucceed) {
+        setSocialConnections(prev => ({ ...prev, facebook: true }));
+        
+        toast({
+          title: "¡Facebook Business Conectado!",
+          description: "Página empresarial vinculada. Acceso a posts, ads y métricas.",
+        });
+      } else {
+        throw new Error("No se encontraron páginas empresariales");
+      }
+
+    } catch (error: any) {
+      toast({
+        title: "Error Facebook Business",
+        description: `${error.message || 'Verifique que tiene páginas empresariales disponibles'}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTikTokConnect = async () => {
+    setLoading(true);
+    try {
+      console.log('🔗 Conectando TikTok Business...');
+      
+      toast({
+        title: "Conectando TikTok Business",
+        description: "Abriendo TikTok Business Manager...",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast({
+        title: "Autenticación TikTok",
+        description: "Verificando cuenta empresarial y permisos de API",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      const shouldSucceed = Math.random() > 0.25;
+
+      if (shouldSucceed) {
+        setSocialConnections(prev => ({ ...prev, tiktok: true }));
+        
+        toast({
+          title: "¡TikTok Business Conectado!",
+          description: "Acceso a video uploads, analytics y campañas publicitarias.",
+        });
+      } else {
+        throw new Error("Cuenta TikTok Business no verificada");
+      }
+
+    } catch (error: any) {
+      toast({
+        title: "Error TikTok Business",
+        description: `${error.message || 'Verifique que tiene una cuenta TikTok Business activa'}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLinkedInConnect = async () => {
+    setLoading(true);
+    try {
+      console.log('🔗 Conectando LinkedIn Company...');
+      
+      toast({
+        title: "Conectando LinkedIn Company",
+        description: "Verificando páginas de empresa administradas...",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 1800));
+
+      toast({
+        title: "Permisos LinkedIn",
+        description: "Solicitando permisos para gestión de contenido empresarial",
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 2200));
+
+      const shouldSucceed = Math.random() > 0.2;
+
+      if (shouldSucceed) {
+        setSocialConnections(prev => ({ ...prev, linkedin: true }));
+        
+        toast({
+          title: "¡LinkedIn Company Conectado!",
+          description: "Página empresarial vinculada. Acceso completo a posts y analytics B2B.",
+        });
+      } else {
+        throw new Error("No tiene permisos de administrador en páginas de empresa");
+      }
+
+    } catch (error: any) {
+      toast({
+        title: "Error LinkedIn Company",
+        description: `${error.message || 'Verifique que administra al menos una página de empresa'}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función genérica para manejar las conexiones
+  const handleSocialConnect = async (platform: string) => {
+    switch (platform) {
+      case 'instagram':
+        return handleInstagramConnect();
+      case 'facebook':
+        return handleFacebookConnect();
+      case 'tiktok':
+        return handleTikTokConnect();
+      case 'linkedin':
+        return handleLinkedInConnect();
+      default:
+        toast({
+          title: "Error",
+          description: "Plataforma no soportada",
+          variant: "destructive",
+        });
     }
   };
 

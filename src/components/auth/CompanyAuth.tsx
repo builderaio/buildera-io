@@ -217,7 +217,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       if (error.message?.includes('Invalid login credentials')) {
         errorMessage = "Email o contraseña incorrectos";
       } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = "Debes confirmar tu email antes de iniciar sesión";
+        errorMessage = "Tu cuenta fue creada pero necesita confirmación. Por favor revisa tu email y haz clic en el enlace de confirmación, o contacta al administrador para activar tu cuenta.";
       } else if (error.message?.includes('User already registered')) {
         errorMessage = "Ya existe una cuenta con este email";
       }

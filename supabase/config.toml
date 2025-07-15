@@ -2,3 +2,4 @@ project_id = "ubhzzppmkhxbuiajfswa"
 
 [functions]
 send-welcome-email = { verify_jwt = false }
+call-buildera-webhook = { verify_jwt = false }

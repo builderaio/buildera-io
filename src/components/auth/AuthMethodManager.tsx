@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useAuthMethods } from "@/hooks/useAuthMethods";
 import { supabase } from "@/integrations/supabase/client";
-import { Linkedin, Mail, Trash2, Plus } from "lucide-react";
+import { Linkedin, Mail, Trash2, Plus, Chrome } from "lucide-react";
 
 const AuthMethodManager = () => {
   const { authMethods, loading, refetch, removeAuthMethod } = useAuthMethods();
@@ -76,7 +76,7 @@ const AuthMethodManager = () => {
       case 'email':
         return { name: 'Email/Contraseña', icon: Mail };
       case 'google':
-        return { name: 'Google', icon: Mail };
+        return { name: 'Google', icon: Chrome };
       case 'linkedin_oidc':
         return { name: 'LinkedIn', icon: Linkedin };
       default:
@@ -156,7 +156,7 @@ const AuthMethodManager = () => {
                 className="flex items-center justify-center space-x-2"
               >
                 <Plus className="h-4 w-4" />
-                <Mail className="h-4 w-4" />
+                <Chrome className="h-4 w-4" />
                 <span>Google</span>
               </Button>
             )}

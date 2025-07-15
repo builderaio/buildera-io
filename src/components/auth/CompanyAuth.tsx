@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthMethods } from "@/hooks/useAuthMethods";
 import { supabase } from "@/integrations/supabase/client";
 import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
-import { Linkedin, Mail } from "lucide-react";
+import { Linkedin, Mail, Chrome } from "lucide-react";
 
 interface CompanyAuthProps {
   mode: "signin" | "signup";
@@ -58,6 +58,57 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
 
     try {
       if (mode === "signup") {
+        // Validaciones para registro
+        if (!fullName.trim()) {
+          toast({
+            title: "Error",
+            description: "El nombre es requerido",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (!companyName.trim()) {
+          toast({
+            title: "Error", 
+            description: "El nombre de la empresa es requerido",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (!companySize) {
+          toast({
+            title: "Error",
+            description: "Selecciona el tamaño de la empresa",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (!industrySector) {
+          toast({
+            title: "Error",
+            description: "Selecciona el sector de la industria",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (password.length < 6) {
+          toast({
+            title: "Error",
+            description: "La contraseña debe tener al menos 6 caracteres",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         if (password !== confirmPassword) {
           toast({
             title: "Error",
@@ -67,6 +118,9 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
           setLoading(false);
           return;
         }
+
+        console.log("Iniciando registro con email para:", email);
+        
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -83,9 +137,15 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error en registro:", error);
+          throw error;
+        }
+        
+        console.log("Registro exitoso:", data);
         
         if (data.user) {
+          console.log("Enviando email de bienvenida a:", data.user.email);
           // Enviar email de bienvenida
           const emailResult = await sendWelcomeEmail(
             data.user.email || '',
@@ -106,18 +166,59 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
           }
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        // Validaciones para login
+        if (!email.trim()) {
+          toast({
+            title: "Error",
+            description: "El email es requerido",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (!password.trim()) {
+          toast({
+            title: "Error",
+            description: "La contraseña es requerida",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        console.log("Iniciando login con email para:", email);
+        
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error en login:", error);
+          throw error;
+        }
+        
+        console.log("Login exitoso:", data);
         window.location.href = '/company-dashboard';
       }
     } catch (error: any) {
+      console.error("Error en autenticación:", error);
+      
+      // Mostrar mensajes de error más específicos
+      let errorMessage = error.message;
+      
+      if (error.message?.includes('Invalid login credentials')) {
+        errorMessage = "Email o contraseña incorrectos";
+      } else if (error.message?.includes('Email not confirmed')) {
+        errorMessage = "Debes confirmar tu email antes de iniciar sesión";
+      } else if (error.message?.includes('User already registered')) {
+        errorMessage = "Ya existe una cuenta con este email";
+      }
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -173,7 +274,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
                 onClick={() => handleSocialAuth('google')}
                 className="w-full"
               >
-                <Mail className="mr-2 h-4 w-4" />
+                <Chrome className="mr-2 h-4 w-4" />
                 Google
               </Button>
             )}

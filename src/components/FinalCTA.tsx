@@ -11,7 +11,7 @@ const FinalCTA = () => {
           Hable con uno de nuestros especialistas y descubra cómo la automatización inteligente puede transformar su negocio. Sin compromiso.
         </p>
         <div className="mt-8">
-          <a href="/auth">
+          <a href="/auth?mode=register">
             <Button 
               variant="secondary" 
               size="xl"

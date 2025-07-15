@@ -11,7 +11,7 @@ const Hero = () => {
           Deje de operar, empiece a escalar. Buildera es la plataforma que le permite a su empresa diseñar y desplegar equipos de agentes de IA que automatizan sus procesos, reducen costos y liberan a su equipo para que se enfoque en la innovación.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
-          <a href="/auth">
+          <a href="/auth?mode=register">
             <Button variant="hero" size="xl">
               Empiece a Automatizar
             </Button>

@@ -69,7 +69,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
           email,
           password,
           options: {
-            emailRedirectTo: "https://buildera.io/",
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: fullName,
               user_type: 'company',
@@ -128,7 +128,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: "https://buildera.io/complete-profile?user_type=company",
+          redirectTo: `${window.location.origin}/complete-profile?user_type=company`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'

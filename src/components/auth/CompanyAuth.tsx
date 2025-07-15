@@ -365,8 +365,8 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
                 <Label htmlFor="websiteUrl">Sitio web (opcional)</Label>
                 <Input
                   id="websiteUrl"
-                  type="url"
-                  placeholder="https://tuempresa.com"
+                  type="text"
+                  placeholder="tuempresa.com"
                   value={websiteUrl}
                   onChange={(e) => setWebsiteUrl(e.target.value)}
                 />

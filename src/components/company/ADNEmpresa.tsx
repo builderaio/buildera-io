@@ -200,10 +200,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               <Label htmlFor="website_url">Sitio web</Label>
               <Input
                 id="website_url"
-                type="url"
+                type="text"
                 value={companyData.website_url}
                 onChange={(e) => setCompanyData({...companyData, website_url: e.target.value})}
-                placeholder="https://suempresa.com"
+                placeholder="suempresa.com"
               />
             </div>
             <div className="space-y-2">

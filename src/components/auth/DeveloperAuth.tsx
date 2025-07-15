@@ -134,8 +134,8 @@ const DeveloperAuth = ({ mode }: DeveloperAuthProps) => {
               <Label htmlFor="githubUrl">GitHub URL (opcional)</Label>
               <Input
                 id="githubUrl"
-                type="url"
-                placeholder="https://github.com/tuusuario"
+                type="text"
+                placeholder="github.com/tuusuario"
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
               />

@@ -238,8 +238,8 @@ const CompleteProfile = () => {
                     <Label htmlFor="githubUrl">GitHub URL (opcional)</Label>
                     <Input
                       id="githubUrl"
-                      type="url"
-                      placeholder="https://github.com/tuusuario"
+                      type="text"
+                      placeholder="github.com/tuusuario"
                       value={githubUrl}
                       onChange={(e) => setGithubUrl(e.target.value)}
                     />
@@ -358,8 +358,8 @@ const CompleteProfile = () => {
                     <Label htmlFor="websiteUrl">Sitio web (opcional)</Label>
                     <Input
                       id="websiteUrl"
-                      type="url"
-                      placeholder="https://tuempresa.com"
+                      type="text"
+                      placeholder="tuempresa.com"
                       value={websiteUrl}
                       onChange={(e) => setWebsiteUrl(e.target.value)}
                     />

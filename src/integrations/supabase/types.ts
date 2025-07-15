@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      company_external_data: {
+        Row: {
+          brand_data: Json | null
+          company_url: string | null
+          created_at: string
+          id: string
+          updated_at: string
+          url_data: Json | null
+          user_id: string
+        }
+        Insert: {
+          brand_data?: Json | null
+          company_url?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          url_data?: Json | null
+          user_id: string
+        }
+        Update: {
+          brand_data?: Json | null
+          company_url?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          url_data?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           auth_provider: string | null

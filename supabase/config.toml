@@ -3,3 +3,5 @@ project_id = "ubhzzppmkhxbuiajfswa"
 [functions]
 send-welcome-email = { verify_jwt = false }
 call-buildera-webhook = { verify_jwt = false }
+get-data-by-url = { verify_jwt = false }
+get-brand-by-url = { verify_jwt = false }

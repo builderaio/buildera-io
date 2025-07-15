@@ -159,6 +159,42 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
           });
           
+          // Llamar a los webhooks para obtener datos de la empresa
+          if (websiteUrl) {
+            try {
+              console.log("Llamando a webhooks para obtener datos de la empresa...");
+              
+              // Llamar a getDataByURL
+              const dataResponse = await supabase.functions.invoke('get-data-by-url', {
+                body: { 
+                  url: websiteUrl,
+                  user_id: data.user.id 
+                }
+              });
+              
+              if (dataResponse.error) {
+                console.error("Error calling getDataByURL:", dataResponse.error);
+              }
+              
+              // Llamar a getBrandByURL
+              const brandResponse = await supabase.functions.invoke('get-brand-by-url', {
+                body: { 
+                  url: websiteUrl,
+                  user_id: data.user.id 
+                }
+              });
+              
+              if (brandResponse.error) {
+                console.error("Error calling getBrandByURL:", brandResponse.error);
+              }
+              
+              console.log("Webhooks ejecutados para obtener datos de la empresa");
+            } catch (error) {
+              console.error("Error ejecutando webhooks:", error);
+              // No mostramos error al usuario ya que el registro fue exitoso
+            }
+          }
+          
           // Cambiar a modo login después del registro exitoso
           if (onModeChange) {
             onModeChange("signin");

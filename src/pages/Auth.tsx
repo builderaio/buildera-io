@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DeveloperAuth from "@/components/auth/DeveloperAuth";
@@ -6,7 +7,25 @@ import ExpertAuth from "@/components/auth/ExpertAuth";
 import CompanyAuth from "@/components/auth/CompanyAuth";
 
 const Auth = () => {
+  const [searchParams] = useSearchParams();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [activeTab, setActiveTab] = useState("company");
+
+  useEffect(() => {
+    // Read URL parameters to set initial state
+    const mode = searchParams.get("mode");
+    const userType = searchParams.get("userType");
+    
+    if (mode === "register" || mode === "signup") {
+      setAuthMode("signup");
+    } else if (mode === "login" || mode === "signin") {
+      setAuthMode("signin");
+    }
+    
+    if (userType === "developer" || userType === "expert" || userType === "company") {
+      setActiveTab(userType);
+    }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
@@ -54,7 +73,7 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="company" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="developer">Desarrollador</TabsTrigger>
                 <TabsTrigger value="expert">Experto</TabsTrigger>

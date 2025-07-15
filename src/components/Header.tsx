@@ -85,12 +85,12 @@ const Header = () => {
 
     return (
       <div className="flex items-center space-x-4">
-        <a href="/auth?mode=login">
+        <a href="/auth?mode=login&userType=company">
           <Button variant="ghost" size="lg">
             Iniciar Sesión
           </Button>
         </a>
-        <a href="/auth?mode=register">
+        <a href="/auth?mode=register&userType=company">
           <Button variant="cta" size="lg">
             Registrarse
           </Button>

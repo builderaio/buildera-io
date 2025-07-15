@@ -1,7 +1,99 @@
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Menu, LogOut, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 
 const Header = () => {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    // Check current session
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Get user profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+        setProfile(profileData);
+      }
+    };
+    
+    getSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single();
+        setProfile(profileData);
+      } else {
+        setProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const renderAuthSection = () => {
+    if (user) {
+      const displayName = profile?.full_name || user.user_metadata?.full_name || user.email;
+      
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="flex items-center space-x-2">
+              <User className="h-4 w-4" />
+              <span>{displayName}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => window.location.href = '/company-dashboard'}>
+              <User className="mr-2 h-4 w-4" />
+              Dashboard
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Cerrar Sesión
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
+    return (
+      <div className="flex items-center space-x-4">
+        <a href="/auth?mode=login">
+          <Button variant="ghost" size="lg">
+            Iniciar Sesión
+          </Button>
+        </a>
+        <a href="/auth?mode=register">
+          <Button variant="cta" size="lg">
+            Registrarse
+          </Button>
+        </a>
+      </div>
+    );
+  };
+
   return (
     <header className="bg-background/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
@@ -24,11 +116,7 @@ const Header = () => {
           <a href="#casos-de-uso" className="text-muted-foreground hover:text-primary transition-smooth">
             Casos de Uso
           </a>
-          <a href="/auth">
-            <Button variant="cta" size="lg">
-              Únete Ahora
-            </Button>
-          </a>
+          {renderAuthSection()}
         </div>
         <div className="md:hidden">
           <Button variant="ghost" size="icon">

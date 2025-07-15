@@ -355,7 +355,7 @@ const CompleteProfile = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="websiteUrl">Sitio web (opcional)</Label>
+                    <Label htmlFor="websiteUrl">Sitio web</Label>
                     <Input
                       id="websiteUrl"
                       type="text"

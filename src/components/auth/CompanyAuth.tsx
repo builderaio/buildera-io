@@ -99,6 +99,16 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
           return;
         }
 
+        if (!websiteUrl.trim()) {
+          toast({
+            title: "Error",
+            description: "El sitio web es requerido",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         if (password.length < 6) {
           toast({
             title: "Error",
@@ -362,7 +372,7 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="websiteUrl">Sitio web (opcional)</Label>
+                <Label htmlFor="websiteUrl">Sitio web</Label>
                 <Input
                   id="websiteUrl"
                   type="text"

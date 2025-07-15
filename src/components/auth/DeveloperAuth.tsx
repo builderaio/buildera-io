@@ -10,9 +10,10 @@ import { Linkedin, Chrome } from "lucide-react";
 
 interface DeveloperAuthProps {
   mode: "signin" | "signup";
+  onModeChange?: (mode: "signin" | "signup") => void;
 }
 
-const DeveloperAuth = ({ mode }: DeveloperAuthProps) => {
+const DeveloperAuth = ({ mode, onModeChange }: DeveloperAuthProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

@@ -8,14 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuthMethods } from "@/hooks/useAuthMethods";
 import { supabase } from "@/integrations/supabase/client";
-import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 import { Linkedin, Mail, Chrome } from "lucide-react";
 
 interface CompanyAuthProps {
   mode: "signin" | "signup";
+  onModeChange?: (mode: "signin" | "signup") => void;
 }
 
-const CompanyAuth = ({ mode }: CompanyAuthProps) => {
+const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,7 +26,6 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { sendWelcomeEmail } = useWelcomeEmail();
   const { authMethods, loading: authMethodsLoading } = useAuthMethods();
 
   const companySizes = [
@@ -155,25 +154,22 @@ const CompanyAuth = ({ mode }: CompanyAuthProps) => {
         console.log("Registro exitoso:", data);
         
         if (data.user) {
-          console.log("Enviando email de bienvenida a:", data.user.email);
-          // Enviar email de bienvenida
-          const emailResult = await sendWelcomeEmail(
-            data.user.email || '',
-            fullName,
-            'company'
-          );
-
-          if (emailResult.success) {
-            toast({
-              title: "¡Registro exitoso!",
-              description: "Revisa tu email para confirmar tu cuenta y recibir la bienvenida.",
-            });
-          } else {
-            toast({
-              title: "¡Registro exitoso!",
-              description: "Tu cuenta ha sido creada. Revisa tu email para confirmarla.",
-            });
+          toast({
+            title: "¡Registro exitoso!",
+            description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
+          });
+          
+          // Cambiar a modo login después del registro exitoso
+          if (onModeChange) {
+            onModeChange("signin");
           }
+          // Limpiar campos de registro pero mantener email y password
+          setFullName("");
+          setCompanyName("");
+          setCompanySize("");
+          setIndustrySector("");
+          setWebsiteUrl("");
+          setConfirmPassword("");
         }
       } else {
         // Validaciones para login

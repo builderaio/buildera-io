@@ -11,9 +11,10 @@ import { Linkedin, Chrome } from "lucide-react";
 
 interface ExpertAuthProps {
   mode: "signin" | "signup";
+  onModeChange?: (mode: "signin" | "signup") => void;
 }
 
-const ExpertAuth = ({ mode }: ExpertAuthProps) => {
+const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

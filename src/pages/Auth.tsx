@@ -91,13 +91,13 @@ const Auth = () => {
                 <TabsTrigger value="company">Empresa</TabsTrigger>
               </TabsList>
               <TabsContent value="developer" className="mt-6">
-                <DeveloperAuth mode={authMode} />
+                <DeveloperAuth mode={authMode} onModeChange={setAuthMode} />
               </TabsContent>
               <TabsContent value="expert" className="mt-6">
-                <ExpertAuth mode={authMode} />
+                <ExpertAuth mode={authMode} onModeChange={setAuthMode} />
               </TabsContent>
               <TabsContent value="company" className="mt-6">
-                <CompanyAuth mode={authMode} />
+                <CompanyAuth mode={authMode} onModeChange={setAuthMode} />
               </TabsContent>
             </Tabs>
           </CardContent>

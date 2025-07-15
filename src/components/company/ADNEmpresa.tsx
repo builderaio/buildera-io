@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Upload, Twitter, Linkedin } from "lucide-react";
+import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music } from "lucide-react";
 
 interface ADNEmpresaProps {
   profile: any;
@@ -29,6 +29,12 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     website_url: profile?.website_url || ""
   });
   const [loading, setLoading] = useState(false);
+  const [socialConnections, setSocialConnections] = useState({
+    instagram: false,
+    facebook: false,
+    tiktok: false,
+    linkedin: false
+  });
   const { toast } = useToast();
 
   const companySizes = [
@@ -126,6 +132,102 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       description: `Generando ${field} personalizada para su empresa...`,
     });
     // Aquí integrarías con la IA para generar el contenido
+  };
+
+  const handleSocialConnect = async (platform: string) => {
+    try {
+      let authUrl = '';
+      
+      switch (platform) {
+        case 'instagram':
+          // Instagram Business API requiere Facebook Login
+          authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=YOUR_FACEBOOK_APP_ID&redirect_uri=${encodeURIComponent(window.location.origin)}/auth/facebook&scope=instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement&response_type=code&state=instagram`;
+          break;
+        case 'facebook':
+          authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=YOUR_FACEBOOK_APP_ID&redirect_uri=${encodeURIComponent(window.location.origin)}/auth/facebook&scope=pages_show_list,pages_read_engagement,pages_manage_posts,publish_pages&response_type=code&state=facebook`;
+          break;
+        case 'tiktok':
+          authUrl = `https://www.tiktok.com/auth/authorize/?client_key=YOUR_TIKTOK_CLIENT_KEY&scope=user.info.basic,video.list,video.upload&response_type=code&redirect_uri=${encodeURIComponent(window.location.origin)}/auth/tiktok&state=tiktok`;
+          break;
+        case 'linkedin':
+          authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=YOUR_LINKEDIN_CLIENT_ID&redirect_uri=${encodeURIComponent(window.location.origin)}/auth/linkedin&state=linkedin&scope=r_organization_social,w_organization_social,rw_organization_admin,r_basicprofile`;
+          break;
+      }
+
+      if (authUrl) {
+        // Abrir ventana de autenticación
+        const authWindow = window.open(
+          authUrl, 
+          'social-auth', 
+          'width=600,height=600,scrollbars=yes,resizable=yes'
+        );
+
+        // Escuchar el mensaje de retorno de la autenticación
+        const messageListener = (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return;
+          
+          if (event.data.type === 'SOCIAL_AUTH_SUCCESS') {
+            setSocialConnections(prev => ({
+              ...prev,
+              [platform]: true
+            }));
+            
+            toast({
+              title: "Conexión exitosa",
+              description: `${platform.charAt(0).toUpperCase() + platform.slice(1)} conectado correctamente`,
+            });
+            
+            authWindow?.close();
+            window.removeEventListener('message', messageListener);
+          } else if (event.data.type === 'SOCIAL_AUTH_ERROR') {
+            toast({
+              title: "Error de conexión",
+              description: `No se pudo conectar con ${platform}. Inténtelo de nuevo.`,
+              variant: "destructive",
+            });
+            authWindow?.close();
+            window.removeEventListener('message', messageListener);
+          }
+        };
+
+        window.addEventListener('message', messageListener);
+
+        // Verificar si la ventana se cerró manualmente
+        const checkClosed = setInterval(() => {
+          if (authWindow?.closed) {
+            clearInterval(checkClosed);
+            window.removeEventListener('message', messageListener);
+          }
+        }, 1000);
+      }
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Error al conectar con ${platform}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSocialDisconnect = async (platform: string) => {
+    try {
+      setSocialConnections(prev => ({
+        ...prev,
+        [platform]: false
+      }));
+      
+      toast({
+        title: "Desconectado",
+        description: `${platform.charAt(0).toUpperCase() + platform.slice(1)} desconectado correctamente`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Error al desconectar ${platform}`,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -335,27 +437,144 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
             <TabsContent value="conexiones" className="space-y-6 mt-6">
               <p className="text-muted-foreground">
-                Conecte sus redes sociales para que nuestros agentes puedan analizar su rendimiento y generar contenido alineado a su marca.
+                Conecte sus redes sociales empresariales para que nuestros agentes puedan analizar su rendimiento y generar contenido alineado a su marca. Todas las conexiones incluyen permisos para acceder a posts, usuarios y publicar contenido en nombre de la empresa.
               </p>
               <div className="space-y-4">
+                {/* Instagram Business */}
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center">
-                    <Twitter className="w-8 h-8 text-blue-600 mr-4" />
-                    <span>Twitter / X</span>
+                    <Instagram className="w-8 h-8 text-pink-600 mr-4" />
+                    <div>
+                      <span className="font-medium">Instagram Business</span>
+                      <p className="text-sm text-muted-foreground">Acceso a posts, stories, usuarios y publicación de contenido</p>
+                    </div>
                   </div>
-                  <Button variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                    Conectar
-                  </Button>
+                  {socialConnections.instagram ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-green-600 font-medium">Conectado</span>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleSocialDisconnect('instagram')}
+                      >
+                        Desconectar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="default" 
+                      className="bg-pink-600 hover:bg-pink-700 text-white"
+                      onClick={() => handleSocialConnect('instagram')}
+                    >
+                      Conectar
+                    </Button>
+                  )}
                 </div>
+
+                {/* Facebook Business */}
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-blue-600 rounded mr-4 flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">f</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Facebook Business</span>
+                      <p className="text-sm text-muted-foreground">Gestión de páginas, posts y audiencias empresariales</p>
+                    </div>
+                  </div>
+                  {socialConnections.facebook ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-green-600 font-medium">Conectado</span>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleSocialDisconnect('facebook')}
+                      >
+                        Desconectar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="default" 
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => handleSocialConnect('facebook')}
+                    >
+                      Conectar
+                    </Button>
+                  )}
+                </div>
+
+                {/* TikTok Business */}
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center">
+                    <Music className="w-8 h-8 text-black mr-4" />
+                    <div>
+                      <span className="font-medium">TikTok Business</span>
+                      <p className="text-sm text-muted-foreground">Subida de videos, análisis y gestión de contenido empresarial</p>
+                    </div>
+                  </div>
+                  {socialConnections.tiktok ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-green-600 font-medium">Conectado</span>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleSocialDisconnect('tiktok')}
+                      >
+                        Desconectar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="default" 
+                      className="bg-black hover:bg-gray-800 text-white"
+                      onClick={() => handleSocialConnect('tiktok')}
+                    >
+                      Conectar
+                    </Button>
+                  )}
+                </div>
+
+                {/* LinkedIn Company */}
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center">
                     <Linkedin className="w-8 h-8 text-blue-700 mr-4" />
-                    <span>LinkedIn</span>
+                    <div>
+                      <span className="font-medium">LinkedIn Company</span>
+                      <p className="text-sm text-muted-foreground">Gestión de página empresarial, posts y analytics profesionales</p>
+                    </div>
                   </div>
-                  <Button variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                    Conectar
-                  </Button>
+                  {socialConnections.linkedin ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-green-600 font-medium">Conectado</span>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleSocialDisconnect('linkedin')}
+                      >
+                        Desconectar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="default" 
+                      className="bg-blue-700 hover:bg-blue-800 text-white"
+                      onClick={() => handleSocialConnect('linkedin')}
+                    >
+                      Conectar
+                    </Button>
+                  )}
                 </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-muted rounded-lg">
+                <h4 className="font-medium mb-2">Permisos otorgados por cada conexión:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• <strong>Instagram Business:</strong> Lectura de posts, stories, comentarios, seguidores y publicación de contenido</li>
+                  <li>• <strong>Facebook Business:</strong> Gestión de páginas, publicación de posts, lectura de insights y audiencias</li>
+                  <li>• <strong>TikTok Business:</strong> Subida de videos, acceso a analytics y gestión de perfil empresarial</li>
+                  <li>• <strong>LinkedIn Company:</strong> Gestión de página de empresa, publicación de contenido y acceso a métricas</li>
+                </ul>
               </div>
             </TabsContent>
           </Tabs>

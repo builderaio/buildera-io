@@ -126,12 +126,74 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   };
 
-  const handleAIGenerate = (field: string) => {
-    toast({
-      title: "Generando con IA",
-      description: `Generando ${field} personalizada para su empresa...`,
-    });
-    // Aquí integrarías con la IA para generar el contenido
+  const handleAIGenerate = async (field: string) => {
+    setLoading(true);
+    try {
+      console.log(`🤖 Generando ${field} con IA...`);
+      
+      toast({
+        title: "Generando con IA",
+        description: `Creando ${field} personalizada para su empresa...`,
+      });
+
+      // Preparar información de la empresa para el contexto
+      const companyInfo = {
+        company_name: companyData.company_name || profile?.company_name || "su empresa",
+        company_size: companyData.company_size || profile?.company_size || "",
+        industry_sector: companyData.industry_sector || profile?.industry_sector || "",
+        website_url: companyData.website_url || profile?.website_url || ""
+      };
+
+      console.log('📋 Información de empresa para IA:', companyInfo);
+
+      // Llamar a la función de edge para generar contenido
+      const response = await supabase.functions.invoke('generate-company-content', {
+        body: {
+          field: field,
+          companyInfo: companyInfo
+        }
+      });
+
+      console.log('📥 Respuesta de IA:', response);
+
+      if (response.error) {
+        console.error('❌ Error de edge function:', response.error);
+        throw new Error(response.error.message || 'Error al generar contenido');
+      }
+
+      const { data } = response;
+      
+      if (!data.success) {
+        console.error('❌ Error en respuesta:', data.error);
+        throw new Error(data.error || 'Error al generar contenido');
+      }
+
+      const generatedContent = data.content;
+      console.log('✅ Contenido generado:', generatedContent);
+
+      // Actualizar el campo correspondiente
+      setFormData(prev => ({
+        ...prev,
+        [field === 'misión' ? 'mission' : 
+         field === 'visión' ? 'vision' : 
+         'valueProposition']: generatedContent
+      }));
+
+      toast({
+        title: "¡Contenido generado!",
+        description: `${field.charAt(0).toUpperCase() + field.slice(1)} creada exitosamente con IA`,
+      });
+
+    } catch (error: any) {
+      console.error(`❌ Error generando ${field}:`, error);
+      toast({
+        title: "Error",
+        description: `No se pudo generar la ${field}. ${error.message || 'Inténtelo de nuevo.'}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSocialConnect = async (platform: string) => {

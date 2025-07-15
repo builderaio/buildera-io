@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import DeveloperAuth from "@/components/auth/DeveloperAuth";
 import ExpertAuth from "@/components/auth/ExpertAuth";
 import CompanyAuth from "@/components/auth/CompanyAuth";
@@ -30,13 +32,22 @@ const Auth = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-heading gradient-text">
-            Únete a Buildera
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Conecta con el futuro de la automatización inteligente
-          </p>
+        <div className="flex items-center justify-between mb-8">
+          <a href="/">
+            <Button variant="ghost" size="lg" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Volver al Inicio
+            </Button>
+          </a>
+          <div className="text-center">
+            <h1 className="text-3xl font-heading gradient-text">
+              Únete a Buildera
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Conecta con el futuro de la automatización inteligente
+            </p>
+          </div>
+          <div className="w-32"></div> {/* Spacer for centering */}
         </div>
 
         <Card className="shadow-elegant">

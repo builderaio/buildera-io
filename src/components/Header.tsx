@@ -103,7 +103,16 @@ const Header = () => {
     <header className="bg-background/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         <div>
-          <a href="#" className="flex items-center space-x-3">
+          <a 
+            href={user ? "/" : "#"} 
+            className="flex items-center space-x-3"
+            onClick={(e) => {
+              if (user) {
+                e.preventDefault();
+                window.location.href = "/";
+              }
+            }}
+          >
             <img 
               src="/lovable-uploads/9bbad23a-3f28-47fd-bf57-1a43f0129bff.png" 
               alt="Buildera Logo" 

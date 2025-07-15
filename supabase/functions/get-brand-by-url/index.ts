@@ -47,7 +47,13 @@ const handler = async (req: Request): Promise<Response> => {
     const credentials = btoa('buildera:Buildera2025*');
     const authHeader = `Basic ${credentials}`;
 
-    console.log('📤 Llamando a getBrandByURL webhook...');
+    // Asegurar que la URL tenga protocolo
+    let formattedUrl = body.url;
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
+    console.log('📤 Llamando a getBrandByURL webhook con URL:', formattedUrl);
     
     // Call the external webhook
     const webhookResponse = await fetch('https://buildera.app.n8n.cloud/webhook/getBrandByURL', {
@@ -56,16 +62,26 @@ const handler = async (req: Request): Promise<Response> => {
         'Content-Type': 'application/json',
         'Authorization': authHeader,
       },
-      body: JSON.stringify({ url: body.url }),
+      body: JSON.stringify({ url: formattedUrl }),
     });
 
     console.log('📥 Respuesta webhook status:', webhookResponse.status);
 
+    const responseText = await webhookResponse.text();
+    console.log('📄 Respuesta webhook body:', responseText);
+
     if (!webhookResponse.ok) {
-      throw new Error(`Webhook failed with status: ${webhookResponse.status}`);
+      console.error('❌ Error en webhook. Status:', webhookResponse.status, 'Body:', responseText);
+      throw new Error(`Webhook failed with status: ${webhookResponse.status} - ${responseText}`);
     }
 
-    const webhookData = await webhookResponse.json();
+    let webhookData;
+    try {
+      webhookData = JSON.parse(responseText);
+    } catch (e) {
+      console.log('📄 Respuesta no es JSON válido, usando como texto');
+      webhookData = { raw_response: responseText };
+    }
     console.log('✅ Datos de marca obtenidos del webhook');
 
     // Initialize Supabase client
@@ -78,7 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from('company_external_data')
       .upsert({
         user_id: body.user_id,
-        company_url: body.url,
+        company_url: formattedUrl,
         brand_data: webhookData,
       })
       .select();

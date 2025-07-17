@@ -329,39 +329,62 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const handleLinkedInConnect = async () => {
     setLoading(true);
     try {
-      console.log('🔗 Conectando LinkedIn Company...');
+      console.log('🔗 Iniciando flujo OAuth LinkedIn Company...');
       
+      // Paso 1: Redirigir a LinkedIn para autorización
       toast({
         title: "Conectando LinkedIn Company",
-        description: "Verificando páginas de empresa administradas...",
+        description: "Redirigiendo a LinkedIn para autorización...",
       });
 
-      await new Promise(resolve => setTimeout(resolve, 1800));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
+      // Simular redireccionamiento a LinkedIn OAuth
+      const clientId = 'your_linkedin_client_id';
+      const redirectUri = `${window.location.origin}/auth/linkedin/callback`;
+      const scopes = 'w_organization_social%20r_organization_social%20rw_company_admin';
+      const state = Math.random().toString(36).substring(7);
+      
+      console.log(`🔗 LinkedIn OAuth URL: https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scopes}`);
+
+      // Paso 2: Simular regreso con código de autorización
       toast({
-        title: "Permisos LinkedIn",
-        description: "Solicitando permisos para gestión de contenido empresarial",
+        title: "Procesando autorización",
+        description: "Intercambiando código por access token...",
       });
 
-      await new Promise(resolve => setTimeout(resolve, 2200));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      const shouldSucceed = Math.random() > 0.2;
+      // Paso 3: Verificar permisos de empresa
+      toast({
+        title: "Verificando permisos",
+        description: "Consultando páginas de empresa administradas...",
+      });
 
-      if (shouldSucceed) {
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
+      // Simular respuesta de API de LinkedIn
+      const hasCompanyAccess = Math.random() > 0.15; // 85% éxito
+      
+      if (hasCompanyAccess) {
+        // Paso 4: Guardar tokens y configuración
         setSocialConnections(prev => ({ ...prev, linkedin: true }));
         
         toast({
           title: "¡LinkedIn Company Conectado!",
-          description: "Página empresarial vinculada. Acceso completo a posts y analytics B2B.",
+          description: "Página empresarial vinculada. Scopes: w_organization_social, r_organization_social",
         });
+
+        console.log('✅ LinkedIn conectado con scopes: w_organization_social, r_organization_social, rw_company_admin');
       } else {
-        throw new Error("No tiene permisos de administrador en páginas de empresa");
+        throw new Error("No se encontraron páginas de empresa administradas o permisos insuficientes");
       }
 
     } catch (error: any) {
+      console.error('❌ Error en flujo OAuth LinkedIn:', error);
       toast({
         title: "Error LinkedIn Company",
-        description: `${error.message || 'Verifique que administra al menos una página de empresa'}`,
+        description: `${error.message || 'Error de autorización. Verifique permisos de administrador.'}`,
         variant: "destructive",
       });
     } finally {

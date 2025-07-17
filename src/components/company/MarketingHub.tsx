@@ -338,25 +338,217 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
       );
     }
 
+    // Datos simulados de las cuentas business conectadas
     const platformData = {
-      linkedin: { name: "LinkedIn", roi: "3.5x", leads: 45, width: "70%", color: "bg-primary" },
-      instagram: { name: "Instagram", roi: "2.1x", leads: 28, width: "45%", color: "bg-secondary" },
-      facebook: { name: "Facebook", roi: "1.8x", leads: 16, width: "30%", color: "bg-accent" },
-      tiktok: { name: "TikTok", roi: "2.8x", leads: 22, width: "55%", color: "bg-purple-600" }
+      linkedin: {
+        name: "LinkedIn Company",
+        followers: "12,450",
+        engagement: "4.2%",
+        roi: "3.5x",
+        leads: 45,
+        recentPosts: [
+          { content: "Innovación en tecnología sostenible", likes: 87, comments: 12, shares: 8, date: "2 días" },
+          { content: "Nuevas oportunidades de crecimiento", likes: 156, comments: 23, shares: 15, date: "5 días" },
+          { content: "Webinar: El futuro del trabajo remoto", likes: 234, comments: 41, shares: 28, date: "1 semana" }
+        ],
+        analytics: { impressions: "45,280", clicks: "1,890", conversions: 45 },
+        color: "bg-[#0A66C2]"
+      },
+      instagram: {
+        name: "Instagram Business",
+        followers: "8,750",
+        engagement: "6.8%",
+        roi: "2.1x",
+        leads: 28,
+        recentPosts: [
+          { content: "Detrás de escenas en nuestro laboratorio", likes: 324, comments: 45, shares: 12, date: "1 día" },
+          { content: "Producto del mes: Innovación verde", likes: 267, comments: 34, shares: 18, date: "3 días" },
+          { content: "Equipo trabajando en nuevas ideas", likes: 189, comments: 22, shares: 9, date: "6 días" }
+        ],
+        analytics: { impressions: "32,150", clicks: "2,180", conversions: 28 },
+        color: "bg-gradient-to-r from-purple-500 to-pink-500"
+      },
+      facebook: {
+        name: "Facebook Business",
+        followers: "15,630",
+        engagement: "3.1%",
+        roi: "1.8x",
+        leads: 16,
+        recentPosts: [
+          { content: "Evento virtual: Tendencias 2024", likes: 145, comments: 28, shares: 22, date: "1 día" },
+          { content: "Testimonios de nuestros clientes", likes: 98, comments: 15, shares: 11, date: "4 días" },
+          { content: "Lanzamiento de nueva línea de productos", likes: 203, comments: 37, shares: 19, date: "1 semana" }
+        ],
+        analytics: { impressions: "28,940", clicks: "895", conversions: 16 },
+        color: "bg-[#1877F2]"
+      },
+      tiktok: {
+        name: "TikTok Business",
+        followers: "5,200",
+        engagement: "12.5%",
+        roi: "2.8x",
+        leads: 22,
+        recentPosts: [
+          { content: "Quick tips para emprendedores", likes: 1200, comments: 89, shares: 156, date: "12 horas" },
+          { content: "Proceso creativo en 60 segundos", likes: 890, comments: 67, shares: 234, date: "2 días" },
+          { content: "Tendencias que no puedes ignorar", likes: 2100, comments: 145, shares: 378, date: "4 días" }
+        ],
+        analytics: { impressions: "156,780", clicks: "19,580", conversions: 22 },
+        color: "bg-black"
+      }
     };
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-8">
+        {/* Resumen General */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-card p-4 rounded-lg border text-center">
+            <p className="text-sm text-muted-foreground">Alcance Total</p>
+            <p className="text-2xl font-bold text-primary">
+              {connectedPlatforms.reduce((total, platform) => {
+                const data = platformData[platform as keyof typeof platformData];
+                return total + parseInt(data.analytics.impressions.replace(',', ''));
+              }, 0).toLocaleString()}
+            </p>
+            <p className="text-xs text-green-600">+15% vs mes anterior</p>
+          </div>
+          <div className="bg-card p-4 rounded-lg border text-center">
+            <p className="text-sm text-muted-foreground">Engagement Promedio</p>
+            <p className="text-2xl font-bold text-primary">
+              {(connectedPlatforms.reduce((total, platform) => {
+                const data = platformData[platform as keyof typeof platformData];
+                return total + parseFloat(data.engagement);
+              }, 0) / connectedPlatforms.length).toFixed(1)}%
+            </p>
+            <p className="text-xs text-green-600">+8% vs mes anterior</p>
+          </div>
+          <div className="bg-card p-4 rounded-lg border text-center">
+            <p className="text-sm text-muted-foreground">Total Leads</p>
+            <p className="text-2xl font-bold text-primary">
+              {connectedPlatforms.reduce((total, platform) => {
+                const data = platformData[platform as keyof typeof platformData];
+                return total + data.leads;
+              }, 0)}
+            </p>
+            <p className="text-xs text-green-600">+22% vs mes anterior</p>
+          </div>
+          <div className="bg-card p-4 rounded-lg border text-center">
+            <p className="text-sm text-muted-foreground">ROI Promedio</p>
+            <p className="text-2xl font-bold text-primary">
+              {(connectedPlatforms.reduce((total, platform) => {
+                const data = platformData[platform as keyof typeof platformData];
+                return total + parseFloat(data.roi);
+              }, 0) / connectedPlatforms.length).toFixed(1)}x
+            </p>
+            <p className="text-xs text-green-600">+12% vs mes anterior</p>
+          </div>
+        </div>
+
+        {/* Detalle por Plataforma */}
         {connectedPlatforms.map(platform => {
           const data = platformData[platform as keyof typeof platformData];
           return (
-            <div key={platform}>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="font-medium">{data.name}</span>
-                <span>ROI: {data.roi} | Leads: {data.leads}</span>
+            <div key={platform} className="bg-card border rounded-lg overflow-hidden">
+              <div className={`${data.color} text-white p-4`}>
+                <div className="flex justify-between items-center">
+                  <h4 className="font-bold text-lg">{data.name}</h4>
+                  <Badge variant="secondary" className="bg-white/20 text-white">
+                    {data.followers} seguidores
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-4 gap-4 mt-4 text-sm">
+                  <div>
+                    <p className="opacity-80">Engagement</p>
+                    <p className="font-bold">{data.engagement}</p>
+                  </div>
+                  <div>
+                    <p className="opacity-80">ROI</p>
+                    <p className="font-bold">{data.roi}</p>
+                  </div>
+                  <div>
+                    <p className="opacity-80">Leads</p>
+                    <p className="font-bold">{data.leads}</p>
+                  </div>
+                  <div>
+                    <p className="opacity-80">Conversiones</p>
+                    <p className="font-bold">{data.analytics.conversions}</p>
+                  </div>
+                </div>
               </div>
-              <div className="w-full bg-muted rounded-full h-3">
-                <div className={`${data.color} h-3 rounded-full`} style={{width: data.width}}></div>
+              
+              <div className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Posts Recientes */}
+                  <div>
+                    <h5 className="font-semibold mb-4 flex items-center gap-2">
+                      📝 Posts Recientes
+                    </h5>
+                    <div className="space-y-3">
+                      {data.recentPosts.map((post, index) => (
+                        <div key={index} className="bg-muted/50 p-3 rounded-lg">
+                          <p className="text-sm font-medium mb-2">{post.content}</p>
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <div className="flex gap-4">
+                              <span>❤️ {post.likes}</span>
+                              <span>💬 {post.comments}</span>
+                              <span>🔄 {post.shares}</span>
+                            </div>
+                            <span>hace {post.date}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Analytics Detallados */}
+                  <div>
+                    <h5 className="font-semibold mb-4 flex items-center gap-2">
+                      📊 Analytics Detallados
+                    </h5>
+                    <div className="space-y-4">
+                      <div className="bg-muted/50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium">Impresiones</span>
+                          <span className="font-bold">{data.analytics.impressions}</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div className="bg-primary h-2 rounded-full" style={{width: "85%"}}></div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-muted/50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium">Clics</span>
+                          <span className="font-bold">{data.analytics.clicks}</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div className="bg-secondary h-2 rounded-full" style={{width: "60%"}}></div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-muted/50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium">Tasa de Conversión</span>
+                          <span className="font-bold">
+                            {((data.analytics.conversions / parseInt(data.analytics.clicks.replace(',', ''))) * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div className="bg-green-500 h-2 rounded-full" style={{width: "40%"}}></div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 mt-4">
+                        <Button variant="outline" size="sm">
+                          Ver Análisis Completo
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          Exportar Datos
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           );
@@ -389,40 +581,8 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
             </TabsList>
 
             <TabsContent value="performance" className="mt-6">
-              <h3 className="text-xl font-bold text-primary mb-4">Performance de Marketing</h3>
-              {hasConnectedPlatforms() ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div className="bg-card p-4 rounded-lg border text-center">
-                      <p className="text-sm text-muted-foreground">Alcance Total</p>
-                      <p className="text-3xl font-bold text-primary">125,340</p>
-                      <p className="text-xs text-green-600">+12% vs mes anterior</p>
-                    </div>
-                    <div className="bg-card p-4 rounded-lg border text-center">
-                      <p className="text-sm text-muted-foreground">Engagement Rate</p>
-                      <p className="text-3xl font-bold text-secondary">4.8%</p>
-                      <p className="text-xs text-green-600">+0.3% vs mes anterior</p>
-                    </div>
-                    <div className="bg-card p-4 rounded-lg border text-center">
-                      <p className="text-sm text-muted-foreground">Leads Generados</p>
-                      <p className="text-3xl font-bold text-accent">89</p>
-                      <p className="text-xs text-red-600">-5% vs mes anterior</p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-card p-6 rounded-lg border">
-                    <h4 className="font-bold mb-4">Performance por Plataforma Conectada</h4>
-                    {renderPlatformPerformance()}
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground mb-4">Conecta tus redes sociales para ver métricas detalladas</p>
-                  <Button onClick={() => window.scrollTo(0, 0)}>
-                    Conectar Redes Sociales
-                  </Button>
-                </div>
-              )}
+              <h3 className="text-xl font-bold text-primary mb-6">Performance de Marketing</h3>
+              {renderPlatformPerformance()}
             </TabsContent>
 
             <TabsContent value="estrategias" className="mt-6">

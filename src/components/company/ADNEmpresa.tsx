@@ -331,6 +331,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     try {
       console.log('🔗 Iniciando flujo OAuth LinkedIn Company...');
       
+      // Validaciones previas
+      if (!companyData.company_name) {
+        throw new Error("Debe guardar la información de la empresa antes de conectar LinkedIn");
+      }
+
       // Paso 1: Redirigir a LinkedIn para autorización
       toast({
         title: "Conectando LinkedIn Company",
@@ -339,13 +344,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      console.log('📊 Datos de empresa para LinkedIn:', {
+        name: companyData.company_name,
+        industry: companyData.industry_sector,
+        size: companyData.company_size,
+        website: companyData.website_url
+      });
+
       // Simular redireccionamiento a LinkedIn OAuth
-      const clientId = 'your_linkedin_client_id';
+      const clientId = process.env.LINKEDIN_CLIENT_ID || 'demo_client_id';
       const redirectUri = `${window.location.origin}/auth/linkedin/callback`;
-      const scopes = 'w_organization_social%20r_organization_social%20rw_company_admin';
+      const scopes = 'w_organization_social%20r_organization_social%20rw_company_admin%20r_basicprofile';
       const state = Math.random().toString(36).substring(7);
       
-      console.log(`🔗 LinkedIn OAuth URL: https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scopes}`);
+      const oauthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=${scopes}`;
+      console.log(`🔗 LinkedIn OAuth URL: ${oauthUrl}`);
 
       // Paso 2: Simular regreso con código de autorización
       toast({
@@ -363,30 +376,64 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
       await new Promise(resolve => setTimeout(resolve, 1200));
 
-      // Simular respuesta de API de LinkedIn
-      const hasCompanyAccess = Math.random() > 0.15; // 85% éxito
-      
-      if (hasCompanyAccess) {
-        // Paso 4: Guardar tokens y configuración
-        setSocialConnections(prev => ({ ...prev, linkedin: true }));
-        
-        toast({
-          title: "¡LinkedIn Company Conectado!",
-          description: "Página empresarial vinculada. Scopes: w_organization_social, r_organization_social",
-        });
+      // Simular verificación de permisos específicos
+      const permissionChecks = {
+        hasCompanyPage: Math.random() > 0.1, // 90% tiene página de empresa
+        hasAdminAccess: Math.random() > 0.2, // 80% tiene acceso admin
+        hasContentPermissions: Math.random() > 0.15, // 85% tiene permisos de contenido
+        hasAnalyticsAccess: Math.random() > 0.25 // 75% tiene acceso a analytics
+      };
 
-        console.log('✅ LinkedIn conectado con scopes: w_organization_social, r_organization_social, rw_company_admin');
-      } else {
-        throw new Error("No se encontraron páginas de empresa administradas o permisos insuficientes");
+      console.log('🔐 Verificación de permisos LinkedIn:', permissionChecks);
+
+      if (!permissionChecks.hasCompanyPage) {
+        throw new Error("No se encontró una página de empresa asociada a esta cuenta LinkedIn");
       }
+
+      if (!permissionChecks.hasAdminAccess) {
+        throw new Error("No tiene permisos de administrador en la página de empresa");
+      }
+
+      if (!permissionChecks.hasContentPermissions) {
+        throw new Error("Faltan permisos para gestionar contenido en LinkedIn");
+      }
+
+      // Si todo está bien, conectar
+      setSocialConnections(prev => ({ ...prev, linkedin: true }));
+      
+      console.log('✅ LinkedIn conectado exitosamente');
+
+      toast({
+        title: "¡LinkedIn Company Conectado!",
+        description: `Página empresarial "${companyData.company_name}" vinculada exitosamente.`,
+      });
 
     } catch (error: any) {
       console.error('❌ Error en flujo OAuth LinkedIn:', error);
+      
+      // Categorizar errores para mejor debugging
+      let errorCategory = 'unknown';
+      let userMessage = error.message;
+
+      if (error.message.includes('página de empresa')) {
+        errorCategory = 'no_company_page';
+        userMessage = "No se encontró una página de empresa LinkedIn. Cree una página de empresa primero.";
+      } else if (error.message.includes('permisos de administrador')) {
+        errorCategory = 'insufficient_permissions';
+        userMessage = "Necesita ser administrador de la página de empresa para conectarla.";
+      } else if (error.message.includes('información de la empresa')) {
+        errorCategory = 'missing_company_data';
+        userMessage = "Complete y guarde la información de su empresa antes de conectar LinkedIn.";
+      }
+
+      console.log(`📋 Categoría de error: ${errorCategory}`);
+
       toast({
         title: "Error LinkedIn Company",
-        description: `${error.message || 'Error de autorización. Verifique permisos de administrador.'}`,
+        description: userMessage,
         variant: "destructive",
       });
+
     } finally {
       setLoading(false);
     }

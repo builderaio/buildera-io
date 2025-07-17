@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CompleteProfile from "./pages/CompleteProfile";
 import Waitlist from "./pages/Waitlist";
+import LinkedInCallback from "./pages/LinkedInCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/company-dashboard" element={<CompanyDashboard />} />
           <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/waitlist" element={<Waitlist />} />
+          <Route path="/auth/linkedin/callback" element={<LinkedInCallback />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

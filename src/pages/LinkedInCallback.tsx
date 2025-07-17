@@ -51,6 +51,8 @@ const LinkedInCallback = () => {
         setMessage('Intercambiando código de autorización...');
 
         // Llamar a la edge function para procesar el callback
+        console.log('📡 Invocando edge function con:', { code: code?.substring(0, 10) + '...', state, userId: savedUserId });
+        
         const { data, error: callbackError } = await supabase.functions.invoke('linkedin-oauth-callback', {
           body: {
             code,
@@ -58,6 +60,8 @@ const LinkedInCallback = () => {
             userId: savedUserId,
           }
         });
+
+        console.log('📡 Respuesta de edge function:', { data, error: callbackError });
 
         if (callbackError) {
           console.error('❌ Error en edge function:', callbackError);

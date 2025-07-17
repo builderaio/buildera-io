@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     // LinkedIn app credentials
     const clientId = '78pxtzefworlny';
     const clientSecret = Deno.env.get('LINKEDIN_CLIENT_SECRET');
-    const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/linkedin-oauth-callback`;
+    const redirectUri = 'https://buildera.io/auth/linkedin/callback';
 
     if (!clientSecret) {
       throw new Error('LinkedIn Client Secret not configured');

@@ -174,9 +174,9 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
         description: "Redirigiendo a LinkedIn para autorización...",
       });
 
-      // Configuración OAuth de LinkedIn
+      // Configuración OAuth de LinkedIn - usar URL de producción
       const clientId = '78pxtzefworlny';
-      const redirectUri = `${window.location.origin}/auth/linkedin/callback`;
+      const redirectUri = 'https://buildera.io/auth/linkedin/callback';
       const scopes = 'w_organization_social r_organization_social rw_company_admin';
       const state = Math.random().toString(36).substring(7);
       

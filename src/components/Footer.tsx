@@ -1,4 +1,5 @@
 import { Twitter, Linkedin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -51,9 +52,9 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/privacy-policy" className="text-muted-foreground hover:text-primary transition-smooth">
                   Política de Privacidad
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

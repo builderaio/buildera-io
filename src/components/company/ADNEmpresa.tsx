@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package } from "lucide-react";
+import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download } from "lucide-react";
 
 interface ADNEmpresaProps {
   profile: any;
@@ -46,6 +46,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   });
   const [loadingProducts, setLoadingProducts] = useState(false);
   
+  // Estados para la gestión de marca
+  const [branding, setBranding] = useState<any>(null);
+  const [brandingForm, setBrandingForm] = useState({
+    primary_color: "#000000",
+    secondary_color: "#ffffff", 
+    complementary_color_1: "#ff0000",
+    complementary_color_2: "#0000ff",
+    visual_identity: "",
+    logo_url: "",
+    brand_manual_url: ""
+  });
+  const [loadingBranding, setLoadingBranding] = useState(false);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const manualFileRef = useRef<HTMLInputElement>(null);
+  
   const { toast } = useToast();
 
   const companySizes = [
@@ -71,10 +86,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     "Otro"
   ];
 
-  // Cargar productos al montar el componente
+  // Cargar productos y branding al montar el componente
   useEffect(() => {
     if (profile?.user_id) {
       fetchProducts();
+      fetchBranding();
     }
   }, [profile?.user_id]);
 
@@ -207,6 +223,260 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     setShowProductForm(false);
     setEditingProduct(null);
     setProductForm({ name: "", description: "" });
+  };
+
+  // Funciones para la gestión de marca
+  const fetchBranding = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('company_branding')
+        .select('*')
+        .eq('user_id', profile?.user_id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        throw error;
+      }
+
+      if (data) {
+        setBranding(data);
+        setBrandingForm({
+          primary_color: data.primary_color || "#000000",
+          secondary_color: data.secondary_color || "#ffffff",
+          complementary_color_1: data.complementary_color_1 || "#ff0000", 
+          complementary_color_2: data.complementary_color_2 || "#0000ff",
+          visual_identity: data.visual_identity || "",
+          logo_url: data.logo_url || "",
+          brand_manual_url: data.brand_manual_url || ""
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching branding:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la configuración de marca",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveBranding = async () => {
+    setLoadingBranding(true);
+    try {
+      const brandingData = {
+        user_id: profile?.user_id,
+        ...brandingForm
+      };
+
+      if (branding) {
+        // Actualizar existente
+        const { error } = await supabase
+          .from('company_branding')
+          .update(brandingData)
+          .eq('id', branding.id);
+
+        if (error) throw error;
+      } else {
+        // Crear nuevo
+        const { data, error } = await supabase
+          .from('company_branding')
+          .insert(brandingData)
+          .select()
+          .single();
+
+        if (error) throw error;
+        setBranding(data);
+      }
+
+      toast({
+        title: "Configuración guardada",
+        description: "La configuración de marca se ha guardado correctamente",
+      });
+
+      await fetchBranding();
+    } catch (error: any) {
+      console.error('Error saving branding:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar la configuración de marca",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingBranding(false);
+    }
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Error",
+        description: "Solo se permiten archivos de imagen",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar tamaño (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "El archivo no puede ser mayor a 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingBranding(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile?.user_id}/logo-${Date.now()}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('brand-assets')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('brand-assets')
+        .getPublicUrl(fileName);
+
+      setBrandingForm(prev => ({ ...prev, logo_url: publicUrl }));
+
+      toast({
+        title: "Logo cargado",
+        description: "El logo se ha cargado correctamente",
+      });
+
+    } catch (error: any) {
+      console.error('Error uploading logo:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo cargar el logo",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingBranding(false);
+    }
+  };
+
+  const handleManualUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de archivo (PDF)
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: "Error", 
+        description: "Solo se permiten archivos PDF",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar tamaño (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "El archivo no puede ser mayor a 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingBranding(true);
+    try {
+      const fileName = `${profile?.user_id}/brand-manual-${Date.now()}.pdf`;
+      
+      const { data, error } = await supabase.storage
+        .from('brand-assets')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('brand-assets')
+        .getPublicUrl(fileName);
+
+      setBrandingForm(prev => ({ ...prev, brand_manual_url: publicUrl }));
+
+      toast({
+        title: "Manual cargado",
+        description: "El manual de marca se ha cargado correctamente",
+      });
+
+    } catch (error: any) {
+      console.error('Error uploading manual:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo cargar el manual",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingBranding(false);
+    }
+  };
+
+  const handleGenerateBrandManual = async () => {
+    if (!companyData.company_name) {
+      toast({
+        title: "Error",
+        description: "Debe guardar la información de la empresa primero",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingBranding(true);
+    try {
+      toast({
+        title: "Generando manual",
+        description: "Creando manual de marca personalizado con IA...",
+      });
+
+      const companyInfo = {
+        company_name: companyData.company_name,
+        industry_sector: companyData.industry_sector,
+        ...brandingForm
+      };
+
+      const response = await supabase.functions.invoke('generate-company-content', {
+        body: {
+          field: 'manual de marca',
+          companyInfo: companyInfo
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Error al generar manual');
+      }
+
+      const { data } = response;
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Error al generar manual');
+      }
+
+      // El manual generado se podría mostrar en un modal o descargar
+      toast({
+        title: "¡Manual generado!",
+        description: "Manual de marca creado exitosamente con IA",
+      });
+
+    } catch (error: any) {
+      console.error('Error generating brand manual:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo generar el manual de marca",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingBranding(false);
+    }
   };
 
   const handleSaveCompanyInfo = async () => {
@@ -899,15 +1169,245 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             </TabsContent>
 
             <TabsContent value="marca" className="space-y-6 mt-6">
-              <div>
-                <Label className="text-sm font-medium">Manual de Marca</Label>
-                <div className="mt-1 flex justify-center px-6 pt-10 pb-10 border-2 border-dashed border-border rounded-md hover:border-primary/50 transition-colors">
-                  <div className="space-y-1 text-center">
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <div className="flex text-sm text-muted-foreground">
-                      <p>Sube tu manual de marca (PDF)</p>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center mb-4">
+                    <Palette className="w-5 h-5 mr-2 text-primary" />
+                    Identidad Visual de la Empresa
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Configure los colores, logo y elementos visuales de su marca para mantener consistencia en todas las comunicaciones.
+                  </p>
+                </div>
+
+                {/* Colores de Marca */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Paleta de Colores</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="primary_color">Color Principal</Label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            id="primary_color"
+                            value={brandingForm.primary_color}
+                            onChange={(e) => setBrandingForm({...brandingForm, primary_color: e.target.value})}
+                            className="w-12 h-10 border border-border rounded cursor-pointer"
+                          />
+                          <Input
+                            value={brandingForm.primary_color}
+                            onChange={(e) => setBrandingForm({...brandingForm, primary_color: e.target.value})}
+                            placeholder="#000000"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="secondary_color">Color Secundario</Label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            id="secondary_color"
+                            value={brandingForm.secondary_color}
+                            onChange={(e) => setBrandingForm({...brandingForm, secondary_color: e.target.value})}
+                            className="w-12 h-10 border border-border rounded cursor-pointer"
+                          />
+                          <Input
+                            value={brandingForm.secondary_color}
+                            onChange={(e) => setBrandingForm({...brandingForm, secondary_color: e.target.value})}
+                            placeholder="#ffffff"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="complementary_color_1">Color Complementario 1</Label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            id="complementary_color_1"
+                            value={brandingForm.complementary_color_1}
+                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_1: e.target.value})}
+                            className="w-12 h-10 border border-border rounded cursor-pointer"
+                          />
+                          <Input
+                            value={brandingForm.complementary_color_1}
+                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_1: e.target.value})}
+                            placeholder="#ff0000"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="complementary_color_2">Color Complementario 2</Label>
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            id="complementary_color_2"
+                            value={brandingForm.complementary_color_2}
+                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_2: e.target.value})}
+                            className="w-12 h-10 border border-border rounded cursor-pointer"
+                          />
+                          <Input
+                            value={brandingForm.complementary_color_2}
+                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_2: e.target.value})}
+                            placeholder="#0000ff"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </CardContent>
+                </Card>
+
+                {/* Logo */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Logo de la Empresa</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="logo_url">URL del Logo</Label>
+                      <Input
+                        id="logo_url"
+                        value={brandingForm.logo_url}
+                        onChange={(e) => setBrandingForm({...brandingForm, logo_url: e.target.value})}
+                        placeholder="https://ejemplo.com/logo.png"
+                      />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground mb-2">o sube un archivo</p>
+                      <input
+                        ref={logoFileRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => logoFileRef.current?.click()}
+                        disabled={loadingBranding}
+                        className="w-full"
+                      >
+                        <FileImage className="w-4 h-4 mr-2" />
+                        {loadingBranding ? "Cargando..." : "Seleccionar Archivo"}
+                      </Button>
+                    </div>
+                    {brandingForm.logo_url && (
+                      <div className="flex justify-center">
+                        <img
+                          src={brandingForm.logo_url}
+                          alt="Logo preview"
+                          className="max-w-xs max-h-32 object-contain border border-border rounded"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Identidad Visual */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Identidad Visual</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Label htmlFor="visual_identity">Descripción de la Identidad Visual</Label>
+                      <Textarea
+                        id="visual_identity"
+                        rows={4}
+                        value={brandingForm.visual_identity}
+                        onChange={(e) => setBrandingForm({...brandingForm, visual_identity: e.target.value})}
+                        placeholder="Describe el estilo visual, tono, personalidad y elementos distintivos de su marca..."
+                        className="resize-none"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Manual de Marca */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Manual de Marca</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="brand_manual_url">URL del Manual de Marca</Label>
+                      <Input
+                        id="brand_manual_url"
+                        value={brandingForm.brand_manual_url}
+                        onChange={(e) => setBrandingForm({...brandingForm, brand_manual_url: e.target.value})}
+                        placeholder="https://ejemplo.com/manual-marca.pdf"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Cargar archivo PDF</p>
+                        <input
+                          ref={manualFileRef}
+                          type="file"
+                          accept=".pdf"
+                          onChange={handleManualUpload}
+                          className="hidden"
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => manualFileRef.current?.click()}
+                          disabled={loadingBranding}
+                          className="w-full"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          {loadingBranding ? "Cargando..." : "Cargar PDF"}
+                        </Button>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Generar con IA</p>
+                        <Button
+                          variant="outline"
+                          onClick={handleGenerateBrandManual}
+                          disabled={loadingBranding}
+                          className="w-full"
+                        >
+                          <Lightbulb className="w-4 h-4 mr-2" />
+                          {loadingBranding ? "Generando..." : "Generar Manual"}
+                        </Button>
+                      </div>
+                    </div>
+                    {brandingForm.brand_manual_url && (
+                      <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div className="flex items-center">
+                          <FileText className="w-5 h-5 mr-2 text-primary" />
+                          <span className="text-sm">Manual de marca disponible</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => window.open(brandingForm.brand_manual_url, '_blank')}
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Ver
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Guardar Configuración */}
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleSaveBranding}
+                    disabled={loadingBranding}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    {loadingBranding ? "Guardando..." : "Guardar Configuración de Marca"}
+                  </Button>
                 </div>
               </div>
             </TabsContent>

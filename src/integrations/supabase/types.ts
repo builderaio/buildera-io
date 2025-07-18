@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      company_branding: {
+        Row: {
+          brand_manual_file_path: string | null
+          brand_manual_url: string | null
+          complementary_color_1: string | null
+          complementary_color_2: string | null
+          created_at: string
+          id: string
+          logo_file_path: string | null
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string
+          user_id: string
+          visual_identity: string | null
+        }
+        Insert: {
+          brand_manual_file_path?: string | null
+          brand_manual_url?: string | null
+          complementary_color_1?: string | null
+          complementary_color_2?: string | null
+          created_at?: string
+          id?: string
+          logo_file_path?: string | null
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+          user_id: string
+          visual_identity?: string | null
+        }
+        Update: {
+          brand_manual_file_path?: string | null
+          brand_manual_url?: string | null
+          complementary_color_1?: string | null
+          complementary_color_2?: string | null
+          created_at?: string
+          id?: string
+          logo_file_path?: string | null
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+          user_id?: string
+          visual_identity?: string | null
+        }
+        Relationships: []
+      }
       company_external_data: {
         Row: {
           brand_data: Json | null

@@ -92,6 +92,60 @@ export type Database = {
         }
         Relationships: []
       }
+      company_files: {
+        Row: {
+          access_level: string | null
+          created_at: string
+          description: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          is_confidential: boolean | null
+          is_encrypted: boolean | null
+          last_accessed: string | null
+          tags: string[] | null
+          updated_at: string
+          upload_date: string
+          user_id: string
+        }
+        Insert: {
+          access_level?: string | null
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          is_confidential?: boolean | null
+          is_encrypted?: boolean | null
+          last_accessed?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          upload_date?: string
+          user_id: string
+        }
+        Update: {
+          access_level?: string | null
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          is_confidential?: boolean | null
+          is_encrypted?: boolean | null
+          last_accessed?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          upload_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       company_strategy: {
         Row: {
           created_at: string

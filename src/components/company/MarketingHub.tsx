@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Instagram, Music, Linkedin } from "lucide-react";
+import { Instagram, Music, Linkedin, Upload, BarChart3, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+
+// Tipificaciones para Facebook SDK
+declare global {
+  interface Window {
+    FB: {
+      init: (params: {
+        appId: string;
+        cookie: boolean;
+        xfbml: boolean;
+        version: string;
+      }) => void;
+      login: (callback: (response: any) => void, options: { scope: string }) => void;
+    };
+    fbAsyncInit: () => void;
+  }
+}
 
 interface MarketingHubProps {
   profile: any;
@@ -23,47 +42,146 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     tiktok: false,
     linkedin: false
   });
+  const [instagramAccounts, setInstagramAccounts] = useState<any[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<string>("");
+  const [publishData, setPublishData] = useState({
+    caption: "",
+    mediaUrl: "",
+    mediaType: "IMAGE"
+  });
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
   const { toast } = useToast();
 
+  // Cargar conexiones existentes al montar el componente
+  useEffect(() => {
+    checkExistingConnections();
+  }, [profile?.user_id]);
+
+  const checkExistingConnections = async () => {
+    if (!profile?.user_id) return;
+
+    try {
+      // Verificar conexión de Facebook
+      const { data: fbConnection } = await supabase
+        .from('facebook_instagram_connections')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .single();
+
+      if (fbConnection) {
+        setSocialConnections(prev => ({ ...prev, facebook: true }));
+        
+        // Verificar conexiones de Instagram
+        const { data: igConnections } = await supabase
+          .from('instagram_business_connections')
+          .select('*')
+          .eq('user_id', profile.user_id)
+          .eq('is_active', true);
+
+        if (igConnections && igConnections.length > 0) {
+          setSocialConnections(prev => ({ ...prev, instagram: true }));
+          setInstagramAccounts(igConnections);
+          if (igConnections.length === 1) {
+            setSelectedAccount(igConnections[0].instagram_account_id);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error verificando conexiones:', error);
+    }
+  };
+
   // Funciones específicas para cada red social
-  const handleInstagramConnect = async () => {
+  const handleFacebookConnect = async () => {
     setLoading(true);
     try {
-      console.log('🔗 Conectando Instagram Business...');
+      console.log('🔗 Iniciando conexión con Facebook...');
       
       toast({
-        title: "Conectando Instagram Business",
-        description: "Instagram Business requiere conectar Facebook primero...",
+        title: "Conectando Facebook",
+        description: "Abriendo ventana de autorización de Facebook...",
       });
 
-      // Simular verificación de Facebook
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Cargar Facebook SDK dinámicamente
+      await loadFacebookSDK();
       
-      toast({
-        title: "Redirecto a Facebook",
-        description: "Abriendo ventana de autenticación de Facebook para Instagram Business",
+      // Inicializar Facebook SDK
+      window.FB.init({
+        appId: '1063669861833681', // Deberías usar una variable de entorno en producción
+        cookie: true,
+        xfbml: true,
+        version: 'v21.0'
       });
 
-      await new Promise(resolve => setTimeout(resolve, 2500));
-
-      // Simular éxito con datos específicos de Instagram
-      const shouldSucceed = Math.random() > 0.15;
-
-      if (shouldSucceed) {
-        setSocialConnections(prev => ({ ...prev, instagram: true }));
-        
-        toast({
-          title: "¡Instagram Business Conectado!",
-          description: "Acceso completo a posts, stories, reels y métricas de audiencia.",
-        });
-      } else {
-        throw new Error("Error de permisos de Instagram Business");
-      }
+      // Realizar login de Facebook
+      window.FB.login((response: any) => {
+        if (response.authResponse) {
+          handleFacebookLoginSuccess(response.authResponse);
+        } else {
+          throw new Error('Usuario canceló la autorización de Facebook');
+        }
+      }, {
+        scope: 'pages_read_engagement,pages_show_list,instagram_basic,instagram_content_publish,business_management'
+      });
 
     } catch (error: any) {
       toast({
-        title: "Error Instagram Business",
-        description: `${error.message || 'Verifique que tiene una cuenta business vinculada a Facebook'}`,
+        title: "Error Facebook",
+        description: error.message || 'Error conectando con Facebook',
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
+  const loadFacebookSDK = (): Promise<void> => {
+    return new Promise((resolve) => {
+      if (window.FB) {
+        resolve();
+        return;
+      }
+
+      window.fbAsyncInit = () => resolve();
+      
+      const script = document.createElement('script');
+      script.src = 'https://connect.facebook.net/es_LA/sdk.js';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    });
+  };
+
+  const handleFacebookLoginSuccess = async (authResponse: any) => {
+    try {
+      console.log('✅ Facebook login exitoso, intercambiando token...');
+      
+      const { data, error } = await supabase.functions.invoke('facebook-instagram-auth', {
+        body: {
+          action: 'exchange_token',
+          shortLivedToken: authResponse.accessToken,
+          userId: profile.user_id
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setSocialConnections(prev => ({ ...prev, facebook: true }));
+        
+        toast({
+          title: "¡Facebook Conectado!",
+          description: `Bienvenido ${data.data.user_name}. ${data.data.instagram_accounts.length} cuentas de Instagram disponibles.`,
+        });
+
+        // Si hay cuentas de Instagram, mostrar opciones para conectar
+        if (data.data.instagram_accounts.length > 0) {
+          handleInstagramAccountsFound(data.data.instagram_accounts);
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error procesando Facebook",
+        description: error.message || 'Error procesando la conexión',
         variant: "destructive",
       });
     } finally {
@@ -71,43 +189,156 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     }
   };
 
-  const handleFacebookConnect = async () => {
-    setLoading(true);
+  const handleInstagramAccountsFound = async (accounts: any[]) => {
     try {
-      console.log('🔗 Conectando Facebook Business...');
-      
       toast({
-        title: "Conectando Facebook Business",
-        description: "Verificando páginas empresariales disponibles...",
+        title: "Cuentas de Instagram encontradas",
+        description: `Se encontraron ${accounts.length} cuenta(s) de Instagram Business.`,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Auto-conectar si solo hay una cuenta
+      if (accounts.length === 1) {
+        await connectInstagramAccount(accounts[0]);
+      } else {
+        // Mostrar selector para múltiples cuentas
+        setInstagramAccounts(accounts.map(acc => ({
+          page_id: acc.page_id,
+          page_name: acc.page_name,
+          instagram_account: acc.instagram_account,
+          page_access_token: acc.page_access_token
+        })));
+      }
+    } catch (error) {
+      console.error('Error manejando cuentas de Instagram:', error);
+    }
+  };
 
-      // Simular selección de página
-      toast({
-        title: "Seleccionar Página",
-        description: "Seleccionando página empresarial principal",
+  const connectInstagramAccount = async (account: any) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('facebook-instagram-auth', {
+        body: {
+          action: 'connect_instagram',
+          userId: profile.user_id,
+          pageId: account.page_id,
+          instagramAccountId: account.instagram_account.id
+        }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (error) throw error;
 
-      const shouldSucceed = Math.random() > 0.1;
-
-      if (shouldSucceed) {
-        setSocialConnections(prev => ({ ...prev, facebook: true }));
+      if (data.success) {
+        setSocialConnections(prev => ({ ...prev, instagram: true }));
+        setSelectedAccount(account.instagram_account.id);
         
         toast({
-          title: "¡Facebook Business Conectado!",
-          description: "Página empresarial vinculada. Acceso a posts, ads y métricas.",
+          title: "¡Instagram Conectado!",
+          description: `@${account.instagram_account.username} conectado exitosamente.`,
         });
-      } else {
-        throw new Error("No se encontraron páginas empresariales");
-      }
 
+        await checkExistingConnections(); // Recargar conexiones
+      }
     } catch (error: any) {
       toast({
-        title: "Error Facebook Business",
-        description: `${error.message || 'Verifique que tiene páginas empresariales disponibles'}`,
+        title: "Error conectando Instagram",
+        description: error.message || 'Error conectando la cuenta de Instagram',
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleInstagramConnect = async () => {
+    if (!socialConnections.facebook) {
+      toast({
+        title: "Facebook requerido",
+        description: "Primero debes conectar Facebook para acceder a Instagram Business.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Si ya hay cuentas disponibles, mostrar selector
+    if (instagramAccounts.length > 0) {
+      toast({
+        title: "Seleccionar cuenta",
+        description: "Selecciona una cuenta de Instagram Business para conectar.",
+      });
+      return;
+    }
+
+    // Buscar cuentas de Instagram
+    try {
+      const { data, error } = await supabase.functions.invoke('facebook-instagram-auth', {
+        body: {
+          action: 'get_instagram_accounts',
+          userId: profile.user_id
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.data.instagram_accounts.length > 0) {
+        handleInstagramAccountsFound(data.data.instagram_accounts);
+      } else {
+        toast({
+          title: "Sin cuentas de Instagram",
+          description: "No se encontraron cuentas de Instagram Business vinculadas a tu Facebook.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error buscando Instagram",
+        description: error.message || 'Error buscando cuentas de Instagram',
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePublishContent = async () => {
+    if (!selectedAccount || !publishData.caption) {
+      toast({
+        title: "Datos incompletos",
+        description: "Selecciona una cuenta y agrega una descripción.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      toast({
+        title: "Publicando contenido",
+        description: "Creando publicación en Instagram...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('facebook-instagram-auth', {
+        body: {
+          action: 'publish_content',
+          userId: profile.user_id,
+          instagramAccountId: selectedAccount,
+          content: {
+            caption: publishData.caption,
+            media_url: publishData.mediaUrl,
+            media_type: publishData.mediaType
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: "¡Contenido Publicado!",
+          description: "Tu publicación ha sido creada exitosamente en Instagram.",
+        });
+        
+        setShowPublishDialog(false);
+        setPublishData({ caption: "", mediaUrl: "", mediaType: "IMAGE" });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error publicando",
+        description: error.message || 'Error creando la publicación',
         variant: "destructive",
       });
     } finally {
@@ -231,15 +462,48 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
   };
 
   const handleSocialDisconnect = async (platform: string) => {
-    setSocialConnections(prev => ({
-      ...prev,
-      [platform]: false
-    }));
-    
-    toast({
-      title: "Desconectado",
-      description: `${platform.charAt(0).toUpperCase() + platform.slice(1)} desconectado del Marketing Hub`,
-    });
+    try {
+      if (platform === 'facebook') {
+        // Desconectar también Instagram
+        await supabase
+          .from('facebook_instagram_connections')
+          .delete()
+          .eq('user_id', profile.user_id);
+          
+        await supabase
+          .from('instagram_business_connections')
+          .delete()
+          .eq('user_id', profile.user_id);
+          
+        setSocialConnections(prev => ({ 
+          ...prev, 
+          facebook: false, 
+          instagram: false 
+        }));
+        setInstagramAccounts([]);
+        setSelectedAccount("");
+      } else if (platform === 'instagram') {
+        await supabase
+          .from('instagram_business_connections')
+          .update({ is_active: false })
+          .eq('user_id', profile.user_id)
+          .eq('instagram_account_id', selectedAccount);
+          
+        setSocialConnections(prev => ({ ...prev, instagram: false }));
+        setSelectedAccount("");
+      }
+      
+      toast({
+        title: "Desconectado",
+        description: `${platform.charAt(0).toUpperCase() + platform.slice(1)} desconectado exitosamente`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Error al desconectar la plataforma",
+        variant: "destructive",
+      });
+    }
   };
 
   const getConnectedPlatforms = () => {
@@ -266,15 +530,21 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
 
   const renderSocialConnections = () => {
     const platforms = [
-      { key: 'instagram', name: 'Instagram Business', icon: Instagram, color: 'bg-pink-600 hover:bg-pink-700' },
       { key: 'facebook', name: 'Facebook Business', icon: () => <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center"><span className="text-white font-bold text-xs">f</span></div>, color: 'bg-blue-600 hover:bg-blue-700' },
+      { key: 'instagram', name: 'Instagram Business', icon: Instagram, color: 'bg-pink-600 hover:bg-pink-700', disabled: !socialConnections.facebook },
       { key: 'tiktok', name: 'TikTok Business', icon: Music, color: 'bg-black hover:bg-gray-800' },
       { key: 'linkedin', name: 'LinkedIn Company', icon: Linkedin, color: 'bg-blue-700 hover:bg-blue-800' }
     ];
 
     return (
-      <div className="space-y-4 mb-6">
-        <h4 className="font-semibold text-lg">Conexiones de Redes Sociales</h4>
+      <div className="space-y-6 mb-6">
+        <div>
+          <h4 className="font-semibold text-lg mb-2">Conexiones de Redes Sociales</h4>
+          <p className="text-sm text-muted-foreground mb-4">
+            Conecta tus cuentas de redes sociales para publicar contenido y obtener métricas
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {platforms.map((platform) => (
             <div key={platform.key} className="flex items-center justify-between p-4 border rounded-lg">
@@ -284,6 +554,9 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
                   <span className="font-medium">{platform.name}</span>
                   {socialConnections[platform.key as keyof typeof socialConnections] && (
                     <Badge variant="secondary" className="ml-2 text-xs">Conectado</Badge>
+                  )}
+                  {platform.disabled && (
+                    <Badge variant="outline" className="ml-2 text-xs">Requiere Facebook</Badge>
                   )}
                 </div>
               </div>
@@ -301,7 +574,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
                   className={`text-white ${platform.color}`}
                   size="sm"
                   onClick={() => handleSocialConnect(platform.key)}
-                  disabled={loading}
+                  disabled={loading || platform.disabled}
                 >
                   {loading ? "Conectando..." : "Conectar"}
                 </Button>
@@ -309,6 +582,91 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
             </div>
           ))}
         </div>
+
+        {/* Selector de cuenta de Instagram */}
+        {socialConnections.instagram && instagramAccounts.length > 1 && (
+          <div className="p-4 bg-muted rounded-lg">
+            <Label htmlFor="instagram-account" className="text-sm font-medium">
+              Cuenta de Instagram activa:
+            </Label>
+            <Select value={selectedAccount} onValueChange={setSelectedAccount}>
+              <SelectTrigger className="w-full mt-2">
+                <SelectValue placeholder="Seleccionar cuenta de Instagram" />
+              </SelectTrigger>
+              <SelectContent>
+                {instagramAccounts.map((account) => (
+                  <SelectItem key={account.instagram_account_id} value={account.instagram_account_id}>
+                    @{account.account_data?.username || account.instagram_account_id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Botón de publicación rápida */}
+        {socialConnections.instagram && selectedAccount && (
+          <div className="flex gap-2">
+            <Dialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  Publicar Contenido
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Crear Publicación</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="media-type">Tipo de contenido</Label>
+                    <Select value={publishData.mediaType} onValueChange={(value) => setPublishData(prev => ({ ...prev, mediaType: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="IMAGE">Imagen</SelectItem>
+                        <SelectItem value="VIDEO">Video</SelectItem>
+                        <SelectItem value="REELS">Reel</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="media-url">URL del archivo</Label>
+                    <Input 
+                      id="media-url"
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                      value={publishData.mediaUrl}
+                      onChange={(e) => setPublishData(prev => ({ ...prev, mediaUrl: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="caption">Descripción</Label>
+                    <Textarea 
+                      id="caption"
+                      placeholder="Escribe la descripción de tu publicación..."
+                      value={publishData.caption}
+                      onChange={(e) => setPublishData(prev => ({ ...prev, caption: e.target.value }))}
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setShowPublishDialog(false)}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={handlePublishContent} disabled={loading}>
+                      {loading ? "Publicando..." : "Publicar"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
     );
   };

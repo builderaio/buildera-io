@@ -1,4 +1,4 @@
-import { Activity, Clock, Users, Zap } from "lucide-react";
+import { Activity, Clock, Users, Zap, Store, UserCheck, Bot } from "lucide-react";
 
 interface MandoCentralProps {
   profile: any;
@@ -79,6 +79,72 @@ const MandoCentral = ({ profile }: MandoCentralProps) => {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* Marketplace Section */}
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold text-primary mb-4">Marketplace de Agentes IA</h2>
+        <div className="bg-card p-6 rounded-lg shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <p className="text-muted-foreground">
+              Descubra agentes de IA especializados para cada área de su empresa.
+            </p>
+            <button className="flex items-center text-primary hover:text-accent transition-colors">
+              <Store className="w-5 h-5 mr-2" />
+              <span>Ver Marketplace Completo</span>
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-primary/5 p-4 rounded-lg">
+              <div className="flex items-center mb-2">
+                <Bot className="w-5 h-5 text-primary mr-2" />
+                <h3 className="font-semibold text-primary">Agentes Activos</h3>
+              </div>
+              <p className="text-2xl font-bold">8</p>
+              <p className="text-sm text-muted-foreground">En funcionamiento</p>
+            </div>
+            <div className="bg-secondary/5 p-4 rounded-lg">
+              <div className="flex items-center mb-2">
+                <Store className="w-5 h-5 text-secondary mr-2" />
+                <h3 className="font-semibold text-secondary">Disponibles</h3>
+              </div>
+              <p className="text-2xl font-bold">24</p>
+              <p className="text-sm text-muted-foreground">Agentes para instalar</p>
+            </div>
+            <div className="bg-accent/20 p-4 rounded-lg">
+              <div className="flex items-center mb-2">
+                <UserCheck className="w-5 h-5 text-accent-foreground mr-2" />
+                <h3 className="font-semibold text-accent-foreground">Roles Cubiertos</h3>
+              </div>
+              <p className="text-2xl font-bold">12</p>
+              <p className="text-sm text-muted-foreground">Departamentos</p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Roles Empresariales Soportados</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { role: "CEO/Dirección", agents: 3, color: "bg-red-100 text-red-800" },
+                { role: "Marketing", agents: 5, color: "bg-purple-100 text-purple-800" },
+                { role: "Ventas", agents: 4, color: "bg-blue-100 text-blue-800" },
+                { role: "Finanzas", agents: 3, color: "bg-green-100 text-green-800" },
+                { role: "RRHH", agents: 3, color: "bg-yellow-100 text-yellow-800" },
+                { role: "Operaciones", agents: 4, color: "bg-orange-100 text-orange-800" },
+                { role: "IT/Desarrollo", agents: 3, color: "bg-cyan-100 text-cyan-800" },
+                { role: "Atención Cliente", agents: 5, color: "bg-pink-100 text-pink-800" }
+              ].map((item, index) => (
+                <div key={index} className="bg-muted p-3 rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
+                  <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-1 ${item.color}`}>
+                    {item.role}
+                  </div>
+                  <p className="text-sm font-semibold">{item.agents} agentes</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

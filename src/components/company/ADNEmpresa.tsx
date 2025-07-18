@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download } from "lucide-react";
+import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target } from "lucide-react";
 
 interface ADNEmpresaProps {
   profile: any;
@@ -26,7 +26,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     full_name: profile?.full_name || "",
     company_size: profile?.company_size || "",
     industry_sector: profile?.industry_sector || "", 
-    website_url: profile?.website_url || ""
+    website_url: profile?.website_url || "",
+    country: profile?.country || ""
   });
   const [loading, setLoading] = useState(false);
   const [socialConnections, setSocialConnections] = useState({
@@ -61,6 +62,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const logoFileRef = useRef<HTMLInputElement>(null);
   const manualFileRef = useRef<HTMLInputElement>(null);
   
+  // Estados para la gestión de estrategia
+  const [strategy, setStrategy] = useState<any>(null);
+  const [strategyForm, setStrategyForm] = useState({
+    mision: "",
+    vision: "",
+    propuesta_valor: ""
+  });
+  const [loadingStrategy, setLoadingStrategy] = useState(false);
+  
   const { toast } = useToast();
 
   const companySizes = [
@@ -86,11 +96,12 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     "Otro"
   ];
 
-  // Cargar productos y branding al montar el componente
+  // Cargar productos, branding y estrategia al montar el componente
   useEffect(() => {
     if (profile?.user_id) {
       fetchProducts();
       fetchBranding();
+      fetchStrategy();
     }
   }, [profile?.user_id]);
 
@@ -223,6 +234,186 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     setShowProductForm(false);
     setEditingProduct(null);
     setProductForm({ name: "", description: "" });
+  };
+
+  // Funciones para la gestión de estrategia
+  const fetchStrategy = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('company_strategy')
+        .select('*')
+        .eq('user_id', profile?.user_id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setStrategy(data);
+        setStrategyForm({
+          mision: data.mision || "",
+          vision: data.vision || "",
+          propuesta_valor: data.propuesta_valor || ""
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching strategy:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la estrategia",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleGenerateStrategy = async () => {
+    if (!companyData.company_name || !profile?.country) {
+      toast({
+        title: "Error",
+        description: "Debe completar información de la empresa y país primero",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (strategy?.generated_with_ai) {
+      toast({
+        title: "Ya generado",
+        description: "La estrategia ya fue generada con IA. Puede editarla manualmente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingStrategy(true);
+    try {
+      toast({
+        title: "Generando estrategia",
+        description: "Creando estrategia personalizada con IA...",
+      });
+
+      const companyInfo = `${companyData.company_name}, ${profile.country}, ${companyData.website_url || 'Sin sitio web'}`;
+
+      const response = await supabase.functions.invoke('call-buildera-webhook', {
+        body: {
+          KEY: 'INFO',
+          COMPANY_INFO: companyInfo
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Error al generar estrategia');
+      }
+
+      const { data } = response;
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Error al generar estrategia');
+      }
+
+      // Procesar respuesta del API - array de objetos con key y value
+      const strategyData = data.data;
+      const mision = strategyData.find((item: any) => item.key === 'mision')?.value || '';
+      const vision = strategyData.find((item: any) => item.key === 'vision')?.value || '';
+      const propuesta_valor = strategyData.find((item: any) => item.key === 'propuesta_valor')?.value || '';
+
+      // Guardar en base de datos
+      const strategyPayload = {
+        user_id: profile?.user_id,
+        mision,
+        vision,
+        propuesta_valor,
+        generated_with_ai: true
+      };
+
+      if (strategy) {
+        const { error } = await supabase
+          .from('company_strategy')
+          .update(strategyPayload)
+          .eq('id', strategy.id);
+        if (error) throw error;
+      } else {
+        const { data: newStrategy, error } = await supabase
+          .from('company_strategy')
+          .insert(strategyPayload)
+          .select()
+          .single();
+        if (error) throw error;
+        setStrategy(newStrategy);
+      }
+
+      setStrategyForm({ mision, vision, propuesta_valor });
+
+      toast({
+        title: "¡Estrategia generada!",
+        description: "Estrategia creada exitosamente con IA",
+      });
+
+    } catch (error: any) {
+      console.error('Error generating strategy:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo generar la estrategia",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingStrategy(false);
+    }
+  };
+
+  const handleSaveStrategy = async () => {
+    if (!strategyForm.mision && !strategyForm.vision && !strategyForm.propuesta_valor) {
+      toast({
+        title: "Error",
+        description: "Debe completar al menos un campo de estrategia",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingStrategy(true);
+    try {
+      const strategyData = {
+        user_id: profile?.user_id,
+        mision: strategyForm.mision,
+        vision: strategyForm.vision,
+        propuesta_valor: strategyForm.propuesta_valor,
+        generated_with_ai: strategy?.generated_with_ai || false
+      };
+
+      if (strategy) {
+        const { error } = await supabase
+          .from('company_strategy')
+          .update(strategyData)
+          .eq('id', strategy.id);
+        if (error) throw error;
+      } else {
+        const { data: newStrategy, error } = await supabase
+          .from('company_strategy')
+          .insert(strategyData)
+          .select()
+          .single();
+        if (error) throw error;
+        setStrategy(newStrategy);
+      }
+
+      toast({
+        title: "Estrategia guardada",
+        description: "La estrategia se ha guardado correctamente",
+      });
+
+      await fetchStrategy();
+    } catch (error: any) {
+      console.error('Error saving strategy:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar la estrategia",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingStrategy(false);
+    }
   };
 
   // Funciones para la gestión de marca
@@ -500,6 +691,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           company_size: companyData.company_size,
           industry_sector: companyData.industry_sector,
           website_url: companyData.website_url,
+          country: companyData.country || profile?.country,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', profile?.user_id);
@@ -937,6 +1129,16 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="country">País *</Label>
+              <Input
+                id="country"
+                value={companyData.country}
+                onChange={(e) => setCompanyData({...companyData, country: e.target.value})}
+                placeholder="País de la empresa"
+                required
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email corporativo (no editable)</Label>
               <Input
                 id="email"
@@ -970,83 +1172,91 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             </TabsList>
 
             <TabsContent value="estrategia" className="space-y-6 mt-6">
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="mission" className="text-sm font-medium">Misión</Label>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleAIGenerate("misión")}
-                    className="text-primary hover:text-accent"
-                  >
-                    <Lightbulb className="w-4 h-4 mr-2" />
-                    Generar con IA
-                  </Button>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center mb-4">
+                    <Target className="w-5 h-5 mr-2 text-primary" />
+                    Estrategia de la Empresa
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Define la misión, visión y propuesta de valor de tu empresa. Puedes generar todo con IA una sola vez o editarlo manualmente.
+                  </p>
+                  
+                  {!strategy?.generated_with_ai && (
+                    <div className="mb-6 p-4 bg-muted/50 rounded-lg border border-dashed">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Generar estrategia completa con IA</p>
+                          <p className="text-sm text-muted-foreground">
+                            Crea automáticamente misión, visión y propuesta de valor basada en la información de tu empresa
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={handleGenerateStrategy}
+                          disabled={loadingStrategy}
+                          className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
+                          <Lightbulb className="w-4 h-4 mr-2" />
+                          {loadingStrategy ? "Generando..." : "Generar con IA"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <Textarea
-                  id="mission"
-                  rows={3}
-                  value={formData.mission}
-                  onChange={(e) => setFormData({...formData, mission: e.target.value})}
-                  placeholder="¿Cuál es el propósito fundamental de su empresa?"
-                  className="resize-none"
-                />
-              </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
+                <div className="space-y-2">
+                  <Label htmlFor="mision" className="text-sm font-medium">Misión</Label>
+                  <Textarea
+                    id="mision"
+                    rows={4}
+                    value={strategyForm.mision}
+                    onChange={(e) => setStrategyForm({...strategyForm, mision: e.target.value})}
+                    placeholder="¿Cuál es el propósito fundamental de su empresa?"
+                    className="resize-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="vision" className="text-sm font-medium">Visión</Label>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleAIGenerate("visión")}
-                    className="text-primary hover:text-accent"
-                  >
-                    <Lightbulb className="w-4 h-4 mr-2" />
-                    Generar con IA
-                  </Button>
+                  <Textarea
+                    id="vision"
+                    rows={4}
+                    value={strategyForm.vision}
+                    onChange={(e) => setStrategyForm({...strategyForm, vision: e.target.value})}
+                    placeholder="¿Hacia dónde se dirige su empresa a largo plazo?"
+                    className="resize-none"
+                  />
                 </div>
-                <Textarea
-                  id="vision"
-                  rows={3}
-                  value={formData.vision}
-                  onChange={(e) => setFormData({...formData, vision: e.target.value})}
-                  placeholder="¿Hacia dónde se dirige su empresa a largo plazo?"
-                  className="resize-none"
-                />
-              </div>
 
-              <div className="space-y-2">
+                <div className="space-y-2">
+                  <Label htmlFor="propuesta_valor" className="text-sm font-medium">Propuesta de Valor</Label>
+                  <Textarea
+                    id="propuesta_valor"
+                    rows={4}
+                    value={strategyForm.propuesta_valor}
+                    onChange={(e) => setStrategyForm({...strategyForm, propuesta_valor: e.target.value})}
+                    placeholder="¿Qué valor único ofrecen a sus clientes?"
+                    className="resize-none"
+                  />
+                </div>
+
                 <div className="flex justify-between items-center">
-                  <Label htmlFor="valueProposition" className="text-sm font-medium">Propuesta de Valor</Label>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleAIGenerate("propuesta de valor")}
-                    className="text-primary hover:text-accent"
-                  >
-                    <Lightbulb className="w-4 h-4 mr-2" />
-                    Generar con IA
-                  </Button>
+                  {strategy?.generated_with_ai && (
+                    <p className="text-xs text-muted-foreground flex items-center">
+                      <Lightbulb className="w-3 h-3 mr-1" />
+                      Generado con IA - Puede editarse manualmente
+                    </p>
+                  )}
+                  <div className="flex gap-2 ml-auto">
+                    <Button 
+                      onClick={handleSaveStrategy}
+                      disabled={loadingStrategy}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      {loadingStrategy ? "Guardando..." : "Guardar Estrategia"}
+                    </Button>
+                  </div>
                 </div>
-                <Textarea
-                  id="valueProposition"
-                  rows={3}
-                  value={formData.valueProposition}
-                  onChange={(e) => setFormData({...formData, valueProposition: e.target.value})}
-                  placeholder="¿Qué valor único ofrecen a sus clientes?"
-                  className="resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <Button 
-                  onClick={() => handleSave("estrategia")}
-                  disabled={loading}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  Guardar Estrategia
-                </Button>
               </div>
             </TabsContent>
 

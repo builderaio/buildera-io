@@ -92,6 +92,39 @@ export type Database = {
         }
         Relationships: []
       }
+      company_strategy: {
+        Row: {
+          created_at: string
+          generated_with_ai: boolean | null
+          id: string
+          mision: string | null
+          propuesta_valor: string | null
+          updated_at: string
+          user_id: string
+          vision: string | null
+        }
+        Insert: {
+          created_at?: string
+          generated_with_ai?: boolean | null
+          id?: string
+          mision?: string | null
+          propuesta_valor?: string | null
+          updated_at?: string
+          user_id: string
+          vision?: string | null
+        }
+        Update: {
+          created_at?: string
+          generated_with_ai?: boolean | null
+          id?: string
+          mision?: string | null
+          propuesta_valor?: string | null
+          updated_at?: string
+          user_id?: string
+          vision?: string | null
+        }
+        Relationships: []
+      }
       linkedin_connections: {
         Row: {
           access_token: string
@@ -166,6 +199,7 @@ export type Database = {
           auth_provider: string | null
           company_name: string | null
           company_size: string | null
+          country: string | null
           created_at: string
           email: string
           experience_years: number | null
@@ -187,6 +221,7 @@ export type Database = {
           auth_provider?: string | null
           company_name?: string | null
           company_size?: string | null
+          country?: string | null
           created_at?: string
           email: string
           experience_years?: number | null
@@ -208,6 +243,7 @@ export type Database = {
           auth_provider?: string | null
           company_name?: string | null
           company_size?: string | null
+          country?: string | null
           created_at?: string
           email?: string
           experience_years?: number | null

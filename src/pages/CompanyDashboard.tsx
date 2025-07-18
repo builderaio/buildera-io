@@ -8,7 +8,7 @@ import MandoCentral from "@/components/company/MandoCentral";
 import ADNEmpresa from "@/components/company/ADNEmpresa";
 import MarketingHub from "@/components/company/MarketingHub";
 import InteligenciaCompetitiva from "@/components/company/InteligenciaCompetitiva";
-import BaseConocimiento from "@/components/company/BaseConocimiento";
+import MisArchivos from "@/components/company/BaseConocimiento";
 import AcademiaBuildiera from "@/components/company/AcademiaBuildera";
 import Marketplace from "@/components/company/Marketplace";
 import Expertos from "@/components/company/Expertos";
@@ -185,7 +185,7 @@ const CompanyDashboard = () => {
       case "inteligencia-competitiva":
         return <InteligenciaCompetitiva />;
       case "base-conocimiento":
-        return <BaseConocimiento />;
+        return <MisArchivos />;
       case "academia-buildera":
         return <AcademiaBuildiera />;
       case "marketplace":

@@ -149,7 +149,7 @@ const TermsOfService = () => {
               </p>
               <div className="mt-4 text-muted-foreground">
                 <p>Innoventum S.A.S.</p>
-                <p>Email: legal@buildera.dev</p>
+                <p>Email: legal@buildera.io</p>
                 <p>Colombia</p>
               </div>
             </section>

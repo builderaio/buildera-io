@@ -9,6 +9,7 @@ import CompanyDashboard from "./pages/CompanyDashboard";
 import CompleteProfile from "./pages/CompleteProfile";
 import Waitlist from "./pages/Waitlist";
 import LinkedInCallback from "./pages/LinkedInCallback";
+import TikTokCallback from "./pages/TikTokCallback";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/complete-profile" element={<CompleteProfile />} />
           <Route path="/waitlist" element={<Waitlist />} />
           <Route path="/auth/linkedin/callback" element={<LinkedInCallback />} />
+          <Route path="/auth/tiktok/callback" element={<TikTokCallback />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

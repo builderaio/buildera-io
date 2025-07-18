@@ -49,7 +49,14 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     mediaUrl: "",
     mediaType: "IMAGE"
   });
+  const [tiktokPublishData, setTikTokPublishData] = useState({
+    title: "",
+    description: "",
+    videoUrl: "",
+    privacy_level: "PUBLIC_TO_EVERYONE"
+  });
   const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [showTikTokPublishDialog, setShowTikTokPublishDialog] = useState(false);
   const { toast } = useToast();
 
   // Cargar conexiones existentes al montar el componente
@@ -66,7 +73,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
         .from('facebook_instagram_connections')
         .select('*')
         .eq('user_id', profile.user_id)
-        .single();
+        .maybeSingle();
 
       if (fbConnection) {
         setSocialConnections(prev => ({ ...prev, facebook: true }));
@@ -85,6 +92,17 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
             setSelectedAccount(igConnections[0].instagram_account_id);
           }
         }
+      }
+
+      // Verificar conexión de TikTok
+      const { data: tiktokConnection } = await supabase
+        .from('tiktok_connections')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .maybeSingle();
+
+      if (tiktokConnection) {
+        setSocialConnections(prev => ({ ...prev, tiktok: true }));
       }
     } catch (error) {
       console.error('Error verificando conexiones:', error);
@@ -346,45 +364,102 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     }
   };
 
-  const handleTikTokConnect = async () => {
+  const handleTikTokPublishContent = async () => {
+    if (!tiktokPublishData.title || !tiktokPublishData.videoUrl) {
+      toast({
+        title: "Datos incompletos",
+        description: "Agrega un título y la URL del video.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      console.log('🔗 Conectando TikTok Business...');
-      
       toast({
-        title: "Conectando TikTok Business",
-        description: "Abriendo TikTok Business Manager...",
+        title: "Publicando video",
+        description: "Subiendo contenido a TikTok...",
       });
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      toast({
-        title: "Autenticación TikTok",
-        description: "Verificando cuenta empresarial y permisos de API",
+      const { data, error } = await supabase.functions.invoke('tiktok-auth', {
+        body: {
+          action: 'publish_video',
+          videoUrl: tiktokPublishData.videoUrl,
+          title: tiktokPublishData.title,
+          description: tiktokPublishData.description,
+          privacy_level: tiktokPublishData.privacy_level
+        }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      if (error) throw error;
 
-      const shouldSucceed = Math.random() > 0.25;
-
-      if (shouldSucceed) {
-        setSocialConnections(prev => ({ ...prev, tiktok: true }));
-        
+      if (data.success) {
         toast({
-          title: "¡TikTok Business Conectado!",
-          description: "Acceso a video uploads, analytics y campañas publicitarias.",
+          title: "¡Video Publicado!",
+          description: `Tu video ha sido subido a TikTok exitosamente. Estado: ${data.status}`,
         });
-      } else {
-        throw new Error("Cuenta TikTok Business no verificada");
+        
+        setShowTikTokPublishDialog(false);
+        setTikTokPublishData({ 
+          title: "", 
+          description: "", 
+          videoUrl: "", 
+          privacy_level: "PUBLIC_TO_EVERYONE" 
+        });
       }
-
     } catch (error: any) {
       toast({
-        title: "Error TikTok Business",
-        description: `${error.message || 'Verifique que tiene una cuenta TikTok Business activa'}`,
+        title: "Error publicando",
+        description: error.message || 'Error subiendo el video a TikTok',
         variant: "destructive",
       });
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTikTokConnect = async () => {
+    setLoading(true);
+    try {
+      console.log('🔗 Iniciando conexión con TikTok...');
+      
+      toast({
+        title: "Conectando TikTok",
+        description: "Abriendo ventana de autorización de TikTok...",
+      });
+
+      // TikTok OAuth configuration
+      const clientKey = 'aw6lvw0ejq3pdkfl';
+      const redirectUri = `${window.location.origin}/auth/tiktok/callback`;
+      const scopes = 'user.info.basic,video.list,video.upload';
+      const state = Math.random().toString(36).substring(7);
+      
+      // Construir URL de OAuth
+      const oauthUrl = new URL('https://www.tiktok.com/v2/auth/authorize');
+      oauthUrl.searchParams.append('client_key', clientKey);
+      oauthUrl.searchParams.append('scope', scopes);
+      oauthUrl.searchParams.append('response_type', 'code');
+      oauthUrl.searchParams.append('redirect_uri', redirectUri);
+      oauthUrl.searchParams.append('state', state);
+
+      console.log(`🔗 Redirigiendo a TikTok OAuth: ${oauthUrl.toString()}`);
+
+      // Guardar estado para verificación posterior
+      localStorage.setItem('tiktok_oauth_state', state);
+      localStorage.setItem('tiktok_oauth_user_id', profile.user_id);
+
+      // Redirigir a TikTok para autorización
+      window.location.href = oauthUrl.toString();
+
+    } catch (error: any) {
+      console.error('❌ Error iniciando TikTok OAuth:', error);
+      
+      toast({
+        title: "Error TikTok",
+        description: error.message || 'Error iniciando autorización. Inténtelo de nuevo.',
+        variant: "destructive",
+      });
+      
       setLoading(false);
     }
   };
@@ -491,6 +566,16 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
           
         setSocialConnections(prev => ({ ...prev, instagram: false }));
         setSelectedAccount("");
+      } else if (platform === 'tiktok') {
+        const { data, error } = await supabase.functions.invoke('tiktok-auth', {
+          body: {
+            action: 'disconnect'
+          }
+        });
+
+        if (error) throw error;
+
+        setSocialConnections(prev => ({ ...prev, tiktok: false }));
       }
       
       toast({
@@ -604,19 +689,19 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
           </div>
         )}
 
-        {/* Botón de publicación rápida */}
-        {socialConnections.instagram && selectedAccount && (
-          <div className="flex gap-2">
+        {/* Botones de publicación rápida */}
+        <div className="flex gap-2 flex-wrap">
+          {socialConnections.instagram && selectedAccount && (
             <Dialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
               <DialogTrigger asChild>
                 <Button className="flex items-center gap-2">
                   <Upload className="w-4 h-4" />
-                  Publicar Contenido
+                  Publicar en Instagram
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Crear Publicación</DialogTitle>
+                  <DialogTitle>Crear Publicación en Instagram</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
@@ -665,8 +750,79 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
                 </div>
               </DialogContent>
             </Dialog>
-          </div>
-        )}
+          )}
+
+          {socialConnections.tiktok && (
+            <Dialog open={showTikTokPublishDialog} onOpenChange={setShowTikTokPublishDialog}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white">
+                  <Music className="w-4 h-4" />
+                  Publicar en TikTok
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Crear Video en TikTok</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="tiktok-title">Título del video</Label>
+                    <Input 
+                      id="tiktok-title"
+                      placeholder="Título llamativo para tu video..."
+                      value={tiktokPublishData.title}
+                      onChange={(e) => setTikTokPublishData(prev => ({ ...prev, title: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="tiktok-video-url">URL del video</Label>
+                    <Input 
+                      id="tiktok-video-url"
+                      placeholder="https://ejemplo.com/video.mp4"
+                      value={tiktokPublishData.videoUrl}
+                      onChange={(e) => setTikTokPublishData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tiktok-description">Descripción</Label>
+                    <Textarea 
+                      id="tiktok-description"
+                      placeholder="Describe tu video, usa hashtags..."
+                      value={tiktokPublishData.description}
+                      onChange={(e) => setTikTokPublishData(prev => ({ ...prev, description: e.target.value }))}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="tiktok-privacy">Privacidad</Label>
+                    <Select value={tiktokPublishData.privacy_level} onValueChange={(value) => setTikTokPublishData(prev => ({ ...prev, privacy_level: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PUBLIC_TO_EVERYONE">Público</SelectItem>
+                        <SelectItem value="FRIENDS_ONLY">Solo amigos</SelectItem>
+                        <SelectItem value="SELF_ONLY">Solo yo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setShowTikTokPublishDialog(false)}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleTikTokPublishContent} disabled={loading}>
+                      {loading ? "Publicando..." : "Publicar"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
     );
   };

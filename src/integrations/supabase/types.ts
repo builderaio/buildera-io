@@ -179,6 +179,111 @@ export type Database = {
         }
         Relationships: []
       }
+      facebook_instagram_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string | null
+          facebook_user_id: string
+          id: string
+          token_type: string
+          updated_at: string
+          user_data: Json | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at?: string | null
+          facebook_user_id: string
+          id?: string
+          token_type?: string
+          updated_at?: string
+          user_data?: Json | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string | null
+          facebook_user_id?: string
+          id?: string
+          token_type?: string
+          updated_at?: string
+          user_data?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      instagram_business_connections: {
+        Row: {
+          account_data: Json | null
+          created_at: string
+          facebook_page_id: string
+          id: string
+          insights_data: Json | null
+          instagram_account_id: string
+          is_active: boolean
+          page_access_token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_data?: Json | null
+          created_at?: string
+          facebook_page_id: string
+          id?: string
+          insights_data?: Json | null
+          instagram_account_id: string
+          is_active?: boolean
+          page_access_token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_data?: Json | null
+          created_at?: string
+          facebook_page_id?: string
+          id?: string
+          insights_data?: Json | null
+          instagram_account_id?: string
+          is_active?: boolean
+          page_access_token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      instagram_publications: {
+        Row: {
+          content_data: Json
+          created_at: string
+          id: string
+          instagram_account_id: string
+          media_id: string
+          published_at: string
+          user_id: string
+        }
+        Insert: {
+          content_data: Json
+          created_at?: string
+          id?: string
+          instagram_account_id: string
+          media_id: string
+          published_at?: string
+          user_id: string
+        }
+        Update: {
+          content_data?: Json
+          created_at?: string
+          id?: string
+          instagram_account_id?: string
+          media_id?: string
+          published_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       linkedin_connections: {
         Row: {
           access_token: string

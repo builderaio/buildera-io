@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music } from "lucide-react";
+import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package } from "lucide-react";
 
 interface ADNEmpresaProps {
   profile: any;
@@ -35,6 +35,17 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     tiktok: false,
     linkedin: false
   });
+  
+  // Estados para la gestión de productos
+  const [products, setProducts] = useState<any[]>([]);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [productForm, setProductForm] = useState({
+    name: "",
+    description: ""
+  });
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  
   const { toast } = useToast();
 
   const companySizes = [
@@ -59,6 +70,144 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     "Energía",
     "Otro"
   ];
+
+  // Cargar productos al montar el componente
+  useEffect(() => {
+    if (profile?.user_id) {
+      fetchProducts();
+    }
+  }, [profile?.user_id]);
+
+  // Funciones para la gestión de productos
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('user_id', profile?.user_id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error: any) {
+      console.error('Error fetching products:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los productos",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveProduct = async () => {
+    if (!productForm.name.trim()) {
+      toast({
+        title: "Error",
+        description: "El nombre del producto es obligatorio",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingProducts(true);
+    try {
+      if (editingProduct) {
+        // Actualizar producto existente
+        const { error } = await supabase
+          .from('products')
+          .update({
+            name: productForm.name,
+            description: productForm.description
+          })
+          .eq('id', editingProduct.id)
+          .eq('user_id', profile?.user_id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Producto actualizado",
+          description: "El producto se ha actualizado correctamente",
+        });
+      } else {
+        // Crear nuevo producto
+        const { error } = await supabase
+          .from('products')
+          .insert({
+            user_id: profile?.user_id,
+            name: productForm.name,
+            description: productForm.description
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Producto creado",
+          description: "El producto se ha creado correctamente",
+        });
+      }
+
+      // Recargar productos y cerrar formulario
+      await fetchProducts();
+      handleCancelProductForm();
+    } catch (error: any) {
+      console.error('Error saving product:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar el producto",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setProductForm({
+      name: product.name,
+      description: product.description || ""
+    });
+    setShowProductForm(true);
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm("¿Está seguro de que desea eliminar este producto?")) {
+      return;
+    }
+
+    setLoadingProducts(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId)
+        .eq('user_id', profile?.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Producto eliminado",
+        description: "El producto se ha eliminado correctamente",
+      });
+
+      await fetchProducts();
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el producto",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleCancelProductForm = () => {
+    setShowProductForm(false);
+    setEditingProduct(null);
+    setProductForm({ name: "", description: "" });
+  };
 
   const handleSaveCompanyInfo = async () => {
     // Validar campos obligatorios
@@ -543,8 +692,9 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       <Card>
         <CardContent className="p-8">
           <Tabs defaultValue="estrategia" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="estrategia">Estrategia</TabsTrigger>
+              <TabsTrigger value="productos">Productos</TabsTrigger>
               <TabsTrigger value="marca">Marca</TabsTrigger>
               <TabsTrigger value="conexiones">Conexiones</TabsTrigger>
             </TabsList>
@@ -628,6 +778,124 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   Guardar Estrategia
                 </Button>
               </div>
+            </TabsContent>
+
+            <TabsContent value="productos" className="space-y-6 mt-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <Package className="w-5 h-5 mr-2 text-primary" />
+                    Productos de la Empresa
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Gestione la información de sus productos para que los agentes de IA puedan brindar información precisa.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => setShowProductForm(true)}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar Producto
+                </Button>
+              </div>
+
+              {showProductForm && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      {editingProduct ? "Editar Producto" : "Nuevo Producto"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="product_name">Nombre del producto *</Label>
+                      <Input
+                        id="product_name"
+                        value={productForm.name}
+                        onChange={(e) => setProductForm({...productForm, name: e.target.value})}
+                        placeholder="Nombre del producto"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="product_description">Descripción</Label>
+                      <Textarea
+                        id="product_description"
+                        rows={3}
+                        value={productForm.description}
+                        onChange={(e) => setProductForm({...productForm, description: e.target.value})}
+                        placeholder="Descripción detallada del producto"
+                        className="resize-none"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={handleCancelProductForm}
+                        disabled={loadingProducts}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button 
+                        onClick={handleSaveProduct}
+                        disabled={loadingProducts}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                      >
+                        {loadingProducts ? "Guardando..." : editingProduct ? "Actualizar" : "Crear"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {products.length === 0 ? (
+                <div className="text-center py-8">
+                  <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">
+                    No hay productos registrados. Agregue el primer producto para comenzar.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {products.map((product) => (
+                    <Card key={product.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-semibold text-foreground">{product.name}</h4>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditProduct(product)}
+                              disabled={loadingProducts}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteProduct(product.id)}
+                              disabled={loadingProducts}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        {product.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-3">
+                            {product.description}
+                          </p>
+                        )}
+                        <div className="mt-3 text-xs text-muted-foreground">
+                          Creado: {new Date(product.created_at).toLocaleDateString()}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="marca" className="space-y-6 mt-6">

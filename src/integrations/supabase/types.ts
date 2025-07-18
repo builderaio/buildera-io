@@ -422,6 +422,75 @@ export type Database = {
         }
         Relationships: []
       }
+      tiktok_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          refresh_token: string | null
+          scope: string
+          tiktok_user_id: string
+          updated_at: string
+          user_data: Json | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          refresh_token?: string | null
+          scope: string
+          tiktok_user_id: string
+          updated_at?: string
+          user_data?: Json | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          refresh_token?: string | null
+          scope?: string
+          tiktok_user_id?: string
+          updated_at?: string
+          user_data?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tiktok_publications: {
+        Row: {
+          content_data: Json
+          created_at: string
+          id: string
+          published_at: string
+          tiktok_user_id: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          content_data: Json
+          created_at?: string
+          id?: string
+          published_at?: string
+          tiktok_user_id: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          content_data?: Json
+          created_at?: string
+          id?: string
+          published_at?: string
+          tiktok_user_id?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

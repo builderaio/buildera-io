@@ -295,7 +295,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
       const companyInfo = `${companyData.company_name}, ${profile.country}, ${companyData.website_url || 'Sin sitio web'}`;
 
-      const response = await supabase.functions.invoke('call-buildera-webhook', {
+      const response = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
         body: {
           KEY: 'INFO',
           COMPANY_INFO: companyInfo

@@ -59,6 +59,13 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Redirección automática para usuarios autenticados al mando central
+  useEffect(() => {
+    if (user && profile && !loading) {
+      window.location.href = '/company-dashboard';
+    }
+  }, [user, profile, loading]);
+
   // Contenido para usuarios autenticados
   const renderAuthenticatedContent = () => {
     const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email || "Usuario";

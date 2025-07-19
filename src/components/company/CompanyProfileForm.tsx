@@ -374,13 +374,13 @@ const CompanyProfileForm = ({ profile, onProfileUpdate }: CompanyProfileFormProp
 
   return (
     <div className="space-y-6">
-      {/* Información de la Empresa */}
+      {/* Información Específica de la Empresa */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center">
-              <Building2 className="w-5 h-5 mr-2" />
-              Información de la Empresa
+              <FileText className="w-5 h-5 mr-2" />
+              Información Específica
             </CardTitle>
             {editing ? (
               <div className="flex items-center space-x-2">
@@ -418,20 +418,7 @@ const CompanyProfileForm = ({ profile, onProfileUpdate }: CompanyProfileFormProp
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="company_name">Nombre de la Empresa</Label>
-              {editing ? (
-                <Input
-                  id="company_name"
-                  value={formData.company_name || ''}
-                  onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                />
-              ) : (
-                <p className="mt-1 text-sm text-gray-900">{profile.company_name || 'No especificado'}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="nit">NIT</Label>
+              <Label htmlFor="nit">NIT / Identificación Tributaria</Label>
               {editing ? (
                 <Input
                   id="nit"
@@ -448,58 +435,21 @@ const CompanyProfileForm = ({ profile, onProfileUpdate }: CompanyProfileFormProp
             </div>
 
             <div>
-              <Label htmlFor="industry">Industria</Label>
+              <Label htmlFor="business_objectives">Objetivos Empresariales</Label>
               {editing ? (
-                <Input
-                  id="industry"
-                  value={formData.industry || ''}
-                  onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                <Textarea
+                  id="business_objectives"
+                  value={formData.business_objectives || ''}
+                  onChange={(e) => setFormData({ ...formData, business_objectives: e.target.value })}
+                  placeholder="Describe los principales objetivos de tu empresa..."
+                  rows={3}
                 />
               ) : (
-                <p className="mt-1 text-sm text-gray-900">{profile.industry || 'No especificado'}</p>
+                <p className="mt-1 text-sm text-gray-900">
+                  {profile.business_objectives || 'No especificado'}
+                </p>
               )}
             </div>
-
-            <div>
-              <Label htmlFor="company_size">Tamaño de la Empresa</Label>
-              {editing ? (
-                <Input
-                  id="company_size"
-                  value={formData.company_size || ''}
-                  onChange={(e) => setFormData({ ...formData, company_size: e.target.value })}
-                  placeholder="Ej: 1-10, 11-50, 51-200, etc."
-                />
-              ) : (
-                <p className="mt-1 text-sm text-gray-900">{profile.company_size || 'No especificado'}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="website_url">Sitio Web</Label>
-            {editing ? (
-              <Input
-                id="website_url"
-                value={formData.website_url || ''}
-                onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
-                placeholder="https://mi-empresa.com"
-              />
-            ) : (
-              <p className="mt-1 text-sm text-gray-900">
-                {profile.website_url ? (
-                  <a 
-                    href={profile.website_url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    {profile.website_url}
-                  </a>
-                ) : (
-                  'No especificado'
-                )}
-              </p>
-            )}
           </div>
         </CardContent>
       </Card>

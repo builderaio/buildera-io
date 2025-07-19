@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target } from "lucide-react";
+import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2 } from "lucide-react";
 import CompanyProfileForm from "./CompanyProfileForm";
 
 interface ADNEmpresaProps {
@@ -1019,6 +1019,103 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             </TabsList>
 
             <TabsContent value="perfil" className="space-y-6 mt-6">
+              {/* Información Básica de la Empresa */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Building2 className="w-5 h-5 mr-2" />
+                    Información Básica de la Empresa
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Complete la información básica de su empresa para acceder a todas las funcionalidades.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="company_name">Nombre de la empresa *</Label>
+                      <Input
+                        id="company_name"
+                        value={profile?.company_name || ""}
+                        onChange={(e) => onProfileUpdate({...profile, company_name: e.target.value})}
+                        placeholder="Nombre de su empresa"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="full_name">Nombre del contacto *</Label>
+                      <Input
+                        id="full_name"
+                        value={profile?.full_name || ""}
+                        onChange={(e) => onProfileUpdate({...profile, full_name: e.target.value})}
+                        placeholder="Su nombre completo"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="company_size">Tamaño de la empresa *</Label>
+                      <Select value={profile?.company_size || ""} onValueChange={(value) => onProfileUpdate({...profile, company_size: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione el tamaño" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {companySizes.map((size) => (
+                            <SelectItem key={size} value={size}>
+                              {size}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="industry_sector">Sector de la industria *</Label>
+                      <Select value={profile?.industry_sector || ""} onValueChange={(value) => onProfileUpdate({...profile, industry_sector: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione el sector" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sectors.map((sector) => (
+                            <SelectItem key={sector} value={sector}>
+                              {sector}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="website_url">Sitio web</Label>
+                      <Input
+                        id="website_url"
+                        type="text"
+                        value={profile?.website_url || ""}
+                        onChange={(e) => onProfileUpdate({...profile, website_url: e.target.value})}
+                        placeholder="suempresa.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="country">País *</Label>
+                      <Input
+                        id="country"
+                        value={profile?.country || ""}
+                        onChange={(e) => onProfileUpdate({...profile, country: e.target.value})}
+                        placeholder="País de la empresa"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email corporativo (no editable)</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profile?.email || ""}
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
               <CompanyProfileForm profile={profile} onProfileUpdate={onProfileUpdate} />
             </TabsContent>
 

@@ -723,9 +723,9 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     return (
       <div className="space-y-6 mb-6">
         <div>
-          <h4 className="font-semibold text-lg mb-2">Conexiones de Redes Sociales</h4>
+          <h4 className="font-semibold text-lg mb-2">Canales de Redes Sociales</h4>
           <p className="text-sm text-muted-foreground mb-4">
-            Conecta tus cuentas de redes sociales para publicar contenido y obtener métricas
+            Conecta tus canales de redes sociales para publicar contenido y obtener métricas
           </p>
         </div>
 

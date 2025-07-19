@@ -123,13 +123,13 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
         
         <div className="flex items-center">
           <div className="w-10 h-10 bg-sidebar-accent rounded-full flex items-center justify-center text-sidebar-primary font-bold">
-            {profile?.company_name?.charAt(0) || "E"}
+            {profile?.full_name?.charAt(0) || "U"}
           </div>
           <div className="ml-3 flex-1">
-            <p className="font-bold text-sm text-sidebar-primary">{profile?.company_name || "Empresa"}</p>
+            <p className="font-bold text-sm text-sidebar-primary">{profile?.full_name || "Usuario"}</p>
             <div className="flex space-x-2 text-xs">
               <button 
-                onClick={() => window.location.href = '/company-profile'}
+                onClick={() => window.open('/profile', '_blank')}
                 className="text-sidebar-foreground/70 hover:text-sidebar-primary hover:underline"
               >
                 Ver perfil

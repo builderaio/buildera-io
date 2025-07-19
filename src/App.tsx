@@ -18,7 +18,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import UserProfile from "./pages/UserProfile";
-import CompanyProfile from "./pages/CompanyProfile";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,7 +41,6 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/profile" element={<UserProfile />} />
-            <Route path="/company-profile" element={<CompanyProfile />} />
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />

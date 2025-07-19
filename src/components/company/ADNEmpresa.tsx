@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target } from "lucide-react";
+import CompanyProfileForm from "./CompanyProfileForm";
 
 interface ADNEmpresaProps {
   profile: any;
@@ -1168,7 +1169,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               <TabsTrigger value="estrategia">Estrategia</TabsTrigger>
               <TabsTrigger value="productos">Productos</TabsTrigger>
               <TabsTrigger value="marca">Marca</TabsTrigger>
-              <TabsTrigger value="conexiones">Conexiones</TabsTrigger>
+              <TabsTrigger value="perfil">Perfil Empresa</TabsTrigger>
+              <TabsTrigger value="canales">Canales</TabsTrigger>
             </TabsList>
 
             <TabsContent value="estrategia" className="space-y-6 mt-6">
@@ -1622,9 +1624,13 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               </div>
             </TabsContent>
 
-            <TabsContent value="conexiones" className="space-y-6 mt-6">
+            <TabsContent value="perfil" className="space-y-6 mt-6">
+              <CompanyProfileForm profile={profile} onProfileUpdate={onProfileUpdate} />
+            </TabsContent>
+
+            <TabsContent value="canales" className="space-y-6 mt-6">
               <p className="text-muted-foreground">
-                Conecte sus redes sociales empresariales para que nuestros agentes puedan analizar su rendimiento y generar contenido alineado a su marca. Todas las conexiones incluyen permisos para acceder a posts, usuarios y publicar contenido en nombre de la empresa.
+                Conecte sus canales empresariales para que nuestros agentes puedan analizar su rendimiento y generar contenido alineado a su marca. Todas las conexiones incluyen permisos para acceder a posts, usuarios y publicar contenido en nombre de la empresa.
               </p>
               <div className="space-y-4">
                 {/* Instagram Business */}

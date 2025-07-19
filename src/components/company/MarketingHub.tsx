@@ -1401,16 +1401,11 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
                   <div className="space-y-4">
                     <div>
                       <Label>Contexto del Negocio</Label>
-                      <div className="flex gap-2">
-                        <Textarea 
-                          placeholder="Ej: Lanzamiento de producto, temporada alta, crisis..."
-                          className="resize-none flex-1"
-                          rows={3}
-                        />
-                        <Button variant="outline" size="sm" className="self-start">
-                          🤖 Optimizar con IA
-                        </Button>
-                      </div>
+                      <Textarea 
+                        placeholder="Ej: Lanzamiento de producto, temporada alta, crisis..."
+                        className="resize-none"
+                        rows={3}
+                      />
                     </div>
                     <div>
                       <Label>Objetivo Principal</Label>
@@ -1419,6 +1414,15 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
                         <option>Generar leads</option>
                         <option>Aumentar reconocimiento</option>
                         <option>Fidelizar clientes</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label>Estacionalidad</Label>
+                      <select className="w-full p-2 border rounded-md">
+                        <option>Temporada alta</option>
+                        <option>Temporada baja</option>
+                        <option>Temporada normal</option>
+                        <option>Evento especial</option>
                       </select>
                     </div>
                     <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">

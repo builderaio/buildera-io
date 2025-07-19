@@ -22,14 +22,6 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     vision: "", 
     valueProposition: "",
   });
-  const [companyData, setCompanyData] = useState({
-    company_name: profile?.company_name || "",
-    full_name: profile?.full_name || "",
-    company_size: profile?.company_size || "",
-    industry_sector: profile?.industry_sector || "", 
-    website_url: profile?.website_url || "",
-    country: profile?.country || ""
-  });
   const [loading, setLoading] = useState(false);
   const [socialConnections, setSocialConnections] = useState({
     instagram: false,
@@ -269,7 +261,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   };
 
   const handleGenerateStrategy = async () => {
-    if (!companyData.company_name || !profile?.country) {
+    if (!profile?.company_name || !profile?.country) {
       toast({
         title: "Error",
         description: "Debe completar información de la empresa y país primero",
@@ -294,7 +286,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         description: "Creando estrategia personalizada con IA...",
       });
 
-      const companyInfo = `${companyData.company_name}, ${profile.country}, ${companyData.website_url || 'Sin sitio web'}`;
+      const companyInfo = `${profile?.company_name}, ${profile.country}, ${profile?.website_url || 'Sin sitio web'}`;
 
       const response = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
         body: {
@@ -614,10 +606,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   };
 
   const handleGenerateBrandManual = async () => {
-    if (!companyData.company_name) {
+    if (!profile?.company_name) {
       toast({
         title: "Error",
-        description: "Debe guardar la información de la empresa primero",
+        description: "Debe completar la información de la empresa primero",
         variant: "destructive",
       });
       return;
@@ -631,8 +623,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       });
 
       const companyInfo = {
-        company_name: companyData.company_name,
-        industry_sector: companyData.industry_sector,
+        company_name: profile?.company_name,
+        industry_sector: profile?.industry_sector,
         ...brandingForm
       };
 
@@ -671,52 +663,6 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   };
 
-  const handleSaveCompanyInfo = async () => {
-    // Validar campos obligatorios
-    if (!companyData.company_name || !companyData.full_name || !companyData.company_size || !companyData.industry_sector) {
-      toast({
-        title: "Información incompleta",
-        description: "Todos los campos marcados con * son obligatorios.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          company_name: companyData.company_name,
-          full_name: companyData.full_name,
-          company_size: companyData.company_size,
-          industry_sector: companyData.industry_sector,
-          website_url: companyData.website_url,
-          country: companyData.country || profile?.country,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', profile?.user_id);
-
-      if (error) throw error;
-
-      // Actualizar el perfil en el estado
-      const updatedProfile = { ...profile, ...companyData };
-      onProfileUpdate(updatedProfile);
-
-      toast({
-        title: "Información guardada",
-        description: "La información de su empresa ha sido actualizada correctamente.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSave = async (field: string) => {
     setLoading(true);
@@ -750,10 +696,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
       // Preparar información de la empresa para el contexto
       const companyInfo = {
-        company_name: companyData.company_name || profile?.company_name || "su empresa",
-        company_size: companyData.company_size || profile?.company_size || "",
-        industry_sector: companyData.industry_sector || profile?.industry_sector || "",
-        website_url: companyData.website_url || profile?.website_url || ""
+        company_name: profile?.company_name || "su empresa",
+        company_size: profile?.company_size || "",
+        industry_sector: profile?.industry_sector || "",
+        website_url: profile?.website_url || ""
       };
 
       console.log('📋 Información de empresa para IA:', companyInfo);
@@ -944,8 +890,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       console.log('🔗 Iniciando flujo OAuth LinkedIn Company...');
       
       // Validaciones previas
-      if (!companyData.company_name) {
-        throw new Error("Debe guardar la información de la empresa antes de conectar LinkedIn");
+      if (!profile?.company_name) {
+        throw new Error("Debe completar la información de la empresa antes de conectar LinkedIn");
       }
 
       // Mostrar toast inicial
@@ -1060,118 +1006,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         </p>
       </header>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Información de la Empresa</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Complete toda la información obligatoria (*) para acceder al dashboard completo.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="company_name">Nombre de la empresa *</Label>
-              <Input
-                id="company_name"
-                value={companyData.company_name}
-                onChange={(e) => setCompanyData({...companyData, company_name: e.target.value})}
-                placeholder="Nombre de su empresa"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="full_name">Nombre del contacto *</Label>
-              <Input
-                id="full_name"
-                value={companyData.full_name}
-                onChange={(e) => setCompanyData({...companyData, full_name: e.target.value})}
-                placeholder="Su nombre completo"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="company_size">Tamaño de la empresa *</Label>
-              <Select value={companyData.company_size} onValueChange={(value) => setCompanyData({...companyData, company_size: value})} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione el tamaño" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companySizes.map((size) => (
-                    <SelectItem key={size} value={size}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="industry_sector">Sector de la industria *</Label>
-              <Select value={companyData.industry_sector} onValueChange={(value) => setCompanyData({...companyData, industry_sector: value})} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccione el sector" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sectors.map((sector) => (
-                    <SelectItem key={sector} value={sector}>
-                      {sector}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="website_url">Sitio web</Label>
-              <Input
-                id="website_url"
-                type="text"
-                value={companyData.website_url}
-                onChange={(e) => setCompanyData({...companyData, website_url: e.target.value})}
-                placeholder="suempresa.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="country">País *</Label>
-              <Input
-                id="country"
-                value={companyData.country}
-                onChange={(e) => setCompanyData({...companyData, country: e.target.value})}
-                placeholder="País de la empresa"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email corporativo (no editable)</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profile?.email || ""}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleSaveCompanyInfo}
-              disabled={loading}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {loading ? "Guardando..." : "Guardar Información"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardContent className="p-8">
-          <Tabs defaultValue="estrategia" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue="perfil" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="perfil">Información de la Empresa</TabsTrigger>
               <TabsTrigger value="estrategia">Estrategia</TabsTrigger>
               <TabsTrigger value="productos">Productos</TabsTrigger>
               <TabsTrigger value="marca">Marca</TabsTrigger>
-              <TabsTrigger value="perfil">Perfil Empresa</TabsTrigger>
               <TabsTrigger value="canales">Canales</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="perfil" className="space-y-6 mt-6">
+              <CompanyProfileForm profile={profile} onProfileUpdate={onProfileUpdate} />
+            </TabsContent>
 
             <TabsContent value="estrategia" className="space-y-6 mt-6">
               <div className="space-y-6">

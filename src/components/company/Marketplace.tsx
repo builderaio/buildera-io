@@ -76,19 +76,32 @@ const Marketplace: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
 
-      const [categoriesResult, agentsResult, userAgentsResult] = await Promise.all([
+      const [categoriesResult, agentsResult] = await Promise.all([
         supabase.from('agent_categories').select('*').order('name'),
-        supabase.from('ai_agents').select('*').eq('is_active', true).order('popularity_score', { ascending: false }),
-        user ? supabase.from('user_agents').select('*').eq('user_id', user.id) : { data: [] }
+        supabase.from('ai_agents').select('*').eq('is_active', true).order('popularity_score', { ascending: false })
       ]);
 
       if (categoriesResult.error) throw categoriesResult.error;
       if (agentsResult.error) throw agentsResult.error;
-      if (userAgentsResult.error) throw userAgentsResult.error;
 
       setCategories(categoriesResult.data || []);
-      setAgents(agentsResult.data || []);
-      setUserAgents(userAgentsResult.data || []);
+      setAgents((agentsResult.data || []).map(agent => ({
+        ...agent,
+        sample_conversations: Array.isArray(agent.sample_conversations) ? agent.sample_conversations : []
+      })));
+
+      // Load user agents separately if user exists
+      if (user) {
+        const { data: userAgentsData, error: userAgentsError } = await supabase
+          .from('user_agents')
+          .select('*')
+          .eq('user_id', user.id);
+        
+        if (userAgentsError) throw userAgentsError;
+        setUserAgents(userAgentsData || []);
+      } else {
+        setUserAgents([]);
+      }
     } catch (error) {
       console.error('Error loading marketplace data:', error);
       toast({

@@ -6,10 +6,10 @@ const UseCases = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-heading text-primary">
-            Así es como te ayudamos día a día
+            Casos reales donde Buildera marca la diferencia
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Mira cómo otros negocios como el tuyo están creciendo con nuestra ayuda.
+            Descubre cómo negocios como el tuyo están usando ERA para acelerar su crecimiento de manera inteligente y sin complicaciones.
           </p>
         </div>
         <div className="space-y-20">
@@ -17,20 +17,20 @@ const UseCases = () => {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="order-2 md:order-1">
               <h3 className="font-heading text-2xl text-primary mb-4">
-                Te ayudamos a cuidar mejor a tus clientes
+                ERA descubre qué contenido conecta mejor con tu audiencia
               </h3>
               <p className="text-muted-foreground mb-6">
-                Imagínate tener un asistente que responde a tus clientes las 24 horas, todos los días. Nuestro sistema de atención automática resuelve el 70% de las consultas frecuentes al instante, mientras tu equipo se enfoca en casos especiales y en construir relaciones que realmente importan.
+                María tenía una tienda online pero no sabía por qué algunos posts en Instagram funcionaban y otros no. Con Buildera, ERA analizó un año completo de sus publicaciones y le mostró que sus tutoriales de 30 segundos generaban 3x más ventas que las fotos de productos. Ahora sabe exactamente qué publicar.
               </p>
               <Badge variant="secondary" className="text-sm font-semibold">
-                Atención al Cliente
+                Análisis de Contenido
               </Badge>
             </div>
             <div className="order-1 md:order-2">
               <div className="bg-primary/5 rounded-lg p-8 shadow-card">
                 <div className="bg-primary text-primary-foreground rounded-lg p-6 text-center">
-                  <h4 className="font-heading text-xl mb-2">Agente de Soporte IA</h4>
-                  <p className="text-sm opacity-90">Respuesta automática 24/7</p>
+                  <h4 className="font-heading text-xl mb-2">ERA Marketing Strategist</h4>
+                  <p className="text-sm opacity-90">Identifica tu contenido de mayor impacto</p>
                 </div>
               </div>
             </div>
@@ -41,20 +41,20 @@ const UseCases = () => {
             <div>
               <div className="bg-secondary/5 rounded-lg p-8 shadow-card">
                 <div className="bg-secondary text-secondary-foreground rounded-lg p-6 text-center">
-                  <h4 className="font-heading text-xl mb-2">Generador de Leads IA</h4>
-                  <p className="text-sm opacity-90">Calificación inteligente de prospectos</p>
+                  <h4 className="font-heading text-xl mb-2">ERA Business Strategist</h4>
+                  <p className="text-sm opacity-90">Convierte datos en decisiones claras</p>
                 </div>
               </div>
             </div>
             <div>
               <h3 className="font-heading text-2xl text-secondary mb-4">
-                Te ayudamos a encontrar más clientes
+                ERA te ayuda a tomar decisiones inteligentes
               </h3>
               <p className="text-muted-foreground mb-6">
-                ¿Qué tal si cada mañana recibieras una lista de clientes potenciales perfectos para tu negocio? Nuestros asistentes inteligentes investigan, analizan y califican prospectos automáticamente, para que tu equipo de ventas pueda enfocarse en cerrar ventas en lugar de buscar clientes.
+                Carlos tenía un restaurante con redes sociales, pero no sabía si invertir más en LinkedIn o Instagram. ERA analizó los datos y descubrió que LinkedIn le traía 60% más reservas los fines de semana. Con Buildera, ahora invierte su tiempo y dinero donde realmente funciona.
               </p>
               <Badge variant="outline" className="text-sm font-semibold border-secondary text-secondary">
-                Ventas y Marketing
+                Estrategia Inteligente
               </Badge>
             </div>
           </div>

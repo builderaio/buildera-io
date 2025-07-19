@@ -5,10 +5,10 @@ const Hero = () => {
     <section className="hero-bg py-16 md:py-20 lg:py-32">
       <div className="container mx-auto px-4 md:px-6 text-center">
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-heading gradient-text leading-tight">
-          Transforma tu negocio con IA que analiza, optimiza y recomienda automáticamente
+          Bienvenido a Buildera: Building The New Era de tu negocio
         </h1>
         <p className="mt-4 md:mt-6 text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
-          Marketing Hub híbrido con análisis semántico de redes sociales, clusters de contenido inteligentes y recomendaciones IA que realmente impulsan el crecimiento. Todo integrado en un ecosistema que conecta datos, insights y acciones.
+          Conoce a ERA, tu asistente de inteligencia artificial que estudia tu negocio, entiende qué funciona mejor y te dice exactamente qué hacer para crecer más rápido. Con Buildera, transformas datos complejos en decisiones simples que realmente impulsan tu éxito.
         </p>
         <div className="mt-6 md:mt-10 flex flex-col sm:flex-row justify-center items-center gap-3 md:gap-4 px-4">
           <a href="/auth?mode=register&userType=company" className="w-full sm:w-auto">

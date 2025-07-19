@@ -1,4 +1,4 @@
-import { Building2, Code, PieChart } from "lucide-react";
+import { Brain, Database, TrendingUp } from "lucide-react";
 
 const Ecosystem = () => {
   return (
@@ -6,47 +6,47 @@ const Ecosystem = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-heading text-primary">
-            Un ecosistema pensado para ti
+            Tecnología híbrida que potencia resultados
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-            Creemos que el crecimiento se da cuando las personas correctas trabajan juntas. Por eso reunimos negocios, desarrolladores y expertos en un solo lugar.
+            Combinamos SQL tradicional, vector stores y análisis semántico para darte insights que realmente impulsan el crecimiento.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Para Empresas */}
+          {/* Análisis Tradicional */}
           <div className="bg-background p-8 rounded-lg shadow-card text-center">
             <div className="flex justify-center mb-6">
               <div className="bg-primary/10 p-4 rounded-full">
-                <Building2 className="w-12 h-12 text-primary" />
+                <Database className="w-12 h-12 text-primary" />
               </div>
             </div>
-            <h3 className="font-heading text-2xl text-primary mb-4">Para Negocios</h3>
+            <h3 className="font-heading text-2xl text-primary mb-4">Datos Estructurados</h3>
             <p className="text-muted-foreground">
-              Te ayudamos a hacer crecer tu negocio más rápido. Accede a soluciones de IA diseñadas específicamente para tus necesidades, sin complicaciones y con resultados que puedes ver.
+              Procesamiento rápido de métricas, fechas y filtros tradicionales. Base sólida para analytics en tiempo real con SQL optimizado.
             </p>
           </div>
-          {/* Para Desarrolladores */}
+          {/* Análisis Semántico */}
           <div className="bg-background p-8 rounded-lg shadow-card text-center">
             <div className="flex justify-center mb-6">
               <div className="bg-secondary/10 p-4 rounded-full">
-                <Code className="w-12 h-12 text-secondary" />
+                <Brain className="w-12 h-12 text-secondary" />
               </div>
             </div>
-            <h3 className="font-heading text-2xl text-secondary mb-4">Para Desarrolladores</h3>
+            <h3 className="font-heading text-2xl text-secondary mb-4">IA Semántica</h3>
             <p className="text-muted-foreground">
-              Únete a una comunidad donde tu talento es valorado. Trabaja en proyectos emocionantes, colabora con otros desarrolladores apasionados y construye el futuro mientras generas ingresos.
+              Vector stores con embeddings de OpenAI para análisis profundo de contenido, clustering automático y búsqueda por similitud.
             </p>
           </div>
-          {/* Para Expertos */}
+          {/* Recomendaciones */}
           <div className="bg-background p-8 rounded-lg shadow-card text-center">
             <div className="flex justify-center mb-6">
               <div className="bg-accent/50 p-4 rounded-full">
-                <PieChart className="w-12 h-12 text-accent-foreground" />
+                <TrendingUp className="w-12 h-12 text-accent-foreground" />
               </div>
             </div>
-            <h3 className="font-heading text-2xl text-accent-foreground mb-4">Para Expertos</h3>
+            <h3 className="font-heading text-2xl text-accent-foreground mb-4">Insights Ejecutables</h3>
             <p className="text-muted-foreground">
-              Tu experiencia tiene un impacto real. Comparte tu conocimiento para guiar proyectos que transforman negocios y ayuda a que las soluciones sean realmente efectivas.
+              Recomendaciones con scores de confianza basadas en análisis de patrones, tendencias y rendimiento histórico.
             </p>
           </div>
         </div>

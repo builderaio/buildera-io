@@ -25,10 +25,21 @@ const AIModelMonitoring = () => {
   const loadModelStatuses = async () => {
     setLoading(true);
     try {
+      // Primero cargar los modelos seleccionados en la configuración
+      const { data: configData, error: configError } = await supabase
+        .from('ai_model_configurations')
+        .select('model_name, function_name');
+
+      if (configError) throw configError;
+
+      const selectedModels = Array.from(new Set(configData?.map(config => config.model_name) || []));
+      
       // Cargar datos de la base de datos desde la tabla ai_model_status_logs
+      // Filtrar solo los modelos que están siendo utilizados
       const { data, error } = await supabase
         .from('ai_model_status_logs')
         .select('*')
+        .in('name', selectedModels)
         .order('last_checked', { ascending: false });
 
       if (error) throw error;
@@ -45,7 +56,12 @@ const AIModelMonitoring = () => {
 
       setModelStatuses(formattedStatuses);
       setLastRefresh(new Date());
-      toast.success('Estado de modelos cargado desde base de datos');
+      
+      if (formattedStatuses.length > 0) {
+        toast.success(`Estado de ${formattedStatuses.length} modelos configurados cargado`);
+      } else {
+        toast.info('No hay modelos configurados para monitorear');
+      }
     } catch (error) {
       console.error('Error loading model statuses:', error);
       toast.error('Error al cargar el estado de los modelos');
@@ -132,8 +148,13 @@ const AIModelMonitoring = () => {
         <div>
           <h2 className="text-2xl font-bold">Monitoreo de Modelos IA</h2>
           <p className="text-muted-foreground">
-            Estado de los proveedores de IA (actualizado por job programado)
+            Estado de los modelos configurados en funciones de negocio (actualizado por job programado)
           </p>
+          {modelStatuses.length === 0 && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Solo se monitorean los modelos seleccionados en la configuración de IA
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-muted-foreground">
@@ -160,7 +181,22 @@ const AIModelMonitoring = () => {
         </div>
       </div>
 
-      {Object.entries(groupedStatuses).map(([provider, statuses]) => (
+      {modelStatuses.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No hay modelos para monitorear</h3>
+            <p className="text-muted-foreground mb-4">
+              Configure modelos en la sección "Configuración de IA" para comenzar el monitoreo
+            </p>
+            <Button onClick={loadModelStatuses} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Recargar
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        Object.entries(groupedStatuses).map(([provider, statuses]) => (
         <Card key={provider}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -223,7 +259,7 @@ const AIModelMonitoring = () => {
             </div>
           </CardContent>
         </Card>
-      ))}
+      )))}
     </div>
   );
 };

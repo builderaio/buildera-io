@@ -28,6 +28,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
 import ThemeSelector from '@/components/ThemeSelector';
+import AIModelSelection from '@/components/admin/AIModelSelection';
+import AIBusinessConfiguration from '@/components/admin/AIBusinessConfiguration';
 
 interface APIKey {
   id: string;
@@ -868,170 +870,29 @@ const AdminAPIKeys = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="config" className="space-y-4">
+          <TabsContent value="config" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Configuración de Modelos IA</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Configura los modelos de IA que utilizará la plataforma basándose en las API keys disponibles
+                  Configura los modelos de IA que utilizará la plataforma en dos pasos
                 </p>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  {/* Configuración por Proveedor */}
-                  {['openai', 'anthropic', 'google', 'groq', 'xai'].map(provider => {
-                    const providerKeys = apiKeys.filter(key => key.provider === provider && key.status === 'active');
-                    
-                    if (providerKeys.length === 0) return null;
-
-                    const getAvailableModels = (provider: string) => {
-                      const modelMap: { [key: string]: string[] } = {
-                        openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-                        anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-haiku-20240307'],
-                        google: ['gemini-pro', 'gemini-pro-vision', 'gemini-ultra'],
-                        groq: ['llama2-70b-4096', 'mixtral-8x7b-32768', 'gemma-7b-it'],
-                        xai: ['grok-beta', 'grok-vision-beta']
-                      };
-                      return modelMap[provider] || [];
-                    };
-
-                    return (
-                      <Card key={provider}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className={`${getProviderColor(provider)} p-2 rounded-lg`}>
-                              <Settings className="w-4 h-4 text-white" />
-                            </div>
-                            <div>
-                              <h4 className="font-semibold">
-                                {provider === 'xai' ? 'xAI (Grok)' : 
-                                 provider === 'groq' ? 'Groq (Inferencia)' : 
-                                 provider.charAt(0).toUpperCase() + provider.slice(1)}
-                              </h4>
-                              <p className="text-sm text-muted-foreground">
-                                {providerKeys.length} API key{providerKeys.length > 1 ? 's' : ''} disponible{providerKeys.length > 1 ? 's' : ''}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-4">
-                            {/* Modelo por defecto para el proveedor */}
-                            <div>
-                              <Label htmlFor={`${provider}-default-model`}>Modelo por defecto</Label>
-                              <Select>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Seleccionar modelo por defecto" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {getAvailableModels(provider).map(model => (
-                                    <SelectItem key={model} value={model}>
-                                      {model}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            {/* Configuración de API keys específicas */}
-                            <div>
-                              <Label>Configuración por API Key</Label>
-                              <div className="space-y-2 mt-2">
-                                {providerKeys.map(apiKey => (
-                                  <div key={apiKey.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                    <div>
-                                      <p className="font-medium">{apiKey.api_key_name}</p>
-                                      <p className="text-sm text-muted-foreground">•••{apiKey.key_last_four}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <Select defaultValue={apiKey.model_name || ''}>
-                                        <SelectTrigger className="w-48">
-                                          <SelectValue placeholder="Modelo asignado" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {getAvailableModels(provider).map(model => (
-                                            <SelectItem key={model} value={model}>
-                                              {model}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                      <Badge variant={apiKey.status === 'active' ? 'default' : 'secondary'}>
-                                        {apiKey.status === 'active' ? 'Activa' : 'Inactiva'}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Configuración avanzada */}
-                            <div className="border-t pt-4">
-                              <h5 className="font-medium mb-3">Configuración Avanzada</h5>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label htmlFor={`${provider}-priority`}>Prioridad del proveedor</Label>
-                                  <Select>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Seleccionar prioridad" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="high">Alta</SelectItem>
-                                      <SelectItem value="medium">Media</SelectItem>
-                                      <SelectItem value="low">Baja</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div>
-                                  <Label htmlFor={`${provider}-fallback`}>Proveedor de respaldo</Label>
-                                  <Select>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Seleccionar respaldo" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {['openai', 'anthropic', 'google', 'groq', 'xai']
-                                        .filter(p => p !== provider && apiKeys.some(k => k.provider === p && k.status === 'active'))
-                                        .map(p => (
-                                          <SelectItem key={p} value={p}>
-                                            {p === 'xai' ? 'xAI (Grok)' : 
-                                             p === 'groq' ? 'Groq' : 
-                                             p.charAt(0).toUpperCase() + p.slice(1)}
-                                          </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-
-                  {apiKeys.filter(key => key.status === 'active').length === 0 && (
-                    <div className="text-center py-8">
-                      <Settings className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground mb-2">
-                        No hay API keys activas para configurar
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Agrega y activa API keys en la pestaña "API Keys" para configurar los modelos de IA
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Botones de acción */}
-                  {apiKeys.filter(key => key.status === 'active').length > 0 && (
-                    <div className="flex justify-end gap-2 pt-4 border-t">
-                      <Button variant="outline">
-                        Restablecer por defecto
-                      </Button>
-                      <Button>
-                        Guardar configuración
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                <Tabs defaultValue="selection" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="selection">1. Selección de Modelos</TabsTrigger>
+                    <TabsTrigger value="business">2. Configuración de Funciones</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="selection" className="mt-6">
+                    <AIModelSelection />
+                  </TabsContent>
+                  
+                  <TabsContent value="business" className="mt-6">
+                    <AIBusinessConfiguration />
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
           </TabsContent>

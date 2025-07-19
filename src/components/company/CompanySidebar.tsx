@@ -1,4 +1,4 @@
-import { Activity, Building, Users, Settings, Bell, Calendar, Search, FolderOpen, GraduationCap, Store, MessageSquare } from "lucide-react";
+import { Activity, Building, Users, Settings, Bell, Calendar, Search, FolderOpen, GraduationCap, Store, MessageSquare, User } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import ThemeSelector from "@/components/ThemeSelector";
 
@@ -10,9 +10,9 @@ interface CompanySidebarProps {
 }
 
 const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: CompanySidebarProps) => {
-  // Verificar si la información de la empresa está completa
+  // Verificar si la información del negocio está completa
   const isProfileIncomplete = !profile?.company_name || 
-                               profile.company_name === 'Mi Empresa' ||
+                               profile.company_name === 'Mi Negocio' ||
                                !profile?.company_size ||
                                !profile?.industry_sector ||
                                !profile?.full_name;
@@ -29,7 +29,8 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
       category: "General",
       items: [
         { id: "mando-central", label: "Mando Central", icon: Activity },
-        { id: "adn-empresa", label: "ADN de la Empresa", icon: Building },
+        { id: "adn-empresa", label: "Mi Negocio", icon: Building },
+        { id: "base-conocimiento", label: "Mi Información", icon: User },
       ]
     },
     {
@@ -42,7 +43,6 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
     {
       category: "Recursos",
       items: [
-        { id: "base-conocimiento", label: "Base de Conocimiento", icon: FolderOpen },
         { id: "academia-buildera", label: "Academia Buildera", icon: GraduationCap },
         { id: "marketplace", label: "Marketplace", icon: Store },
         { id: "expertos", label: "Conectar Expertos", icon: Users },
@@ -53,21 +53,27 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
   return (
     <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col p-4 fixed h-full">
       <div 
-        className="flex items-center space-x-3 pb-6 border-b border-sidebar-border cursor-pointer hover:opacity-80 transition-opacity"
+        className="flex items-center space-x-3 pb-6 border-b border-sidebar-border cursor-pointer hover:opacity-80 transition-all duration-300 group"
         onClick={() => window.location.href = '/company-dashboard'}
       >
         <div className="relative">
-          <img 
-            src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
-            alt="Buildera Logo" 
-            width="48" 
-            height="48" 
-            className="object-contain"
-          />
+          <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+            <img 
+              src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
+              alt="Buildera Logo" 
+              width="32" 
+              height="32" 
+              className="object-contain filter brightness-0 invert"
+            />
+          </div>
         </div>
-        <div>
-          <span className="font-bold text-2xl tracking-tight text-sidebar-primary">BUILDERA</span>
-          <p className="text-xs text-sidebar-foreground/70 mt-0.5">AI Business Platform</p>
+        <div className="flex flex-col">
+          <span className="font-black text-2xl tracking-wider text-sidebar-primary bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            BUILDERA
+          </span>
+          <p className="text-[10px] font-medium text-sidebar-foreground/60 tracking-widest uppercase mt-0.5 leading-none">
+            AI Business Platform
+          </p>
         </div>
       </div>
       

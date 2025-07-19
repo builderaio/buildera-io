@@ -352,7 +352,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           {mode === "signup" && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="fullName">Nombre del contacto</Label>
+                <Label htmlFor="fullName">
+                  Nombre del contacto <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="fullName"
                   type="text"
@@ -363,7 +365,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyName">Nombre de la empresa</Label>
+                <Label htmlFor="companyName">
+                  Nombre de la empresa <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="companyName"
                   type="text"
@@ -374,7 +378,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companySize">Tamaño de la empresa</Label>
+                <Label htmlFor="companySize">
+                  Tamaño de la empresa <span className="text-destructive">*</span>
+                </Label>
                 <Select value={companySize} onValueChange={setCompanySize} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona el tamaño" />
@@ -389,7 +395,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="industrySector">Sector de la industria</Label>
+                <Label htmlFor="industrySector">
+                  Sector de la industria <span className="text-destructive">*</span>
+                </Label>
                 <Select value={industrySector} onValueChange={setIndustrySector} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona el sector" />
@@ -404,7 +412,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="websiteUrl">Sitio web</Label>
+                <Label htmlFor="websiteUrl">
+                  Sitio web <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="websiteUrl"
                   type="text"
@@ -417,7 +427,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           )}
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email corporativo</Label>
+            <Label htmlFor="email">
+              Email corporativo <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="email"
               type="email"
@@ -429,7 +441,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">
+              Contraseña <span className="text-destructive">*</span>
+            </Label>
             <PasswordInput
               id="password"
               placeholder="Tu contraseña"
@@ -441,7 +455,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           
           {mode === "signup" && (
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <Label htmlFor="confirmPassword">
+                Confirmar contraseña <span className="text-destructive">*</span>
+              </Label>
               <PasswordInput
                 id="confirmPassword"
                 placeholder="Confirma tu contraseña"

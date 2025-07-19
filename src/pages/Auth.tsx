@@ -51,11 +51,13 @@ const Auth = () => {
           </a>
           <div className="text-center">
             <div className="flex justify-center mb-4">
-              <img 
-                src="/lovable-uploads/df793eae-f9ea-4291-9de2-ecf01e5005d5.png" 
-                alt="Buildera Logo" 
-                className="h-16 w-auto"
-              />
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
+                <img 
+                  src="/lovable-uploads/df793eae-f9ea-4291-9de2-ecf01e5005d5.png" 
+                  alt="Buildera Logo" 
+                  className="h-12 w-auto"
+                />
+              </div>
             </div>
             <h1 className="text-3xl font-heading text-white mb-2">
               Únete a Buildera

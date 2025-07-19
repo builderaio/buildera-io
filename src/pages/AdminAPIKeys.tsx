@@ -197,24 +197,78 @@ const AdminAPIKeys = () => {
 
   const refreshUsageData = async () => {
     try {
-      // Esta función llamaría a las APIs de cada proveedor para obtener datos reales
+      setLoading(true);
+      
+      toast({
+        title: "Sincronizando...",
+        description: "Obteniendo datos de uso de todos los proveedores",
+      });
+
       const { data, error } = await supabase.functions.invoke('sync-api-usage');
       
       if (error) throw error;
 
+      const results = data?.results || [];
+      const successCount = results.filter((r: any) => r.success).length;
+      const totalCount = results.length;
+
       toast({
-        title: "Éxito",
-        description: "Datos de uso actualizados",
+        title: `Sincronización completada`,
+        description: `${successCount}/${totalCount} API keys sincronizadas exitosamente`,
       });
 
-      loadUsageData();
-      loadBillingData();
+      await Promise.all([loadUsageData(), loadBillingData()]);
     } catch (error) {
       console.error('Error refreshing usage data:', error);
       toast({
-        title: "Info",
-        description: "Función de sincronización no disponible aún",
-        variant: "default",
+        title: "Error en sincronización",
+        description: "Hubo un problema al sincronizar los datos. Usando datos estimados.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const syncSpecificProvider = async (provider: string) => {
+    try {
+      toast({
+        title: "Sincronizando...",
+        description: `Obteniendo datos de uso de ${provider}`,
+      });
+
+      // Filtrar solo las API keys de este proveedor
+      const providerKeys = apiKeys.filter(key => key.provider === provider && key.status === 'active');
+      
+      if (providerKeys.length === 0) {
+        toast({
+          title: "Info",
+          description: `No hay API keys activas para ${provider}`,
+          variant: "default",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('sync-api-usage');
+      
+      if (error) throw error;
+
+      const results = data?.results || [];
+      const providerResults = results.filter((r: any) => r.provider === provider);
+      const successCount = providerResults.filter((r: any) => r.success).length;
+
+      toast({
+        title: `${provider} sincronizado`,
+        description: `${successCount}/${providerResults.length} API keys actualizadas`,
+      });
+
+      await Promise.all([loadUsageData(), loadBillingData()]);
+    } catch (error) {
+      console.error(`Error syncing ${provider}:`, error);
+      toast({
+        title: "Error",
+        description: `No se pudo sincronizar ${provider}`,
+        variant: "destructive",
       });
     }
   };
@@ -558,8 +612,17 @@ const AdminAPIKeys = () => {
 
           <TabsContent value="usage" className="space-y-4">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <CardTitle>Consumo por Proveedor (Últimos 30 días)</CardTitle>
+                <Button
+                  onClick={refreshUsageData}
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Sincronizar Todo
+                </Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -572,7 +635,7 @@ const AdminAPIKeys = () => {
                         cost: acc.cost + curr.total_cost
                       }), { tokens: 0, requests: 0, cost: 0 });
 
-                    if (providerUsage.tokens === 0) return null;
+                    const hasApiKeys = apiKeys.filter(key => key.provider === provider && key.status === 'active').length > 0;
 
                     return (
                       <div key={provider} className="flex items-center justify-between p-4 border rounded-lg">
@@ -588,28 +651,51 @@ const AdminAPIKeys = () => {
                             </h4>
                             <p className="text-sm text-muted-foreground">
                               {apiKeys.filter(key => key.provider === provider).length} API keys
+                              {hasApiKeys && ' activas'}
+                              {!hasApiKeys && ' - No hay keys activas'}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="grid grid-cols-3 gap-4">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Tokens</p>
-                              <p className="font-semibold">{providerUsage.tokens.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Requests</p>
-                              <p className="font-semibold">{providerUsage.requests.toLocaleString()}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Costo</p>
-                              <p className="font-semibold">${providerUsage.cost.toFixed(2)}</p>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Tokens</p>
+                                <p className="font-semibold">{providerUsage.tokens.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Requests</p>
+                                <p className="font-semibold">{providerUsage.requests.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Costo</p>
+                                <p className="font-semibold">${providerUsage.cost.toFixed(2)}</p>
+                              </div>
                             </div>
                           </div>
+                          {hasApiKeys && (
+                            <Button
+                              onClick={() => syncSpecificProvider(provider)}
+                              size="sm"
+                              variant="ghost"
+                              className="flex items-center"
+                            >
+                              <RefreshCw className="w-4 h-4 mr-1" />
+                              Sync
+                            </Button>
+                          )}
                         </div>
                       </div>
                     );
                   })}
+                  
+                  {apiKeys.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">
+                        No hay API keys configuradas. Agrega una API key para comenzar.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

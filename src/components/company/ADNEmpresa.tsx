@@ -8,11 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar } from "lucide-react";
+import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar, MapPin, Search } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+
+// Declare global google types
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 import CompanyProfileForm from "./CompanyProfileForm";
 
 interface ADNEmpresaProps {
@@ -92,6 +99,13 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     "Otro"
   ];
   
+  // Estados para Google Maps en oficinas centrales
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [searchAddress, setSearchAddress] = useState('');
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  
   const { toast } = useToast();
 
   const companySizes = [
@@ -124,8 +138,105 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       fetchBranding();
       fetchStrategy();
       fetchObjectives();
+      loadGoogleMaps();
     }
   }, [profile?.user_id]);
+  
+  // Funciones para Google Maps
+  const loadGoogleMaps = async () => {
+    if (window.google && window.google.maps) {
+      setMapLoaded(true);
+      return;
+    }
+
+    try {
+      // Obtener API key desde Supabase Edge Function
+      const response = await supabase.functions.invoke('get-google-maps-key');
+      
+      if (response.error || !response.data?.apiKey) {
+        console.warn('Google Maps API key not available:', response.error);
+        toast({
+          title: "Google Maps no disponible",
+          description: "Puedes usar los campos de ubicación manualmente",
+        });
+        return;
+      }
+
+      const apiKey = response.data.apiKey;
+
+      // Cargar Google Maps script
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => {
+        setMapLoaded(true);
+      };
+      
+      script.onerror = () => {
+        toast({
+          title: "Error cargando Google Maps",
+          description: "Puedes introducir la dirección manualmente",
+          variant: "destructive",
+        });
+      };
+      
+      document.head.appendChild(script);
+    } catch (error) {
+      console.error('Error loading Google Maps:', error);
+    }
+  };
+
+  const searchLocation = async () => {
+    if (!searchAddress || !window.google) return;
+
+    const geocoder = new window.google.maps.Geocoder();
+    
+    try {
+      const response = await geocoder.geocode({ address: searchAddress });
+      
+      if (response.results[0]) {
+        const result = response.results[0];
+        const addressComponents = result.address_components;
+        
+        let city = '';
+        let country = '';
+        
+        for (const component of addressComponents) {
+          if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
+            city = component.long_name;
+          }
+          if (component.types.includes('country')) {
+            country = component.long_name;
+          }
+        }
+
+        // Actualizar los campos del perfil
+        onProfileUpdate({
+          ...profile,
+          headquarters_address: result.formatted_address,
+          headquarters_city: city,
+          headquarters_country: country,
+          headquarters_lat: result.geometry.location.lat(),
+          headquarters_lng: result.geometry.location.lng()
+        });
+
+        setSearchAddress('');
+        
+        toast({
+          title: "Ubicación encontrada",
+          description: "La dirección se ha actualizado automáticamente",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo encontrar la dirección",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Funciones para la gestión de productos
   const fetchProducts = async () => {
@@ -1298,12 +1409,53 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="headquarters_address">Dirección oficina central</Label>
-                      <Input
-                        id="headquarters_address"
-                        value={profile?.headquarters_address || ""}
-                        onChange={(e) => onProfileUpdate({...profile, headquarters_address: e.target.value})}
-                        placeholder="Dirección de la oficina principal"
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id="headquarters_address"
+                          value={profile?.headquarters_address || ""}
+                          onChange={(e) => onProfileUpdate({...profile, headquarters_address: e.target.value})}
+                          placeholder="Dirección de la oficina principal"
+                        />
+                        {mapLoaded && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              if (profile?.headquarters_address) {
+                                setSearchAddress(profile.headquarters_address);
+                                searchLocation();
+                              }
+                            }}
+                            className="px-3"
+                          >
+                            <Search className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                      {mapLoaded && (
+                        <div className="flex gap-2 mt-2">
+                          <Input
+                            placeholder="Buscar nueva dirección..."
+                            value={searchAddress}
+                            onChange={(e) => setSearchAddress(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                searchLocation();
+                              }
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={searchLocation}
+                            disabled={!searchAddress.trim()}
+                          >
+                            <Search className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="headquarters_city">Ciudad oficina central</Label>
@@ -1526,7 +1678,6 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 </CardContent>
               </Card>
 
-              <CompanyProfileForm profile={profile} onProfileUpdate={onProfileUpdate} />
             </TabsContent>
 
             <TabsContent value="estrategia" className="space-y-6 mt-6">

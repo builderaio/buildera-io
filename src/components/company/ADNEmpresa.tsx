@@ -1763,7 +1763,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="mision" className="text-sm font-medium">Misión</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="mision" className="text-sm font-medium">Misión</Label>
+                    <EraOptimizerButton
+                      currentText={strategyForm.mision}
+                      fieldType="misión"
+                      context={{
+                        companyName: profile?.company_name,
+                        industry: profile?.industry_sector,
+                        size: profile?.company_size
+                      }}
+                      onOptimized={(optimizedText) => setStrategyForm({...strategyForm, mision: optimizedText})}
+                      size="sm"
+                      disabled={!strategyForm.mision.trim()}
+                    />
+                  </div>
                   <Textarea
                     id="mision"
                     rows={4}
@@ -1775,7 +1789,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="vision" className="text-sm font-medium">Visión</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="vision" className="text-sm font-medium">Visión</Label>
+                    <EraOptimizerButton
+                      currentText={strategyForm.vision}
+                      fieldType="visión"
+                      context={{
+                        companyName: profile?.company_name,
+                        industry: profile?.industry_sector,
+                        size: profile?.company_size
+                      }}
+                      onOptimized={(optimizedText) => setStrategyForm({...strategyForm, vision: optimizedText})}
+                      size="sm"
+                      disabled={!strategyForm.vision.trim()}
+                    />
+                  </div>
                   <Textarea
                     id="vision"
                     rows={4}
@@ -1787,7 +1815,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="propuesta_valor" className="text-sm font-medium">Propuesta de Valor</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="propuesta_valor" className="text-sm font-medium">Propuesta de Valor</Label>
+                    <EraOptimizerButton
+                      currentText={strategyForm.propuesta_valor}
+                      fieldType="propuesta de valor"
+                      context={{
+                        companyName: profile?.company_name,
+                        industry: profile?.industry_sector,
+                        size: profile?.company_size
+                      }}
+                      onOptimized={(optimizedText) => setStrategyForm({...strategyForm, propuesta_valor: optimizedText})}
+                      size="sm"
+                      disabled={!strategyForm.propuesta_valor.trim()}
+                    />
+                  </div>
                   <Textarea
                     id="propuesta_valor"
                     rows={4}
@@ -2101,7 +2143,22 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <Label htmlFor="visual_identity">Descripción de la Identidad Visual</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="visual_identity">Descripción de la Identidad Visual</Label>
+                        <EraOptimizerButton
+                          currentText={brandingForm.visual_identity}
+                          fieldType="identidad visual"
+                          context={{
+                            companyName: profile?.company_name,
+                            industry: profile?.industry_sector,
+                            primaryColor: brandingForm.primary_color,
+                            secondaryColor: brandingForm.secondary_color
+                          }}
+                          onOptimized={(optimizedText) => setBrandingForm({...brandingForm, visual_identity: optimizedText})}
+                          size="sm"
+                          disabled={!brandingForm.visual_identity.trim()}
+                        />
+                      </div>
                       <Textarea
                         id="visual_identity"
                         rows={4}

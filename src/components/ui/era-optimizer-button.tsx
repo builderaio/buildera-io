@@ -218,6 +218,7 @@ export const EraOptimizerButton: React.FC<EraOptimizerButtonProps> = ({
         ) : (
           <>
             <Zap className="w-4 h-4" />
+            Optimizar con{' '}
             <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent font-medium">
               Era
             </span>

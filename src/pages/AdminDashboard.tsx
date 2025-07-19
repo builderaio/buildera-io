@@ -7,9 +7,6 @@ import {
   Users, 
   Building2, 
   BarChart3, 
-  Settings, 
-  LogOut, 
-  Shield,
   Activity,
   DollarSign,
   TrendingUp,
@@ -17,15 +14,20 @@ import {
   UserCheck,
   Database,
   Trophy,
-  Key
+  Key,
+  Brain,
+  Zap,
+  Shield,
+  Settings
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
-import ThemeSelector from '@/components/ThemeSelector';
+import AdminLayout from '@/components/admin/AdminLayout';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 const AdminDashboard = () => {
-  const { user, logout, isAuthenticated } = useAdminAuth();
+  const { isAuthenticated } = useAdminAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
@@ -91,23 +93,17 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    toast({
-      title: "Sesión cerrada",
-      description: "Ha salido del portal admin exitosamente",
-    });
-    navigate('/admin/login');
-  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-lg text-muted-foreground">Cargando dashboard...</p>
+      <AdminLayout>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-lg text-muted-foreground">Cargando dashboard...</p>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
@@ -188,54 +184,19 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card shadow-sm border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
-            <div className="flex items-center min-w-0 flex-1">
-              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary mr-2 sm:mr-3 flex-shrink-0" />
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-xl font-bold text-foreground truncate">Portal Admin</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Buildera</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              <ThemeSelector />
-              <Badge variant="secondary" className="hidden sm:flex">
-                <Shield className="w-3 h-3 mr-1" />
-                {user?.role}
-              </Badge>
-              <span className="text-xs sm:text-sm text-muted-foreground hidden md:block">{user?.username}</span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleLogout}
-                className="flex items-center p-2 sm:px-3"
-              >
-                <LogOut className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Salir</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Welcome Section */}
-        <div className="mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2">
-            Bienvenido al Dashboard Admin
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Monitoreo y gestión del ecosistema Buildera
-          </p>
-        </div>
+    <AdminLayout>
+      <AdminPageHeader
+        title="Dashboard Principal"
+        subtitle="Monitoreo y gestión del ecosistema Buildera"
+        icon={Shield}
+        onRefresh={loadDashboardStats}
+        refreshing={loading}
+      />
+      
+      <main className="flex-1 p-6 overflow-auto">
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statCards.map((stat, index) => {
             const Icon = stat.icon;
             return (
@@ -261,7 +222,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <Card className="mb-6 sm:mb-8 animate-fade-in">
+        <Card className="mb-8 animate-fade-in">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center text-base sm:text-lg">
               <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
@@ -295,7 +256,7 @@ const AdminDashboard = () => {
         {/* Recent Activity */}
         <RecentActivity />
       </main>
-    </div>
+    </AdminLayout>
   );
 };
 

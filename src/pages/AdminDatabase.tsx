@@ -8,8 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  ArrowLeft, 
-  Shield, 
   Database, 
   RefreshCw, 
   Search, 
@@ -26,7 +24,8 @@ import {
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import ThemeSelector from '@/components/ThemeSelector';
+import AdminLayout from '@/components/admin/AdminLayout';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 interface TableInfo {
   table_name: string;
@@ -194,51 +193,33 @@ const AdminDatabase = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando información de base de datos...</p>
+      <AdminLayout>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Cargando información de base de datos...</p>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card shadow-sm border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/admin')}
-                className="flex items-center p-2 sm:px-3 flex-shrink-0"
-              >
-                <ArrowLeft className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Volver al Dashboard</span>
-              </Button>
-              <div className="h-4 sm:h-6 w-px bg-border hidden sm:block" />
-              <div className="flex items-center min-w-0">
-                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-primary mr-2 flex-shrink-0" />
-                <div className="min-w-0">
-                  <h1 className="text-sm sm:text-lg font-bold text-foreground truncate">Administración de Base de Datos</h1>
-                  <p className="text-xs text-muted-foreground hidden sm:block">Portal Admin - Buildera</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              <ThemeSelector />
-              <span className="text-xs sm:text-sm text-muted-foreground hidden md:block">{user?.username}</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <AdminLayout>
+      <AdminPageHeader
+        title="Administración de Base de Datos"
+        subtitle="Monitoreo y gestión de datos del sistema"
+        icon={Database}
+        showBackButton={true}
+        onRefresh={loadDatabaseInfo}
+        refreshing={loading}
+        badge={{
+          text: `${tables.length} tablas`,
+          variant: "secondary"
+        }}
+      />
+      
+      <main className="flex-1 p-6 overflow-auto">
         {/* Database Status */}
         {connectionInfo && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -499,7 +480,7 @@ const AdminDatabase = () => {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
+    </AdminLayout>
   );
 };
 

@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Shield, BarChart3, Users, TrendingUp, Activity, Calendar, Download, RefreshCw } from 'lucide-react';
+import { BarChart3, Users, TrendingUp, Activity, Calendar, Download, RefreshCw } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import ThemeSelector from '@/components/ThemeSelector';
+import AdminLayout from '@/components/admin/AdminLayout';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
 
 interface AnalyticsData {
@@ -385,51 +386,29 @@ const AdminAnalytics = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando analytics...</p>
+      <AdminLayout>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Cargando analytics...</p>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card shadow-sm border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/admin')}
-                className="flex items-center p-2 sm:px-3 flex-shrink-0"
-              >
-                <ArrowLeft className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Volver al Dashboard</span>
-              </Button>
-              <div className="h-4 sm:h-6 w-px bg-border hidden sm:block" />
-              <div className="flex items-center min-w-0">
-                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-primary mr-2 flex-shrink-0" />
-                <div className="min-w-0">
-                  <h1 className="text-sm sm:text-lg font-bold text-foreground truncate">Analytics Avanzados</h1>
-                  <p className="text-xs text-muted-foreground hidden sm:block">Portal Admin - Buildera</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              <ThemeSelector />
-              <span className="text-xs sm:text-sm text-muted-foreground hidden md:block">{user?.username}</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <AdminLayout>
+      <AdminPageHeader
+        title="Analytics Avanzados"
+        subtitle="Reportes y métricas del sistema"
+        icon={BarChart3}
+        showBackButton={true}
+        onRefresh={loadAnalytics}
+        refreshing={loading}
+      />
+      
+      <main className="flex-1 p-6 overflow-auto">
         {/* Controls */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex items-center gap-2">
@@ -609,7 +588,7 @@ const AdminAnalytics = () => {
           </Card>
         </div>
       </main>
-    </div>
+    </AdminLayout>
   );
 };
 

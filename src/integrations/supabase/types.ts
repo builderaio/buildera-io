@@ -146,6 +146,45 @@ export type Database = {
         }
         Relationships: []
       }
+      company_objectives: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          objective_type: string
+          priority: number | null
+          status: string | null
+          target_date: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          objective_type: string
+          priority?: number | null
+          status?: string | null
+          target_date?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          objective_type?: string
+          priority?: number | null
+          status?: string | null
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       company_strategy: {
         Row: {
           created_at: string
@@ -358,6 +397,7 @@ export type Database = {
           auth_provider: string | null
           avatar_url: string | null
           bio: string | null
+          business_objectives: string | null
           company_name: string | null
           company_size: string | null
           country: string | null
@@ -368,12 +408,18 @@ export type Database = {
           full_name: string
           functional_area: string | null
           github_url: string | null
+          headquarters_address: string | null
+          headquarters_city: string | null
+          headquarters_country: string | null
+          headquarters_lat: number | null
+          headquarters_lng: number | null
           id: string
           industry: string | null
           industry_sector: string | null
           linked_providers: string[] | null
           linkedin_profile: string | null
           location: string | null
+          nit: string | null
           phone: string | null
           position: string | null
           skills: string[] | null
@@ -387,6 +433,7 @@ export type Database = {
           auth_provider?: string | null
           avatar_url?: string | null
           bio?: string | null
+          business_objectives?: string | null
           company_name?: string | null
           company_size?: string | null
           country?: string | null
@@ -397,12 +444,18 @@ export type Database = {
           full_name: string
           functional_area?: string | null
           github_url?: string | null
+          headquarters_address?: string | null
+          headquarters_city?: string | null
+          headquarters_country?: string | null
+          headquarters_lat?: number | null
+          headquarters_lng?: number | null
           id?: string
           industry?: string | null
           industry_sector?: string | null
           linked_providers?: string[] | null
           linkedin_profile?: string | null
           location?: string | null
+          nit?: string | null
           phone?: string | null
           position?: string | null
           skills?: string[] | null
@@ -416,6 +469,7 @@ export type Database = {
           auth_provider?: string | null
           avatar_url?: string | null
           bio?: string | null
+          business_objectives?: string | null
           company_name?: string | null
           company_size?: string | null
           country?: string | null
@@ -426,12 +480,18 @@ export type Database = {
           full_name?: string
           functional_area?: string | null
           github_url?: string | null
+          headquarters_address?: string | null
+          headquarters_city?: string | null
+          headquarters_country?: string | null
+          headquarters_lat?: number | null
+          headquarters_lng?: number | null
           id?: string
           industry?: string | null
           industry_sector?: string | null
           linked_providers?: string[] | null
           linkedin_profile?: string | null
           location?: string | null
+          nit?: string | null
           phone?: string | null
           position?: string | null
           skills?: string[] | null

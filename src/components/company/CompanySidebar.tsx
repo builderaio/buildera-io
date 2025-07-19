@@ -127,12 +127,21 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
           </div>
           <div className="ml-3 flex-1">
             <p className="font-bold text-sm text-sidebar-primary">{profile?.company_name || "Empresa"}</p>
-            <button 
-              onClick={onSignOut}
-              className="text-xs text-sidebar-foreground/70 hover:text-sidebar-primary hover:underline"
-            >
-              Cerrar sesión
-            </button>
+            <div className="flex space-x-2 text-xs">
+              <button 
+                onClick={() => window.location.href = '/company-profile'}
+                className="text-sidebar-foreground/70 hover:text-sidebar-primary hover:underline"
+              >
+                Ver perfil
+              </button>
+              <span className="text-sidebar-foreground/50">•</span>
+              <button 
+                onClick={onSignOut}
+                className="text-sidebar-foreground/70 hover:text-sidebar-primary hover:underline"
+              >
+                Cerrar sesión
+              </button>
+            </div>
           </div>
         </div>
       </div>

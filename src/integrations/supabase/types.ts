@@ -14,6 +14,192 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      agent_conversations: {
+        Row: {
+          agent_id: string | null
+          context_data: Json | null
+          created_at: string
+          id: string
+          messages: Json
+          status: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          context_data?: Json | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          status?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          context_data?: Json | null
+          created_at?: string
+          id?: string
+          messages?: Json
+          status?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_ratings: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          id: string
+          rating: number
+          review: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          review?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          review?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_ratings_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agents: {
+        Row: {
+          avatar_url: string | null
+          capabilities: string[] | null
+          category_id: string | null
+          created_at: string
+          description: string
+          detailed_description: string | null
+          id: string
+          is_active: boolean | null
+          model_name: string | null
+          model_provider: string | null
+          monthly_price: number | null
+          name: string
+          popularity_score: number | null
+          price_per_use: number | null
+          pricing_model: string | null
+          rating: number | null
+          sample_conversations: Json | null
+          system_prompt: string
+          total_ratings: number | null
+          updated_at: string
+          use_cases: string[] | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          capabilities?: string[] | null
+          category_id?: string | null
+          created_at?: string
+          description: string
+          detailed_description?: string | null
+          id?: string
+          is_active?: boolean | null
+          model_name?: string | null
+          model_provider?: string | null
+          monthly_price?: number | null
+          name: string
+          popularity_score?: number | null
+          price_per_use?: number | null
+          pricing_model?: string | null
+          rating?: number | null
+          sample_conversations?: Json | null
+          system_prompt: string
+          total_ratings?: number | null
+          updated_at?: string
+          use_cases?: string[] | null
+        }
+        Update: {
+          avatar_url?: string | null
+          capabilities?: string[] | null
+          category_id?: string | null
+          created_at?: string
+          description?: string
+          detailed_description?: string | null
+          id?: string
+          is_active?: boolean | null
+          model_name?: string | null
+          model_provider?: string | null
+          monthly_price?: number | null
+          name?: string
+          popularity_score?: number | null
+          price_per_use?: number | null
+          pricing_model?: string | null
+          rating?: number | null
+          sample_conversations?: Json | null
+          system_prompt?: string
+          total_ratings?: number | null
+          updated_at?: string
+          use_cases?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agents_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "agent_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_model_configurations: {
         Row: {
           created_at: string
@@ -1076,6 +1262,50 @@ export type Database = {
           video_id?: string
         }
         Relationships: []
+      }
+      user_agents: {
+        Row: {
+          added_at: string
+          agent_id: string | null
+          custom_name: string | null
+          custom_settings: Json | null
+          id: string
+          is_favorite: boolean | null
+          last_used_at: string | null
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          agent_id?: string | null
+          custom_name?: string | null
+          custom_settings?: Json | null
+          id?: string
+          is_favorite?: boolean | null
+          last_used_at?: string | null
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          agent_id?: string | null
+          custom_name?: string | null
+          custom_settings?: Json | null
+          id?: string
+          is_favorite?: boolean | null
+          last_used_at?: string | null
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_agents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_tutorials: {
         Row: {

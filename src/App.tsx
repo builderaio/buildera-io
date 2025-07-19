@@ -26,6 +26,8 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminAIMonitoring from "./pages/AdminAIMonitoring";
 import AdminChampionChallenge from "./pages/AdminChampionChallenge";
 import AdminAIConfig from "./pages/AdminAIConfig";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminDatabase from "./pages/AdminDatabase";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import UserProfile from "./pages/UserProfile";
 
@@ -104,6 +106,16 @@ const App = () => {
               <Route path="/admin/ai-config" element={
                 <AdminProtectedRoute>
                   <AdminAIConfig />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/analytics" element={
+                <AdminProtectedRoute>
+                  <AdminAnalytics />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/database" element={
+                <AdminProtectedRoute>
+                  <AdminDatabase />
                 </AdminProtectedRoute>
               } />
               

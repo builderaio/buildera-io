@@ -14,6 +14,8 @@ import Marketplace from "@/components/company/Marketplace";
 import Expertos from "@/components/company/Expertos";
 import Configuracion from "@/components/company/Configuracion";
 import UserProfile from "./UserProfile";
+import EraCoachMark from "@/components/ui/era-coach-mark";
+import { useEraCoachMark } from "@/hooks/useEraCoachMark";
 import { User } from "@supabase/supabase-js";
 
 const CompanyDashboard = () => {
@@ -24,6 +26,9 @@ const CompanyDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  
+  // Era coach mark
+  const { shouldShowCoachMark, hideCoachMark, resetTutorial, isLoading: coachMarkLoading } = useEraCoachMark(user?.id);
 
   useEffect(() => {
     // Check for view parameter in URL
@@ -194,7 +199,7 @@ const CompanyDashboard = () => {
       case "expertos":
         return <Expertos />;
       case "configuracion":
-        return <Configuracion profile={profile} />;
+        return <Configuracion profile={profile} resetTutorial={resetTutorial} />;
       case "profile":
         return <UserProfile />;
       default:
@@ -224,6 +229,15 @@ const CompanyDashboard = () => {
       <main className="flex-1 p-8 overflow-y-auto ml-64">
         {renderContent()}
       </main>
+      
+      {/* Era Coach Mark */}
+      {user && shouldShowCoachMark && (
+        <EraCoachMark
+          isOpen={shouldShowCoachMark}
+          onClose={hideCoachMark}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 };

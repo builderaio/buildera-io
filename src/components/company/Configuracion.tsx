@@ -1,13 +1,16 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { RotateCcw, Zap } from "lucide-react";
 import AuthMethodManager from "@/components/auth/AuthMethodManager";
 
 interface ConfiguracionProps {
   profile: any;
+  resetTutorial?: () => Promise<void>;
 }
 
-const Configuracion = ({ profile }: ConfiguracionProps) => {
+const Configuracion = ({ profile, resetTutorial }: ConfiguracionProps) => {
   return (
     <div>
       <header className="mb-8">
@@ -20,10 +23,11 @@ const Configuracion = ({ profile }: ConfiguracionProps) => {
       <Card>
         <CardContent className="p-8">
           <Tabs defaultValue="usuarios" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="usuarios">Usuarios y Roles</TabsTrigger>
               <TabsTrigger value="autenticacion">Autenticación</TabsTrigger>
-              <TabsTrigger value="facturacion">Facturación y Suscripción</TabsTrigger>
+              <TabsTrigger value="tutoriales">Tutoriales</TabsTrigger>
+              <TabsTrigger value="facturacion">Facturación</TabsTrigger>
             </TabsList>
 
             <TabsContent value="usuarios" className="mt-6">
@@ -74,6 +78,50 @@ const Configuracion = ({ profile }: ConfiguracionProps) => {
 
             <TabsContent value="autenticacion" className="mt-6">
               <AuthMethodManager />
+            </TabsContent>
+
+            <TabsContent value="tutoriales" className="mt-6">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-foreground mb-2">Tutoriales y Guías</h3>
+                  <p className="text-muted-foreground">
+                    Gestiona los tutoriales y guías de introducción que ya has visto.
+                  </p>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center">
+                        <Zap className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">Tutorial de Era</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Introducción al asistente de IA de Buildera
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={resetTutorial}
+                      disabled={!resetTutorial}
+                      className="gap-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Ver de nuevo
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      💡 Al hacer clic en "Ver de nuevo", el tutorial de Era aparecerá la próxima vez que cargues la página o inmediatamente si recargas.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="facturacion" className="mt-6">

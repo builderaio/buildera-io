@@ -356,6 +356,8 @@ export type Database = {
       profiles: {
         Row: {
           auth_provider: string | null
+          avatar_url: string | null
+          bio: string | null
           company_name: string | null
           company_size: string | null
           country: string | null
@@ -364,11 +366,16 @@ export type Database = {
           experience_years: number | null
           expertise_areas: string[] | null
           full_name: string
+          functional_area: string | null
           github_url: string | null
           id: string
           industry: string | null
           industry_sector: string | null
           linked_providers: string[] | null
+          linkedin_profile: string | null
+          location: string | null
+          phone: string | null
+          position: string | null
           skills: string[] | null
           updated_at: string
           user_id: string
@@ -378,6 +385,8 @@ export type Database = {
         }
         Insert: {
           auth_provider?: string | null
+          avatar_url?: string | null
+          bio?: string | null
           company_name?: string | null
           company_size?: string | null
           country?: string | null
@@ -386,11 +395,16 @@ export type Database = {
           experience_years?: number | null
           expertise_areas?: string[] | null
           full_name: string
+          functional_area?: string | null
           github_url?: string | null
           id?: string
           industry?: string | null
           industry_sector?: string | null
           linked_providers?: string[] | null
+          linkedin_profile?: string | null
+          location?: string | null
+          phone?: string | null
+          position?: string | null
           skills?: string[] | null
           updated_at?: string
           user_id: string
@@ -400,6 +414,8 @@ export type Database = {
         }
         Update: {
           auth_provider?: string | null
+          avatar_url?: string | null
+          bio?: string | null
           company_name?: string | null
           company_size?: string | null
           country?: string | null
@@ -408,11 +424,16 @@ export type Database = {
           experience_years?: number | null
           expertise_areas?: string[] | null
           full_name?: string
+          functional_area?: string | null
           github_url?: string | null
           id?: string
           industry?: string | null
           industry_sector?: string | null
           linked_providers?: string[] | null
+          linkedin_profile?: string | null
+          location?: string | null
+          phone?: string | null
+          position?: string | null
           skills?: string[] | null
           updated_at?: string
           user_id?: string

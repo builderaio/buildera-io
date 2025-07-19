@@ -69,9 +69,13 @@ const Header = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
+              <User className="mr-2 h-4 w-4" />
+              Mi Perfil
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => window.location.href = '/company-dashboard'}>
               <User className="mr-2 h-4 w-4" />
-              Dashboard
+              Dashboard Empresa
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut}>

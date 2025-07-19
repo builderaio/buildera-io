@@ -4,8 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import DeveloperAuth from "@/components/auth/DeveloperAuth";
-import ExpertAuth from "@/components/auth/ExpertAuth";
 import CompanyAuth from "@/components/auth/CompanyAuth";
 import authBackground from "@/assets/auth-background.jpg";
 
@@ -104,17 +102,9 @@ const Auth = () => {
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="developer">Desarrollador</TabsTrigger>
-                <TabsTrigger value="expert">Experto</TabsTrigger>
-                <TabsTrigger value="company">Empresa</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-1">
+                <TabsTrigger value="company">Negocio</TabsTrigger>
               </TabsList>
-              <TabsContent value="developer" className="mt-6">
-                <DeveloperAuth mode={authMode} onModeChange={setAuthMode} />
-              </TabsContent>
-              <TabsContent value="expert" className="mt-6">
-                <ExpertAuth mode={authMode} onModeChange={setAuthMode} />
-              </TabsContent>
               <TabsContent value="company" className="mt-6">
                 <CompanyAuth mode={authMode} onModeChange={setAuthMode} />
               </TabsContent>

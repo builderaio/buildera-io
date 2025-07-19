@@ -270,6 +270,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
 
   const handleSocialAuth = async (provider: 'google' | 'linkedin_oidc') => {
     try {
+      console.log(`🔗 Iniciando autenticación con ${provider}...`);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -281,11 +283,15 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error(`❌ Error OAuth ${provider}:`, error);
+        throw error;
+      }
     } catch (error: any) {
+      console.error(`❌ Error en autenticación ${provider}:`, error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Error de Autenticación",
+        description: error.message || `Error al conectar con ${provider}. Por favor, intenta de nuevo.`,
         variant: "destructive",
       });
     }

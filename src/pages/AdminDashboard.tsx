@@ -21,6 +21,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
+import ThemeSelector from '@/components/ThemeSelector';
 
 const AdminDashboard = () => {
   const { user, logout, isAuthenticated } = useAdminAuth();
@@ -100,10 +101,10 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-slate-800 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Cargando dashboard...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-lg text-muted-foreground">Cargando dashboard...</p>
         </div>
       </div>
     );
@@ -180,25 +181,26 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
+      <header className="bg-card shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center min-w-0 flex-1">
-              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-slate-800 mr-2 sm:mr-3 flex-shrink-0" />
+              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary mr-2 sm:mr-3 flex-shrink-0" />
               <div className="min-w-0">
-                <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">Portal Admin</h1>
-                <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">Buildera</p>
+                <h1 className="text-base sm:text-xl font-bold text-foreground truncate">Portal Admin</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Buildera</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              <Badge variant="secondary" className="bg-green-100 text-green-800 hidden sm:flex">
+              <ThemeSelector />
+              <Badge variant="secondary" className="hidden sm:flex">
                 <Shield className="w-3 h-3 mr-1" />
                 {user?.role}
               </Badge>
-              <span className="text-xs sm:text-sm text-gray-700 hidden md:block">{user?.username}</span>
+              <span className="text-xs sm:text-sm text-muted-foreground hidden md:block">{user?.username}</span>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -217,10 +219,10 @@ const AdminDashboard = () => {
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Welcome Section */}
         <div className="mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2">
             Bienvenido al Dashboard Admin
           </h2>
-          <p className="text-sm sm:text-base text-gray-600">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Monitoreo y gestión del ecosistema Buildera
           </p>
         </div>
@@ -234,8 +236,8 @@ const AdminDashboard = () => {
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{stat.title}</p>
-                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">{stat.value}</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">{stat.title}</p>
+                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">{stat.value}</p>
                       <p className="text-xs sm:text-sm text-green-600 flex items-center mt-1">
                         <TrendingUp className="w-3 h-3 mr-1 flex-shrink-0" />
                         <span className="truncate">{stat.change}</span>
@@ -267,15 +269,15 @@ const AdminDashboard = () => {
                   <div
                     key={index}
                     onClick={action.action}
-                    className="p-3 sm:p-4 border rounded-lg hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors group hover-scale"
+                    className="p-3 sm:p-4 border rounded-lg hover:bg-accent/50 active:bg-accent cursor-pointer transition-colors group hover-scale"
                   >
                     <div className="flex items-start mb-2 sm:mb-3">
-                      <div className="bg-slate-100 p-2 rounded-lg group-hover:bg-slate-200 transition-colors flex-shrink-0">
-                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" />
+                      <div className="bg-muted p-2 rounded-lg group-hover:bg-muted/80 transition-colors flex-shrink-0">
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                       </div>
-                      <h3 className="ml-2 sm:ml-3 font-semibold text-gray-900 text-sm sm:text-base leading-tight">{action.title}</h3>
+                      <h3 className="ml-2 sm:ml-3 font-semibold text-foreground text-sm sm:text-base leading-tight">{action.title}</h3>
                     </div>
-                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{action.description}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{action.description}</p>
                   </div>
                 );
               })}
@@ -436,7 +438,7 @@ const RecentActivity = () => {
       <CardContent>
         {loading ? (
           <div className="flex items-center justify-center py-6 sm:py-8">
-            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-slate-800"></div>
+            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
           </div>
         ) : recentActivity.length > 0 ? (
           <div className="space-y-3 sm:space-y-4">
@@ -448,10 +450,10 @@ const RecentActivity = () => {
                     <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">{activity.title}</p>
-                    <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{activity.description}</p>
+                    <p className="font-medium text-foreground text-sm sm:text-base">{activity.title}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{activity.description}</p>
                   </div>
-                  <span className="ml-2 text-xs text-gray-500 flex-shrink-0">
+                  <span className="ml-2 text-xs text-muted-foreground flex-shrink-0">
                     {getTimeAgo(activity.timestamp)}
                   </span>
                 </div>
@@ -460,8 +462,8 @@ const RecentActivity = () => {
           </div>
         ) : (
           <div className="text-center py-6 sm:py-8">
-            <Activity className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-sm sm:text-base text-gray-500">No hay actividad reciente en las últimas 24 horas</p>
+            <Activity className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-sm sm:text-base text-muted-foreground">No hay actividad reciente en las últimas 24 horas</p>
           </div>
         )}
       </CardContent>

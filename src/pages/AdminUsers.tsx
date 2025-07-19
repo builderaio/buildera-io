@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
+import ThemeSelector from '@/components/ThemeSelector';
 
 interface UserProfile {
   id: string;
@@ -120,19 +121,19 @@ const AdminUsers = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-slate-800 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Cargando usuarios...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-lg text-muted-foreground">Cargando usuarios...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
+      <header className="bg-card shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
@@ -145,14 +146,18 @@ const AdminUsers = () => {
                 <ArrowLeft className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Volver</span>
               </Button>
-              <div className="h-4 sm:h-6 w-px bg-gray-300 hidden sm:block" />
+              <div className="h-4 sm:h-6 w-px bg-border hidden sm:block" />
               <div className="flex items-center min-w-0">
-                <Shield className="w-5 h-5 sm:w-8 sm:h-8 text-slate-800 mr-2 sm:mr-3 flex-shrink-0" />
+                <Shield className="w-5 h-5 sm:w-8 sm:h-8 text-primary mr-2 sm:mr-3 flex-shrink-0" />
                 <div className="min-w-0">
-                  <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">Gestión de Usuarios</h1>
-                  <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">Portal Admin - Buildera</p>
+                  <h1 className="text-sm sm:text-xl font-bold text-foreground truncate">Gestión de Usuarios</h1>
+                  <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Portal Admin - Buildera</p>
                 </div>
               </div>
+            </div>
+            
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <ThemeSelector />
             </div>
           </div>
         </div>
@@ -231,15 +236,15 @@ const AdminUsers = () => {
               {filteredUsers.map((user) => {
                 const UserTypeIcon = getUserTypeIcon(user.user_type);
                 return (
-                  <div key={user.id} className="border rounded-lg p-3 sm:p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors hover-scale">
+                  <div key={user.id} className="border rounded-lg p-3 sm:p-4 hover:bg-accent/50 active:bg-accent transition-colors hover-scale">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
-                        <div className="bg-slate-100 p-2 rounded-lg flex-shrink-0">
-                          <UserTypeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" />
+                        <div className="bg-muted p-2 rounded-lg flex-shrink-0">
+                          <UserTypeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{user.full_name || 'Sin nombre'}</h3>
+                            <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{user.full_name || 'Sin nombre'}</h3>
                             <div className="flex items-center gap-2 flex-wrap">
                               <Badge className={`${getUserTypeBadge(user.user_type)} text-xs`}>
                                 {user.user_type}
@@ -253,7 +258,7 @@ const AdminUsers = () => {
                             </div>
                           </div>
                           
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs sm:text-sm text-gray-600">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs sm:text-sm text-muted-foreground">
                             <div className="flex items-center min-w-0">
                               <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
                               <span className="truncate">{user.email}</span>
@@ -314,8 +319,8 @@ const AdminUsers = () => {
               
               {filteredUsers.length === 0 && (
                 <div className="text-center py-6 sm:py-8">
-                  <Users className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm sm:text-base text-gray-500">No se encontraron usuarios con los filtros aplicados</p>
+                  <Users className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm sm:text-base text-muted-foreground">No se encontraron usuarios con los filtros aplicados</p>
                 </div>
               )}
             </div>

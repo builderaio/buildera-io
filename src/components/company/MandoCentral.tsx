@@ -1,10 +1,11 @@
-import { Activity, Clock, Users, Zap, Store, UserCheck, Bot } from "lucide-react";
+import { Activity, Clock, Users, Zap, Store, UserCheck, Bot, TrendingUp, Sparkles, Target, ArrowRight } from "lucide-react";
 
 interface MandoCentralProps {
   profile: any;
+  onNavigate?: (view: string) => void;
 }
 
-const MandoCentral = ({ profile }: MandoCentralProps) => {
+const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
   const kpis = [
     {
       title: "Tareas Automatizadas",
@@ -79,6 +80,121 @@ const MandoCentral = ({ profile }: MandoCentralProps) => {
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* Próxima Mejora Section */}
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold text-primary mb-4">🚀 Próxima Mejora para su Empresa</h2>
+        <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 p-6 rounded-lg shadow-sm border border-primary/20">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                Acelere su crecimiento con automatización inteligente
+              </h3>
+              <p className="text-muted-foreground">
+                Basado en su perfil y uso actual, hemos identificado oportunidades clave para aumentar su eficiencia operativa.
+              </p>
+            </div>
+            <div className="hidden md:block">
+              <div className="bg-primary/20 p-4 rounded-full">
+                <TrendingUp className="w-8 h-8 text-primary" />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {/* CTA 1: Conectar más redes sociales */}
+            <div 
+              className="bg-card p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border border-transparent hover:border-primary/20"
+              onClick={() => onNavigate?.('marketing-hub')}
+            >
+              <div className="flex items-center mb-3">
+                <div className="bg-blue-100 p-2 rounded-lg">
+                  <Sparkles className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="ml-3">
+                  <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">Marketing Automático</h4>
+                  <p className="text-sm text-muted-foreground">+40% engagement</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Conecte LinkedIn, Instagram y TikTok para contenido automatizado multiplataforma
+              </p>
+              <div className="flex items-center text-primary group-hover:text-accent transition-colors">
+                <span className="text-sm font-medium">Conectar ahora</span>
+                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+
+            {/* CTA 2: Generar contenido con IA */}
+            <div 
+              className="bg-card p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border border-transparent hover:border-secondary/20"
+              onClick={() => onNavigate?.('adn-empresa')}
+            >
+              <div className="flex items-center mb-3">
+                <div className="bg-purple-100 p-2 rounded-lg">
+                  <Bot className="w-5 h-5 text-purple-600" />
+                </div>
+                <div className="ml-3">
+                  <h4 className="font-semibold text-foreground group-hover:text-secondary transition-colors">Contenido IA</h4>
+                  <p className="text-sm text-muted-foreground">-70% tiempo</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Genere posts, emails y campañas personalizadas usando IA avanzada
+              </p>
+              <div className="flex items-center text-secondary group-hover:text-accent transition-colors">
+                <span className="text-sm font-medium">Activar IA</span>
+                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+
+            {/* CTA 3: Analytics avanzados */}
+            <div 
+              className="bg-card p-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border border-transparent hover:border-accent/20"
+              onClick={() => onNavigate?.('inteligencia-competitiva')}
+            >
+              <div className="flex items-center mb-3">
+                <div className="bg-green-100 p-2 rounded-lg">
+                  <Target className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="ml-3">
+                  <h4 className="font-semibold text-foreground group-hover:text-accent-foreground transition-colors">Analytics Pro</h4>
+                  <p className="text-sm text-muted-foreground">+150% ROI</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Insights predictivos y optimización automática de sus campañas
+              </p>
+              <div className="flex items-center text-accent-foreground group-hover:text-primary transition-colors">
+                <span className="text-sm font-medium">Ver insights</span>
+                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="bg-primary/20 p-2 rounded-lg mr-3">
+                  <Zap className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-primary">Impulso Empresarial Completo</p>
+                  <p className="text-sm text-muted-foreground">
+                    Implemente las 3 mejoras y aumente su eficiencia operativa en un 85%
+                  </p>
+                </div>
+              </div>
+              <button 
+                className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors font-medium"
+                onClick={() => onNavigate?.('marketing-hub')}
+              >
+                Comenzar Plan
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 

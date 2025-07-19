@@ -177,7 +177,7 @@ const CompanyDashboard = () => {
   const renderContent = () => {
     switch (activeView) {
       case "mando-central":
-        return <MandoCentral profile={profile} />;
+        return <MandoCentral profile={profile} onNavigate={setActiveView} />;
       case "adn-empresa":
         return <ADNEmpresa profile={profile} onProfileUpdate={setProfile} />;
       case "marketing-hub":
@@ -195,7 +195,7 @@ const CompanyDashboard = () => {
       case "configuracion":
         return <Configuracion profile={profile} />;
       default:
-        return <MandoCentral profile={profile} />;
+        return <MandoCentral profile={profile} onNavigate={setActiveView} />;
     }
   };
 

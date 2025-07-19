@@ -656,6 +656,42 @@ export type Database = {
         }
         Relationships: []
       }
+      era_prompt_templates: {
+        Row: {
+          created_at: string
+          field_type: string
+          id: string
+          is_active: boolean | null
+          max_words: number | null
+          specific_instructions: string
+          system_prompt: string
+          tone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          field_type: string
+          id?: string
+          is_active?: boolean | null
+          max_words?: number | null
+          specific_instructions: string
+          system_prompt: string
+          tone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          field_type?: string
+          id?: string
+          is_active?: boolean | null
+          max_words?: number | null
+          specific_instructions?: string
+          system_prompt?: string
+          tone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       facebook_instagram_connections: {
         Row: {
           access_token: string

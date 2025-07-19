@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain } from "lucide-react";
 import AIModelSelection from '@/components/admin/AIModelSelection';
 import AIBusinessConfiguration from '@/components/admin/AIBusinessConfiguration';
+import EraPromptConfiguration from '@/components/admin/EraPromptConfiguration';
 
 export default function ConfiguracionIA() {
   return (
@@ -27,9 +28,10 @@ export default function ConfiguracionIA() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="selection" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="selection">1. Selección de Modelos</TabsTrigger>
-              <TabsTrigger value="business">2. Configuración de Funciones</TabsTrigger>
+              <TabsTrigger value="business">2. Funciones de Negocio</TabsTrigger>
+              <TabsTrigger value="prompts">3. Prompts de Era</TabsTrigger>
             </TabsList>
             
             <TabsContent value="selection" className="mt-6">
@@ -38,6 +40,10 @@ export default function ConfiguracionIA() {
             
             <TabsContent value="business" className="mt-6">
               <AIBusinessConfiguration />
+            </TabsContent>
+            
+            <TabsContent value="prompts" className="mt-6">
+              <EraPromptConfiguration />
             </TabsContent>
           </Tabs>
         </CardContent>

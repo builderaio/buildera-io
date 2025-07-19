@@ -48,103 +48,64 @@ serve(async (req) => {
       );
     }
 
-    // Crear el prompt especializado según el tipo de campo
-    let systemPrompt = `Eres Era, la IA especializada de Buildera. Tu trabajo es optimizar contenido empresarial para que sea más profesional, claro y persuasivo.
+    // Obtener el template de prompt desde la base de datos
+    let promptTemplate;
+    
+    // Buscar template específico para el tipo de campo
+    const { data: specificTemplate, error: specificError } = await supabase
+      .from('era_prompt_templates')
+      .select('*')
+      .eq('field_type', fieldType.toLowerCase())
+      .eq('is_active', true)
+      .single();
 
-Instrucciones generales:
-- Mantén el mensaje central del texto original
-- Mejora la claridad y profesionalismo
-- Usa un tono corporativo pero accesible
-- Optimiza para impacto y memorabilidad
-- Evita jerga excesiva
-- Mantén la longitud apropiada para el tipo de campo`;
-
-    let specificInstructions = '';
-
-    switch (fieldType.toLowerCase()) {
-      case 'misión':
-      case 'misión empresarial':
-        specificInstructions = `
-Optimiza esta MISIÓN EMPRESARIAL:
-- Debe ser clara y inspiradora
-- Enfocada en el propósito de la empresa
-- Incluye el valor que aporta a clientes/sociedad
-- Máximo 150 palabras
-- Usa verbos en presente`;
-        break;
-
-      case 'visión':
-      case 'visión empresarial':
-        specificInstructions = `
-Optimiza esta VISIÓN EMPRESARIAL:
-- Debe ser aspiracional y motivadora
-- Enfocada en el futuro deseado
-- Inspire a empleados y stakeholders
-- Máximo 100 palabras
-- Usa un lenguaje futuro y positivo`;
-        break;
-
-      case 'valores':
-      case 'valores empresariales':
-        specificInstructions = `
-Optimiza estos VALORES EMPRESARIALES:
-- Deben ser principios claros y accionables
-- Reflejen la cultura de la empresa
-- Sean memorables y aplicables
-- Formato de lista o párrafo breve
-- Máximo 120 palabras`;
-        break;
-
-      case 'descripción de producto':
-      case 'producto':
-        specificInstructions = `
-Optimiza esta DESCRIPCIÓN DE PRODUCTO:
-- Enfócate en beneficios, no solo características
-- Incluye propuesta de valor única
-- Dirígete al público objetivo
-- Usa lenguaje persuasivo pero factual
-- Máximo 200 palabras`;
-        break;
-
-      case 'objetivo empresarial':
-      case 'objetivo':
-        specificInstructions = `
-Optimiza este OBJETIVO EMPRESARIAL:
-- Debe ser específico y medible
-- Orientado a resultados
-- Temporalmente definido
-- Realista pero ambicioso
-- Máximo 100 palabras`;
-        break;
-
-      case 'descripción de empresa':
-      case 'sobre nosotros':
-        specificInstructions = `
-Optimiza esta DESCRIPCIÓN DE EMPRESA:
-- Historia y propósito claros
-- Diferenciadores competitivos
-- Enfoque en valor al cliente
-- Tono profesional y confiable
-- Máximo 250 palabras`;
-        break;
-
-      default:
-        specificInstructions = `
-Optimiza este CONTENIDO EMPRESARIAL:
-- Mejora claridad y profesionalismo
-- Mantén el mensaje principal
-- Optimiza para impacto
-- Usa lenguaje empresarial apropiado`;
+    if (specificError && specificError.code !== 'PGRST116') {
+      console.error('Error loading specific prompt template:', specificError);
     }
+
+    if (!specificTemplate) {
+      // Si no encuentra template específico, usar el default
+      const { data: defaultTemplate, error: defaultError } = await supabase
+        .from('era_prompt_templates')
+        .select('*')
+        .eq('field_type', 'default')
+        .eq('is_active', true)
+        .single();
+
+      if (defaultError) {
+        console.error('Error loading default prompt template:', defaultError);
+        // Fallback a prompt hardcodeado
+        promptTemplate = {
+          system_prompt: 'Eres Era, la IA especializada de Buildera. Tu trabajo es optimizar contenido empresarial para que sea más profesional, claro y persuasivo.',
+          specific_instructions: 'Optimiza este CONTENIDO EMPRESARIAL:\n- Mejora claridad y profesionalismo\n- Mantén el mensaje principal\n- Optimiza para impacto\n- Usa lenguaje empresarial apropiado',
+          max_words: 200,
+          tone: 'professional'
+        };
+      } else {
+        promptTemplate = defaultTemplate;
+      }
+    } else {
+      promptTemplate = specificTemplate;
+    }
+
+    const systemPrompt = promptTemplate.system_prompt;
+    const specificInstructions = promptTemplate.specific_instructions;
+
+    // Crear el prompt completo con contexto
+    const contextInfo = [
+      context.companyName ? `Empresa: ${context.companyName}` : '',
+      context.industry ? `Industria: ${context.industry}` : '',
+      context.size ? `Tamaño: ${context.size}` : '',
+      `Tono deseado: ${promptTemplate.tone}`,
+      `Máximo de palabras: ${promptTemplate.max_words}`
+    ].filter(Boolean).join('\n');
 
     const fullPrompt = `${systemPrompt}
 
 ${specificInstructions}
 
-Contexto adicional de la empresa:
-${context.companyName ? `Empresa: ${context.companyName}` : ''}
-${context.industry ? `Industria: ${context.industry}` : ''}
-${context.size ? `Tamaño: ${context.size}` : ''}
+Contexto adicional:
+${contextInfo}
 
 TEXTO ORIGINAL:
 "${text}"
@@ -172,6 +133,7 @@ TEXTO OPTIMIZADO:`;
     };
 
     console.log('Using AI config:', aiConfig);
+    console.log('Using prompt template:', promptTemplate.field_type || 'default');
     console.log('Enviando prompt a OpenAI:', fullPrompt);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -215,7 +177,10 @@ TEXTO OPTIMIZADO:`;
         optimizedText,
         originalLength: text.length,
         optimizedLength: optimizedText.length,
-        fieldType
+        fieldType,
+        templateUsed: promptTemplate.field_type || 'default',
+        tone: promptTemplate.tone,
+        maxWords: promptTemplate.max_words
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

@@ -257,6 +257,183 @@ export type Database = {
         }
         Relationships: []
       }
+      content_clusters: {
+        Row: {
+          avg_engagement: number | null
+          cluster_name: string
+          content_theme: string
+          created_at: string
+          embedding_centroid: string | null
+          id: string
+          platform: string
+          post_count: number | null
+          representative_posts: string[] | null
+          top_hashtags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_engagement?: number | null
+          cluster_name: string
+          content_theme: string
+          created_at?: string
+          embedding_centroid?: string | null
+          id?: string
+          platform: string
+          post_count?: number | null
+          representative_posts?: string[] | null
+          top_hashtags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_engagement?: number | null
+          cluster_name?: string
+          content_theme?: string
+          created_at?: string
+          embedding_centroid?: string | null
+          id?: string
+          platform?: string
+          post_count?: number | null
+          representative_posts?: string[] | null
+          top_hashtags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_embeddings: {
+        Row: {
+          content_text: string
+          created_at: string
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          platform: string
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_text: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          platform: string
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_text?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          platform?: string
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_recommendations: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          description: string
+          id: string
+          platform: string
+          recommendation_type: string
+          similar_post_ids: string[] | null
+          status: string | null
+          suggested_content: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          platform: string
+          recommendation_type: string
+          similar_post_ids?: string[] | null
+          status?: string | null
+          suggested_content?: Json | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          platform?: string
+          recommendation_type?: string
+          similar_post_ids?: string[] | null
+          status?: string | null
+          suggested_content?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      data_processing_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          job_type: string
+          metadata: Json | null
+          platform: string
+          processed_items: number | null
+          progress: number | null
+          started_at: string | null
+          status: string
+          total_items: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type: string
+          metadata?: Json | null
+          platform: string
+          processed_items?: number | null
+          progress?: number | null
+          started_at?: string | null
+          status?: string
+          total_items?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type?: string
+          metadata?: Json | null
+          platform?: string
+          processed_items?: number | null
+          progress?: number | null
+          started_at?: string | null
+          status?: string
+          total_items?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       facebook_instagram_connections: {
         Row: {
           access_token: string
@@ -933,6 +1110,10 @@ export type Database = {
         Args: { _user_id: string; _provider: string }
         Returns: undefined
       }
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
       get_ai_model_config: {
         Args: { function_name_param: string }
         Returns: {
@@ -944,9 +1125,97 @@ export type Database = {
           presence_penalty: number
         }[]
       }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
       remove_linked_provider: {
         Args: { _user_id: string; _provider: string }
         Returns: undefined
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
     }
     Enums: {

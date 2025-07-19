@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Activity, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ModelStatus {
   provider: string;
@@ -15,75 +16,63 @@ interface ModelStatus {
   errorRate: number;
 }
 
-const AI_PROVIDERS = [
-  {
-    provider: 'OpenAI',
-    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-3.5-turbo'],
-    statusUrl: 'https://status.openai.com/api/v2/status.json'
-  },
-  {
-    provider: 'Anthropic', 
-    models: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
-    statusUrl: 'https://status.anthropic.com/api/v2/status.json'
-  },
-  {
-    provider: 'Google',
-    models: ['gemini-pro', 'gemini-pro-vision', 'gemini-1.5-pro'],
-    statusUrl: 'https://status.cloud.google.com/incidents.json'
-  },
-  {
-    provider: 'xAI',
-    models: ['grok-beta', 'grok-1'],
-    statusUrl: null // No public status API
-  }
-];
 
 const AIModelMonitoring = () => {
   const [modelStatuses, setModelStatuses] = useState<ModelStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
-  const checkModelStatuses = async () => {
+  const loadModelStatuses = async () => {
     setLoading(true);
     try {
-      const statuses: ModelStatus[] = [];
-      
-      for (const provider of AI_PROVIDERS) {
-        for (const model of provider.models) {
-          // Simular check de status (en producción, estos serían llamadas reales a APIs de status)
-          const mockStatus = await simulateStatusCheck(provider.provider, model);
-          statuses.push(mockStatus);
-        }
-      }
-      
-      setModelStatuses(statuses);
+      // Cargar datos de la base de datos desde la tabla ai_model_status_logs
+      const { data, error } = await supabase
+        .from('ai_model_status_logs')
+        .select('*')
+        .order('last_checked', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedStatuses: ModelStatus[] = data?.map(log => ({
+        provider: log.provider,
+        name: log.name,
+        status: log.status as ModelStatus['status'],
+        responseTime: log.response_time,
+        lastChecked: log.last_checked,
+        uptime: log.uptime,
+        errorRate: log.error_rate
+      })) || [];
+
+      setModelStatuses(formattedStatuses);
       setLastRefresh(new Date());
-      toast.success('Estado de modelos actualizado');
+      toast.success('Estado de modelos cargado desde base de datos');
     } catch (error) {
-      console.error('Error checking model statuses:', error);
-      toast.error('Error al verificar el estado de los modelos');
+      console.error('Error loading model statuses:', error);
+      toast.error('Error al cargar el estado de los modelos');
     } finally {
       setLoading(false);
     }
   };
 
-  const simulateStatusCheck = async (provider: string, model: string): Promise<ModelStatus> => {
-    // Simular latencia de red
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
-    
-    // Simular diferentes estados
-    const statuses: ModelStatus['status'][] = ['online', 'online', 'online', 'degraded', 'offline'];
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-    
-    return {
-      provider,
-      name: model,
-      status: randomStatus,
-      responseTime: Math.floor(Math.random() * 2000 + 100),
-      lastChecked: new Date().toISOString(),
-      uptime: Math.random() * 100,
-      errorRate: Math.random() * 5
-    };
+  const triggerModelMonitoring = async () => {
+    setLoading(true);
+    try {
+      // Llamar al edge function que ejecuta el monitoreo y actualiza la base de datos
+      const { error } = await supabase.functions.invoke('ai-model-monitoring');
+      
+      if (error) throw error;
+      
+      // Recargar datos de la base de datos después del monitoreo
+      setTimeout(() => {
+        loadModelStatuses();
+      }, 2000); // Esperar 2 segundos para que se procesen los datos
+      
+      toast.success('Monitoreo ejecutado correctamente');
+    } catch (error) {
+      console.error('Error triggering model monitoring:', error);
+      toast.error('Error al ejecutar el monitoreo');
+      setLoading(false);
+    }
   };
 
   const getStatusIcon = (status: ModelStatus['status']) => {
@@ -125,12 +114,8 @@ const AIModelMonitoring = () => {
   };
 
   useEffect(() => {
-    checkModelStatuses();
-    
-    // Actualizar cada 5 minutos
-    const interval = setInterval(checkModelStatuses, 5 * 60 * 1000);
-    
-    return () => clearInterval(interval);
+    // Solo cargar datos al montar el componente, sin intervalos automáticos
+    loadModelStatuses();
   }, []);
 
   const groupedStatuses = modelStatuses.reduce((acc, status) => {
@@ -147,7 +132,7 @@ const AIModelMonitoring = () => {
         <div>
           <h2 className="text-2xl font-bold">Monitoreo de Modelos IA</h2>
           <p className="text-muted-foreground">
-            Estado en tiempo real de los proveedores de IA
+            Estado de los proveedores de IA (actualizado por job programado)
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -155,13 +140,22 @@ const AIModelMonitoring = () => {
             Última actualización: {lastRefresh.toLocaleTimeString()}
           </span>
           <Button 
-            onClick={checkModelStatuses} 
+            onClick={loadModelStatuses} 
             disabled={loading}
             variant="outline"
             size="sm"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Actualizar
+            Recargar Datos
+          </Button>
+          <Button 
+            onClick={triggerModelMonitoring} 
+            disabled={loading}
+            variant="default"
+            size="sm"
+          >
+            <Activity className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Ejecutar Monitoreo
           </Button>
         </div>
       </div>

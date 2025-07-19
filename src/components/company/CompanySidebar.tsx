@@ -129,7 +129,7 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
             <p className="font-bold text-sm text-sidebar-primary">{profile?.full_name || "Usuario"}</p>
             <div className="flex space-x-2 text-xs">
               <button 
-                onClick={() => window.open('/profile', '_blank')}
+                onClick={() => setActiveView('profile')}
                 className="text-sidebar-foreground/70 hover:text-sidebar-primary hover:underline"
               >
                 Ver perfil

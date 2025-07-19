@@ -13,6 +13,7 @@ import AcademiaBuildiera from "@/components/company/AcademiaBuildera";
 import Marketplace from "@/components/company/Marketplace";
 import Expertos from "@/components/company/Expertos";
 import Configuracion from "@/components/company/Configuracion";
+import UserProfile from "./UserProfile";
 import { User } from "@supabase/supabase-js";
 
 const CompanyDashboard = () => {
@@ -194,6 +195,8 @@ const CompanyDashboard = () => {
         return <Expertos />;
       case "configuracion":
         return <Configuracion profile={profile} />;
+      case "profile":
+        return <UserProfile />;
       default:
         return <MandoCentral profile={profile} onNavigate={setActiveView} />;
     }

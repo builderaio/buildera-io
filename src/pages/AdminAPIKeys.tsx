@@ -1,0 +1,658 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  ArrowLeft, 
+  Key, 
+  Plus, 
+  Eye, 
+  EyeOff, 
+  Settings, 
+  Activity, 
+  DollarSign,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  RefreshCw
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { supabase } from '@/integrations/supabase/client';
+import ThemeSelector from '@/components/ThemeSelector';
+
+interface APIKey {
+  id: string;
+  provider: string;
+  model_name: string;
+  api_key_name: string;
+  api_key_hash: string;
+  key_last_four: string;
+  status: string;
+  usage_limit_monthly?: number;
+  cost_limit_monthly?: number;
+  created_at: string;
+  updated_at: string;
+  last_usage_check?: string;
+  notes?: string;
+}
+
+interface UsageData {
+  api_key_id: string;
+  total_tokens: number;
+  total_requests: number;
+  total_cost: number;
+  usage_date: string;
+}
+
+interface BillingData {
+  api_key_id: string;
+  total_usage_tokens: number;
+  total_cost: number;
+  status: string;
+  billing_period_start: string;
+  billing_period_end: string;
+}
+
+const AdminAPIKeys = () => {
+  const navigate = useNavigate();
+  const { user } = useAdminAuth();
+  const { toast } = useToast();
+  const [apiKeys, setApiKeys] = useState<APIKey[]>([]);
+  const [usageData, setUsageData] = useState<UsageData[]>([]);
+  const [billingData, setBillingData] = useState<BillingData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newApiKey, setNewApiKey] = useState({
+    provider: '',
+    model_name: '',
+    api_key_name: '',
+    api_key: '',
+    usage_limit_monthly: '',
+    cost_limit_monthly: '',
+    notes: ''
+  });
+
+  useEffect(() => {
+    loadAPIKeys();
+    loadUsageData();
+    loadBillingData();
+  }, []);
+
+  const loadAPIKeys = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('llm_api_keys')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setApiKeys(data || []);
+    } catch (error) {
+      console.error('Error loading API keys:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las API keys",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadUsageData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('llm_api_usage')
+        .select('*')
+        .gte('usage_date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+
+      if (error) throw error;
+      setUsageData(data || []);
+    } catch (error) {
+      console.error('Error loading usage data:', error);
+    }
+  };
+
+  const loadBillingData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('llm_api_billing')
+        .select('*')
+        .order('billing_period_start', { ascending: false });
+
+      if (error) throw error;
+      setBillingData(data || []);
+    } catch (error) {
+      console.error('Error loading billing data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddAPIKey = async () => {
+    try {
+      if (!newApiKey.provider || !newApiKey.model_name || !newApiKey.api_key_name || !newApiKey.api_key) {
+        toast({
+          title: "Error",
+          description: "Todos los campos obligatorios deben ser completados",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const keyLastFour = newApiKey.api_key.slice(-4);
+      const hashedKey = `***${keyLastFour}`;
+
+      const { error } = await supabase
+        .from('llm_api_keys')
+        .insert({
+          provider: newApiKey.provider,
+          model_name: newApiKey.model_name,
+          api_key_name: newApiKey.api_key_name,
+          api_key_hash: hashedKey,
+          key_last_four: keyLastFour,
+          usage_limit_monthly: newApiKey.usage_limit_monthly ? parseInt(newApiKey.usage_limit_monthly) : null,
+          cost_limit_monthly: newApiKey.cost_limit_monthly ? parseFloat(newApiKey.cost_limit_monthly) : null,
+          notes: newApiKey.notes
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: "API key agregada exitosamente",
+      });
+
+      setShowAddDialog(false);
+      setNewApiKey({
+        provider: '',
+        model_name: '',
+        api_key_name: '',
+        api_key: '',
+        usage_limit_monthly: '',
+        cost_limit_monthly: '',
+        notes: ''
+      });
+      loadAPIKeys();
+    } catch (error) {
+      console.error('Error adding API key:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo agregar la API key",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const refreshUsageData = async () => {
+    try {
+      // Esta función llamaría a las APIs de cada proveedor para obtener datos reales
+      const { data, error } = await supabase.functions.invoke('sync-api-usage');
+      
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: "Datos de uso actualizados",
+      });
+
+      loadUsageData();
+      loadBillingData();
+    } catch (error) {
+      console.error('Error refreshing usage data:', error);
+      toast({
+        title: "Info",
+        description: "Función de sincronización no disponible aún",
+        variant: "default",
+      });
+    }
+  };
+
+  const getUsageForKey = (keyId: string) => {
+    return usageData
+      .filter(usage => usage.api_key_id === keyId)
+      .reduce((acc, curr) => ({
+        total_tokens: acc.total_tokens + curr.total_tokens,
+        total_requests: acc.total_requests + curr.total_requests,
+        total_cost: acc.total_cost + curr.total_cost
+      }), { total_tokens: 0, total_requests: 0, total_cost: 0 });
+  };
+
+  const getBillingForKey = (keyId: string) => {
+    return billingData.find(billing => billing.api_key_id === keyId);
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'inactive':
+        return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'expired':
+        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <XCircle className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getProviderColor = (provider: string) => {
+    const colors: { [key: string]: string } = {
+      openai: 'bg-green-500',
+      anthropic: 'bg-blue-500',
+      google: 'bg-yellow-500',
+      groq: 'bg-purple-500',
+      default: 'bg-gray-500'
+    };
+    return colors[provider] || colors.default;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-lg text-muted-foreground">Cargando API keys...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-card shadow-sm border-b sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/admin')}
+                className="flex items-center p-2 sm:px-3 flex-shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Volver al Dashboard</span>
+              </Button>
+              <div className="h-4 sm:h-6 w-px bg-border hidden sm:block" />
+              <div className="flex items-center min-w-0">
+                <Key className="w-5 h-5 sm:w-6 sm:h-6 text-primary mr-2 flex-shrink-0" />
+                <div className="min-w-0">
+                  <h1 className="text-sm sm:text-lg font-bold text-foreground truncate">Gestión API Keys</h1>
+                  <p className="text-xs text-muted-foreground hidden sm:block">Portal Admin - Buildera</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <Button
+                onClick={refreshUsageData}
+                size="sm"
+                variant="outline"
+                className="flex items-center"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Sincronizar
+              </Button>
+              <ThemeSelector />
+              <span className="text-xs sm:text-sm text-muted-foreground hidden md:block">{user?.username}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <Card>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total API Keys</p>
+                  <p className="text-2xl font-bold text-foreground">{apiKeys.length}</p>
+                </div>
+                <Key className="w-8 h-8 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">APIs Activas</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {apiKeys.filter(key => key.status === 'active').length}
+                  </p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Costo Total (30d)</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    ${usageData.reduce((acc, curr) => acc + curr.total_cost, 0).toFixed(2)}
+                  </p>
+                </div>
+                <DollarSign className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Tokens Usados</p>
+                  <p className="text-2xl font-bold text-foreground">
+                    {usageData.reduce((acc, curr) => acc + curr.total_tokens, 0).toLocaleString()}
+                  </p>
+                </div>
+                <Activity className="w-8 h-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="keys" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <TabsList>
+              <TabsTrigger value="keys">API Keys</TabsTrigger>
+              <TabsTrigger value="usage">Uso & Consumo</TabsTrigger>
+              <TabsTrigger value="billing">Facturación</TabsTrigger>
+            </TabsList>
+
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar API Key
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Agregar Nueva API Key</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="provider">Proveedor *</Label>
+                    <Select
+                      value={newApiKey.provider}
+                      onValueChange={(value) => setNewApiKey({...newApiKey, provider: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar proveedor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="openai">OpenAI</SelectItem>
+                        <SelectItem value="anthropic">Anthropic</SelectItem>
+                        <SelectItem value="google">Google</SelectItem>
+                        <SelectItem value="groq">Groq</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="model">Modelo *</Label>
+                    <Input
+                      id="model"
+                      value={newApiKey.model_name}
+                      onChange={(e) => setNewApiKey({...newApiKey, model_name: e.target.value})}
+                      placeholder="ej: gpt-4o, claude-3-5-sonnet"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="name">Nombre descriptivo *</Label>
+                    <Input
+                      id="name"
+                      value={newApiKey.api_key_name}
+                      onChange={(e) => setNewApiKey({...newApiKey, api_key_name: e.target.value})}
+                      placeholder="ej: Producción Principal"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="key">API Key *</Label>
+                    <Input
+                      id="key"
+                      type="password"
+                      value={newApiKey.api_key}
+                      onChange={(e) => setNewApiKey({...newApiKey, api_key: e.target.value})}
+                      placeholder="sk-..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="usage_limit">Límite tokens/mes</Label>
+                      <Input
+                        id="usage_limit"
+                        type="number"
+                        value={newApiKey.usage_limit_monthly}
+                        onChange={(e) => setNewApiKey({...newApiKey, usage_limit_monthly: e.target.value})}
+                        placeholder="1000000"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="cost_limit">Límite costo/mes ($)</Label>
+                      <Input
+                        id="cost_limit"
+                        type="number"
+                        step="0.01"
+                        value={newApiKey.cost_limit_monthly}
+                        onChange={(e) => setNewApiKey({...newApiKey, cost_limit_monthly: e.target.value})}
+                        placeholder="500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="notes">Notas</Label>
+                    <Textarea
+                      id="notes"
+                      value={newApiKey.notes}
+                      onChange={(e) => setNewApiKey({...newApiKey, notes: e.target.value})}
+                      placeholder="Descripción adicional..."
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAddDialog(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleAddAPIKey}>
+                      Agregar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <TabsContent value="keys" className="space-y-4">
+            {apiKeys.map((apiKey) => {
+              const usage = getUsageForKey(apiKey.id);
+              const billing = getBillingForKey(apiKey.id);
+              
+              return (
+                <Card key={apiKey.id}>
+                  <CardContent className="p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className={`${getProviderColor(apiKey.provider)} p-3 rounded-lg`}>
+                          <Key className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-lg font-semibold">{apiKey.api_key_name}</h3>
+                            {getStatusIcon(apiKey.status)}
+                            <Badge variant="secondary">
+                              {apiKey.provider}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-1">
+                            Modelo: {apiKey.model_name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Key: ***{apiKey.key_last_four}
+                          </p>
+                          {apiKey.notes && (
+                            <p className="text-sm text-muted-foreground mt-2">
+                              {apiKey.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:text-right">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Tokens (30d)</p>
+                          <p className="font-semibold">{usage.total_tokens.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Requests (30d)</p>
+                          <p className="font-semibold">{usage.total_requests.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Costo (30d)</p>
+                          <p className="font-semibold">${usage.total_cost.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">Límite mensual</p>
+                          <p className="font-semibold">
+                            {apiKey.cost_limit_monthly ? `$${apiKey.cost_limit_monthly}` : 'Sin límite'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </TabsContent>
+
+          <TabsContent value="usage" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Consumo por Proveedor (Últimos 30 días)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {['openai', 'anthropic', 'google', 'groq'].map(provider => {
+                    const providerUsage = usageData
+                      .filter(usage => apiKeys.find(key => key.id === usage.api_key_id && key.provider === provider))
+                      .reduce((acc, curr) => ({
+                        tokens: acc.tokens + curr.total_tokens,
+                        requests: acc.requests + curr.total_requests,
+                        cost: acc.cost + curr.total_cost
+                      }), { tokens: 0, requests: 0, cost: 0 });
+
+                    if (providerUsage.tokens === 0) return null;
+
+                    return (
+                      <div key={provider} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`${getProviderColor(provider)} p-2 rounded-lg`}>
+                            <Activity className="w-4 h-4 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold capitalize">{provider}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {apiKeys.filter(key => key.provider === provider).length} API keys
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Tokens</p>
+                              <p className="font-semibold">{providerUsage.tokens.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Requests</p>
+                              <p className="font-semibold">{providerUsage.requests.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Costo</p>
+                              <p className="font-semibold">${providerUsage.cost.toFixed(2)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="billing" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Estado de Facturación</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {billingData.map((billing) => {
+                    const apiKey = apiKeys.find(key => key.id === billing.api_key_id);
+                    if (!apiKey) return null;
+
+                    return (
+                      <div key={billing.api_key_id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`${getProviderColor(apiKey.provider)} p-2 rounded-lg`}>
+                            <DollarSign className="w-4 h-4 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">{apiKey.api_key_name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {billing.billing_period_start} - {billing.billing_period_end}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Tokens</p>
+                              <p className="font-semibold">{billing.total_usage_tokens.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Costo</p>
+                              <p className="font-semibold">${billing.total_cost.toFixed(2)}</p>
+                            </div>
+                            <Badge variant={billing.status === 'paid' ? 'default' : 'destructive'}>
+                              {billing.status === 'paid' ? 'Pagado' : 'Pendiente'}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </main>
+    </div>
+  );
+};
+
+export default AdminAPIKeys;

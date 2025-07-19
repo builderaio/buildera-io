@@ -28,6 +28,7 @@ import AdminChampionChallenge from "./pages/AdminChampionChallenge";
 import AdminAIConfig from "./pages/AdminAIConfig";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminDatabase from "./pages/AdminDatabase";
+import AdminAPIKeys from "./pages/AdminAPIKeys";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import UserProfile from "./pages/UserProfile";
 
@@ -116,6 +117,11 @@ const App = () => {
               <Route path="/admin/database" element={
                 <AdminProtectedRoute>
                   <AdminDatabase />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/api-keys" element={
+                <AdminProtectedRoute>
+                  <AdminAPIKeys />
                 </AdminProtectedRoute>
               } />
               

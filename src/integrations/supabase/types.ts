@@ -803,6 +803,157 @@ export type Database = {
         }
         Relationships: []
       }
+      llm_api_billing: {
+        Row: {
+          api_key_id: string
+          billing_period_end: string
+          billing_period_start: string
+          created_at: string
+          currency: string | null
+          id: string
+          provider: string
+          status: string | null
+          total_cost: number | null
+          total_usage_tokens: number | null
+          updated_at: string
+        }
+        Insert: {
+          api_key_id: string
+          billing_period_end: string
+          billing_period_start: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          provider: string
+          status?: string | null
+          total_cost?: number | null
+          total_usage_tokens?: number | null
+          updated_at?: string
+        }
+        Update: {
+          api_key_id?: string
+          billing_period_end?: string
+          billing_period_start?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          provider?: string
+          status?: string | null
+          total_cost?: number | null
+          total_usage_tokens?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "llm_api_billing_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "llm_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      llm_api_keys: {
+        Row: {
+          api_key_hash: string
+          api_key_name: string
+          cost_limit_monthly: number | null
+          created_at: string
+          id: string
+          key_last_four: string
+          last_usage_check: string | null
+          model_name: string
+          notes: string | null
+          provider: string
+          status: string
+          updated_at: string
+          usage_limit_monthly: number | null
+        }
+        Insert: {
+          api_key_hash: string
+          api_key_name: string
+          cost_limit_monthly?: number | null
+          created_at?: string
+          id?: string
+          key_last_four: string
+          last_usage_check?: string | null
+          model_name: string
+          notes?: string | null
+          provider: string
+          status?: string
+          updated_at?: string
+          usage_limit_monthly?: number | null
+        }
+        Update: {
+          api_key_hash?: string
+          api_key_name?: string
+          cost_limit_monthly?: number | null
+          created_at?: string
+          id?: string
+          key_last_four?: string
+          last_usage_check?: string | null
+          model_name?: string
+          notes?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+          usage_limit_monthly?: number | null
+        }
+        Relationships: []
+      }
+      llm_api_usage: {
+        Row: {
+          api_key_id: string
+          completion_tokens: number | null
+          created_at: string
+          id: string
+          model_name: string
+          prompt_tokens: number | null
+          provider: string
+          total_cost: number | null
+          total_requests: number | null
+          total_tokens: number | null
+          updated_at: string
+          usage_date: string
+        }
+        Insert: {
+          api_key_id: string
+          completion_tokens?: number | null
+          created_at?: string
+          id?: string
+          model_name: string
+          prompt_tokens?: number | null
+          provider: string
+          total_cost?: number | null
+          total_requests?: number | null
+          total_tokens?: number | null
+          updated_at?: string
+          usage_date?: string
+        }
+        Update: {
+          api_key_id?: string
+          completion_tokens?: number | null
+          created_at?: string
+          id?: string
+          model_name?: string
+          prompt_tokens?: number | null
+          provider?: string
+          total_cost?: number | null
+          total_requests?: number | null
+          total_tokens?: number | null
+          updated_at?: string
+          usage_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "llm_api_usage_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "llm_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_actionables: {
         Row: {
           action_type: string

@@ -16,7 +16,8 @@ import {
   Eye,
   UserCheck,
   Database,
-  Trophy
+  Trophy,
+  Key
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -177,6 +178,12 @@ const AdminDashboard = () => {
       description: "Monitoreo y administración de datos",
       icon: Database,
       action: () => navigate('/admin/database')
+    },
+    {
+      title: "Gestión API Keys",
+      description: "Parametrización y monitoreo de APIs LLM",
+      icon: Key,
+      action: () => navigate('/admin/api-keys')
     }
   ];
 

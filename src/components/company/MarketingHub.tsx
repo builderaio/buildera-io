@@ -1381,16 +1381,91 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
         <CardContent className="p-8">
           <Tabs defaultValue="performance" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="performance" disabled={!hasConnectedPlatforms()}>Performance</TabsTrigger>
+              <TabsTrigger value="performance">Performance</TabsTrigger>
               <TabsTrigger value="estrategias">Estrategias</TabsTrigger>
-              <TabsTrigger value="calendario" disabled={!hasConnectedPlatforms()}>Calendario</TabsTrigger>
-              <TabsTrigger value="creacion" disabled={!hasConnectedPlatforms()}>Creación con IA</TabsTrigger>
-              <TabsTrigger value="pauta" disabled={!hasConnectedPlatforms()}>Gestión de Pauta</TabsTrigger>
+              <TabsTrigger value="calendario">Calendario</TabsTrigger>
+              <TabsTrigger value="creacion">Creación con IA</TabsTrigger>
+              <TabsTrigger value="pauta">Gestión de Pauta</TabsTrigger>
             </TabsList>
 
             <TabsContent value="performance" className="mt-6">
               <h3 className="text-xl font-bold text-primary mb-6">Performance de Marketing</h3>
-              {renderPlatformPerformance()}
+              {hasConnectedPlatforms() ? (
+                renderPlatformPerformance()
+              ) : (
+                <div className="space-y-6">
+                  {/* Vista sin conexiones */}
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      Conecta tus redes sociales para ver métricas reales de performance. Mientras tanto, explora las funcionalidades de demo.
+                    </AlertDescription>
+                  </Alert>
+                  
+                  {/* Métricas de ejemplo */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-card p-4 rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground">Alcance Potencial</p>
+                      <p className="text-2xl font-bold text-primary">--</p>
+                      <p className="text-xs text-muted-foreground">Conecta redes para ver datos</p>
+                    </div>
+                    <div className="bg-card p-4 rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground">Engagement Rate</p>
+                      <p className="text-2xl font-bold text-primary">--</p>
+                      <p className="text-xs text-muted-foreground">Conecta redes para ver datos</p>
+                    </div>
+                    <div className="bg-card p-4 rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground">Leads Generados</p>
+                      <p className="text-2xl font-bold text-primary">--</p>
+                      <p className="text-xs text-muted-foreground">Conecta redes para ver datos</p>
+                    </div>
+                    <div className="bg-card p-4 rounded-lg border text-center">
+                      <p className="text-sm text-muted-foreground">ROI Promedio</p>
+                      <p className="text-2xl font-bold text-primary">--</p>
+                      <p className="text-xs text-muted-foreground">Conecta redes para ver datos</p>
+                    </div>
+                  </div>
+                  
+                  {/* Tutorial de métricas */}
+                  <div className="bg-card border rounded-lg p-6">
+                    <h4 className="font-bold mb-4">¿Qué métricas verás cuando conectes tus redes?</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                          <div>
+                            <p className="font-medium text-sm">Alcance e Impresiones</p>
+                            <p className="text-xs text-muted-foreground">Cuántas personas ven tu contenido</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                          <div>
+                            <p className="font-medium text-sm">Engagement</p>
+                            <p className="text-xs text-muted-foreground">Likes, comentarios, shares y clics</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                          <div>
+                            <p className="font-medium text-sm">Conversiones</p>
+                            <p className="text-xs text-muted-foreground">Leads y ventas generadas</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                          <div>
+                            <p className="font-medium text-sm">ROI y Performance</p>
+                            <p className="text-xs text-muted-foreground">Retorno de inversión publicitaria</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="estrategias" className="mt-6">
@@ -1505,8 +1580,8 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
 
             <TabsContent value="creacion" className="mt-6">
               <h3 className="text-xl font-bold text-primary mb-4">Estudio de Creación con IA</h3>
-              {hasConnectedPlatforms() ? (
-                <div className="space-y-4">
+              <div className="space-y-4">
+                {hasConnectedPlatforms() && (
                   <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg mb-4">
                     <p className="text-sm font-medium mb-2">🎯 Plataformas Conectadas:</p>
                     <div className="flex gap-2">
@@ -1517,63 +1592,90 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
                       ))}
                     </div>
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="prompt">Idea o Tema Central</Label>
-                    <Textarea
-                      id="prompt"
-                      rows={3}
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Ej: 'Lanzamiento de nuestro nuevo producto ecológico'"
-                      className="resize-none"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>Generar contenido para:</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                      <Button 
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
-                        disabled={!prompt.trim()}
-                      >
-                        Generar Texto para Post
-                      </Button>
-                      <Button 
-                        className="bg-accent text-accent-foreground hover:bg-accent/90"
-                        disabled={!prompt.trim()}
-                      >
-                        Generar Imagen
-                      </Button>
-                      <Button 
-                        variant="secondary"
-                        disabled={!prompt.trim()}
-                      >
-                        Generar Video Corto
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6 border-t pt-6">
-                    <h4 className="font-bold text-foreground mb-2">Resultado Generado:</h4>
-                    <div className="bg-muted p-4 rounded-md min-h-[150px]">
-                      <p className="text-muted-foreground italic">
-                        {prompt.trim() 
-                          ? "Ingrese una idea y presione 'Generar' para crear contenido personalizado para sus redes conectadas..." 
-                          : "El contenido generado por la IA aparecerá aquí..."
-                        }
-                      </p>
-                    </div>
+                )}
+                
+                {!hasConnectedPlatforms() && (
+                  <Alert className="mb-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      Puedes generar contenido ahora. Para publicar automáticamente, conecta tus redes sociales.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <div>
+                  <Label htmlFor="prompt">Idea o Tema Central</Label>
+                  <Textarea
+                    id="prompt"
+                    rows={3}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Ej: 'Lanzamiento de nuestro nuevo producto ecológico'"
+                    className="resize-none"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Generar contenido para:</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                    <Button 
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                      disabled={!prompt.trim()}
+                    >
+                      Generar Texto para Post
+                    </Button>
+                    <Button 
+                      className="bg-accent text-accent-foreground hover:bg-accent/90"
+                      disabled={!prompt.trim()}
+                    >
+                      Generar Imagen
+                    </Button>
+                    <Button 
+                      variant="secondary"
+                      disabled={!prompt.trim()}
+                    >
+                      Generar Video Corto
+                    </Button>
                   </div>
                 </div>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground mb-4">Conecta tus redes sociales para acceder al estudio de creación con IA</p>
-                  <Button onClick={() => window.scrollTo(0, 0)}>
-                    Conectar Redes Sociales
-                  </Button>
+                
+                <div className="mt-6 border-t pt-6">
+                  <h4 className="font-bold text-foreground mb-2">Resultado Generado:</h4>
+                  <div className="bg-muted p-4 rounded-md min-h-[150px]">
+                    <p className="text-muted-foreground italic">
+                      {prompt.trim() 
+                        ? "Ingrese una idea y presione 'Generar' para crear contenido personalizado..." 
+                        : "El contenido generado por la IA aparecerá aquí..."
+                      }
+                    </p>
+                  </div>
                 </div>
-              )}
+                
+                {hasConnectedPlatforms() && (
+                  <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
+                    <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+                      ✅ Publicación automática disponible
+                    </p>
+                    <p className="text-xs text-green-600 dark:text-green-300">
+                      El contenido generado se puede publicar directamente en tus redes conectadas.
+                    </p>
+                  </div>
+                )}
+                
+                {!hasConnectedPlatforms() && (
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
+                    <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+                      💡 Consejo: Conecta tus redes sociales
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-300 mb-3">
+                      Una vez conectadas, podrás publicar automáticamente el contenido generado.
+                    </p>
+                    <Button size="sm" onClick={() => window.scrollTo(0, 0)}>
+                      Conectar Redes Sociales
+                    </Button>
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             <TabsContent value="pauta" className="mt-6">

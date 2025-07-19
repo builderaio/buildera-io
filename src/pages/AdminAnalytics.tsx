@@ -90,24 +90,180 @@ const AdminAnalytics = () => {
         .select('created_at, provider, name')
         .gte('created_at', startDate.toISOString());
 
-      // Procesar datos para gráficos
-      const processedData = processAnalyticsData({
-        profiles: profiles || [],
-        linkedinConnections: linkedinConnections || [],
-        facebookConnections: facebookConnections || [],
-        tiktokConnections: tiktokConnections || [],
-        socialPosts: socialPosts || [],
-        aiLogs: aiLogs || []
-      }, startDate, endDate);
+      // Obtener analytics de la nueva tabla
+      const { data: systemAnalytics } = await supabase
+        .from('system_analytics')
+        .select('*')
+        .gte('period_start', startDate.toISOString())
+        .order('period_start');
 
-      setData(processedData);
-      toast.success('Analytics cargados correctamente');
+      // Si no hay datos, generar algunos usando el edge function
+      if (!systemAnalytics || systemAnalytics.length === 0) {
+        console.log('No analytics data found, generating...');
+        try {
+          await supabase.functions.invoke('generate-analytics-data');
+          
+          // Recargar datos después de generar
+          const { data: newAnalytics } = await supabase
+            .from('system_analytics')
+            .select('*')
+            .gte('period_start', startDate.toISOString())
+            .order('period_start');
+            
+          if (newAnalytics) {
+            const processedData = processSystemAnalytics(newAnalytics, startDate, endDate);
+            setData(processedData);
+            toast.success('Analytics generados y cargados correctamente');
+            return;
+          }
+        } catch (error) {
+          console.error('Error generating analytics:', error);
+          toast.warning('No se pudieron generar analytics, usando datos simulados');
+        }
+      }
+
+      // Procesar datos reales de analytics
+      if (systemAnalytics && systemAnalytics.length > 0) {
+        const processedData = processSystemAnalytics(systemAnalytics, startDate, endDate);
+        setData(processedData);
+        toast.success('Analytics cargados desde base de datos');
+      } else {
+        // Fallback: usar datos existentes como respaldo
+        const processedData = processAnalyticsData({
+          profiles: profiles || [],
+          linkedinConnections: linkedinConnections || [],
+          facebookConnections: facebookConnections || [],
+          tiktokConnections: tiktokConnections || [],
+          socialPosts: socialPosts || [],
+          aiLogs: aiLogs || []
+        }, startDate, endDate);
+        setData(processedData);
+        toast.success('Analytics cargados (datos simulados)');
+      }
     } catch (error) {
       console.error('Error loading analytics:', error);
       toast.error('Error al cargar los analytics');
     } finally {
       setLoading(false);
     }
+  };
+
+  const processSystemAnalytics = (analyticsData: any[], startDate: Date, endDate: Date): AnalyticsData => {
+    // Crear array de días en el rango
+    const days = [];
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      days.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+
+    // Procesar registros de usuarios por día
+    const userRegistrations = days.map(day => {
+      const dayStr = day.toISOString().split('T')[0];
+      const dayData = analyticsData.find(a => 
+        a.metric_name === 'daily_user_registrations' && 
+        a.period_start.startsWith(dayStr)
+      );
+      
+      return {
+        date: dayStr,
+        total: dayData?.metric_value || 0,
+        companies: dayData?.metadata?.companies || 0,
+        developers: dayData?.metadata?.developers || 0,
+        experts: dayData?.metadata?.experts || 0
+      };
+    });
+
+    // Procesar conexiones de plataformas (totales)
+    const linkedinTotal = analyticsData
+      .filter(a => a.metric_name === 'daily_linkedin_connections')
+      .reduce((sum, a) => sum + a.metric_value, 0);
+    
+    const facebookTotal = analyticsData
+      .filter(a => a.metric_name === 'daily_facebook_connections')
+      .reduce((sum, a) => sum + a.metric_value, 0);
+    
+    const tiktokTotal = analyticsData
+      .filter(a => a.metric_name === 'daily_tiktok_connections')
+      .reduce((sum, a) => sum + a.metric_value, 0);
+
+    const platformConnections = [
+      {
+        platform: 'LinkedIn',
+        connections: linkedinTotal,
+        color: '#0077B5'
+      },
+      {
+        platform: 'Facebook/Instagram',
+        connections: facebookTotal,
+        color: '#1877F2'
+      },
+      {
+        platform: 'TikTok',
+        connections: tiktokTotal,
+        color: '#FF0050'
+      }
+    ];
+
+    // Procesar generación de contenido
+    const contentGeneration = days.map(day => {
+      const dayStr = day.toISOString().split('T')[0];
+      const dayData = analyticsData.find(a => 
+        a.metric_name === 'daily_content_generation' && 
+        a.period_start.startsWith(dayStr)
+      );
+      
+      return {
+        date: dayStr,
+        posts: dayData?.metric_value || 0,
+        linkedin: dayData?.metadata?.linkedin || 0,
+        facebook: dayData?.metadata?.facebook || 0,
+        instagram: dayData?.metadata?.instagram || 0,
+        tiktok: dayData?.metadata?.tiktok || 0
+      };
+    });
+
+    // Procesar uso de IA
+    const aiRequests = analyticsData
+      .filter(a => a.metric_name === 'daily_ai_requests')
+      .reduce((acc, a) => {
+        if (a.metadata?.openai) acc.push({ provider: 'OpenAI', requests: a.metadata.openai });
+        if (a.metadata?.anthropic) acc.push({ provider: 'Anthropic', requests: a.metadata.anthropic });
+        if (a.metadata?.google) acc.push({ provider: 'Google', requests: a.metadata.google });
+        return acc;
+      }, []);
+
+    // Consolidar requests por proveedor
+    const aiUsage = aiRequests.reduce((acc: any, req: any) => {
+      const existing = acc.find((item: any) => item.provider === req.provider);
+      if (existing) {
+        existing.requests += req.requests;
+      } else {
+        acc.push({ provider: req.provider, requests: req.requests });
+      }
+      return acc;
+    }, []);
+
+    // Métricas del sistema (calculadas)
+    const totalUsers = userRegistrations.reduce((sum, day) => sum + day.total, 0);
+    const totalConnections = linkedinTotal + facebookTotal + tiktokTotal;
+    const totalContent = contentGeneration.reduce((sum, day) => sum + day.posts, 0);
+    const totalAIRequests = aiUsage.reduce((sum: number, ai: any) => sum + ai.requests, 0);
+
+    const systemMetrics = [
+      { metric: 'Usuarios Totales', value: totalUsers.toString(), status: 'info' },
+      { metric: 'Conexiones', value: totalConnections.toString(), status: 'success' },
+      { metric: 'Contenido Generado', value: totalContent.toString(), status: 'success' },
+      { metric: 'Requests IA', value: totalAIRequests.toString(), status: 'info' }
+    ];
+
+    return {
+      userRegistrations,
+      platformConnections,
+      contentGeneration,
+      aiUsage,
+      systemMetrics
+    };
   };
 
   const processAnalyticsData = (rawData: any, startDate: Date, endDate: Date): AnalyticsData => {
@@ -297,6 +453,25 @@ const AdminAnalytics = () => {
             <Button onClick={loadAnalytics} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
               Actualizar
+            </Button>
+            
+            <Button 
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await supabase.functions.invoke('generate-analytics-data');
+                  toast.success('Datos generados correctamente');
+                  await loadAnalytics();
+                } catch (error) {
+                  toast.error('Error al generar datos');
+                  setLoading(false);
+                }
+              }} 
+              variant="default" 
+              size="sm"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Generar Datos
             </Button>
             
             <Button onClick={exportData} variant="outline" size="sm">

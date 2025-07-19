@@ -1230,6 +1230,45 @@ export type Database = {
         }
         Relationships: []
       }
+      system_analytics: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_name: string
+          metric_type: string
+          metric_value: number
+          period_end: string | null
+          period_start: string
+          platform: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_name: string
+          metric_type?: string
+          metric_value: number
+          period_end?: string | null
+          period_start?: string
+          platform?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_name?: string
+          metric_type?: string
+          metric_value?: number
+          period_end?: string | null
+          period_start?: string
+          platform?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       tiktok_connections: {
         Row: {
           access_token: string

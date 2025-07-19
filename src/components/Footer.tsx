@@ -1,4 +1,4 @@
-import { Twitter, Linkedin } from "lucide-react";
+import { Instagram, Linkedin, Facebook } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -66,11 +66,29 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-lg mb-4">Conectar</h4>
             <div className="flex space-x-4">
-              <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
-                <Twitter className="w-6 h-6" />
+              <a 
+                href="https://www.instagram.com/builderaai" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-smooth"
+              >
+                <Instagram className="w-6 h-6" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+              <a 
+                href="https://www.linkedin.com/company/buildera-io" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-smooth"
+              >
                 <Linkedin className="w-6 h-6" />
+              </a>
+              <a 
+                href="https://www.facebook.com/profile.php?id=61576657727180" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-smooth"
+              >
+                <Facebook className="w-6 h-6" />
               </a>
             </div>
           </div>

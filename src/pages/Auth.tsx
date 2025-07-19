@@ -8,7 +8,6 @@ import DeveloperAuth from "@/components/auth/DeveloperAuth";
 import ExpertAuth from "@/components/auth/ExpertAuth";
 import CompanyAuth from "@/components/auth/CompanyAuth";
 import authBackground from "@/assets/auth-background.jpg";
-import builderaLogo from "@/assets/buildera-logo.png";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -55,7 +54,7 @@ const Auth = () => {
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <img 
-                src={builderaLogo} 
+                src="/lovable-uploads/df793eae-f9ea-4291-9de2-ecf01e5005d5.png" 
                 alt="Buildera Logo" 
                 className="h-16 w-auto"
               />

@@ -215,7 +215,7 @@ const CompleteProfile = () => {
                   <SelectContent>
                     <SelectItem value="developer">Desarrollador</SelectItem>
                     <SelectItem value="expert">Experto</SelectItem>
-                    <SelectItem value="company">Empresa</SelectItem>
+                    <SelectItem value="company">Negocio</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -314,18 +314,18 @@ const CompleteProfile = () => {
               {userType === 'company' && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="companyName">Nombre de la empresa</Label>
+                    <Label htmlFor="companyName">Nombre del negocio</Label>
                     <Input
                       id="companyName"
                       type="text"
-                      placeholder="Tu Empresa S.A.S."
+                      placeholder="Tu Negocio S.A.S."
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="companySize">Tamaño de la empresa</Label>
+                    <Label htmlFor="companySize">Tamaño del negocio</Label>
                     <Select value={companySize} onValueChange={setCompanySize} required>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecciona el tamaño" />
@@ -359,7 +359,7 @@ const CompleteProfile = () => {
                     <Input
                       id="websiteUrl"
                       type="text"
-                      placeholder="tuempresa.com"
+                      placeholder="tunegocio.com"
                       value={websiteUrl}
                       onChange={(e) => setWebsiteUrl(e.target.value)}
                     />

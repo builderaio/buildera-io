@@ -1176,9 +1176,9 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   return (
     <div>
       <header className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground">ADN de la Empresa</h1>
+        <h1 className="text-4xl font-bold text-foreground">ADN del Negocio</h1>
         <p className="text-lg text-muted-foreground">
-          Centralice la identidad y estrategia de su empresa para alinear a nuestros agentes de IA.
+          Centraliza la identidad y estrategia de tu negocio para alinear a nuestros agentes de IA.
         </p>
       </header>
 
@@ -1187,7 +1187,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         <CardContent className="p-8">
           <Tabs defaultValue="perfil" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="perfil">Información de la Empresa</TabsTrigger>
+              <TabsTrigger value="perfil">Información del Negocio</TabsTrigger>
               <TabsTrigger value="estrategia">Estrategia</TabsTrigger>
               <TabsTrigger value="productos">Productos</TabsTrigger>
               <TabsTrigger value="marca">Marca</TabsTrigger>
@@ -1200,21 +1200,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Building2 className="w-5 h-5 mr-2" />
-                    Información de {profile?.company_name || 'la Empresa'}
+                    Información de {profile?.company_name || 'tu Negocio'}
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Complete toda la información de su empresa.
+                    Completa toda la información de tu negocio.
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="company_name">Nombre de la empresa *</Label>
+                      <Label htmlFor="company_name">Nombre del negocio *</Label>
                       <Input
                         id="company_name"
                         value={profile?.company_name || ""}
                         onChange={(e) => onProfileUpdate({...profile, company_name: e.target.value})}
-                        placeholder="Nombre de su empresa"
+                        placeholder="Nombre de tu negocio"
                         required
                       />
                     </div>
@@ -1245,7 +1245,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         type="text"
                         value={profile?.website_url || ""}
                         onChange={(e) => onProfileUpdate({...profile, website_url: e.target.value})}
-                        placeholder="suempresa.com"
+                        placeholder="tunegocio.com"
                       />
                     </div>
                     <div className="space-y-2">
@@ -1258,7 +1258,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="company_size">Tamaño de la empresa *</Label>
+                      <Label htmlFor="company_size">Tamaño del negocio *</Label>
                       <Select value={profile?.company_size || ""} onValueChange={(value) => onProfileUpdate({...profile, company_size: value})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccione el tamaño" />
@@ -1293,7 +1293,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         id="country"
                         value={profile?.country || ""}
                         onChange={(e) => onProfileUpdate({...profile, country: e.target.value})}
-                        placeholder="País de la empresa"
+                        placeholder="País del negocio"
                         required
                       />
                     </div>
@@ -1308,10 +1308,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     <div>
                       <CardTitle className="flex items-center">
                         <Target className="w-5 h-5 mr-2" />
-                        Objetivos Empresariales
+                        Objetivos del Negocio
                       </CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        Define los objetivos estratégicos de tu empresa.
+                        Define los objetivos estratégicos de tu negocio.
                       </p>
                     </div>
                     <Button 
@@ -1522,10 +1522,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 <div>
                   <h3 className="text-lg font-semibold flex items-center mb-4">
                     <Target className="w-5 h-5 mr-2 text-primary" />
-                    Estrategia de la Empresa
+                    Estrategia del Negocio
                   </h3>
                   <p className="text-sm text-muted-foreground mb-6">
-                    Define la misión, visión y propuesta de valor de tu empresa. Puedes generar todo con IA una sola vez o editarlo manualmente.
+                    Define la misión, visión y propuesta de valor de tu negocio. Puedes generar todo con IA una sola vez o editarlo manualmente.
                   </p>
                   
                   {!strategy?.generated_with_ai && (
@@ -1534,7 +1534,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         <div>
                           <p className="font-medium">Generar estrategia completa con IA</p>
                           <p className="text-sm text-muted-foreground">
-                            Crea automáticamente misión, visión y propuesta de valor basada en la información de tu empresa
+                            Crea automáticamente misión, visión y propuesta de valor basada en la información de tu negocio
                           </p>
                         </div>
                         <Button 
@@ -1571,7 +1571,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     rows={4}
                     value={strategyForm.mision}
                     onChange={(e) => setStrategyForm({...strategyForm, mision: e.target.value})}
-                    placeholder="¿Cuál es el propósito fundamental de su empresa?"
+                    placeholder="¿Cuál es el propósito fundamental de tu negocio?"
                     className="resize-none"
                   />
                 </div>
@@ -1597,7 +1597,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     rows={4}
                     value={strategyForm.vision}
                     onChange={(e) => setStrategyForm({...strategyForm, vision: e.target.value})}
-                    placeholder="¿Hacia dónde se dirige su empresa a largo plazo?"
+                    placeholder="¿Hacia dónde se dirige tu negocio a largo plazo?"
                     className="resize-none"
                   />
                 </div>
@@ -1653,7 +1653,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 <div>
                   <h3 className="text-lg font-semibold flex items-center">
                     <Package className="w-5 h-5 mr-2 text-primary" />
-                    Productos de la Empresa
+                    Productos del Negocio
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Gestione la información de sus productos para que los agentes de IA puedan brindar información precisa.
@@ -1785,7 +1785,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 <div>
                   <h3 className="text-lg font-semibold flex items-center mb-4">
                     <Palette className="w-5 h-5 mr-2 text-primary" />
-                    Identidad Visual de la Empresa
+                    Identidad Visual del Negocio
                   </h3>
                   <p className="text-sm text-muted-foreground mb-6">
                     Configure los colores, logo y elementos visuales de su marca para mantener consistencia en todas las comunicaciones.
@@ -1878,7 +1878,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 {/* Logo */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Logo de la Empresa</CardTitle>
+                    <CardTitle className="text-base">Logo del Negocio</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">

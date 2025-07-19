@@ -71,7 +71,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         if (!companyName.trim()) {
           toast({
             title: "Error", 
-            description: "El nombre de la empresa es requerido",
+            description: "El nombre del negocio es requerido",
             variant: "destructive",
           });
           setLoading(false);
@@ -81,7 +81,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         if (!companySize) {
           toast({
             title: "Error",
-            description: "Selecciona el tamaño de la empresa",
+            description: "Selecciona el tamaño del negocio",
             variant: "destructive",
           });
           setLoading(false);
@@ -159,10 +159,10 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
           });
           
-          // Llamar a los webhooks para obtener datos de la empresa
+          // Llamar a los webhooks para obtener datos del negocio
           if (websiteUrl) {
             try {
-              console.log("Llamando a webhooks para obtener datos de la empresa...");
+              console.log("Llamando a webhooks para obtener datos del negocio...");
               
               // Llamar a getDataByURL
               const dataResponse = await supabase.functions.invoke('get-data-by-url', {
@@ -188,7 +188,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 console.error("Error calling getBrandByURL:", brandResponse.error);
               }
               
-              console.log("Webhooks ejecutados para obtener datos de la empresa");
+              console.log("Webhooks ejecutados para obtener datos del negocio");
             } catch (error) {
               console.error("Error ejecutando webhooks:", error);
               // No mostramos error al usuario ya que el registro fue exitoso
@@ -372,12 +372,12 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="companyName">
-                  Nombre de la empresa <span className="text-destructive">*</span>
+                  Nombre del negocio <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="companyName"
                   type="text"
-                  placeholder="Tu Empresa S.A.S."
+                  placeholder="Tu Negocio S.A.S."
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   required
@@ -385,7 +385,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="companySize">
-                  Tamaño de la empresa <span className="text-destructive">*</span>
+                  Tamaño del negocio <span className="text-destructive">*</span>
                 </Label>
                 <Select value={companySize} onValueChange={setCompanySize} required>
                   <SelectTrigger>
@@ -424,7 +424,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 <Input
                   id="websiteUrl"
                   type="text"
-                  placeholder="tuempresa.com"
+                  placeholder="tunegocio.com"
                   value={websiteUrl}
                   onChange={(e) => setWebsiteUrl(e.target.value)}
                 />
@@ -439,7 +439,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             <Input
               id="email"
               type="email"
-              placeholder="contacto@tuempresa.com"
+              placeholder="contacto@tunegocio.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

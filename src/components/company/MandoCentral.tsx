@@ -47,7 +47,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       <header className="mb-8">
         <h1 className="text-4xl font-bold text-foreground">Mando Central</h1>
         <p className="text-lg text-muted-foreground">
-          ¡Bienvenido, {profile?.company_name || "Empresa"}! Desde aquí puedes ver todo lo que está pasando en tu negocio y tomar las mejores decisiones para crecer.
+          ¡Bienvenido, {profile?.company_name || "Negocio"}! Desde aquí puedes ver todo lo que está pasando en tu negocio y tomar las mejores decisiones para crecer.
         </p>
       </header>
 
@@ -85,12 +85,12 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
 
       {/* Próxima Mejora Section */}
       <section className="mb-8">
-        <h2 className="text-2xl font-bold text-primary mb-4">🚀 Te ayudamos a crecer aún más</h2>
+        <h2 className="text-2xl font-bold text-primary mb-4">🚀 Te ayudamos a hacer crecer tu negocio aún más</h2>
         <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 p-6 rounded-lg shadow-sm border border-primary/20">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
-                Vamos a acelerar el crecimiento de tu empresa
+                Vamos a acelerar el crecimiento de tu negocio
               </h3>
               <p className="text-muted-foreground">
                 Hemos analizado tu uso actual y encontramos oportunidades perfectas para que crezcas más rápido y con menos esfuerzo.
@@ -204,7 +204,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
         <div className="bg-card p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <p className="text-muted-foreground">
-              Descubre asistentes inteligentes especializados para cada área de tu empresa.
+              Descubre asistentes inteligentes especializados para cada área de tu negocio.
             </p>
             <button className="flex items-center text-primary hover:text-accent transition-colors">
               <Store className="w-5 h-5 mr-2" />
@@ -266,7 +266,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
 
       {/* AI Insights Section */}
       <section>
-        <h2 className="text-2xl font-bold text-primary mb-4">Ideas para hacer crecer tu empresa</h2>
+        <h2 className="text-2xl font-bold text-primary mb-4">Ideas para hacer crecer tu negocio</h2>
         <div className="bg-card p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <p className="text-muted-foreground">

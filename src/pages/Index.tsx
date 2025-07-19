@@ -69,7 +69,7 @@ const Index = () => {
   // Contenido para usuarios autenticados
   const renderAuthenticatedContent = () => {
     const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email || "Usuario";
-    const companyName = profile?.company_name || "su empresa";
+    const companyName = profile?.company_name || "tu negocio";
 
     return (
       <div className="min-h-screen">
@@ -81,7 +81,7 @@ const Index = () => {
               Bienvenido de nuevo, <span className="text-primary">{displayName}</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              Acelere el crecimiento de {companyName} con herramientas de IA diseñadas para empresas como la suya.
+              Acelera el crecimiento de {companyName} con herramientas de IA diseñadas para negocios como el tuyo.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -109,7 +109,7 @@ const Index = () => {
               <CardContent className="p-6 text-center">
                 <BarChart3 className="h-12 w-12 text-primary mx-auto mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Mando Central</h3>
-                <p className="text-muted-foreground">Supervise todas las métricas de su empresa en un solo lugar</p>
+                <p className="text-muted-foreground">Supervisa todas las métricas de tu negocio en un solo lugar</p>
               </CardContent>
             </Card>
 
@@ -124,8 +124,8 @@ const Index = () => {
             <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => window.location.href = '/company-dashboard?view=adn-empresa'}>
               <CardContent className="p-6 text-center">
                 <Users className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">ADN Empresa</h3>
-                <p className="text-muted-foreground">Configure la identidad y estrategia de su empresa</p>
+                <h3 className="text-xl font-semibold mb-2">ADN Negocio</h3>
+                <p className="text-muted-foreground">Configura la identidad y estrategia de tu negocio</p>
               </CardContent>
             </Card>
           </div>
@@ -140,7 +140,7 @@ const Index = () => {
                     <p className="text-2xl font-bold text-primary">
                       {profile.company_size || 'No especificado'}
                     </p>
-                    <p className="text-sm text-muted-foreground">Tamaño de empresa</p>
+                    <p className="text-sm text-muted-foreground">Tamaño del negocio</p>
                   </div>
                   <div className="text-center">
                     <p className="text-2xl font-bold text-secondary">

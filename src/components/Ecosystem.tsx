@@ -9,7 +9,7 @@ const Ecosystem = () => {
             Un ecosistema pensado para ti
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-            Creemos que el crecimiento se da cuando las personas correctas trabajan juntas. Por eso reunimos empresas, desarrolladores y expertos en un solo lugar.
+            Creemos que el crecimiento se da cuando las personas correctas trabajan juntas. Por eso reunimos negocios, desarrolladores y expertos en un solo lugar.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
@@ -20,9 +20,9 @@ const Ecosystem = () => {
                 <Building2 className="w-12 h-12 text-primary" />
               </div>
             </div>
-            <h3 className="font-heading text-2xl text-primary mb-4">Para Empresas</h3>
+            <h3 className="font-heading text-2xl text-primary mb-4">Para Negocios</h3>
             <p className="text-muted-foreground">
-              Te ayudamos a hacer crecer tu empresa más rápido. Accede a soluciones de IA diseñadas específicamente para tus necesidades, sin complicaciones y con resultados que puedes ver.
+              Te ayudamos a hacer crecer tu negocio más rápido. Accede a soluciones de IA diseñadas específicamente para tus necesidades, sin complicaciones y con resultados que puedes ver.
             </p>
           </div>
           {/* Para Desarrolladores */}
@@ -46,7 +46,7 @@ const Ecosystem = () => {
             </div>
             <h3 className="font-heading text-2xl text-accent-foreground mb-4">Para Expertos</h3>
             <p className="text-muted-foreground">
-              Tu experiencia tiene un impacto real. Comparte tu conocimiento para guiar proyectos que transforman empresas y ayuda a que las soluciones sean realmente efectivas.
+              Tu experiencia tiene un impacto real. Comparte tu conocimiento para guiar proyectos que transforman negocios y ayuda a que las soluciones sean realmente efectivas.
             </p>
           </div>
         </div>

@@ -65,7 +65,7 @@ const CompanyDashboard = () => {
             email: session.user.email || '',
             full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuario',
             user_type: 'company',
-            company_name: session.user.user_metadata?.company_name || 'Mi Empresa',
+            company_name: session.user.user_metadata?.company_name || 'Mi Negocio',
             industry_sector: session.user.user_metadata?.industry_sector || 'Tecnología'
           })
           .select()
@@ -75,7 +75,7 @@ const CompanyDashboard = () => {
           console.error('Error creando perfil:', insertError);
           toast({
             title: "Error",
-            description: "No se pudo crear el perfil de empresa. Intente nuevamente.",
+            description: "No se pudo crear el perfil del negocio. Intente nuevamente.",
             variant: "destructive",
           });
           navigate('/auth');
@@ -85,7 +85,7 @@ const CompanyDashboard = () => {
         profileData = newProfile;
         toast({
           title: "Perfil creado",
-          description: "Se ha creado su perfil de empresa. Complete su información en ADN de la Empresa.",
+          description: "Se ha creado tu perfil de negocio. Completa tu información en ADN del Negocio.",
         });
       } else if (error) {
         console.error('Error obteniendo perfil:', error);
@@ -102,7 +102,7 @@ const CompanyDashboard = () => {
       if (profileData && profileData.user_type !== 'company') {
         toast({
           title: "Acceso denegado",
-          description: "Este dashboard es solo para empresas.",
+          description: "Este dashboard es solo para negocios.",
           variant: "destructive",
         });
         navigate('/auth');
@@ -157,7 +157,7 @@ const CompanyDashboard = () => {
         setActiveView("adn-empresa");
         toast({
           title: "Complete su perfil",
-          description: "Debe completar toda la información de su empresa para continuar.",
+          description: "Debes completar toda la información de tu negocio para continuar.",
         });
       }
       

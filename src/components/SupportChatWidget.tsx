@@ -42,8 +42,8 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
   const getPageContext = () => {
     const path = location.pathname;
     const contexts = {
-      '/company-dashboard': 'Panel de control empresarial',
-      '/company-dashboard/adn': 'Sección ADN de la Empresa',
+      '/company-dashboard': 'Panel de control del negocio',
+      '/company-dashboard/adn': 'Sección ADN del Negocio',
       '/company-dashboard/marketplace': 'Marketplace de expertos',
       '/company-dashboard/expertos': 'Gestión de expertos',
       '/company-dashboard/marketing': 'Marketing Hub',
@@ -132,7 +132,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
     if (messages.length === 0) {
       const welcomeMessage: Message = {
         id: 'welcome',
-        content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy Era, tu asistente personal de Buildera. Estoy aquí para ayudarte a sacar el máximo provecho de la plataforma y acompañarte en el crecimiento de tu empresa. ¿En qué puedo ayudarte hoy?`,
+        content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy Era, tu asistente personal de Buildera. Estoy aquí para ayudarte a sacar el máximo provecho de la plataforma y acompañarte en el crecimiento de tu negocio. ¿En qué puedo ayudarte hoy?`,
         sender: 'support',
         timestamp: new Date(),
       };

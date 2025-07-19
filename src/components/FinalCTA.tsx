@@ -5,7 +5,7 @@ const FinalCTA = () => {
     <section id="contacto" className="bg-primary text-primary-foreground py-20">
       <div className="container mx-auto px-6 text-center">
         <h2 className="text-3xl md:text-4xl font-heading">
-          ¿Listo para ver tu empresa crecer?
+          ¿Listo para ver tu negocio crecer?
         </h2>
         <p className="mt-4 text-lg text-primary-foreground/80 max-w-2xl mx-auto">
           Estamos aquí para acompañarte. Conversa con nuestro equipo y descubre cómo podemos ayudarte a automatizar tu negocio. Sin presión, sin compromisos.

@@ -127,44 +127,99 @@ const EraCoachMark: React.FC<EraCoachMarkProps> = ({ isOpen, onClose, userId }) 
       title: "Principales funciones de Buildera",
       content: (
         <div className="space-y-4">
+          <p className="text-sm text-muted-foreground text-center mb-4">
+            Conoce dónde encontrar cada función en tu panel lateral
+          </p>
           <div className="grid gap-3">
             <div className="flex items-start gap-2">
               <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold text-blue-600">1</span>
+                <span className="text-xs font-bold text-blue-600">📋</span>
               </div>
               <div>
                 <h4 className="font-semibold text-xs">ADN Empresa</h4>
                 <p className="text-xs text-muted-foreground">Define misión, visión e identidad visual</p>
+                <span className="text-xs text-blue-600 font-medium">👈 Panel lateral - Primera opción</span>
               </div>
             </div>
             
             <div className="flex items-start gap-2">
               <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold text-purple-600">2</span>
+                <span className="text-xs font-bold text-purple-600">📢</span>
               </div>
               <div>
                 <h4 className="font-semibold text-xs">Marketing Hub</h4>
                 <p className="text-xs text-muted-foreground">Genera contenido optimizado para redes sociales</p>
+                <span className="text-xs text-purple-600 font-medium">👈 Panel lateral - Sección Marketing</span>
               </div>
             </div>
             
             <div className="flex items-start gap-2">
               <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold text-green-600">3</span>
+                <span className="text-xs font-bold text-green-600">🛒</span>
               </div>
               <div>
                 <h4 className="font-semibold text-xs">Marketplace & Expertos</h4>
                 <p className="text-xs text-muted-foreground">Conecta con especialistas para tus proyectos</p>
+                <span className="text-xs text-green-600 font-medium">👈 Panel lateral - Sección Colaboradores</span>
               </div>
             </div>
             
             <div className="flex items-start gap-2">
               <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold text-orange-600">4</span>
+                <span className="text-xs font-bold text-orange-600">📊</span>
               </div>
               <div>
                 <h4 className="font-semibold text-xs">Inteligencia Competitiva</h4>
                 <p className="text-xs text-muted-foreground">Analiza competencia y tendencias del mercado</p>
+                <span className="text-xs text-orange-600 font-medium">👈 Panel lateral - Sección Análisis</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Navegación de la plataforma",
+      content: (
+        <div className="space-y-4">
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+            <h4 className="font-semibold text-sm mb-3 text-center">🧭 Cómo navegar en Buildera</h4>
+            
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs">📂</span>
+                </div>
+                <div>
+                  <p className="text-xs"><strong>Panel Lateral:</strong> Todas las funciones principales</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs">💬</span>
+                </div>
+                <div>
+                  <p className="text-xs"><strong>Chat Era:</strong> Botón flotante para asistencia IA</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs">⚙️</span>
+                </div>
+                <div>
+                  <p className="text-xs"><strong>Configuración:</strong> Personaliza tu experiencia</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-xs">⚡</span>
+                </div>
+                <div>
+                  <p className="text-xs"><strong>Botón Era:</strong> Aparece al escribir para optimizar contenido</p>
+                </div>
               </div>
             </div>
           </div>
@@ -176,7 +231,7 @@ const EraCoachMark: React.FC<EraCoachMarkProps> = ({ isOpen, onClose, userId }) 
       content: (
         <div className="space-y-6 text-center">
           <div className="flex items-center justify-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center animate-pulse">
               <Target className="w-8 h-8 text-white" />
             </div>
           </div>
@@ -184,14 +239,22 @@ const EraCoachMark: React.FC<EraCoachMarkProps> = ({ isOpen, onClose, userId }) 
           <div>
             <h3 className="text-lg font-bold mb-2">¡Era está lista para ayudarte!</h3>
             <p className="text-muted-foreground text-sm">
-              Explora cada sección y usa el chat de Era (botón flotante) para obtener ayuda personalizada en tiempo real.
+              Explora cada sección usando el panel lateral y conversa con Era para obtener ayuda personalizada.
             </p>
           </div>
           
-          <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-            <p className="text-xs text-blue-700 dark:text-blue-300">
-              💡 <strong>Tip:</strong> Haz clic en el ícono de chat para conversar con Era en cualquier momento.
-            </p>
+          <div className="space-y-3">
+            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                💡 <strong>Tip:</strong> Haz clic en el ícono de chat para conversar con Era
+              </p>
+            </div>
+            
+            <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
+              <p className="text-xs text-purple-700 dark:text-purple-300">
+                ⚡ <strong>Pro Tip:</strong> Usa "Optimizar con Era" al escribir contenido
+              </p>
+            </div>
           </div>
         </div>
       )

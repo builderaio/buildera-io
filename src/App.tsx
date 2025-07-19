@@ -3,8 +3,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { AdminAuthProvider } from "@/hooks/useAdminAuth";
 import SupportChatWidget from "@/components/SupportChatWidget";
+import VersionUpdateNotification from "@/components/VersionUpdateNotification";
+import CacheManager from "@/components/CacheManager";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -48,10 +51,13 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AdminAuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AdminAuthProvider>
+          <TooltipProvider>
+            <CacheManager />
+            <VersionUpdateNotification />
+            <Toaster />
+            <Sonner />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -84,9 +90,10 @@ const App = () => {
             
             {/* Chat widget de soporte para usuarios autenticados */}
             <SupportChatWidget user={user} />
-          </BrowserRouter>
-        </TooltipProvider>
-      </AdminAuthProvider>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AdminAuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

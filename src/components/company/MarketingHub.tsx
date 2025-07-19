@@ -67,6 +67,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
   const [showLinkedInPublishDialog, setShowLinkedInPublishDialog] = useState(false);
   const [linkedinPosts, setLinkedinPosts] = useState<any[]>([]);
   const [linkedinAnalytics, setLinkedinAnalytics] = useState<any>(null);
+  const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
   const { toast } = useToast();
 
   // Cargar conexiones existentes al montar el componente
@@ -1535,46 +1536,149 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
               <div className="bg-card p-6 rounded-lg border">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="font-bold">Enero 2025</h4>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-4">
+                    <div className="flex gap-1 bg-muted p-1 rounded-lg">
+                      <Button
+                        size="sm"
+                        variant={calendarView === 'day' ? 'default' : 'ghost'}
+                        onClick={() => setCalendarView('day')}
+                        className="text-xs px-3 py-1"
+                      >
+                        Día
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={calendarView === 'week' ? 'default' : 'ghost'}
+                        onClick={() => setCalendarView('week')}
+                        className="text-xs px-3 py-1"
+                      >
+                        Semana
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={calendarView === 'month' ? 'default' : 'ghost'}
+                        onClick={() => setCalendarView('month')}
+                        className="text-xs px-3 py-1"
+                      >
+                        Mes
+                      </Button>
+                    </div>
                     <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                       Hoy: {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted-foreground mb-2">
-                  <div>LUN</div><div>MAR</div><div>MIÉ</div><div>JUE</div><div>VIE</div><div>SÁB</div><div>DOM</div>
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                  {Array.from({ length: 31 }, (_, i) => {
-                    const day = i + 1;
-                    const isToday = day === new Date().getDate() && new Date().getMonth() === 0;
-                    return (
-                      <div key={day} className={`border rounded-md h-24 p-1 ${isToday ? 'bg-primary/10 border-primary' : 'bg-card'}`}>
-                        <div className={`text-xs ${isToday ? 'font-bold text-primary' : ''}`}>{day}</div>
-                        {day === 2 && (
-                          <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded p-1 mt-1">
-                            Post LinkedIn
+                {/* Vista Mes */}
+                {calendarView === 'month' && (
+                  <>
+                    <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted-foreground mb-2">
+                      <div>LUN</div><div>MAR</div><div>MIÉ</div><div>JUE</div><div>VIE</div><div>SÁB</div><div>DOM</div>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1">
+                      {Array.from({ length: 31 }, (_, i) => {
+                        const day = i + 1;
+                        const isToday = day === new Date().getDate() && new Date().getMonth() === 0;
+                        return (
+                          <div key={day} className={`border rounded-md h-24 p-1 ${isToday ? 'bg-primary/10 border-primary' : 'bg-card'}`}>
+                            <div className={`text-xs ${isToday ? 'font-bold text-primary' : ''}`}>{day}</div>
+                            {day === 2 && (
+                              <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded p-1 mt-1">
+                                Post LinkedIn
+                              </div>
+                            )}
+                            {day === 4 && (
+                              <div className="bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 text-xs rounded p-1 mt-1">
+                                Video TikTok
+                              </div>
+                            )}
+                            {day === 8 && (
+                              <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded p-1 mt-1">
+                                Instagram Post
+                              </div>
+                            )}
+                            {day === 15 && (
+                              <div className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs rounded p-1 mt-1">
+                                Webinar
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {day === 4 && (
-                          <div className="bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 text-xs rounded p-1 mt-1">
-                            Video TikTok
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+                
+                {/* Vista Semana */}
+                {calendarView === 'week' && (
+                  <>
+                    <div className="grid grid-cols-8 gap-1 text-center text-xs font-semibold text-muted-foreground mb-2">
+                      <div>Hora</div><div>LUN</div><div>MAR</div><div>MIÉ</div><div>JUE</div><div>VIE</div><div>SÁB</div><div>DOM</div>
+                    </div>
+                    <div className="space-y-1">
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const hour = i + 8; // Horario de 8 AM a 7 PM
+                        return (
+                          <div key={hour} className="grid grid-cols-8 gap-1">
+                            <div className="text-xs text-muted-foreground p-2 text-center">{hour}:00</div>
+                            {Array.from({ length: 7 }, (_, dayIndex) => (
+                              <div key={dayIndex} className="border rounded-md h-16 p-1 bg-card">
+                                {hour === 10 && dayIndex === 1 && (
+                                  <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded p-1">
+                                    Reunión Marketing
+                                  </div>
+                                )}
+                                {hour === 14 && dayIndex === 3 && (
+                                  <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded p-1">
+                                    Post Instagram
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        )}
-                        {day === 8 && (
-                          <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded p-1 mt-1">
-                            Instagram Post
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+                
+                {/* Vista Día */}
+                {calendarView === 'day' && (
+                  <>
+                    <div className="text-center text-sm font-medium text-muted-foreground mb-4">
+                      Hoy - {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </div>
+                    <div className="space-y-1">
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const hour = i + 8; // Horario de 8 AM a 7 PM
+                        return (
+                          <div key={hour} className="flex gap-2 items-start">
+                            <div className="text-xs text-muted-foreground w-16 text-right pt-2">{hour}:00</div>
+                            <div className="flex-1 border rounded-md h-20 p-2 bg-card">
+                              {hour === 10 && (
+                                <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm rounded p-2">
+                                  <div className="font-medium">Reunión de Marketing</div>
+                                  <div className="text-xs">Revisión de estrategia Q1</div>
+                                </div>
+                              )}
+                              {hour === 14 && (
+                                <div className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm rounded p-2">
+                                  <div className="font-medium">Publicar en Instagram</div>
+                                  <div className="text-xs">Post sobre nuevo producto</div>
+                                </div>
+                              )}
+                              {hour === 16 && (
+                                <div className="bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 text-sm rounded p-2">
+                                  <div className="font-medium">Análisis de Métricas</div>
+                                  <div className="text-xs">Revisar performance semanal</div>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        )}
-                        {day === 15 && (
-                          <div className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs rounded p-1 mt-1">
-                            Webinar
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </div>
             </TabsContent>
 

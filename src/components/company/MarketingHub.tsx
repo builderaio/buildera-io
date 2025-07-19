@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Instagram, Music, Linkedin, Upload, BarChart3, Calendar, AlertTriangle, CheckCircle, Clock, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";

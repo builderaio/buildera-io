@@ -8,7 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2 } from "lucide-react";
+import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar } from "lucide-react";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import CompanyProfileForm from "./CompanyProfileForm";
 
 interface ADNEmpresaProps {
@@ -64,6 +68,30 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   });
   const [loadingStrategy, setLoadingStrategy] = useState(false);
   
+  // Estados para objetivos empresariales
+  const [objectives, setObjectives] = useState<any[]>([]);
+  const [showObjectiveForm, setShowObjectiveForm] = useState(false);
+  const [editingObjective, setEditingObjective] = useState<any>(null);
+  const [objectiveForm, setObjectiveForm] = useState({
+    title: "",
+    description: "",
+    objective_type: "",
+    priority: 1,
+    target_date: null as Date | null
+  });
+  const [loadingObjectives, setLoadingObjectives] = useState(false);
+  
+  const objectiveTypes = [
+    "Financiero",
+    "Crecimiento",
+    "Operacional", 
+    "Marketing",
+    "Recursos Humanos",
+    "Tecnología",
+    "Sostenibilidad",
+    "Otro"
+  ];
+  
   const { toast } = useToast();
 
   const companySizes = [
@@ -89,12 +117,13 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     "Otro"
   ];
 
-  // Cargar productos, branding y estrategia al montar el componente
+  // Cargar productos, branding, estrategia y objetivos al montar el componente
   useEffect(() => {
     if (profile?.user_id) {
       fetchProducts();
       fetchBranding();
       fetchStrategy();
+      fetchObjectives();
     }
   }, [profile?.user_id]);
 
@@ -407,6 +436,152 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     } finally {
       setLoadingStrategy(false);
     }
+  };
+
+  // Funciones para la gestión de objetivos empresariales
+  const fetchObjectives = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('company_objectives')
+        .select('*')
+        .eq('user_id', profile?.user_id)
+        .order('priority', { ascending: true });
+
+      if (error) throw error;
+      setObjectives(data || []);
+    } catch (error: any) {
+      console.error('Error fetching objectives:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los objetivos",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveObjective = async () => {
+    if (!objectiveForm.title.trim()) {
+      toast({
+        title: "Error",
+        description: "El título del objetivo es obligatorio",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingObjectives(true);
+    try {
+      if (editingObjective) {
+        // Actualizar objetivo existente
+        const { error } = await supabase
+          .from('company_objectives')
+          .update({
+            title: objectiveForm.title,
+            description: objectiveForm.description,
+            objective_type: objectiveForm.objective_type,
+            priority: objectiveForm.priority,
+            target_date: objectiveForm.target_date ? objectiveForm.target_date.toISOString().split('T')[0] : null
+          })
+          .eq('id', editingObjective.id)
+          .eq('user_id', profile?.user_id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Objetivo actualizado",
+          description: "El objetivo se ha actualizado correctamente",
+        });
+      } else {
+        // Crear nuevo objetivo
+        const { error } = await supabase
+          .from('company_objectives')
+          .insert({
+            user_id: profile?.user_id,
+            title: objectiveForm.title,
+            description: objectiveForm.description,
+            objective_type: objectiveForm.objective_type,
+            priority: objectiveForm.priority,
+            target_date: objectiveForm.target_date ? objectiveForm.target_date.toISOString().split('T')[0] : null
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Objetivo creado",
+          description: "El objetivo se ha creado correctamente",
+        });
+      }
+
+      // Recargar objetivos y cerrar formulario
+      await fetchObjectives();
+      handleCancelObjectiveForm();
+    } catch (error: any) {
+      console.error('Error saving objective:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar el objetivo",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingObjectives(false);
+    }
+  };
+
+  const handleEditObjective = (objective: any) => {
+    setEditingObjective(objective);
+    setObjectiveForm({
+      title: objective.title,
+      description: objective.description || "",
+      objective_type: objective.objective_type,
+      priority: objective.priority || 1,
+      target_date: objective.target_date ? new Date(objective.target_date) : null
+    });
+    setShowObjectiveForm(true);
+  };
+
+  const handleDeleteObjective = async (objectiveId: string) => {
+    if (!confirm("¿Está seguro de que desea eliminar este objetivo?")) {
+      return;
+    }
+
+    setLoadingObjectives(true);
+    try {
+      const { error } = await supabase
+        .from('company_objectives')
+        .delete()
+        .eq('id', objectiveId)
+        .eq('user_id', profile?.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Objetivo eliminado",
+        description: "El objetivo se ha eliminado correctamente",
+      });
+
+      await fetchObjectives();
+    } catch (error: any) {
+      console.error('Error deleting objective:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el objetivo",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingObjectives(false);
+    }
+  };
+
+  const handleCancelObjectiveForm = () => {
+    setShowObjectiveForm(false);
+    setEditingObjective(null);
+    setObjectiveForm({
+      title: "",
+      description: "",
+      objective_type: "",
+      priority: 1,
+      target_date: null
+    });
   };
 
   // Funciones para la gestión de marca
@@ -1019,135 +1194,339 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             </TabsList>
 
             <TabsContent value="perfil" className="space-y-6 mt-6">
-              <Tabs defaultValue="informacion" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="informacion">Información de {profile?.company_name || 'la Empresa'}</TabsTrigger>
-                  <TabsTrigger value="objetivos">Objetivos Empresariales</TabsTrigger>
-                </TabsList>
+              {/* Información de la Empresa */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Building2 className="w-5 h-5 mr-2" />
+                    Información de {profile?.company_name || 'la Empresa'}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Complete toda la información de su empresa.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="company_name">Nombre de la empresa *</Label>
+                      <Input
+                        id="company_name"
+                        value={profile?.company_name || ""}
+                        onChange={(e) => onProfileUpdate({...profile, company_name: e.target.value})}
+                        placeholder="Nombre de su empresa"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="full_name">Nombre del contacto *</Label>
+                      <Input
+                        id="full_name"
+                        value={profile?.full_name || ""}
+                        onChange={(e) => onProfileUpdate({...profile, full_name: e.target.value})}
+                        placeholder="Su nombre completo"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email corporativo (no editable)</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profile?.email || ""}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="website_url">Sitio web</Label>
+                      <Input
+                        id="website_url"
+                        type="text"
+                        value={profile?.website_url || ""}
+                        onChange={(e) => onProfileUpdate({...profile, website_url: e.target.value})}
+                        placeholder="suempresa.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="nit">NIT</Label>
+                      <Input
+                        id="nit"
+                        value={profile?.nit || ""}
+                        onChange={(e) => onProfileUpdate({...profile, nit: e.target.value})}
+                        placeholder="Número de identificación tributaria"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="company_size">Tamaño de la empresa *</Label>
+                      <Select value={profile?.company_size || ""} onValueChange={(value) => onProfileUpdate({...profile, company_size: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione el tamaño" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {companySizes.map((size) => (
+                            <SelectItem key={size} value={size}>
+                              {size}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="industry_sector">Sector de la industria *</Label>
+                      <Select value={profile?.industry_sector || ""} onValueChange={(value) => onProfileUpdate({...profile, industry_sector: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione el sector" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sectors.map((sector) => (
+                            <SelectItem key={sector} value={sector}>
+                              {sector}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="country">País *</Label>
+                      <Input
+                        id="country"
+                        value={profile?.country || ""}
+                        onChange={(e) => onProfileUpdate({...profile, country: e.target.value})}
+                        placeholder="País de la empresa"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="headquarters_address">Dirección oficina central</Label>
+                      <Input
+                        id="headquarters_address"
+                        value={profile?.headquarters_address || ""}
+                        onChange={(e) => onProfileUpdate({...profile, headquarters_address: e.target.value})}
+                        placeholder="Dirección de la oficina principal"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="headquarters_city">Ciudad oficina central</Label>
+                      <Input
+                        id="headquarters_city"
+                        value={profile?.headquarters_city || ""}
+                        onChange={(e) => onProfileUpdate({...profile, headquarters_city: e.target.value})}
+                        placeholder="Ciudad de la oficina principal"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="headquarters_country">País oficina central</Label>
+                      <Input
+                        id="headquarters_country"
+                        value={profile?.headquarters_country || ""}
+                        onChange={(e) => onProfileUpdate({...profile, headquarters_country: e.target.value})}
+                        placeholder="País de la oficina principal"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <TabsContent value="informacion" className="space-y-6 mt-6">
-                  {/* Información Unificada de la Empresa */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Building2 className="w-5 h-5 mr-2" />
-                        Información de {profile?.company_name || 'la Empresa'}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        Complete toda la información de su empresa en un solo lugar.
-                      </p>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="company_name">Nombre de la empresa *</Label>
-                          <Input
-                            id="company_name"
-                            value={profile?.company_name || ""}
-                            onChange={(e) => onProfileUpdate({...profile, company_name: e.target.value})}
-                            placeholder="Nombre de su empresa"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="full_name">Nombre del contacto *</Label>
-                          <Input
-                            id="full_name"
-                            value={profile?.full_name || ""}
-                            onChange={(e) => onProfileUpdate({...profile, full_name: e.target.value})}
-                            placeholder="Su nombre completo"
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email corporativo (no editable)</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={profile?.email || ""}
-                            disabled
-                            className="bg-muted"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="website_url">Sitio web</Label>
-                          <Input
-                            id="website_url"
-                            type="text"
-                            value={profile?.website_url || ""}
-                            onChange={(e) => onProfileUpdate({...profile, website_url: e.target.value})}
-                            placeholder="suempresa.com"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="company_size">Tamaño de la empresa *</Label>
-                          <Select value={profile?.company_size || ""} onValueChange={(value) => onProfileUpdate({...profile, company_size: value})}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione el tamaño" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {companySizes.map((size) => (
-                                <SelectItem key={size} value={size}>
-                                  {size}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="industry_sector">Sector de la industria *</Label>
-                          <Select value={profile?.industry_sector || ""} onValueChange={(value) => onProfileUpdate({...profile, industry_sector: value})}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccione el sector" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {sectors.map((sector) => (
-                                <SelectItem key={sector} value={sector}>
-                                  {sector}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="country">País *</Label>
-                          <Input
-                            id="country"
-                            value={profile?.country || ""}
-                            onChange={(e) => onProfileUpdate({...profile, country: e.target.value})}
-                            placeholder="País de la empresa"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <CompanyProfileForm profile={profile} onProfileUpdate={onProfileUpdate} />
-                </TabsContent>
-
-                <TabsContent value="objetivos" className="space-y-6 mt-6">
-                  <Card>
-                    <CardHeader>
+              {/* Objetivos Empresariales */}
+              <Card>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <div>
                       <CardTitle className="flex items-center">
                         <Target className="w-5 h-5 mr-2" />
                         Objetivos Empresariales
                       </CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        Define los objetivos estratégicos de tu empresa para orientar todas las actividades.
+                        Define los objetivos estratégicos de tu empresa.
                       </p>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-center py-8">
-                        <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">
-                          Funcionalidad de objetivos empresariales próximamente disponible.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+                    </div>
+                    <Button 
+                      onClick={() => setShowObjectiveForm(true)}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Agregar Objetivo
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {showObjectiveForm && (
+                    <Card className="mb-6">
+                      <CardHeader>
+                        <CardTitle>
+                          {editingObjective ? "Editar Objetivo" : "Nuevo Objetivo"}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="objective_title">Título del objetivo *</Label>
+                            <Input
+                              id="objective_title"
+                              value={objectiveForm.title}
+                              onChange={(e) => setObjectiveForm({...objectiveForm, title: e.target.value})}
+                              placeholder="Nombre del objetivo"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="objective_type">Tipo de objetivo *</Label>
+                            <Select value={objectiveForm.objective_type} onValueChange={(value) => setObjectiveForm({...objectiveForm, objective_type: value})}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione el tipo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {objectiveTypes.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="objective_priority">Prioridad</Label>
+                            <Select 
+                              value={objectiveForm.priority.toString()} 
+                              onValueChange={(value) => setObjectiveForm({...objectiveForm, priority: parseInt(value)})}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione prioridad" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1">Alta (1)</SelectItem>
+                                <SelectItem value="2">Media (2)</SelectItem>
+                                <SelectItem value="3">Baja (3)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Fecha objetivo</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full justify-start text-left font-normal",
+                                    !objectiveForm.target_date && "text-muted-foreground"
+                                  )}
+                                >
+                                  <Calendar className="mr-2 h-4 w-4" />
+                                  {objectiveForm.target_date ? format(objectiveForm.target_date, "PPP") : <span>Seleccionar fecha</span>}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <CalendarComponent
+                                  mode="single"
+                                  selected={objectiveForm.target_date}
+                                  onSelect={(date) => setObjectiveForm({...objectiveForm, target_date: date})}
+                                  initialFocus
+                                  className="p-3 pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="objective_description">Descripción</Label>
+                          <Textarea
+                            id="objective_description"
+                            rows={3}
+                            value={objectiveForm.description}
+                            onChange={(e) => setObjectiveForm({...objectiveForm, description: e.target.value})}
+                            placeholder="Describe el objetivo en detalle"
+                            className="resize-none"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="outline"
+                            onClick={handleCancelObjectiveForm}
+                            disabled={loadingObjectives}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button 
+                            onClick={handleSaveObjective}
+                            disabled={loadingObjectives}
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
+                          >
+                            {loadingObjectives ? "Guardando..." : editingObjective ? "Actualizar" : "Crear"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {objectives.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">
+                        No hay objetivos registrados. Agregue el primer objetivo para comenzar.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {objectives.map((objective) => (
+                        <Card key={objective.id} className="hover:shadow-md transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-semibold text-foreground">{objective.title}</h4>
+                                  <span className={cn(
+                                    "px-2 py-1 text-xs rounded-full",
+                                    objective.priority === 1 ? "bg-red-100 text-red-800" :
+                                    objective.priority === 2 ? "bg-yellow-100 text-yellow-800" :
+                                    "bg-green-100 text-green-800"
+                                  )}>
+                                    Prioridad {objective.priority}
+                                  </span>
+                                  <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                    {objective.objective_type}
+                                  </span>
+                                </div>
+                                {objective.description && (
+                                  <p className="text-sm text-muted-foreground mb-2">
+                                    {objective.description}
+                                  </p>
+                                )}
+                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                  {objective.target_date && (
+                                    <span>Fecha objetivo: {new Date(objective.target_date).toLocaleDateString()}</span>
+                                  )}
+                                  <span>Creado: {new Date(objective.created_at).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditObjective(objective)}
+                                  disabled={loadingObjectives}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteObjective(objective.id)}
+                                  disabled={loadingObjectives}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <CompanyProfileForm profile={profile} onProfileUpdate={onProfileUpdate} />
             </TabsContent>
 
             <TabsContent value="estrategia" className="space-y-6 mt-6">

@@ -15,7 +15,8 @@ import {
   TrendingUp,
   Eye,
   UserCheck,
-  Database
+  Database,
+  Trophy
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -147,7 +148,25 @@ const AdminDashboard = () => {
       action: () => navigate('/admin/users')
     },
     {
-      title: "Analytics Avanzados",
+      title: "Monitoreo IA",
+      description: "Estado y rendimiento de modelos de IA",
+      icon: Activity,
+      action: () => navigate('/admin/ai-monitoring')
+    },
+    {
+      title: "Champion Challenge",
+      description: "Evaluación y comparación de modelos IA",
+      icon: Trophy,
+      action: () => navigate('/admin/champion-challenge')
+    },
+    {
+      title: "Configuración IA",
+      description: "Parametrización de modelos por función",
+      icon: Settings,
+      action: () => navigate('/admin/ai-config')
+    },
+    {
+      title: "Analytics Avanzados", 
       description: "Reportes detallados y métricas de uso",
       icon: BarChart3,
       action: () => navigate('/admin/analytics')
@@ -157,12 +176,6 @@ const AdminDashboard = () => {
       description: "Monitoreo y administración de datos",
       icon: Database,
       action: () => navigate('/admin/database')
-    },
-    {
-      title: "Configuración Sistema",
-      description: "Ajustes generales y configuraciones",
-      icon: Settings,
-      action: () => navigate('/admin/settings')
     }
   ];
 

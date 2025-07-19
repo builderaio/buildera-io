@@ -23,6 +23,9 @@ import TermsOfService from "./pages/TermsOfService";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
+import AdminAIMonitoring from "./pages/AdminAIMonitoring";
+import AdminChampionChallenge from "./pages/AdminChampionChallenge";
+import AdminAIConfig from "./pages/AdminAIConfig";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import UserProfile from "./pages/UserProfile";
 
@@ -73,6 +76,11 @@ const App = () => {
               
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={
+                <AdminProtectedRoute>
+                  <AdminDashboard />
+                </AdminProtectedRoute>
+              } />
               <Route path="/admin/dashboard" element={
                 <AdminProtectedRoute>
                   <AdminDashboard />
@@ -81,6 +89,21 @@ const App = () => {
               <Route path="/admin/users" element={
                 <AdminProtectedRoute>
                   <AdminUsers />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/ai-monitoring" element={
+                <AdminProtectedRoute>
+                  <AdminAIMonitoring />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/champion-challenge" element={
+                <AdminProtectedRoute>
+                  <AdminChampionChallenge />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/ai-config" element={
+                <AdminProtectedRoute>
+                  <AdminAIConfig />
                 </AdminProtectedRoute>
               } />
               

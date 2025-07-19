@@ -90,34 +90,47 @@ const CompanyProfileForm = ({ profile, onProfileUpdate }: CompanyProfileFormProp
       }
 
       try {
-        // Get API key from Supabase Edge Function
+        // Try to get API key from Supabase Edge Function
         const response = await supabase.functions.invoke('get-google-maps-key');
         
-        if (response.error) {
-          throw new Error(response.error);
+        let apiKey = '';
+        
+        if (response.error || !response.data?.apiKey) {
+          // If edge function fails, show a message but don't prevent the form from working
+          console.warn('Google Maps API key not available:', response.error);
+          toast({
+            title: "Google Maps no disponible",
+            description: "Puedes usar el formulario de ubicación manualmente",
+          });
+          return;
+        } else {
+          apiKey = response.data.apiKey;
         }
 
-        const { apiKey } = response.data;
-
+        // Load Google Maps script
         const script = document.createElement('script');
         script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
         script.async = true;
         script.defer = true;
-        script.onload = () => setMapLoaded(true);
+        
+        script.onload = () => {
+          setMapLoaded(true);
+        };
+        
         script.onerror = () => {
           toast({
-            title: "Error",
-            description: "No se pudo cargar Google Maps. Verifica la configuración de la API key.",
+            title: "Error cargando Google Maps",
+            description: "Puedes introducir la dirección manualmente",
             variant: "destructive",
           });
         };
+        
         document.head.appendChild(script);
       } catch (error) {
         console.error('Error loading Google Maps:', error);
         toast({
-          title: "Error",
-          description: "No se pudo cargar Google Maps. Configura la API key en los secretos de Supabase.",
-          variant: "destructive",
+          title: "Google Maps no disponible",
+          description: "Puedes introducir la dirección manualmente",
         });
       }
     };
@@ -502,42 +515,74 @@ const CompanyProfileForm = ({ profile, onProfileUpdate }: CompanyProfileFormProp
         <CardContent className="space-y-4">
           {editing && (
             <div className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Buscar dirección..."
-                  value={searchAddress}
-                  onChange={(e) => setSearchAddress(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      searchLocation();
-                    }
-                  }}
-                />
-                <Button onClick={searchLocation} variant="outline">
-                  <Search className="w-4 h-4" />
-                </Button>
-              </div>
-              
-              {mapLoaded ? (
-                <div 
-                  ref={mapRef} 
-                  className="w-full h-64 border rounded-lg"
-                  style={{ minHeight: '300px' }}
-                />
-              ) : (
-                <div className="w-full h-64 border rounded-lg flex items-center justify-center bg-gray-50">
-                  <p className="text-gray-500">Cargando Google Maps...</p>
+              {/* Formulario manual de dirección */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="headquarters_address">Dirección</Label>
+                  <Input
+                    id="headquarters_address"
+                    value={formData.headquarters_address || ''}
+                    onChange={(e) => setFormData({ ...formData, headquarters_address: e.target.value })}
+                    placeholder="Calle 123 #45-67"
+                  />
                 </div>
+                
+                <div>
+                  <Label htmlFor="headquarters_city">Ciudad</Label>
+                  <Input
+                    id="headquarters_city"
+                    value={formData.headquarters_city || ''}
+                    onChange={(e) => setFormData({ ...formData, headquarters_city: e.target.value })}
+                    placeholder="Bogotá"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="headquarters_country">País</Label>
+                  <Input
+                    id="headquarters_country"
+                    value={formData.headquarters_country || ''}
+                    onChange={(e) => setFormData({ ...formData, headquarters_country: e.target.value })}
+                    placeholder="Colombia"
+                  />
+                </div>
+              </div>
+
+              {/* Google Maps solo si está disponible */}
+              {mapLoaded && (
+                <>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Buscar dirección..."
+                      value={searchAddress}
+                      onChange={(e) => setSearchAddress(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          searchLocation();
+                        }
+                      }}
+                    />
+                    <Button onClick={searchLocation} variant="outline">
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <div 
+                    ref={mapRef} 
+                    className="w-full h-64 border rounded-lg"
+                    style={{ minHeight: '300px' }}
+                  />
+                  
+                  <p className="text-xs text-gray-500">
+                    Haz clic en el mapa para marcar la ubicación de tus oficinas centrales
+                  </p>
+                </>
               )}
-              
-              <p className="text-xs text-gray-500">
-                Haz clic en el mapa para marcar la ubicación de tus oficinas centrales
-              </p>
             </div>
           )}
 
-          {(profile.headquarters_address || formData.headquarters_address) && (
+          {!editing && (profile.headquarters_address || formData.headquarters_address) && (
             <div className="space-y-2">
               <div>
                 <Label>Dirección</Label>
@@ -559,6 +604,28 @@ const CompanyProfileForm = ({ profile, onProfileUpdate }: CompanyProfileFormProp
                   </div>
                 )}
               </div>
+
+              {/* Mapa de solo lectura */}
+              {(profile.headquarters_lat && profile.headquarters_lng) && (
+                <div className="mt-4">
+                  <Label>Ubicación en el Mapa</Label>
+                  <div className="w-full h-48 border rounded-lg bg-gray-100 flex items-center justify-center">
+                    <p className="text-gray-500 text-center">
+                      📍 Oficinas ubicadas en:<br/>
+                      Lat: {profile.headquarters_lat.toFixed(6)}<br/>
+                      Lng: {profile.headquarters_lng.toFixed(6)}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!editing && !(profile.headquarters_address || formData.headquarters_address) && (
+            <div className="text-center py-8">
+              <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No hay información de oficinas centrales</p>
+              <p className="text-sm text-gray-400">Haz clic en "Editar" para agregar la ubicación</p>
             </div>
           )}
         </CardContent>

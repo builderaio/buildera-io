@@ -431,6 +431,7 @@ const AdminAPIKeys = () => {
               <TabsTrigger value="keys">API Keys</TabsTrigger>
               <TabsTrigger value="usage">Uso & Consumo</TabsTrigger>
               <TabsTrigger value="billing">Facturación</TabsTrigger>
+              <TabsTrigger value="config">Configuración AI</TabsTrigger>
             </TabsList>
 
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -611,9 +612,10 @@ const AdminAPIKeys = () => {
           </TabsContent>
 
           <TabsContent value="usage" className="space-y-4">
+            {/* Resumen por Proveedor */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <CardTitle>Consumo por Proveedor (Últimos 30 días)</CardTitle>
+                <CardTitle>Resumen por Proveedor (Últimos 30 días)</CardTitle>
                 <Button
                   onClick={refreshUsageData}
                   size="sm"
@@ -625,7 +627,7 @@ const AdminAPIKeys = () => {
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {['openai', 'anthropic', 'google', 'groq', 'xai'].map(provider => {
                     const providerUsage = usageData
                       .filter(usage => apiKeys.find(key => key.id === usage.api_key_id && key.provider === provider))
@@ -638,52 +640,101 @@ const AdminAPIKeys = () => {
                     const hasApiKeys = apiKeys.filter(key => key.provider === provider && key.status === 'active').length > 0;
 
                     return (
-                      <div key={provider} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className={`${getProviderColor(provider)} p-2 rounded-lg`}>
-                            <Activity className="w-4 h-4 text-white" />
+                      <Card key={provider}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <div className={`${getProviderColor(provider)} p-2 rounded-lg`}>
+                                <Activity className="w-4 h-4 text-white" />
+                              </div>
+                              <h4 className="font-semibold">
+                                {provider === 'xai' ? 'xAI (Grok)' : 
+                                 provider === 'groq' ? 'Groq' : 
+                                 provider.charAt(0).toUpperCase() + provider.slice(1)}
+                              </h4>
+                            </div>
+                            {hasApiKeys && (
+                              <Button
+                                onClick={() => syncSpecificProvider(provider)}
+                                size="sm"
+                                variant="ghost"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                              </Button>
+                            )}
                           </div>
-                          <div>
-                            <h4 className="font-semibold capitalize">
-                              {provider === 'xai' ? 'xAI (Grok)' : 
-                               provider === 'groq' ? 'Groq (Inferencia)' : 
-                               provider}
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              {apiKeys.filter(key => key.provider === provider).length} API keys
-                              {hasApiKeys && ' activas'}
-                              {!hasApiKeys && ' - No hay keys activas'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="grid grid-cols-3 gap-4">
-                              <div>
-                                <p className="text-sm text-muted-foreground">Tokens</p>
-                                <p className="font-semibold">{providerUsage.tokens.toLocaleString()}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">Requests</p>
-                                <p className="font-semibold">{providerUsage.requests.toLocaleString()}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-muted-foreground">Costo</p>
-                                <p className="font-semibold">${providerUsage.cost.toFixed(2)}</p>
-                              </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Tokens:</span>
+                              <span className="font-medium">{providerUsage.tokens.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Requests:</span>
+                              <span className="font-medium">{providerUsage.requests.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Costo:</span>
+                              <span className="font-medium">${providerUsage.cost.toFixed(2)}</span>
                             </div>
                           </div>
-                          {hasApiKeys && (
-                            <Button
-                              onClick={() => syncSpecificProvider(provider)}
-                              size="sm"
-                              variant="ghost"
-                              className="flex items-center"
-                            >
-                              <RefreshCw className="w-4 h-4 mr-1" />
-                              Sync
-                            </Button>
-                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Detalle por API Key */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Consumo Detallado por API Key</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {apiKeys.map(apiKey => {
+                    const keyUsage = getUsageForKey(apiKey.id);
+                    
+                    return (
+                      <div key={apiKey.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`${getProviderColor(apiKey.provider)} p-2 rounded-lg`}>
+                            <Key className="w-4 h-4 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">{apiKey.api_key_name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {apiKey.provider === 'xai' ? 'xAI (Grok)' : 
+                               apiKey.provider === 'groq' ? 'Groq (Inferencia)' : 
+                               apiKey.provider.charAt(0).toUpperCase() + apiKey.provider.slice(1)} 
+                              {apiKey.model_name && ` • ${apiKey.model_name}`}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {getStatusIcon(apiKey.status)}
+                              <span className="text-xs text-muted-foreground">•••{apiKey.key_last_four}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">Tokens</p>
+                              <p className="font-semibold">{keyUsage.total_tokens.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Requests</p>
+                              <p className="font-semibold">{keyUsage.total_requests.toLocaleString()}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Costo</p>
+                              <p className="font-semibold">${keyUsage.total_cost.toFixed(2)}</p>
+                              {apiKey.cost_limit_monthly && (
+                                <p className="text-xs text-muted-foreground">
+                                  de ${apiKey.cost_limit_monthly}/mes
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );
@@ -704,16 +755,16 @@ const AdminAPIKeys = () => {
           <TabsContent value="billing" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Estado de Facturación</CardTitle>
+                <CardTitle>Facturación por API Key</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {billingData.map((billing) => {
-                    const apiKey = apiKeys.find(key => key.id === billing.api_key_id);
-                    if (!apiKey) return null;
-
+                  {apiKeys.map(apiKey => {
+                    const billing = getBillingForKey(apiKey.id);
+                    const usage = getUsageForKey(apiKey.id);
+                    
                     return (
-                      <div key={billing.api_key_id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={apiKey.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="flex items-center gap-3">
                           <div className={`${getProviderColor(apiKey.provider)} p-2 rounded-lg`}>
                             <DollarSign className="w-4 h-4 text-white" />
@@ -721,28 +772,265 @@ const AdminAPIKeys = () => {
                           <div>
                             <h4 className="font-semibold">{apiKey.api_key_name}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {billing.billing_period_start} - {billing.billing_period_end}
+                              {apiKey.provider === 'xai' ? 'xAI (Grok)' : 
+                               apiKey.provider === 'groq' ? 'Groq (Inferencia)' : 
+                               apiKey.provider.charAt(0).toUpperCase() + apiKey.provider.slice(1)}
+                              {apiKey.model_name && ` • ${apiKey.model_name}`}
                             </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {getStatusIcon(apiKey.status)}
+                              <span className="text-xs text-muted-foreground">•••{apiKey.key_last_four}</span>
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-6">
                             <div>
-                              <p className="text-sm text-muted-foreground">Tokens</p>
-                              <p className="font-semibold">{billing.total_usage_tokens.toLocaleString()}</p>
+                              <p className="text-sm text-muted-foreground">Tokens (30d)</p>
+                              <p className="font-semibold">{usage.total_tokens.toLocaleString()}</p>
+                              {apiKey.usage_limit_monthly && (
+                                <p className="text-xs text-muted-foreground">
+                                  de {apiKey.usage_limit_monthly.toLocaleString()}/mes
+                                </p>
+                              )}
                             </div>
                             <div>
-                              <p className="text-sm text-muted-foreground">Costo</p>
-                              <p className="font-semibold">${billing.total_cost.toFixed(2)}</p>
+                              <p className="text-sm text-muted-foreground">Costo (30d)</p>
+                              <p className="font-semibold">${usage.total_cost.toFixed(2)}</p>
+                              {apiKey.cost_limit_monthly && (
+                                <p className="text-xs text-muted-foreground">
+                                  de ${apiKey.cost_limit_monthly}/mes
+                                </p>
+                              )}
                             </div>
-                            <Badge variant={billing.status === 'paid' ? 'default' : 'destructive'}>
-                              {billing.status === 'paid' ? 'Pagado' : 'Pendiente'}
-                            </Badge>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Estado</p>
+                              <Badge variant={billing?.status === 'paid' ? 'default' : 'secondary'}>
+                                {billing?.status === 'paid' ? 'Pagado' : 'Pendiente'}
+                              </Badge>
+                              {billing && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {new Date(billing.billing_period_start).toLocaleDateString('es-ES')} - 
+                                  {new Date(billing.billing_period_end).toLocaleDateString('es-ES')}
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Límites</p>
+                              <div className="flex flex-col gap-1">
+                                {apiKey.usage_limit_monthly && (
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-16 h-1 bg-gray-200 rounded">
+                                      <div 
+                                        className="h-1 bg-blue-500 rounded"
+                                        style={{ 
+                                          width: `${Math.min(100, (usage.total_tokens / apiKey.usage_limit_monthly) * 100)}%` 
+                                        }}
+                                      />
+                                    </div>
+                                    <span className="text-xs">
+                                      {Math.round((usage.total_tokens / apiKey.usage_limit_monthly) * 100)}%
+                                    </span>
+                                  </div>
+                                )}
+                                {apiKey.cost_limit_monthly && (
+                                  <div className="flex items-center gap-1">
+                                    <div className="w-16 h-1 bg-gray-200 rounded">
+                                      <div 
+                                        className="h-1 bg-green-500 rounded"
+                                        style={{ 
+                                          width: `${Math.min(100, (usage.total_cost / apiKey.cost_limit_monthly) * 100)}%` 
+                                        }}
+                                      />
+                                    </div>
+                                    <span className="text-xs">
+                                      {Math.round((usage.total_cost / apiKey.cost_limit_monthly) * 100)}%
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
                     );
                   })}
+                  
+                  {apiKeys.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">
+                        No hay API keys configuradas para mostrar facturación.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="config" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configuración de Modelos IA</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configura los modelos de IA que utilizará la plataforma basándose en las API keys disponibles
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Configuración por Proveedor */}
+                  {['openai', 'anthropic', 'google', 'groq', 'xai'].map(provider => {
+                    const providerKeys = apiKeys.filter(key => key.provider === provider && key.status === 'active');
+                    
+                    if (providerKeys.length === 0) return null;
+
+                    const getAvailableModels = (provider: string) => {
+                      const modelMap: { [key: string]: string[] } = {
+                        openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+                        anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-haiku-20240307'],
+                        google: ['gemini-pro', 'gemini-pro-vision', 'gemini-ultra'],
+                        groq: ['llama2-70b-4096', 'mixtral-8x7b-32768', 'gemma-7b-it'],
+                        xai: ['grok-beta', 'grok-vision-beta']
+                      };
+                      return modelMap[provider] || [];
+                    };
+
+                    return (
+                      <Card key={provider}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className={`${getProviderColor(provider)} p-2 rounded-lg`}>
+                              <Settings className="w-4 h-4 text-white" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold">
+                                {provider === 'xai' ? 'xAI (Grok)' : 
+                                 provider === 'groq' ? 'Groq (Inferencia)' : 
+                                 provider.charAt(0).toUpperCase() + provider.slice(1)}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {providerKeys.length} API key{providerKeys.length > 1 ? 's' : ''} disponible{providerKeys.length > 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            {/* Modelo por defecto para el proveedor */}
+                            <div>
+                              <Label htmlFor={`${provider}-default-model`}>Modelo por defecto</Label>
+                              <Select>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Seleccionar modelo por defecto" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {getAvailableModels(provider).map(model => (
+                                    <SelectItem key={model} value={model}>
+                                      {model}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {/* Configuración de API keys específicas */}
+                            <div>
+                              <Label>Configuración por API Key</Label>
+                              <div className="space-y-2 mt-2">
+                                {providerKeys.map(apiKey => (
+                                  <div key={apiKey.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                    <div>
+                                      <p className="font-medium">{apiKey.api_key_name}</p>
+                                      <p className="text-sm text-muted-foreground">•••{apiKey.key_last_four}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Select defaultValue={apiKey.model_name || ''}>
+                                        <SelectTrigger className="w-48">
+                                          <SelectValue placeholder="Modelo asignado" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {getAvailableModels(provider).map(model => (
+                                            <SelectItem key={model} value={model}>
+                                              {model}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <Badge variant={apiKey.status === 'active' ? 'default' : 'secondary'}>
+                                        {apiKey.status === 'active' ? 'Activa' : 'Inactiva'}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Configuración avanzada */}
+                            <div className="border-t pt-4">
+                              <h5 className="font-medium mb-3">Configuración Avanzada</h5>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor={`${provider}-priority`}>Prioridad del proveedor</Label>
+                                  <Select>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Seleccionar prioridad" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="high">Alta</SelectItem>
+                                      <SelectItem value="medium">Media</SelectItem>
+                                      <SelectItem value="low">Baja</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <Label htmlFor={`${provider}-fallback`}>Proveedor de respaldo</Label>
+                                  <Select>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Seleccionar respaldo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {['openai', 'anthropic', 'google', 'groq', 'xai']
+                                        .filter(p => p !== provider && apiKeys.some(k => k.provider === p && k.status === 'active'))
+                                        .map(p => (
+                                          <SelectItem key={p} value={p}>
+                                            {p === 'xai' ? 'xAI (Grok)' : 
+                                             p === 'groq' ? 'Groq' : 
+                                             p.charAt(0).toUpperCase() + p.slice(1)}
+                                          </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+
+                  {apiKeys.filter(key => key.status === 'active').length === 0 && (
+                    <div className="text-center py-8">
+                      <Settings className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground mb-2">
+                        No hay API keys activas para configurar
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Agrega y activa API keys en la pestaña "API Keys" para configurar los modelos de IA
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Botones de acción */}
+                  {apiKeys.filter(key => key.status === 'active').length > 0 && (
+                    <div className="flex justify-end gap-2 pt-4 border-t">
+                      <Button variant="outline">
+                        Restablecer por defecto
+                      </Button>
+                      <Button>
+                        Guardar configuración
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

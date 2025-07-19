@@ -7,6 +7,8 @@ import { ArrowLeft } from "lucide-react";
 import DeveloperAuth from "@/components/auth/DeveloperAuth";
 import ExpertAuth from "@/components/auth/ExpertAuth";
 import CompanyAuth from "@/components/auth/CompanyAuth";
+import authBackground from "@/assets/auth-background.jpg";
+import builderaLogo from "@/assets/buildera-logo.png";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -30,27 +32,45 @@ const Auth = () => {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url(${authBackground})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Background overlay for better readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20"></div>
+      
+      <div className="w-full max-w-2xl relative z-10">
         <div className="flex items-center justify-between mb-8">
           <a href="/">
-            <Button variant="ghost" size="lg" className="flex items-center gap-2">
+            <Button variant="ghost" size="lg" className="flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/10">
               <ArrowLeft className="h-4 w-4" />
               Volver al Inicio
             </Button>
           </a>
           <div className="text-center">
-            <h1 className="text-3xl font-heading gradient-text">
+            <div className="flex justify-center mb-4">
+              <img 
+                src={builderaLogo} 
+                alt="Buildera Logo" 
+                className="h-16 w-auto"
+              />
+            </div>
+            <h1 className="text-3xl font-heading text-white mb-2">
               Únete a Buildera
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-white/80 mt-2">
               Conecta con el futuro de la automatización inteligente
             </p>
           </div>
           <div className="w-32"></div> {/* Spacer for centering */}
         </div>
 
-        <Card className="shadow-elegant">
+        <Card className="shadow-elegant backdrop-blur-sm bg-card/95 border border-white/10">
           <CardHeader className="text-center">
             <div className="flex justify-center space-x-4 mb-4">
               <button

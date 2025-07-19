@@ -1708,7 +1708,20 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
                 )}
                 
                 <div>
-                  <Label htmlFor="prompt">Idea o Tema Central</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="prompt">Idea o Tema Central</Label>
+                    <EraOptimizerButton
+                      currentText={prompt}
+                      fieldType="contenido de marketing"
+                      context={{
+                        companyName: profile?.company_name,
+                        industry: profile?.industry_sector
+                      }}
+                      onOptimized={(optimizedText) => setPrompt(optimizedText)}
+                      size="sm"
+                      disabled={!prompt.trim()}
+                    />
+                  </div>
                   <Textarea
                     id="prompt"
                     rows={3}

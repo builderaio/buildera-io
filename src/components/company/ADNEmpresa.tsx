@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar, MapPin, Search } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -1613,7 +1614,22 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="objective_description">Descripción</Label>
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="objective_description">Descripción</Label>
+                            <EraOptimizerButton
+                              currentText={objectiveForm.description}
+                              fieldType="objetivo empresarial"
+                              context={{
+                                companyName: profile?.company_name,
+                                industry: profile?.industry_sector,
+                                objectiveType: objectiveForm.objective_type,
+                                objectiveTitle: objectiveForm.title
+                              }}
+                              onOptimized={(optimizedText) => setObjectiveForm({...objectiveForm, description: optimizedText})}
+                              size="sm"
+                              disabled={!objectiveForm.description.trim()}
+                            />
+                          </div>
                           <Textarea
                             id="objective_description"
                             rows={3}
@@ -1841,7 +1857,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="product_description">Descripción</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="product_description">Descripción</Label>
+                        <EraOptimizerButton
+                          currentText={productForm.description}
+                          fieldType="descripción de producto"
+                          context={{
+                            companyName: profile?.company_name,
+                            industry: profile?.industry_sector,
+                            productName: productForm.name
+                          }}
+                          onOptimized={(optimizedText) => setProductForm({...productForm, description: optimizedText})}
+                          size="sm"
+                          disabled={!productForm.description.trim()}
+                        />
+                      </div>
                       <Textarea
                         id="product_description"
                         rows={3}

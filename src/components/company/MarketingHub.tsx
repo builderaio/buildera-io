@@ -7,13 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Instagram, Music, Linkedin, Upload, BarChart3, Calendar, AlertTriangle, CheckCircle, Clock, Zap } from "lucide-react";
+import { Instagram, Music, Linkedin, Upload, BarChart3, Calendar, AlertTriangle, CheckCircle, Clock, Zap, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Target } from "lucide-react";
+import MarketingHubInsights from './MarketingHubInsights';
 
 // Tipificaciones para Facebook SDK
 declare global {

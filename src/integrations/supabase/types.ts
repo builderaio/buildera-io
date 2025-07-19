@@ -404,6 +404,110 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_actionables: {
+        Row: {
+          action_type: string
+          completed_at: string | null
+          created_at: string
+          description: string
+          due_date: string | null
+          estimated_impact: string | null
+          id: string
+          insight_id: string | null
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          completed_at?: string | null
+          created_at?: string
+          description: string
+          due_date?: string | null
+          estimated_impact?: string | null
+          id?: string
+          insight_id?: string | null
+          priority: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          estimated_impact?: string | null
+          id?: string
+          insight_id?: string | null
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_actionables_insight_id_fkey"
+            columns: ["insight_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_insights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_insights: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          data: Json
+          date_range_end: string | null
+          date_range_start: string | null
+          description: string
+          id: string
+          impact_level: string | null
+          insight_type: string
+          platforms: string[]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          data: Json
+          date_range_end?: string | null
+          date_range_start?: string | null
+          description: string
+          id?: string
+          impact_level?: string | null
+          insight_type: string
+          platforms: string[]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          data?: Json
+          date_range_end?: string | null
+          date_range_start?: string | null
+          description?: string
+          id?: string
+          impact_level?: string | null
+          insight_type?: string
+          platforms?: string[]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           created_at: string
@@ -579,6 +683,149 @@ export type Database = {
           published_at?: string | null
           scheduled_for?: string
           status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_media_analytics: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_type: string
+          period_end: string
+          period_start: string
+          period_type: string
+          platform: string
+          user_id: string
+          value: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          period_end: string
+          period_start: string
+          period_type: string
+          platform: string
+          user_id: string
+          value?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          platform?: string
+          user_id?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
+      social_media_comments: {
+        Row: {
+          author_id: string | null
+          author_name: string | null
+          content: string
+          created_at: string
+          id: string
+          platform_comment_id: string
+          post_id: string | null
+          published_at: string
+          raw_data: Json | null
+          sentiment_label: string | null
+          sentiment_score: number | null
+          user_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          author_name?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          platform_comment_id: string
+          post_id?: string | null
+          published_at: string
+          raw_data?: Json | null
+          sentiment_label?: string | null
+          sentiment_score?: number | null
+          user_id: string
+        }
+        Update: {
+          author_id?: string | null
+          author_name?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          platform_comment_id?: string
+          post_id?: string | null
+          published_at?: string
+          raw_data?: Json | null
+          sentiment_label?: string | null
+          sentiment_score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_media_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_media_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_media_posts: {
+        Row: {
+          content: string | null
+          created_at: string
+          hashtags: string[] | null
+          id: string
+          media_urls: string[] | null
+          mentions: string[] | null
+          metrics: Json | null
+          platform: string
+          platform_post_id: string
+          post_type: string | null
+          published_at: string
+          raw_data: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          hashtags?: string[] | null
+          id?: string
+          media_urls?: string[] | null
+          mentions?: string[] | null
+          metrics?: Json | null
+          platform: string
+          platform_post_id: string
+          post_type?: string | null
+          published_at: string
+          raw_data?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          hashtags?: string[] | null
+          id?: string
+          media_urls?: string[] | null
+          mentions?: string[] | null
+          metrics?: Json | null
+          platform?: string
+          platform_post_id?: string
+          post_type?: string | null
+          published_at?: string
+          raw_data?: Json | null
           updated_at?: string
           user_id?: string
         }

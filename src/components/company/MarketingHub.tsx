@@ -6,12 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Instagram, Music, Linkedin, Upload, BarChart3, Calendar } from "lucide-react";
+import { Instagram, Music, Linkedin, Upload, BarChart3, Calendar, AlertTriangle, CheckCircle, Clock, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Target } from "lucide-react";
 
 // Tipificaciones para Facebook SDK
 declare global {
@@ -700,6 +701,139 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     return getConnectedPlatforms().length > 0;
   };
 
+  const renderRequiredActions = () => {
+    const actions = [
+      {
+        id: 1,
+        title: "Conectar redes sociales",
+        description: "Sin conexiones a redes sociales, no puedes publicar contenido ni obtener métricas",
+        priority: "alta",
+        completed: hasConnectedPlatforms(),
+        icon: Linkedin,
+        action: () => window.scrollTo({ top: 800, behavior: 'smooth' })
+      },
+      {
+        id: 2,
+        title: "Definir objetivos de marketing",
+        description: "Establece metas claras para medir el éxito de tus campañas",
+        priority: "alta",
+        completed: false,
+        icon: Target,
+        action: () => {
+          // Scroll to strategy section
+          window.scrollTo({ top: 1200, behavior: 'smooth' });
+        }
+      },
+      {
+        id: 3,
+        title: "Crear contenido inicial",
+        description: "Genera tu primer contenido usando IA para comenzar tu presencia digital",
+        priority: "media",
+        completed: false,
+        icon: Zap,
+        action: () => {
+          // Switch to content tab
+          const tabs = document.querySelector('[data-value="contenido"]') as HTMLElement;
+          if (tabs) tabs.click();
+        }
+      },
+      {
+        id: 4,
+        title: "Configurar análisis y métricas",
+        description: "Configura el seguimiento para medir el rendimiento de tus publicaciones",
+        priority: "media",
+        completed: socialConnections.linkedin,
+        icon: BarChart3,
+        action: () => {
+          // Switch to analytics tab
+          const tabs = document.querySelector('[data-value="analiticas"]') as HTMLElement;
+          if (tabs) tabs.click();
+        }
+      }
+    ];
+
+    const pendingActions = actions.filter(action => !action.completed);
+    const completedCount = actions.length - pendingActions.length;
+
+    if (pendingActions.length === 0) {
+      return (
+        <Card className="mb-6 border-green-200 bg-green-50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+              <div>
+                <h3 className="font-semibold text-green-800">¡Excelente trabajo!</h3>
+                <p className="text-sm text-green-600">Has completado todas las acciones básicas de configuración de marketing.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <Card className="mb-6 border-orange-200 bg-orange-50">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-3 mb-4">
+            <AlertTriangle className="w-6 h-6 text-orange-600 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-orange-800 mb-1">Acciones Requeridas para Marketing</h3>
+              <p className="text-sm text-orange-600 mb-3">
+                Completa estas tareas para optimizar tu función de marketing ({completedCount}/{actions.length} completadas)
+              </p>
+              
+              <div className="w-full bg-orange-200 rounded-full h-2 mb-4">
+                <div 
+                  className="bg-orange-600 h-2 rounded-full transition-all duration-300" 
+                  style={{width: `${(completedCount / actions.length) * 100}%`}}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {pendingActions.slice(0, 3).map((action) => (
+              <div key={action.id} className="flex items-start gap-3 p-3 bg-white rounded-lg border border-orange-200">
+                <action.icon className={`w-5 h-5 mt-0.5 ${
+                  action.priority === 'alta' ? 'text-red-600' : 'text-yellow-600'
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium text-sm text-gray-900">{action.title}</h4>
+                    <Badge 
+                      variant={action.priority === 'alta' ? 'destructive' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {action.priority === 'alta' ? 'Urgente' : 'Importante'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-2">{action.description}</p>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="text-xs h-7"
+                    onClick={action.action}
+                  >
+                    <Clock className="w-3 h-3 mr-1" />
+                    Hacer ahora
+                  </Button>
+                </div>
+              </div>
+            ))}
+            
+            {pendingActions.length > 3 && (
+              <div className="text-center pt-2">
+                <p className="text-xs text-orange-600">
+                  +{pendingActions.length - 3} acciones más por completar
+                </p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   const renderConnectionAlert = () => {
     if (hasConnectedPlatforms()) return null;
 
@@ -1239,6 +1373,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
         </p>
       </header>
 
+      {renderRequiredActions()}
       {renderConnectionAlert()}
       {renderSocialConnections()}
 

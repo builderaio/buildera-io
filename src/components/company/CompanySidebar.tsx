@@ -52,7 +52,10 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
 
   return (
     <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col p-4 fixed h-full">
-      <div className="flex items-center space-x-3 pb-6 border-b border-sidebar-border">
+      <div 
+        className="flex items-center space-x-3 pb-6 border-b border-sidebar-border cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={() => window.location.href = '/company-dashboard'}
+      >
         <div className="relative">
           <img 
             src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 

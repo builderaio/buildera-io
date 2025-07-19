@@ -109,12 +109,12 @@ const Header = () => {
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
         <div>
           <a 
-            href={user ? "/" : "#"} 
+            href={user ? "/company-dashboard" : "#"} 
             className="flex items-center space-x-3"
             onClick={(e) => {
               if (user) {
                 e.preventDefault();
-                window.location.href = "/";
+                window.location.href = "/company-dashboard";
               }
             }}
           >

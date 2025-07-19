@@ -58,6 +58,9 @@ serve(async (req) => {
           case 'groq':
             usageData = await syncGroqUsage(apiKey);
             break;
+          case 'xai':
+            usageData = await syncXAIUsage(apiKey);
+            break;
           default:
             console.log(`Provider ${apiKey.provider} not supported for sync`);
             continue;
@@ -207,6 +210,32 @@ async function syncGroqUsage(apiKey: APIKey) {
     };
   } catch (error) {
     console.error('Error syncing Groq usage:', error);
+    return null;
+  }
+}
+
+// xAI (Grok) API usage sync
+async function syncXAIUsage(apiKey: APIKey) {
+  try {
+    // Note: For demo purposes, returning mock data
+    // In production, you would call xAI's usage API
+    // const response = await fetch('https://api.x.ai/v1/usage', {
+    //   headers: {
+    //     'Authorization': `Bearer ${actualApiKey}`,
+    //     'Content-Type': 'application/json'
+    //   }
+    // });
+    
+    // Mock usage data for demo - xAI is competitive pricing
+    return {
+      total_tokens: Math.floor(Math.random() * 9000) + 900,
+      prompt_tokens: Math.floor(Math.random() * 4500) + 450,
+      completion_tokens: Math.floor(Math.random() * 4500) + 450,
+      total_requests: Math.floor(Math.random() * 90) + 9,
+      total_cost: parseFloat((Math.random() * 35 + 3.5).toFixed(2)) // Competitive pricing
+    };
+  } catch (error) {
+    console.error('Error syncing xAI usage:', error);
     return null;
   }
 }

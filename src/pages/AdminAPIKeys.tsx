@@ -252,6 +252,7 @@ const AdminAPIKeys = () => {
       anthropic: 'bg-blue-500',
       google: 'bg-yellow-500',
       groq: 'bg-purple-500',
+      xai: 'bg-gray-800', // Color distintivo para xAI
       default: 'bg-gray-500'
     };
     return colors[provider] || colors.default;
@@ -403,7 +404,8 @@ const AdminAPIKeys = () => {
                         <SelectItem value="openai">OpenAI</SelectItem>
                         <SelectItem value="anthropic">Anthropic</SelectItem>
                         <SelectItem value="google">Google</SelectItem>
-                        <SelectItem value="groq">Groq</SelectItem>
+                        <SelectItem value="groq">Groq (Inferencia rápida)</SelectItem>
+                        <SelectItem value="xai">xAI (Grok)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -561,7 +563,7 @@ const AdminAPIKeys = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {['openai', 'anthropic', 'google', 'groq'].map(provider => {
+                  {['openai', 'anthropic', 'google', 'groq', 'xai'].map(provider => {
                     const providerUsage = usageData
                       .filter(usage => apiKeys.find(key => key.id === usage.api_key_id && key.provider === provider))
                       .reduce((acc, curr) => ({
@@ -579,7 +581,11 @@ const AdminAPIKeys = () => {
                             <Activity className="w-4 h-4 text-white" />
                           </div>
                           <div>
-                            <h4 className="font-semibold capitalize">{provider}</h4>
+                            <h4 className="font-semibold capitalize">
+                              {provider === 'xai' ? 'xAI (Grok)' : 
+                               provider === 'groq' ? 'Groq (Inferencia)' : 
+                               provider}
+                            </h4>
                             <p className="text-sm text-muted-foreground">
                               {apiKeys.filter(key => key.provider === provider).length} API keys
                             </p>

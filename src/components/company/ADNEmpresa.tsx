@@ -189,50 +189,72 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   };
 
   const searchLocation = async () => {
-    if (!searchAddress || !window.google) return;
+    if (!searchAddress || !window.google) {
+      toast({
+        title: "Error",
+        description: "Introduce una dirección para buscar",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const geocoder = new window.google.maps.Geocoder();
-    
     try {
+      const geocoder = new window.google.maps.Geocoder();
       const response = await geocoder.geocode({ address: searchAddress });
       
-      if (response.results[0]) {
+      if (response.results && response.results.length > 0) {
         const result = response.results[0];
         const addressComponents = result.address_components;
         
         let city = '';
         let country = '';
         
+        // Extraer ciudad y país de los componentes de la dirección
         for (const component of addressComponents) {
-          if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
+          const types = component.types;
+          
+          // Ciudad: buscar en locality, administrative_area_level_2, o sublocality
+          if (types.includes('locality') || 
+              types.includes('administrative_area_level_2') ||
+              types.includes('sublocality')) {
             city = component.long_name;
           }
-          if (component.types.includes('country')) {
+          
+          // País
+          if (types.includes('country')) {
             country = component.long_name;
           }
         }
 
-        // Actualizar los campos del perfil
-        onProfileUpdate({
+        // Actualizar el perfil con toda la información de la dirección
+        const updatedProfile = {
           ...profile,
           headquarters_address: result.formatted_address,
           headquarters_city: city,
           headquarters_country: country,
           headquarters_lat: result.geometry.location.lat(),
           headquarters_lng: result.geometry.location.lng()
-        });
+        };
 
+        onProfileUpdate(updatedProfile);
         setSearchAddress('');
         
         toast({
-          title: "Ubicación encontrada",
-          description: "La dirección se ha actualizado automáticamente",
+          title: "¡Dirección encontrada!",
+          description: `Se actualizó: ${result.formatted_address}${city ? ` • ${city}` : ''}${country ? ` • ${country}` : ''}`,
+        });
+      } else {
+        toast({
+          title: "No encontrado",
+          description: "No se pudo encontrar la dirección especificada",
+          variant: "destructive",
         });
       }
     } catch (error) {
+      console.error('Error en búsqueda de ubicación:', error);
       toast({
-        title: "Error",
-        description: "No se pudo encontrar la dirección",
+        title: "Error de búsqueda",
+        description: "Hubo un problema al buscar la dirección. Intenta de nuevo.",
         variant: "destructive",
       });
     }
@@ -1407,73 +1429,84 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         required
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="headquarters_address">Dirección oficina central</Label>
-                      <div className="flex gap-2">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="headquarters_address">Dirección oficina central</Label>
                         <Input
                           id="headquarters_address"
                           value={profile?.headquarters_address || ""}
                           onChange={(e) => onProfileUpdate({...profile, headquarters_address: e.target.value})}
-                          placeholder="Dirección de la oficina principal"
+                          placeholder="Dirección completa de la oficina principal"
                         />
-                        {mapLoaded && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              if (profile?.headquarters_address) {
-                                setSearchAddress(profile.headquarters_address);
-                                searchLocation();
-                              }
-                            }}
-                            className="px-3"
-                          >
-                            <Search className="w-4 h-4" />
-                          </Button>
-                        )}
                       </div>
+                      
                       {mapLoaded && (
-                        <div className="flex gap-2 mt-2">
-                          <Input
-                            placeholder="Buscar nueva dirección..."
-                            value={searchAddress}
-                            onChange={(e) => setSearchAddress(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                searchLocation();
-                              }
-                            }}
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={searchLocation}
-                            disabled={!searchAddress.trim()}
-                          >
-                            <Search className="w-4 h-4" />
-                          </Button>
+                        <div className="space-y-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-blue-600" />
+                            <Label className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                              Búsqueda inteligente con Google Maps
+                            </Label>
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Buscar dirección completa (ej: Calle 123 #45-67, Bogotá, Colombia)..."
+                              value={searchAddress}
+                              onChange={(e) => setSearchAddress(e.target.value)}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  searchLocation();
+                                }
+                              }}
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              onClick={searchLocation}
+                              disabled={!searchAddress.trim()}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              <Search className="w-4 h-4 mr-2" />
+                              Buscar
+                            </Button>
+                          </div>
+                          <p className="text-xs text-blue-600 dark:text-blue-300">
+                            La búsqueda actualizará automáticamente la dirección completa con ciudad y país
+                          </p>
+                          
+                          {(profile?.headquarters_city || profile?.headquarters_country) && (
+                            <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded border">
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Información extraída:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {profile?.headquarters_city && (
+                                  <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded">
+                                    📍 {profile.headquarters_city}
+                                  </span>
+                                )}
+                                {profile?.headquarters_country && (
+                                  <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded">
+                                    🌍 {profile.headquarters_country}
+                                  </span>
+                                )}
+                                {profile?.headquarters_lat && profile?.headquarters_lng && (
+                                  <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded">
+                                    🗺️ {profile.headquarters_lat.toFixed(4)}, {profile.headquarters_lng.toFixed(4)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="headquarters_city">Ciudad oficina central</Label>
-                      <Input
-                        id="headquarters_city"
-                        value={profile?.headquarters_city || ""}
-                        onChange={(e) => onProfileUpdate({...profile, headquarters_city: e.target.value})}
-                        placeholder="Ciudad de la oficina principal"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="headquarters_country">País oficina central</Label>
-                      <Input
-                        id="headquarters_country"
-                        value={profile?.headquarters_country || ""}
-                        onChange={(e) => onProfileUpdate({...profile, headquarters_country: e.target.value})}
-                        placeholder="País de la oficina principal"
-                      />
+                      
+                      {!mapLoaded && (
+                        <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                          <p className="text-sm text-amber-700 dark:text-amber-300">
+                            ⚠️ Google Maps no está disponible. Puedes introducir la dirección manualmente.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>

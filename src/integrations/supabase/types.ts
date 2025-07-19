@@ -239,6 +239,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_model_status_logs: {
+        Row: {
+          created_at: string
+          error_rate: number
+          id: string
+          last_checked: string
+          name: string
+          provider: string
+          response_time: number
+          status: string
+          uptime: number
+        }
+        Insert: {
+          created_at?: string
+          error_rate?: number
+          id?: string
+          last_checked?: string
+          name: string
+          provider: string
+          response_time?: number
+          status: string
+          uptime?: number
+        }
+        Update: {
+          created_at?: string
+          error_rate?: number
+          id?: string
+          last_checked?: string
+          name?: string
+          provider?: string
+          response_time?: number
+          status?: string
+          uptime?: number
+        }
+        Relationships: []
+      }
       company_branding: {
         Row: {
           brand_manual_file_path: string | null

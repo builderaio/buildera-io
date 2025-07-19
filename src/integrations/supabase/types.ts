@@ -857,12 +857,13 @@ export type Database = {
         Row: {
           api_key_hash: string
           api_key_name: string
+          available_models: string[] | null
           cost_limit_monthly: number | null
           created_at: string
           id: string
           key_last_four: string
           last_usage_check: string | null
-          model_name: string
+          model_name: string | null
           notes: string | null
           provider: string
           status: string
@@ -872,12 +873,13 @@ export type Database = {
         Insert: {
           api_key_hash: string
           api_key_name: string
+          available_models?: string[] | null
           cost_limit_monthly?: number | null
           created_at?: string
           id?: string
           key_last_four: string
           last_usage_check?: string | null
-          model_name: string
+          model_name?: string | null
           notes?: string | null
           provider: string
           status?: string
@@ -887,12 +889,13 @@ export type Database = {
         Update: {
           api_key_hash?: string
           api_key_name?: string
+          available_models?: string[] | null
           cost_limit_monthly?: number | null
           created_at?: string
           id?: string
           key_last_four?: string
           last_usage_check?: string | null
-          model_name?: string
+          model_name?: string | null
           notes?: string | null
           provider?: string
           status?: string

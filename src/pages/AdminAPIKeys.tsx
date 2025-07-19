@@ -32,7 +32,8 @@ import ThemeSelector from '@/components/ThemeSelector';
 interface APIKey {
   id: string;
   provider: string;
-  model_name: string;
+  model_name?: string; // Modelo por defecto (opcional)
+  available_models?: string[]; // Modelos disponibles
   api_key_name: string;
   api_key_hash: string;
   key_last_four: string;
@@ -73,7 +74,8 @@ const AdminAPIKeys = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newApiKey, setNewApiKey] = useState({
     provider: '',
-    model_name: '',
+    default_model: '',
+    available_models: [] as string[],
     api_key_name: '',
     api_key: '',
     usage_limit_monthly: '',
@@ -138,10 +140,10 @@ const AdminAPIKeys = () => {
 
   const handleAddAPIKey = async () => {
     try {
-      if (!newApiKey.provider || !newApiKey.model_name || !newApiKey.api_key_name || !newApiKey.api_key) {
+      if (!newApiKey.provider || !newApiKey.api_key_name || !newApiKey.api_key) {
         toast({
           title: "Error",
-          description: "Todos los campos obligatorios deben ser completados",
+          description: "Los campos Proveedor, Nombre y API Key son obligatorios",
           variant: "destructive",
         });
         return;
@@ -154,7 +156,8 @@ const AdminAPIKeys = () => {
         .from('llm_api_keys')
         .insert({
           provider: newApiKey.provider,
-          model_name: newApiKey.model_name,
+          model_name: newApiKey.default_model || null,
+          available_models: newApiKey.available_models,
           api_key_name: newApiKey.api_key_name,
           api_key_hash: hashedKey,
           key_last_four: keyLastFour,
@@ -173,7 +176,8 @@ const AdminAPIKeys = () => {
       setShowAddDialog(false);
       setNewApiKey({
         provider: '',
-        model_name: '',
+        default_model: '',
+        available_models: [],
         api_key_name: '',
         api_key: '',
         usage_limit_monthly: '',
@@ -405,12 +409,12 @@ const AdminAPIKeys = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="model">Modelo *</Label>
+                    <Label htmlFor="model">Modelo por defecto (opcional)</Label>
                     <Input
                       id="model"
-                      value={newApiKey.model_name}
-                      onChange={(e) => setNewApiKey({...newApiKey, model_name: e.target.value})}
-                      placeholder="ej: gpt-4o, claude-3-5-sonnet"
+                      value={newApiKey.default_model}
+                      onChange={(e) => setNewApiKey({...newApiKey, default_model: e.target.value})}
+                      placeholder="ej: gpt-4o, claude-3-5-sonnet (opcional)"
                     />
                   </div>
 
@@ -507,9 +511,11 @@ const AdminAPIKeys = () => {
                               {apiKey.provider}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-1">
-                            Modelo: {apiKey.model_name}
-                          </p>
+                          {apiKey.model_name && (
+                            <p className="text-sm text-muted-foreground mb-1">
+                              Modelo por defecto: {apiKey.model_name}
+                            </p>
+                          )}
                           <p className="text-sm text-muted-foreground">
                             Key: ***{apiKey.key_last_four}
                           </p>

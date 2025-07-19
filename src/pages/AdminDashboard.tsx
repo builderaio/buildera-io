@@ -271,52 +271,188 @@ const AdminDashboard = () => {
         </Card>
 
         {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Activity className="w-5 h-5 mr-2" />
-              Actividad Reciente del Sistema
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-                <div className="bg-blue-500 p-2 rounded-full mr-3">
-                  <Users className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Nuevos registros</p>
-                  <p className="text-sm text-gray-600">3 empresas se registraron hoy</p>
-                </div>
-                <span className="ml-auto text-xs text-gray-500">2 min ago</span>
-              </div>
-              
-              <div className="flex items-center p-3 bg-green-50 rounded-lg">
-                <div className="bg-green-500 p-2 rounded-full mr-3">
-                  <Activity className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Conexiones activas</p>
-                  <p className="text-sm text-gray-600">5 nuevas conexiones LinkedIn establecidas</p>
-                </div>
-                <span className="ml-auto text-xs text-gray-500">1 hr ago</span>
-              </div>
-              
-              <div className="flex items-center p-3 bg-purple-50 rounded-lg">
-                <div className="bg-purple-500 p-2 rounded-full mr-3">
-                  <BarChart3 className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Uso de IA</p>
-                  <p className="text-sm text-gray-600">150 solicitudes de generación de contenido procesadas</p>
-                </div>
-                <span className="ml-auto text-xs text-gray-500">3 hr ago</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <RecentActivity />
       </main>
     </div>
+  );
+};
+
+// Componente para mostrar actividad reciente real
+const RecentActivity = () => {
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadRecentActivity();
+  }, []);
+
+  const loadRecentActivity = async () => {
+    try {
+      // Obtener registros recientes (últimas 24 horas)
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const { data: recentProfiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .gte('created_at', yesterday.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Obtener conexiones recientes
+      const { data: recentLinkedIn } = await supabase
+        .from('linkedin_connections')
+        .select('*')
+        .gte('created_at', yesterday.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      const { data: recentFacebook } = await supabase
+        .from('facebook_instagram_connections')
+        .select('*')
+        .gte('created_at', yesterday.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      const { data: recentTikTok } = await supabase
+        .from('tiktok_connections')
+        .select('*')
+        .gte('created_at', yesterday.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      // Combinar y ordenar actividades
+      const activities = [];
+      
+      if (recentProfiles) {
+        recentProfiles.forEach(profile => {
+          activities.push({
+            type: 'user_registration',
+            data: profile,
+            timestamp: profile.created_at,
+            icon: Users,
+            color: 'bg-blue-500',
+            bgColor: 'bg-blue-50',
+            title: 'Nuevo registro',
+            description: `${profile.user_type === 'company' ? 'Empresa' : 'Usuario'} registrado: ${profile.full_name || profile.email}`
+          });
+        });
+      }
+
+      if (recentLinkedIn) {
+        recentLinkedIn.forEach(conn => {
+          activities.push({
+            type: 'linkedin_connection',
+            data: conn,
+            timestamp: conn.created_at,
+            icon: Activity,
+            color: 'bg-green-500',
+            bgColor: 'bg-green-50',
+            title: 'Conexión LinkedIn',
+            description: `Nueva conexión LinkedIn establecida`
+          });
+        });
+      }
+
+      if (recentFacebook) {
+        recentFacebook.forEach(conn => {
+          activities.push({
+            type: 'facebook_connection',
+            data: conn,
+            timestamp: conn.created_at,
+            icon: Activity,
+            color: 'bg-purple-500',
+            bgColor: 'bg-purple-50',
+            title: 'Conexión Facebook',
+            description: `Nueva conexión Facebook/Instagram establecida`
+          });
+        });
+      }
+
+      if (recentTikTok) {
+        recentTikTok.forEach(conn => {
+          activities.push({
+            type: 'tiktok_connection',
+            data: conn,
+            timestamp: conn.created_at,
+            icon: Activity,
+            color: 'bg-orange-500',
+            bgColor: 'bg-orange-50',
+            title: 'Conexión TikTok',
+            description: `Nueva conexión TikTok establecida`
+          });
+        });
+      }
+
+      // Ordenar por timestamp más reciente
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setRecentActivity(activities.slice(0, 5)); // Solo mostrar las 5 más recientes
+
+    } catch (error) {
+      console.error('Error cargando actividad reciente:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInMs = now.getTime() - time.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInDays > 0) {
+      return `${diffInDays} día${diffInDays > 1 ? 's' : ''} ago`;
+    } else if (diffInHours > 0) {
+      return `${diffInHours} hr${diffInHours > 1 ? 's' : ''} ago`;
+    } else {
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      return `${diffInMinutes || 1} min ago`;
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Activity className="w-5 h-5 mr-2" />
+          Actividad Reciente del Sistema
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800"></div>
+          </div>
+        ) : recentActivity.length > 0 ? (
+          <div className="space-y-4">
+            {recentActivity.map((activity, index) => {
+              const Icon = activity.icon;
+              return (
+                <div key={index} className={`flex items-center p-3 ${activity.bgColor} rounded-lg`}>
+                  <div className={`${activity.color} p-2 rounded-full mr-3`}>
+                    <Icon className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{activity.title}</p>
+                    <p className="text-sm text-gray-600">{activity.description}</p>
+                  </div>
+                  <span className="ml-auto text-xs text-gray-500">
+                    {getTimeAgo(activity.timestamp)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">No hay actividad reciente en las últimas 24 horas</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

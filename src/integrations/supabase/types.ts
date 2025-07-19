@@ -422,6 +422,48 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_posts: {
+        Row: {
+          company_page_id: string
+          content: Json
+          created_at: string
+          error_message: string | null
+          id: string
+          platform: string
+          published_at: string | null
+          scheduled_for: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_page_id: string
+          content: Json
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          platform: string
+          published_at?: string | null
+          scheduled_for: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_page_id?: string
+          content?: Json
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          platform?: string
+          published_at?: string | null
+          scheduled_for?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tiktok_connections: {
         Row: {
           access_token: string

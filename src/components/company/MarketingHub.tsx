@@ -55,14 +55,27 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     videoUrl: "",
     privacy_level: "PUBLIC_TO_EVERYONE"
   });
+  const [linkedinPublishData, setLinkedinPublishData] = useState({
+    text: "",
+    mediaUrl: "",
+    imageDescription: "",
+    scheduleTime: ""
+  });
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [showTikTokPublishDialog, setShowTikTokPublishDialog] = useState(false);
+  const [showLinkedInPublishDialog, setShowLinkedInPublishDialog] = useState(false);
+  const [linkedinPosts, setLinkedinPosts] = useState<any[]>([]);
+  const [linkedinAnalytics, setLinkedinAnalytics] = useState<any>(null);
   const { toast } = useToast();
 
   // Cargar conexiones existentes al montar el componente
   useEffect(() => {
     checkExistingConnections();
-  }, [profile?.user_id]);
+    // Cargar datos de LinkedIn si ya está conectado
+    if (socialConnections.linkedin) {
+      loadLinkedInData();
+    }
+  }, [profile?.user_id, socialConnections.linkedin]);
 
   const checkExistingConnections = async () => {
     if (!profile?.user_id) return;
@@ -417,6 +430,91 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
       setLoading(false);
     }
   };
+
+  const handleLinkedInPublishContent = async () => {
+    if (!linkedinPublishData.text) {
+      toast({
+        title: "Datos incompletos",
+        description: "Agrega el texto del post.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      toast({
+        title: "Publicando contenido",
+        description: "Creando post en LinkedIn Company Page...",
+      });
+
+      const action = linkedinPublishData.scheduleTime ? 'schedule_post' : 'create_post';
+      
+      const { data, error } = await supabase.functions.invoke('linkedin-posts', {
+        body: {
+          action,
+          content: {
+            text: linkedinPublishData.text,
+            mediaUrl: linkedinPublishData.mediaUrl,
+            imageDescription: linkedinPublishData.imageDescription
+          },
+          scheduleTime: linkedinPublishData.scheduleTime || undefined
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        const message = linkedinPublishData.scheduleTime 
+          ? `Post programado exitosamente para ${new Date(linkedinPublishData.scheduleTime).toLocaleString()}`
+          : "Post publicado exitosamente en LinkedIn Company Page";
+          
+        toast({
+          title: "¡Contenido Publicado!",
+          description: message,
+        });
+        
+        setShowLinkedInPublishDialog(false);
+        setLinkedinPublishData({ text: "", mediaUrl: "", imageDescription: "", scheduleTime: "" });
+        
+        // Refrescar posts si fue publicación inmediata
+        if (!linkedinPublishData.scheduleTime) {
+          loadLinkedInData();
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error publicando",
+        description: error.message || 'Error creando la publicación en LinkedIn',
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadLinkedInData = async () => {
+    try {
+      // Cargar posts recientes
+      const { data: postsData, error: postsError } = await supabase.functions.invoke('linkedin-posts', {
+        body: { action: 'get_posts' }
+      });
+
+      if (!postsError && postsData.success) {
+        setLinkedinPosts(postsData.data.posts.slice(0, 5));
+      }
+
+      // Cargar analytics
+      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke('linkedin-posts', {
+        body: { action: 'get_analytics' }
+      });
+
+      if (!analyticsError && analyticsData.success) {
+        setLinkedinAnalytics(analyticsData.data);
+      }
+    } catch (error) {
+      console.error('Error cargando datos de LinkedIn:', error);
+    }
 
   const handleTikTokConnect = async () => {
     setLoading(true);
@@ -816,6 +914,80 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
                     </Button>
                     <Button onClick={handleTikTokPublishContent} disabled={loading}>
                       {loading ? "Publicando..." : "Publicar"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {socialConnections.linkedin && (
+            <Dialog open={showLinkedInPublishDialog} onOpenChange={setShowLinkedInPublishDialog}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white">
+                  <Linkedin className="w-4 h-4" />
+                  Publicar en LinkedIn
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Crear Post en LinkedIn Company</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="linkedin-text">Contenido del post</Label>
+                    <textarea 
+                      id="linkedin-text"
+                      className="w-full p-3 border rounded-md min-h-[120px] resize-none"
+                      placeholder="¿Qué quieres compartir con tu audiencia profesional?..."
+                      value={linkedinPublishData.text}
+                      onChange={(e) => setLinkedinPublishData(prev => ({ ...prev, text: e.target.value }))}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {linkedinPublishData.text.length}/3000 caracteres
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="linkedin-media">URL de imagen (opcional)</Label>
+                    <Input 
+                      id="linkedin-media"
+                      type="url"
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                      value={linkedinPublishData.mediaUrl}
+                      onChange={(e) => setLinkedinPublishData(prev => ({ ...prev, mediaUrl: e.target.value }))}
+                    />
+                  </div>
+
+                  {linkedinPublishData.mediaUrl && (
+                    <div>
+                      <Label htmlFor="linkedin-image-desc">Descripción de imagen</Label>
+                      <Input 
+                        id="linkedin-image-desc"
+                        placeholder="Descripción de la imagen..."
+                        value={linkedinPublishData.imageDescription}
+                        onChange={(e) => setLinkedinPublishData(prev => ({ ...prev, imageDescription: e.target.value }))}
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <Label htmlFor="linkedin-schedule">Programar para más tarde (opcional)</Label>
+                    <Input 
+                      id="linkedin-schedule"
+                      type="datetime-local"
+                      value={linkedinPublishData.scheduleTime}
+                      onChange={(e) => setLinkedinPublishData(prev => ({ ...prev, scheduleTime: e.target.value }))}
+                      min={new Date().toISOString().slice(0, 16)}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => setShowLinkedInPublishDialog(false)}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleLinkedInPublishContent} disabled={loading}>
+                      {loading ? "Publicando..." : linkedinPublishData.scheduleTime ? "Programar" : "Publicar"}
                     </Button>
                   </div>
                 </div>

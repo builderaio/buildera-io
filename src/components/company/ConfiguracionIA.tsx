@@ -27,8 +27,10 @@ interface AIModelConfig {
 const AI_MODELS = [
   { value: 'gpt-4o-mini', label: 'GPT-4o Mini', description: 'Rápido y económico' },
   { value: 'gpt-4o', label: 'GPT-4o', description: 'Más potente y preciso' },
-  { value: 'gpt-4', label: 'GPT-4', description: 'Modelo premium' },
-  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', description: 'Equilibrio precio-rendimiento' }
+  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', description: 'Modelo premium optimizado' },
+  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo', description: 'Equilibrio precio-rendimiento' },
+  { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', description: 'Modelo de Anthropic avanzado' },
+  { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', description: 'Claude rápido y eficiente' }
 ];
 
 const FUNCTION_DESCRIPTIONS = {

@@ -75,28 +75,48 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
     setIsLoading(true);
 
     try {
-      // Simular respuesta del bot de soporte por ahora
-      // En producción esto se conectaría a un sistema de soporte real
-      setTimeout(() => {
-        const supportMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: `Hola ${user?.display_name || 'Usuario'}, he recibido tu consulta sobre "${pageContext}". Te ayudo con: "${inputMessage}". Un agente de soporte se pondrá en contacto contigo pronto.`,
-          sender: 'support',
-          timestamp: new Date(),
-        };
-        
-        setMessages(prev => [...prev, supportMessage]);
-        setIsLoading(false);
-      }, 1500);
+      const { data, error } = await supabase.functions.invoke('era-chat', {
+        body: {
+          message: inputMessage,
+          context: pageContext,
+          userInfo: {
+            display_name: user?.display_name || user?.full_name,
+            user_type: user?.user_type
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      const eraMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: data.reply,
+        sender: 'support',
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, eraMessage]);
+      setIsLoading(false);
 
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Fallback response if Era service fails
+      const fallbackMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: `Hola ${user?.display_name || 'Usuario'}, soy Era, tu asistente de IA de Buildera. Disculpa, estoy experimentando algunas dificultades técnicas. ¿Podrías intentar tu pregunta de nuevo en unos momentos?`,
+        sender: 'support',
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, fallbackMessage]);
+      setIsLoading(false);
+      
       toast({
-        title: "Error",
-        description: "No se pudo enviar el mensaje. Inténtalo de nuevo.",
+        title: "Conexión limitada",
+        description: "Era está funcionando en modo básico. Algunas funciones pueden estar limitadas.",
         variant: "destructive",
       });
-      setIsLoading(false);
     }
   };
 
@@ -112,7 +132,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
     if (messages.length === 0) {
       const welcomeMessage: Message = {
         id: 'welcome',
-        content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy tu asistente de soporte de Buildera. ¿En qué puedo ayudarte hoy?`,
+        content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy Era, tu asistente de inteligencia artificial de Buildera. Estoy aquí para ayudarte a optimizar tu empresa y aprovechar al máximo todas las funciones de la plataforma. ¿En qué puedo ayudarte hoy?`,
         sender: 'support',
         timestamp: new Date(),
       };
@@ -143,7 +163,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
             <div className="flex items-center gap-2">
               <Bot className="w-5 h-5" />
               <div>
-                <h3 className="font-semibold text-sm">Soporte Buildera</h3>
+                <h3 className="font-semibold text-sm">Era - Asistente IA</h3>
                 <p className="text-xs opacity-90">{getPageContext()}</p>
               </div>
             </div>

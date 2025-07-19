@@ -124,6 +124,54 @@ const EraCoachMark: React.FC<EraCoachMarkProps> = ({ isOpen, onClose, userId }) 
       )
     },
     {
+      title: "Principales funciones de Buildera",
+      content: (
+        <div className="space-y-4">
+          <div className="grid gap-3">
+            <div className="flex items-start gap-2">
+              <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-xs font-bold text-blue-600">1</span>
+              </div>
+              <div>
+                <h4 className="font-semibold text-xs">ADN Empresa</h4>
+                <p className="text-xs text-muted-foreground">Define misión, visión e identidad visual</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-2">
+              <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-xs font-bold text-purple-600">2</span>
+              </div>
+              <div>
+                <h4 className="font-semibold text-xs">Marketing Hub</h4>
+                <p className="text-xs text-muted-foreground">Genera contenido optimizado para redes sociales</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-2">
+              <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-xs font-bold text-green-600">3</span>
+              </div>
+              <div>
+                <h4 className="font-semibold text-xs">Marketplace & Expertos</h4>
+                <p className="text-xs text-muted-foreground">Conecta con especialistas para tus proyectos</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-2">
+              <div className="w-6 h-6 bg-orange-100 dark:bg-orange-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-xs font-bold text-orange-600">4</span>
+              </div>
+              <div>
+                <h4 className="font-semibold text-xs">Inteligencia Competitiva</h4>
+                <p className="text-xs text-muted-foreground">Analiza competencia y tendencias del mercado</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
       title: "¡Listo para empezar!",
       content: (
         <div className="space-y-6 text-center">
@@ -136,13 +184,13 @@ const EraCoachMark: React.FC<EraCoachMarkProps> = ({ isOpen, onClose, userId }) 
           <div>
             <h3 className="text-lg font-bold mb-2">¡Era está lista para ayudarte!</h3>
             <p className="text-muted-foreground text-sm">
-              Comienza a escribir en cualquier campo de tu empresa y verás cómo Era mejora automáticamente tu contenido.
+              Explora cada sección y usa el chat de Era (botón flotante) para obtener ayuda personalizada en tiempo real.
             </p>
           </div>
           
           <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
             <p className="text-xs text-blue-700 dark:text-blue-300">
-              💡 <strong>Tip:</strong> Puedes volver a ver este tutorial desde el panel de configuración en cualquier momento.
+              💡 <strong>Tip:</strong> Haz clic en el ícono de chat para conversar con Era en cualquier momento.
             </p>
           </div>
         </div>

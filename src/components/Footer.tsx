@@ -56,6 +56,11 @@ const Footer = () => {
                   Política de Privacidad
                 </Link>
               </li>
+              <li>
+                <Link to="/admin/login" className="text-muted-foreground hover:text-primary transition-smooth text-xs opacity-50 hover:opacity-100">
+                  Admin
+                </Link>
+              </li>
             </ul>
           </div>
           <div>

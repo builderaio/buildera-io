@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_model_configurations: {
+        Row: {
+          created_at: string
+          frequency_penalty: number | null
+          function_name: string
+          id: string
+          max_tokens: number | null
+          model_name: string
+          presence_penalty: number | null
+          temperature: number | null
+          top_p: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          frequency_penalty?: number | null
+          function_name: string
+          id?: string
+          max_tokens?: number | null
+          model_name?: string
+          presence_penalty?: number | null
+          temperature?: number | null
+          top_p?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          frequency_penalty?: number | null
+          function_name?: string
+          id?: string
+          max_tokens?: number | null
+          model_name?: string
+          presence_penalty?: number | null
+          temperature?: number | null
+          top_p?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       company_branding: {
         Row: {
           brand_manual_file_path: string | null
@@ -646,6 +685,17 @@ export type Database = {
       add_linked_provider: {
         Args: { _user_id: string; _provider: string }
         Returns: undefined
+      }
+      get_ai_model_config: {
+        Args: { function_name_param: string }
+        Returns: {
+          model_name: string
+          temperature: number
+          max_tokens: number
+          top_p: number
+          frequency_penalty: number
+          presence_penalty: number
+        }[]
       }
       remove_linked_provider: {
         Args: { _user_id: string; _provider: string }

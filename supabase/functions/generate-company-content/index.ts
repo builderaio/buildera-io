@@ -1,7 +1,12 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -86,6 +91,27 @@ La propuesta de valor debe explicar claramente qué hace única a esta empresa y
         throw new Error('Campo no soportado');
     }
 
+    // Obtener configuración de IA desde la base de datos
+    const { data: config, error: configError } = await supabase
+      .from('ai_model_configurations')
+      .select('*')
+      .eq('function_name', 'generate-company-content')
+      .single();
+
+    if (configError) {
+      console.error('Error loading AI config:', configError);
+    }
+
+    const aiConfig = config || {
+      model_name: 'gpt-4o-mini',
+      temperature: 0.7,
+      max_tokens: 300,
+      top_p: 1.0,
+      frequency_penalty: 0.0,
+      presence_penalty: 0.0
+    };
+
+    console.log('Using AI config:', aiConfig);
     console.log('📤 Enviando request a OpenAI...');
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -95,13 +121,16 @@ La propuesta de valor debe explicar claramente qué hace única a esta empresa y
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: aiConfig.model_name,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_tokens: 300,
-        temperature: 0.7,
+        max_tokens: aiConfig.max_tokens,
+        temperature: aiConfig.temperature,
+        top_p: aiConfig.top_p,
+        frequency_penalty: aiConfig.frequency_penalty,
+        presence_penalty: aiConfig.presence_penalty,
       }),
     });
 

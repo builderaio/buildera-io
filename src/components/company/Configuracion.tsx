@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { RotateCcw, Zap } from "lucide-react";
 import AuthMethodManager from "@/components/auth/AuthMethodManager";
+import ConfiguracionIA from "./ConfiguracionIA";
 
 interface ConfiguracionProps {
   profile: any;
@@ -23,11 +24,12 @@ const Configuracion = ({ profile, resetTutorial }: ConfiguracionProps) => {
       <Card>
         <CardContent className="p-8">
           <Tabs defaultValue="usuarios" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="usuarios">Usuarios y Roles</TabsTrigger>
-              <TabsTrigger value="autenticacion">Autenticación</TabsTrigger>
-              <TabsTrigger value="tutoriales">Tutoriales</TabsTrigger>
-              <TabsTrigger value="facturacion">Facturación</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
+              <TabsTrigger value="usuarios" className="text-xs sm:text-sm">Usuarios</TabsTrigger>
+              <TabsTrigger value="autenticacion" className="text-xs sm:text-sm">Autenticación</TabsTrigger>
+              <TabsTrigger value="ia" className="text-xs sm:text-sm">IA</TabsTrigger>
+              <TabsTrigger value="tutoriales" className="text-xs sm:text-sm">Tutoriales</TabsTrigger>
+              <TabsTrigger value="facturacion" className="text-xs sm:text-sm">Facturación</TabsTrigger>
             </TabsList>
 
             <TabsContent value="usuarios" className="mt-6">
@@ -78,6 +80,10 @@ const Configuracion = ({ profile, resetTutorial }: ConfiguracionProps) => {
 
             <TabsContent value="autenticacion" className="mt-6">
               <AuthMethodManager />
+            </TabsContent>
+
+            <TabsContent value="ia" className="mt-6">
+              <ConfiguracionIA />
             </TabsContent>
 
             <TabsContent value="tutoriales" className="mt-6">

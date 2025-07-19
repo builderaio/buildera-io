@@ -6,10 +6,10 @@ const UseCases = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-heading text-primary">
-            Inteligencia Artificial Aplicada a su Negocio
+            Así es como te ayudamos día a día
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Vea cómo nuestros agentes transforman operaciones en diferentes áreas.
+            Mira cómo otros negocios como el tuyo están creciendo con nuestra ayuda.
           </p>
         </div>
         <div className="space-y-20">
@@ -17,10 +17,10 @@ const UseCases = () => {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="order-2 md:order-1">
               <h3 className="font-heading text-2xl text-primary mb-4">
-                Automatización de Soporte al Cliente
+                Te ayudamos a cuidar mejor a tus clientes
               </h3>
               <p className="text-muted-foreground mb-6">
-                Implemente un Agente de Soporte que responde el 70% de las consultas frecuentes de forma instantánea y personalizada, 24/7. Libere a su equipo para que se enfoque en casos complejos y en construir relaciones duraderas con sus clientes.
+                Imagínate tener un asistente que responde a tus clientes las 24 horas, todos los días. Nuestro sistema de atención automática resuelve el 70% de las consultas frecuentes al instante, mientras tu equipo se enfoca en casos especiales y en construir relaciones que realmente importan.
               </p>
               <Badge variant="secondary" className="text-sm font-semibold">
                 Atención al Cliente
@@ -48,10 +48,10 @@ const UseCases = () => {
             </div>
             <div>
               <h3 className="font-heading text-2xl text-secondary mb-4">
-                Inteligencia Comercial y Generación de Leads
+                Te ayudamos a encontrar más clientes
               </h3>
               <p className="text-muted-foreground mb-6">
-                Despliegue un equipo de agentes que investigan, analizan y califican leads automáticamente. Su equipo de ventas recibirá una lista diaria de prospectos de alta calidad, listos para ser contactados, multiplicando su eficiencia.
+                ¿Qué tal si cada mañana recibieras una lista de clientes potenciales perfectos para tu negocio? Nuestros asistentes inteligentes investigan, analizan y califican prospectos automáticamente, para que tu equipo de ventas pueda enfocarse en cerrar ventas en lugar de buscar clientes.
               </p>
               <Badge variant="outline" className="text-sm font-semibold border-secondary text-secondary">
                 Ventas y Marketing

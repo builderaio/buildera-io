@@ -47,13 +47,13 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       <header className="mb-8">
         <h1 className="text-4xl font-bold text-foreground">Mando Central</h1>
         <p className="text-lg text-muted-foreground">
-          Bienvenido, {profile?.company_name || "Empresa"}. Desde aquí puede construir, monitorear y escalar su operación.
+          ¡Bienvenido, {profile?.company_name || "Empresa"}! Desde aquí puedes ver todo lo que está pasando en tu negocio y tomar las mejores decisiones para crecer.
         </p>
       </header>
 
       {/* KPIs Section */}
       <section className="mb-8">
-        <h2 className="text-2xl font-bold text-primary mb-4">El Pulso de su Negocio</h2>
+        <h2 className="text-2xl font-bold text-primary mb-4">Cómo va tu negocio</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {kpis.map((kpi, index) => {
             const Icon = kpi.icon;
@@ -85,15 +85,15 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
 
       {/* Próxima Mejora Section */}
       <section className="mb-8">
-        <h2 className="text-2xl font-bold text-primary mb-4">🚀 Próxima Mejora para su Empresa</h2>
+        <h2 className="text-2xl font-bold text-primary mb-4">🚀 Te ayudamos a crecer aún más</h2>
         <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 p-6 rounded-lg shadow-sm border border-primary/20">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
-                Acelere su crecimiento con automatización inteligente
+                Vamos a acelerar el crecimiento de tu empresa
               </h3>
               <p className="text-muted-foreground">
-                Basado en su perfil y uso actual, hemos identificado oportunidades clave para aumentar su eficiencia operativa.
+                Hemos analizado tu uso actual y encontramos oportunidades perfectas para que crezcas más rápido y con menos esfuerzo.
               </p>
             </div>
             <div className="hidden md:block">
@@ -200,11 +200,11 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
 
       {/* Marketplace Section */}
       <section className="mb-8">
-        <h2 className="text-2xl font-bold text-primary mb-4">Marketplace de Agentes IA</h2>
+        <h2 className="text-2xl font-bold text-primary mb-4">Herramientas que te van a encantar</h2>
         <div className="bg-card p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <p className="text-muted-foreground">
-              Descubra agentes de IA especializados para cada área de su empresa.
+              Descubre asistentes inteligentes especializados para cada área de tu empresa.
             </p>
             <button className="flex items-center text-primary hover:text-accent transition-colors">
               <Store className="w-5 h-5 mr-2" />
@@ -266,11 +266,11 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
 
       {/* AI Insights Section */}
       <section>
-        <h2 className="text-2xl font-bold text-primary mb-4">Insights de su Negocio</h2>
+        <h2 className="text-2xl font-bold text-primary mb-4">Ideas para hacer crecer tu empresa</h2>
         <div className="bg-card p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <p className="text-muted-foreground">
-              Oportunidades y recomendaciones generadas por nuestros agentes de IA.
+              Oportunidades y recomendaciones personalizadas que hemos preparado para ti.
             </p>
             <button className="flex items-center text-primary hover:text-accent transition-colors">
               <Zap className="w-5 h-5 mr-2" />

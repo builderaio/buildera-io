@@ -5,20 +5,20 @@ const Hero = () => {
     <section className="hero-bg py-20 md:py-32">
       <div className="container mx-auto px-6 text-center">
         <h1 className="text-4xl md:text-6xl font-heading gradient-text leading-tight">
-          La Automatización Inteligente que su Empresa Necesita para Crecer
+          Hacemos que tu empresa crezca con la automatización que realmente funciona
         </h1>
         <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-          Deje de operar, empiece a escalar. Buildera es la plataforma que le permite a su empresa diseñar y desplegar equipos de agentes de IA que automatizan sus procesos, reducen costos y liberan a su equipo para que se enfoque en la innovación.
+          Sabemos lo desafiante que puede ser hacer crecer un negocio hoy en día. Por eso creamos Buildera: para que puedas automatizar lo que te quita tiempo y enfocarte en lo que realmente importa. Estamos aquí para acompañarte en cada paso hacia el crecimiento que buscas.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
           <a href="/auth?mode=register&userType=company">
             <Button variant="hero" size="xl">
-              Empiece a Automatizar
+              Comenzar mi Transformación
             </Button>
           </a>
           <a href="#solucion">
             <Button variant="outline-hero" size="xl">
-              Conozca la Plataforma
+              Ver Cómo Te Ayudamos
             </Button>
           </a>
         </div>

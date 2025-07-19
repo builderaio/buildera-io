@@ -104,7 +104,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
       // Fallback response if Era service fails
       const fallbackMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `Hola ${user?.display_name || 'Usuario'}, soy Era, tu asistente de IA de Buildera. Disculpa, estoy experimentando algunas dificultades técnicas. ¿Podrías intentar tu pregunta de nuevo en unos momentos?`,
+        content: `Hola ${user?.display_name || 'Usuario'}, soy Era, tu asistente personal de Buildera. En este momento estoy teniendo algunas dificultades técnicas. ¿Podrías intentar tu pregunta de nuevo en unos momentos? Gracias por tu paciencia.`,
         sender: 'support',
         timestamp: new Date(),
       };
@@ -113,8 +113,8 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
       setIsLoading(false);
       
       toast({
-        title: "Conexión limitada",
-        description: "Era está funcionando en modo básico. Algunas funciones pueden estar limitadas.",
+        title: "Nos reconectaremos pronto",
+        description: "Era está trabajando en modo básico. Algunas funciones pueden estar limitadas temporalmente.",
         variant: "destructive",
       });
     }
@@ -132,7 +132,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
     if (messages.length === 0) {
       const welcomeMessage: Message = {
         id: 'welcome',
-        content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy Era, tu asistente de inteligencia artificial de Buildera. Estoy aquí para ayudarte a optimizar tu empresa y aprovechar al máximo todas las funciones de la plataforma. ¿En qué puedo ayudarte hoy?`,
+        content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy Era, tu asistente personal de Buildera. Estoy aquí para ayudarte a sacar el máximo provecho de la plataforma y acompañarte en el crecimiento de tu empresa. ¿En qué puedo ayudarte hoy?`,
         sender: 'support',
         timestamp: new Date(),
       };

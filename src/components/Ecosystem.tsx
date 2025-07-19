@@ -6,10 +6,10 @@ const Ecosystem = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-heading text-primary">
-            Un Ecosistema para Construir el Futuro
+            Un ecosistema pensado para ti
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-            Conectamos a las tres fuerzas de la transformación digital en un círculo virtuoso de innovación y crecimiento.
+            Creemos que el crecimiento se da cuando las personas correctas trabajan juntas. Por eso reunimos empresas, desarrolladores y expertos en un solo lugar.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
@@ -22,7 +22,7 @@ const Ecosystem = () => {
             </div>
             <h3 className="font-heading text-2xl text-primary mb-4">Para Empresas</h3>
             <p className="text-muted-foreground">
-              Su acelerador de innovación. Acceda a soluciones de IA a medida, implementadas en tiempo récord para obtener una ventaja competitiva real y sostenible.
+              Te ayudamos a hacer crecer tu empresa más rápido. Accede a soluciones de IA diseñadas específicamente para tus necesidades, sin complicaciones y con resultados que puedes ver.
             </p>
           </div>
           {/* Para Desarrolladores */}
@@ -34,7 +34,7 @@ const Ecosystem = () => {
             </div>
             <h3 className="font-heading text-2xl text-secondary mb-4">Para Desarrolladores</h3>
             <p className="text-muted-foreground">
-              Construya el futuro, hoy. Acceda a proyectos relevantes, colabore con una comunidad de élite y monetice sus habilidades creando agentes de IA.
+              Únete a una comunidad donde tu talento es valorado. Trabaja en proyectos emocionantes, colabora con otros desarrolladores apasionados y construye el futuro mientras generas ingresos.
             </p>
           </div>
           {/* Para Expertos */}
@@ -46,7 +46,7 @@ const Ecosystem = () => {
             </div>
             <h3 className="font-heading text-2xl text-accent-foreground mb-4">Para Expertos</h3>
             <p className="text-muted-foreground">
-              Su plataforma de influencia. Aplique su conocimiento de industria para guiar proyectos de alto impacto y asegurar que las soluciones sean estratégicamente brillantes.
+              Tu experiencia tiene un impacto real. Comparte tu conocimiento para guiar proyectos que transforman empresas y ayuda a que las soluciones sean realmente efectivas.
             </p>
           </div>
         </div>

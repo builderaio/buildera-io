@@ -515,6 +515,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     } catch (error) {
       console.error('Error cargando datos de LinkedIn:', error);
     }
+  };
 
   const handleTikTokConnect = async () => {
     setLoading(true);

@@ -428,7 +428,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           
           <div className="space-y-2">
             <Label htmlFor="email">
-              Email corporativo <span className="text-destructive">*</span>
+              Correo electrónico <span className="text-destructive">*</span>
             </Label>
             <Input
               id="email"

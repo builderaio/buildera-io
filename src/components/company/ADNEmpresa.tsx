@@ -1019,104 +1019,135 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             </TabsList>
 
             <TabsContent value="perfil" className="space-y-6 mt-6">
-              {/* Información Básica de la Empresa */}
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Building2 className="w-5 h-5 mr-2" />
-                    Información Básica de la Empresa
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Complete la información básica de su empresa para acceder a todas las funcionalidades.
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="company_name">Nombre de la empresa *</Label>
-                      <Input
-                        id="company_name"
-                        value={profile?.company_name || ""}
-                        onChange={(e) => onProfileUpdate({...profile, company_name: e.target.value})}
-                        placeholder="Nombre de su empresa"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="full_name">Nombre del contacto *</Label>
-                      <Input
-                        id="full_name"
-                        value={profile?.full_name || ""}
-                        onChange={(e) => onProfileUpdate({...profile, full_name: e.target.value})}
-                        placeholder="Su nombre completo"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="company_size">Tamaño de la empresa *</Label>
-                      <Select value={profile?.company_size || ""} onValueChange={(value) => onProfileUpdate({...profile, company_size: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione el tamaño" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {companySizes.map((size) => (
-                            <SelectItem key={size} value={size}>
-                              {size}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="industry_sector">Sector de la industria *</Label>
-                      <Select value={profile?.industry_sector || ""} onValueChange={(value) => onProfileUpdate({...profile, industry_sector: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione el sector" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sectors.map((sector) => (
-                            <SelectItem key={sector} value={sector}>
-                              {sector}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="website_url">Sitio web</Label>
-                      <Input
-                        id="website_url"
-                        type="text"
-                        value={profile?.website_url || ""}
-                        onChange={(e) => onProfileUpdate({...profile, website_url: e.target.value})}
-                        placeholder="suempresa.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="country">País *</Label>
-                      <Input
-                        id="country"
-                        value={profile?.country || ""}
-                        onChange={(e) => onProfileUpdate({...profile, country: e.target.value})}
-                        placeholder="País de la empresa"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email corporativo (no editable)</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profile?.email || ""}
-                      disabled
-                      className="bg-muted"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+              <Tabs defaultValue="informacion" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="informacion">Información de {profile?.company_name || 'la Empresa'}</TabsTrigger>
+                  <TabsTrigger value="objetivos">Objetivos Empresariales</TabsTrigger>
+                </TabsList>
 
-              <CompanyProfileForm profile={profile} onProfileUpdate={onProfileUpdate} />
+                <TabsContent value="informacion" className="space-y-6 mt-6">
+                  {/* Información Unificada de la Empresa */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Building2 className="w-5 h-5 mr-2" />
+                        Información de {profile?.company_name || 'la Empresa'}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Complete toda la información de su empresa en un solo lugar.
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="company_name">Nombre de la empresa *</Label>
+                          <Input
+                            id="company_name"
+                            value={profile?.company_name || ""}
+                            onChange={(e) => onProfileUpdate({...profile, company_name: e.target.value})}
+                            placeholder="Nombre de su empresa"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="full_name">Nombre del contacto *</Label>
+                          <Input
+                            id="full_name"
+                            value={profile?.full_name || ""}
+                            onChange={(e) => onProfileUpdate({...profile, full_name: e.target.value})}
+                            placeholder="Su nombre completo"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email corporativo (no editable)</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={profile?.email || ""}
+                            disabled
+                            className="bg-muted"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="website_url">Sitio web</Label>
+                          <Input
+                            id="website_url"
+                            type="text"
+                            value={profile?.website_url || ""}
+                            onChange={(e) => onProfileUpdate({...profile, website_url: e.target.value})}
+                            placeholder="suempresa.com"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="company_size">Tamaño de la empresa *</Label>
+                          <Select value={profile?.company_size || ""} onValueChange={(value) => onProfileUpdate({...profile, company_size: value})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccione el tamaño" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {companySizes.map((size) => (
+                                <SelectItem key={size} value={size}>
+                                  {size}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="industry_sector">Sector de la industria *</Label>
+                          <Select value={profile?.industry_sector || ""} onValueChange={(value) => onProfileUpdate({...profile, industry_sector: value})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccione el sector" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sectors.map((sector) => (
+                                <SelectItem key={sector} value={sector}>
+                                  {sector}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="country">País *</Label>
+                          <Input
+                            id="country"
+                            value={profile?.country || ""}
+                            onChange={(e) => onProfileUpdate({...profile, country: e.target.value})}
+                            placeholder="País de la empresa"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <CompanyProfileForm profile={profile} onProfileUpdate={onProfileUpdate} />
+                </TabsContent>
+
+                <TabsContent value="objetivos" className="space-y-6 mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Target className="w-5 h-5 mr-2" />
+                        Objetivos Empresariales
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Define los objetivos estratégicos de tu empresa para orientar todas las actividades.
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-center py-8">
+                        <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">
+                          Funcionalidad de objetivos empresariales próximamente disponible.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
             <TabsContent value="estrategia" className="space-y-6 mt-6">

@@ -31,7 +31,7 @@ const Auth = () => {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-4 relative"
+      className="min-h-screen flex items-center justify-center p-2 md:p-4 relative"
       style={{
         backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url(${authBackground})`,
         backgroundSize: 'cover',
@@ -42,31 +42,32 @@ const Auth = () => {
       {/* Background overlay for better readability */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20"></div>
       
-      <div className="w-full max-w-2xl relative z-10">
-        <div className="flex items-center justify-between mb-8">
+      <div className="w-full max-w-lg md:max-w-2xl relative z-10">
+        <div className="flex items-center justify-between mb-6 md:mb-8">
           <a href="/">
-            <Button variant="ghost" size="lg" className="flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/10">
-              <ArrowLeft className="h-4 w-4" />
-              Volver al Inicio
+            <Button variant="ghost" size="sm" className="flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/10 text-sm md:text-base">
+              <ArrowLeft className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Volver al Inicio</span>
+              <span className="sm:hidden">Inicio</span>
             </Button>
           </a>
           <ThemeSelector />
         </div>
         
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
+        <div className="text-center mb-6 md:mb-8">
+          <div className="flex justify-center mb-3 md:mb-4">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-2 md:p-3 shadow-lg">
               <img 
                 src="/lovable-uploads/df793eae-f9ea-4291-9de2-ecf01e5005d5.png" 
                 alt="Buildera Logo" 
-                className="h-12 w-auto"
+                className="h-10 md:h-12 w-auto"
               />
             </div>
           </div>
-          <h1 className="text-3xl font-heading text-white mb-2">
+          <h1 className="text-2xl md:text-3xl font-heading text-white mb-2">
             Únete a Buildera
           </h1>
-          <p className="text-white/80 mt-2">
+          <p className="text-white/80 mt-2 text-sm md:text-base px-4">
             Conecta con el futuro de la automatización inteligente
           </p>
         </div>

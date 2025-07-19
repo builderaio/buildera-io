@@ -1,4 +1,4 @@
-import { Activity, Building, Users, Settings, Bell, Calendar, Search, FolderOpen, GraduationCap, Store, MessageSquare, User } from "lucide-react";
+import { Activity, Building, Users, Settings, Bell, Calendar, Search, FolderOpen, GraduationCap, Store, MessageSquare, User, Menu, X } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import ThemeSelector from "@/components/ThemeSelector";
 
@@ -7,9 +7,11 @@ interface CompanySidebarProps {
   setActiveView: (view: string) => void;
   profile: any;
   onSignOut: () => void;
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: (open: boolean) => void;
 }
 
-const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: CompanySidebarProps) => {
+const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut, isMobileMenuOpen = false, setIsMobileMenuOpen }: CompanySidebarProps) => {
   // Verificar si la información del negocio está completa
   const isProfileIncomplete = !profile?.company_name || 
                                profile.company_name === 'Mi Negocio' ||
@@ -23,6 +25,10 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
       return;
     }
     setActiveView(viewId);
+    // Cerrar menú móvil al seleccionar una opción
+    if (setIsMobileMenuOpen) {
+      setIsMobileMenuOpen(false);
+    }
   };
   const menuItems = [
     {
@@ -51,31 +57,53 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
   ];
 
   return (
-    <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col p-4 fixed h-full">
-      <div 
-        className="flex items-center space-x-3 pb-6 border-b border-sidebar-border cursor-pointer hover:opacity-80 transition-all duration-300 group"
-        onClick={() => window.location.href = '/company-dashboard'}
-      >
-        <div className="relative">
-          <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-            <img 
-              src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
-              alt="Buildera Logo" 
-              width="32" 
-              height="32" 
-              className="object-contain filter brightness-0 invert"
-            />
+    <>
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsMobileMenuOpen?.(false)}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <aside className={`
+        fixed top-0 left-0 h-full bg-sidebar text-sidebar-foreground flex flex-col p-4 z-50 transition-transform duration-300 ease-in-out
+        w-72 md:w-64
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
+        {/* Mobile Close Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen?.(false)}
+          className="absolute top-4 right-4 md:hidden p-2 hover:bg-sidebar-accent rounded-lg transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div 
+          className="flex items-center space-x-3 pb-6 border-b border-sidebar-border cursor-pointer hover:opacity-80 transition-all duration-300 group"
+          onClick={() => window.location.href = '/company-dashboard'}
+        >
+          <div className="relative">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+              <img 
+                src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
+                alt="Buildera Logo" 
+                width="28" 
+                height="28" 
+                className="md:w-8 md:h-8 object-contain filter brightness-0 invert"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-black text-xl md:text-2xl tracking-wider text-sidebar-primary bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              BUILDERA
+            </span>
+            <p className="text-[9px] md:text-[10px] font-medium text-sidebar-foreground/60 tracking-widest uppercase mt-0.5 leading-none">
+              AI Business Platform
+            </p>
           </div>
         </div>
-        <div className="flex flex-col">
-          <span className="font-black text-2xl tracking-wider text-sidebar-primary bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            BUILDERA
-          </span>
-          <p className="text-[10px] font-medium text-sidebar-foreground/60 tracking-widest uppercase mt-0.5 leading-none">
-            AI Business Platform
-          </p>
-        </div>
-      </div>
       
       <nav className="mt-8 flex-1 overflow-y-auto">
         {menuItems.map((category) => (
@@ -160,8 +188,9 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
             </div>
           </div>
         </div>
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </>
   );
 };
 

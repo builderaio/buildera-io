@@ -43,18 +43,18 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
   ];
 
   return (
-    <div>
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground">Mando Central</h1>
-        <p className="text-lg text-muted-foreground">
+    <div className="space-y-6 md:space-y-8">
+      <header className="mb-6 md:mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground">Mando Central</h1>
+        <p className="text-base md:text-lg text-muted-foreground">
           ¡Bienvenido, {profile?.company_name || "Negocio"}! Desde aquí puedes ver todo lo que está pasando en tu negocio y tomar las mejores decisiones para crecer.
         </p>
       </header>
 
       {/* KPIs Section */}
-      <section className="mb-8">
-        <h2 className="text-2xl font-bold text-primary mb-4">Cómo va tu negocio</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">Cómo va tu negocio</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {kpis.map((kpi, index) => {
             const Icon = kpi.icon;
             return (
@@ -84,8 +84,8 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       </section>
 
       {/* Próxima Mejora Section */}
-      <section className="mb-8">
-        <h2 className="text-2xl font-bold text-primary mb-4">🚀 Te ayudamos a hacer crecer tu negocio aún más</h2>
+      <section className="mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">🚀 Te ayudamos a hacer crecer tu negocio aún más</h2>
         <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 p-6 rounded-lg shadow-sm border border-primary/20">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -199,8 +199,8 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       </section>
 
       {/* Marketplace Section */}
-      <section className="mb-8">
-        <h2 className="text-2xl font-bold text-primary mb-4">Herramientas que te van a encantar</h2>
+      <section className="mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">Herramientas que te van a encantar</h2>
         <div className="bg-card p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <p className="text-muted-foreground">
@@ -266,7 +266,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
 
       {/* AI Insights Section */}
       <section>
-        <h2 className="text-2xl font-bold text-primary mb-4">Ideas para hacer crecer tu negocio</h2>
+        <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">Ideas para hacer crecer tu negocio</h2>
         <div className="bg-card p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <p className="text-muted-foreground">

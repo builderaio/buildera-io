@@ -1,4 +1,5 @@
 
+import { Menu } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,7 @@ const CompanyDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [activeView, setActiveView] = useState("mando-central");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -220,13 +222,24 @@ const CompanyDashboard = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(true)}
+        className="fixed top-4 left-4 z-30 p-2 bg-sidebar text-sidebar-foreground rounded-lg shadow-lg md:hidden"
+      >
+        <Menu className="w-6 h-6" />
+      </button>
+
       <CompanySidebar 
         activeView={activeView} 
         setActiveView={setActiveView}
         profile={profile}
         onSignOut={handleSignOut}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
-      <main className="flex-1 p-8 overflow-y-auto ml-64">
+      
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto md:ml-64 pt-16 md:pt-8">
         {renderContent()}
       </main>
       

@@ -120,24 +120,29 @@ export default function ConfiguracionIA() {
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4 lg:p-6">
       <div className="flex items-center gap-3">
-        <Brain className="h-6 w-6 text-primary" />
-        <div>
-          <h2 className="text-2xl font-bold">Configuración de IA</h2>
-          <p className="text-muted-foreground">
+        <Brain className="h-5 h-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-2xl font-bold">Configuración de IA</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Configura los modelos y parámetros de inteligencia artificial
           </p>
         </div>
       </div>
 
       <Tabs defaultValue={configs[0]?.function_name} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3 h-auto p-1">
           {configs.map(config => {
             const info = FUNCTION_DESCRIPTIONS[config.function_name as keyof typeof FUNCTION_DESCRIPTIONS];
             return (
-              <TabsTrigger key={config.function_name} value={config.function_name} className="text-xs sm:text-sm">
-                {info?.name || config.function_name}
+              <TabsTrigger 
+                key={config.function_name} 
+                value={config.function_name} 
+                className="text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap"
+              >
+                <span className="hidden sm:inline">{info?.name || config.function_name}</span>
+                <span className="sm:hidden">{info?.name?.split(' ')[0] || config.function_name}</span>
               </TabsTrigger>
             );
           })}
@@ -146,34 +151,34 @@ export default function ConfiguracionIA() {
         {configs.map(config => {
           const info = FUNCTION_DESCRIPTIONS[config.function_name as keyof typeof FUNCTION_DESCRIPTIONS];
           return (
-            <TabsContent key={config.function_name} value={config.function_name}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {info?.name || config.function_name}
-                    <Badge variant="secondary" className="ml-2">
+            <TabsContent key={config.function_name} value={config.function_name} className="mt-4 sm:mt-6">
+              <Card className="animate-fade-in">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <span className="text-base sm:text-lg">{info?.name || config.function_name}</span>
+                    <Badge variant="secondary" className="self-start sm:ml-2 text-xs">
                       {config.model_name}
                     </Badge>
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm">
                     {info?.description || 'Configuración de función de IA'}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-4 sm:space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor={`model-${config.function_name}`}>Modelo de IA</Label>
+                    <Label htmlFor={`model-${config.function_name}`} className="text-sm font-medium">Modelo de IA</Label>
                     <Select
                       value={config.model_name}
                       onValueChange={(value) => updateConfigValue(config.function_name, 'model_name', value)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecciona un modelo" />
                       </SelectTrigger>
                       <SelectContent>
                         {AI_MODELS.map(model => (
                           <SelectItem key={model.value} value={model.value}>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{model.label}</span>
+                            <div className="flex flex-col py-1">
+                              <span className="font-medium text-sm">{model.label}</span>
                               <span className="text-xs text-muted-foreground">{model.description}</span>
                             </div>
                           </SelectItem>
@@ -182,9 +187,9 @@ export default function ConfiguracionIA() {
                     </Select>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor={`tokens-${config.function_name}`}>Tokens Máximos</Label>
+                      <Label htmlFor={`tokens-${config.function_name}`} className="text-sm font-medium">Tokens Máximos</Label>
                       <Input
                         id={`tokens-${config.function_name}`}
                         type="number"
@@ -192,11 +197,12 @@ export default function ConfiguracionIA() {
                         max="4000"
                         value={config.max_tokens}
                         onChange={(e) => updateConfigValue(config.function_name, 'max_tokens', parseInt(e.target.value))}
+                        className="w-full"
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Temperatura: {config.temperature}</Label>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Temperatura: {config.temperature}</Label>
                       <Slider
                         value={[config.temperature]}
                         onValueChange={(value) => updateConfigValue(config.function_name, 'temperature', value[0])}
@@ -211,8 +217,8 @@ export default function ConfiguracionIA() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Top P: {config.top_p}</Label>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Top P: {config.top_p}</Label>
                       <Slider
                         value={[config.top_p]}
                         onValueChange={(value) => updateConfigValue(config.function_name, 'top_p', value[0])}
@@ -223,8 +229,8 @@ export default function ConfiguracionIA() {
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Penalización por Frecuencia: {config.frequency_penalty}</Label>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Penalización por Frecuencia: {config.frequency_penalty}</Label>
                       <Slider
                         value={[config.frequency_penalty]}
                         onValueChange={(value) => updateConfigValue(config.function_name, 'frequency_penalty', value[0])}
@@ -235,8 +241,8 @@ export default function ConfiguracionIA() {
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Penalización por Presencia: {config.presence_penalty}</Label>
+                    <div className="space-y-3 lg:col-span-2">
+                      <Label className="text-sm font-medium">Penalización por Presencia: {config.presence_penalty}</Label>
                       <Slider
                         value={[config.presence_penalty]}
                         onValueChange={(value) => updateConfigValue(config.function_name, 'presence_penalty', value[0])}
@@ -248,11 +254,11 @@ export default function ConfiguracionIA() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end pt-4 border-t">
                     <Button
                       onClick={() => updateConfiguration(config)}
                       disabled={saving === config.function_name}
-                      className="min-w-[120px]"
+                      className="min-w-[120px] hover-scale"
                     >
                       {saving === config.function_name ? (
                         <RefreshCw className="h-4 w-4 animate-spin mr-2" />

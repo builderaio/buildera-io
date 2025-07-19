@@ -132,23 +132,26 @@ const AdminUsers = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+      <header className="bg-white shadow-sm border-b sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => navigate('/admin/dashboard')}
-                className="mr-4"
+                className="flex items-center p-2 sm:px-3 flex-shrink-0"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver
+                <ArrowLeft className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Volver</span>
               </Button>
-              <Shield className="w-8 h-8 text-slate-800 mr-3" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Gestión de Usuarios</h1>
-                <p className="text-sm text-gray-500">Portal Admin - Buildera</p>
+              <div className="h-4 sm:h-6 w-px bg-gray-300 hidden sm:block" />
+              <div className="flex items-center min-w-0">
+                <Shield className="w-5 h-5 sm:w-8 sm:h-8 text-slate-800 mr-2 sm:mr-3 flex-shrink-0" />
+                <div className="min-w-0">
+                  <h1 className="text-sm sm:text-xl font-bold text-gray-900 truncate">Gestión de Usuarios</h1>
+                  <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">Portal Admin - Buildera</p>
+                </div>
               </div>
             </div>
           </div>
@@ -156,17 +159,17 @@ const AdminUsers = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Filters */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Search className="w-5 h-5 mr-2" />
+        <Card className="mb-4 sm:mb-6 animate-fade-in">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center text-base sm:text-lg">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
               Filtros y Búsqueda
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col gap-4">
               <div className="flex-1">
                 <Input
                   placeholder="Buscar por email, nombre o empresa..."
@@ -175,11 +178,12 @@ const AdminUsers = () => {
                   className="w-full"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 overflow-x-auto pb-2">
                 <Button
                   variant={userTypeFilter === 'all' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setUserTypeFilter('all')}
+                  className="whitespace-nowrap flex-shrink-0"
                 >
                   Todos ({users.length})
                 </Button>
@@ -187,6 +191,7 @@ const AdminUsers = () => {
                   variant={userTypeFilter === 'company' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setUserTypeFilter('company')}
+                  className="whitespace-nowrap flex-shrink-0"
                 >
                   Empresas ({users.filter(u => u.user_type === 'company').length})
                 </Button>
@@ -194,13 +199,15 @@ const AdminUsers = () => {
                   variant={userTypeFilter === 'developer' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setUserTypeFilter('developer')}
+                  className="whitespace-nowrap flex-shrink-0"
                 >
-                  Desarrolladores ({users.filter(u => u.user_type === 'developer').length})
+                  Dev ({users.filter(u => u.user_type === 'developer').length})
                 </Button>
                 <Button
                   variant={userTypeFilter === 'expert' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setUserTypeFilter('expert')}
+                  className="whitespace-nowrap flex-shrink-0"
                 >
                   Expertos ({users.filter(u => u.user_type === 'expert').length})
                 </Button>
@@ -210,61 +217,63 @@ const AdminUsers = () => {
         </Card>
 
         {/* Users List */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                Lista de Usuarios ({filteredUsers.length})
+        <Card className="animate-fade-in">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center justify-between text-base sm:text-lg">
+              <span className="flex items-center min-w-0">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                <span className="truncate">Lista de Usuarios ({filteredUsers.length})</span>
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {filteredUsers.map((user) => {
                 const UserTypeIcon = getUserTypeIcon(user.user_type);
                 return (
-                  <div key={user.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div key={user.id} className="border rounded-lg p-3 sm:p-4 hover:bg-gray-50 active:bg-gray-100 transition-colors hover-scale">
                     <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4">
-                        <div className="bg-slate-100 p-2 rounded-lg">
-                          <UserTypeIcon className="w-5 h-5 text-slate-600" />
+                      <div className="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
+                        <div className="bg-slate-100 p-2 rounded-lg flex-shrink-0">
+                          <UserTypeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">{user.full_name || 'Sin nombre'}</h3>
-                            <Badge className={getUserTypeBadge(user.user_type)}>
-                              {user.user_type}
-                            </Badge>
-                            {user.linked_providers.length > 0 && (
-                              <Badge variant="outline" className="text-xs">
-                                <Activity className="w-3 h-3 mr-1" />
-                                {user.linked_providers.length} conexión(es)
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                            <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{user.full_name || 'Sin nombre'}</h3>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge className={`${getUserTypeBadge(user.user_type)} text-xs`}>
+                                {user.user_type}
                               </Badge>
-                            )}
+                              {user.linked_providers.length > 0 && (
+                                <Badge variant="outline" className="text-xs">
+                                  <Activity className="w-3 h-3 mr-1" />
+                                  {user.linked_providers.length} conexión(es)
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm text-gray-600">
-                            <div className="flex items-center">
-                              <Mail className="w-3 h-3 mr-1" />
-                              {user.email}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs sm:text-sm text-gray-600">
+                            <div className="flex items-center min-w-0">
+                              <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
+                              <span className="truncate">{user.email}</span>
                             </div>
                             
                             {user.company_name && (
-                              <div className="flex items-center">
-                                <Building2 className="w-3 h-3 mr-1" />
-                                {user.company_name}
+                              <div className="flex items-center min-w-0">
+                                <Building2 className="w-3 h-3 mr-1 flex-shrink-0" />
+                                <span className="truncate">{user.company_name}</span>
                               </div>
                             )}
                             
                             {user.website_url && (
-                              <div className="flex items-center">
-                                <Globe className="w-3 h-3 mr-1" />
+                              <div className="flex items-center min-w-0">
+                                <Globe className="w-3 h-3 mr-1 flex-shrink-0" />
                                 <a 
                                   href={user.website_url} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
-                                  className="text-blue-600 hover:underline"
+                                  className="text-blue-600 hover:underline truncate"
                                 >
                                   Sitio web
                                 </a>
@@ -272,22 +281,22 @@ const AdminUsers = () => {
                             )}
                             
                             {user.industry && (
-                              <div className="flex items-center">
-                                <Activity className="w-3 h-3 mr-1" />
-                                {user.industry}
+                              <div className="flex items-center min-w-0">
+                                <Activity className="w-3 h-3 mr-1 flex-shrink-0" />
+                                <span className="truncate">{user.industry}</span>
                               </div>
                             )}
                             
                             <div className="flex items-center">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              {new Date(user.created_at).toLocaleDateString('es-ES')}
+                              <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
+                              <span className="text-xs sm:text-sm">{new Date(user.created_at).toLocaleDateString('es-ES')}</span>
                             </div>
                           </div>
 
                           {user.linked_providers.length > 0 && (
-                            <div className="mt-2">
+                            <div className="mt-2 sm:mt-3">
                               <p className="text-xs text-gray-500 mb-1">Conexiones activas:</p>
-                              <div className="flex gap-1">
+                              <div className="flex gap-1 flex-wrap">
                                 {user.linked_providers.map((provider, index) => (
                                   <Badge key={index} variant="secondary" className="text-xs">
                                     {provider}
@@ -304,9 +313,9 @@ const AdminUsers = () => {
               })}
               
               {filteredUsers.length === 0 && (
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No se encontraron usuarios con los filtros aplicados</p>
+                <div className="text-center py-6 sm:py-8">
+                  <Users className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm sm:text-base text-gray-500">No se encontraron usuarios con los filtros aplicados</p>
                 </div>
               )}
             </div>

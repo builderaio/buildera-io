@@ -313,7 +313,7 @@ const EraCoachMark: React.FC<EraCoachMarkProps> = ({ isOpen, onClose, userId }) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-auto">
+      <DialogContent className="max-w-md mx-auto" aria-describedby="era-coach-mark-description">
         <DialogHeader className="relative">
           <Button
             variant="ghost"
@@ -328,7 +328,7 @@ const EraCoachMark: React.FC<EraCoachMarkProps> = ({ isOpen, onClose, userId }) 
           </DialogTitle>
         </DialogHeader>
         
-        <div className="py-6">
+        <div id="era-coach-mark-description" className="py-6">
           {steps[currentStep].content}
         </div>
         

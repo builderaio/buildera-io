@@ -52,13 +52,13 @@ const VersionUpdateNotification: React.FC = () => {
 
   return (
     <div className="fixed top-4 right-4 z-[9999] max-w-sm animate-fade-in">
-      <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800">
-        <RefreshCw className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800 dark:text-blue-200">
+      <Alert className="border-primary/20 bg-card/95 backdrop-blur-sm dark:bg-card/95 dark:border-primary/20 shadow-lg">
+        <RefreshCw className="h-4 w-4 text-primary" />
+        <AlertDescription className="text-foreground">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
               <p className="font-medium mb-2">Nueva versión disponible</p>
-              <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+              <p className="text-sm text-muted-foreground mb-3">
                 Hay actualizaciones importantes. Recomendamos actualizar para obtener las últimas mejoras.
               </p>
               <div className="flex gap-2">
@@ -66,7 +66,7 @@ const VersionUpdateNotification: React.FC = () => {
                   size="sm"
                   onClick={handleUpdate}
                   disabled={isUpdating}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   {isUpdating ? (
                     <>
@@ -85,7 +85,6 @@ const VersionUpdateNotification: React.FC = () => {
                   variant="outline"
                   onClick={handleDismiss}
                   disabled={isUpdating}
-                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
                 >
                   Después
                 </Button>
@@ -96,7 +95,7 @@ const VersionUpdateNotification: React.FC = () => {
               variant="ghost"
               onClick={handleDismiss}
               disabled={isUpdating}
-              className="h-6 w-6 p-0 text-blue-600 hover:bg-blue-100"
+              className="h-6 w-6 p-0 hover:bg-accent"
             >
               <X className="h-3 w-3" />
             </Button>

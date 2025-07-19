@@ -4,6 +4,7 @@ import { Menu, LogOut, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import ThemeSelector from "@/components/ThemeSelector";
 
 const Header = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -124,7 +125,7 @@ const Header = () => {
             />
           </a>
         </div>
-        <div className="hidden md:flex items-center space-x-8">
+        <div className="hidden md:flex items-center space-x-6">
           <a href="#solucion" className="text-muted-foreground hover:text-primary transition-smooth">
             Solución
           </a>
@@ -134,9 +135,11 @@ const Header = () => {
           <a href="#casos-de-uso" className="text-muted-foreground hover:text-primary transition-smooth">
             Casos de Uso
           </a>
+          <ThemeSelector />
           {renderAuthSection()}
         </div>
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center space-x-2">
+          <ThemeSelector />
           <Button variant="ghost" size="icon">
             <Menu className="h-6 w-6" />
           </Button>

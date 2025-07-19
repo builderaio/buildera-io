@@ -1,4 +1,6 @@
 import { Activity, Building, Users, Settings, Bell, Calendar, Search, FolderOpen, GraduationCap, Store, MessageSquare } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
+import ThemeSelector from "@/components/ThemeSelector";
 
 interface CompanySidebarProps {
   activeView: string;
@@ -103,6 +105,11 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut }: Compa
       </nav>
       
       <div className="pt-4 mt-auto border-t border-sidebar-border">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs text-sidebar-foreground/70 font-medium">Tema</span>
+          <ThemeSelector />
+        </div>
+        
         <button
           onClick={() => handleMenuClick("configuracion")}
           disabled={isProfileIncomplete}

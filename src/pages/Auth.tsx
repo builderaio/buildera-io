@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import CompanyAuth from "@/components/auth/CompanyAuth";
+import ThemeSelector from "@/components/ThemeSelector";
 import authBackground from "@/assets/auth-background.jpg";
 
 const Auth = () => {
@@ -49,24 +50,25 @@ const Auth = () => {
               Volver al Inicio
             </Button>
           </a>
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
-                <img 
-                  src="/lovable-uploads/df793eae-f9ea-4291-9de2-ecf01e5005d5.png" 
-                  alt="Buildera Logo" 
-                  className="h-12 w-auto"
-                />
-              </div>
+          <ThemeSelector />
+        </div>
+        
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
+              <img 
+                src="/lovable-uploads/df793eae-f9ea-4291-9de2-ecf01e5005d5.png" 
+                alt="Buildera Logo" 
+                className="h-12 w-auto"
+              />
             </div>
-            <h1 className="text-3xl font-heading text-white mb-2">
-              Únete a Buildera
-            </h1>
-            <p className="text-white/80 mt-2">
-              Conecta con el futuro de la automatización inteligente
-            </p>
           </div>
-          <div className="w-32"></div> {/* Spacer for centering */}
+          <h1 className="text-3xl font-heading text-white mb-2">
+            Únete a Buildera
+          </h1>
+          <p className="text-white/80 mt-2">
+            Conecta con el futuro de la automatización inteligente
+          </p>
         </div>
 
         <Card className="shadow-elegant backdrop-blur-sm bg-card/95 border border-white/10">

@@ -9,7 +9,7 @@ const Ecosystem = () => {
             Buildera: donde la inteligencia artificial se vuelve simple
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-            En Buildera creemos que la mejor tecnología es la que no necesitas entender para usarla. ERA maneja toda la complejidad por ti, para que te enfoques en lo que realmente importa: hacer crecer tu negocio.
+            En Buildera creemos que cada negocio necesita un equipo completo y actualizado. ERA crea asistentes especializados, investiga tu competencia y trae información externa relevante. Todo funciona junto para acelerar tu crecimiento sin complicaciones.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
@@ -22,7 +22,7 @@ const Ecosystem = () => {
             </div>
             <h3 className="font-heading text-2xl text-primary mb-4">ERA Recolecta</h3>
             <p className="text-muted-foreground">
-              Tu asistente conecta todas tus redes sociales y reúne todo tu contenido en un solo lugar. No importa cuánto hayas publicado, ERA lo revisa todo en minutos.
+              Tu asistente reúne información de todas las fuentes: tus redes sociales, datos de competencia, tendencias del mercado y fuentes externas relevantes. Todo en un solo lugar para entender tu negocio completamente.
             </p>
           </div>
           {/* Análisis */}
@@ -34,7 +34,7 @@ const Ecosystem = () => {
             </div>
             <h3 className="font-heading text-2xl text-secondary mb-4">ERA Entiende</h3>
             <p className="text-muted-foreground">
-              Con inteligencia artificial avanzada, ERA identifica patrones que tú no podrías ver. Entiende qué temas, formatos y momentos funcionan mejor para tu audiencia.
+              Con inteligencia artificial avanzada, ERA crea asistentes especializados para cada área: marketing, finanzas, recursos humanos, legal y más. Cada uno entiende las necesidades específicas de su función.
             </p>
           </div>
           {/* Recomendaciones */}
@@ -46,7 +46,7 @@ const Ecosystem = () => {
             </div>
             <h3 className="font-heading text-2xl text-accent-foreground mb-4">ERA Recomienda</h3>
             <p className="text-muted-foreground">
-              Basándose en tu historial de éxito, ERA te dice exactamente qué hacer: qué contenido crear, cuándo publicarlo y cómo optimizarlo para mejores resultados.
+              Combinando información interna, análisis de competencia y datos externos, cada asistente especializado te da recomendaciones precisas para acelerar su área específica y el crecimiento general del negocio.
             </p>
           </div>
         </div>

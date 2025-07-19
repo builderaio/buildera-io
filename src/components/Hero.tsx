@@ -8,7 +8,7 @@ const Hero = () => {
           Bienvenido a Buildera: Building The New Era de tu negocio
         </h1>
         <p className="mt-4 md:mt-6 text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto px-4">
-          Conoce a ERA, tu asistente de inteligencia artificial que estudia tu negocio, entiende qué funciona mejor y te dice exactamente qué hacer para crecer más rápido. Con Buildera, transformas datos complejos en decisiones simples que realmente impulsan tu éxito.
+          Conoce a ERA, tu asistente de inteligencia artificial que analiza tu negocio completo, estudia tu competencia, trae información externa relevante y crea roles especializados (jurídico, financiero, RRHH) para acelerar cada área de tu empresa. Con Buildera, transformas información dispersa en estrategias claras que impulsan tu crecimiento.
         </p>
         <div className="mt-6 md:mt-10 flex flex-col sm:flex-row justify-center items-center gap-3 md:gap-4 px-4">
           <a href="/auth?mode=register&userType=company" className="w-full sm:w-auto">

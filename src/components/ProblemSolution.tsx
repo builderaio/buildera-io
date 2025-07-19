@@ -9,7 +9,7 @@ const ProblemSolution = () => {
             ERA entiende tu negocio mejor que nadie
           </h2>
           <p className="mt-3 md:mt-4 text-base md:text-lg text-muted-foreground px-4">
-            Tu asistente ERA analiza todo lo que has publicado en redes sociales, identifica qué conecta mejor con tu audiencia y te sugiere el camino más directo para hacer crecer tu negocio. En Buildera, convertimos el caos de información en claridad total.
+            Tu asistente ERA estudia tu negocio desde todos los ángulos: analiza tus redes sociales, investiga tu competencia, trae información externa relevante y crea asistentes especializados para cada área de tu empresa. En Buildera, convertimos información dispersa en estrategias claras para acelerar tu crecimiento.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
@@ -22,19 +22,19 @@ const ProblemSolution = () => {
               <li className="flex items-start">
                 <X className="w-6 h-6 text-destructive mr-3 flex-shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-foreground">Publicas sin saber si funciona</strong> - tienes Instagram, LinkedIn, Facebook, pero no sabes cuál contenido realmente conecta con tu audiencia.
+                  <strong className="text-foreground">Trabajas a ciegas en múltiples áreas</strong> - no sabes si tu marketing funciona, qué hace tu competencia, o cómo optimizar recursos humanos y legales.
                 </span>
               </li>
               <li className="flex items-start">
                 <X className="w-6 h-6 text-destructive mr-3 flex-shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-foreground">Pierdes oportunidades de crecimiento</strong> - sabes que hay patrones en tu éxito, pero no logras identificarlos para repetirlos.
+                  <strong className="text-foreground">Pierdes oportunidades por falta de información</strong> - sabes que necesitas datos del mercado y competencia, pero no tienes tiempo ni recursos para investigar.
                 </span>
               </li>
               <li className="flex items-start">
                 <X className="w-6 h-6 text-destructive mr-3 flex-shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-foreground">Te quedas con dudas</strong> - ves los números pero no entiendes qué hacer diferente para que tu negocio crezca más rápido.
+                  <strong className="text-foreground">Cada área va por su lado</strong> - marketing, ventas, finanzas y recursos humanos trabajan sin una estrategia unificada que acelere el crecimiento.
                 </span>
               </li>
             </ul>
@@ -48,19 +48,19 @@ const ProblemSolution = () => {
               <li className="flex items-start">
                 <CheckCircle className="w-6 h-6 text-primary mr-3 flex-shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-primary">ERA revisa todo tu historial</strong> - conectamos tus redes sociales y estudiamos un año completo de todo lo que has publicado para entender qué funciona mejor.
+                  <strong className="text-primary">ERA crea equipos especializados</strong> - genera asistentes expertos en marketing, finanzas, recursos humanos, legal y más, cada uno optimizado para su área.
                 </span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="w-6 h-6 text-primary mr-3 flex-shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-primary">Agrupa tu contenido por temas</strong> - ERA organiza automáticamente tus publicaciones por temas similares y te muestra cuáles generan más interacción.
+                  <strong className="text-primary">Trae información externa clave</strong> - ERA investiga tu competencia, analiza tendencias del mercado y recopila datos relevantes de múltiples fuentes.
                 </span>
               </li>
               <li className="flex items-start">
                 <CheckCircle className="w-6 h-6 text-primary mr-3 flex-shrink-0 mt-0.5" />
                 <span>
-                  <strong className="text-primary">Te dice exactamente qué hacer</strong> - basándose en tus mejores resultados, ERA te sugiere qué contenido crear, cuándo publicarlo y cómo mejorarlo.
+                  <strong className="text-primary">Unifica todo en estrategias claras</strong> - conecta información de todas las áreas y fuentes para darte recomendaciones precisas que aceleren tu crecimiento.
                 </span>
               </li>
             </ul>

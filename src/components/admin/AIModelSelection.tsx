@@ -28,8 +28,15 @@ const AIModelSelection = () => {
   const [selectedModels, setSelectedModels] = useState<SelectedModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fetchingModels, setFetchingModels] = useState<string | null>(null);
 
-  const getAvailableModels = (provider: string) => {
+  const getAvailableModels = (provider: string, apiKey?: APIKey) => {
+    // Usar modelos almacenados en la base de datos si están disponibles
+    if (apiKey?.available_models && apiKey.available_models.length > 0) {
+      return apiKey.available_models;
+    }
+    
+    // Fallback a modelos por defecto
     const modelMap: { [key: string]: string[] } = {
       openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
       anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-haiku-20240307'],
@@ -73,7 +80,7 @@ const AIModelSelection = () => {
 
       Object.entries(providerGroups).forEach(([provider, keys]) => {
         const primaryKey = keys[0]; // Usar la primera API key como principal
-        const availableModels = getAvailableModels(provider);
+        const availableModels = getAvailableModels(provider, primaryKey);
         const defaultModel = primaryKey.model_name || availableModels[0];
         
         if (defaultModel) {
@@ -99,6 +106,30 @@ const AIModelSelection = () => {
       const filtered = prev.filter(sm => sm.provider !== provider);
       return [...filtered, { provider, model, api_key_id }];
     });
+  };
+
+  const fetchModelsFromAPI = async (provider: string, apiKeyId: string) => {
+    setFetchingModels(provider);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-available-models', {
+        body: { provider, apiKeyId }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success(`Modelos de ${provider} actualizados: ${data.models.length} modelos encontrados`);
+        // Recargar los API keys para mostrar los modelos actualizados
+        await loadAPIKeys();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching models:', error);
+      toast.error(`Error al obtener modelos de ${provider}: ${error.message}`);
+    } finally {
+      setFetchingModels(null);
+    }
   };
 
   const saveSelection = async () => {
@@ -139,7 +170,7 @@ const AIModelSelection = () => {
         <div>
           <h3 className="text-lg font-semibold">Selección de Modelos por Proveedor</h3>
           <p className="text-sm text-muted-foreground">
-            Selecciona qué modelo de IA usar para cada proveedor configurado
+            Selecciona qué modelo de IA usar para cada proveedor configurado. Los modelos se consultan en línea desde cada proveedor.
           </p>
         </div>
         <Button onClick={saveSelection} disabled={saving}>
@@ -155,7 +186,9 @@ const AIModelSelection = () => {
       <div className="grid gap-4">
         {Object.entries(providerGroups).map(([provider, keys]) => {
           const selectedModel = selectedModels.find(sm => sm.provider === provider);
-          const availableModels = getAvailableModels(provider);
+          const primaryKey = keys[0];
+          const availableModels = getAvailableModels(provider, primaryKey);
+          const isLoadingThisProvider = fetchingModels === provider;
           
           return (
             <Card key={provider}>
@@ -173,9 +206,27 @@ const AIModelSelection = () => {
                       </CardTitle>
                       <CardDescription>
                         {keys.length} API key{keys.length > 1 ? 's' : ''} disponible{keys.length > 1 ? 's' : ''}
+                        {primaryKey.available_models?.length > 0 && (
+                          <span className="ml-2 text-xs">
+                            • {primaryKey.available_models.length} modelos
+                          </span>
+                        )}
                       </CardDescription>
                     </div>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchModelsFromAPI(provider, primaryKey.id)}
+                    disabled={isLoadingThisProvider}
+                  >
+                    {isLoadingThisProvider ? (
+                      <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                    )}
+                    {isLoadingThisProvider ? 'Consultando...' : 'Actualizar Modelos'}
+                  </Button>
                   {selectedModel && (
                     <Badge variant="default" className="flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" />

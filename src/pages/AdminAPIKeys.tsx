@@ -536,10 +536,25 @@ const AdminAPIKeys = () => {
             {apiKeys.map((apiKey) => {
               const usage = getUsageForKey(apiKey.id);
               const billing = getBillingForKey(apiKey.id);
+              const isHashedKey = apiKey.api_key_hash.startsWith('***') && apiKey.api_key_hash.length <= 7;
               
               return (
-                <Card key={apiKey.id}>
+                <Card key={apiKey.id} className={isHashedKey ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950' : ''}>
                   <CardContent className="p-6">
+                    {isHashedKey && (
+                      <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg border border-yellow-300">
+                        <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+                          <AlertTriangle className="w-4 h-4" />
+                          <p className="text-sm font-medium">
+                            Esta API key necesita ser reconfigurada con la clave real para funcionar correctamente.
+                          </p>
+                        </div>
+                        <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                          La aplicación ahora usa las API keys reales almacenadas de forma segura, no las API keys de Supabase.
+                        </p>
+                      </div>
+                    )}
+                    
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                       <div className="flex items-start gap-4">
                         <div className={`${getProviderColor(apiKey.provider)} p-3 rounded-lg`}>
@@ -552,6 +567,11 @@ const AdminAPIKeys = () => {
                             <Badge variant="secondary">
                               {apiKey.provider}
                             </Badge>
+                            {isHashedKey && (
+                              <Badge variant="destructive" className="text-xs">
+                                Requiere Reconfiguración
+                              </Badge>
+                            )}
                           </div>
                           {apiKey.model_name && (
                             <p className="text-sm text-muted-foreground mb-1">
@@ -561,6 +581,11 @@ const AdminAPIKeys = () => {
                           <p className="text-sm text-muted-foreground">
                             Key: ***{apiKey.key_last_four}
                           </p>
+                          {apiKey.available_models && apiKey.available_models.length > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              {apiKey.available_models.length} modelos disponibles
+                            </p>
+                          )}
                           {apiKey.notes && (
                             <p className="text-sm text-muted-foreground mt-2">
                               {apiKey.notes}

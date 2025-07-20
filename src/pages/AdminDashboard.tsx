@@ -193,7 +193,7 @@ const AdminDashboard = () => {
         refreshing={loading}
       />
       
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-3 sm:p-6 overflow-auto">
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

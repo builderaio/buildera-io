@@ -34,40 +34,40 @@ const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
 
   return (
     <header className="bg-card border-b sticky top-0 z-40">
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 min-w-0 flex-1">
+      <div className="px-3 sm:px-6 py-3 sm:py-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
             {showBackButton && (
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => navigate(backPath)}
-                className="flex items-center gap-2 flex-shrink-0"
+                className="flex items-center gap-1 sm:gap-2 flex-shrink-0 px-2 sm:px-3"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Volver</span>
+                <span className="hidden sm:inline text-xs sm:text-sm">Volver</span>
               </Button>
             )}
             
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               {Icon && (
-                <div className="bg-primary/10 p-2 rounded-lg flex-shrink-0">
-                  <Icon className="w-5 h-5 text-primary" />
+                <div className="bg-primary/10 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
               )}
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold text-foreground truncate">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">
                     {title}
                   </h1>
                   {badge && (
-                    <Badge variant={badge.variant || "secondary"}>
+                    <Badge variant={badge.variant || "secondary"} className="text-xs">
                       {badge.text}
                     </Badge>
                   )}
                 </div>
                 {subtitle && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
                     {subtitle}
                   </p>
                 )}
@@ -75,20 +75,22 @@ const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
             </div>
           </div>
           
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {onRefresh && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={onRefresh}
                 disabled={refreshing}
-                className="gap-2"
+                className="gap-1 sm:gap-2 px-2 sm:px-3"
               >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">Actualizar</span>
+                <span className="hidden sm:inline text-xs sm:text-sm">Actualizar</span>
               </Button>
             )}
-            {actions}
+            <div className="flex items-center gap-1 sm:gap-2">
+              {actions}
+            </div>
           </div>
         </div>
       </div>

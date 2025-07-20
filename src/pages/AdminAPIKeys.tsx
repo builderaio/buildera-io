@@ -74,6 +74,7 @@ const AdminAPIKeys = () => {
   const [billingData, setBillingData] = useState<BillingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingKey, setEditingKey] = useState<APIKey | null>(null);
   const [newApiKey, setNewApiKey] = useState({
     provider: '',
     default_model: '',
@@ -155,28 +156,56 @@ const AdminAPIKeys = () => {
       
       // IMPORTANTE: Almacenar la API key completa (en un entorno real estaría encriptada)
       // Por seguridad, en producción esto debería estar encriptado
-      const { error } = await supabase
-        .from('llm_api_keys')
-        .insert({
-          provider: newApiKey.provider,
-          model_name: newApiKey.default_model || null,
-          available_models: newApiKey.available_models,
-          api_key_name: newApiKey.api_key_name,
-          api_key_hash: newApiKey.api_key, // Almacenar la API key completa (temporal)
-          key_last_four: keyLastFour,
-          usage_limit_monthly: newApiKey.usage_limit_monthly ? parseInt(newApiKey.usage_limit_monthly) : null,
-          cost_limit_monthly: newApiKey.cost_limit_monthly ? parseFloat(newApiKey.cost_limit_monthly) : null,
-          notes: newApiKey.notes
+      if (editingKey) {
+        // Actualizar API key existente
+        const { error } = await supabase
+          .from('llm_api_keys')
+          .update({
+            provider: newApiKey.provider,
+            model_name: newApiKey.default_model || null,
+            available_models: newApiKey.available_models,
+            api_key_name: newApiKey.api_key_name,
+            api_key_hash: newApiKey.api_key, // Almacenar la API key completa (temporal)
+            key_last_four: keyLastFour,
+            status: 'active', // Reactivar la API key
+            usage_limit_monthly: newApiKey.usage_limit_monthly ? parseInt(newApiKey.usage_limit_monthly) : null,
+            cost_limit_monthly: newApiKey.cost_limit_monthly ? parseFloat(newApiKey.cost_limit_monthly) : null,
+            notes: newApiKey.notes
+          })
+          .eq('id', editingKey.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Éxito",
+          description: "API key reconfigurada exitosamente",
         });
+      } else {
+        // Crear nueva API key
+        const { error } = await supabase
+          .from('llm_api_keys')
+          .insert({
+            provider: newApiKey.provider,
+            model_name: newApiKey.default_model || null,
+            available_models: newApiKey.available_models,
+            api_key_name: newApiKey.api_key_name,
+            api_key_hash: newApiKey.api_key, // Almacenar la API key completa (temporal)
+            key_last_four: keyLastFour,
+            usage_limit_monthly: newApiKey.usage_limit_monthly ? parseInt(newApiKey.usage_limit_monthly) : null,
+            cost_limit_monthly: newApiKey.cost_limit_monthly ? parseFloat(newApiKey.cost_limit_monthly) : null,
+            notes: newApiKey.notes
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Éxito",
-        description: "API key agregada exitosamente",
-      });
+        toast({
+          title: "Éxito",
+          description: "API key agregada exitosamente",
+        });
+      }
 
       setShowAddDialog(false);
+      setEditingKey(null);
       setNewApiKey({
         provider: '',
         default_model: '',
@@ -189,10 +218,10 @@ const AdminAPIKeys = () => {
       });
       loadAPIKeys();
     } catch (error) {
-      console.error('Error adding API key:', error);
+      console.error('Error processing API key:', error);
       toast({
         title: "Error",
-        description: "No se pudo agregar la API key",
+        description: editingKey ? "No se pudo reconfigurar la API key" : "No se pudo agregar la API key",
         variant: "destructive",
       });
     }
@@ -426,10 +455,10 @@ const AdminAPIKeys = () => {
                   Agregar API Key
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Agregar Nueva API Key</DialogTitle>
-                </DialogHeader>
+               <DialogContent className="sm:max-w-md">
+                 <DialogHeader>
+                   <DialogTitle>{editingKey ? 'Reconfigurar API Key' : 'Agregar Nueva API Key'}</DialogTitle>
+                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="provider">Proveedor *</Label>
@@ -523,9 +552,9 @@ const AdminAPIKeys = () => {
                     >
                       Cancelar
                     </Button>
-                    <Button onClick={handleAddAPIKey}>
-                      Agregar
-                    </Button>
+                     <Button onClick={handleAddAPIKey}>
+                       {editingKey ? 'Reconfigurar' : 'Agregar'}
+                     </Button>
                   </div>
                 </div>
               </DialogContent>
@@ -541,19 +570,43 @@ const AdminAPIKeys = () => {
               return (
                 <Card key={apiKey.id} className={isHashedKey ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950' : ''}>
                   <CardContent className="p-6">
-                    {isHashedKey && (
-                      <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg border border-yellow-300">
-                        <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
-                          <AlertTriangle className="w-4 h-4" />
-                          <p className="text-sm font-medium">
-                            Esta API key necesita ser reconfigurada con la clave real para funcionar correctamente.
-                          </p>
-                        </div>
-                        <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                          La aplicación ahora usa las API keys reales almacenadas de forma segura, no las API keys de Supabase.
-                        </p>
-                      </div>
-                    )}
+                     {isHashedKey && (
+                       <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg border border-yellow-300">
+                         <div className="flex items-center justify-between text-yellow-800 dark:text-yellow-200">
+                           <div className="flex items-center gap-2">
+                             <AlertTriangle className="w-4 h-4" />
+                             <div>
+                               <p className="text-sm font-medium">
+                                 Esta API key necesita ser reconfigurada con la clave real para funcionar correctamente.
+                               </p>
+                               <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                                 La aplicación ahora usa las API keys reales almacenadas de forma segura, no las API keys de Supabase.
+                               </p>
+                             </div>
+                           </div>
+                           <Button
+                             size="sm"
+                             onClick={() => {
+                                setNewApiKey({
+                                  provider: apiKey.provider,
+                                  api_key: '',
+                                  api_key_name: apiKey.api_key_name,
+                                  default_model: apiKey.model_name || '',
+                                  available_models: apiKey.available_models || [],
+                                  usage_limit_monthly: apiKey.usage_limit_monthly?.toString() || '',
+                                  cost_limit_monthly: apiKey.cost_limit_monthly?.toString() || '',
+                                  notes: apiKey.notes || ''
+                                });
+                               setEditingKey(apiKey);
+                               setShowAddDialog(true);
+                             }}
+                             className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                           >
+                             Reconfigurar
+                           </Button>
+                         </div>
+                       </div>
+                     )}
                     
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                       <div className="flex items-start gap-4">

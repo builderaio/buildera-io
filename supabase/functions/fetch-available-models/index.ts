@@ -99,6 +99,8 @@ serve(async (req) => {
 
 async function fetchOpenAIModels(apiKey: string): Promise<string[]> {
   try {
+    console.log(`Attempting to fetch OpenAI models with API key: ${apiKey.substring(0, 8)}...`);
+    
     const response = await fetch('https://api.openai.com/v1/models', {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -106,30 +108,47 @@ async function fetchOpenAIModels(apiKey: string): Promise<string[]> {
       },
     });
 
+    console.log(`OpenAI API response status: ${response.status}`);
+
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`OpenAI API error details: ${errorText}`);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    return data.data
-      .filter((model: any) => model.id.includes('gpt') || model.id.includes('davinci'))
+    const models = data.data
+      .filter((model: any) => {
+        // Filtrar solo modelos GPT actuales y relevantes
+        return model.id.includes('gpt-4') || 
+               model.id.includes('gpt-3.5') ||
+               model.id.includes('o1') ||
+               model.id === 'gpt-4o' ||
+               model.id === 'gpt-4o-mini';
+      })
       .map((model: any) => model.id)
       .sort();
+
+    console.log(`Successfully fetched ${models.length} OpenAI models:`, models);
+    return models;
   } catch (error) {
     console.error('Error fetching OpenAI models:', error);
     // Fallback a modelos conocidos si falla la API
+    console.log('Using fallback OpenAI models');
     return ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'];
   }
 }
 
 async function fetchAnthropicModels(apiKey: string): Promise<string[]> {
   // Anthropic no tiene endpoint público para listar modelos
-  // Retornamos modelos conocidos
+  // Retornamos modelos conocidos actualizados según la documentación
+  console.log('Using known Anthropic models (no public API available)');
   return [
     'claude-3-5-sonnet-20241022',
-    'claude-3-opus-20240229', 
-    'claude-3-haiku-20240307',
-    'claude-3-sonnet-20240229'
+    'claude-3-5-haiku-20241022',
+    'claude-3-opus-20240229',
+    'claude-3-sonnet-20240229',
+    'claude-3-haiku-20240307'
   ];
 }
 
@@ -154,6 +173,8 @@ async function fetchGoogleModels(apiKey: string): Promise<string[]> {
 
 async function fetchGroqModels(apiKey: string): Promise<string[]> {
   try {
+    console.log(`Attempting to fetch Groq models with API key: ${apiKey.substring(0, 8)}...`);
+    
     const response = await fetch('https://api.groq.com/openai/v1/models', {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -161,22 +182,31 @@ async function fetchGroqModels(apiKey: string): Promise<string[]> {
       },
     });
 
+    console.log(`Groq API response status: ${response.status}`);
+
     if (!response.ok) {
-      throw new Error(`Groq API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`Groq API error details: ${errorText}`);
+      throw new Error(`Groq API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    return data.data
+    const models = data.data
       .map((model: any) => model.id)
       .sort();
+
+    console.log(`Successfully fetched ${models.length} Groq models:`, models);
+    return models;
   } catch (error) {
     console.error('Error fetching Groq models:', error);
-    return ['llama2-70b-4096', 'mixtral-8x7b-32768', 'gemma-7b-it'];
+    console.log('Using fallback Groq models');
+    return ['llama-3.1-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768', 'gemma-7b-it'];
   }
 }
 
 async function fetchXAIModels(apiKey: string): Promise<string[]> {
   // xAI no tiene endpoint público para listar modelos aún
-  // Retornamos modelos conocidos
+  // Retornamos modelos conocidos actualizados
+  console.log('Using known xAI models (no public API available)');
   return ['grok-beta', 'grok-vision-beta'];
 }

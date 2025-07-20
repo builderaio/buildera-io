@@ -152,8 +152,9 @@ const AdminAPIKeys = () => {
       }
 
       const keyLastFour = newApiKey.api_key.slice(-4);
-      const hashedKey = `***${keyLastFour}`;
-
+      
+      // IMPORTANTE: Almacenar la API key completa (en un entorno real estaría encriptada)
+      // Por seguridad, en producción esto debería estar encriptado
       const { error } = await supabase
         .from('llm_api_keys')
         .insert({
@@ -161,7 +162,7 @@ const AdminAPIKeys = () => {
           model_name: newApiKey.default_model || null,
           available_models: newApiKey.available_models,
           api_key_name: newApiKey.api_key_name,
-          api_key_hash: hashedKey,
+          api_key_hash: newApiKey.api_key, // Almacenar la API key completa (temporal)
           key_last_four: keyLastFour,
           usage_limit_monthly: newApiKey.usage_limit_monthly ? parseInt(newApiKey.usage_limit_monthly) : null,
           cost_limit_monthly: newApiKey.cost_limit_monthly ? parseFloat(newApiKey.cost_limit_monthly) : null,

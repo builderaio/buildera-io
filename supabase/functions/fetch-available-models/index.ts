@@ -25,15 +25,20 @@ serve(async (req) => {
     // Obtener la API key desde la base de datos
     const { data: apiKeyData, error: keyError } = await supabaseClient
       .from('llm_api_keys')
-      .select('api_key_hash, provider')
+      .select('api_key_hash, provider, api_key_name')
       .eq('id', apiKeyId)
+      .eq('status', 'active')
       .single();
 
     if (keyError || !apiKeyData) {
-      throw new Error('API Key no encontrada');
+      console.error('API Key error:', keyError);
+      throw new Error('API Key no encontrada o inactiva');
     }
 
-    // Decodificar la API key (en producción estaría encriptada)
+    console.log(`Using API key: ${apiKeyData.api_key_name} for provider: ${apiKeyData.provider}`);
+    
+    // Usar la API key completa almacenada en api_key_hash 
+    // (En producción esto estaría encriptado y se desencriptaría aquí)
     const apiKey = apiKeyData.api_key_hash;
     let availableModels: string[] = [];
 

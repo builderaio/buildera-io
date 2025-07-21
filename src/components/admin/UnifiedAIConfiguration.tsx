@@ -7,15 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
-  Plus, Settings, Trash2, RefreshCw, Key, Bot, Cog, 
-  CheckCircle, Circle, AlertCircle, Save, Edit
+  Plus, Settings, RefreshCw, Key, Bot, Cog, 
+  CheckCircle, Circle
 } from "lucide-react";
 
 interface AIProvider {
@@ -85,8 +82,6 @@ export default function UnifiedAIConfiguration() {
   const [models, setModels] = useState<ProviderModel[]>([]);
   const [functions, setFunctions] = useState<BusinessFunction[]>([]);
   const [assignments, setAssignments] = useState<FunctionAssignment[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<AIProvider | null>(null);
-  const [currentStep, setCurrentStep] = useState<string>("providers");
   const [loading, setLoading] = useState(true);
 
   // Form states
@@ -107,7 +102,6 @@ export default function UnifiedAIConfiguration() {
 
   const [showProviderDialog, setShowProviderDialog] = useState(false);
   const [showAPIKeyDialog, setShowAPIKeyDialog] = useState(false);
-  const [editingAPIKey, setEditingAPIKey] = useState<APIKey | null>(null);
 
   useEffect(() => {
     loadAllData();
@@ -176,10 +170,6 @@ export default function UnifiedAIConfiguration() {
         supported_model_types: []
       });
       toast.success('Proveedor agregado exitosamente');
-      
-      // Auto-select the new provider and move to next step
-      setSelectedProvider(data);
-      setCurrentStep("api-keys");
     } catch (error) {
       console.error('Error adding provider:', error);
       toast.error('Error al agregar proveedor');
@@ -297,414 +287,287 @@ export default function UnifiedAIConfiguration() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Configuración Unificada de IA</h2>
+        <h2 className="text-2xl font-bold">Configuración de IA</h2>
         <p className="text-muted-foreground">
-          Configura proveedores, API keys y modelos en un flujo secuencial
+          Configura proveedores, API keys, modelos y funciones en una sola pantalla
         </p>
       </div>
 
-      <Tabs value={currentStep} onValueChange={setCurrentStep} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="providers" className="flex items-center gap-2">
-            <Bot className="h-4 w-4" />
-            1. Proveedores
-          </TabsTrigger>
-          <TabsTrigger value="api-keys" className="flex items-center gap-2">
-            <Key className="h-4 w-4" />
-            2. API Keys
-          </TabsTrigger>
-          <TabsTrigger value="models" className="flex items-center gap-2">
-            <Cog className="h-4 w-4" />
-            3. Modelos
-          </TabsTrigger>
-          <TabsTrigger value="functions" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            4. Funciones
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Step 1: Providers */}
-        <TabsContent value="providers">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Paso 1: Proveedores de IA</CardTitle>
-                <CardDescription>
-                  Configura los proveedores de IA disponibles
-                </CardDescription>
-              </div>
-              <Dialog open={showProviderDialog} onOpenChange={setShowProviderDialog}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
+      <div className="grid gap-6">
+        {/* Proveedores Section */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5" />
+                Proveedores de IA
+              </CardTitle>
+              <CardDescription>
+                Configura los proveedores de IA disponibles
+              </CardDescription>
+            </div>
+            <Dialog open={showProviderDialog} onOpenChange={setShowProviderDialog}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar Proveedor
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Nuevo Proveedor de IA</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Nombre (interno)</Label>
+                    <Input
+                      value={newProvider.name}
+                      onChange={(e) => setNewProvider({...newProvider, name: e.target.value})}
+                      placeholder="openai, anthropic, etc."
+                    />
+                  </div>
+                  <div>
+                    <Label>Nombre para mostrar</Label>
+                    <Input
+                      value={newProvider.display_name}
+                      onChange={(e) => setNewProvider({...newProvider, display_name: e.target.value})}
+                      placeholder="OpenAI, Anthropic, etc."
+                    />
+                  </div>
+                  <div>
+                    <Label>Descripción</Label>
+                    <Textarea
+                      value={newProvider.description}
+                      onChange={(e) => setNewProvider({...newProvider, description: e.target.value})}
+                      placeholder="Descripción del proveedor"
+                    />
+                  </div>
+                  <div>
+                    <Label>URL Base de API</Label>
+                    <Input
+                      value={newProvider.base_url}
+                      onChange={(e) => setNewProvider({...newProvider, base_url: e.target.value})}
+                      placeholder="https://api.ejemplo.com/v1"
+                    />
+                  </div>
+                  <div>
+                    <Label>Variable de Entorno</Label>
+                    <Input
+                      value={newProvider.env_key}
+                      onChange={(e) => setNewProvider({...newProvider, env_key: e.target.value})}
+                      placeholder="PROVIDER_API_KEY"
+                    />
+                  </div>
+                  <Button onClick={addProvider} className="w-full">
                     Agregar Proveedor
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Nuevo Proveedor de IA</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Nombre (interno)</Label>
-                      <Input
-                        value={newProvider.name}
-                        onChange={(e) => setNewProvider({...newProvider, name: e.target.value})}
-                        placeholder="openai, anthropic, etc."
-                      />
-                    </div>
-                    <div>
-                      <Label>Nombre para mostrar</Label>
-                      <Input
-                        value={newProvider.display_name}
-                        onChange={(e) => setNewProvider({...newProvider, display_name: e.target.value})}
-                        placeholder="OpenAI, Anthropic, etc."
-                      />
-                    </div>
-                    <div>
-                      <Label>Descripción</Label>
-                      <Textarea
-                        value={newProvider.description}
-                        onChange={(e) => setNewProvider({...newProvider, description: e.target.value})}
-                        placeholder="Descripción del proveedor"
-                      />
-                    </div>
-                    <div>
-                      <Label>URL Base de API</Label>
-                      <Input
-                        value={newProvider.base_url}
-                        onChange={(e) => setNewProvider({...newProvider, base_url: e.target.value})}
-                        placeholder="https://api.ejemplo.com/v1"
-                      />
-                    </div>
-                    <div>
-                      <Label>Variable de Entorno</Label>
-                      <Input
-                        value={newProvider.env_key}
-                        onChange={(e) => setNewProvider({...newProvider, env_key: e.target.value})}
-                        placeholder="PROVIDER_API_KEY"
-                      />
-                    </div>
-                    <Button onClick={addProvider} className="w-full">
-                      Agregar Proveedor
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {providers.map((provider) => {
-                  const status = getProviderStatus(provider);
-                  return (
-                    <div 
-                      key={provider.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                        selectedProvider?.id === provider.id 
-                          ? 'border-primary bg-primary/5' 
-                          : 'hover:border-primary/50'
-                      }`}
-                      onClick={() => setSelectedProvider(provider)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          {getStatusIcon(status)}
-                          <div>
-                            <h3 className="font-medium">{provider.display_name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {provider.description}
-                            </p>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Badge variant="outline">{getStatusText(status)}</Badge>
-                              <Switch checked={provider.is_active} />
-                            </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              {providers.map((provider) => {
+                const status = getProviderStatus(provider);
+                const providerAPIKeys = apiKeys.filter(key => key.provider === provider.name);
+                const providerModels = models.filter(model => model.provider_id === provider.id);
+                
+                return (
+                  <div 
+                    key={provider.id}
+                    className="p-4 border rounded-lg space-y-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        {getStatusIcon(status)}
+                        <div>
+                          <h3 className="font-medium">{provider.display_name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {provider.description}
+                          </p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Badge variant="outline">{getStatusText(status)}</Badge>
+                            <Switch checked={provider.is_active} />
                           </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="outline"
+                      </div>
+                    </div>
+
+                    {/* API Keys para este proveedor */}
+                    <div className="pl-8 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium flex items-center gap-2">
+                          <Key className="h-4 w-4" />
+                          API Keys
+                        </h4>
+                        <Dialog open={showAPIKeyDialog && newAPIKey.provider === provider.name} 
+                                onOpenChange={(open) => {
+                                  setShowAPIKeyDialog(open);
+                                  if (open) setNewAPIKey({...newAPIKey, provider: provider.name});
+                                }}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Plus className="h-3 w-3 mr-1" />
+                              Agregar API Key
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Nueva API Key para {provider.display_name}</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              <div>
+                                <Label>Nombre de la API Key</Label>
+                                <Input
+                                  value={newAPIKey.api_key_name}
+                                  onChange={(e) => setNewAPIKey({...newAPIKey, api_key_name: e.target.value})}
+                                  placeholder="Ej: Producción, Desarrollo"
+                                />
+                              </div>
+                              <div>
+                                <Label>API Key</Label>
+                                <Input
+                                  type="password"
+                                  value={newAPIKey.api_key}
+                                  onChange={(e) => setNewAPIKey({...newAPIKey, api_key: e.target.value})}
+                                  placeholder="Ingresa tu API key"
+                                />
+                              </div>
+                              <Button onClick={addAPIKey} className="w-full">
+                                Agregar API Key
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      
+                      {providerAPIKeys.length > 0 ? (
+                        <div className="grid gap-2">
+                          {providerAPIKeys.map((key) => (
+                            <div key={key.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                              <div>
+                                <span className="text-sm font-medium">{key.api_key_name}</span>
+                                <span className="text-xs text-muted-foreground ml-2">****{key.key_last_four}</span>
+                              </div>
+                              <Badge variant={key.status === 'active' ? 'default' : 'secondary'}>
+                                {key.status}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No hay API keys configuradas</p>
+                      )}
+
+                      {/* Modelos para este proveedor */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium flex items-center gap-2">
+                            <Cog className="h-4 w-4" />
+                            Modelos
+                          </h4>
+                          <Button 
+                            variant="outline" 
                             size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedProvider(provider);
-                              setCurrentStep("api-keys");
-                            }}
-                            disabled={status === 'incomplete'}
+                            onClick={() => refreshProviderModels(provider)}
+                            disabled={providerAPIKeys.length === 0}
                           >
-                            Configurar
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            Cargar Modelos
                           </Button>
                         </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Step 2: API Keys */}
-        <TabsContent value="api-keys">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Paso 2: API Keys</CardTitle>
-                <CardDescription>
-                  {selectedProvider 
-                    ? `Configura las API keys para ${selectedProvider.display_name}`
-                    : 'Selecciona un proveedor para configurar sus API keys'
-                  }
-                </CardDescription>
-              </div>
-              {selectedProvider && (
-                <Dialog open={showAPIKeyDialog} onOpenChange={setShowAPIKeyDialog}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Agregar API Key
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>
-                        {editingAPIKey ? 'Editar API Key' : 'Nueva API Key'}
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Nombre de la API Key</Label>
-                        <Input
-                          value={newAPIKey.api_key_name}
-                          onChange={(e) => setNewAPIKey({...newAPIKey, api_key_name: e.target.value})}
-                          placeholder="Mi API Key de OpenAI"
-                        />
-                      </div>
-                      <div>
-                        <Label>API Key</Label>
-                        <Input
-                          type="password"
-                          value={newAPIKey.api_key}
-                          onChange={(e) => setNewAPIKey({...newAPIKey, api_key: e.target.value})}
-                          placeholder="sk-..."
-                        />
-                      </div>
-                      <div>
-                        <Label>Proveedor</Label>
-                        <Select 
-                          value={newAPIKey.provider || selectedProvider?.name} 
-                          onValueChange={(value) => setNewAPIKey({...newAPIKey, provider: value})}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {providers.map((provider) => (
-                              <SelectItem key={provider.id} value={provider.name}>
-                                {provider.display_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <Button onClick={addAPIKey} className="w-full">
-                        {editingAPIKey ? 'Actualizar' : 'Agregar'} API Key
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </CardHeader>
-            <CardContent>
-              {selectedProvider ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nombre</TableHead>
-                      <TableHead>Proveedor</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Últimos 4</TableHead>
-                      <TableHead>Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {apiKeys
-                      .filter(key => key.provider === selectedProvider.name)
-                      .map((key) => (
-                      <TableRow key={key.id}>
-                        <TableCell className="font-medium">{key.api_key_name}</TableCell>
-                        <TableCell>{key.provider}</TableCell>
-                        <TableCell>
-                          <Badge variant={key.status === 'active' ? 'default' : 'secondary'}>
-                            {key.status === 'active' ? 'Activa' : 'Inactiva'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>****{key.key_last_four}</TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                        
+                        {providerModels.length > 0 ? (
+                          <div className="grid gap-2">
+                            {MODEL_TYPES.map((type) => {
+                              const typeModels = providerModels.filter(m => m.model_type === type.value && m.is_available);
+                              
+                              if (typeModels.length === 0) return null;
+                              
+                              return (
+                                <div key={type.value} className="space-y-2">
+                                  <h5 className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                    <span>{type.icon}</span>
+                                    {type.label}
+                                  </h5>
+                                  <div className="grid gap-1 pl-4">
+                                    {typeModels.map((model) => (
+                                      <div key={model.id} className="flex items-center justify-between p-2 bg-muted/20 rounded text-sm">
+                                        <span>{model.display_name}</span>
+                                        <div className="flex items-center gap-2">
+                                          {model.is_preferred && <Badge variant="secondary" className="text-xs">Preferido</Badge>}
+                                          <Badge variant="outline" className="text-xs">
+                                            {model.is_available ? 'Disponible' : 'No disponible'}
+                                          </Badge>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Selecciona un proveedor en el paso anterior para configurar sus API keys
-                </div>
-              )}
-
-              {selectedProvider && apiKeys.some(key => key.provider === selectedProvider.name) && (
-                <div className="mt-4 flex justify-end">
-                  <Button onClick={() => setCurrentStep("models")}>
-                    Continuar a Modelos
-                    <Settings className="h-4 w-4 ml-2" />
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Step 3: Models */}
-        <TabsContent value="models">
-          <Card>
-            <CardHeader>
-              <CardTitle>Paso 3: Configuración de Modelos</CardTitle>
-              <CardDescription>
-                {selectedProvider 
-                  ? `Obtén y configura los modelos para ${selectedProvider.display_name}`
-                  : 'Selecciona un proveedor para configurar sus modelos'
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedProvider ? (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Modelos Disponibles</h3>
-                    <Button
-                      onClick={() => refreshProviderModels(selectedProvider)}
-                      variant="outline"
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Actualizar Modelos
-                    </Button>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {providerAPIKeys.length === 0 
+                              ? 'Configura una API key para cargar modelos'
+                              : 'No hay modelos cargados. Haz clic en "Cargar Modelos"'
+                            }
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Modelo</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Estado</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {models
-                        .filter(model => model.provider_id === selectedProvider.id)
-                        .map((model) => (
-                        <TableRow key={model.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{model.display_name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {model.model_name}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {MODEL_TYPES.find(t => t.value === model.model_type)?.label || model.model_type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              {model.is_available && (
-                                <Badge variant="default">Disponible</Badge>
-                              )}
-                              {model.is_preferred && (
-                                <Badge variant="secondary">Preferido</Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-
-                  {models.some(model => model.provider_id === selectedProvider.id && model.is_available) && (
-                    <div className="flex justify-end">
-                      <Button onClick={() => setCurrentStep("functions")}>
-                        Continuar a Funciones
-                        <Bot className="h-4 w-4 ml-2" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Selecciona un proveedor y configura su API key primero
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Step 4: Functions */}
-        <TabsContent value="functions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Paso 4: Asignación de Funciones</CardTitle>
-              <CardDescription>
-                Asigna modelos específicos a las funciones de negocio
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {functions.map((func) => {
-                  const modelType = MODEL_TYPES.find(t => t.value === func.required_model_type);
-                  const assignment = assignments.find(a => a.function_config_id === func.id && a.is_active);
-                  
-                  return (
-                    <div key={func.id} className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="text-2xl">{modelType?.icon}</div>
-                          <div>
-                            <h3 className="font-medium">{func.display_name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Requiere: {modelType?.label}
-                            </p>
-                            {assignment && (
-                              <p className="text-sm text-green-600">
-                                Configurado: {assignment.provider?.display_name} - {assignment.model?.display_name}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch checked={func.is_active} />
-                          {assignment ? (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <AlertCircle className="h-5 w-5 text-yellow-500" />
-                          )}
-                        </div>
+        {/* Asignación de Funciones */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Asignación de Funciones
+            </CardTitle>
+            <CardDescription>
+              Asigna modelos específicos a cada función de negocio
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {functions.map((func) => {
+                const assignment = assignments.find(a => a.function_config_id === func.id && a.is_active);
+                
+                return (
+                  <div key={func.id} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="font-medium">{func.display_name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Requiere: {MODEL_TYPES.find(t => t.value === func.required_model_type)?.label}
+                        </p>
                       </div>
+                      <Badge variant={assignment ? 'default' : 'outline'}>
+                        {assignment ? 'Configurado' : 'Sin configurar'}
+                      </Badge>
                     </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                    
+                    {assignment && (
+                      <div className="text-sm space-y-1">
+                        <p><strong>Proveedor:</strong> {assignment.provider?.display_name}</p>
+                        <p><strong>Modelo:</strong> {assignment.model?.display_name}</p>
+                        <p><strong>API Key:</strong> {assignment.api_key?.api_key_name}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -182,9 +182,13 @@ export const EraOptimizerButton: React.FC<EraOptimizerButtonProps> = ({
         return `Ofrecemos productos de alta calidad a precios accesibles, democratizando el acceso y garantizando una experiencia excepcional para todos nuestros clientes.`;
       case 'descripción de producto':
         return `Este producto ha sido diseñado con tecnología de vanguardia y los más altos estándares de calidad, garantizando una experiencia excepcional y accesible para nuestros usuarios.`;
+      case 'objetivo empresarial':
+      case 'descripción de objetivo':
+      case 'objetivo':
+        return `Lograr un crecimiento sostenible y rentable mediante la implementación de estrategias innovadoras que generen valor agregado para nuestros clientes y stakeholders, optimizando procesos y recursos para alcanzar la excelencia operacional.`;
       default:
-        // Para cualquier otro tipo, mejorar el texto sin concatenar
-        return `${text} - Optimizado con enfoque profesional y mayor impacto comunicacional.`;
+        // Para cualquier otro tipo, generar texto optimizado sin concatenar el original
+        return `Contenido optimizado con enfoque profesional, mayor claridad comunicacional y estructura mejorada para generar mayor impacto y engagement con la audiencia objetivo.`;
     }
   };
 

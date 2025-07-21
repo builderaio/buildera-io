@@ -5,15 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Play, BarChart3, Target, Zap, Clock, TrendingUp, Award } from "lucide-react";
+import { Trophy, Play, BarChart3, Target, Zap, Clock, TrendingUp, Award, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface ChallengeResult {
   id: string;
-  function_name: string;
-  model_name: string;
-  test_prompt: string;
+  modelId: string;
+  modelName: string;
+  provider: string;
+  functionName: string;
+  prompt: string;
   response: string;
   score: number;
   latency: number;
@@ -25,6 +27,19 @@ interface ChallengeResult {
     creativity: number;
     coherence: number;
   };
+}
+
+interface BusinessFunction {
+  id: string;
+  function_name: string;
+  display_name: string;
+  description: string;
+  models: Array<{
+    id: string;
+    model_name: string;
+    display_name: string;
+    provider_name: string;
+  }>;
 }
 
 interface TestScenario {
@@ -71,52 +86,142 @@ const TEST_SCENARIOS: TestScenario[] = [
   }
 ];
 
-const MODELS_TO_TEST = [
-  { name: 'gpt-4o', provider: 'OpenAI', cost_per_1k: 0.005 },
-  { name: 'gpt-4o-mini', provider: 'OpenAI', cost_per_1k: 0.0015 },
-  { name: 'claude-3-sonnet', provider: 'Anthropic', cost_per_1k: 0.003 },
-  { name: 'claude-3-haiku', provider: 'Anthropic', cost_per_1k: 0.00025 },
-  { name: 'gemini-pro', provider: 'Google', cost_per_1k: 0.0025 }
-];
-
 const ChampionChallenge = () => {
+  const [businessFunctions, setBusinessFunctions] = useState<BusinessFunction[]>([]);
   const [selectedFunction, setSelectedFunction] = useState<string>('');
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<ChallengeResult[]>([]);
   const [currentChampion, setCurrentChampion] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadBusinessFunctions();
+  }, []);
+
+  const loadBusinessFunctions = async () => {
+    setLoading(true);
+    try {
+      const { data: functions, error: functionsError } = await supabase
+        .from('business_function_configurations')
+        .select(`
+          id,
+          function_name,
+          display_name,
+          description,
+          is_active
+        `)
+        .eq('is_active', true);
+
+      if (functionsError) throw functionsError;
+
+      const functionsWithModels: BusinessFunction[] = [];
+
+      for (const func of functions || []) {
+        // Get assigned models for this function
+        const { data: assignments, error: assignmentsError } = await supabase
+          .from('function_model_assignments')
+          .select(`
+            id,
+            model_id,
+            ai_provider_models!inner(
+              id,
+              model_name,
+              display_name,
+              ai_providers!inner(name)
+            )
+          `)
+          .eq('function_config_id', func.id)
+          .eq('is_active', true);
+
+        if (assignmentsError) {
+          console.error('Error loading assignments for function', func.function_name, assignmentsError);
+          continue;
+        }
+
+        const models = assignments?.map(assignment => ({
+          id: assignment.ai_provider_models.id,
+          model_name: assignment.ai_provider_models.model_name,
+          display_name: assignment.ai_provider_models.display_name,
+          provider_name: assignment.ai_provider_models.ai_providers.name
+        })) || [];
+
+        if (models.length > 1) { // Only include functions with multiple models for comparison
+          functionsWithModels.push({
+            id: func.id,
+            function_name: func.function_name,
+            display_name: func.display_name,
+            description: func.description || 'Función de negocio configurada',
+            models
+          });
+        }
+      }
+
+      setBusinessFunctions(functionsWithModels);
+      
+      if (functionsWithModels.length === 0) {
+        toast.info('No hay funciones con múltiples modelos configurados para competir');
+      }
+    } catch (error) {
+      console.error('Error loading business functions:', error);
+      toast.error('Error cargando funciones de negocio');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const runChallenge = async (functionName: string) => {
+    const selectedFunc = businessFunctions.find(f => f.function_name === functionName);
+    if (!selectedFunc || selectedFunc.models.length < 2) {
+      toast.error('Se necesitan al menos 2 modelos para ejecutar el challenge');
+      return;
+    }
+
     setRunning(true);
     setProgress(0);
     
     try {
       const scenario = TEST_SCENARIOS.find(s => s.function_name === functionName);
-      if (!scenario) throw new Error('Escenario no encontrado');
-
-      const challengeResults: ChallengeResult[] = [];
-      const totalTests = MODELS_TO_TEST.length * scenario.test_prompts.length;
-      let completedTests = 0;
-
-      for (const model of MODELS_TO_TEST) {
-        for (const prompt of scenario.test_prompts) {
-          // Simular llamada a modelo (en producción sería llamada real)
-          const result = await simulateModelTest(functionName, model.name, prompt, model.cost_per_1k);
-          challengeResults.push(result);
-          
-          completedTests++;
-          setProgress((completedTests / totalTests) * 100);
-          
-          // Pequeña pausa para mostrar progreso
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+      if (!scenario) {
+        toast.error('Escenario de prueba no encontrado para esta función');
+        return;
       }
 
-      // Calcular el campeón (modelo con mejor score promedio)
-      const modelScores = MODELS_TO_TEST.map(model => {
-        const modelResults = challengeResults.filter(r => r.model_name === model.name);
-        const avgScore = modelResults.reduce((sum, r) => sum + r.score, 0) / modelResults.length;
-        return { model: model.name, score: avgScore };
+      toast.info('Ejecutando challenge real con modelos configurados...');
+
+      // Call the edge function to run the real challenge
+      const { data, error } = await supabase.functions.invoke('run-champion-challenge', {
+        body: {
+          functionName: functionName,
+          testPrompts: scenario.test_prompts,
+          modelIds: selectedFunc.models.map(m => m.id)
+        }
+      });
+
+      if (error) throw error;
+
+      const challengeResults: ChallengeResult[] = data.results.map((result: any) => ({
+        id: `${Date.now()}-${Math.random()}`,
+        modelId: result.modelId,
+        modelName: result.modelName,
+        provider: result.provider,
+        functionName: functionName,
+        prompt: result.prompt,
+        response: result.response,
+        score: result.score,
+        latency: result.latency,
+        cost: result.cost,
+        timestamp: new Date().toISOString(),
+        metrics: result.metrics
+      }));
+
+      // Calculate the champion (model with best average score)
+      const modelScores = selectedFunc.models.map(model => {
+        const modelResults = challengeResults.filter(r => r.modelId === model.id);
+        const avgScore = modelResults.length > 0 
+          ? modelResults.reduce((sum, r) => sum + r.score, 0) / modelResults.length 
+          : 0;
+        return { model: model.model_name, score: avgScore };
       });
 
       const champion = modelScores.reduce((best, current) => 
@@ -126,72 +231,22 @@ const ChampionChallenge = () => {
       setCurrentChampion(prev => ({ ...prev, [functionName]: champion.model }));
       setResults(challengeResults);
       
-      toast.success(`Challenge completado. Campeón: ${champion.model}`);
+      toast.success(`Challenge completado. Campeón: ${champion.model} con ${champion.score.toFixed(1)} puntos`);
     } catch (error) {
       console.error('Error running challenge:', error);
-      toast.error('Error ejecutando el challenge');
+      toast.error('Error ejecutando el challenge: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     } finally {
       setRunning(false);
       setProgress(0);
     }
   };
 
-  const simulateModelTest = async (
-    functionName: string, 
-    modelName: string, 
-    prompt: string, 
-    costPer1k: number
-  ): Promise<ChallengeResult> => {
-    // Simular latencia variable por modelo
-    const latencyBase = {
-      'gpt-4o': 800,
-      'gpt-4o-mini': 400,
-      'claude-3-sonnet': 600,
-      'claude-3-haiku': 300,
-      'gemini-pro': 500
-    }[modelName] || 500;
-    
-    const latency = latencyBase + Math.random() * 500;
-    
-    // Simular scores basados en características del modelo
-    const baseScores = {
-      'gpt-4o': { relevancy: 95, accuracy: 92, creativity: 88, coherence: 94 },
-      'gpt-4o-mini': { relevancy: 88, accuracy: 85, creativity: 82, coherence: 87 },
-      'claude-3-sonnet': { relevancy: 93, accuracy: 90, creativity: 90, coherence: 92 },
-      'claude-3-haiku': { relevancy: 85, accuracy: 82, creativity: 85, coherence: 84 },
-      'gemini-pro': { relevancy: 89, accuracy: 87, creativity: 86, coherence: 88 }
-    }[modelName] || { relevancy: 80, accuracy: 80, creativity: 80, coherence: 80 };
-
-    // Añadir variabilidad
-    const metrics = {
-      relevancy: Math.min(100, baseScores.relevancy + (Math.random() - 0.5) * 10),
-      accuracy: Math.min(100, baseScores.accuracy + (Math.random() - 0.5) * 10),
-      creativity: Math.min(100, baseScores.creativity + (Math.random() - 0.5) * 10),
-      coherence: Math.min(100, baseScores.coherence + (Math.random() - 0.5) * 10)
-    };
-
-    const averageScore = (metrics.relevancy + metrics.accuracy + metrics.creativity + metrics.coherence) / 4;
-    
-    return {
-      id: `${Date.now()}-${Math.random()}`,
-      function_name: functionName,
-      model_name: modelName,
-      test_prompt: prompt,
-      response: `Respuesta simulada de ${modelName} para el prompt: "${prompt.substring(0, 50)}..."`,
-      score: averageScore,
-      latency: Math.round(latency),
-      cost: (prompt.length / 1000) * costPer1k,
-      timestamp: new Date().toISOString(),
-      metrics
-    };
+  const getModelResults = (functionName: string, modelId: string) => {
+    return results.filter(r => r.functionName === functionName && r.modelId === modelId);
   };
 
-  const getModelResults = (functionName: string, modelName: string) => {
-    return results.filter(r => r.function_name === functionName && r.model_name === modelName);
-  };
-
-  const getAverageScore = (functionName: string, modelName: string) => {
-    const modelResults = getModelResults(functionName, modelName);
+  const getAverageScore = (functionName: string, modelId: string) => {
+    const modelResults = getModelResults(functionName, modelId);
     if (modelResults.length === 0) return 0;
     return modelResults.reduce((sum, r) => sum + r.score, 0) / modelResults.length;
   };
@@ -202,6 +257,17 @@ const ChampionChallenge = () => {
     if (score >= 70) return 'text-orange-600';
     return 'text-red-600';
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-muted-foreground">Cargando configuración...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -236,11 +302,13 @@ const ChampionChallenge = () => {
                   <SelectValue placeholder="Selecciona una función" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TEST_SCENARIOS.map(scenario => (
-                    <SelectItem key={scenario.function_name} value={scenario.function_name}>
+                  {businessFunctions.map(func => (
+                    <SelectItem key={func.function_name} value={func.function_name}>
                       <div className="flex flex-col">
-                        <span className="font-medium">{scenario.name}</span>
-                        <span className="text-xs text-muted-foreground">{scenario.description}</span>
+                        <span className="font-medium">{func.display_name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {func.description} • {func.models.length} modelos
+                        </span>
                       </div>
                     </SelectItem>
                   ))}
@@ -251,11 +319,11 @@ const ChampionChallenge = () => {
             <div className="flex items-end">
               <Button 
                 onClick={() => runChallenge(selectedFunction)}
-                disabled={!selectedFunction || running}
+                disabled={!selectedFunction || running || businessFunctions.length === 0}
                 className="w-full"
               >
                 <Play className="h-4 w-4 mr-2" />
-                {running ? 'Ejecutando Challenge...' : 'Iniciar Challenge'}
+                {running ? 'Ejecutando Challenge...' : 'Iniciar Challenge Real'}
               </Button>
             </div>
           </div>
@@ -268,6 +336,22 @@ const ChampionChallenge = () => {
               </div>
               <Progress value={progress} className="w-full" />
             </div>
+          )}
+
+          {businessFunctions.length === 0 && !loading && (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No hay funciones configuradas para competir</h3>
+                <p className="text-muted-foreground mb-4">
+                  Configure al menos 2 modelos por función de negocio para poder ejecutar challenges
+                </p>
+                <Button onClick={loadBusinessFunctions} variant="outline" size="sm">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Recargar
+                </Button>
+              </CardContent>
+            </Card>
           )}
         </CardContent>
       </Card>
@@ -298,39 +382,39 @@ const ChampionChallenge = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {TEST_SCENARIOS.map(scenario => {
-                  const functionResults = results.filter(r => r.function_name === scenario.function_name);
+                {businessFunctions.map(func => {
+                  const functionResults = results.filter(r => r.functionName === func.function_name);
                   if (functionResults.length === 0) return null;
 
-                  const modelRanking = MODELS_TO_TEST.map(model => ({
+                  const modelRanking = func.models.map(model => ({
                     ...model,
-                    avgScore: getAverageScore(scenario.function_name, model.name),
-                    avgLatency: getModelResults(scenario.function_name, model.name)
-                      .reduce((sum, r) => sum + r.latency, 0) / getModelResults(scenario.function_name, model.name).length || 0
+                    avgScore: getAverageScore(func.function_name, model.id),
+                    avgLatency: getModelResults(func.function_name, model.id)
+                      .reduce((sum, r) => sum + r.latency, 0) / getModelResults(func.function_name, model.id).length || 0
                   })).sort((a, b) => b.avgScore - a.avgScore);
 
                   return (
-                    <div key={scenario.function_name} className="mb-6">
+                    <div key={func.function_name} className="mb-6">
                       <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                        <Badge variant="outline">{scenario.name}</Badge>
-                        {currentChampion[scenario.function_name] && (
+                        <Badge variant="outline">{func.display_name}</Badge>
+                        {currentChampion[func.function_name] && (
                           <Badge className="bg-yellow-100 text-yellow-800">
                             <Trophy className="h-3 w-3 mr-1" />
-                            Campeón: {currentChampion[scenario.function_name]}
+                            Campeón: {currentChampion[func.function_name]}
                           </Badge>
                         )}
                       </h3>
                       
                       <div className="space-y-2">
                         {modelRanking.map((model, index) => (
-                          <div key={model.name} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div key={model.id} className="flex items-center justify-between p-3 border rounded-lg">
                             <div className="flex items-center gap-3">
                               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-sm font-bold">
                                 #{index + 1}
                               </div>
                               <div>
-                                <div className="font-medium">{model.name}</div>
-                                <div className="text-sm text-muted-foreground">{model.provider}</div>
+                                <div className="font-medium">{model.display_name}</div>
+                                <div className="text-sm text-muted-foreground">{model.provider_name}</div>
                               </div>
                             </div>
                             
@@ -348,8 +432,8 @@ const ChampionChallenge = () => {
                               </div>
                               
                               <div className="text-right">
-                                <div className="text-sm">${model.cost_per_1k.toFixed(4)}</div>
-                                <div className="text-xs text-muted-foreground">Costo/1K</div>
+                                <div className="text-sm">$0.002</div>
+                                <div className="text-xs text-muted-foreground">Est. Costo</div>
                               </div>
                               
                               {index === 0 && (
@@ -380,8 +464,8 @@ const ChampionChallenge = () => {
                     <div key={result.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{result.model_name}</Badge>
-                          <Badge variant="secondary">{TEST_SCENARIOS.find(s => s.function_name === result.function_name)?.name}</Badge>
+                          <Badge variant="outline">{result.modelName}</Badge>
+                          <Badge variant="secondary">{businessFunctions.find(f => f.function_name === result.functionName)?.display_name}</Badge>
                         </div>
                         <div className={`text-lg font-bold ${getScoreColor(result.score)}`}>
                           {result.score.toFixed(1)}
@@ -389,7 +473,7 @@ const ChampionChallenge = () => {
                       </div>
                       
                       <div className="text-sm text-muted-foreground mb-3">
-                        Prompt: {result.test_prompt}
+                        Prompt: {result.prompt}
                       </div>
                       
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

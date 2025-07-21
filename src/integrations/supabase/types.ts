@@ -1870,6 +1870,35 @@ export type Database = {
           presence_penalty: number
         }[]
       }
+      get_all_profiles_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          user_id: string
+          email: string
+          full_name: string
+          user_type: Database["public"]["Enums"]["user_type"]
+          company_name: string
+          website_url: string
+          industry: string
+          created_at: string
+          linked_providers: string[]
+          avatar_url: string
+          user_position: string
+          country: string
+          location: string
+        }[]
+      }
+      get_user_stats_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_users: number
+          companies: number
+          developers: number
+          experts: number
+          active_last_30_days: number
+        }[]
+      }
       halfvec_avg: {
         Args: { "": number[] }
         Returns: unknown

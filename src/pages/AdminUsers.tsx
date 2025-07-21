@@ -59,10 +59,34 @@ const AdminUsers = () => {
 
   const loadUsers = async () => {
     try {
+      // Los admins necesitan acceso sin restricciones RLS para ver todos los usuarios
       const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_all_profiles_admin')
+        .then(async (result) => {
+          if (result.error) {
+            // Fallback: intentar consulta directa (requiere service_role o función específica)
+            return await supabase
+              .from('profiles')
+              .select(`
+                id,
+                user_id,
+                email,
+                full_name,
+                user_type,
+                company_name,
+                website_url,
+                industry,
+                created_at,
+                linked_providers,
+                avatar_url,
+                position,
+                country,
+                location
+              `)
+              .order('created_at', { ascending: false });
+          }
+          return result;
+        });
 
       if (error) throw error;
       setUsers(profiles || []);
@@ -70,7 +94,7 @@ const AdminUsers = () => {
       console.error('Error cargando usuarios:', error);
       toast({
         title: "Error",
-        description: "No se pudieron cargar los usuarios",
+        description: "No se pudieron cargar los usuarios. Verifique los permisos de administrador.",
         variant: "destructive",
       });
     } finally {

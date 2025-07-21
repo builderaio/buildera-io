@@ -230,7 +230,22 @@ export default function BusinessFunctionConfiguration() {
   };
 
   const getAvailableModels = (requiredType: string) => {
-    return models.filter(model => model.model_type === requiredType);
+    // Map function requirements to appropriate model types
+    const modelTypeMapping: Record<string, string[]> = {
+      'text_generation': ['text_generation'],
+      'reasoning': ['reasoning'],
+      'image_generation': ['image_generation'], 
+      'audio_generation': ['audio_generation'],
+      'video_generation': ['video_generation'],
+      'content_optimization': ['text_generation', 'reasoning'], // Functions that need both
+      'content_analysis': ['text_generation', 'reasoning'],
+      'semantic_analysis': ['text_generation', 'reasoning'],
+      'competitive_intelligence': ['text_generation', 'reasoning'],
+      'marketing_insights': ['text_generation', 'reasoning']
+    };
+
+    const allowedTypes = modelTypeMapping[requiredType] || [requiredType];
+    return models.filter(model => allowedTypes.includes(model.model_type));
   };
 
   const getProviderForModel = (modelId: string) => {

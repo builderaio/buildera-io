@@ -42,30 +42,9 @@ interface ProviderModel {
   provider_id: string;
   model_name: string;
   display_name: string;
-  model_type: string;
+  model_type: 'text_generation' | 'image_generation' | 'audio_generation' | 'video_generation' | 'reasoning';
   is_available: boolean;
   is_preferred: boolean;
-}
-
-interface BusinessFunction {
-  id: string;
-  function_name: string;
-  display_name: string;
-  required_model_type: string;
-  is_active: boolean;
-}
-
-interface FunctionAssignment {
-  id: string;
-  function_config_id: string;
-  provider_id: string;
-  model_id: string;
-  api_key_id: string;
-  model_parameters: any;
-  is_active: boolean;
-  provider?: AIProvider;
-  model?: ProviderModel;
-  api_key?: APIKey;
 }
 
 const MODEL_TYPES = [
@@ -80,9 +59,9 @@ export default function UnifiedAIConfiguration() {
   const [providers, setProviders] = useState<AIProvider[]>([]);
   const [apiKeys, setAPIKeys] = useState<APIKey[]>([]);
   const [models, setModels] = useState<ProviderModel[]>([]);
-  const [functions, setFunctions] = useState<BusinessFunction[]>([]);
-  const [assignments, setAssignments] = useState<FunctionAssignment[]>([]);
+  const [typeAssignments, setTypeAssignments] = useState<Record<string, Record<string, string>>>({});
   const [loading, setLoading] = useState(true);
+  const [loadingModels, setLoadingModels] = useState<Record<string, boolean>>({});
 
   // Form states
   const [newProvider, setNewProvider] = useState({
@@ -109,34 +88,27 @@ export default function UnifiedAIConfiguration() {
 
   const loadAllData = async () => {
     try {
-      const [providersRes, apiKeysRes, modelsRes, functionsRes] = await Promise.all([
+      const [providersRes, apiKeysRes, modelsRes] = await Promise.all([
         supabase.from('ai_providers').select('*').order('display_name'),
         supabase.from('llm_api_keys').select('*').order('created_at', { ascending: false }),
-        supabase.from('ai_provider_models').select('*'),
-        supabase.from('business_function_configurations').select('*').order('function_name')
+        supabase.from('ai_provider_models').select('*')
       ]);
 
       if (providersRes.error) throw providersRes.error;
       if (apiKeysRes.error) throw apiKeysRes.error;
       if (modelsRes.error) throw modelsRes.error;
-      if (functionsRes.error) throw functionsRes.error;
 
       setProviders(providersRes.data || []);
       setAPIKeys(apiKeysRes.data || []);
       setModels(modelsRes.data || []);
-      setFunctions(functionsRes.data || []);
 
-      // Load assignments
-      const { data: assignmentsData } = await supabase
-        .from('function_model_assignments')
-        .select(`
-          *,
-          provider:ai_providers(*),
-          model:ai_provider_models(*),
-          api_key:llm_api_keys(*)
-        `);
-      
-      setAssignments(assignmentsData || []);
+      // Cargar configuraciones de tipos de modelo por proveedor
+      const assignments: Record<string, Record<string, string>> = {};
+      (providersRes.data || []).forEach((provider: AIProvider) => {
+        assignments[provider.id] = provider.configuration?.model_types || {};
+      });
+      setTypeAssignments(assignments);
+
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Error al cargar datos');
@@ -206,6 +178,8 @@ export default function UnifiedAIConfiguration() {
   };
 
   const refreshProviderModels = async (provider: AIProvider) => {
+    setLoadingModels(prev => ({ ...prev, [provider.id]: true }));
+    
     try {
       // Buscar una API key activa para este proveedor
       const providerAPIKey = apiKeys.find(key => key.provider === provider.name && key.status === 'active');
@@ -225,17 +199,15 @@ export default function UnifiedAIConfiguration() {
       if (error) throw error;
 
       if (data?.models && data.models.length > 0) {
-        // Update models in database
-        for (const model of data.models) {
+        // Actualizar modelos en la base de datos
+        for (const modelName of data.models) {
           await supabase
             .from('ai_provider_models')
             .upsert({
               provider_id: provider.id,
-              model_name: model.name,
-              display_name: model.display_name || model.name,
-              model_type: model.type || 'text_generation',
-              capabilities: model.capabilities || {},
-              pricing_info: model.pricing || {},
+              model_name: modelName,
+              display_name: modelName,
+              model_type: inferModelType(modelName) as any,
               is_available: true
             }, {
               onConflict: 'provider_id,model_name'
@@ -243,23 +215,68 @@ export default function UnifiedAIConfiguration() {
         }
 
         await loadAllData();
-        toast.success(`Modelos actualizados para ${provider.display_name}`);
+        toast.success(`${data.models.length} modelos cargados para ${provider.display_name}`);
+      } else {
+        toast.warning(`No se encontraron modelos para ${provider.display_name}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error refreshing models:', error);
-      toast.error('Error al actualizar modelos');
+      toast.error('Error al cargar modelos: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setLoadingModels(prev => ({ ...prev, [provider.id]: false }));
     }
+  };
+
+  const inferModelType = (modelName: string): string => {
+    const name = modelName.toLowerCase();
+    if (name.includes('vision') || name.includes('dalle') || name.includes('midjourney') || name.includes('image')) {
+      return 'image_generation';
+    }
+    if (name.includes('whisper') || name.includes('audio') || name.includes('speech')) {
+      return 'audio_generation';
+    }
+    if (name.includes('video')) {
+      return 'video_generation';
+    }
+    if (name.includes('o1') || name.includes('reasoning') || name.includes('claude-3')) {
+      return 'reasoning';
+    }
+    return 'text_generation';
   };
 
   const getProviderStatus = (provider: AIProvider) => {
     const hasAPIKey = apiKeys.some(key => key.provider === provider.name && key.status === 'active');
     const hasModels = models.some(model => model.provider_id === provider.id && model.is_available);
-    const hasAssignments = assignments.some(assignment => assignment.provider_id === provider.id && assignment.is_active);
+    const hasTypeAssignments = typeAssignments[provider.id] && Object.keys(typeAssignments[provider.id]).length > 0;
 
-    if (hasAssignments && hasModels && hasAPIKey) return 'configured';
+    if (hasTypeAssignments && hasModels && hasAPIKey) return 'configured';
     if (hasModels && hasAPIKey) return 'ready';
     if (hasAPIKey) return 'api-key-added';
     return 'incomplete';
+  };
+
+  const updateModelTypeAssignment = async (providerId: string, modelType: string, modelName: string) => {
+    try {
+      const currentConfig = typeAssignments[providerId] || {};
+      const newConfig = { ...currentConfig, [modelType]: modelName };
+      
+      await supabase
+        .from('ai_providers')
+        .update({
+          configuration: { ...providers.find(p => p.id === providerId)?.configuration, model_types: newConfig }
+        })
+        .eq('id', providerId);
+
+      setTypeAssignments(prev => ({
+        ...prev,
+        [providerId]: newConfig
+      }));
+
+      toast.success('Configuración actualizada');
+    } catch (error) {
+      console.error('Error updating model type assignment:', error);
+      toast.error('Error al actualizar configuración');
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -289,7 +306,7 @@ export default function UnifiedAIConfiguration() {
       <div>
         <h2 className="text-2xl font-bold">Configuración de IA</h2>
         <p className="text-muted-foreground">
-          Configura proveedores, API keys, modelos y funciones en una sola pantalla
+          Configura proveedores, API keys, modelos y asignaciones por tipo de contenido
         </p>
       </div>
 
@@ -470,19 +487,18 @@ export default function UnifiedAIConfiguration() {
                             variant="outline" 
                             size="sm"
                             onClick={() => refreshProviderModels(provider)}
-                            disabled={providerAPIKeys.length === 0}
+                            disabled={!providerAPIKeys.some(key => key.status === 'active') || loadingModels[provider.id]}
                           >
-                            <RefreshCw className="h-3 w-3 mr-1" />
-                            Cargar Modelos
+                            <RefreshCw className={`h-3 w-3 mr-1 ${loadingModels[provider.id] ? 'animate-spin' : ''}`} />
+                            {loadingModels[provider.id] ? 'Cargando...' : 'Cargar Modelos'}
                           </Button>
                         </div>
                         
                         {providerModels.length > 0 ? (
-                          <div className="grid gap-2">
+                          <div className="grid gap-4">
                             {MODEL_TYPES.map((type) => {
                               const typeModels = providerModels.filter(m => m.model_type === type.value && m.is_available);
-                              
-                              if (typeModels.length === 0) return null;
+                              const selectedModel = typeAssignments[provider.id]?.[type.value];
                               
                               return (
                                 <div key={type.value} className="space-y-2">
@@ -490,18 +506,28 @@ export default function UnifiedAIConfiguration() {
                                     <span>{type.icon}</span>
                                     {type.label}
                                   </h5>
-                                  <div className="grid gap-1 pl-4">
-                                    {typeModels.map((model) => (
-                                      <div key={model.id} className="flex items-center justify-between p-2 bg-muted/20 rounded text-sm">
-                                        <span>{model.display_name}</span>
-                                        <div className="flex items-center gap-2">
-                                          {model.is_preferred && <Badge variant="secondary" className="text-xs">Preferido</Badge>}
-                                          <Badge variant="outline" className="text-xs">
-                                            {model.is_available ? 'Disponible' : 'No disponible'}
-                                          </Badge>
-                                        </div>
-                                      </div>
-                                    ))}
+                                  <div className="pl-4">
+                                    <Select
+                                      value={selectedModel || ''}
+                                      onValueChange={(value) => updateModelTypeAssignment(provider.id, type.value, value)}
+                                    >
+                                      <SelectTrigger className="h-8">
+                                        <SelectValue placeholder="Seleccionar modelo" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="">Sin asignar</SelectItem>
+                                        {typeModels.map((model) => (
+                                          <SelectItem key={model.id} value={model.model_name}>
+                                            {model.display_name}
+                                          </SelectItem>
+                                        ))}
+                                        {typeModels.length === 0 && (
+                                          <SelectItem value="" disabled>
+                                            No hay modelos de este tipo disponibles
+                                          </SelectItem>
+                                        )}
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                 </div>
                               );
@@ -517,50 +543,6 @@ export default function UnifiedAIConfiguration() {
                         )}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Asignación de Funciones */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Asignación de Funciones
-            </CardTitle>
-            <CardDescription>
-              Asigna modelos específicos a cada función de negocio
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {functions.map((func) => {
-                const assignment = assignments.find(a => a.function_config_id === func.id && a.is_active);
-                
-                return (
-                  <div key={func.id} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h4 className="font-medium">{func.display_name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Requiere: {MODEL_TYPES.find(t => t.value === func.required_model_type)?.label}
-                        </p>
-                      </div>
-                      <Badge variant={assignment ? 'default' : 'outline'}>
-                        {assignment ? 'Configurado' : 'Sin configurar'}
-                      </Badge>
-                    </div>
-                    
-                    {assignment && (
-                      <div className="text-sm space-y-1">
-                        <p><strong>Proveedor:</strong> {assignment.provider?.display_name}</p>
-                        <p><strong>Modelo:</strong> {assignment.model?.display_name}</p>
-                        <p><strong>API Key:</strong> {assignment.api_key?.api_key_name}</p>
-                      </div>
-                    )}
                   </div>
                 );
               })}

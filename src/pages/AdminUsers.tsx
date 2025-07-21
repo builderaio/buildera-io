@@ -59,34 +59,43 @@ const AdminUsers = () => {
 
   const loadUsers = async () => {
     try {
-      // Consulta directa con select específico para evitar problemas RLS
+      // Usar la función de administrador para obtener todos los usuarios sin restricciones RLS
       const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          user_id,
-          email,
-          full_name,
-          user_type,
-          company_name,
-          website_url,
-          industry,
-          created_at,
-          linked_providers,
-          avatar_url,
-          position,
-          country,
-          location
-        `)
-        .order('created_at', { ascending: false });
+        .rpc('get_all_profiles_admin');
 
-      if (error) throw error;
-      setUsers((profiles as UserProfile[]) || []);
+      if (error) {
+        console.error('Error con función admin, intentando consulta directa:', error);
+        // Fallback: intentar consulta directa
+        const fallbackResult = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            user_id,
+            email,
+            full_name,
+            user_type,
+            company_name,
+            website_url,
+            industry,
+            created_at,
+            linked_providers,
+            avatar_url,
+            position,
+            country,
+            location
+          `)
+          .order('created_at', { ascending: false });
+        
+        if (fallbackResult.error) throw fallbackResult.error;
+        setUsers((fallbackResult.data as UserProfile[]) || []);
+      } else {
+        setUsers((profiles as UserProfile[]) || []);
+      }
     } catch (error) {
       console.error('Error cargando usuarios:', error);
       toast({
         title: "Error",
-        description: "No se pudieron cargar los usuarios. Verifique los permisos de administrador.",
+        description: `No se pudieron cargar los usuarios: ${error.message}`,
         variant: "destructive",
       });
     } finally {

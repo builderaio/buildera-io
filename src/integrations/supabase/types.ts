@@ -1859,6 +1859,31 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      get_admin_analytics_data: {
+        Args: { start_date: string; end_date: string }
+        Returns: {
+          metric_name: string
+          metric_value: number
+          period_start: string
+          period_end: string
+          platform: string
+          metadata: Json
+        }[]
+      }
+      get_admin_analytics_summary: {
+        Args: { start_date: string; end_date: string }
+        Returns: {
+          total_users: number
+          total_companies: number
+          total_developers: number
+          total_experts: number
+          total_linkedin_connections: number
+          total_facebook_connections: number
+          total_tiktok_connections: number
+          total_ai_logs: number
+          active_models: number
+        }[]
+      }
       get_admin_recent_activity: {
         Args: Record<PropertyKey, never>
         Returns: {

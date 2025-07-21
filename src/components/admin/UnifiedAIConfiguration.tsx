@@ -508,24 +508,27 @@ export default function UnifiedAIConfiguration() {
                                   </h5>
                                   <div className="pl-4">
                                     <Select
-                                      value={selectedModel || ''}
-                                      onValueChange={(value) => updateModelTypeAssignment(provider.id, type.value, value)}
+                                      value={selectedModel || 'none'}
+                                      onValueChange={(value) => {
+                                        const modelName = value === 'none' ? '' : value;
+                                        updateModelTypeAssignment(provider.id, type.value, modelName);
+                                      }}
                                     >
                                       <SelectTrigger className="h-8">
                                         <SelectValue placeholder="Seleccionar modelo" />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="">Sin asignar</SelectItem>
+                                        <SelectItem value="none">Sin asignar</SelectItem>
                                         {typeModels.map((model) => (
                                           <SelectItem key={model.id} value={model.model_name}>
                                             {model.display_name}
                                           </SelectItem>
                                         ))}
-                                        {typeModels.length === 0 && (
-                                          <SelectItem value="" disabled>
-                                            No hay modelos de este tipo disponibles
-                                          </SelectItem>
-                                        )}
+                                         {typeModels.length === 0 && (
+                                           <SelectItem value="unavailable" disabled>
+                                             No hay modelos de este tipo disponibles
+                                           </SelectItem>
+                                         )}
                                       </SelectContent>
                                     </Select>
                                   </div>

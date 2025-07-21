@@ -1,8 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Shield } from 'lucide-react';
-import ConfiguracionIA from '@/components/company/ConfiguracionIA';
+import AIProviderManagement from '@/components/admin/AIProviderManagement';
+import BusinessFunctionConfiguration from '@/components/admin/BusinessFunctionConfiguration';
+import AIModelSelection from '@/components/admin/AIModelSelection';
+import AIBusinessConfiguration from '@/components/admin/AIBusinessConfiguration';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import ThemeSelector from '@/components/ThemeSelector';
 
@@ -46,7 +50,39 @@ const AdminAIConfig = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <ConfiguracionIA />
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Configuración de IA</h2>
+            <p className="text-muted-foreground">
+              Gestiona los proveedores, modelos de IA y configuraciones del sistema
+            </p>
+          </div>
+
+          <Tabs defaultValue="providers" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="providers">Proveedores de IA</TabsTrigger>
+              <TabsTrigger value="functions">Funciones de Negocio</TabsTrigger>
+              <TabsTrigger value="selection">Selección Legacy</TabsTrigger>
+              <TabsTrigger value="business">Configuración Legacy</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="providers">
+              <AIProviderManagement />
+            </TabsContent>
+            
+            <TabsContent value="functions">
+              <BusinessFunctionConfiguration />
+            </TabsContent>
+            
+            <TabsContent value="selection">
+              <AIModelSelection />
+            </TabsContent>
+            
+            <TabsContent value="business">
+              <AIBusinessConfiguration />
+            </TabsContent>
+          </Tabs>
+        </div>
       </main>
     </div>
   );

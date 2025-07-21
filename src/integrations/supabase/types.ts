@@ -305,6 +305,158 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_provider_models: {
+        Row: {
+          capabilities: Json | null
+          created_at: string
+          display_name: string
+          id: string
+          is_available: boolean
+          is_preferred: boolean
+          model_name: string
+          model_type: Database["public"]["Enums"]["ai_model_type"]
+          pricing_info: Json | null
+          provider_id: string
+          updated_at: string
+        }
+        Insert: {
+          capabilities?: Json | null
+          created_at?: string
+          display_name: string
+          id?: string
+          is_available?: boolean
+          is_preferred?: boolean
+          model_name: string
+          model_type: Database["public"]["Enums"]["ai_model_type"]
+          pricing_info?: Json | null
+          provider_id: string
+          updated_at?: string
+        }
+        Update: {
+          capabilities?: Json | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_available?: boolean
+          is_preferred?: boolean
+          model_name?: string
+          model_type?: Database["public"]["Enums"]["ai_model_type"]
+          pricing_info?: Json | null
+          provider_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_provider_models_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "ai_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_providers: {
+        Row: {
+          auth_type: string
+          base_url: string
+          configuration: Json | null
+          created_at: string
+          description: string | null
+          display_name: string
+          env_key: string
+          id: string
+          is_active: boolean
+          name: string
+          supported_model_types: Database["public"]["Enums"]["ai_model_type"][]
+          updated_at: string
+        }
+        Insert: {
+          auth_type?: string
+          base_url: string
+          configuration?: Json | null
+          created_at?: string
+          description?: string | null
+          display_name: string
+          env_key: string
+          id?: string
+          is_active?: boolean
+          name: string
+          supported_model_types?: Database["public"]["Enums"]["ai_model_type"][]
+          updated_at?: string
+        }
+        Update: {
+          auth_type?: string
+          base_url?: string
+          configuration?: Json | null
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          env_key?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          supported_model_types?: Database["public"]["Enums"]["ai_model_type"][]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      business_function_configurations: {
+        Row: {
+          configuration: Json | null
+          created_at: string
+          default_model_id: string | null
+          default_provider_id: string | null
+          description: string | null
+          display_name: string
+          function_name: Database["public"]["Enums"]["business_function_type"]
+          id: string
+          is_active: boolean
+          required_model_type: Database["public"]["Enums"]["ai_model_type"]
+          updated_at: string
+        }
+        Insert: {
+          configuration?: Json | null
+          created_at?: string
+          default_model_id?: string | null
+          default_provider_id?: string | null
+          description?: string | null
+          display_name: string
+          function_name: Database["public"]["Enums"]["business_function_type"]
+          id?: string
+          is_active?: boolean
+          required_model_type: Database["public"]["Enums"]["ai_model_type"]
+          updated_at?: string
+        }
+        Update: {
+          configuration?: Json | null
+          created_at?: string
+          default_model_id?: string | null
+          default_provider_id?: string | null
+          description?: string | null
+          display_name?: string
+          function_name?: Database["public"]["Enums"]["business_function_type"]
+          id?: string
+          is_active?: boolean
+          required_model_type?: Database["public"]["Enums"]["ai_model_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_function_configurations_default_model_id_fkey"
+            columns: ["default_model_id"]
+            isOneToOne: false
+            referencedRelation: "ai_provider_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_function_configurations_default_provider_id_fkey"
+            columns: ["default_provider_id"]
+            isOneToOne: false
+            referencedRelation: "ai_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_branding: {
         Row: {
           brand_manual_file_path: string | null
@@ -757,6 +909,74 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      function_model_assignments: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          function_config_id: string
+          id: string
+          is_active: boolean
+          model_id: string
+          model_parameters: Json | null
+          priority: number
+          provider_id: string
+          updated_at: string
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          function_config_id: string
+          id?: string
+          is_active?: boolean
+          model_id: string
+          model_parameters?: Json | null
+          priority?: number
+          provider_id: string
+          updated_at?: string
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          function_config_id?: string
+          id?: string
+          is_active?: boolean
+          model_id?: string
+          model_parameters?: Json | null
+          priority?: number
+          provider_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "function_model_assignments_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "llm_api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "function_model_assignments_function_config_id_fkey"
+            columns: ["function_config_id"]
+            isOneToOne: false
+            referencedRelation: "business_function_configurations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "function_model_assignments_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "ai_provider_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "function_model_assignments_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "ai_providers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       instagram_business_connections: {
         Row: {
@@ -1744,6 +1964,21 @@ export type Database = {
       }
     }
     Enums: {
+      ai_model_type:
+        | "text_generation"
+        | "image_generation"
+        | "audio_generation"
+        | "video_generation"
+        | "reasoning"
+      business_function_type:
+        | "content_optimization"
+        | "content_generation"
+        | "chat_assistant"
+        | "image_creation"
+        | "audio_synthesis"
+        | "video_creation"
+        | "data_analysis"
+        | "competitive_intelligence"
       user_type: "developer" | "expert" | "company"
     }
     CompositeTypes: {
@@ -1872,6 +2107,23 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_model_type: [
+        "text_generation",
+        "image_generation",
+        "audio_generation",
+        "video_generation",
+        "reasoning",
+      ],
+      business_function_type: [
+        "content_optimization",
+        "content_generation",
+        "chat_assistant",
+        "image_creation",
+        "audio_synthesis",
+        "video_creation",
+        "data_analysis",
+        "competitive_intelligence",
+      ],
       user_type: ["developer", "expert", "company"],
     },
   },

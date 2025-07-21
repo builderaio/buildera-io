@@ -163,7 +163,9 @@ export const EraOptimizerButton: React.FC<EraOptimizerButtonProps> = ({
     } catch (error) {
       console.error('Error optimizing with Era:', error);
       // Por ahora, simulamos una optimización simple
-      setOptimizedText(enhanceText(currentText, fieldType));
+      const fallbackText = enhanceText(currentText, fieldType);
+      console.log('Fallback optimization text:', fallbackText);
+      setOptimizedText(fallbackText);
       setShowDialog(true);
     } finally {
       setIsOptimizing(false);

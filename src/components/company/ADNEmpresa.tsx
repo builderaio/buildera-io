@@ -1174,24 +1174,23 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   };
 
   return (
-    <div>
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground">ADN del Negocio</h1>
-        <p className="text-lg text-muted-foreground">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+      <header className="mb-6 sm:mb-8 text-center sm:text-left">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">ADN del Negocio</h1>
+        <p className="text-sm sm:text-base lg:text-lg text-muted-foreground mt-2">
           Centraliza la identidad y estrategia de tu negocio para alinear a nuestros agentes de IA.
         </p>
       </header>
 
-
       <Card>
-        <CardContent className="p-8">
+        <CardContent className="p-4 sm:p-6 lg:p-8">
           <Tabs defaultValue="perfil" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="perfil">Información del Negocio</TabsTrigger>
-              <TabsTrigger value="estrategia">Estrategia</TabsTrigger>
-              <TabsTrigger value="productos">Productos</TabsTrigger>
-              <TabsTrigger value="marca">Marca</TabsTrigger>
-              <TabsTrigger value="canales">Canales</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1">
+              <TabsTrigger value="perfil" className="text-xs sm:text-sm px-2 py-2 sm:px-4">Info</TabsTrigger>
+              <TabsTrigger value="estrategia" className="text-xs sm:text-sm px-2 py-2 sm:px-4">Estrategia</TabsTrigger>
+              <TabsTrigger value="productos" className="text-xs sm:text-sm px-2 py-2 sm:px-4">Productos</TabsTrigger>
+              <TabsTrigger value="marca" className="text-xs sm:text-sm px-2 py-2 sm:px-4">Marca</TabsTrigger>
+              <TabsTrigger value="canales" className="text-xs sm:text-sm px-2 py-2 sm:px-4">Canales</TabsTrigger>
             </TabsList>
 
             <TabsContent value="perfil" className="space-y-6 mt-6">
@@ -1207,7 +1206,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="company_name">Nombre del negocio *</Label>
                       <Input
@@ -1739,7 +1738,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {products.map((product) => (
                     <Card key={product.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
@@ -1798,7 +1797,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     <CardTitle className="text-base">Paleta de Colores</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="primary_color">Color Principal</Label>
                         <div className="flex gap-2">
@@ -1974,7 +1973,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         placeholder="https://ejemplo.com/manual-marca.pdf"
                       />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground mb-2">Cargar archivo PDF</p>
                         <input
@@ -2049,137 +2048,141 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               </p>
               <div className="space-y-4">
                 {/* Instagram Business */}
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center">
-                    <Instagram className="w-8 h-8 text-pink-600 mr-4" />
-                    <div>
-                      <span className="font-medium">Instagram Business</span>
-                      <p className="text-sm text-muted-foreground">Acceso a posts, stories, usuarios y publicación de contenido</p>
-                    </div>
-                  </div>
+                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
+                   <div className="flex items-center">
+                     <Instagram className="w-8 h-8 text-pink-600 mr-4" />
+                     <div>
+                       <span className="font-medium">Instagram Business</span>
+                       <p className="text-sm text-muted-foreground">Acceso a posts, stories, usuarios y publicación de contenido</p>
+                     </div>
+                   </div>
                   {checkConnectionStatus('instagram') ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-green-600 font-medium">Conectado</span>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleSocialDisconnect('instagram')}
-                        disabled={loading}
-                      >
-                        {loading ? "Desconectando..." : "Desconectar"}
-                      </Button>
-                    </div>
+                     <div className="flex flex-col sm:flex-row items-center gap-2">
+                       <span className="text-sm text-green-600 font-medium">Conectado</span>
+                       <Button 
+                         variant="outline" 
+                         size="sm"
+                         onClick={() => handleSocialDisconnect('instagram')}
+                         disabled={loading}
+                         className="w-full sm:w-auto"
+                       >
+                         {loading ? "Desconectando..." : "Desconectar"}
+                       </Button>
+                     </div>
                   ) : (
-                    <Button 
-                      variant="default" 
-                      className="bg-pink-600 hover:bg-pink-700 text-white"
-                      onClick={() => handleSocialConnect('instagram')}
-                      disabled={loading}
-                    >
-                      {loading ? "Conectando..." : "Conectar"}
-                    </Button>
+                     <Button 
+                       variant="default" 
+                       className="bg-pink-600 hover:bg-pink-700 text-white w-full sm:w-auto"
+                       onClick={() => handleSocialConnect('instagram')}
+                       disabled={loading}
+                     >
+                       {loading ? "Conectando..." : "Conectar"}
+                     </Button>
                   )}
                 </div>
 
                 {/* Facebook Business */}
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-blue-600 rounded mr-4 flex items-center justify-center">
-                      <span className="text-white font-bold text-sm">f</span>
-                    </div>
-                    <div>
-                      <span className="font-medium">Facebook Business</span>
-                      <p className="text-sm text-muted-foreground">Gestión de páginas, posts y audiencias empresariales</p>
-                    </div>
-                  </div>
-                  {checkConnectionStatus('facebook') ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-green-600 font-medium">Conectado</span>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleSocialDisconnect('facebook')}
-                        disabled={loading}
-                      >
-                        {loading ? "Desconectando..." : "Desconectar"}
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button 
-                      variant="default" 
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => handleSocialConnect('facebook')}
-                      disabled={loading}
-                    >
-                      {loading ? "Conectando..." : "Conectar"}
-                    </Button>
-                  )}
+                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
+                   <div className="flex items-center">
+                     <div className="w-8 h-8 bg-blue-600 rounded mr-4 flex items-center justify-center">
+                       <span className="text-white font-bold text-sm">f</span>
+                     </div>
+                     <div>
+                       <span className="font-medium">Facebook Business</span>
+                       <p className="text-sm text-muted-foreground">Gestión de páginas, posts y audiencias empresariales</p>
+                     </div>
+                   </div>
+                   {checkConnectionStatus('facebook') ? (
+                     <div className="flex flex-col sm:flex-row items-center gap-2">
+                       <span className="text-sm text-green-600 font-medium">Conectado</span>
+                       <Button 
+                         variant="outline" 
+                         size="sm"
+                         onClick={() => handleSocialDisconnect('facebook')}
+                         disabled={loading}
+                         className="w-full sm:w-auto"
+                       >
+                         {loading ? "Desconectando..." : "Desconectar"}
+                       </Button>
+                     </div>
+                   ) : (
+                     <Button 
+                       variant="default" 
+                       className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+                       onClick={() => handleSocialConnect('facebook')}
+                       disabled={loading}
+                     >
+                       {loading ? "Conectando..." : "Conectar"}
+                     </Button>
+                   )}
                 </div>
 
                 {/* TikTok Business */}
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center">
-                    <Music className="w-8 h-8 text-black mr-4" />
-                    <div>
-                      <span className="font-medium">TikTok Business</span>
-                      <p className="text-sm text-muted-foreground">Subida de videos, análisis y gestión de contenido empresarial</p>
-                    </div>
-                  </div>
-                  {checkConnectionStatus('tiktok') ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-green-600 font-medium">Conectado</span>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleSocialDisconnect('tiktok')}
-                        disabled={loading}
-                      >
-                        {loading ? "Desconectando..." : "Desconectar"}
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button 
-                      variant="default" 
-                      className="bg-black hover:bg-gray-800 text-white"
-                      onClick={() => handleSocialConnect('tiktok')}
-                      disabled={loading}
-                    >
-                      {loading ? "Conectando..." : "Conectar"}
-                    </Button>
-                  )}
+                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
+                   <div className="flex items-center">
+                     <Music className="w-8 h-8 text-black mr-4" />
+                     <div>
+                       <span className="font-medium">TikTok Business</span>
+                       <p className="text-sm text-muted-foreground">Subida de videos, análisis y gestión de contenido empresarial</p>
+                     </div>
+                   </div>
+                   {checkConnectionStatus('tiktok') ? (
+                     <div className="flex flex-col sm:flex-row items-center gap-2">
+                       <span className="text-sm text-green-600 font-medium">Conectado</span>
+                       <Button 
+                         variant="outline" 
+                         size="sm"
+                         onClick={() => handleSocialDisconnect('tiktok')}
+                         disabled={loading}
+                         className="w-full sm:w-auto"
+                       >
+                         {loading ? "Desconectando..." : "Desconectar"}
+                       </Button>
+                     </div>
+                   ) : (
+                     <Button 
+                       variant="default" 
+                       className="bg-black hover:bg-gray-800 text-white w-full sm:w-auto"
+                       onClick={() => handleSocialConnect('tiktok')}
+                       disabled={loading}
+                     >
+                       {loading ? "Conectando..." : "Conectar"}
+                     </Button>
+                   )}
                 </div>
 
                 {/* LinkedIn Company */}
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center">
-                    <Linkedin className="w-8 h-8 text-blue-700 mr-4" />
-                    <div>
-                      <span className="font-medium">LinkedIn Company</span>
-                      <p className="text-sm text-muted-foreground">Gestión de página empresarial, posts y analytics profesionales</p>
-                    </div>
-                  </div>
-                  {checkConnectionStatus('linkedin') ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-green-600 font-medium">Conectado</span>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleSocialDisconnect('linkedin')}
-                        disabled={loading}
-                      >
-                        {loading ? "Desconectando..." : "Desconectar"}
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button 
-                      variant="default" 
-                      className="bg-blue-700 hover:bg-blue-800 text-white"
-                      onClick={() => handleSocialConnect('linkedin')}
-                      disabled={loading}
-                    >
-                      {loading ? "Conectando..." : "Conectar"}
-                    </Button>
-                  )}
+                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
+                   <div className="flex items-center">
+                     <Linkedin className="w-8 h-8 text-blue-700 mr-4" />
+                     <div>
+                       <span className="font-medium">LinkedIn Company</span>
+                       <p className="text-sm text-muted-foreground">Gestión de página empresarial, posts y analytics profesionales</p>
+                     </div>
+                   </div>
+                   {checkConnectionStatus('linkedin') ? (
+                     <div className="flex flex-col sm:flex-row items-center gap-2">
+                       <span className="text-sm text-green-600 font-medium">Conectado</span>
+                       <Button 
+                         variant="outline" 
+                         size="sm"
+                         onClick={() => handleSocialDisconnect('linkedin')}
+                         disabled={loading}
+                         className="w-full sm:w-auto"
+                       >
+                         {loading ? "Desconectando..." : "Desconectar"}
+                       </Button>
+                     </div>
+                   ) : (
+                     <Button 
+                       variant="default" 
+                       className="bg-blue-700 hover:bg-blue-800 text-white w-full sm:w-auto"
+                       onClick={() => handleSocialConnect('linkedin')}
+                       disabled={loading}
+                     >
+                       {loading ? "Conectando..." : "Conectar"}
+                     </Button>
+                   )}
                 </div>
               </div>
 

@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Shield } from 'lucide-react';
-import AIProviderManagement from '@/components/admin/AIProviderManagement';
-import BusinessFunctionConfiguration from '@/components/admin/BusinessFunctionConfiguration';
+import UnifiedAIConfiguration from '@/components/admin/UnifiedAIConfiguration';
 import AIModelSelection from '@/components/admin/AIModelSelection';
 import AIBusinessConfiguration from '@/components/admin/AIBusinessConfiguration';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -58,20 +57,15 @@ const AdminAIConfig = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="providers" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="providers">Proveedores de IA</TabsTrigger>
-              <TabsTrigger value="functions">Funciones de Negocio</TabsTrigger>
+          <Tabs defaultValue="unified" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="unified">Configuración Unificada</TabsTrigger>
               <TabsTrigger value="selection">Selección Legacy</TabsTrigger>
               <TabsTrigger value="business">Configuración Legacy</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="providers">
-              <AIProviderManagement />
-            </TabsContent>
-            
-            <TabsContent value="functions">
-              <BusinessFunctionConfiguration />
+            <TabsContent value="unified">
+              <UnifiedAIConfiguration />
             </TabsContent>
             
             <TabsContent value="selection">

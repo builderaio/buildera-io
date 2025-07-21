@@ -1,11 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Shield } from 'lucide-react';
 import UnifiedAIConfiguration from '@/components/admin/UnifiedAIConfiguration';
-import AIModelSelection from '@/components/admin/AIModelSelection';
-import AIBusinessConfiguration from '@/components/admin/AIBusinessConfiguration';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import ThemeSelector from '@/components/ThemeSelector';
 
@@ -57,25 +54,7 @@ const AdminAIConfig = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="unified" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="unified">Configuración Unificada</TabsTrigger>
-              <TabsTrigger value="selection">Selección Legacy</TabsTrigger>
-              <TabsTrigger value="business">Configuración Legacy</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="unified">
-              <UnifiedAIConfiguration />
-            </TabsContent>
-            
-            <TabsContent value="selection">
-              <AIModelSelection />
-            </TabsContent>
-            
-            <TabsContent value="business">
-              <AIBusinessConfiguration />
-            </TabsContent>
-          </Tabs>
+          <UnifiedAIConfiguration />
         </div>
       </main>
     </div>

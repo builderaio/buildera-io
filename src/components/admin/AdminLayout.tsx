@@ -57,9 +57,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     {
       group: "Inteligencia Artificial",
       items: [
-        { icon: Key, label: "API Keys", path: "/admin/api-keys" },
-        { icon: Brain, label: "Configuración IA", path: "/admin/ai-config" },
-        { icon: Activity, label: "Monitoreo IA", path: "/admin/ai-monitoring" },
+        { icon: Brain, label: "Configuración de IA", path: "/admin/ai-config" },
+        { icon: Settings, label: "Configuración de funciones", path: "/admin/function-config" },
+        { icon: Activity, label: "Monitoreo de IA", path: "/admin/ai-monitoring" },
         { icon: Trophy, label: "Champion Challenge", path: "/admin/champion-challenge" },
       ]
     },

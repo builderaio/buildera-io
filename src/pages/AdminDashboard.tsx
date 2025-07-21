@@ -176,10 +176,10 @@ const AdminDashboard = () => {
       action: () => navigate('/admin/database')
     },
     {
-      title: "Gestión API Keys",
-      description: "Parametrización y monitoreo de APIs LLM",
-      icon: Key,
-      action: () => navigate('/admin/api-keys')
+      title: "Configuración de Funciones",
+      description: "Configuración de modelos para funciones específicas",
+      icon: Settings,
+      action: () => navigate('/admin/function-config')
     }
   ];
 

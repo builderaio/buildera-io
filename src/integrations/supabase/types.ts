@@ -1859,6 +1859,37 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      get_admin_recent_activity: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          recent_profiles: Json
+          recent_connections: Json
+        }[]
+      }
+      get_admin_social_connections: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          linkedin_connections: number
+          facebook_connections: number
+          tiktok_connections: number
+          recent_linkedin: number
+          recent_facebook: number
+          recent_tiktok: number
+        }[]
+      }
+      get_admin_user_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_users: number
+          recent_users: number
+          companies: number
+          developers: number
+          experts: number
+          users_with_linkedin: number
+          users_with_facebook: number
+          users_with_tiktok: number
+        }[]
+      }
       get_ai_model_config: {
         Args: { function_name_param: string }
         Returns: {

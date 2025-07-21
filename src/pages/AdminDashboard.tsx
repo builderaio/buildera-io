@@ -49,43 +49,39 @@ const AdminDashboard = () => {
 
   const loadDashboardStats = async () => {
     try {
-      // Obtener estadísticas de usuarios
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
+      // Usar funciones administrativas para obtener estadísticas sin restricciones RLS
+      const { data: userAnalytics, error: userError } = await supabase
+        .rpc('get_admin_user_analytics');
 
-      if (profilesError) throw profilesError;
-
-      // Obtener conexiones activas
-      const { data: linkedinConnections } = await supabase
-        .from('linkedin_connections')
-        .select('*');
-
-      const { data: facebookConnections } = await supabase
-        .from('facebook_instagram_connections')
-        .select('*');
-
-      const { data: tiktokConnections } = await supabase
-        .from('tiktok_connections')
-        .select('*');
-
-      const companies = profiles?.filter(p => p.user_type === 'company') || [];
-      const totalConnections = (linkedinConnections?.length || 0) + 
-                              (facebookConnections?.length || 0) + 
-                              (tiktokConnections?.length || 0);
-
-      setStats({
-        totalUsers: profiles?.length || 0,
-        totalCompanies: companies.length,
-        activeConnections: totalConnections,
-        revenueMetrics: companies.length * 49 // Estimado por empresa
-      });
+      if (userError) {
+        console.error('Error con función de analytics, intentando consulta directa:', userError);
+        // Fallback: intentar consulta directa
+        const { data: profiles } = await supabase.from('profiles').select('*');
+        setStats({
+          totalUsers: profiles?.length || 0,
+          totalCompanies: profiles?.filter(p => p.user_type === 'company').length || 0,
+          activeConnections: 0,
+          revenueMetrics: (profiles?.filter(p => p.user_type === 'company').length || 0) * 49
+        });
+      } else {
+        const analytics = userAnalytics?.[0];
+        if (analytics) {
+          setStats({
+            totalUsers: Number(analytics.total_users) || 0,
+            totalCompanies: Number(analytics.companies) || 0,
+            activeConnections: Number(analytics.users_with_linkedin) + 
+                             Number(analytics.users_with_facebook) + 
+                             Number(analytics.users_with_tiktok) || 0,
+            revenueMetrics: Number(analytics.companies) * 49 // Estimado por empresa
+          });
+        }
+      }
 
     } catch (error) {
       console.error('Error cargando estadísticas:', error);
       toast({
         title: "Error",
-        description: "No se pudieron cargar las estadísticas del dashboard",
+        description: `No se pudieron cargar las estadísticas: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -271,44 +267,21 @@ const RecentActivity = () => {
 
   const loadRecentActivity = async () => {
     try {
-      // Obtener registros recientes (últimas 24 horas)
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      const { data: recentProfiles } = await supabase
-        .from('profiles')
-        .select('*')
-        .gte('created_at', yesterday.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(5);
+      // Usar función administrativa para obtener actividad reciente
+      const { data: recentData, error } = await supabase
+        .rpc('get_admin_recent_activity');
 
-      // Obtener conexiones recientes
-      const { data: recentLinkedIn } = await supabase
-        .from('linkedin_connections')
-        .select('*')
-        .gte('created_at', yesterday.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(3);
+      if (error) {
+        console.error('Error con función de actividad reciente:', error);
+        setRecentActivity([]);
+        return;
+      }
 
-      const { data: recentFacebook } = await supabase
-        .from('facebook_instagram_connections')
-        .select('*')
-        .gte('created_at', yesterday.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      const { data: recentTikTok } = await supabase
-        .from('tiktok_connections')
-        .select('*')
-        .gte('created_at', yesterday.toISOString())
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      // Combinar y ordenar actividades
       const activities = [];
       
-      if (recentProfiles) {
-        recentProfiles.forEach(profile => {
+      // Procesar perfiles recientes
+      if (recentData?.[0]?.recent_profiles && Array.isArray(recentData[0].recent_profiles)) {
+        recentData[0].recent_profiles.forEach((profile: any) => {
           activities.push({
             type: 'user_registration',
             data: profile,
@@ -322,8 +295,9 @@ const RecentActivity = () => {
         });
       }
 
-      if (recentLinkedIn) {
-        recentLinkedIn.forEach(conn => {
+      // Procesar conexiones recientes
+      if (recentData?.[0]?.recent_connections && Array.isArray(recentData[0].recent_connections)) {
+        recentData[0].recent_connections.forEach((conn: any) => {
           activities.push({
             type: 'linkedin_connection',
             data: conn,
@@ -332,37 +306,7 @@ const RecentActivity = () => {
             color: 'bg-green-500',
             bgColor: 'bg-green-50',
             title: 'Conexión LinkedIn',
-            description: `Nueva conexión LinkedIn establecida`
-          });
-        });
-      }
-
-      if (recentFacebook) {
-        recentFacebook.forEach(conn => {
-          activities.push({
-            type: 'facebook_connection',
-            data: conn,
-            timestamp: conn.created_at,
-            icon: Activity,
-            color: 'bg-purple-500',
-            bgColor: 'bg-purple-50',
-            title: 'Conexión Facebook',
-            description: `Nueva conexión Facebook/Instagram establecida`
-          });
-        });
-      }
-
-      if (recentTikTok) {
-        recentTikTok.forEach(conn => {
-          activities.push({
-            type: 'tiktok_connection',
-            data: conn,
-            timestamp: conn.created_at,
-            icon: Activity,
-            color: 'bg-orange-500',
-            bgColor: 'bg-orange-50',
-            title: 'Conexión TikTok',
-            description: `Nueva conexión TikTok establecida`
+            description: 'Nueva conexión LinkedIn establecida'
           });
         });
       }
@@ -373,6 +317,7 @@ const RecentActivity = () => {
 
     } catch (error) {
       console.error('Error cargando actividad reciente:', error);
+      setRecentActivity([]);
     } finally {
       setLoading(false);
     }

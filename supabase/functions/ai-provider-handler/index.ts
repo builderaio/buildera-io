@@ -12,8 +12,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Provider configurations
-const PROVIDERS = {
+/**
+ * Universal AI Provider Handler
+ * Esta función puede manejar cualquier proveedor de IA que se configure
+ */
+
+interface ProviderConfig {
+  baseUrl: string;
+  authHeader: (apiKey: string) => string;
+  envKey: string;
+  formatRequest: (model: string, messages: any[], config: any) => any;
+  parseResponse: (data: any) => string;
+  customHeaders?: Record<string, string>;
+  urlTransform?: (baseUrl: string, model: string, apiKey: string) => string;
+}
+
+// Configuraciones de proveedores predefinidas
+const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   openai: {
     baseUrl: 'https://api.openai.com/v1/chat/completions',
     authHeader: (apiKey: string) => `Bearer ${apiKey}`,
@@ -33,6 +48,7 @@ const PROVIDERS = {
     baseUrl: 'https://api.anthropic.com/v1/messages',
     authHeader: (apiKey: string) => `Bearer ${apiKey}`,
     envKey: 'ANTHROPIC_API_KEY',
+    customHeaders: { 'anthropic-version': '2023-06-01' },
     formatRequest: (model: string, messages: any[], config: any) => ({
       model,
       max_tokens: config.max_tokens,
@@ -46,6 +62,8 @@ const PROVIDERS = {
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
     authHeader: (apiKey: string) => apiKey,
     envKey: 'GOOGLE_API_KEY',
+    urlTransform: (baseUrl: string, model: string, apiKey: string) => 
+      `${baseUrl}/${model}:generateContent?key=${apiKey}`,
     formatRequest: (model: string, messages: any[], config: any) => ({
       contents: messages.filter(m => m.role !== 'system').map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
@@ -72,9 +90,41 @@ const PROVIDERS = {
       top_p: config.top_p,
     }),
     parseResponse: (data: any) => data.choices[0].message.content
+  },
+  perplexity: {
+    baseUrl: 'https://api.perplexity.ai/chat/completions',
+    authHeader: (apiKey: string) => `Bearer ${apiKey}`,
+    envKey: 'PERPLEXITY_API_KEY',
+    formatRequest: (model: string, messages: any[], config: any) => ({
+      model,
+      messages,
+      temperature: config.temperature,
+      max_tokens: config.max_tokens,
+      top_p: config.top_p,
+      return_images: false,
+      return_related_questions: false,
+      search_recency_filter: 'month',
+      frequency_penalty: config.frequency_penalty || 1,
+      presence_penalty: config.presence_penalty || 0
+    }),
+    parseResponse: (data: any) => data.choices[0].message.content
   }
 };
 
+/**
+ * Función para agregar automáticamente un nuevo proveedor
+ */
+async function addNewProvider(
+  providerName: string, 
+  config: ProviderConfig
+): Promise<void> {
+  PROVIDER_CONFIGS[providerName] = config;
+  console.log(`Provider ${providerName} added successfully`);
+}
+
+/**
+ * Obtener proveedor activo desde la base de datos
+ */
 async function getActiveProvider() {
   const { data: selection, error } = await supabase
     .from('ai_model_selections')
@@ -89,8 +139,11 @@ async function getActiveProvider() {
   return selection;
 }
 
-async function getApiKey(apiKeyId: string, provider: string) {
-  // Try to get from database first
+/**
+ * Obtener API key para el proveedor
+ */
+async function getApiKey(apiKeyId: string, provider: string): Promise<string> {
+  // Intentar obtener desde la base de datos primero
   const { data: keyRecord, error } = await supabase
     .from('llm_api_keys')
     .select('api_key_hash')
@@ -99,12 +152,12 @@ async function getApiKey(apiKeyId: string, provider: string) {
     .single();
 
   if (!error && keyRecord) {
-    // In a real environment, you would decrypt the key here
-    console.log('Using configured API key from database for provider:', provider);
+    // En un entorno real, descifrarías la clave aquí
+    console.log(`Using configured API key from database for provider: ${provider}`);
   }
 
-  // Fallback to environment variable
-  const providerConfig = PROVIDERS[provider as keyof typeof PROVIDERS];
+  // Fallback a variable de entorno
+  const providerConfig = PROVIDER_CONFIGS[provider];
   if (!providerConfig) {
     throw new Error(`Proveedor no soportado: ${provider}`);
   }
@@ -117,29 +170,43 @@ async function getApiKey(apiKeyId: string, provider: string) {
   return apiKey;
 }
 
-async function callAIProvider(provider: string, model: string, messages: any[], config: any, apiKey: string) {
-  const providerConfig = PROVIDERS[provider as keyof typeof PROVIDERS];
+/**
+ * Llamar al proveedor de IA universal
+ */
+async function callAIProvider(
+  provider: string, 
+  model: string, 
+  messages: any[], 
+  config: any, 
+  apiKey: string
+): Promise<string> {
+  const providerConfig = PROVIDER_CONFIGS[provider];
   if (!providerConfig) {
     throw new Error(`Proveedor no soportado: ${provider}`);
   }
 
+  // Configurar URL
   let url = providerConfig.baseUrl;
+  if (providerConfig.urlTransform) {
+    url = providerConfig.urlTransform(providerConfig.baseUrl, model, apiKey);
+  }
+
+  // Configurar headers
   let headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
 
-  // Handle different auth methods
-  if (provider === 'google') {
-    url = `${url}/${model}:generateContent?key=${apiKey}`;
-  } else {
+  // Agregar autenticación
+  if (!providerConfig.urlTransform || provider !== 'google') {
     headers['Authorization'] = providerConfig.authHeader(apiKey);
   }
 
-  // Add provider-specific headers
-  if (provider === 'anthropic') {
-    headers['anthropic-version'] = '2023-06-01';
+  // Agregar headers personalizados
+  if (providerConfig.customHeaders) {
+    headers = { ...headers, ...providerConfig.customHeaders };
   }
 
+  // Formatear request
   const requestBody = providerConfig.formatRequest(model, messages, config);
 
   console.log(`Calling ${provider} API:`, { url, requestBody });
@@ -168,11 +235,47 @@ serve(async (req) => {
   }
 
   try {
-    const { message, context, userInfo } = await req.json();
+    const { 
+      action, 
+      messages, 
+      functionName, 
+      context,
+      // Para agregar nuevos proveedores
+      newProvider 
+    } = await req.json();
 
-    console.log('Era chat request:', { message, context, userInfo });
+    // Acción para agregar un nuevo proveedor dinámicamente
+    if (action === 'addProvider' && newProvider) {
+      await addNewProvider(newProvider.name, newProvider.config);
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: `Provider ${newProvider.name} added successfully` 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    // Get active provider and model
+    // Acción para listar proveedores disponibles
+    if (action === 'listProviders') {
+      return new Response(JSON.stringify({ 
+        providers: Object.keys(PROVIDER_CONFIGS),
+        configurations: PROVIDER_CONFIGS 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Procesamiento estándar de IA
+    if (!messages || !functionName) {
+      return new Response(JSON.stringify({ 
+        error: 'Se requieren messages y functionName' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Obtener proveedor activo
     const activeProvider = await getActiveProvider();
     const apiKey = await getApiKey(activeProvider.api_key_id, activeProvider.provider);
 
@@ -180,7 +283,7 @@ serve(async (req) => {
     const { data: config, error: configError } = await supabase
       .from('ai_model_configurations')
       .select('*')
-      .eq('function_name', 'era-chat')
+      .eq('function_name', functionName)
       .single();
 
     if (configError) {
@@ -200,43 +303,7 @@ serve(async (req) => {
     console.log('Using model:', activeProvider.model_name);
     console.log('Using AI config:', aiConfig);
 
-    const systemPrompt = `Eres Era, el asistente de inteligencia artificial de Buildera. Buildera es una plataforma integral para empresas que incluye:
-
-PRINCIPALES FUNCIONES DE LA PLATAFORMA:
-1. **ADN Empresa**: Definir misión, visión, propuesta de valor e identidad visual
-2. **Marketplace**: Conectar con expertos especializados para proyectos
-3. **Expertos**: Gestionar colaboradores y especialistas
-4. **Marketing Hub**: Generar contenido optimizado para redes sociales y marketing
-5. **Inteligencia Competitiva**: Analizar competencia y tendencias del mercado
-6. **Academia Buildera**: Acceder a cursos y recursos educativos
-7. **Base de Conocimiento**: Centralizar información y documentos empresariales
-8. **Configuración**: Personalizar la experiencia de la plataforma
-
-CARACTERÍSTICAS ESPECIALES DE ERA:
-- Optimizas automáticamente contenido empresarial (misión, visión, propuestas de valor, etc.)
-- Generas contenido de marketing contextualizado
-- Ayudas con análisis competitivo
-- Proporcionas insights estratégicos
-- Asistes en la toma de decisiones empresariales
-
-Tu personalidad es:
-- Profesional pero cercana
-- Proactiva en sugerir mejoras
-- Enfocada en resultados empresariales
-- Inteligente y estratégica
-- Siempre orientada a ayudar al crecimiento del negocio
-
-Contexto actual: ${context || 'Dashboard principal'}
-Usuario: ${userInfo?.display_name || 'Usuario'}
-
-Responde de manera conversacional, útil y siempre relacionando tus respuestas con las capacidades de Buildera que pueden ayudar al usuario.`;
-
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: message }
-    ];
-
-    const reply = await callAIProvider(
+    const response = await callAIProvider(
       activeProvider.provider,
       activeProvider.model_name,
       messages,
@@ -244,20 +311,21 @@ Responde de manera conversacional, útil y siempre relacionando tus respuestas c
       apiKey
     );
 
-    console.log('Era response:', reply);
-
     return new Response(JSON.stringify({ 
-      reply,
+      success: true,
+      response,
       provider: activeProvider.provider,
-      model: activeProvider.model_name
+      model: activeProvider.model_name,
+      context
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (error) {
-    console.error('Error in era-chat function:', error);
+    console.error('Error in ai-provider-handler function:', error);
     return new Response(JSON.stringify({ 
-      error: 'Lo siento, no puedo procesar tu mensaje en este momento. Inténtalo de nuevo.',
-      details: error.message
+      success: false,
+      error: error.message || 'Error interno del servidor' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -217,8 +217,19 @@ export default function UnifiedAIConfiguration() {
 
   const refreshProviderModels = async (provider: AIProvider) => {
     try {
+      // Buscar una API key activa para este proveedor
+      const providerAPIKey = apiKeys.find(key => key.provider === provider.name && key.status === 'active');
+      
+      if (!providerAPIKey) {
+        toast.error(`No hay API key configurada para ${provider.display_name}`);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('fetch-available-models', {
-        body: { provider: provider.name }
+        body: { 
+          provider: provider.name,
+          apiKeyId: providerAPIKey.id
+        }
       });
 
       if (error) throw error;

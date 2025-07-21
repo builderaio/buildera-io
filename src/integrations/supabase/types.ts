@@ -239,6 +239,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_model_selections: {
+        Row: {
+          api_key_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          model_name: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_name: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          model_name?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_model_status_logs: {
         Row: {
           created_at: string

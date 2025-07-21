@@ -66,17 +66,30 @@ const AIBusinessConfiguration = () => {
 
   const loadAvailableModels = async () => {
     try {
-      // Cargar modelos seleccionados de la sección anterior
-      // Por ahora, usaremos una lista simulada basada en configuraciones existentes
-      const { data, error } = await supabase
-        .from('ai_model_configurations')
+      // Cargar modelos seleccionados de la primera pestaña (Selección de Modelos)
+      const { data: selectedModels, error: selectionsError } = await supabase
+        .from('ai_model_selections')
         .select('model_name')
+        .eq('is_active', true)
         .order('model_name');
 
-      if (error) throw error;
+      if (selectionsError) throw selectionsError;
       
-      const uniqueModels = Array.from(new Set(data?.map(config => config.model_name) || []));
-      setAvailableModels(uniqueModels);
+      if (selectedModels && selectedModels.length > 0) {
+        const uniqueModels = Array.from(new Set(selectedModels.map(s => s.model_name)));
+        setAvailableModels(uniqueModels);
+      } else {
+        // Si no hay modelos seleccionados, usar configuraciones existentes como fallback
+        const { data: configs, error: configsError } = await supabase
+          .from('ai_model_configurations')
+          .select('model_name')
+          .order('model_name');
+
+        if (configsError) throw configsError;
+        
+        const uniqueModels = Array.from(new Set(configs?.map(config => config.model_name) || []));
+        setAvailableModels(uniqueModels);
+      }
     } catch (error) {
       console.error('Error loading available models:', error);
       // Fallback a modelos por defecto

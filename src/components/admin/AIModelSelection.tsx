@@ -61,34 +61,55 @@ const AIModelSelection = () => {
 
   const loadAPIKeys = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: apiKeysData, error: apiKeysError } = await supabase
         .from('llm_api_keys')
         .select('*')
         .eq('status', 'active')
         .order('provider');
 
-      if (error) throw error;
-      setApiKeys(data || []);
+      if (apiKeysError) throw apiKeysError;
+      setApiKeys(apiKeysData || []);
       
-      // Inicializar selectedModels con modelos por defecto de cada proveedor
-      const initialSelection: SelectedModel[] = [];
-      const providerGroups = (data || []).reduce((acc, key) => {
+      // Cargar selecciones guardadas desde la base de datos
+      const { data: savedSelections, error: selectionsError } = await supabase
+        .from('ai_model_selections')
+        .select('*')
+        .eq('is_active', true);
+
+      if (selectionsError) throw selectionsError;
+
+      const providerGroups = (apiKeysData || []).reduce((acc, key) => {
         if (!acc[key.provider]) acc[key.provider] = [];
         acc[key.provider].push(key);
         return acc;
       }, {} as Record<string, APIKey[]>);
 
+      const initialSelection: SelectedModel[] = [];
+
       Object.entries(providerGroups).forEach(([provider, keys]) => {
-        const primaryKey = keys[0]; // Usar la primera API key como principal
-        const availableModels = getAvailableModels(provider, primaryKey);
-        const defaultModel = primaryKey.model_name || availableModels[0];
+        // Buscar selección guardada para este proveedor
+        const savedSelection = savedSelections?.find(s => s.provider === provider);
         
-        if (defaultModel) {
+        if (savedSelection) {
+          // Usar selección guardada
           initialSelection.push({
             provider,
-            model: defaultModel,
-            api_key_id: primaryKey.id
+            model: savedSelection.model_name,
+            api_key_id: savedSelection.api_key_id
           });
+        } else {
+          // Usar valores por defecto
+          const primaryKey = keys[0];
+          const availableModels = getAvailableModels(provider, primaryKey);
+          const defaultModel = primaryKey.model_name || availableModels[0];
+          
+          if (defaultModel) {
+            initialSelection.push({
+              provider,
+              model: defaultModel,
+              api_key_id: primaryKey.id
+            });
+          }
         }
       });
 
@@ -135,8 +156,23 @@ const AIModelSelection = () => {
   const saveSelection = async () => {
     setSaving(true);
     try {
-      // Guardar la selección en la base de datos
-      // Por ahora solo mostramos un mensaje de éxito
+      // Guardar cada selección de modelo en la base de datos
+      for (const selection of selectedModels) {
+        const { error } = await supabase
+          .from('ai_model_selections')
+          .upsert({
+            provider: selection.provider,
+            model_name: selection.model,
+            api_key_id: selection.api_key_id,
+            is_active: true,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'provider'
+          });
+
+        if (error) throw error;
+      }
+      
       toast.success('Selección de modelos guardada exitosamente');
     } catch (error) {
       console.error('Error saving model selection:', error);

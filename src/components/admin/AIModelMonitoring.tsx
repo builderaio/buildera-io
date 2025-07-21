@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Activity, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { RefreshCw, Activity, AlertTriangle, CheckCircle, XCircle, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ModelStatus {
   provider: string;
@@ -16,51 +17,75 @@ interface ModelStatus {
   errorRate: number;
 }
 
+interface HistoricalData {
+  timestamp: string;
+  provider: string;
+  responseTime: number;
+  uptime: number;
+  status: string;
+}
+
 
 const AIModelMonitoring = () => {
-  const [modelStatuses, setModelStatuses] = useState<ModelStatus[]>([]);
+  const [latestStatus, setLatestStatus] = useState<Record<string, ModelStatus>>({});
+  const [historicalData, setHistoricalData] = useState<HistoricalData[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
   const loadModelStatuses = async () => {
     setLoading(true);
     try {
-      // Primero cargar los modelos seleccionados en la configuración
-      const { data: configData, error: configError } = await supabase
-        .from('ai_model_configurations')
-        .select('model_name, function_name');
-
-      if (configError) throw configError;
-
-      const selectedModels = Array.from(new Set(configData?.map(config => config.model_name) || []));
-      
-      // Cargar datos de la base de datos desde la tabla ai_model_status_logs
-      // Filtrar solo los modelos que están siendo utilizados
-      const { data, error } = await supabase
+      // Cargar el último registro por proveedor
+      const { data: latestData, error: latestError } = await supabase
         .from('ai_model_status_logs')
         .select('*')
-        .in('name', selectedModels)
         .order('last_checked', { ascending: false });
 
-      if (error) throw error;
+      if (latestError) throw latestError;
 
-      const formattedStatuses: ModelStatus[] = data?.map(log => ({
+      // Obtener el último registro por proveedor
+      const latestByProvider: Record<string, ModelStatus> = {};
+      latestData?.forEach(log => {
+        if (!latestByProvider[log.provider]) {
+          latestByProvider[log.provider] = {
+            provider: log.provider,
+            name: log.name,
+            status: log.status as ModelStatus['status'],
+            responseTime: log.response_time,
+            lastChecked: log.last_checked,
+            uptime: log.uptime,
+            errorRate: log.error_rate
+          };
+        }
+      });
+
+      setLatestStatus(latestByProvider);
+
+      // Cargar datos históricos (últimos 24 registros para la gráfica)
+      const { data: historicalData, error: historicalError } = await supabase
+        .from('ai_model_status_logs')
+        .select('provider, response_time, uptime, status, last_checked')
+        .order('last_checked', { ascending: false })
+        .limit(100);
+
+      if (historicalError) throw historicalError;
+
+      const formattedHistorical: HistoricalData[] = historicalData?.map(log => ({
+        timestamp: new Date(log.last_checked).toLocaleTimeString(),
         provider: log.provider,
-        name: log.name,
-        status: log.status as ModelStatus['status'],
         responseTime: log.response_time,
-        lastChecked: log.last_checked,
         uptime: log.uptime,
-        errorRate: log.error_rate
+        status: log.status
       })) || [];
 
-      setModelStatuses(formattedStatuses);
+      setHistoricalData(formattedHistorical);
       setLastRefresh(new Date());
       
-      if (formattedStatuses.length > 0) {
-        toast.success(`Estado de ${formattedStatuses.length} modelos configurados cargado`);
+      const providerCount = Object.keys(latestByProvider).length;
+      if (providerCount > 0) {
+        toast.success(`Estado de ${providerCount} proveedores cargado`);
       } else {
-        toast.info('No hay modelos configurados para monitorear');
+        toast.info('No hay datos de monitoreo disponibles');
       }
     } catch (error) {
       console.error('Error loading model statuses:', error);
@@ -130,17 +155,8 @@ const AIModelMonitoring = () => {
   };
 
   useEffect(() => {
-    // Solo cargar datos al montar el componente, sin intervalos automáticos
     loadModelStatuses();
   }, []);
-
-  const groupedStatuses = modelStatuses.reduce((acc, status) => {
-    if (!acc[status.provider]) {
-      acc[status.provider] = [];
-    }
-    acc[status.provider].push(status);
-    return acc;
-  }, {} as Record<string, ModelStatus[]>);
 
   return (
     <div className="space-y-6">
@@ -150,9 +166,9 @@ const AIModelMonitoring = () => {
           <p className="text-muted-foreground">
             Estado de los modelos configurados en funciones de negocio (actualizado por job programado)
           </p>
-          {modelStatuses.length === 0 && (
+          {Object.keys(latestStatus).length === 0 && (
             <p className="text-sm text-muted-foreground mt-1">
-              Solo se monitorean los modelos seleccionados en la configuración de IA
+              Mostrando el último estado registrado por proveedor
             </p>
           )}
         </div>
@@ -181,13 +197,13 @@ const AIModelMonitoring = () => {
         </div>
       </div>
 
-      {modelStatuses.length === 0 ? (
+      {Object.keys(latestStatus).length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
             <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No hay modelos para monitorear</h3>
+            <h3 className="text-lg font-semibold mb-2">No hay datos de monitoreo</h3>
             <p className="text-muted-foreground mb-4">
-              Configure modelos en la sección "Configuración de IA" para comenzar el monitoreo
+              No se han encontrado datos de monitoreo de modelos IA
             </p>
             <Button onClick={loadModelStatuses} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -196,70 +212,106 @@ const AIModelMonitoring = () => {
           </CardContent>
         </Card>
       ) : (
-        Object.entries(groupedStatuses).map(([provider, statuses]) => (
-        <Card key={provider}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              {provider}
-              <Badge variant="outline" className="ml-auto">
-                {statuses.filter(s => s.status === 'online').length}/{statuses.length} activos
-              </Badge>
-            </CardTitle>
-            <CardDescription>
-              Estado de los modelos de {provider}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              {statuses.map((status, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
+        <>
+          {/* Estado actual por proveedor */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Object.entries(latestStatus).map(([provider, status]) => (
+              <Card key={provider}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
                     {getStatusIcon(status.status)}
-                    <div>
-                      <div className="font-medium">{status.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Última verificación: {new Date(status.lastChecked).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className={`text-sm font-medium ${getResponseTimeColor(status.responseTime)}`}>
-                        {status.responseTime}ms
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Tiempo de respuesta
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className="text-sm font-medium">
-                        {status.uptime.toFixed(1)}%
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Disponibilidad
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className="text-sm font-medium">
-                        {status.errorRate.toFixed(2)}%
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Tasa de error
-                      </div>
-                    </div>
-                    
+                    {provider}
+                  </CardTitle>
+                  <CardDescription>
+                    Último estado registrado
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Estado</span>
                     {getStatusBadge(status.status)}
                   </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Modelo</span>
+                    <span className="text-sm font-medium">{status.name}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Tiempo de respuesta</span>
+                    <span className={`text-sm font-medium ${getResponseTimeColor(status.responseTime)}`}>
+                      {status.responseTime}ms
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Disponibilidad</span>
+                    <span className="text-sm font-medium">{status.uptime.toFixed(1)}%</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Tasa de error</span>
+                    <span className="text-sm font-medium">{status.errorRate.toFixed(2)}%</span>
+                  </div>
+                  
+                  <div className="text-xs text-muted-foreground pt-2 border-t">
+                    Última verificación: {new Date(status.lastChecked).toLocaleString()}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Gráfica histórica */}
+          {historicalData.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Histórico de Tiempo de Respuesta
+                </CardTitle>
+                <CardDescription>
+                  Evolución del tiempo de respuesta por proveedor
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={historicalData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="timestamp" 
+                        fontSize={12}
+                        interval="preserveStartEnd"
+                      />
+                      <YAxis 
+                        fontSize={12}
+                        label={{ value: 'Tiempo (ms)', angle: -90, position: 'insideLeft' }}
+                      />
+                      <Tooltip 
+                        labelFormatter={(value) => `Hora: ${value}`}
+                        formatter={(value, name) => [`${value}ms`, `${name}`]}
+                      />
+                      {Object.keys(latestStatus).map((provider, index) => (
+                        <Line
+                          key={provider}
+                          type="monotone"
+                          dataKey="responseTime"
+                          data={historicalData.filter(d => d.provider === provider)}
+                          stroke={`hsl(${(index * 137.5) % 360}, 70%, 50%)`}
+                          strokeWidth={2}
+                          name={provider}
+                          connectNulls={false}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )))}
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 };

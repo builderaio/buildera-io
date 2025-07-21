@@ -7,11 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Settings, Save, AlertCircle } from "lucide-react";
+import { Save, AlertCircle } from "lucide-react";
 
 interface BusinessFunction {
   id: string;
@@ -41,19 +39,6 @@ interface AIProviderModel {
   is_available: boolean;
 }
 
-interface FunctionModelAssignment {
-  id: string;
-  function_config_id: string;
-  provider_id: string;
-  model_id: string;
-  api_key_id: string | null;
-  model_parameters: any;
-  is_active: boolean;
-  priority: number;
-  provider?: AIProvider;
-  model?: AIProviderModel;
-}
-
 interface APIKey {
   id: string;
   api_key_name: string;
@@ -73,12 +58,13 @@ export default function BusinessFunctionConfiguration() {
   const [functions, setFunctions] = useState<BusinessFunction[]>([]);
   const [providers, setProviders] = useState<AIProvider[]>([]);
   const [models, setModels] = useState<AIProviderModel[]>([]);
-  const [assignments, setAssignments] = useState<FunctionModelAssignment[]>([]);
   const [apiKeys, setApiKeys] = useState<APIKey[]>([]);
   const [selectedFunction, setSelectedFunction] = useState<BusinessFunction | null>(null);
-  const [isConfiguring, setIsConfiguring] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [selectedAPIKey, setSelectedAPIKey] = useState<string>('');
   const [modelParameters, setModelParameters] = useState({
     temperature: 0.7,
     max_tokens: 500,
@@ -93,7 +79,7 @@ export default function BusinessFunctionConfiguration() {
 
   useEffect(() => {
     if (selectedFunction) {
-      loadFunctionAssignments(selectedFunction.id);
+      loadFunctionConfiguration(selectedFunction);
     }
   }, [selectedFunction]);
 
@@ -123,23 +109,42 @@ export default function BusinessFunctionConfiguration() {
     }
   };
 
-  const loadFunctionAssignments = async (functionId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('function_model_assignments')
-        .select(`
-          *,
-          provider:ai_providers(*),
-          model:ai_provider_models(*)
-        `)
-        .eq('function_config_id', functionId)
-        .order('priority');
+  const loadFunctionConfiguration = (func: BusinessFunction) => {
+    // Reset form
+    setSelectedModel(func.default_model_id || '');
+    setSelectedAPIKey('');
+    
+    // Load configuration if exists
+    if (func.configuration) {
+      setModelParameters({
+        temperature: func.configuration.temperature || 0.7,
+        max_tokens: func.configuration.max_tokens || 500,
+        top_p: func.configuration.top_p || 1.0,
+        frequency_penalty: func.configuration.frequency_penalty || 0.0,
+        presence_penalty: func.configuration.presence_penalty || 0.0
+      });
+    } else {
+      setModelParameters({
+        temperature: 0.7,
+        max_tokens: 500,
+        top_p: 1.0,
+        frequency_penalty: 0.0,
+        presence_penalty: 0.0
+      });
+    }
 
-      if (error) throw error;
-      setAssignments(data || []);
-    } catch (error) {
-      console.error('Error loading assignments:', error);
-      toast.error('Error al cargar asignaciones');
+    // Load API key if model is selected
+    if (func.default_model_id) {
+      const model = models.find(m => m.id === func.default_model_id);
+      if (model) {
+        const provider = providers.find(p => p.id === model.provider_id);
+        if (provider) {
+          const availableKeys = apiKeys.filter(key => key.provider === provider.name);
+          if (availableKeys.length > 0) {
+            setSelectedAPIKey(availableKeys[0].id);
+          }
+        }
+      }
     }
   };
 
@@ -163,69 +168,51 @@ export default function BusinessFunctionConfiguration() {
     }
   };
 
-  const addModelAssignment = async (providerId: string, modelId: string, apiKeyId: string) => {
-    if (!selectedFunction) return;
-
-    try {
-      const { error } = await supabase
-        .from('function_model_assignments')
-        .insert({
-          function_config_id: selectedFunction.id,
-          provider_id: providerId,
-          model_id: modelId,
-          api_key_id: apiKeyId,
-          model_parameters: modelParameters,
-          is_active: true,
-          priority: assignments.length + 1
-        });
-
-      if (error) throw error;
-
-      await loadFunctionAssignments(selectedFunction.id);
-      setIsConfiguring(false);
-      toast.success('Asignación de modelo agregada');
-    } catch (error) {
-      console.error('Error adding assignment:', error);
-      toast.error('Error al agregar asignación');
+  const saveConfiguration = async () => {
+    if (!selectedFunction || !selectedModel) {
+      toast.error('Selecciona una función y un modelo');
+      return;
     }
-  };
 
-  const toggleAssignmentStatus = async (assignment: FunctionModelAssignment) => {
+    setSaving(true);
     try {
-      const { error } = await supabase
-        .from('function_model_assignments')
-        .update({ is_active: !assignment.is_active })
-        .eq('id', assignment.id);
-
-      if (error) throw error;
-
-      setAssignments(assignments.map(a => 
-        a.id === assignment.id ? { ...a, is_active: !a.is_active } : a
-      ));
+      const selectedModelData = getAvailableModels(selectedFunction.required_model_type).find(m => m.id === selectedModel);
       
-      toast.success('Estado de asignación actualizado');
-    } catch (error) {
-      console.error('Error updating assignment status:', error);
-      toast.error('Error al actualizar estado');
-    }
-  };
-
-  const deleteAssignment = async (assignment: FunctionModelAssignment) => {
-    if (!confirm('¿Estás seguro de eliminar esta asignación?')) return;
-
-    try {
       const { error } = await supabase
-        .from('function_model_assignments')
-        .delete()
-        .eq('id', assignment.id);
+        .from('business_function_configurations')
+        .update({
+          default_model_id: selectedModel,
+          default_provider_id: selectedModelData?.provider_id,
+          configuration: {
+            ...modelParameters,
+            api_key_id: selectedAPIKey
+          }
+        })
+        .eq('id', selectedFunction.id);
 
       if (error) throw error;
 
-      setAssignments(assignments.filter(a => a.id !== assignment.id));
-      toast.success('Asignación eliminada');
+      // Update local state
+      setFunctions(functions.map(f => 
+        f.id === selectedFunction.id 
+          ? { 
+              ...f, 
+              default_model_id: selectedModel,
+              default_provider_id: selectedModelData?.provider_id,
+              configuration: {
+                ...modelParameters,
+                api_key_id: selectedAPIKey
+              }
+            } 
+          : f
+      ));
+
+      toast.success('Configuración guardada exitosamente');
     } catch (error) {
-      console.error('Error deleting assignment:', error);
-      toast.error('Error al eliminar asignación');
+      console.error('Error saving configuration:', error);
+      toast.error('Error al guardar configuración');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -237,7 +224,7 @@ export default function BusinessFunctionConfiguration() {
       'image_generation': ['image_generation'], 
       'audio_generation': ['audio_generation'],
       'video_generation': ['video_generation'],
-      'content_optimization': ['text_generation', 'reasoning'], // Functions that need both
+      'content_optimization': ['text_generation', 'reasoning'],
       'content_analysis': ['text_generation', 'reasoning'],
       'semantic_analysis': ['text_generation', 'reasoning'],
       'competitive_intelligence': ['text_generation', 'reasoning'],
@@ -258,16 +245,39 @@ export default function BusinessFunctionConfiguration() {
     return apiKeys.filter(key => key.provider === provider?.name);
   };
 
+  const handleModelChange = (modelId: string) => {
+    setSelectedModel(modelId);
+    setSelectedAPIKey('');
+    
+    // Auto-select first available API key for the provider
+    if (modelId) {
+      const model = models.find(m => m.id === modelId);
+      if (model) {
+        const provider = providers.find(p => p.id === model.provider_id);
+        if (provider) {
+          const availableKeys = apiKeys.filter(key => key.provider === provider.name);
+          if (availableKeys.length > 0) {
+            setSelectedAPIKey(availableKeys[0].id);
+          }
+        }
+      }
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center p-8">Cargando configuración...</div>;
   }
+
+  const selectedModelData = selectedModel ? getAvailableModels(selectedFunction?.required_model_type || '').find(m => m.id === selectedModel) : null;
+  const provider = selectedModelData ? getProviderForModel(selectedModel) : null;
+  const availableAPIKeys = provider ? getAPIKeysForProvider(provider.id) : [];
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">Configuración de Funciones de Negocio</h2>
         <p className="text-muted-foreground">
-          Configura qué modelos de IA usar para cada función específica del sistema
+          Selecciona una función y configura el modelo de IA que utilizará
         </p>
       </div>
 
@@ -277,16 +287,14 @@ export default function BusinessFunctionConfiguration() {
           <CardHeader>
             <CardTitle>Funciones de Negocio</CardTitle>
             <CardDescription>
-              Funciones que utilizan IA en el sistema
+              Selecciona una función para configurar su modelo de IA
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {functions.map((func) => {
                 const modelType = MODEL_TYPES.find(t => t.value === func.required_model_type);
-                const activeAssignments = assignments.filter(a => 
-                  a.function_config_id === func.id && a.is_active
-                ).length;
+                const hasModel = !!func.default_model_id;
 
                 return (
                   <div 
@@ -310,11 +318,9 @@ export default function BusinessFunctionConfiguration() {
                             <Badge variant="outline">
                               {modelType?.label}
                             </Badge>
-                            {selectedFunction?.id === func.id && (
-                              <Badge variant="secondary">
-                                {activeAssignments} modelo(s) activo(s)
-                              </Badge>
-                            )}
+                            <Badge variant={hasModel ? "default" : "secondary"}>
+                              {hasModel ? 'Configurado' : 'Sin configurar'}
+                            </Badge>
                           </div>
                         </div>
                       </div>
@@ -335,251 +341,169 @@ export default function BusinessFunctionConfiguration() {
           </CardContent>
         </Card>
 
-        {/* Configuración de Modelos */}
+        {/* Configuración del Modelo */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle>
               {selectedFunction 
-                ? `Modelos para ${selectedFunction.display_name}` 
+                ? `Configuración: ${selectedFunction.display_name}` 
                 : 'Selecciona una Función'
               }
-              {selectedFunction && (
-                <Dialog open={isConfiguring} onOpenChange={setIsConfiguring}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Configurar Modelo
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Configurar Nuevo Modelo</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <ModelConfigurationForm
-                        selectedFunction={selectedFunction}
-                        availableModels={getAvailableModels(selectedFunction.required_model_type)}
-                        providers={providers}
-                        apiKeys={apiKeys}
-                        modelParameters={modelParameters}
-                        setModelParameters={setModelParameters}
-                        onAdd={addModelAssignment}
-                        getProviderForModel={getProviderForModel}
-                        getAPIKeysForProvider={getAPIKeysForProvider}
-                      />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              )}
             </CardTitle>
             <CardDescription>
               {selectedFunction 
-                ? 'Modelos asignados para esta función'
-                : 'Selecciona una función para configurar sus modelos'
+                ? 'Configura el modelo y parámetros para esta función'
+                : 'Selecciona una función para configurar su modelo'
               }
             </CardDescription>
           </CardHeader>
           <CardContent>
             {selectedFunction ? (
-              <div className="space-y-4">
-                {assignments.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Proveedor</TableHead>
-                        <TableHead>Modelo</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead>Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {assignments.map((assignment) => (
-                        <TableRow key={assignment.id}>
-                          <TableCell>
-                            <div className="font-medium">
-                              {assignment.provider?.display_name}
+              <div className="space-y-6">
+                {/* Selección de Modelo */}
+                <div>
+                  <Label>Modelo de IA</Label>
+                  <Select value={selectedModel} onValueChange={handleModelChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un modelo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAvailableModels(selectedFunction.required_model_type).map((model) => {
+                        const modelProvider = getProviderForModel(model.id);
+                        return (
+                          <SelectItem key={model.id} value={model.id}>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">{modelProvider?.display_name}</span>
+                              <span className="text-muted-foreground">-</span>
+                              <span>{model.display_name}</span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">
-                                {assignment.model?.display_name}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {assignment.model?.model_name}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={assignment.is_active ? "default" : "secondary"}>
-                              {assignment.is_active ? 'Activo' : 'Inactivo'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Switch
-                                checked={assignment.is_active}
-                                onCheckedChange={() => toggleAssignmentStatus(assignment)}
-                              />
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => deleteAssignment(assignment)}
-                              >
-                                Eliminar
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No hay modelos configurados para esta función.
-                    <br />
-                    Haz clic en "Configurar Modelo" para agregar uno.
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Selección de API Key */}
+                {selectedModel && availableAPIKeys.length > 0 && (
+                  <div>
+                    <Label>API Key</Label>
+                    <Select value={selectedAPIKey} onValueChange={setSelectedAPIKey}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona una API key" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableAPIKeys.map((key) => (
+                          <SelectItem key={key.id} value={key.id}>
+                            {key.api_key_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
+
+                {/* Parámetros del modelo */}
+                {selectedModel && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Parámetros del Modelo</h4>
+                    
+                    <div>
+                      <Label>Temperatura: {modelParameters.temperature}</Label>
+                      <Slider
+                        value={[modelParameters.temperature]}
+                        onValueChange={(value) => setModelParameters({...modelParameters, temperature: value[0]})}
+                        max={2}
+                        min={0}
+                        step={0.1}
+                        className="mt-2"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Controla la creatividad del modelo (0 = determinista, 2 = muy creativo)
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <Label>Tokens Máximos</Label>
+                      <Input
+                        type="number"
+                        value={modelParameters.max_tokens}
+                        onChange={(e) => setModelParameters({...modelParameters, max_tokens: parseInt(e.target.value) || 500})}
+                        min={1}
+                        max={4000}
+                        className="mt-2"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Número máximo de tokens en la respuesta
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label>Top P: {modelParameters.top_p}</Label>
+                      <Slider
+                        value={[modelParameters.top_p]}
+                        onValueChange={(value) => setModelParameters({...modelParameters, top_p: value[0]})}
+                        max={1}
+                        min={0}
+                        step={0.1}
+                        className="mt-2"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Controla la diversidad de tokens considerados
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label>Penalización de Frecuencia: {modelParameters.frequency_penalty}</Label>
+                      <Slider
+                        value={[modelParameters.frequency_penalty]}
+                        onValueChange={(value) => setModelParameters({...modelParameters, frequency_penalty: value[0]})}
+                        max={2}
+                        min={-2}
+                        step={0.1}
+                        className="mt-2"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Reduce la repetición de palabras frecuentes
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label>Penalización de Presencia: {modelParameters.presence_penalty}</Label>
+                      <Slider
+                        value={[modelParameters.presence_penalty]}
+                        onValueChange={(value) => setModelParameters({...modelParameters, presence_penalty: value[0]})}
+                        max={2}
+                        min={-2}
+                        step={0.1}
+                        className="mt-2"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Reduce la repetición de temas ya mencionados
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Botón Guardar */}
+                <Button 
+                  onClick={saveConfiguration}
+                  disabled={!selectedModel || !selectedAPIKey || saving}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? 'Guardando...' : 'Guardar Configuración'}
+                </Button>
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
-                Selecciona una función de la lista para configurar sus modelos.
+                Selecciona una función de la lista para configurar su modelo de IA.
               </div>
             )}
           </CardContent>
         </Card>
       </div>
     </div>
-  );
-}
-
-function ModelConfigurationForm({ 
-  selectedFunction, 
-  availableModels, 
-  providers,
-  apiKeys,
-  modelParameters, 
-  setModelParameters,
-  onAdd,
-  getProviderForModel,
-  getAPIKeysForProvider
-}: {
-  selectedFunction: BusinessFunction;
-  availableModels: AIProviderModel[];
-  providers: AIProvider[];
-  apiKeys: APIKey[];
-  modelParameters: any;
-  setModelParameters: (params: any) => void;
-  onAdd: (providerId: string, modelId: string, apiKeyId: string) => void;
-  getProviderForModel: (modelId: string) => AIProvider | undefined;
-  getAPIKeysForProvider: (providerId: string) => APIKey[];
-}) {
-  const [selectedModel, setSelectedModel] = useState<string>('');
-  const [selectedAPIKey, setSelectedAPIKey] = useState<string>('');
-
-  const handleModelChange = (modelId: string) => {
-    setSelectedModel(modelId);
-    setSelectedAPIKey('');
-  };
-
-  const selectedModelData = availableModels.find(m => m.id === selectedModel);
-  const provider = selectedModelData ? getProviderForModel(selectedModel) : null;
-  const availableAPIKeys = provider ? getAPIKeysForProvider(provider.id) : [];
-
-  return (
-    <>
-      <div>
-        <Label>Modelo</Label>
-        <Select onValueChange={handleModelChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecciona un modelo" />
-          </SelectTrigger>
-          <SelectContent>
-            {availableModels.map((model) => {
-              const modelProvider = getProviderForModel(model.id);
-              return (
-                <SelectItem key={model.id} value={model.id}>
-                  <div className="flex items-center space-x-2">
-                    <span>{modelProvider?.display_name}</span>
-                    <span className="text-muted-foreground">-</span>
-                    <span>{model.display_name}</span>
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {selectedModel && availableAPIKeys.length > 0 && (
-        <div>
-          <Label>API Key</Label>
-          <Select onValueChange={setSelectedAPIKey}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona una API key" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableAPIKeys.map((key) => (
-                <SelectItem key={key.id} value={key.id}>
-                  {key.api_key_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Parámetros del modelo */}
-      <div className="space-y-4">
-        <div>
-          <Label>Temperatura: {modelParameters.temperature}</Label>
-          <Slider
-            value={[modelParameters.temperature]}
-            onValueChange={(value) => setModelParameters({...modelParameters, temperature: value[0]})}
-            max={2}
-            min={0}
-            step={0.1}
-            className="mt-2"
-          />
-        </div>
-        
-        <div>
-          <Label>Tokens Máximos</Label>
-          <Input
-            type="number"
-            value={modelParameters.max_tokens}
-            onChange={(e) => setModelParameters({...modelParameters, max_tokens: parseInt(e.target.value)})}
-            min={1}
-            max={4000}
-          />
-        </div>
-
-        <div>
-          <Label>Top P: {modelParameters.top_p}</Label>
-          <Slider
-            value={[modelParameters.top_p]}
-            onValueChange={(value) => setModelParameters({...modelParameters, top_p: value[0]})}
-            max={1}
-            min={0}
-            step={0.1}
-            className="mt-2"
-          />
-        </div>
-      </div>
-
-      <Button 
-        onClick={() => {
-          if (selectedModel && selectedAPIKey && provider) {
-            onAdd(provider.id, selectedModel, selectedAPIKey);
-          }
-        }}
-        disabled={!selectedModel || !selectedAPIKey}
-        className="w-full"
-      >
-        <Save className="h-4 w-4 mr-2" />
-        Guardar Configuración
-      </Button>
-    </>
   );
 }

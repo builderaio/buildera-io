@@ -59,37 +59,29 @@ const AdminUsers = () => {
 
   const loadUsers = async () => {
     try {
-      // Los admins necesitan acceso sin restricciones RLS para ver todos los usuarios
+      // Consulta directa con select específico para evitar problemas RLS
       const { data: profiles, error } = await supabase
-        .rpc('get_all_profiles_admin')
-        .then(async (result) => {
-          if (result.error) {
-            // Fallback: intentar consulta directa (requiere service_role o función específica)
-            return await supabase
-              .from('profiles')
-              .select(`
-                id,
-                user_id,
-                email,
-                full_name,
-                user_type,
-                company_name,
-                website_url,
-                industry,
-                created_at,
-                linked_providers,
-                avatar_url,
-                position,
-                country,
-                location
-              `)
-              .order('created_at', { ascending: false });
-          }
-          return result;
-        });
+        .from('profiles')
+        .select(`
+          id,
+          user_id,
+          email,
+          full_name,
+          user_type,
+          company_name,
+          website_url,
+          industry,
+          created_at,
+          linked_providers,
+          avatar_url,
+          position,
+          country,
+          location
+        `)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUsers(profiles || []);
+      setUsers((profiles as UserProfile[]) || []);
     } catch (error) {
       console.error('Error cargando usuarios:', error);
       toast({

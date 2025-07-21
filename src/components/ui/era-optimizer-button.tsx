@@ -138,22 +138,25 @@ export const EraOptimizerButton: React.FC<EraOptimizerButtonProps> = ({
     setIsOptimizing(true);
     
     try {
-      // Simular llamada a la API - aquí iría la integración real con Supabase
-      const response = await fetch('/api/era-optimize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Usar la edge function correcta de Supabase
+      const { supabase } = await import('@/integrations/supabase/client');
+      
+      const { data, error } = await supabase.functions.invoke('era-content-optimizer', {
+        body: {
           text: currentText,
           fieldType,
           context: context || {}
-        })
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Error al conectar con Era');
+      if (error) {
+        throw new Error(`Error al conectar con Era: ${error.message}`);
       }
 
-      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Error desconocido de Era');
+      }
+
       setOptimizedText(data.optimizedText);
       setShowDialog(true);
 
@@ -169,15 +172,19 @@ export const EraOptimizerButton: React.FC<EraOptimizerButtonProps> = ({
 
   const enhanceText = (text: string, type: string): string => {
     // Simulación simple de optimización hasta que la API esté lista
+    // IMPORTANTE: Solo devolver el texto optimizado, NO concatenar con el original
     switch (type.toLowerCase()) {
       case 'misión':
-        return `${text}\n\nNuestra misión se fundamenta en la excelencia operacional y el compromiso con la satisfacción del cliente, creando valor sostenible para todos nuestros stakeholders.`;
+        return `Nuestra misión se fundamenta en la excelencia operacional y el compromiso con la satisfacción del cliente, democratizando el acceso a productos de alta calidad y creando valor sostenible para todos nuestros stakeholders.`;
       case 'visión':
-        return `${text}\n\nAspiramos a ser líderes en innovación, estableciendo nuevos estándares de calidad y contribuyendo al desarrollo sostenible de nuestra industria.`;
+        return `Aspiramos a ser líderes en innovación y accesibilidad, estableciendo nuevos estándares de calidad y contribuyendo al desarrollo sostenible de nuestra industria.`;
+      case 'propuesta de valor':
+        return `Ofrecemos productos de alta calidad a precios accesibles, democratizando el acceso y garantizando una experiencia excepcional para todos nuestros clientes.`;
       case 'descripción de producto':
-        return `${text}\n\nEste producto ha sido diseñado con tecnología de vanguardia y los más altos estándares de calidad, garantizando una experiencia excepcional para nuestros usuarios.`;
+        return `Este producto ha sido diseñado con tecnología de vanguardia y los más altos estándares de calidad, garantizando una experiencia excepcional y accesible para nuestros usuarios.`;
       default:
-        return `${text}\n\n[Optimizado por Era: Contenido mejorado con enfoque profesional y mayor impacto comunicacional]`;
+        // Para cualquier otro tipo, mejorar el texto sin concatenar
+        return `${text} - Optimizado con enfoque profesional y mayor impacto comunicacional.`;
     }
   };
 

@@ -189,9 +189,9 @@ const Marketplace: React.FC = () => {
         .select('id')
         .eq('template_id', agentId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') {
+      if (checkError) {
         throw checkError;
       }
 

@@ -80,9 +80,10 @@ const AgentConfigWizard = () => {
       
       // Inicializar configuraciones de interfaz
       const permissions = data.permissions_template as any;
-      const interfaces = permissions?.interaction_interfaces || [];
+      const interfacesObj = permissions?.interaction_interfaces || {};
+      const interfaceIds = Object.keys(interfacesObj);
       setInterfaceConfigs(
-        interfaces.map((id: string) => ({
+        interfaceIds.map((id: string) => ({
           id,
           enabled: true,
           config: {}

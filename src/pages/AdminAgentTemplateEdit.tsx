@@ -68,6 +68,29 @@ const AdminAgentTemplateEdit = () => {
     { value: 'enterprise', label: 'Enterprise' }
   ];
 
+  const icons = [
+    { emoji: '🤖', name: 'Robot' },
+    { emoji: '🧠', name: 'Cerebro' },
+    { emoji: '💼', name: 'Negocios' },
+    { emoji: '📊', name: 'Analytics' },
+    { emoji: '🔍', name: 'Investigación' },
+    { emoji: '⚡', name: 'Automatización' },
+    { emoji: '🎯', name: 'Objetivos' },
+    { emoji: '🚀', name: 'Productividad' },
+    { emoji: '💡', name: 'Ideas' },
+    { emoji: '🔧', name: 'Herramientas' },
+    { emoji: '👥', name: 'Recursos Humanos' },
+    { emoji: '💬', name: 'Comunicación' },
+    { emoji: '📈', name: 'Crecimiento' },
+    { emoji: '🏆', name: 'Éxito' },
+    { emoji: '📱', name: 'Digital' },
+    { emoji: '💳', name: 'Finanzas' },
+    { emoji: '📋', name: 'Gestión' },
+    { emoji: '🌐', name: 'Global' },
+    { emoji: '📞', name: 'Soporte' },
+    { emoji: '🔒', name: 'Seguridad' }
+  ];
+
   useEffect(() => {
     if (id) {
       loadTemplate();
@@ -289,14 +312,25 @@ const AdminAgentTemplateEdit = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="icon">Icono (Emoji)</Label>
-                  <Input
-                    id="icon"
-                    value={formData.icon}
-                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                    placeholder="🤖"
-                    maxLength={2}
-                  />
+                  <Label htmlFor="icon">Icono del Agente</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {icons.map(iconData => (
+                      <button
+                        key={iconData.emoji}
+                        type="button"
+                        className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-lg hover:border-primary transition-colors ${
+                          formData.icon === iconData.emoji ? 'border-primary bg-primary/10' : 'border-border'
+                        }`}
+                        onClick={() => setFormData({ ...formData, icon: iconData.emoji })}
+                        title={iconData.name}
+                      >
+                        {iconData.emoji}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Seleccionado: {formData.icon} {icons.find(i => i.emoji === formData.icon)?.name || 'Desconocido'}
+                  </p>
                 </div>
               </div>
 

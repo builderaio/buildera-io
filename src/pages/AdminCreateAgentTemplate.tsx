@@ -242,14 +242,36 @@ const AdminCreateAgentTemplate = () => {
   };
 
   const categories = [
+    { value: 'recursos_humanos', label: 'Recursos Humanos' },
+    { value: 'servicio_cliente', label: 'Servicio al Cliente' },
+    { value: 'contabilidad', label: 'Contabilidad' },
     { value: 'marketing', label: 'Marketing' },
     { value: 'analytics', label: 'Analytics' },
-    { value: 'research', label: 'Research' },
-    { value: 'automation', label: 'Automation' },
-    { value: 'general', label: 'General' },
+    { value: 'general', label: 'General' }
   ];
 
-  const icons = ['🤖', '🧠', '💼', '📊', '🔍', '⚡', '🎯', '🚀', '💡', '🔧'];
+  const icons = [
+    { emoji: '🤖', name: 'Robot' },
+    { emoji: '🧠', name: 'Cerebro' },
+    { emoji: '💼', name: 'Negocios' },
+    { emoji: '📊', name: 'Analytics' },
+    { emoji: '🔍', name: 'Investigación' },
+    { emoji: '⚡', name: 'Automatización' },
+    { emoji: '🎯', name: 'Objetivos' },
+    { emoji: '🚀', name: 'Productividad' },
+    { emoji: '💡', name: 'Ideas' },
+    { emoji: '🔧', name: 'Herramientas' },
+    { emoji: '👥', name: 'Recursos Humanos' },
+    { emoji: '💬', name: 'Comunicación' },
+    { emoji: '📈', name: 'Crecimiento' },
+    { emoji: '🏆', name: 'Éxito' },
+    { emoji: '📱', name: 'Digital' },
+    { emoji: '💳', name: 'Finanzas' },
+    { emoji: '📋', name: 'Gestión' },
+    { emoji: '🌐', name: 'Global' },
+    { emoji: '📞', name: 'Soporte' },
+    { emoji: '🔒', name: 'Seguridad' }
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -338,21 +360,25 @@ const AdminCreateAgentTemplate = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="icon">Icono</Label>
-                  <div className="flex gap-2 flex-wrap">
-                    {icons.map(icon => (
+                  <Label htmlFor="icon">Icono del Agente</Label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {icons.map(iconData => (
                       <button
-                        key={icon}
+                        key={iconData.emoji}
                         type="button"
-                        className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-lg hover:border-primary ${
-                          formData.icon === icon ? 'border-primary bg-primary/10' : 'border-border'
+                        className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-lg hover:border-primary transition-colors ${
+                          formData.icon === iconData.emoji ? 'border-primary bg-primary/10' : 'border-border'
                         }`}
-                        onClick={() => setFormData({...formData, icon})}
+                        onClick={() => setFormData({...formData, icon: iconData.emoji})}
+                        title={iconData.name}
                       >
-                        {icon}
+                        {iconData.emoji}
                       </button>
                     ))}
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Seleccionado: {formData.icon} {icons.find(i => i.emoji === formData.icon)?.name || 'Desconocido'}
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pricing_model">Modelo de Precio</Label>

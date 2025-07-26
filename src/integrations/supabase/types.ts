@@ -1131,6 +1131,47 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_configurations: {
+        Row: {
+          access_level: string
+          agent_id: string
+          analytics_enabled: boolean
+          created_at: string
+          dashboard_id: string
+          id: string
+          real_time_updates: boolean
+          updated_at: string
+        }
+        Insert: {
+          access_level?: string
+          agent_id: string
+          analytics_enabled?: boolean
+          created_at?: string
+          dashboard_id: string
+          id?: string
+          real_time_updates?: boolean
+          updated_at?: string
+        }
+        Update: {
+          access_level?: string
+          agent_id?: string
+          analytics_enabled?: boolean
+          created_at?: string
+          dashboard_id?: string
+          id?: string
+          real_time_updates?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_configurations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_processing_jobs: {
         Row: {
           completed_at: string | null
@@ -1181,6 +1222,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      email_integrations: {
+        Row: {
+          agent_id: string
+          created_at: string
+          email_address: string
+          id: string
+          imap_server: string
+          smtp_server: string
+          status: string
+          updated_at: string
+          webhook_url: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          email_address: string
+          id?: string
+          imap_server: string
+          smtp_server: string
+          status?: string
+          updated_at?: string
+          webhook_url: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          email_address?: string
+          id?: string
+          imap_server?: string
+          smtp_server?: string
+          status?: string
+          updated_at?: string
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_integrations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_instances"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       era_prompt_templates: {
         Row: {
@@ -2189,6 +2274,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      widget_configurations: {
+        Row: {
+          agent_id: string
+          company_logo: string | null
+          company_name: string | null
+          created_at: string
+          id: string
+          primary_color: string | null
+          updated_at: string
+          widget_id: string
+          widget_type: string
+        }
+        Insert: {
+          agent_id: string
+          company_logo?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          primary_color?: string | null
+          updated_at?: string
+          widget_id: string
+          widget_type?: string
+        }
+        Update: {
+          agent_id?: string
+          company_logo?: string | null
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          primary_color?: string | null
+          updated_at?: string
+          widget_id?: string
+          widget_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "widget_configurations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_instances"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

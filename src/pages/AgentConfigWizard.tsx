@@ -153,11 +153,10 @@ const AgentConfigWizard = () => {
         .replace(/\{\{company_name\}\}/g, profile?.company_name || 'Tu empresa')
         .replace(/\{\{industry\}\}/g, profile?.industry || 'tu industria');
 
-      const { error } = await supabase
-        .from('agent_instances')
-        .insert({
+      // Usar edge function para desplegar el agente con integraciones reales
+      const { data, error } = await supabase.functions.invoke('deploy-agent-instance', {
+        body: {
           template_id: templateId,
-          user_id: user.id,
           name: agentName,
           contextualized_instructions: contextualizedInstructions,
           tenant_config: {
@@ -165,18 +164,23 @@ const AgentConfigWizard = () => {
             industry: profile?.industry,
             interface_configs: interfaceConfigs.filter(c => c.enabled),
             knowledge_base: knowledgeBaseConfig,
-          } as any,
-          tools_permissions: template?.tools_config as any,
-        });
+          },
+          tools_permissions: template?.tools_config,
+        }
+      });
 
       if (error) throw error;
 
+      // Guardar las URLs generadas para mostrar en el paso 5
+      setDeployedUrls(data.interface_urls);
+
       toast({
         title: "¡Agente desplegado exitosamente!",
-        description: `${agentName} está listo para trabajar`,
+        description: `${agentName} está listo para trabajar con interfaces únicas`,
       });
 
-      navigate('/company-dashboard?view=mis-agentes');
+      // Ir al paso de URLs generadas antes de finalizar
+      setCurrentStep(5);
     } catch (error) {
       console.error('Error deploying agent:', error);
       toast({
@@ -514,75 +518,156 @@ const AgentConfigWizard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ExternalLink className="w-5 h-5" />
-                URLs de Integración
+                URLs de Integración Generadas
               </CardTitle>
               <CardDescription>
-                Enlaces y configuraciones para integrar tu agente
+                Interfaces únicas para tu empresa - Estas URLs son exclusivas para ti
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {interfaceConfigs.filter(c => c.enabled).map(config => {
-                const IconComponent = getInterfaceIcon(config.id);
-                let url = '';
-                let description = '';
+              {Object.entries(deployedUrls).map(([key, value]: [string, any]) => {
+                const interfaceConfig = interfaceConfigs.find(c => c.enabled && (
+                  (key === 'chat' && c.id === 'chat') ||
+                  (key === 'api' && c.id === 'api_webhook') ||
+                  (key === 'widget' && c.id === 'web_widget') ||
+                  (key === 'email' && c.id === 'email_monitor') ||
+                  (key === 'dashboard' && c.id === 'dashboard')
+                ));
                 
-                switch (config.id) {
-                  case 'api_webhook':
-                    url = generateApiUrl('temp-agent-id');
-                    description = 'Usa esta URL para integrar el agente mediante API REST';
-                    break;
-                  case 'web_widget':
-                    url = generateWebWidgetUrl('temp-agent-id');
-                    description = 'Embed este widget en tu sitio web con el branding configurado';
-                    break;
-                  case 'dashboard':
-                    url = generateDashboardUrl('temp-agent-id');
-                    description = 'Dashboard ejecutivo para ver métricas y analytics';
-                    break;
-                  case 'email_monitor':
-                    description = 'El agente monitoreará los emails configurados automáticamente';
-                    break;
-                  case 'chat':
-                    url = `https://chat.buildera.ai/temp-agent-id`;
-                    description = 'Chat directo con tu agente personalizado';
-                    break;
-                }
+                if (!interfaceConfig) return null;
 
+                const IconComponent = getInterfaceIcon(interfaceConfig.id);
+                
                 return (
-                  <div key={config.id} className="border rounded-lg p-4">
-                    <div className="flex items-center gap-3 mb-3">
+                  <div key={key} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-3">
                       <IconComponent className="w-5 h-5 text-primary" />
-                      <h4 className="font-medium">{getInterfaceName(config.id)}</h4>
+                      <h4 className="font-medium">{getInterfaceName(interfaceConfig.id)}</h4>
+                      <Badge variant="outline" className="text-green-600 border-green-200">
+                        Activo
+                      </Badge>
                     </div>
                     
-                    <p className="text-sm text-muted-foreground mb-3">{description}</p>
-                    
-                    {url && (
-                      <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                        <code className="flex-1 text-sm font-mono truncate">{url}</code>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigator.clipboard.writeText(url)}
-                        >
-                          <Copy className="w-3 h-3" />
-                        </Button>
+                    {value.url && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">URL Principal:</Label>
+                        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                          <code className="flex-1 text-sm font-mono truncate">{value.url}</code>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigator.clipboard.writeText(value.url)}
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(value.url, '_blank')}
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     )}
 
-                    {config.id === 'web_widget' && (
-                      <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                        <Label className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                          Código de Integración:
-                        </Label>
-                        <code className="block mt-2 text-xs font-mono text-blue-800 dark:text-blue-200">
-                          {`<script src="${url}"></script>`}
-                        </code>
+                    {value.api_key && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">API Key:</Label>
+                        <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
+                          <code className="flex-1 text-sm font-mono truncate">{value.api_key}</code>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigator.clipboard.writeText(value.api_key)}
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {value.embed_code && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Código de Integración:</Label>
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                          <code className="block text-xs font-mono text-blue-800 dark:text-blue-200 whitespace-pre-wrap">
+                            {value.embed_code}
+                          </code>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2"
+                            onClick={() => navigator.clipboard.writeText(value.embed_code)}
+                          >
+                            <Copy className="w-3 h-3 mr-1" />
+                            Copiar Código
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {value.access_token && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Token de Acceso:</Label>
+                        <div className="flex items-center gap-2 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                          <code className="flex-1 text-sm font-mono truncate">{value.access_token}</code>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigator.clipboard.writeText(value.access_token)}
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {value.webhook_url && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Webhook URL:</Label>
+                        <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                          <code className="flex-1 text-sm font-mono truncate">{value.webhook_url}</code>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigator.clipboard.writeText(value.webhook_url)}
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {value.documentation && (
+                      <div className="pt-2">
+                        <Button
+                          size="sm"
+                          variant="link"
+                          onClick={() => window.open(value.documentation, '_blank')}
+                          className="h-auto p-0 text-blue-600"
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          Ver Documentación
+                        </Button>
                       </div>
                     )}
                   </div>
                 );
               })}
+
+              <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-green-900 dark:text-green-100">¡Agente Desplegado!</h4>
+                    <p className="text-sm text-green-700 dark:text-green-200 mt-1">
+                      Tu agente está activo y las interfaces están listas para usar. 
+                      Estas URLs son únicas para tu empresa y no se compartirán con otras organizaciones.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         );
@@ -747,7 +832,15 @@ const AgentConfigWizard = () => {
               Siguiente
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-          ) : (
+          ) : currentStep === 5 ? (
+            <Button
+              onClick={() => navigate('/company-dashboard?view=mis-agentes')}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Ir a Mis Agentes
+            </Button>
+          ) : currentStep === 6 ? (
             <Button
               onClick={deployAgent}
               disabled={loading || interfaceConfigs.filter(c => c.enabled).length === 0}
@@ -765,7 +858,7 @@ const AgentConfigWizard = () => {
                 </>
               )}
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

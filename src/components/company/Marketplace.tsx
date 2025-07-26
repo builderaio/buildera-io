@@ -183,65 +183,43 @@ const Marketplace: React.FC = () => {
     }
 
     try {
-      // Obtener la plantilla del agente
-      const { data: template, error: templateError } = await supabase
-        .from('agent_templates')
-        .select('*')
-        .eq('id', agentId)
-        .single();
-
-      if (templateError) throw templateError;
-
-      // Obtener el perfil del usuario para personalización
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_name, industry')
+      // Verificar si ya existe una instancia de este template para el usuario
+      const { data: existingInstance, error: checkError } = await supabase
+        .from('agent_instances')
+        .select('id')
+        .eq('template_id', agentId)
         .eq('user_id', user.id)
         .single();
 
-      // Contextualizar las instrucciones
-      const contextualizedInstructions = template.instructions_template
-        ?.replace(/\{\{company_name\}\}/g, profile?.company_name || 'Tu empresa')
-        .replace(/\{\{industry\}\}/g, profile?.industry || 'tu industria');
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
 
-      // Crear la instancia del agente
-      const { error: instanceError } = await supabase
-        .from('agent_instances')
-        .insert({
-          template_id: template.id,
-          user_id: user.id,
-          name: `${template.name} - ${profile?.company_name || 'Mi Empresa'}`,
-          contextualized_instructions: contextualizedInstructions || template.instructions_template,
-          tenant_config: {
-            company_name: profile?.company_name,
-            industry: profile?.industry,
-          },
-          tools_permissions: template.tools_config,
-        });
-
-      if (instanceError) throw instanceError;
-
-      await loadData(); // Recargar datos
-      
-      toast({
-        title: "Agente agregado",
-        description: `${template.name} ha sido agregado a tu workspace`,
-      });
-    } catch (error: any) {
-      if (error.code === '23505') { // Unique constraint violation
+      if (existingInstance) {
         toast({
           title: "Agente ya agregado",
           description: "Este agente ya está en tu workspace",
           variant: "destructive",
         });
-      } else {
-        console.error('Error adding agent:', error);
-        toast({
-          title: "Error",
-          description: "Error agregando el agente",
-          variant: "destructive",
-        });
+        return;
       }
+
+      // Redirigir al wizard de configuración en lugar de crear directamente
+      toast({
+        title: "Configurando agente",
+        description: "Te llevamos al asistente de configuración",
+      });
+      
+      // Usar navigate desde react-router-dom
+      window.location.href = `/marketplace/agents/${agentId}/configure`;
+      
+    } catch (error: any) {
+      console.error('Error checking agent:', error);
+      toast({
+        title: "Error",
+        description: "Error verificando el agente",
+        variant: "destructive",
+      });
     }
   };
 

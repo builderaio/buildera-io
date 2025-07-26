@@ -76,19 +76,49 @@ const Marketplace: React.FC = () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
 
-      const [categoriesResult, agentsResult] = await Promise.all([
-        supabase.from('agent_categories').select('*').order('name'),
-        supabase.from('ai_agents').select('*').eq('is_active', true).order('popularity_score', { ascending: false })
-      ]);
+      // Cargar plantillas de agentes activas desde el portal admin
+      const { data: templatesData, error: templatesError } = await supabase
+        .from('agent_templates')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
-      if (categoriesResult.error) throw categoriesResult.error;
-      if (agentsResult.error) throw agentsResult.error;
+      if (templatesError) throw templatesError;
 
-      setCategories(categoriesResult.data || []);
-      setAgents((agentsResult.data || []).map(agent => ({
-        ...agent,
-        sample_conversations: Array.isArray(agent.sample_conversations) ? agent.sample_conversations : []
-      })));
+      // Crear categorías únicas basadas en las plantillas
+      const uniqueCategories = [...new Set((templatesData || []).map(t => t.category))].map(category => ({
+        id: category,
+        name: category.charAt(0).toUpperCase() + category.slice(1),
+        description: `Agentes especializados en ${category}`,
+        icon: 'TrendingUp',
+        color: 'primary'
+      }));
+
+      setCategories(uniqueCategories);
+
+      // Transformar las plantillas al formato esperado por el marketplace
+      const transformedAgents = (templatesData || []).map(template => ({
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        detailed_description: template.description,
+        category_id: template.category,
+        capabilities: Array.isArray(template.tools_config) ? template.tools_config.map((tool: any) => tool.name || tool.type || 'Herramienta') : [],
+        use_cases: [template.description],
+        pricing_model: template.pricing_model,
+        price_per_use: template.pricing_amount || 0,
+        monthly_price: template.pricing_amount || 0,
+        avatar_url: undefined,
+        is_active: template.is_active,
+        popularity_score: template.is_featured ? 100 : 50,
+        rating: 4.5,
+        total_ratings: 10,
+        model_provider: 'OpenAI',
+        model_name: 'GPT-4',
+        sample_conversations: []
+      }));
+
+      setAgents(transformedAgents);
 
       // Load user agents separately if user exists
       if (user) {

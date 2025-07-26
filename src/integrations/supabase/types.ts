@@ -85,6 +85,225 @@ export type Database = {
           },
         ]
       }
+      agent_instances: {
+        Row: {
+          contextualized_instructions: string
+          created_at: string
+          id: string
+          last_used_at: string | null
+          name: string
+          openai_agent_id: string | null
+          status: string
+          template_id: string
+          tenant_config: Json | null
+          tools_permissions: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contextualized_instructions: string
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          name: string
+          openai_agent_id?: string | null
+          status?: string
+          template_id: string
+          tenant_config?: Json | null
+          tools_permissions?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contextualized_instructions?: string
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          openai_agent_id?: string | null
+          status?: string
+          template_id?: string
+          tenant_config?: Json | null
+          tools_permissions?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_instances_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "agent_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_knowledge_files: {
+        Row: {
+          agent_instance_id: string
+          created_at: string
+          description: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          metadata: Json | null
+          openai_file_id: string | null
+          processing_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_instance_id: string
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          metadata?: Json | null
+          openai_file_id?: string | null
+          processing_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_instance_id?: string
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          metadata?: Json | null
+          openai_file_id?: string | null
+          processing_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_knowledge_files_agent_instance_id_fkey"
+            columns: ["agent_instance_id"]
+            isOneToOne: false
+            referencedRelation: "agent_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_logs: {
+        Row: {
+          agent_instance_id: string | null
+          created_at: string
+          id: string
+          log_level: string
+          message: string
+          metadata: Json | null
+          mission_id: string | null
+        }
+        Insert: {
+          agent_instance_id?: string | null
+          created_at?: string
+          id?: string
+          log_level?: string
+          message: string
+          metadata?: Json | null
+          mission_id?: string | null
+        }
+        Update: {
+          agent_instance_id?: string | null
+          created_at?: string
+          id?: string
+          log_level?: string
+          message?: string
+          metadata?: Json | null
+          mission_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_logs_agent_instance_id_fkey"
+            columns: ["agent_instance_id"]
+            isOneToOne: false
+            referencedRelation: "agent_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_logs_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "agent_missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_missions: {
+        Row: {
+          agent_instance_id: string
+          completed_at: string | null
+          created_at: string
+          description: string
+          error_message: string | null
+          id: string
+          mission_context: Json | null
+          openai_run_id: string | null
+          priority: number | null
+          progress: number | null
+          results: Json | null
+          started_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_instance_id: string
+          completed_at?: string | null
+          created_at?: string
+          description: string
+          error_message?: string | null
+          id?: string
+          mission_context?: Json | null
+          openai_run_id?: string | null
+          priority?: number | null
+          progress?: number | null
+          results?: Json | null
+          started_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_instance_id?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          error_message?: string | null
+          id?: string
+          mission_context?: Json | null
+          openai_run_id?: string | null
+          priority?: number | null
+          progress?: number | null
+          results?: Json | null
+          started_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_missions_agent_instance_id_fkey"
+            columns: ["agent_instance_id"]
+            isOneToOne: false
+            referencedRelation: "agent_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_ratings: {
         Row: {
           agent_id: string | null
@@ -119,6 +338,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      agent_templates: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          instructions_template: string
+          is_active: boolean
+          is_featured: boolean
+          name: string
+          permissions_template: Json | null
+          pricing_amount: number | null
+          pricing_model: string
+          tools_config: Json | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          instructions_template: string
+          is_active?: boolean
+          is_featured?: boolean
+          name: string
+          permissions_template?: Json | null
+          pricing_amount?: number | null
+          pricing_model?: string
+          tools_config?: Json | null
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          instructions_template?: string
+          is_active?: boolean
+          is_featured?: boolean
+          name?: string
+          permissions_template?: Json | null
+          pricing_amount?: number | null
+          pricing_model?: string
+          tools_config?: Json | null
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
       }
       ai_agents: {
         Row: {

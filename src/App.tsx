@@ -31,6 +31,11 @@ import AdminDatabase from "./pages/AdminDatabase";
 import AdminFunctionConfig from "./pages/AdminFunctionConfig";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import UserProfile from "./pages/UserProfile";
+import AdminAgentTemplates from "./pages/AdminAgentTemplates";
+import AdminCreateAgentTemplate from "./pages/AdminCreateAgentTemplate";
+import AgentMarketplace from "./pages/AgentMarketplace";
+import CompanyAgents from "./pages/CompanyAgents";
+import AgentConfigWizard from "./pages/AgentConfigWizard";
 
 import NotFound from "./pages/NotFound";
 
@@ -124,6 +129,21 @@ const App = () => {
                   <AdminFunctionConfig />
                 </AdminProtectedRoute>
               } />
+              <Route path="/admin/agent-templates" element={
+                <AdminProtectedRoute>
+                  <AdminAgentTemplates />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/agent-templates/create" element={
+                <AdminProtectedRoute>
+                  <AdminCreateAgentTemplate />
+                </AdminProtectedRoute>
+              } />
+              
+              {/* Company Routes */}
+              <Route path="/marketplace/agents" element={<AgentMarketplace />} />
+              <Route path="/marketplace/agents/:templateId/configure" element={<AgentConfigWizard />} />
+              <Route path="/company/agents" element={<CompanyAgents />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

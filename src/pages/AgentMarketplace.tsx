@@ -123,7 +123,7 @@ const AgentMarketplace = () => {
       });
 
       loadData(); // Recargar datos
-      navigate('/company/agents'); // Redirigir a la gestión de agentes
+      navigate('/marketplace/agents/' + template.id + '/configure');
     } catch (error) {
       console.error('Error contracting agent:', error);
       toast({

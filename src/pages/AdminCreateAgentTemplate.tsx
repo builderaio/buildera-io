@@ -8,7 +8,29 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Plus, X } from 'lucide-react';
+import { 
+  ArrowLeft,
+  Save,
+  X,
+  Bot, 
+  Plus, 
+  Settings, 
+  Play, 
+  Pause, 
+  Activity, 
+  FileText, 
+  Target,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Upload,
+  MessageSquare,
+  Globe,
+  Mail,
+  FileSpreadsheet,
+  Code,
+  Webhook
+} from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -19,6 +41,15 @@ interface ToolConfig {
   type: 'web_browser' | 'code_interpreter' | 'file_search' | 'function';
   enabled: boolean;
   config?: Record<string, any>;
+}
+
+interface InteractionInterface {
+  id: string;
+  name: string;
+  description: string;
+  icon: any;
+  category: 'conversational' | 'automation' | 'data' | 'integration';
+  config_schema: Record<string, any>;
 }
 
 const AdminCreateAgentTemplate = () => {
@@ -47,6 +78,83 @@ const AdminCreateAgentTemplate = () => {
 
   const [customFunctions, setCustomFunctions] = useState<string[]>([]);
   const [newFunction, setNewFunction] = useState('');
+  const [selectedInterfaces, setSelectedInterfaces] = useState<string[]>([]);
+
+  // Definir interfaces de interacción disponibles
+  const interactionInterfaces: InteractionInterface[] = [
+    {
+      id: 'chat',
+      name: 'Chat Conversacional',
+      description: 'Los usuarios interactúan con el agente mediante chat en tiempo real',
+      icon: MessageSquare,
+      category: 'conversational',
+      config_schema: {
+        welcome_message: 'string',
+        max_conversation_length: 'number',
+        response_style: 'enum'
+      }
+    },
+    {
+      id: 'form_wizard',
+      name: 'Formularios Inteligentes',
+      description: 'El agente presenta formularios dinámicos para recopilar información',
+      icon: FileText,
+      category: 'data',
+      config_schema: {
+        form_fields: 'array',
+        validation_rules: 'object',
+        completion_callback: 'string'
+      }
+    },
+    {
+      id: 'email_monitor',
+      name: 'Monitor de Correos',
+      description: 'El agente lee y responde correos automáticamente',
+      icon: Mail,
+      category: 'automation',
+      config_schema: {
+        email_filters: 'array',
+        response_templates: 'object',
+        auto_reply_rules: 'object'
+      }
+    },
+    {
+      id: 'web_widget',
+      name: 'Widget Web',
+      description: 'Embebido en páginas web como chat o formulario',
+      icon: Globe,
+      category: 'integration',
+      config_schema: {
+        widget_style: 'object',
+        trigger_events: 'array',
+        page_integration: 'object'
+      }
+    },
+    {
+      id: 'api_webhook',
+      name: 'API/Webhook',
+      description: 'Recibe datos vía API y responde programáticamente',
+      icon: Webhook,
+      category: 'integration',
+      config_schema: {
+        webhook_url: 'string',
+        authentication: 'object',
+        response_format: 'enum'
+      }
+    },
+    {
+      id: 'dashboard',
+      name: 'Dashboard Ejecutivo',
+      description: 'Presenta resultados en dashboards visuales interactivos',
+      icon: FileSpreadsheet,
+      category: 'data',
+      config_schema: {
+        chart_types: 'array',
+        update_frequency: 'enum',
+        data_sources: 'array'
+      }
+    }
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +179,7 @@ const AdminCreateAgentTemplate = () => {
           permissions_template: {
             allowed_tools: tools.filter(t => t.enabled).map(t => t.type),
             custom_functions: customFunctions,
+            interaction_interfaces: selectedInterfaces,
           } as any,
           created_by: user?.username,
         });
@@ -112,6 +221,24 @@ const AdminCreateAgentTemplate = () => {
 
   const removeCustomFunction = (func: string) => {
     setCustomFunctions(customFunctions.filter(f => f !== func));
+  };
+
+  const toggleInterface = (interfaceId: string) => {
+    setSelectedInterfaces(prev => 
+      prev.includes(interfaceId)
+        ? prev.filter(id => id !== interfaceId)
+        : [...prev, interfaceId]
+    );
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colors = {
+      conversational: 'bg-blue-100 text-blue-800',
+      automation: 'bg-green-100 text-green-800',
+      data: 'bg-purple-100 text-purple-800',
+      integration: 'bg-orange-100 text-orange-800'
+    };
+    return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
   const categories = [
@@ -355,6 +482,84 @@ Siempre mantén un tono profesional y basa tus análisis en datos concretos.`}
                   ))}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Interfaces de Interacción */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Interfaces de Interacción</CardTitle>
+              <CardDescription>
+                Define cómo los usuarios interactuarán con este agente. Puedes seleccionar múltiples interfaces.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {interactionInterfaces.map(interactionInterface => {
+                  const IconComponent = interactionInterface.icon;
+                  const isSelected = selectedInterfaces.includes(interactionInterface.id);
+                  
+                  return (
+                    <div
+                      key={interactionInterface.id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'border-primary bg-primary/5 ring-1 ring-primary' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      onClick={() => toggleInterface(interactionInterface.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                        }`}>
+                          <IconComponent className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium">{interactionInterface.name}</h4>
+                            <Badge 
+                              variant="outline" 
+                              className={getCategoryColor(interactionInterface.category)}
+                            >
+                              {interactionInterface.category}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {interactionInterface.description}
+                          </p>
+                        </div>
+                        {isSelected && (
+                          <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {selectedInterfaces.length > 0 && (
+                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                  <div className="text-sm font-medium mb-2">Interfaces seleccionadas:</div>
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedInterfaces.map(interfaceId => {
+                      const interactionInterface = interactionInterfaces.find(i => i.id === interfaceId);
+                      return interactionInterface ? (
+                        <Badge key={interfaceId} variant="secondary">
+                          {interactionInterface.name}
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              {selectedInterfaces.length === 0 && (
+                <div className="text-center py-4 text-muted-foreground">
+                  <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>Selecciona al menos una interfaz de interacción</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

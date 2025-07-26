@@ -120,15 +120,25 @@ const Marketplace: React.FC = () => {
 
       setAgents(transformedAgents);
 
-      // Load user agents separately if user exists
+      // Cargar instancias de agentes del usuario si existe
       if (user) {
-        const { data: userAgentsData, error: userAgentsError } = await supabase
-          .from('user_agents')
-          .select('*')
+        const { data: instancesData, error: instancesError } = await supabase
+          .from('agent_instances')
+          .select('id, template_id, name, status')
           .eq('user_id', user.id);
         
-        if (userAgentsError) throw userAgentsError;
-        setUserAgents(userAgentsData || []);
+        if (instancesError) throw instancesError;
+        
+        // Mapear instancias al formato esperado por userAgents para compatibilidad
+        const userAgentsCompatible = (instancesData || []).map(instance => ({
+          id: instance.id,
+          agent_id: instance.template_id,
+          custom_name: instance.name,
+          is_favorite: false,
+          usage_count: 0
+        }));
+        
+        setUserAgents(userAgentsCompatible);
       } else {
         setUserAgents([]);
       }
@@ -173,20 +183,49 @@ const Marketplace: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('user_agents')
+      // Obtener la plantilla del agente
+      const { data: template, error: templateError } = await supabase
+        .from('agent_templates')
+        .select('*')
+        .eq('id', agentId)
+        .single();
+
+      if (templateError) throw templateError;
+
+      // Obtener el perfil del usuario para personalización
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_name, industry')
+        .eq('user_id', user.id)
+        .single();
+
+      // Contextualizar las instrucciones
+      const contextualizedInstructions = template.instructions_template
+        ?.replace(/\{\{company_name\}\}/g, profile?.company_name || 'Tu empresa')
+        .replace(/\{\{industry\}\}/g, profile?.industry || 'tu industria');
+
+      // Crear la instancia del agente
+      const { error: instanceError } = await supabase
+        .from('agent_instances')
         .insert({
+          template_id: template.id,
           user_id: user.id,
-          agent_id: agentId
+          name: `${template.name} - ${profile?.company_name || 'Mi Empresa'}`,
+          contextualized_instructions: contextualizedInstructions || template.instructions_template,
+          tenant_config: {
+            company_name: profile?.company_name,
+            industry: profile?.industry,
+          },
+          tools_permissions: template.tools_config,
         });
 
-      if (error) throw error;
+      if (instanceError) throw instanceError;
 
       await loadData(); // Recargar datos
       
       toast({
         title: "Agente agregado",
-        description: "El agente ha sido agregado a tu workspace",
+        description: `${template.name} ha sido agregado a tu workspace`,
       });
     } catch (error: any) {
       if (error.code === '23505') { // Unique constraint violation

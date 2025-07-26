@@ -35,6 +35,7 @@ import AdminAgentTemplates from "./pages/AdminAgentTemplates";
 import AdminCreateAgentTemplate from "./pages/AdminCreateAgentTemplate";
 import AdminAgentTemplateView from "./pages/AdminAgentTemplateView";
 import AdminAgentTemplateEdit from "./pages/AdminAgentTemplateEdit";
+import AdminAgentTemplateVersions from "./pages/AdminAgentTemplateVersions";
 import AgentMarketplace from "./pages/AgentMarketplace";
 import CompanyAgents from "./pages/CompanyAgents";
 import AgentConfigWizard from "./pages/AgentConfigWizard";
@@ -149,6 +150,11 @@ const App = () => {
               <Route path="/admin/agent-templates/:id/edit" element={
                 <AdminProtectedRoute>
                   <AdminAgentTemplateEdit />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/agent-templates/:id/versions" element={
+                <AdminProtectedRoute>
+                  <AdminAgentTemplateVersions />
                 </AdminProtectedRoute>
               } />
               

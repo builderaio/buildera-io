@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Settings, Copy, Eye, Users } from 'lucide-react';
+import { ArrowLeft, Settings, Copy, Eye, Users, History } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import ThemeSelector from '@/components/ThemeSelector';
+import AgentTemplateVersionHistory from '@/components/admin/AgentTemplateVersionHistory';
 
 interface AgentTemplate {
   id: string;
@@ -137,6 +138,15 @@ const AdminAgentTemplateView = () => {
             </div>
             
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/admin/agent-templates/${template.id}/versions`)}
+                className="flex items-center gap-2"
+              >
+                <History className="w-4 h-4" />
+                <span className="hidden sm:inline">Versiones</span>
+              </Button>
               <Button
                 onClick={() => navigate(`/admin/agent-templates/${template.id}/edit`)}
                 size="sm"

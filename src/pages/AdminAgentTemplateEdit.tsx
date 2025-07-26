@@ -53,6 +53,8 @@ const AdminAgentTemplateEdit = () => {
     version: '1.0.0'
   });
 
+  const [changeNotes, setChangeNotes] = useState('');
+
   const categories = [
     { value: 'recursos_humanos', label: 'Recursos Humanos' },
     { value: 'servicio_cliente', label: 'Servicio al Cliente' },
@@ -133,6 +135,15 @@ const AdminAgentTemplateEdit = () => {
     }
   };
 
+  const generateNewVersion = (currentVersion: string): string => {
+    const parts = currentVersion.split('.');
+    const major = parseInt(parts[0]) || 1;
+    const minor = parseInt(parts[1]) || 0;
+    const patch = parseInt(parts[2]) || 0;
+    
+    return `${major}.${minor}.${patch + 1}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!template) return;
@@ -140,6 +151,9 @@ const AdminAgentTemplateEdit = () => {
     setSaving(true);
     
     try {
+      // Generar nueva versión automáticamente
+      const newVersion = generateNewVersion(template.version);
+      
       const { error } = await supabase
         .from('agent_templates')
         .update({
@@ -152,16 +166,31 @@ const AdminAgentTemplateEdit = () => {
           icon: formData.icon,
           is_active: formData.is_active,
           is_featured: formData.is_featured,
-          version: formData.version,
+          version: newVersion, // Usar la nueva versión generada
           updated_at: new Date().toISOString()
         })
         .eq('id', template.id);
 
       if (error) throw error;
 
+      // Si hay notas de cambio, actualizar la entrada más reciente en el historial
+      if (changeNotes.trim()) {
+        const { error: versionError } = await supabase
+          .from('agent_template_versions')
+          .update({
+            change_notes: changeNotes
+          })
+          .eq('template_id', template.id)
+          .eq('version_number', newVersion);
+
+        if (versionError) {
+          console.warn('No se pudieron actualizar las notas de versión:', versionError);
+        }
+      }
+
       toast({
         title: "Éxito",
-        description: "Plantilla actualizada correctamente",
+        description: `Plantilla actualizada a versión ${newVersion}`,
       });
 
       navigate(`/admin/agent-templates/${template.id}`);
@@ -399,16 +428,6 @@ const AdminAgentTemplateEdit = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="version">Versión</Label>
-                <Input
-                  id="version"
-                  value={formData.version}
-                  onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                  placeholder="1.0.0"
-                  required
-                />
-              </div>
             </CardContent>
           </Card>
 
@@ -474,6 +493,31 @@ const AdminAgentTemplateEdit = () => {
                   checked={formData.is_featured}
                   onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notas de versión */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Notas de la Versión</CardTitle>
+              <CardDescription>
+                Describe qué cambios se realizaron en esta actualización
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="changeNotes">¿Qué cambiaste?</Label>
+                <Textarea
+                  id="changeNotes"
+                  value={changeNotes}
+                  onChange={(e) => setChangeNotes(e.target.value)}
+                  placeholder="Ej: Actualizado el prompt principal, mejoradas las instrucciones de manejo de datos..."
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Estas notas aparecerán en el historial de versiones para facilitar el seguimiento de cambios
+                </p>
               </div>
             </CardContent>
           </Card>

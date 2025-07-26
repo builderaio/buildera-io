@@ -339,6 +339,74 @@ export type Database = {
           },
         ]
       }
+      agent_template_versions: {
+        Row: {
+          category: string
+          change_notes: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          instructions_template: string
+          is_active: boolean
+          is_featured: boolean
+          name: string
+          permissions_template: Json | null
+          pricing_amount: number | null
+          pricing_model: string
+          template_id: string
+          tools_config: Json | null
+          version_number: string
+        }
+        Insert: {
+          category?: string
+          change_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          instructions_template: string
+          is_active?: boolean
+          is_featured?: boolean
+          name: string
+          permissions_template?: Json | null
+          pricing_amount?: number | null
+          pricing_model?: string
+          template_id: string
+          tools_config?: Json | null
+          version_number: string
+        }
+        Update: {
+          category?: string
+          change_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          instructions_template?: string
+          is_active?: boolean
+          is_featured?: boolean
+          name?: string
+          permissions_template?: Json | null
+          pricing_amount?: number | null
+          pricing_model?: string
+          template_id?: string
+          tools_config?: Json | null
+          version_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "agent_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_templates: {
         Row: {
           category: string
@@ -2286,6 +2354,14 @@ export type Database = {
       remove_linked_provider: {
         Args: { _user_id: string; _provider: string }
         Returns: undefined
+      }
+      restore_agent_template_version: {
+        Args: {
+          template_id_param: string
+          version_number_param: string
+          new_version_param: string
+        }
+        Returns: boolean
       }
       sparsevec_out: {
         Args: { "": unknown }

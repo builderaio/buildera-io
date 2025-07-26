@@ -1,4 +1,4 @@
-import { Activity, Building, Users, Settings, Bell, Calendar, Search, FolderOpen, GraduationCap, Store, MessageSquare, User, Menu, X } from "lucide-react";
+import { Activity, Building, Users, Settings, Bell, Calendar, Search, FolderOpen, GraduationCap, Store, MessageSquare, User, Menu, X, Bot } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import ThemeSelector from "@/components/ThemeSelector";
 
@@ -40,6 +40,13 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut, isMobil
       ]
     },
     {
+      category: "Agentes IA", 
+      items: [
+        { id: "mis-agentes", label: "Mis Agentes", icon: Bot },
+        { id: "marketplace", label: "Marketplace", icon: Store },
+      ]
+    },
+    {
       category: "Operaciones", 
       items: [
         { id: "marketing-hub", label: "Marketing Hub", icon: Bell },
@@ -50,7 +57,6 @@ const CompanySidebar = ({ activeView, setActiveView, profile, onSignOut, isMobil
       category: "Recursos",
       items: [
         { id: "academia-buildera", label: "Academia Buildera", icon: GraduationCap },
-        { id: "marketplace", label: "Marketplace", icon: Store },
         { id: "expertos", label: "Conectar Expertos", icon: Users },
       ]
     }

@@ -15,6 +15,7 @@ import Marketplace from "@/components/company/Marketplace";
 import Expertos from "@/components/company/Expertos";
 import Configuracion from "@/components/company/Configuracion";
 import UserProfile from "./UserProfile";
+import CompanyAgents from "./CompanyAgents";
 import EraCoachMark from "@/components/ui/era-coach-mark";
 import { useEraCoachMark } from "@/hooks/useEraCoachMark";
 import { User } from "@supabase/supabase-js";
@@ -188,6 +189,8 @@ const CompanyDashboard = () => {
         return <MandoCentral profile={profile} onNavigate={setActiveView} />;
       case "adn-empresa":
         return <ADNEmpresa profile={profile} onProfileUpdate={setProfile} />;
+      case "mis-agentes":
+        return <CompanyAgents />;
       case "marketing-hub":
         return <MarketingHub profile={profile} />;
       case "inteligencia-competitiva":

@@ -163,7 +163,7 @@ const AgentConfigWizard = () => {
         description: `${agentName} está listo para trabajar`,
       });
 
-      navigate('/company/agents');
+      navigate('/company-dashboard?view=mis-agentes');
     } catch (error) {
       console.error('Error deploying agent:', error);
       toast({

@@ -206,36 +206,47 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
             <p className="text-muted-foreground">
               Descubre asistentes inteligentes especializados para cada área de tu negocio.
             </p>
-            <button className="flex items-center text-primary hover:text-accent transition-colors">
+            <button 
+              onClick={() => onNavigate?.('marketplace')}
+              className="flex items-center text-primary hover:text-accent transition-colors"
+            >
               <Store className="w-5 h-5 mr-2" />
               <span>Ver Marketplace Completo</span>
             </button>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-primary/5 p-4 rounded-lg">
+            <div 
+              onClick={() => onNavigate?.('mis-agentes')}
+              className="bg-primary/5 p-4 rounded-lg cursor-pointer hover:bg-primary/10 transition-colors group"
+            >
               <div className="flex items-center mb-2">
                 <Bot className="w-5 h-5 text-primary mr-2" />
-                <h3 className="font-semibold text-primary">Agentes Activos</h3>
+                <h3 className="font-semibold text-primary">Mis Agentes</h3>
+                <ArrowRight className="w-4 h-4 ml-auto text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <p className="text-2xl font-bold">8</p>
-              <p className="text-sm text-muted-foreground">En funcionamiento</p>
+              <p className="text-2xl font-bold">0</p>
+              <p className="text-sm text-muted-foreground">Agentes contratados</p>
             </div>
-            <div className="bg-secondary/5 p-4 rounded-lg">
+            <div 
+              onClick={() => onNavigate?.('marketplace')}
+              className="bg-secondary/5 p-4 rounded-lg cursor-pointer hover:bg-secondary/10 transition-colors group"
+            >
               <div className="flex items-center mb-2">
                 <Store className="w-5 h-5 text-secondary mr-2" />
-                <h3 className="font-semibold text-secondary">Disponibles</h3>
+                <h3 className="font-semibold text-secondary">Marketplace</h3>
+                <ArrowRight className="w-4 h-4 ml-auto text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <p className="text-2xl font-bold">24</p>
-              <p className="text-sm text-muted-foreground">Agentes para instalar</p>
+              <p className="text-2xl font-bold">15</p>
+              <p className="text-sm text-muted-foreground">Agentes disponibles</p>
             </div>
             <div className="bg-accent/20 p-4 rounded-lg">
               <div className="flex items-center mb-2">
                 <UserCheck className="w-5 h-5 text-accent-foreground mr-2" />
-                <h3 className="font-semibold text-accent-foreground">Roles Cubiertos</h3>
+                <h3 className="font-semibold text-accent-foreground">Categorías</h3>
               </div>
-              <p className="text-2xl font-bold">12</p>
-              <p className="text-sm text-muted-foreground">Departamentos</p>
+              <p className="text-2xl font-bold">8</p>
+              <p className="text-sm text-muted-foreground">Especializaciones</p>
             </div>
           </div>
 
@@ -252,9 +263,14 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
                 { role: "IT/Desarrollo", agents: 3, color: "bg-cyan-100 text-cyan-800" },
                 { role: "Atención Cliente", agents: 5, color: "bg-pink-100 text-pink-800" }
               ].map((item, index) => (
-                <div key={index} className="bg-muted p-3 rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
-                  <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-1 ${item.color}`}>
-                    {item.role}
+                <div 
+                  key={index} 
+                  onClick={() => onNavigate?.('marketplace')}
+                  className="bg-muted p-3 rounded-lg hover:bg-muted/80 transition-colors cursor-pointer group"
+                >
+                  <div className={`inline-flex items-center justify-between w-full px-2 py-1 rounded-full text-xs font-medium mb-1 ${item.color}`}>
+                    <span>{item.role}</span>
+                    <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
                   <p className="text-sm font-semibold">{item.agents} agentes</p>
                 </div>

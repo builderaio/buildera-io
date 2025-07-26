@@ -38,6 +38,7 @@ import AdminAgentTemplateEdit from "./pages/AdminAgentTemplateEdit";
 import AdminAgentTemplateVersions from "./pages/AdminAgentTemplateVersions";
 import AgentMarketplace from "./pages/AgentMarketplace";
 import CompanyAgents from "./pages/CompanyAgents";
+import CompanyAgentView from "./pages/CompanyAgentView";
 import AgentConfigWizard from "./pages/AgentConfigWizard";
 
 import NotFound from "./pages/NotFound";
@@ -162,6 +163,7 @@ const App = () => {
               <Route path="/marketplace/agents" element={<AgentMarketplace />} />
               <Route path="/marketplace/agents/:templateId/configure" element={<AgentConfigWizard />} />
               <Route path="/company/agents" element={<CompanyAgents />} />
+              <Route path="/company/agents/:agentId" element={<CompanyAgentView />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

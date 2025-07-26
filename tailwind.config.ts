@@ -66,6 +66,32 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
+				},
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))'
+				},
+				category: {
+					'recursos-humanos': 'hsl(var(--category-recursos-humanos))',
+					'recursos-humanos-foreground': 'hsl(var(--category-recursos-humanos-foreground))',
+					'servicio-cliente': 'hsl(var(--category-servicio-cliente))',
+					'servicio-cliente-foreground': 'hsl(var(--category-servicio-cliente-foreground))',
+					'contabilidad': 'hsl(var(--category-contabilidad))',
+					'contabilidad-foreground': 'hsl(var(--category-contabilidad-foreground))',
+					'marketing': 'hsl(var(--category-marketing))',
+					'marketing-foreground': 'hsl(var(--category-marketing-foreground))',
+					'analytics': 'hsl(var(--category-analytics))',
+					'analytics-foreground': 'hsl(var(--category-analytics-foreground))',
+					'general': 'hsl(var(--category-general))',
+					'general-foreground': 'hsl(var(--category-general-foreground))'
 				}
 			},
 			borderRadius: {

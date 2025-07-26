@@ -132,11 +132,12 @@ const AdminAgentTemplates = () => {
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      'marketing': 'bg-blue-100 text-blue-800',
-      'analytics': 'bg-green-100 text-green-800',
-      'research': 'bg-purple-100 text-purple-800',
-      'automation': 'bg-orange-100 text-orange-800',
-      'general': 'bg-gray-100 text-gray-800',
+      'recursos_humanos': 'bg-category-recursos-humanos/10 text-category-recursos-humanos border-category-recursos-humanos/20',
+      'servicio_cliente': 'bg-category-servicio-cliente/10 text-category-servicio-cliente border-category-servicio-cliente/20',
+      'contabilidad': 'bg-category-contabilidad/10 text-category-contabilidad border-category-contabilidad/20',
+      'marketing': 'bg-category-marketing/10 text-category-marketing border-category-marketing/20',
+      'analytics': 'bg-category-analytics/10 text-category-analytics border-category-analytics/20',
+      'general': 'bg-category-general/10 text-category-general border-category-general/20',
     };
     return colors[category] || colors.general;
   };
@@ -223,7 +224,7 @@ const AdminAgentTemplates = () => {
                             {template.category}
                           </Badge>
                           {template.is_featured && (
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                            <Star className="w-4 h-4 text-warning fill-current" />
                           )}
                         </div>
                       </div>
@@ -245,7 +246,7 @@ const AdminAgentTemplates = () => {
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${template.is_active ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <div className={`w-2 h-2 rounded-full ${template.is_active ? 'bg-success' : 'bg-destructive'}`} />
                       <span className="text-sm text-muted-foreground">
                         {template.is_active ? 'Activo' : 'Inactivo'}
                       </span>
@@ -271,14 +272,14 @@ const AdminAgentTemplates = () => {
                         size="sm"
                         onClick={() => toggleFeatured(template.id, template.is_featured)}
                       >
-                        <Star className={`w-4 h-4 ${template.is_featured ? 'text-yellow-500 fill-current' : ''}`} />
+                        <Star className={`w-4 h-4 ${template.is_featured ? 'text-warning fill-current' : ''}`} />
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => deleteTemplate(template.id)}
                       >
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                        <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>
                   </div>

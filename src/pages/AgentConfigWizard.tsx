@@ -22,7 +22,13 @@ import {
   Webhook,
   FileText,
   Play,
-  Clock
+  Clock,
+  Upload,
+  Link,
+  Copy,
+  Eye,
+  ExternalLink,
+  PenTool
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -55,8 +61,14 @@ const AgentConfigWizard = () => {
   const [agentName, setAgentName] = useState('');
   const [customInstructions, setCustomInstructions] = useState('');
   const [interfaceConfigs, setInterfaceConfigs] = useState<InterfaceConfig[]>([]);
+  const [knowledgeBaseConfig, setKnowledgeBaseConfig] = useState({
+    sourceType: '', // 'file', 'url', 'text'
+    sourceContent: '',
+    sourceFile: null as File | null
+  });
+  const [deployedUrls, setDeployedUrls] = useState<Record<string, string>>({});
   
-  const totalSteps = 4;
+  const totalSteps = 6;
 
   useEffect(() => {
     if (templateId) {
@@ -152,6 +164,7 @@ const AgentConfigWizard = () => {
             company_name: profile?.company_name,
             industry: profile?.industry,
             interface_configs: interfaceConfigs.filter(c => c.enabled),
+            knowledge_base: knowledgeBaseConfig,
           } as any,
           tools_permissions: template?.tools_config as any,
         });
@@ -198,6 +211,18 @@ const AgentConfigWizard = () => {
       dashboard: 'Dashboard Ejecutivo',
     };
     return names[interfaceId] || interfaceId;
+  };
+
+  const generateApiUrl = (agentId: string) => {
+    return `https://api.buildera.ai/v1/agents/${agentId}/chat`;
+  };
+
+  const generateWebWidgetUrl = (agentId: string) => {
+    return `https://widget.buildera.ai/embed/${agentId}`;
+  };
+
+  const generateDashboardUrl = (agentId: string) => {
+    return `https://dashboard.buildera.ai/agents/${agentId}/analytics`;
   };
 
   const renderStepContent = () => {
@@ -248,6 +273,95 @@ const AgentConfigWizard = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
+                <PenTool className="w-5 h-5" />
+                Base de Conocimiento
+              </CardTitle>
+              <CardDescription>
+                Proporciona información específica de tu empresa para personalizar el agente
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <Label>Selecciona cómo proporcionar la información</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <Button
+                    variant={knowledgeBaseConfig.sourceType === 'file' ? 'default' : 'outline'}
+                    onClick={() => setKnowledgeBaseConfig({...knowledgeBaseConfig, sourceType: 'file'})}
+                    className="h-20 flex-col"
+                  >
+                    <Upload className="w-6 h-6 mb-2" />
+                    Archivo
+                  </Button>
+                  <Button
+                    variant={knowledgeBaseConfig.sourceType === 'url' ? 'default' : 'outline'}
+                    onClick={() => setKnowledgeBaseConfig({...knowledgeBaseConfig, sourceType: 'url'})}
+                    className="h-20 flex-col"
+                  >
+                    <Link className="w-6 h-6 mb-2" />
+                    URL
+                  </Button>
+                  <Button
+                    variant={knowledgeBaseConfig.sourceType === 'text' ? 'default' : 'outline'}
+                    onClick={() => setKnowledgeBaseConfig({...knowledgeBaseConfig, sourceType: 'text'})}
+                    className="h-20 flex-col"
+                  >
+                    <FileText className="w-6 h-6 mb-2" />
+                    Texto
+                  </Button>
+                </div>
+
+                {knowledgeBaseConfig.sourceType === 'file' && (
+                  <div className="space-y-2">
+                    <Label>Subir archivo (PDF, DOCX, TXT)</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      onChange={(e) => setKnowledgeBaseConfig({
+                        ...knowledgeBaseConfig,
+                        sourceFile: e.target.files?.[0] || null
+                      })}
+                    />
+                  </div>
+                )}
+
+                {knowledgeBaseConfig.sourceType === 'url' && (
+                  <div className="space-y-2">
+                    <Label>URL de información</Label>
+                    <Input
+                      value={knowledgeBaseConfig.sourceContent}
+                      onChange={(e) => setKnowledgeBaseConfig({
+                        ...knowledgeBaseConfig,
+                        sourceContent: e.target.value
+                      })}
+                      placeholder="https://empresa.com/sobre-nosotros"
+                    />
+                  </div>
+                )}
+
+                {knowledgeBaseConfig.sourceType === 'text' && (
+                  <div className="space-y-2">
+                    <Label>Información de la empresa</Label>
+                    <Textarea
+                      value={knowledgeBaseConfig.sourceContent}
+                      onChange={(e) => setKnowledgeBaseConfig({
+                        ...knowledgeBaseConfig,
+                        sourceContent: e.target.value
+                      })}
+                      rows={6}
+                      placeholder="Describe tu empresa, productos, servicios, valores, etc..."
+                    />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 3:
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                 <Settings className="w-5 h-5" />
                 Personalización de Instrucciones
               </CardTitle>
@@ -274,7 +388,7 @@ const AgentConfigWizard = () => {
           </Card>
         );
 
-      case 3:
+      case 4:
         return (
           <Card>
             <CardHeader>
@@ -322,11 +436,36 @@ const AgentConfigWizard = () => {
                         {config.id === 'email_monitor' && (
                           <>
                             <div className="space-y-2">
-                              <Label>Filtros de Email</Label>
+                              <Label>Email de la Empresa</Label>
                               <Input
-                                value={config.config.email_filters || ''}
-                                onChange={(e) => handleInterfaceConfig(config.id, 'email_filters', e.target.value)}
-                                placeholder="soporte@, ventas@"
+                                value={config.config.company_email || ''}
+                                onChange={(e) => handleInterfaceConfig(config.id, 'company_email', e.target.value)}
+                                placeholder="soporte@tuempresa.com"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Servidor IMAP</Label>
+                              <Input
+                                value={config.config.imap_server || ''}
+                                onChange={(e) => handleInterfaceConfig(config.id, 'imap_server', e.target.value)}
+                                placeholder="imap.gmail.com"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Servidor SMTP</Label>
+                              <Input
+                                value={config.config.smtp_server || ''}
+                                onChange={(e) => handleInterfaceConfig(config.id, 'smtp_server', e.target.value)}
+                                placeholder="smtp.gmail.com"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Contraseña de App</Label>
+                              <Input
+                                type="password"
+                                value={config.config.email_password || ''}
+                                onChange={(e) => handleInterfaceConfig(config.id, 'email_password', e.target.value)}
+                                placeholder="Contraseña de aplicación"
                               />
                             </div>
                           </>
@@ -335,11 +474,27 @@ const AgentConfigWizard = () => {
                         {config.id === 'web_widget' && (
                           <>
                             <div className="space-y-2">
-                              <Label>Color del Widget</Label>
+                              <Label>Color Principal</Label>
                               <Input
                                 type="color"
-                                value={config.config.widget_color || '#3b82f6'}
-                                onChange={(e) => handleInterfaceConfig(config.id, 'widget_color', e.target.value)}
+                                value={config.config.primary_color || '#3b82f6'}
+                                onChange={(e) => handleInterfaceConfig(config.id, 'primary_color', e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Logo de la Empresa (URL)</Label>
+                              <Input
+                                value={config.config.company_logo || ''}
+                                onChange={(e) => handleInterfaceConfig(config.id, 'company_logo', e.target.value)}
+                                placeholder="https://tuempresa.com/logo.png"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Nombre de la Empresa</Label>
+                              <Input
+                                value={config.config.company_name || ''}
+                                onChange={(e) => handleInterfaceConfig(config.id, 'company_name', e.target.value)}
+                                placeholder="Tu Empresa S.A."
                               />
                             </div>
                           </>
@@ -353,7 +508,86 @@ const AgentConfigWizard = () => {
           </Card>
         );
 
-      case 4:
+      case 5:
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ExternalLink className="w-5 h-5" />
+                URLs de Integración
+              </CardTitle>
+              <CardDescription>
+                Enlaces y configuraciones para integrar tu agente
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {interfaceConfigs.filter(c => c.enabled).map(config => {
+                const IconComponent = getInterfaceIcon(config.id);
+                let url = '';
+                let description = '';
+                
+                switch (config.id) {
+                  case 'api_webhook':
+                    url = generateApiUrl('temp-agent-id');
+                    description = 'Usa esta URL para integrar el agente mediante API REST';
+                    break;
+                  case 'web_widget':
+                    url = generateWebWidgetUrl('temp-agent-id');
+                    description = 'Embed este widget en tu sitio web con el branding configurado';
+                    break;
+                  case 'dashboard':
+                    url = generateDashboardUrl('temp-agent-id');
+                    description = 'Dashboard ejecutivo para ver métricas y analytics';
+                    break;
+                  case 'email_monitor':
+                    description = 'El agente monitoreará los emails configurados automáticamente';
+                    break;
+                  case 'chat':
+                    url = `https://chat.buildera.ai/temp-agent-id`;
+                    description = 'Chat directo con tu agente personalizado';
+                    break;
+                }
+
+                return (
+                  <div key={config.id} className="border rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <IconComponent className="w-5 h-5 text-primary" />
+                      <h4 className="font-medium">{getInterfaceName(config.id)}</h4>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground mb-3">{description}</p>
+                    
+                    {url && (
+                      <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                        <code className="flex-1 text-sm font-mono truncate">{url}</code>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => navigator.clipboard.writeText(url)}
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
+
+                    {config.id === 'web_widget' && (
+                      <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                        <Label className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                          Código de Integración:
+                        </Label>
+                        <code className="block mt-2 text-xs font-mono text-blue-800 dark:text-blue-200">
+                          {`<script src="${url}"></script>`}
+                        </code>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+
+      case 6:
         return (
           <Card>
             <CardHeader>
@@ -370,6 +604,26 @@ const AgentConfigWizard = () => {
                 <div>
                   <h4 className="font-medium text-sm text-muted-foreground">AGENTE</h4>
                   <p className="font-semibold">{agentName}</p>
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-medium text-sm text-muted-foreground mb-2">BASE DE CONOCIMIENTO</h4>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">
+                      {knowledgeBaseConfig.sourceType === 'file' && 'Archivo'}
+                      {knowledgeBaseConfig.sourceType === 'url' && 'URL'}
+                      {knowledgeBaseConfig.sourceType === 'text' && 'Texto'}
+                    </Badge>
+                    {knowledgeBaseConfig.sourceType && (
+                      <span className="text-sm text-muted-foreground">
+                        {knowledgeBaseConfig.sourceType === 'file' && knowledgeBaseConfig.sourceFile?.name}
+                        {knowledgeBaseConfig.sourceType === 'url' && knowledgeBaseConfig.sourceContent}
+                        {knowledgeBaseConfig.sourceType === 'text' && `${knowledgeBaseConfig.sourceContent.slice(0, 50)}...`}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 
                 <Separator />
@@ -483,7 +737,12 @@ const AgentConfigWizard = () => {
           {currentStep < totalSteps ? (
             <Button
               onClick={() => setCurrentStep(Math.min(totalSteps, currentStep + 1))}
-              disabled={currentStep === 1 && !agentName.trim()}
+              disabled={
+                (currentStep === 1 && !agentName.trim()) ||
+                (currentStep === 2 && !knowledgeBaseConfig.sourceType) ||
+                (currentStep === 2 && knowledgeBaseConfig.sourceType === 'file' && !knowledgeBaseConfig.sourceFile) ||
+                (currentStep === 2 && (knowledgeBaseConfig.sourceType === 'url' || knowledgeBaseConfig.sourceType === 'text') && !knowledgeBaseConfig.sourceContent.trim())
+              }
             >
               Siguiente
               <ArrowRight className="w-4 h-4 ml-2" />

@@ -176,6 +176,12 @@ const AdminDashboard = () => {
       description: "Configuración de modelos para funciones específicas",
       icon: Settings,
       action: () => navigate('/admin/function-config')
+    },
+    {
+      title: "Plantillas de Agentes",
+      description: "Crear y gestionar agentes autónomos para el marketplace",
+      icon: Brain,
+      action: () => navigate('/admin/agent-templates')
     }
   ];
 

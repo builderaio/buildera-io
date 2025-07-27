@@ -191,7 +191,7 @@ const CompanyAgents = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Cargando agentes...</p>
@@ -201,37 +201,35 @@ const CompanyAgents = () => {
   }
 
   return (
-    <div className="w-full">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="space-y-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Mis Agentes IA</h1>
-              <p className="text-muted-foreground text-lg">
-                Gestiona tu equipo de agentes autónomos y sus misiones
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate('/marketplace/agents')}>
-                <Plus className="w-4 h-4 mr-2" />
-                Contratar Agente
-              </Button>
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Mis Agentes IA</h1>
+          <p className="text-muted-foreground text-lg">
+            Gestiona tu equipo de agentes autónomos y sus misiones
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate('/marketplace/agents')}>
+            <Plus className="w-4 h-4 mr-2" />
+            Contratar Agente
+          </Button>
+        </div>
+      </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="agents">Agentes</TabsTrigger>
-              <TabsTrigger value="missions">Misiones</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="agents">Agentes</TabsTrigger>
+          <TabsTrigger value="missions">Misiones</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
 
-            <TabsContent value="agents" className="space-y-6">
-              {agents.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {agents.map((agent) => (
-                    <Card key={agent.id} className="relative">
+        <TabsContent value="agents" className="space-y-6">
+          {agents.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {agents.map((agent) => (
+                <Card key={agent.id} className="relative">
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -288,31 +286,31 @@ const CompanyAgents = () => {
                           </Button>
                         </div>
                       </CardContent>
-                    </Card>
-                  ))}
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Bot className="w-8 h-8 text-muted-foreground" />
                 </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Bot className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">No tienes agentes contratados</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Visita el marketplace para contratar tu primer agente
-                  </p>
-                  <Button onClick={() => navigate('/marketplace/agents')}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Ir al Marketplace
-                  </Button>
-                </div>
-              )}
-            </TabsContent>
+                <h3 className="text-lg font-medium mb-2">No tienes agentes contratados</h3>
+                <p className="text-muted-foreground mb-4">
+                  Visita el marketplace para contratar tu primer agente
+                </p>
+                <Button onClick={() => navigate('/marketplace/agents')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ir al Marketplace
+                </Button>
+              </div>
+            )}
+          </TabsContent>
 
-            <TabsContent value="missions" className="space-y-6">
-              {missions.length > 0 ? (
-                <div className="space-y-4">
-                  {missions.map((mission) => (
-                    <Card key={mission.id}>
+          <TabsContent value="missions" className="space-y-6">
+            {missions.length > 0 ? (
+              <div className="space-y-4">
+                {missions.map((mission) => (
+                  <Card key={mission.id}>
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 space-y-2">
@@ -428,8 +426,6 @@ const CompanyAgents = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </div>
-    </div>
   );
 };
 

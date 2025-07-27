@@ -11,6 +11,7 @@ import CacheManager from "@/components/CacheManager";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import AuthenticatedLayout from "./components/AuthenticatedLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import CompanyDashboard from "./pages/CompanyDashboard";
@@ -77,14 +78,22 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/company-dashboard" element={<CompanyDashboard />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/waitlist" element={<Waitlist />} />
               <Route path="/auth/linkedin/callback" element={<LinkedInCallback />} />
               <Route path="/auth/tiktok/callback" element={<TikTokCallback />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-service" element={<TermsOfService />} />
-              <Route path="/profile" element={<UserProfile />} />
+              
+              {/* Authenticated Routes with Layout */}
+              <Route element={<AuthenticatedLayout />}>
+                <Route path="/company-dashboard" element={<CompanyDashboard />} />
+                <Route path="/profile" element={<UserProfile />} />
+                <Route path="/marketplace/agents" element={<AgentMarketplace />} />
+                <Route path="/marketplace/agents/:templateId/configure" element={<AgentConfigWizard />} />
+                <Route path="/company/agents" element={<CompanyAgents />} />
+                <Route path="/company/agents/:agentId" element={<CompanyAgentView />} />
+              </Route>
               
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -158,12 +167,6 @@ const App = () => {
                   <AdminAgentTemplateVersions />
                 </AdminProtectedRoute>
               } />
-              
-              {/* Company Routes */}
-              <Route path="/marketplace/agents" element={<AgentMarketplace />} />
-              <Route path="/marketplace/agents/:templateId/configure" element={<AgentConfigWizard />} />
-              <Route path="/company/agents" element={<CompanyAgents />} />
-              <Route path="/company/agents/:agentId" element={<CompanyAgentView />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

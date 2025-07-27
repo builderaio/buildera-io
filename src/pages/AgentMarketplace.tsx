@@ -198,8 +198,8 @@ const AgentMarketplace = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div className="w-full">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="space-y-6">
           <div className="text-center space-y-4">

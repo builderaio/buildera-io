@@ -67,7 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('🔐 Preparando autenticación básica');
     
     // Create basic auth header
-    const credentials = btoa('buildera:Buildera2025*');
+    const credentials = btoa('innoventum:Innoventum2025*');
     const authHeader = `Basic ${credentials}`;
 
     console.log('📤 Enviando request al webhook externo...');

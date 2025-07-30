@@ -72,14 +72,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('📤 Enviando request al webhook externo...');
     
+    // Prepare URL with query parameters for GET request
+    const url = new URL('https://buildera.app.n8n.cloud/webhook/my-business');
+    url.searchParams.append('KEY', payload.KEY);
+    url.searchParams.append('COMPANY_INFO', payload.COMPANY_INFO);
+    if (payload.ADDITIONAL_INFO) {
+      url.searchParams.append('ADDITIONAL_INFO', payload.ADDITIONAL_INFO);
+    }
+
     // Make the API call to the external webhook
-    const webhookResponse = await fetch('https://buildera.app.n8n.cloud/webhook/my-business', {
-      method: 'POST',
+    const webhookResponse = await fetch(url.toString(), {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': authHeader,
       },
-      body: JSON.stringify(payload),
     });
 
     console.log('📥 Respuesta del webhook:', {

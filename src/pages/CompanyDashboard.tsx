@@ -183,12 +183,44 @@ const CompanyDashboard = () => {
     navigate('/auth');
   };
 
+  const handleProfileUpdate = async (updatedProfile: any) => {
+    const previousUrl = profile?.website_url;
+    const newUrl = updatedProfile?.website_url;
+    
+    // Actualizar el perfil en el estado
+    setProfile(updatedProfile);
+    
+    // Si se actualizó la URL del sitio web y hay una nueva URL
+    if (previousUrl !== newUrl && newUrl && newUrl.trim() !== "") {
+      try {
+        console.log("Llamando a n8n webhook por actualización de URL...");
+        
+        const response = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
+          body: {
+            KEY: "INFO",
+            COMPANY_INFO: `Empresa ${updatedProfile.company_name || 'sin nombre'} sitio web ${newUrl}`,
+            ADDITIONAL_INFO: ""
+          }
+        });
+        
+        if (response.error) {
+          console.error("Error calling n8n webhook:", response.error);
+        } else {
+          console.log("N8n webhook ejecutado correctamente por actualización de URL");
+        }
+      } catch (error) {
+        console.error("Error ejecutando n8n webhook:", error);
+        // No mostramos error al usuario ya que la actualización del perfil fue exitosa
+      }
+    }
+  };
+
   const renderContent = () => {
     switch (activeView) {
       case "mando-central":
         return <MandoCentral profile={profile} onNavigate={setActiveView} />;
       case "adn-empresa":
-        return <ADNEmpresa profile={profile} onProfileUpdate={setProfile} />;
+        return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;
       case "mis-agentes":
         return <CompanyAgents />;
       case "marketing-hub":

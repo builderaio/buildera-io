@@ -188,6 +188,19 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 console.error("Error calling getBrandByURL:", brandResponse.error);
               }
               
+              // Llamar a n8n webhook para notificar registro
+              const n8nResponse = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
+                body: {
+                  KEY: "INFO",
+                  COMPANY_INFO: `Empresa ${companyName} sitio web ${websiteUrl}`,
+                  ADDITIONAL_INFO: ""
+                }
+              });
+              
+              if (n8nResponse.error) {
+                console.error("Error calling n8n webhook:", n8nResponse.error);
+              }
+              
               console.log("Webhooks ejecutados para obtener datos del negocio");
             } catch (error) {
               console.error("Error ejecutando webhooks:", error);

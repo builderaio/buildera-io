@@ -58,13 +58,41 @@ interface SocialNetwork {
 }
 
 interface LinkedInCompanyDetails {
-  name?: string;
-  description?: string;
-  followers?: number;
-  employees?: string;
-  industry?: string;
-  website?: string;
-  logo?: string;
+  basic_info?: {
+    name?: string;
+    description?: string;
+    website?: string;
+    linkedin_url?: string;
+    industries?: string[];
+    is_verified?: boolean;
+    founded_info?: {
+      year?: number;
+      month?: number;
+      day?: number;
+    };
+  };
+  stats?: {
+    employee_count?: number;
+    follower_count?: number;
+    employee_count_range?: {
+      start?: number;
+      end?: number;
+    };
+  };
+  locations?: {
+    headquarters?: {
+      country?: string;
+      state?: string;
+      city?: string;
+      postal_code?: string;
+      line1?: string;
+      line2?: string;
+    };
+  };
+  media?: {
+    logo_url?: string;
+    cover_url?: string;
+  };
 }
 
 interface LinkedInPost {
@@ -755,34 +783,71 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Linkedin className="w-5 h-5" />
-              Detalles de LinkedIn - {linkedinDetails.name}
+              Detalles de LinkedIn - {linkedinDetails.basic_info?.name || 'Empresa'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-4">
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground">Descripción</h4>
-                  <p className="text-sm">{linkedinDetails.description || 'No disponible'}</p>
+                  <p className="text-sm">{linkedinDetails.basic_info?.description || 'No disponible'}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground">Industria</h4>
-                  <p className="text-sm">{linkedinDetails.industry || 'No disponible'}</p>
+                  <p className="text-sm">{linkedinDetails.basic_info?.industries?.join(', ') || 'No disponible'}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground">Sitio Web</h4>
-                  <p className="text-sm">{linkedinDetails.website || 'No disponible'}</p>
+                  <p className="text-sm">{linkedinDetails.basic_info?.website || 'No disponible'}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground">Verificado</h4>
+                  <p className="text-sm">{linkedinDetails.basic_info?.is_verified ? '✅ Verificado' : '❌ No verificado'}</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground">Seguidores</h4>
-                  <p className="text-sm">{linkedinDetails.followers?.toLocaleString() || 'No disponible'}</p>
+                  <p className="text-sm">{linkedinDetails.stats?.follower_count?.toLocaleString() || 'No disponible'}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground">Empleados</h4>
-                  <p className="text-sm">{linkedinDetails.employees || 'No disponible'}</p>
+                  <p className="text-sm">
+                    {linkedinDetails.stats?.employee_count || 
+                     (linkedinDetails.stats?.employee_count_range ? 
+                      `${linkedinDetails.stats.employee_count_range.start}-${linkedinDetails.stats.employee_count_range.end}` : 
+                      'No disponible')}
+                  </p>
                 </div>
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground">Año de Fundación</h4>
+                  <p className="text-sm">{linkedinDetails.basic_info?.founded_info?.year || 'No disponible'}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground">Ubicación</h4>
+                  <p className="text-sm">
+                    {linkedinDetails.locations?.headquarters ? 
+                      `${linkedinDetails.locations.headquarters.city}, ${linkedinDetails.locations.headquarters.state}, ${linkedinDetails.locations.headquarters.country}` : 
+                      'No disponible'}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground">Dirección</h4>
+                  <p className="text-sm">{linkedinDetails.locations?.headquarters?.line1 || 'No disponible'}</p>
+                </div>
+                {linkedinDetails.media?.logo_url && (
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground">Logo</h4>
+                    <img 
+                      src={linkedinDetails.media.logo_url} 
+                      alt="Company Logo" 
+                      className="w-16 h-16 object-contain rounded-lg border"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>

@@ -73,6 +73,14 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     mission: "",
     propuesta_valor: ""
   });
+  
+  // Estados para controlar el uso de ERA en estrategia
+  const [strategyEraUsage, setStrategyEraUsage] = useState({
+    generatedWithAI: false,
+    visionOptimized: false,
+    missionOptimized: false,
+    propuestaValorOptimized: false
+  });
   const [loadingStrategy, setLoadingStrategy] = useState(false);
 
   // Estados para objetivos
@@ -388,6 +396,14 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           vision: normalizeForDisplay(strategy.vision),
           mission: normalizeForDisplay(strategy.mision),
           propuesta_valor: normalizeForDisplay(strategy.propuesta_valor)
+        });
+
+        // Actualizar estado de ERA basado en los datos de la base de datos
+        setStrategyEraUsage({
+          generatedWithAI: strategy.generated_with_ai || false,
+          visionOptimized: strategy.generated_with_ai || false,
+          missionOptimized: strategy.generated_with_ai || false,
+          propuestaValorOptimized: strategy.generated_with_ai || false
         });
       } else {
         console.log('No strategy found, setting empty form');
@@ -723,6 +739,14 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         // Guardar automáticamente en la base de datos
         await saveStrategyToDatabase(strategyData, true);
 
+        // Marcar que se generó con IA
+        setStrategyEraUsage({
+          generatedWithAI: true,
+          visionOptimized: true,
+          missionOptimized: true,
+          propuestaValorOptimized: true
+        });
+
         toast({
           title: "Estrategia generada y guardada",
           description: "Los fundamentos estratégicos han sido generados con IA y guardados en la base de datos",
@@ -740,6 +764,63 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       toast({
         title: "Error",
         description: error.message || "No se pudo generar la estrategia con IA",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingStrategy(false);
+    }
+  };
+
+  // Funciones para optimizar campos individuales con ERA
+  const optimizeFieldWithEra = async (fieldName: 'vision' | 'mission' | 'propuesta_valor', fieldType: string) => {
+    if (!strategyForm[fieldName].trim()) {
+      toast({
+        title: "Campo vacío",
+        description: "Primero ingresa contenido en el campo para poder optimizarlo",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingStrategy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('era-content-optimizer', {
+        body: {
+          currentText: strategyForm[fieldName],
+          fieldType: fieldType,
+          context: {
+            company: companyData?.name || profile?.company_name,
+            industry: companyData?.industry_sector || profile?.industry_sector
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.optimizedText) {
+        // Actualizar el campo con el texto optimizado
+        const updatedForm = { ...strategyForm, [fieldName]: data.optimizedText };
+        setStrategyForm(updatedForm);
+
+        // Marcar que este campo fue optimizado
+        setStrategyEraUsage(prev => ({
+          ...prev,
+          [`${fieldName}Optimized`]: true
+        }));
+
+        // Guardar automáticamente
+        await saveStrategyToDatabase(updatedForm, false);
+
+        toast({
+          title: "Campo optimizado",
+          description: `El campo ${fieldType} ha sido optimizado con ERA`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error optimizing field:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo optimizar el campo",
         variant: "destructive",
       });
     } finally {
@@ -1291,10 +1372,16 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     <CardTitle className="flex items-center text-lg">
                       <Flag className="w-5 h-5 mr-2 text-primary" />
                       Fundamentos Estratégicos
+                      {strategyEraUsage.generatedWithAI && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs ml-3">
+                          <Bot className="h-3 w-3" />
+                          Generado por ERA
+                        </div>
+                      )}
                     </CardTitle>
                     <Button 
                       onClick={handleGenerateStrategy}
-                      disabled={loadingStrategy}
+                      disabled={loadingStrategy || strategyEraUsage.generatedWithAI}
                       variant="outline"
                       size="sm"
                     >
@@ -1311,19 +1398,24 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     {/* Misión */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="mission">Misión</Label>
-                        <EraOptimizerButton
-                          currentText={strategyForm.mission}
-                          fieldType="misión empresarial"
-                          context={{
-                            companyName: profile?.company_name,
-                            industry: profile?.industry_sector,
-                            description: companyData?.descripcion_empresa
-                          }}
-                          onOptimized={(optimizedText) => setStrategyForm({...strategyForm, mission: optimizedText})}
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="mission">Misión</Label>
+                          {strategyEraUsage.missionOptimized && (
+                            <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
+                              <Bot className="h-3 w-3" />
+                              Generado por ERA
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          onClick={() => optimizeFieldWithEra('mission', 'misión empresarial')}
+                          disabled={loadingStrategy || strategyEraUsage.missionOptimized || !strategyForm.mission.trim()}
                           size="sm"
-                          disabled={!strategyForm.mission.trim()}
-                        />
+                          variant="outline"
+                        >
+                          <Bot className="w-3 h-3 mr-1" />
+                          Optimizar con ERA
+                        </Button>
                       </div>
                       <Textarea
                         id="mission"
@@ -1338,19 +1430,24 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     {/* Visión */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="vision">Visión</Label>
-                        <EraOptimizerButton
-                          currentText={strategyForm.vision}
-                          fieldType="visión empresarial"
-                          context={{
-                            companyName: profile?.company_name,
-                            industry: profile?.industry_sector,
-                            mission: strategyForm.mission
-                          }}
-                          onOptimized={(optimizedText) => setStrategyForm({...strategyForm, vision: optimizedText})}
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="vision">Visión</Label>
+                          {strategyEraUsage.visionOptimized && (
+                            <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
+                              <Bot className="h-3 w-3" />
+                              Generado por ERA
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          onClick={() => optimizeFieldWithEra('vision', 'visión empresarial')}
+                          disabled={loadingStrategy || strategyEraUsage.visionOptimized || !strategyForm.vision.trim()}
                           size="sm"
-                          disabled={!strategyForm.vision.trim()}
-                        />
+                          variant="outline"
+                        >
+                          <Bot className="w-3 h-3 mr-1" />
+                          Optimizar con ERA
+                        </Button>
                       </div>
                       <Textarea
                         id="vision"
@@ -1365,20 +1462,24 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     {/* Propuesta de Valor */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="propuesta_valor">Propuesta de Valor</Label>
-                        <EraOptimizerButton
-                          currentText={strategyForm.propuesta_valor}
-                          fieldType="propuesta de valor"
-                          context={{
-                            companyName: profile?.company_name,
-                            industry: profile?.industry_sector,
-                            mission: strategyForm.mission,
-                            vision: strategyForm.vision
-                          }}
-                          onOptimized={(optimizedText) => setStrategyForm({...strategyForm, propuesta_valor: optimizedText})}
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="propuesta_valor">Propuesta de Valor</Label>
+                          {strategyEraUsage.propuestaValorOptimized && (
+                            <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
+                              <Bot className="h-3 w-3" />
+                              Generado por ERA
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          onClick={() => optimizeFieldWithEra('propuesta_valor', 'propuesta de valor')}
+                          disabled={loadingStrategy || strategyEraUsage.propuestaValorOptimized || !strategyForm.propuesta_valor.trim()}
                           size="sm"
-                          disabled={!strategyForm.propuesta_valor.trim()}
-                        />
+                          variant="outline"
+                        >
+                          <Bot className="w-3 h-3 mr-1" />
+                          Optimizar con ERA
+                        </Button>
                       </div>
                       <Textarea
                         id="propuesta_valor"

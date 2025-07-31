@@ -315,39 +315,93 @@ async function getInstagramPosts(username: string): Promise<any> {
     }
 
     const data = await response.json();
-    console.log('✅ Instagram posts data received:', JSON.stringify(data, null, 2));
+    console.log('✅ Instagram posts data received. Full response structure:');
+    console.log('Response keys:', Object.keys(data));
+    if (data.data) console.log('data.data keys:', Object.keys(data.data));
+    console.log('Sample data structure:', JSON.stringify(data, null, 2).substring(0, 1000) + '...');
     
-    // Handle different possible data structures
+    // Handle different possible data structures with better debugging
     let postsArray = [];
-    if (data.data?.edges) {
+    let dataSource = '';
+    
+    if (data.data?.edges && Array.isArray(data.data.edges)) {
       // GraphQL-style response
       postsArray = data.data.edges;
+      dataSource = 'data.edges';
+      console.log(`📊 Found ${postsArray.length} posts in data.edges`);
     } else if (data.data && Array.isArray(data.data)) {
       // Direct array response
       postsArray = data.data;
+      dataSource = 'data (direct array)';
+      console.log(`📊 Found ${postsArray.length} posts in data array`);
     } else if (data.items && Array.isArray(data.items)) {
       // Items array response
       postsArray = data.items;
+      dataSource = 'items';
+      console.log(`📊 Found ${postsArray.length} posts in items`);
+    } else if (data.user?.edge_owner_to_timeline_media?.edges) {
+      // User timeline format
+      postsArray = data.user.edge_owner_to_timeline_media.edges;
+      dataSource = 'user.edge_owner_to_timeline_media.edges';
+      console.log(`📊 Found ${postsArray.length} posts in user timeline`);
+    } else if (data.graphql?.user?.edge_owner_to_timeline_media?.edges) {
+      // GraphQL user format
+      postsArray = data.graphql.user.edge_owner_to_timeline_media.edges;
+      dataSource = 'graphql.user.edge_owner_to_timeline_media.edges';
+      console.log(`📊 Found ${postsArray.length} posts in graphql user timeline`);
     } else {
-      console.log('⚠️ Unexpected data structure, using empty array');
+      console.log('⚠️ No recognized posts structure found. Available paths:');
+      console.log('Available data keys:', data ? Object.keys(data) : 'No data object');
+      if (data.data) console.log('data keys:', Object.keys(data.data));
+      
+      // Try to find any array in the response
+      const findArrays = (obj: any, path = ''): string[] => {
+        const arrays: string[] = [];
+        if (typeof obj === 'object' && obj !== null) {
+          for (const [key, value] of Object.entries(obj)) {
+            const currentPath = path ? `${path}.${key}` : key;
+            if (Array.isArray(value)) {
+              arrays.push(`${currentPath} (length: ${value.length})`);
+            } else if (typeof value === 'object') {
+              arrays.push(...findArrays(value, currentPath));
+            }
+          }
+        }
+        return arrays;
+      };
+      
+      const foundArrays = findArrays(data);
+      console.log('Found arrays in response:', foundArrays);
     }
 
-    const posts: InstagramPost[] = postsArray.slice(0, 12).map((item: any) => {
+    console.log(`📊 Using data source: ${dataSource}`);
+    console.log(`📊 Processing ${postsArray.length} items`);
+
+    const posts: InstagramPost[] = postsArray.slice(0, 12).map((item: any, index: number) => {
       // Handle both edge.node and direct item structures
       const post = item.node || item;
       
-      return {
+      console.log(`📝 Processing post ${index + 1}:`, {
         id: post.id || post.pk,
         shortcode: post.shortcode || post.code,
-        display_url: post.display_url || post.image_versions2?.candidates?.[0]?.url || post.thumbnail_url,
-        caption: post.edge_media_to_caption?.edges?.[0]?.node?.text || post.caption?.text || '',
+        hasDisplayUrl: !!(post.display_url || post.image_versions2?.candidates?.[0]?.url || post.thumbnail_url),
+        likeCount: post.edge_liked_by?.count || post.like_count || 0
+      });
+      
+      return {
+        id: post.id || post.pk || `post_${index}`,
+        shortcode: post.shortcode || post.code || `code_${index}`,
+        display_url: post.display_url || post.image_versions2?.candidates?.[0]?.url || post.thumbnail_url || '',
+        caption: post.edge_media_to_caption?.edges?.[0]?.node?.text || post.caption?.text || post.caption || '',
         like_count: post.edge_liked_by?.count || post.like_count || 0,
         comment_count: post.edge_media_to_comment?.count || post.comment_count || 0,
-        taken_at_timestamp: post.taken_at_timestamp || post.taken_at,
-        is_video: post.is_video || post.media_type === 2,
+        taken_at_timestamp: post.taken_at_timestamp || post.taken_at || Date.now() / 1000,
+        is_video: post.is_video || post.media_type === 2 || false,
         video_view_count: post.video_view_count || post.view_count || 0,
       };
     });
+
+    console.log(`✅ Successfully processed ${posts.length} posts`);
 
     console.log(`📊 Processing ${posts.length} posts for analysis`);
     let postsAnalysis = null;

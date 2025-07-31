@@ -2605,6 +2605,84 @@ export type Database = {
         }
         Relationships: []
       }
+      tiktok_followers: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          follower_count: number | null
+          follower_nickname: string | null
+          follower_unique_id: string | null
+          follower_user_id: string
+          id: string
+          raw_data: Json | null
+          tiktok_user_id: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          follower_count?: number | null
+          follower_nickname?: string | null
+          follower_unique_id?: string | null
+          follower_user_id: string
+          id?: string
+          raw_data?: Json | null
+          tiktok_user_id: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          follower_count?: number | null
+          follower_nickname?: string | null
+          follower_unique_id?: string | null
+          follower_user_id?: string
+          id?: string
+          raw_data?: Json | null
+          tiktok_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tiktok_following: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          follower_count: number | null
+          following_nickname: string | null
+          following_unique_id: string | null
+          following_user_id: string
+          id: string
+          raw_data: Json | null
+          tiktok_user_id: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          follower_count?: number | null
+          following_nickname?: string | null
+          following_unique_id?: string | null
+          following_user_id: string
+          id?: string
+          raw_data?: Json | null
+          tiktok_user_id: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          follower_count?: number | null
+          following_nickname?: string | null
+          following_unique_id?: string | null
+          following_user_id?: string
+          id?: string
+          raw_data?: Json | null
+          tiktok_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tiktok_publications: {
         Row: {
           content_data: Json
@@ -2632,6 +2710,60 @@ export type Database = {
           tiktok_user_id?: string
           user_id?: string
           video_id?: string
+        }
+        Relationships: []
+      }
+      tiktok_user_data: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          follower_count: number | null
+          following_count: number | null
+          heart_count: number | null
+          id: string
+          is_verified: boolean | null
+          nickname: string
+          raw_data: Json | null
+          signature: string | null
+          tiktok_user_id: string
+          unique_id: string
+          updated_at: string
+          user_id: string
+          video_count: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          follower_count?: number | null
+          following_count?: number | null
+          heart_count?: number | null
+          id?: string
+          is_verified?: boolean | null
+          nickname: string
+          raw_data?: Json | null
+          signature?: string | null
+          tiktok_user_id: string
+          unique_id: string
+          updated_at?: string
+          user_id: string
+          video_count?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          follower_count?: number | null
+          following_count?: number | null
+          heart_count?: number | null
+          id?: string
+          is_verified?: boolean | null
+          nickname?: string
+          raw_data?: Json | null
+          signature?: string | null
+          tiktok_user_id?: string
+          unique_id?: string
+          updated_at?: string
+          user_id?: string
+          video_count?: number | null
         }
         Relationships: []
       }

@@ -32,6 +32,18 @@ interface InstagramFollower {
   is_verified?: boolean;
 }
 
+interface InstagramPost {
+  id?: string;
+  shortcode?: string;
+  display_url?: string;
+  caption?: string;
+  like_count?: number;
+  comment_count?: number;
+  taken_at_timestamp?: number;
+  is_video?: boolean;
+  video_view_count?: number;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -65,6 +77,8 @@ serve(async (req) => {
 
     if (action === 'get_complete_analysis') {
       responseData = await getCompleteInstagramAnalysis(username);
+    } else if (action === 'get_posts') {
+      responseData = await getInstagramPosts(username);
     } else {
       throw new Error(`Action not supported: ${action}`);
     }
@@ -276,6 +290,167 @@ async function getCompleteInstagramAnalysis(username: string): Promise<any> {
   } catch (error) {
     console.error('❌ Error getting complete Instagram analysis:', error);
     throw error;
+  }
+}
+
+async function getInstagramPosts(username: string): Promise<any> {
+  console.log(`📱 Getting Instagram posts for: ${username}`);
+  
+  try {
+    const response = await fetch(`https://instagram-social-api.p.rapidapi.com/v1/posts?username_or_id_or_url=${username}`, {
+      method: 'GET',
+      headers: {
+        'x-rapidapi-host': 'instagram-social-api.p.rapidapi.com',
+        'x-rapidapi-key': rapidApiKey!,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Instagram API error: ${response.status} - ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Instagram posts data received');
+    
+    const posts: InstagramPost[] = data.data?.edges?.slice(0, 12).map((edge: any) => ({
+      id: edge.node.id,
+      shortcode: edge.node.shortcode,
+      display_url: edge.node.display_url,
+      caption: edge.node.edge_media_to_caption?.edges?.[0]?.node?.text || '',
+      like_count: edge.node.edge_liked_by?.count || 0,
+      comment_count: edge.node.edge_media_to_comment?.count || 0,
+      taken_at_timestamp: edge.node.taken_at_timestamp,
+      is_video: edge.node.is_video,
+      video_view_count: edge.node.video_view_count || 0,
+    })) || [];
+
+    // Analyze posts with AI if available
+    let postsAnalysis = null;
+    if (openAIApiKey && posts.length > 0) {
+      try {
+        console.log('🤖 Starting posts AI analysis...');
+        postsAnalysis = await analyzePostsWithAI(posts, username);
+        console.log('✅ Posts AI analysis completed');
+      } catch (error) {
+        console.error('❌ Posts AI analysis failed:', error);
+      }
+    }
+
+    return {
+      posts: posts,
+      analysis: postsAnalysis || {
+        summary: `Se encontraron ${posts.length} publicaciones recientes de @${username}`,
+        insights: [
+          "Las publicaciones muestran patrones de engagement variables",
+          "Analizar horarios de publicación para optimizar alcance",
+          "Revisar tipos de contenido con mejor rendimiento"
+        ],
+        recommendations: [
+          "Mantener consistencia en la calidad visual",
+          "Usar hashtags relevantes para aumentar alcance",
+          "Interactuar más con los comentarios de seguidores"
+        ],
+        ai_powered: false
+      },
+      stats: {
+        total_posts: posts.length,
+        avg_likes: posts.length > 0 ? Math.round(posts.reduce((sum, post) => sum + (post.like_count || 0), 0) / posts.length) : 0,
+        avg_comments: posts.length > 0 ? Math.round(posts.reduce((sum, post) => sum + (post.comment_count || 0), 0) / posts.length) : 0,
+        video_count: posts.filter(post => post.is_video).length,
+        has_ai_analysis: !!postsAnalysis
+      }
+    };
+  } catch (error) {
+    console.error('❌ Error getting Instagram posts:', error);
+    throw error;
+  }
+}
+
+async function analyzePostsWithAI(posts: InstagramPost[], username: string): Promise<any> {
+  console.log('🤖 Analyzing posts with OpenAI');
+  
+  try {
+    const prompt = `
+Analiza las siguientes publicaciones de Instagram de @${username} y proporciona un análisis detallado en español:
+
+DATOS DE LAS PUBLICACIONES:
+${JSON.stringify(posts.slice(0, 8), null, 2)}
+
+Por favor, proporciona un análisis estructurado que incluya:
+
+1. **Resumen de Contenido**: Análisis general del tipo de contenido y temas
+2. **Rendimiento**: Análisis de likes, comentarios y engagement
+3. **Patrones**: Identificación de patrones en el contenido exitoso
+4. **Audiencia**: Insights sobre la respuesta de la audiencia
+5. **Recomendaciones**: Sugerencias específicas para mejorar el contenido
+6. **Oportunidades**: Identificación de nuevas oportunidades de contenido
+
+Estructura la respuesta en formato JSON con las siguientes claves:
+- summary: resumen ejecutivo del análisis de contenido
+- content_analysis: análisis del tipo de contenido
+- performance: análisis de rendimiento y engagement
+- patterns: patrones identificados
+- audience_response: análisis de respuesta de audiencia
+- recommendations: recomendaciones específicas
+- opportunities: oportunidades identificadas
+
+Sé específico y proporciona insights accionables para marketing de contenido.
+`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'Eres un experto en marketing de contenido y análisis de redes sociales. Proporciona análisis detallados y recomendaciones prácticas basadas en datos de publicaciones de Instagram.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2500,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const aiResponse = await response.json();
+    const analysisText = aiResponse.choices[0].message.content;
+    
+    // Try to parse as JSON, fallback to structured format if parsing fails
+    try {
+      const parsed = JSON.parse(analysisText);
+      console.log('✅ Successfully parsed posts AI response as JSON');
+      return {
+        ...parsed,
+        ai_powered: true
+      };
+    } catch {
+      console.log('⚠️ Posts AI response not JSON, structuring as text analysis');
+      return { 
+        summary: analysisText,
+        recommendations: ["Análisis de contenido generado por IA - revisar texto completo arriba"],
+        opportunities: ["Oportunidades de contenido identificadas por IA"],
+        ai_powered: true
+      };
+    }
+
+  } catch (error) {
+    console.error('❌ Error analyzing posts with OpenAI:', error);
+    return {
+      error: 'No se pudo procesar el análisis de posts con IA',
+      raw_data: posts
+    };
   }
 }
 

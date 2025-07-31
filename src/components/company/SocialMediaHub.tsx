@@ -77,6 +77,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   const [linkedinPosts, setLinkedinPosts] = useState<LinkedInPost[]>([]);
   const [loadingLinkedIn, setLoadingLinkedIn] = useState(false);
   const [instagramDetails, setInstagramDetails] = useState<any>(null);
+  const [instagramPosts, setInstagramPosts] = useState<any>(null);
   const [loadingInstagram, setLoadingInstagram] = useState(false);
 
   // Initialize social networks
@@ -113,7 +114,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         isValid: validateInstagramUrl(companyData?.instagram_url),
         isActive: !!companyData?.instagram_url && validateInstagramUrl(companyData?.instagram_url),
         hasDetails: true,
-        hasPosts: false
+        hasPosts: true
       },
       {
         id: 'facebook',
@@ -419,6 +420,48 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     }
   };
 
+  const loadInstagramPosts = async (network: SocialNetwork) => {
+    if (!network.url || !network.isValid) return;
+
+    setLoadingInstagram(true);
+    try {
+      const usernameOrUrl = network.url;
+      
+      console.log('📱 Loading Instagram posts for:', usernameOrUrl);
+      
+      const { data, error } = await supabase.functions.invoke('instagram-scraper', {
+        body: {
+          action: 'get_posts',
+          username_or_url: usernameOrUrl
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setInstagramPosts(data.data);
+        console.log('✅ Instagram posts loaded:', data.data);
+        
+        toast({
+          title: "Posts de Instagram cargados",
+          description: `Se cargaron ${data.data.posts?.length || 0} posts para análisis`,
+        });
+      } else {
+        console.log('❌ Function returned success: false');
+        console.log('❌ Data received:', data);
+      }
+    } catch (error: any) {
+      console.error('Error loading Instagram posts:', error);
+      toast({
+        title: "Error cargando posts",
+        description: error.message || "No se pudieron cargar los posts de Instagram",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingInstagram(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -557,15 +600,17 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                           variant="outline"
                           size="sm"
                           className="flex items-center gap-2 h-auto py-3 px-3"
-                          onClick={() => {
-                            setSelectedNetwork(network);
-                            if (network.id === 'linkedin') {
-                              loadLinkedInCompanyPosts(network);
-                            }
-                          }}
-                          disabled={loadingLinkedIn && selectedNetwork?.id === network.id}
+                           onClick={() => {
+                             setSelectedNetwork(network);
+                             if (network.id === 'linkedin') {
+                               loadLinkedInCompanyPosts(network);
+                             } else if (network.id === 'instagram') {
+                               loadInstagramPosts(network);
+                             }
+                           }}
+                           disabled={(loadingLinkedIn || loadingInstagram) && selectedNetwork?.id === network.id}
                         >
-                          {loadingLinkedIn && selectedNetwork?.id === network.id ? (
+                          {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <BarChart3 className="w-4 h-4" />
@@ -955,6 +1000,158 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                         {follower.is_verified && (
                           <Badge variant="outline" className="text-xs">Verificado</Badge>
                         )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Posts de Instagram */}
+      {selectedNetwork && instagramPosts && selectedNetwork.id === 'instagram' && (
+        <div className="space-y-6">
+          {/* Estadísticas de posts */}
+          <Card className="border-purple-200 bg-purple-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-800">
+                <BarChart3 className="w-5 h-5" />
+                Análisis de Posts de Instagram
+                {instagramPosts.analysis?.ai_powered && (
+                  <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                    ✨ Potenciado por IA
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {instagramPosts.stats?.total_posts || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Posts analizados</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {instagramPosts.stats?.avg_likes?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Likes promedio</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {instagramPosts.stats?.avg_comments || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Comentarios promedio</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {instagramPosts.stats?.video_count || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Videos</div>
+                </div>
+              </div>
+
+              {/* Análisis con IA de posts */}
+              {instagramPosts.analysis && (
+                <div className="space-y-4">
+                  {instagramPosts.analysis.summary && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Resumen del Contenido</h4>
+                      <p className="text-sm leading-relaxed bg-white p-3 rounded border">{instagramPosts.analysis.summary}</p>
+                    </div>
+                  )}
+
+                  {instagramPosts.analysis.content_analysis && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Análisis de Contenido</h4>
+                      <div className="bg-white p-3 rounded border">
+                        <p className="text-sm leading-relaxed">{instagramPosts.analysis.content_analysis}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {instagramPosts.analysis.performance && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Análisis de Rendimiento</h4>
+                      <div className="bg-white p-3 rounded border">
+                        <p className="text-sm leading-relaxed">{instagramPosts.analysis.performance}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {instagramPosts.analysis.recommendations && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Recomendaciones</h4>
+                      <div className="bg-white p-3 rounded border">
+                        {Array.isArray(instagramPosts.analysis.recommendations) ? (
+                          <ul className="text-sm space-y-2">
+                            {instagramPosts.analysis.recommendations.map((rec: string, index: number) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <span className="w-1.5 h-1.5 bg-purple-600 rounded-full mt-2 flex-shrink-0"></span>
+                                {rec}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm leading-relaxed">{instagramPosts.analysis.recommendations}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Grid de posts */}
+          {instagramPosts.posts && instagramPosts.posts.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Instagram className="w-5 h-5" />
+                  Posts Recientes ({instagramPosts.posts.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {instagramPosts.posts.slice(0, 9).map((post: any, index: number) => (
+                    <div key={index} className="bg-white border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                      {post.display_url && (
+                        <div className="aspect-square bg-muted relative">
+                          <img 
+                            src={post.display_url} 
+                            alt="Instagram post"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                          {post.is_video && (
+                            <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                              📹 Video
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="p-4 space-y-3">
+                        {post.caption && (
+                          <p className="text-sm line-clamp-3">{post.caption}</p>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4">
+                            <span>❤️ {post.like_count?.toLocaleString() || 0}</span>
+                            <span>💬 {post.comment_count?.toLocaleString() || 0}</span>
+                            {post.is_video && post.video_view_count && (
+                              <span>👁️ {post.video_view_count?.toLocaleString()}</span>
+                            )}
+                          </div>
+                          {post.taken_at_timestamp && (
+                            <span>{new Date(post.taken_at_timestamp * 1000).toLocaleDateString()}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

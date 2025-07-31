@@ -188,9 +188,6 @@ const CompanyDashboard = () => {
   };
 
   const handleProfileUpdate = async (updatedProfile: any) => {
-    const previousUrl = profile?.website_url;
-    const newUrl = updatedProfile?.website_url;
-    
     // Actualizar el perfil en el estado
     setProfile(updatedProfile);
     
@@ -203,32 +200,6 @@ const CompanyDashboard = () => {
         updatedProfile.company_name || 'sin nombre', 
         updatedProfile.website_url
       );
-    }
-    
-    // Si se actualizó la URL del sitio web y hay una nueva URL
-    if (previousUrl !== newUrl && newUrl && newUrl.trim() !== "") {
-      try {
-        console.log("Llamando a función asíncrona de webhooks por actualización de URL...");
-        
-        // Llamar a la función asíncrona de procesamiento de webhooks
-        const response = await supabase.functions.invoke('process-company-webhooks', {
-          body: {
-            user_id: user?.id,
-            company_name: updatedProfile.company_name || 'sin nombre',
-            website_url: newUrl,
-            trigger_type: 'update'
-          }
-        });
-        
-        if (response.error) {
-          console.error("Error calling process-company-webhooks:", response.error);
-        } else {
-          console.log("Webhooks de actualización iniciados en background:", response.data);
-        }
-      } catch (error) {
-        console.error("Error ejecutando webhooks:", error);
-        // No mostramos error al usuario ya que la actualización del perfil fue exitosa
-      }
     }
   };
 

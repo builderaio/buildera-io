@@ -182,7 +182,7 @@ export default function MarketingHub() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      console.log(`🚀 Starting analysis for ${platformId}`);
+      console.log(`🚀 Starting analysis for ${platformId} and saving to database`);
 
       // Obtener información de la empresa para usar URLs específicas
       const { data: companies } = await supabase
@@ -199,6 +199,7 @@ export default function MarketingHub() {
       }
 
       let analysisResult = null;
+      let scraperResult = null;
 
       switch (platformId) {
         case 'instagram':
@@ -206,24 +207,73 @@ export default function MarketingHub() {
             // Extraer username de la URL
             const username = company.instagram_url.split('/').pop()?.replace('@', '');
             if (username) {
+              console.log('📊 Scraping Instagram posts...');
               // Obtener posts
-              await supabase.functions.invoke('instagram-scraper', {
+              const { data: scrapeData, error: scrapeError } = await supabase.functions.invoke('instagram-scraper', {
                 body: { action: 'get_posts', username_or_url: username }
               });
               
-              // Análisis inteligente
+              if (scrapeError) {
+                console.error('Error scraping Instagram:', scrapeError);
+                throw scrapeError;
+              }
+              
+              scraperResult = scrapeData;
+              
+              console.log('🧠 Running intelligent analysis...');
+              // Análisis inteligente que guarda en BD
               const { data, error } = await supabase.functions.invoke('instagram-intelligent-analysis');
-              if (error) throw error;
+              if (error) {
+                console.error('Error in Instagram analysis:', error);
+                throw error;
+              }
               analysisResult = data;
+              
+              // Ejecutar análisis avanzado adicional
+              console.log('📈 Running advanced calendar analysis...');
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'instagram',
+                  action: 'process_calendar_data'
+                }
+              });
+              
+              // Analizar ubicación de seguidores
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'instagram',
+                  action: 'analyze_followers_location'
+                }
+              });
+              
+              // Generar insights de audiencia
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'instagram',
+                  action: 'generate_audience_insights'
+                }
+              });
             }
           }
           break;
 
         case 'facebook':
           if (company.facebook_url) {
+            console.log('📊 Running Facebook intelligent analysis...');
             const { data, error } = await supabase.functions.invoke('facebook-intelligent-analysis');
-            if (error) throw error;
+            if (error) {
+              console.error('Error in Facebook analysis:', error);
+              throw error;
+            }
             analysisResult = data;
+            
+            // Análisis avanzado para Facebook
+            await supabase.functions.invoke('advanced-social-analyzer', {
+              body: {
+                platform: 'facebook',
+                action: 'process_calendar_data'
+              }
+            });
           }
           break;
 
@@ -231,8 +281,31 @@ export default function MarketingHub() {
           if (company.linkedin_url) {
             const identifier = company.linkedin_url.match(/linkedin\.com\/company\/([a-zA-Z0-9-_]+)/)?.[1];
             if (identifier) {
-              // Análisis de LinkedIn (cuando esté disponible)
-              toast.info('Análisis de LinkedIn estará disponible próximamente');
+              console.log('📊 Scraping LinkedIn company posts...');
+              // Obtener posts de la empresa
+              const { data: scrapeData, error: scrapeError } = await supabase.functions.invoke('linkedin-scraper', {
+                body: { 
+                  action: 'get_company_posts', 
+                  company_identifier: identifier 
+                }
+              });
+              
+              if (scrapeError) {
+                console.error('Error scraping LinkedIn:', scrapeError);
+                throw scrapeError;
+              }
+              
+              scraperResult = scrapeData;
+              
+              // Procesar datos en calendario y generar análisis
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'linkedin',
+                  action: 'process_calendar_data'
+                }
+              });
+              
+              analysisResult = { success: true, platform: 'linkedin' };
             }
           }
           break;
@@ -241,8 +314,38 @@ export default function MarketingHub() {
           if (company.tiktok_url) {
             const username = company.tiktok_url.match(/tiktok\.com\/@([a-zA-Z0-9._-]+)/)?.[1];
             if (username) {
-              // Análisis de TikTok (cuando esté disponible)
-              toast.info('Análisis de TikTok estará disponible próximamente');
+              console.log('📊 Scraping TikTok posts...');
+              // Obtener posts
+              const { data: scrapeData, error: scrapeError } = await supabase.functions.invoke('tiktok-scraper', {
+                body: { 
+                  action: 'get_posts', 
+                  unique_id: username 
+                }
+              });
+              
+              if (scrapeError) {
+                console.error('Error scraping TikTok:', scrapeError);
+                throw scrapeError;
+              }
+              
+              scraperResult = scrapeData;
+              
+              // Análisis avanzado para TikTok
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'tiktok',
+                  action: 'process_calendar_data'
+                }
+              });
+              
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'tiktok',
+                  action: 'analyze_followers_location'
+                }
+              });
+              
+              analysisResult = { success: true, platform: 'tiktok' };
             }
           }
           break;

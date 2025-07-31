@@ -361,12 +361,18 @@ async function getInstagramPosts(username: string): Promise<any> {
     // Log the entire response structure for debugging
     console.log('Complete API response:', JSON.stringify(data, null, 2));
     
-    // Handle different possible data structures
+    // Handle data.items structure first (as shown in your response)
     let postsArray = [];
     let dataSource = '';
     
+    // PRIMARY: Check for data.items structure (your specific case)
+    if (data.data?.items && Array.isArray(data.data.items)) {
+      postsArray = data.data.items;
+      dataSource = 'data.items';
+      console.log(`📊 Found ${postsArray.length} posts in data.items (count: ${data.data.count})`);
+    }
     // Check for direct posts array in response
-    if (data.posts && Array.isArray(data.posts)) {
+    else if (data.posts && Array.isArray(data.posts)) {
       postsArray = data.posts;
       dataSource = 'posts';
       console.log(`📊 Found ${postsArray.length} posts in data.posts`);
@@ -395,51 +401,10 @@ async function getInstagramPosts(username: string): Promise<any> {
       dataSource = 'items';
       console.log(`📊 Found ${postsArray.length} posts in items`);
     }
-    // Check for user timeline structures
-    else if (data.user?.edge_owner_to_timeline_media?.edges) {
-      postsArray = data.user.edge_owner_to_timeline_media.edges;
-      dataSource = 'user.edge_owner_to_timeline_media.edges';
-      console.log(`📊 Found ${postsArray.length} posts in user timeline`);
-    }
-    // Check for feed structure
-    else if (data.feed?.media && Array.isArray(data.feed.media)) {
-      postsArray = data.feed.media;
-      dataSource = 'feed.media';
-      console.log(`📊 Found ${postsArray.length} posts in feed.media`);
-    }
-    // Check for media array
-    else if (data.media && Array.isArray(data.media)) {
-      postsArray = data.media;
-      dataSource = 'media';
-      console.log(`📊 Found ${postsArray.length} posts in media`);
-    }
     else {
       console.log('⚠️ No recognized posts structure found.');
       console.log('Available top-level keys:', data ? Object.keys(data) : 'No data object');
       if (data.data) console.log('data object keys:', Object.keys(data.data));
-      if (data.user) console.log('user object keys:', Object.keys(data.user));
-      
-      // Try to find any array in the response
-      const findArrays = (obj: any, path = '', maxDepth = 3): string[] => {
-        const arrays: string[] = [];
-        if (maxDepth <= 0 || typeof obj !== 'object' || obj === null) return arrays;
-        
-        for (const [key, value] of Object.entries(obj)) {
-          const currentPath = path ? `${path}.${key}` : key;
-          if (Array.isArray(value)) {
-            arrays.push(`${currentPath} (length: ${value.length})`);
-            if (value.length > 0 && typeof value[0] === 'object') {
-              arrays.push(`  └─ First item keys: ${Object.keys(value[0]).join(', ')}`);
-            }
-          } else if (typeof value === 'object') {
-            arrays.push(...findArrays(value, currentPath, maxDepth - 1));
-          }
-        }
-        return arrays;
-      };
-      
-      const foundArrays = findArrays(data);
-      console.log('Found arrays in response:', foundArrays);
     }
 
     console.log(`📊 Using data source: ${dataSource}`);

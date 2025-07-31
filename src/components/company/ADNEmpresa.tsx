@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 import CompanyProfileForm from "./CompanyProfileForm";
+import { EnrichedCompanyInfo } from "./EnrichedCompanyInfo";
 
 interface ADNEmpresaProps {
   profile: any;
@@ -2039,6 +2040,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             </TabsContent>
 
             <TabsContent value="perfil" className="space-y-6 mt-6">
+              {/* Información Enriquecida por IA */}
+              {profile?.primary_company_id && (
+                <EnrichedCompanyInfo companyId={profile.primary_company_id} />
+              )}
+              
               <CompanyProfileForm profile={profile} onProfileUpdate={onProfileUpdate} />
             </TabsContent>
 

@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useEnrichedCompanyData } from '@/hooks/useEnrichedCompanyData';
-import { Building, Globe, Users, Calendar, ExternalLink, RefreshCw } from 'lucide-react';
+import { Building, Globe, Users, Calendar, ExternalLink, RefreshCw, Sparkles, Bot, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface EnrichedCompanyInfoProps {
@@ -64,126 +64,159 @@ export const EnrichedCompanyInfo = ({ companyId }: EnrichedCompanyInfoProps) => 
   const socialLinks = getSocialMediaLinks();
   const enrichmentStatus = getEnrichmentStatus();
 
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5" />
-              {companyData.name}
-            </CardTitle>
-            <CardDescription className="flex items-center gap-2 mt-2">
-              {companyData.company_size && (
-                <>
-                  <Users className="h-4 w-4" />
-                  {companyData.company_size}
-                </>
-              )}
-              {companyData.website_url && (
-                <>
-                  <Globe className="h-4 w-4 ml-3" />
-                  <a 
-                    href={companyData.website_url.startsWith('http') ? companyData.website_url : `https://${companyData.website_url}`}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    {companyData.website_url}
-                  </a>
-                </>
-              )}
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={enrichmentStatus === 'enriched' ? 'default' : 'secondary'}>
-              {enrichmentStatus === 'enriched' ? 'Datos Enriquecidos' : 'Pendiente de Análisis'}
-            </Badge>
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
+  const getSocialIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'facebook':
+        return <Facebook className="h-4 w-4" />;
+      case 'twitter':
+        return <Twitter className="h-4 w-4" />;
+      case 'linkedin':
+        return <Linkedin className="h-4 w-4" />;
+      case 'instagram':
+        return <Instagram className="h-4 w-4" />;
+      default:
+        return <ExternalLink className="h-4 w-4" />;
+    }
+  };
 
-      <CardContent className="space-y-6">
-        {/* Información básica */}
-        <div>
-          <h4 className="text-sm font-medium mb-3">Información General</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Sector</p>
-              <p className="font-medium">
-                {companyData.industria_principal || companyData.industry_sector || 'No especificado'}
-              </p>
+  return (
+    <div className="space-y-6">
+      {/* Información Enriquecida por IA */}
+      {isDataEnriched() && (
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Bot className="h-6 w-6 text-primary" />
+                  <Sparkles className="h-3 w-3 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Análisis Empresarial ERA</CardTitle>
+                  <CardDescription className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Analizado el {new Date(companyData.webhook_processed_at!).toLocaleDateString('es-ES', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </CardDescription>
+                </div>
+              </div>
+              <Badge variant="default" className="bg-primary/10 text-primary border-primary/20">
+                <Sparkles className="h-3 w-3 mr-1" />
+                IA
+              </Badge>
             </div>
-            {isDataEnriched() && companyData.webhook_processed_at && (
-              <div>
-                <p className="text-sm text-muted-foreground">Último Análisis</p>
-                <p className="font-medium flex items-center gap-1">
-                  <Calendar className="h-4 w-4" />
-                  {new Date(companyData.webhook_processed_at).toLocaleDateString('es-ES')}
-                </p>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
+            {/* Descripción Empresarial Enriquecida */}
+            {companyData.descripcion_empresa && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-foreground">Descripción Empresarial</h4>
+                  <Badge variant="outline" className="text-xs">
+                    <Bot className="h-3 w-3 mr-1" />
+                    Generado por ERA
+                  </Badge>
+                </div>
+                <div className="bg-background/60 backdrop-blur-sm border border-primary/20 rounded-lg p-4">
+                  <p className="text-sm leading-relaxed text-foreground/90">
+                    {companyData.descripcion_empresa}
+                  </p>
+                </div>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Descripción enriquecida */}
-        {companyData.descripcion_empresa && (
-          <>
-            <Separator />
-            <div>
-              <h4 className="text-sm font-medium mb-3">Descripción Empresarial</h4>
-              <p className="text-sm leading-relaxed bg-muted/50 p-4 rounded-lg">
-                {companyData.descripcion_empresa}
-              </p>
-            </div>
-          </>
-        )}
-
-        {/* Redes sociales */}
-        {socialLinks.length > 0 && (
-          <>
-            <Separator />
-            <div>
-              <h4 className="text-sm font-medium mb-3">Redes Sociales</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {socialLinks.map((link) => (
-                  <Button
-                    key={link.platform}
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="justify-start"
-                  >
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      {link.platform}
-                    </a>
-                  </Button>
-                ))}
+            {/* Sector Identificado */}
+            {companyData.industria_principal && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-foreground">Sector Principal</h4>
+                  <Badge variant="outline" className="text-xs">
+                    <Bot className="h-3 w-3 mr-1" />
+                    Identificado por ERA
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Building className="h-5 w-5 text-primary" />
+                  <span className="font-medium text-foreground">{companyData.industria_principal}</span>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            )}
 
-        {/* Información de estado */}
-        {!isDataEnriched() && companyData.website_url && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-500"></div>
-              <p className="text-sm text-yellow-800">
-                Analizando información de la empresa en segundo plano...
-              </p>
+            {/* Redes Sociales Detectadas */}
+            {socialLinks.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-foreground">Redes Sociales Detectadas</h4>
+                  <Badge variant="outline" className="text-xs">
+                    <Bot className="h-3 w-3 mr-1" />
+                    Encontradas por ERA
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {socialLinks.map((link) => (
+                    <Button
+                      key={link.platform}
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="justify-start bg-background/60 hover:bg-background/80 border-primary/20"
+                    >
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {getSocialIcon(link.platform)}
+                        <span className="ml-2">{link.platform}</span>
+                      </a>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Separator className="bg-primary/20" />
+            
+            {/* Footer con marca ERA */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+                <span>Información analizada y enriquecida por ERA</span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleRefresh} className="h-auto p-1">
+                <RefreshCw className="h-3 w-3" />
+              </Button>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Estado de Procesamiento */}
+      {!isDataEnriched() && companyData.website_url && (
+        <Card className="border-yellow-200 bg-yellow-50/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Bot className="h-5 w-5 text-yellow-600" />
+                <div className="absolute -top-1 -right-1 h-2 w-2 bg-yellow-500 rounded-full animate-ping"></div>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-yellow-800">ERA está analizando tu empresa</p>
+                <p className="text-xs text-yellow-700">
+                  Estamos procesando la información de tu sitio web para generar insights personalizados
+                </p>
+              </div>
+              <Badge variant="outline" className="border-yellow-300 text-yellow-700">
+                Procesando...
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };

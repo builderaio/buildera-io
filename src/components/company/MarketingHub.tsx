@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   BarChart3, 
@@ -28,6 +28,7 @@ import MarketingMetrics from './MarketingMetrics';
 import ContentGenerator from './ContentGenerator';
 import MarketingCalendar from './MarketingCalendar';
 import AdvancedMarketingDashboard from './AdvancedMarketingDashboard';
+import MarketingHubOnboarding from './MarketingHubOnboarding';
 
 interface MarketingHubProps {
   profile: any;
@@ -43,7 +44,6 @@ interface QuickStat {
 }
 
 const MarketingHub = ({ profile }: MarketingHubProps) => {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   const [socialConnections, setSocialConnections] = useState({
     linkedin: false,
@@ -53,6 +53,8 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
   });
   const [loading, setLoading] = useState(false);
   const [realMetrics, setRealMetrics] = useState<QuickStat[]>([]);
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Mock quick stats - en producción vendría de la API
   const quickStats: QuickStat[] = [
@@ -91,9 +93,63 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
   ];
 
   useEffect(() => {
+    checkOnboardingStatus();
     checkConnections();
     loadRealMetrics();
   }, [profile?.user_id]);
+
+  const checkOnboardingStatus = async () => {
+    if (!profile?.user_id) return;
+
+    try {
+      // Check if user has any social media connections configured
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('created_by', profile.user_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // Check if user has any insights or actionables
+      const [insightsResult, actionablesResult] = await Promise.all([
+        supabase
+          .from('marketing_insights')
+          .select('id')
+          .eq('user_id', profile.user_id)
+          .limit(1),
+        supabase
+          .from('marketing_actionables')
+          .select('id')
+          .eq('user_id', profile.user_id)
+          .limit(1)
+      ]);
+
+      const hasCompanyData = companyData && (
+        companyData.linkedin_url || 
+        companyData.instagram_url || 
+        companyData.facebook_url || 
+        companyData.tiktok_url
+      );
+
+      const hasInsights = (insightsResult.data && insightsResult.data.length > 0) ||
+                         (actionablesResult.data && actionablesResult.data.length > 0);
+
+      // Si no tiene datos de empresa configurados O no tiene insights, necesita onboarding
+      const needsOnboarding = !hasCompanyData || !hasInsights;
+      
+      setNeedsOnboarding(needsOnboarding);
+      console.log('🎯 Onboarding status:', {
+        hasCompanyData,
+        hasInsights,
+        needsOnboarding
+      });
+
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      setNeedsOnboarding(true); // Si hay error, mostrar onboarding por seguridad
+    }
+  };
 
   const checkConnections = async () => {
     if (!profile?.user_id) return;
@@ -489,6 +545,37 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     </Card>
   );
 
+  const handleOnboardingComplete = () => {
+    setNeedsOnboarding(false);
+    setShowOnboarding(false);
+    // Recargar datos después del onboarding
+    checkConnections();
+    loadRealMetrics();
+    toast.success('¡Marketing Hub configurado correctamente!');
+  };
+
+  // Mostrar onboarding si es necesario
+  if (needsOnboarding === true || showOnboarding) {
+    return (
+      <MarketingHubOnboarding 
+        profile={profile} 
+        onComplete={handleOnboardingComplete}
+      />
+    );
+  }
+
+  // Mostrar loading mientras determinamos si necesita onboarding
+  if (needsOnboarding === null) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Cargando Marketing Hub...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
@@ -499,10 +586,20 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
             Tu centro de control para marketing digital con IA
           </p>
         </div>
-        <Button className="flex items-center gap-2">
-          <PlusCircle className="h-4 w-4" />
-          Crear Campaña
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowOnboarding(true)}
+            className="flex items-center gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            Reconfigurar
+          </Button>
+          <Button className="flex items-center gap-2">
+            <PlusCircle className="h-4 w-4" />
+            Crear Campaña
+          </Button>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">

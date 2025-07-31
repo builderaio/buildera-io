@@ -14,7 +14,7 @@ import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { 
   Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Youtube, Plus, Edit, Trash2, 
   Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar, Globe, 
-  Bot, Facebook, ExternalLink, RefreshCw, Save 
+  Bot, Facebook, ExternalLink, RefreshCw, Save, Flag 
 } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -379,6 +379,72 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     } catch (error: any) {
       console.error('Error fetching strategy:', error);
     }
+  };
+
+  const handleSaveStrategy = async () => {
+    setLoading(true);
+    try {
+      const { data: existingStrategy, error: fetchError } = await supabase
+        .from('company_strategy')
+        .select('*')
+        .eq('user_id', profile?.user_id)
+        .maybeSingle();
+
+      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+      if (existingStrategy) {
+        // Actualizar estrategia existente
+        const { error } = await supabase
+          .from('company_strategy')
+          .update({
+            vision: strategyForm.vision || null,
+            mission: strategyForm.mission || null,
+            values: strategyForm.values || null,
+            competitive_advantages: strategyForm.competitive_advantages || null,
+            target_market: strategyForm.target_market || null,
+            business_model: strategyForm.business_model || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', profile?.user_id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Estrategia actualizada",
+          description: "Los fundamentos estratégicos se han actualizado correctamente",
+        });
+      } else {
+        // Crear nueva estrategia
+        const { error } = await supabase
+          .from('company_strategy')
+          .insert({
+            vision: strategyForm.vision || null,
+            mission: strategyForm.mission || null,
+            values: strategyForm.values || null,
+            competitive_advantages: strategyForm.competitive_advantages || null,
+            target_market: strategyForm.target_market || null,
+            business_model: strategyForm.business_model || null,
+            user_id: profile?.user_id
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Estrategia creada",
+          description: "Los fundamentos estratégicos se han guardado correctamente",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error saving strategy:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar la estrategia",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   };
 
   // Funciones para objetivos
@@ -1051,24 +1117,164 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
             {/* Las demás pestañas (Estrategia, Marca, Canales) mantienen su estructura original */}
             <TabsContent value="estrategia" className="space-y-6 mt-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-lg font-semibold flex items-center">
+              {/* SECCIÓN 1: FUNDAMENTOS ESTRATÉGICOS */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
                     <Target className="w-5 h-5 mr-2 text-primary" />
-                    Estrategia Empresarial
-                  </h3>
+                    Fundamentos Estratégicos
+                  </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Define los objetivos estratégicos de tu negocio para que los agentes de IA puedan alinear sus acciones.
+                    Define la misión, visión y propuesta de valor de tu negocio.
                   </p>
-                </div>
-                <Button 
-                  onClick={() => setShowObjectiveForm(true)}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Agregar Objetivo
-                </Button>
-              </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="mission">Misión</Label>
+                        <EraOptimizerButton
+                          currentText={strategyForm.mission}
+                          fieldType="misión empresarial"
+                          context={{
+                            companyName: profile?.company_name,
+                            industry: profile?.industry_sector,
+                            companySize: profile?.company_size
+                          }}
+                          onOptimized={(optimizedText) => setStrategyForm({...strategyForm, mission: optimizedText})}
+                          size="sm"
+                          disabled={!strategyForm.mission.trim()}
+                        />
+                      </div>
+                      <Textarea
+                        id="mission"
+                        value={strategyForm.mission}
+                        onChange={(e) => setStrategyForm({...strategyForm, mission: e.target.value})}
+                        placeholder="¿Cuál es el propósito fundamental de tu empresa? ¿Por qué existe?"
+                        rows={3}
+                        className="resize-none"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="vision">Visión</Label>
+                        <EraOptimizerButton
+                          currentText={strategyForm.vision}
+                          fieldType="visión empresarial"
+                          context={{
+                            companyName: profile?.company_name,
+                            industry: profile?.industry_sector,
+                            mission: strategyForm.mission
+                          }}
+                          onOptimized={(optimizedText) => setStrategyForm({...strategyForm, vision: optimizedText})}
+                          size="sm"
+                          disabled={!strategyForm.vision.trim()}
+                        />
+                      </div>
+                      <Textarea
+                        id="vision"
+                        value={strategyForm.vision}
+                        onChange={(e) => setStrategyForm({...strategyForm, vision: e.target.value})}
+                        placeholder="¿Cómo visualizas tu empresa en el futuro? ¿Qué quieres lograr a largo plazo?"
+                        rows={3}
+                        className="resize-none"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="values">Valores Empresariales</Label>
+                        <EraOptimizerButton
+                          currentText={strategyForm.values}
+                          fieldType="valores empresariales"
+                          context={{
+                            companyName: profile?.company_name,
+                            industry: profile?.industry_sector,
+                            mission: strategyForm.mission
+                          }}
+                          onOptimized={(optimizedText) => setStrategyForm({...strategyForm, values: optimizedText})}
+                          size="sm"
+                          disabled={!strategyForm.values.trim()}
+                        />
+                      </div>
+                      <Textarea
+                        id="values"
+                        value={strategyForm.values}
+                        onChange={(e) => setStrategyForm({...strategyForm, values: e.target.value})}
+                        placeholder="¿Cuáles son los principios y valores que guían a tu empresa?"
+                        rows={3}
+                        className="resize-none"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="competitive_advantages">Propuesta de Valor</Label>
+                        <EraOptimizerButton
+                          currentText={strategyForm.competitive_advantages}
+                          fieldType="propuesta de valor"
+                          context={{
+                            companyName: profile?.company_name,
+                            industry: profile?.industry_sector,
+                            mission: strategyForm.mission,
+                            vision: strategyForm.vision
+                          }}
+                          onOptimized={(optimizedText) => setStrategyForm({...strategyForm, competitive_advantages: optimizedText})}
+                          size="sm"
+                          disabled={!strategyForm.competitive_advantages.trim()}
+                        />
+                      </div>
+                      <Textarea
+                        id="competitive_advantages"
+                        value={strategyForm.competitive_advantages}
+                        onChange={(e) => setStrategyForm({...strategyForm, competitive_advantages: e.target.value})}
+                        placeholder="¿Qué te diferencia de la competencia? ¿Qué valor único ofreces a tus clientes?"
+                        rows={3}
+                        className="resize-none"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={handleSaveStrategy}
+                      disabled={loading}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {loading ? "Guardando..." : "Guardar Fundamentos"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* SECCIÓN 2: OBJETIVOS ESTRATÉGICOS */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Flag className="w-5 h-5 mr-2 text-primary" />
+                    Objetivos Estratégicos
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Define los objetivos específicos de tu negocio organizados por plazo.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Gestiona los objetivos estratégicos para que los agentes de IA puedan alinear sus acciones.
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => setShowObjectiveForm(true)}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Agregar Objetivo
+                    </Button>
+                  </div>
 
               {/* Lista de objetivos */}
               <div className="space-y-4">
@@ -1295,6 +1501,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   </CardContent>
                 </Card>
               )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="marca" className="space-y-6 mt-6">

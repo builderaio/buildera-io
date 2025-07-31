@@ -177,18 +177,25 @@ async function getFollowers(tikTokUserId: string, userId: string, supabase: any,
     throw new Error(`TikTok Followers API error: ${response.status}`)
   }
 
-  const data = await response.json()
-  const followers = data.data?.user_list || []
+  const apiResponse = await response.json()
+  console.log('TikTok Followers API Response:', JSON.stringify(apiResponse, null, 2))
+  
+  // Verificar que la respuesta sea exitosa
+  if (apiResponse.code !== 0) {
+    throw new Error(`TikTok Followers API error: ${apiResponse.msg}`)
+  }
 
-  // Guardar muestra de seguidores
+  const followers = apiResponse.data?.followers || []
+
+  // Guardar muestra de seguidores con la estructura correcta
   const followersToSave = followers.slice(0, 50).map((follower: any) => ({
     user_id: userId,
     tiktok_user_id: tikTokUserId,
-    follower_user_id: follower.user_id || follower.id,
+    follower_user_id: follower.id,
     follower_unique_id: follower.unique_id,
     follower_nickname: follower.nickname,
     follower_count: follower.follower_count || 0,
-    avatar_url: follower.avatar_thumb?.url_list?.[0],
+    avatar_url: follower.avatar,
     raw_data: follower
   }))
 
@@ -225,18 +232,26 @@ async function getFollowing(tikTokUserId: string, userId: string, supabase: any,
     throw new Error(`TikTok Following API error: ${response.status}`)
   }
 
-  const data = await response.json()
-  const following = data.data?.user_list || []
+  const apiResponse = await response.json()
+  console.log('TikTok Following API Response:', JSON.stringify(apiResponse, null, 2))
+  
+  // Verificar que la respuesta sea exitosa
+  if (apiResponse.code !== 0) {
+    throw new Error(`TikTok Following API error: ${apiResponse.msg}`)
+  }
 
-  // Guardar muestra de seguidos
+  // Asumir que la respuesta de following tiene la misma estructura que followers
+  const following = apiResponse.data?.following || apiResponse.data?.user_list || []
+
+  // Guardar muestra de seguidos con la estructura correcta
   const followingToSave = following.slice(0, 50).map((followedUser: any) => ({
     user_id: userId,
     tiktok_user_id: tikTokUserId,
-    following_user_id: followedUser.user_id || followedUser.id,
+    following_user_id: followedUser.id,
     following_unique_id: followedUser.unique_id,
     following_nickname: followedUser.nickname,
     follower_count: followedUser.follower_count || 0,
-    avatar_url: followedUser.avatar_thumb?.url_list?.[0],
+    avatar_url: followedUser.avatar,
     raw_data: followedUser
   }))
 

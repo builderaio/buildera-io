@@ -22,7 +22,11 @@ import {
   Eye,
   BarChart3,
   Settings,
-  RefreshCw
+  RefreshCw,
+  Link,
+  Globe,
+  Users,
+  TrendingUp
 } from "lucide-react";
 
 interface SocialMediaHubProps {
@@ -343,40 +347,76 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Hub de Redes Sociales</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Hub de Redes Sociales</h2>
           <p className="text-muted-foreground">
             Gestiona y analiza la presencia de tu empresa en redes sociales
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-primary">
+            <Globe className="h-3 w-3 mr-1" />
+            {socialNetworks.filter(n => n.isActive).length} conectadas
+          </Badge>
+        </div>
       </div>
 
-      {/* Social Networks Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Estado general */}
+      <Card className="border-l-4 border-l-primary">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+                <Link className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Estado de Conexiones</h3>
+                <p className="text-sm text-muted-foreground">
+                  {socialNetworks.filter(n => n.isActive).length} de {socialNetworks.length} plataformas activas
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-primary">
+                {Math.round((socialNetworks.filter(n => n.isActive).length / socialNetworks.length) * 100)}%
+              </div>
+              <p className="text-xs text-muted-foreground">Configuración completa</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Redes sociales grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {socialNetworks.map((network) => {
           const IconComponent = network.icon;
           
           return (
-            <Card key={network.id} className={`transition-all hover:shadow-md ${network.isActive ? 'border-green-200' : 'border-gray-200'}`}>
-              <CardHeader className="pb-3">
+            <Card 
+              key={network.id} 
+              className={`transition-all duration-200 hover:shadow-lg hover-scale group ${
+                network.isActive ? 'border-green-200 bg-green-50/50' : 'border-muted bg-muted/20'
+              }`}
+            >
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg ${network.color} flex items-center justify-center`}>
-                      <IconComponent className="w-5 h-5 text-white" />
+                    <div className={`w-12 h-12 rounded-xl ${network.color} flex items-center justify-center shadow-md`}>
+                      <IconComponent className="w-6 h-6 text-white" />
                     </div>
                     <div>
                       <CardTitle className="text-lg">{network.name}</CardTitle>
                       {network.isActive ? (
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                        <Badge className="bg-green-100 text-green-700 border-green-200">
                           <CheckCircle className="w-3 h-3 mr-1" />
-                          Activo
+                          Conectado
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="text-xs text-gray-500">
+                        <Badge variant="outline" className="text-muted-foreground border-muted-foreground">
                           <AlertTriangle className="w-3 h-3 mr-1" />
-                          Inactivo
+                          Desconectado
                         </Badge>
                       )}
                     </div>
@@ -386,6 +426,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                       variant="ghost"
                       size="sm"
                       onClick={() => window.open(network.url!, '_blank')}
+                      className="opacity-60 group-hover:opacity-100 transition-opacity"
                     >
                       <ExternalLink className="w-4 h-4" />
                     </Button>
@@ -395,22 +436,25 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
               
               <CardContent className="space-y-4">
                 {network.isActive ? (
-                  <div className="space-y-3">
-                    <div className="text-sm text-muted-foreground">
-                      URL configurada: 
-                      <span className="font-mono text-xs block mt-1 truncate">
+                  <div className="space-y-4">
+                    <div className="p-3 bg-white rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                        <Link className="h-3 w-3" />
+                        URL configurada
+                      </div>
+                      <p className="font-mono text-xs truncate text-green-700">
                         {network.url}
-                      </span>
+                      </p>
                     </div>
                     
                     <Separator />
                     
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
                       {network.hasDetails && (
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-full"
+                          className="flex items-center gap-2 h-auto py-3 px-3"
                           onClick={() => {
                             setSelectedNetwork(network);
                             if (network.id === 'linkedin') {
@@ -420,11 +464,14 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                           disabled={loadingLinkedIn && selectedNetwork?.id === network.id}
                         >
                           {loadingLinkedIn && selectedNetwork?.id === network.id ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <Eye className="w-4 h-4 mr-2" />
+                            <Eye className="w-4 h-4" />
                           )}
-                          Ver Detalles
+                          <div className="text-left">
+                            <div className="text-xs font-medium">Ver Detalles</div>
+                            <div className="text-xs text-muted-foreground">Información</div>
+                          </div>
                         </Button>
                       )}
                       
@@ -432,7 +479,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-full"
+                          className="flex items-center gap-2 h-auto py-3 px-3"
                           onClick={() => {
                             setSelectedNetwork(network);
                             if (network.id === 'linkedin') {
@@ -442,35 +489,41 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                           disabled={loadingLinkedIn && selectedNetwork?.id === network.id}
                         >
                           {loadingLinkedIn && selectedNetwork?.id === network.id ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <BarChart3 className="w-4 h-4 mr-2" />
+                            <BarChart3 className="w-4 h-4" />
                           )}
-                          Analizar Posts
+                          <div className="text-left">
+                            <div className="text-xs font-medium">Analizar</div>
+                            <div className="text-xs text-muted-foreground">Posts</div>
+                          </div>
                         </Button>
                       )}
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
+                  <div className="space-y-4">
+                    <Alert className="border-orange-200 bg-orange-50">
+                      <AlertTriangle className="h-4 w-4 text-orange-600" />
+                      <AlertDescription className="text-orange-800">
                         {network.url && !network.isValid
-                          ? "URL inválida. Por favor verifica el formato."
-                          : "Configura la URL para habilitar funciones."
+                          ? "URL inválida. Verifica el formato correcto."
+                          : "Configura la URL para activar las funciones de análisis."
                         }
                       </AlertDescription>
                     </Alert>
                     
-                    <div className="space-y-2">
-                      <Label htmlFor={`${network.id}-url`}>URL de {network.name}</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor={`${network.id}-url`} className="text-sm font-medium">
+                        URL de {network.name}
+                      </Label>
                       <div className="flex gap-2">
                         <Input
                           id={`${network.id}-url`}
                           placeholder={getUrlPlaceholder(network.id)}
                           value={urlInputs[network.id] || network.url || ''}
                           onChange={(e) => setUrlInputs(prev => ({ ...prev, [network.id]: e.target.value }))}
+                          className="text-sm"
                         />
                         <Button
                           size="sm"
@@ -533,25 +586,41 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         </Card>
       )}
 
-      {/* Posts Section */}
+      {/* Posts de LinkedIn */}
       {selectedNetwork && linkedinPosts.length > 0 && selectedNetwork.id === 'linkedin' && (
-        <Card>
+        <Card className="border-blue-200 bg-blue-50/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-blue-800">
               <BarChart3 className="w-5 h-5" />
-              Posts de LinkedIn ({linkedinPosts.length})
+              Análisis de Posts de LinkedIn ({linkedinPosts.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {linkedinPosts.slice(0, 5).map((post, index) => (
-                <div key={index} className="border rounded-lg p-4 space-y-3">
-                  <p className="text-sm">{post.text || 'Sin texto'}</p>
-                  <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>👍 {post.likes || 0} Me gusta</span>
-                    <span>💬 {post.comments || 0} Comentarios</span>
-                    <span>🔄 {post.shares || 0} Compartidos</span>
-                    {post.date && <span>📅 {new Date(post.date).toLocaleDateString()}</span>}
+                <div key={index} className="bg-white border border-blue-200 rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow">
+                  <p className="text-sm leading-relaxed">{post.text || 'Sin contenido de texto'}</p>
+                  <div className="flex items-center gap-6 text-xs text-blue-600">
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                      <span className="font-medium">{post.likes || 0}</span>
+                      <span className="text-muted-foreground">Me gusta</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+                      <span className="font-medium">{post.comments || 0}</span>
+                      <span className="text-muted-foreground">Comentarios</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
+                      <span className="font-medium">{post.shares || 0}</span>
+                      <span className="text-muted-foreground">Compartidos</span>
+                    </div>
+                    {post.date && (
+                      <div className="flex items-center gap-1 ml-auto">
+                        <span className="text-muted-foreground">{new Date(post.date).toLocaleDateString()}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

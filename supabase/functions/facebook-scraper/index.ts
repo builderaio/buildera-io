@@ -27,10 +27,25 @@ interface FacebookPageDetails {
 }
 
 interface FacebookPageReview {
-  author_name?: string;
-  rating?: number;
-  review_text?: string;
-  date?: string;
+  type?: string;
+  post_id?: string;
+  recommend?: boolean;
+  message?: string;
+  author?: {
+    id?: string;
+    name?: string;
+    url?: string;
+    profile_picture?: {
+      uri?: string;
+      width?: number;
+      height?: number;
+      scale?: number;
+    };
+  };
+  reactions_count?: number;
+  share?: number;
+  photos?: any[];
+  tags?: any[];
 }
 
 Deno.serve(async (req) => {
@@ -109,7 +124,7 @@ Deno.serve(async (req) => {
           
           if (reviewsResponse.ok) {
             const reviewsData = await reviewsResponse.json();
-            reviews = reviewsData.reviews || [];
+            reviews = reviewsData.results || [];
             console.log('✅ Reviews retrieved:', reviews.length);
           } else {
             console.log('⚠️ Failed to fetch reviews:', reviewsResponse.status);

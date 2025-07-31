@@ -2577,27 +2577,42 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {facebookDetails.reviews.slice(0, 6).map((review: any, index: number) => (
-                    <div key={index} className="p-4 bg-white border rounded-lg space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium text-sm">{review.author_name || 'Usuario'}</div>
-                        {review.rating && (
-                          <div className="flex items-center gap-1">
-                            {Array.from({ length: 5 }, (_, i) => (
-                              <div
-                                key={i}
-                                className={`w-3 h-3 rounded-full ${
-                                  i < review.rating ? 'bg-yellow-400' : 'bg-gray-200'
-                                }`}
-                              />
-                            ))}
+                    <div key={index} className="p-4 bg-white border rounded-lg space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          {review.author?.profile_picture?.uri && (
+                            <img 
+                              src={review.author.profile_picture.uri} 
+                              alt="Avatar del usuario"
+                              className="w-10 h-10 rounded-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <div>
+                            <div className="font-medium text-sm">{review.author?.name || 'Usuario'}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {review.recommend ? (
+                                <span className="text-green-600 flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Recomienda
+                                </span>
+                              ) : (
+                                <span className="text-gray-600">Review</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        {review.reactions_count > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Heart className="w-3 h-3" />
+                            {review.reactions_count}
                           </div>
                         )}
                       </div>
-                      {review.review_text && (
-                        <p className="text-sm text-muted-foreground">{review.review_text}</p>
-                      )}
-                      {review.date && (
-                        <div className="text-xs text-muted-foreground">{review.date}</div>
+                      {review.message && (
+                        <p className="text-sm text-muted-foreground">{review.message}</p>
                       )}
                     </div>
                   ))}

@@ -1,300 +1,257 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req) => {
+  console.log('🧠 Facebook Intelligent Analysis request received')
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const supabaseClient = createClient(
+    const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    )
 
-    // Get the user from the Authorization header
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+    if (!openaiApiKey) {
+      throw new Error('OpenAI API key not configured')
+    }
+
+    // Obtain the authenticated user
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
+    let userId: string | null = null;
+
+    if (authHeader) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser(
+        authHeader.replace('Bearer ', '')
+      );
+      
+      if (!userError && user) {
+        userId = user.id;
+      }
     }
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !user) {
-      throw new Error('Invalid user token');
-    }
-
-    console.log(`🔍 Starting Facebook intelligent analysis for user: ${user.id}`);
-
-    // Fetch Facebook posts for the user
-    const { data: facebookPosts, error: postsError } = await supabaseClient
-      .from('facebook_posts')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (postsError) {
-      console.error('Error fetching Facebook posts:', postsError);
-      throw new Error('Failed to fetch Facebook posts');
-    }
-
-    if (!facebookPosts || facebookPosts.length === 0) {
-      console.log('No Facebook posts found for analysis');
+    if (!userId) {
+      console.error('❌ No authenticated user found');
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: 'No hay publicaciones de Facebook para analizar' 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`📊 Found ${facebookPosts.length} Facebook posts for analysis`);
+    console.log('🔍 Starting Facebook intelligent analysis for user:', userId)
 
-    // Calculate general metrics
-    const totalPosts = facebookPosts.length;
-    const totalReactions = facebookPosts.reduce((sum, post) => sum + (post.reactions_count || 0), 0);
-    const totalComments = facebookPosts.reduce((sum, post) => sum + (post.comments_count || 0), 0);
-    const totalShares = facebookPosts.reduce((sum, post) => sum + (post.reshare_count || 0), 0);
-    
-    const avgReactions = totalReactions / totalPosts;
-    const avgComments = totalComments / totalPosts;
-    const avgShares = totalShares / totalPosts;
-    const engagementRate = ((totalReactions + totalComments + totalShares) / totalPosts) / 1000; // Normalized
+    // Get Facebook posts from database
+    const { data: facebookPosts, error: postsError } = await supabase
+      .from('facebook_posts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50);
 
-    // Analyze reaction types
-    const reactionTypes = facebookPosts.reduce((acc, post) => {
-      if (post.reactions) {
-        const reactions = typeof post.reactions === 'string' ? JSON.parse(post.reactions) : post.reactions;
-        Object.entries(reactions).forEach(([type, count]) => {
-          acc[type] = (acc[type] || 0) + count;
-        });
-      }
-      return acc;
-    }, {});
+    if (postsError) {
+      console.error('Error fetching Facebook posts:', postsError);
+      throw new Error(`Error fetching Facebook posts: ${postsError.message}`);
+    }
 
-    // Get recent posts for detailed analysis
-    const recentPosts = facebookPosts.slice(0, 10).map(post => ({
-      message: post.message || '',
-      reactions_count: post.reactions_count || 0,
-      comments_count: post.comments_count || 0,
-      shares: post.reshare_count || 0,
+    if (!facebookPosts || facebookPosts.length === 0) {
+      console.log('No Facebook posts found for analysis')
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'No Facebook posts found for analysis',
+          insights_generated: 0,
+          actionables_generated: 0 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('📊 Analyzing', facebookPosts.length, 'posts')
+
+    // Prepare posts for analysis
+    const postsForAnalysis = facebookPosts.map(post => ({
+      content: post.content || '',
+      likes: post.likes_count || 0,
+      comments: post.comments_count || 0,
+      shares: post.shares_count || 0,
       created_at: post.created_at,
-      reactions: post.reactions
+      engagement_rate: post.engagement_rate || 0
     }));
 
-    console.log('📈 Calculated metrics:', {
-      totalPosts,
-      avgReactions: avgReactions.toFixed(2),
-      avgComments: avgComments.toFixed(2),
-      avgShares: avgShares.toFixed(2),
-      engagementRate: (engagementRate * 100).toFixed(2) + '%'
+    console.log('🤖 Calling OpenAI for intelligent analysis');
+
+    // Call OpenAI for intelligent analysis
+    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Eres un experto analista de marketing de Facebook. Analiza los siguientes posts de Facebook y genera insights accionables en español. 
+            
+            Para cada insight que generes, incluye:
+            1. Un título claro y específico
+            2. Una descripción detallada del insight
+            3. El tipo de insight (engagement, content_performance, timing, audience, etc.)
+            4. El nivel de impacto (high, medium, low)
+            5. Una puntuación de confianza (0.0-1.0)
+            6. Datos específicos que respalden el insight
+            7. Recomendaciones accionables específicas
+
+            Enfócate en:
+            - Patrones de engagement
+            - Mejores horarios de publicación
+            - Tipos de contenido que funcionan mejor
+            - Análisis de audiencia
+            - Optimización del contenido
+            - Estrategias de networking social`
+          },
+          {
+            role: 'user',
+            content: `Analiza estos posts de Facebook y genera insights accionables:
+            
+            Posts: ${JSON.stringify(postsForAnalysis, null, 2)}
+            
+            Responde en formato JSON con esta estructura:
+            {
+              "insights": [
+                {
+                  "title": "Título del insight",
+                  "description": "Descripción detallada",
+                  "insight_type": "tipo",
+                  "impact_level": "high|medium|low",
+                  "confidence_score": 0.85,
+                  "data": { "datos_especificos": "valores" },
+                  "platforms": ["facebook"]
+                }
+              ],
+              "actionables": [
+                {
+                  "title": "Acción recomendada",
+                  "description": "Descripción de la acción",
+                  "action_type": "content_optimization|timing|strategy",
+                  "priority": "urgent|high|medium|low",
+                  "estimated_impact": "Impacto estimado"
+                }
+              ]
+            }`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      })
     });
 
-    // Prepare prompt for AI analysis
-    const analysisPrompt = `
-Analiza los siguientes datos de Facebook para proporcionar insights estratégicos de marketing:
+    if (!openaiResponse.ok) {
+      const errorText = await openaiResponse.text();
+      console.error('OpenAI API error:', openaiResponse.status, errorText);
+      throw new Error(`OpenAI API error: ${openaiResponse.status}`);
+    }
 
-MÉTRICAS GENERALES:
-- Total de publicaciones: ${totalPosts}
-- Promedio de reacciones: ${avgReactions.toFixed(2)}
-- Promedio de comentarios: ${avgComments.toFixed(2)}
-- Promedio de compartidos: ${avgShares.toFixed(2)}
-- Tasa de engagement: ${(engagementRate * 100).toFixed(2)}%
+    const aiResult = await openaiResponse.json();
+    console.log('✅ OpenAI analysis completed');
 
-DISTRIBUCIÓN DE REACCIONES:
-${Object.entries(reactionTypes).map(([type, count]) => `- ${type}: ${count}`).join('\n')}
+    let analysisResult;
+    try {
+      analysisResult = JSON.parse(aiResult.choices[0].message.content);
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError);
+      throw new Error('Error parsing AI analysis result');
+    }
 
-PUBLICACIONES RECIENTES (últimas 10):
-${recentPosts.map((post, index) => `
-${index + 1}. Mensaje: "${post.message.substring(0, 100)}${post.message.length > 100 ? '...' : ''}"
-   - Reacciones: ${post.reactions_count}
-   - Comentarios: ${post.comments_count}
-   - Compartidos: ${post.shares}
-   - Fecha: ${post.created_at}
-`).join('\n')}
+    let insightsCreated = 0;
+    let actionablesCreated = 0;
 
-Por favor proporciona un análisis en formato JSON con la siguiente estructura:
-{
-  "strategic_analysis": "Análisis estratégico detallado del rendimiento",
-  "content_performance": "Análisis del rendimiento del contenido",
-  "audience_engagement": "Análisis del engagement de la audiencia",
-  "key_findings": "Hallazgos clave y patrones identificados",
-  "recommendations": [
-    "Recomendación específica 1",
-    "Recomendación específica 2",
-    "Recomendación específica 3"
-  ],
-  "optimization_opportunities": [
-    "Oportunidad de optimización 1",
-    "Oportunidad de optimización 2",
-    "Oportunidad de optimización 3"
-  ]
-}
+    // Save insights to database
+    if (analysisResult.insights && analysisResult.insights.length > 0) {
+      for (const insight of analysisResult.insights) {
+        const { error: insightError } = await supabase
+          .from('marketing_insights')
+          .insert({
+            user_id: userId,
+            insight_type: insight.insight_type || 'facebook_analysis',
+            title: insight.title,
+            description: insight.description,
+            data: insight.data || {},
+            confidence_score: insight.confidence_score || 0.8,
+            impact_level: insight.impact_level || 'medium',
+            platforms: insight.platforms || ['facebook']
+          });
 
-Enfócate en insights accionables para mejorar la estrategia de marketing en Facebook.
-    `;
-
-    // Call the universal AI handler
-    console.log('🤖 Calling AI for strategic analysis...');
-    const { data: aiResponse, error: aiError } = await supabaseClient.functions.invoke(
-      'universal-ai-handler',
-      {
-        body: {
-          prompt: analysisPrompt,
-          max_tokens: 2000,
-          temperature: 0.3
+        if (insightError) {
+          console.error('Error saving insight:', insightError);
+        } else {
+          insightsCreated++;
         }
       }
-    );
-
-    if (aiError) {
-      console.error('Error calling AI:', aiError);
-      throw new Error('Failed to generate AI analysis');
     }
 
-    let analysisData;
-    try {
-      const aiContent = aiResponse.choices?.[0]?.message?.content || aiResponse.content || '';
-      console.log('🎯 AI Response received, parsing...');
-      
-      // Try to extract JSON from the response
-      const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        analysisData = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No JSON found in AI response');
-      }
-    } catch (parseError) {
-      console.error('Error parsing AI response:', parseError);
-      // Fallback analysis
-      analysisData = {
-        strategic_analysis: `Análisis basado en ${totalPosts} publicaciones con una tasa de engagement del ${(engagementRate * 100).toFixed(2)}%. El rendimiento muestra ${avgReactions.toFixed(0)} reacciones promedio por publicación.`,
-        content_performance: "El contenido muestra variabilidad en el engagement. Se recomienda analizar los posts con mejor rendimiento para identificar patrones exitosos.",
-        audience_engagement: `La audiencia muestra mayor preferencia por reacciones (${avgReactions.toFixed(0)} promedio) comparado con comentarios (${avgComments.toFixed(0)} promedio).`,
-        key_findings: "Se identifican oportunidades de mejora en la consistencia del engagement y la optimización del timing de publicaciones.",
-        recommendations: [
-          "Analizar horarios óptimos de publicación",
-          "Incrementar contenido interactivo",
-          "Optimizar el uso de hashtags relevantes"
-        ],
-        optimization_opportunities: [
-          "Mejorar la frecuencia de publicación",
-          "Desarrollar contenido más visual",
-          "Implementar estrategias de community management"
-        ]
-      };
-    }
+    // Save actionables to database
+    if (analysisResult.actionables && analysisResult.actionables.length > 0) {
+      for (const actionable of analysisResult.actionables) {
+        const { error: actionableError } = await supabase
+          .from('marketing_actionables')
+          .insert({
+            user_id: userId,
+            title: actionable.title,
+            description: actionable.description,
+            action_type: actionable.action_type || 'optimization',
+            priority: actionable.priority || 'medium',
+            status: 'pending',
+            estimated_impact: actionable.estimated_impact
+          });
 
-    // Structure the marketing insights
-    const marketingInsights = {
-      type: 'facebook_intelligent_analysis',
-      platform: 'Facebook',
-      metrics: {
-        total_posts: totalPosts,
-        avg_reactions: parseFloat(avgReactions.toFixed(2)),
-        avg_comments: parseFloat(avgComments.toFixed(2)),
-        avg_shares: parseFloat(avgShares.toFixed(2)),
-        engagement_rate: parseFloat((engagementRate * 100).toFixed(2))
-      },
-      strategic_analysis: analysisData.strategic_analysis,
-      content_performance: analysisData.content_performance,
-      audience_engagement: analysisData.audience_engagement,
-      key_findings: analysisData.key_findings,
-      created_at: new Date().toISOString(),
-      user_id: user.id
-    };
-
-    // Delete old Facebook insights
-    await supabaseClient
-      .from('marketing_insights')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('type', 'facebook_intelligent_analysis');
-
-    // Insert new insights
-    const { error: insertError } = await supabaseClient
-      .from('marketing_insights')
-      .insert([marketingInsights]);
-
-    if (insertError) {
-      console.error('Error inserting insights:', insertError);
-      throw new Error('Failed to save insights');
-    }
-
-    // Create actionables
-    const actionables = [
-      ...analysisData.recommendations.map((rec: string, index: number) => ({
-        user_id: user.id,
-        platform: 'Facebook',
-        type: 'content_optimization',
-        title: `Recomendación ${index + 1}`,
-        description: rec,
-        priority: index < 2 ? 'high' : 'medium',
-        status: 'pending',
-        created_at: new Date().toISOString()
-      })),
-      ...analysisData.optimization_opportunities.map((opp: string, index: number) => ({
-        user_id: user.id,
-        platform: 'Facebook',
-        type: 'optimization_opportunity',
-        title: `Oportunidad ${index + 1}`,
-        description: opp,
-        priority: 'medium',
-        status: 'pending',
-        created_at: new Date().toISOString()
-      }))
-    ];
-
-    // Delete old Facebook actionables
-    await supabaseClient
-      .from('marketing_actionables')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('platform', 'Facebook');
-
-    // Insert new actionables
-    if (actionables.length > 0) {
-      const { error: actionablesError } = await supabaseClient
-        .from('marketing_actionables')
-        .insert(actionables);
-
-      if (actionablesError) {
-        console.error('Error inserting actionables:', actionablesError);
+        if (actionableError) {
+          console.error('Error saving actionable:', actionableError);
+        } else {
+          actionablesCreated++;
+        }
       }
     }
 
-    console.log(`✅ Facebook intelligent analysis completed. Created ${actionables.length} actionables.`);
+    console.log(`✅ Facebook analysis completed: ${insightsCreated} insights, ${actionablesCreated} actionables created`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        analysis: analysisData,
-        metrics: marketingInsights.metrics,
-        actionables_created: actionables.length
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error) {
-    console.error('Error in Facebook intelligent analysis:', error);
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
+        platform: 'facebook',
+        insights_generated: insightsCreated,
+        actionables_generated: actionablesCreated,
+        posts_analyzed: facebookPosts.length
       }),
       { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
+
+  } catch (error: any) {
+    console.error('❌ Facebook intelligent analysis error:', error)
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        insights_generated: 0,
+        actionables_generated: 0
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    )
   }
-});
+})

@@ -163,6 +163,9 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   const [tikTokDetails, setTikTokDetails] = useState<any>(null);
   const [tikTokPosts, setTikTokPosts] = useState<any>(null);
   const [loadingTikTok, setLoadingTikTok] = useState(false);
+  const [youtubeDetails, setYoutubeDetails] = useState<any>(null);
+  const [youtubePosts, setYoutubePosts] = useState<any>(null);
+  const [loadingYoutube, setLoadingYoutube] = useState(false);
 
   // Initialize social networks
   const initializeSocialNetworks = (companyData: any): SocialNetwork[] => {
@@ -230,8 +233,8 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         url: companyData?.youtube_url || null,
         isValid: validateYouTubeUrl(companyData?.youtube_url),
         isActive: !!companyData?.youtube_url && validateYouTubeUrl(companyData?.youtube_url),
-        hasDetails: false,
-        hasPosts: false
+        hasDetails: true,
+        hasPosts: true
       }
     ];
   };
@@ -271,6 +274,12 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     if (!url) return false;
     const youtubeRegex = /^https?:\/\/(www\.)?youtube\.com\/(c\/|channel\/|user\/|@)[a-zA-Z0-9_-]+\/?$/;
     return youtubeRegex.test(url);
+  };
+
+  // Extract channel identifier from YouTube URL
+  const extractYouTubeIdentifier = (url: string): string => {
+    const match = url.match(/youtube\.com\/(c\/|channel\/|user\/|@)([a-zA-Z0-9_-]+)/);
+    return match ? match[2] : '';
   };
 
   // Extract company identifier from LinkedIn URL
@@ -613,6 +622,70 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     }
   };
 
+  const loadYoutubeDetails = async (network: SocialNetwork) => {
+    if (!network.url || !network.isValid) return;
+
+    setLoadingYoutube(true);
+    try {
+      const identifier = extractYouTubeIdentifier(network.url);
+      
+      console.log('🔍 Loading YouTube details for:', identifier);
+      
+      toast({
+        title: "Conectando YouTube",
+        description: "Esta funcionalidad estará disponible próximamente",
+      });
+      
+      // Placeholder data for now
+      setYoutubeDetails({
+        channel_name: identifier,
+        subscriber_count: 'Próximamente',
+        video_count: 'Próximamente',
+        total_views: 'Próximamente'
+      });
+      setSelectedNetwork(network);
+      
+    } catch (error: any) {
+      console.error('Error loading YouTube details:', error);
+      toast({
+        title: "Error cargando YouTube",
+        description: error.message || "No se pudieron cargar los detalles de YouTube",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingYoutube(false);
+    }
+  };
+
+  const loadYoutubePosts = async (network: SocialNetwork) => {
+    if (!network.url || !network.isValid) return;
+
+    setLoadingYoutube(true);
+    try {
+      const identifier = extractYouTubeIdentifier(network.url);
+      
+      console.log('📹 Loading YouTube posts for:', identifier);
+      
+      toast({
+        title: "Cargando videos",
+        description: "Esta funcionalidad estará disponible próximamente",
+      });
+      
+      // Placeholder data for now
+      setYoutubePosts([]);
+      
+    } catch (error: any) {
+      console.error('Error loading YouTube posts:', error);
+      toast({
+        title: "Error cargando videos",
+        description: error.message || "No se pudieron cargar los videos de YouTube",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingYoutube(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -730,11 +803,13 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                               loadTikTokDetails(network);
                             } else if (network.id === 'instagram') {
                               loadInstagramDetails(network);
+                            } else if (network.id === 'youtube') {
+                              loadYoutubeDetails(network);
                             }
                           }}
-                           disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok) && selectedNetwork?.id === network.id}
+                           disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok || loadingYoutube) && selectedNetwork?.id === network.id}
                         >
-                           {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') ? (
+                            {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') || (loadingYoutube && selectedNetwork?.id === 'youtube') ? (
                              <Loader2 className="w-4 h-4 animate-spin" />
                            ) : (
                              <Eye className="w-4 h-4" />
@@ -759,11 +834,13 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                                 loadInstagramPosts(network);
                               } else if (network.id === 'tiktok') {
                                 loadTikTokPosts(network);
+                              } else if (network.id === 'youtube') {
+                                loadYoutubePosts(network);
                               }
                             }}
-                            disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok) && selectedNetwork?.id === network.id}
+                            disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok || loadingYoutube) && selectedNetwork?.id === network.id}
                         >
-                          {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') ? (
+                          {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') || (loadingYoutube && selectedNetwork?.id === 'youtube') ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <BarChart3 className="w-4 h-4" />

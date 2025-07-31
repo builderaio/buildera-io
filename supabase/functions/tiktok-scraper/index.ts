@@ -279,7 +279,7 @@ async function getFollowing(tikTokUserId: string, userId: string, supabase: any,
 async function getPosts(tikTokUserId: string, userId: string, supabase: any, rapidApiKey: string) {
   console.log(`📹 Getting posts for TikTok user: ${tikTokUserId}`)
   
-  const response = await fetch(`https://tiktok-scraper7.p.rapidapi.com/user/posts?user_id=${tikTokUserId}`, {
+  const response = await fetch(`https://tiktok-scraper7.p.rapidapi.com/user/posts?user_id=${tikTokUserId}&count=30`, {
     headers: {
       'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com',
       'x-rapidapi-key': rapidApiKey
@@ -384,31 +384,67 @@ async function getCompleteAnalysis(uniqueId: string, userId: string, supabase: a
 async function getPostsByUsername(uniqueId: string, userId: string, supabase: any, rapidApiKey: string) {
   console.log(`📹 Getting posts for TikTok unique_id: ${uniqueId}`)
   
-  // Primero obtener el user_id de TikTok
-  const userInfoResponse = await fetch(`https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${encodeURIComponent(uniqueId)}`, {
+  // Usar la API directamente con unique_id y count=30
+  const response = await fetch(`https://tiktok-scraper7.p.rapidapi.com/user/posts?unique_id=${encodeURIComponent(uniqueId)}&count=30`, {
     headers: {
       'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com',
       'x-rapidapi-key': rapidApiKey
     }
   })
 
-  if (!userInfoResponse.ok) {
-    const errorText = await userInfoResponse.text()
-    console.error('TikTok User Info API error:', errorText)
-    throw new Error(`TikTok User Info API error: ${userInfoResponse.status}`)
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error('TikTok Posts API error:', errorText)
+    throw new Error(`TikTok Posts API error: ${response.status}`)
   }
 
-  const userInfoData = await userInfoResponse.json()
+  const apiResponse = await response.json()
+  console.log('TikTok Posts API Response:', JSON.stringify(apiResponse, null, 2))
   
-  if (userInfoData.code !== 0) {
-    throw new Error(`TikTok User Info API error: ${userInfoData.msg}`)
+  // Verificar que la respuesta sea exitosa
+  if (apiResponse.code !== 0) {
+    throw new Error(`TikTok Posts API error: ${apiResponse.msg}`)
   }
 
-  const tikTokUserId = userInfoData.data?.user?.id
-  if (!tikTokUserId) {
-    throw new Error('No user ID found for TikTok user')
+  const videos = apiResponse.data?.videos || []
+
+  // Obtener el user_id de TikTok desde la respuesta
+  const tikTokUserId = videos.length > 0 ? videos[0].author?.id || 'unknown' : 'unknown'
+
+  // Guardar posts con la estructura correcta
+  const postsToSave = videos.map((video: any) => ({
+    user_id: userId,
+    tiktok_user_id: tikTokUserId,
+    video_id: video.video_id,
+    aweme_id: video.aweme_id,
+    title: video.title || '',
+    cover_url: video.cover,
+    duration: video.duration || 0,
+    play_count: video.play_count || 0,
+    digg_count: video.digg_count || 0,
+    comment_count: video.comment_count || 0,
+    share_count: video.share_count || 0,
+    download_count: video.download_count || 0,
+    collect_count: video.collect_count || 0,
+    create_time: video.create_time,
+    posted_at: video.create_time ? new Date(video.create_time * 1000).toISOString() : null,
+    is_ad: video.is_ad || false,
+    raw_data: video
+  }))
+
+  if (postsToSave.length > 0) {
+    await supabase.from('tiktok_posts').upsert(postsToSave)
   }
 
-  // Ahora obtener los posts usando el user_id
-  return await getPosts(tikTokUserId, userId, supabase, rapidApiKey)
+  console.log(`✅ Saved ${postsToSave.length} posts`)
+
+  return new Response(
+    JSON.stringify({ 
+      success: true, 
+      data: videos,
+      saved_count: postsToSave.length,
+      total_count: videos.length 
+    }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  )
 }

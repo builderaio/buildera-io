@@ -183,7 +183,7 @@ const ResponsiveLayout = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuContent className="w-56 bg-card border shadow-lg z-50" align="end" forceMount>
                     <div className="flex items-center justify-start gap-2 p-2">
                       <div className="flex flex-col space-y-1 leading-none">
                         <p className="font-medium">{profile.full_name}</p>
@@ -217,7 +217,11 @@ const ResponsiveLayout = () => {
   }
 
   // Layout con sidebar para empresas
-  return <CompanyLayout profile={profile} handleSignOut={handleSignOut} />;
+  return (
+    <SidebarProvider>
+      <CompanyLayout profile={profile} handleSignOut={handleSignOut} />
+    </SidebarProvider>
+  );
 };
 
 const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSignOut: () => void }) => {
@@ -304,9 +308,8 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   const activeView = getActiveView();
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <Sidebar variant="inset" collapsible="icon">
+    <div className="min-h-screen flex w-full bg-background">
+      <Sidebar variant="inset" collapsible="icon" className="border-r">
           <SidebarHeader>
             <div className="flex items-center gap-2 px-2 py-2">
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-sidebar-primary-foreground">
@@ -401,7 +404,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 bg-card border shadow-lg z-50">
                   <DropdownMenuItem onClick={() => setActiveView('perfil')}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Ver perfil</span>
@@ -433,7 +436,6 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
           </main>
         </SidebarInset>
       </div>
-    </SidebarProvider>
   );
 };
 

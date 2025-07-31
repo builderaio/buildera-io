@@ -123,7 +123,7 @@ export default function MarketingHub() {
       console.log('🎯 Actionables loaded:', actionablesData?.length || 0);
       setActionables(actionablesData || []);
 
-      // Cargar posts recientes - usar instagram_posts en lugar de social_media_posts
+      // Cargar posts de Instagram (principal tabla disponible)
       const { data: postsData, error: postsError } = await supabase
         .from('instagram_posts')
         .select('*')
@@ -133,11 +133,11 @@ export default function MarketingHub() {
 
       if (postsError) {
         console.error('Error loading posts:', postsError);
-        throw postsError;
+        // No lanzar error, solo logear
       }
-      console.log('📱 Posts loaded:', postsData?.length || 0);
+
       // Transformar posts de Instagram al formato esperado
-      const transformedPosts = postsData?.map(post => ({
+      const transformedPosts = (postsData || []).map(post => ({
         ...post,
         platform: 'instagram',
         content: post.caption || '',
@@ -145,9 +145,13 @@ export default function MarketingHub() {
         metrics: {
           likes: post.like_count || 0,
           comments: post.comment_count || 0,
-          engagement: post.engagement_rate || 0
+          shares: 0, // Instagram posts no tienen shares directos
+          engagement: post.engagement_rate || 0,
+          views: post.video_view_count || post.impressions || 0
         }
-      })) || [];
+      }));
+      
+      console.log('📱 Posts loaded:', transformedPosts.length, 'from Instagram');
       setPosts(transformedPosts);
 
       // Cargar analytics
@@ -180,29 +184,75 @@ export default function MarketingHub() {
 
       console.log(`🚀 Starting analysis for ${platformId}`);
 
-      // Si es Instagram, usar el endpoint específico
-      if (platformId === 'instagram') {
-        // Primero obtener posts
-        const { data: scraperData, error: scraperError } = await supabase.functions.invoke('instagram-scraper', {
-          body: { 
-            action: 'get_posts', 
-            username_or_url: 'biury.co'
+      // Obtener información de la empresa para usar URLs específicas
+      const { data: companies } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('created_by', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      const company = companies?.[0];
+      if (!company) {
+        toast.error('No se encontró información de empresa');
+        return;
+      }
+
+      let analysisResult = null;
+
+      switch (platformId) {
+        case 'instagram':
+          if (company.instagram_url) {
+            // Extraer username de la URL
+            const username = company.instagram_url.split('/').pop()?.replace('@', '');
+            if (username) {
+              // Obtener posts
+              await supabase.functions.invoke('instagram-scraper', {
+                body: { action: 'get_posts', username_or_url: username }
+              });
+              
+              // Análisis inteligente
+              const { data, error } = await supabase.functions.invoke('instagram-intelligent-analysis');
+              if (error) throw error;
+              analysisResult = data;
+            }
           }
-        });
+          break;
 
-        if (scraperError) {
-          console.warn('Error obteniendo posts:', scraperError);
-        }
+        case 'facebook':
+          if (company.facebook_url) {
+            const { data, error } = await supabase.functions.invoke('facebook-intelligent-analysis');
+            if (error) throw error;
+            analysisResult = data;
+          }
+          break;
 
-        // Luego hacer análisis avanzado
-        const { data, error } = await supabase.functions.invoke('advanced-social-analyzer');
-        
-        if (error) throw error;
+        case 'linkedin':
+          if (company.linkedin_url) {
+            const identifier = company.linkedin_url.match(/linkedin\.com\/company\/([a-zA-Z0-9-_]+)/)?.[1];
+            if (identifier) {
+              // Análisis de LinkedIn (cuando esté disponible)
+              toast.info('Análisis de LinkedIn estará disponible próximamente');
+            }
+          }
+          break;
 
-        toast.success(`Análisis completado para ${platformId} - ${data.insights_generated || 0} insights generados`);
-      } else {
-        // Para otras plataformas, usar el endpoint genérico (cuando esté disponible)
-        toast.info(`Análisis para ${platformId} estará disponible próximamente`);
+        case 'tiktok':
+          if (company.tiktok_url) {
+            const username = company.tiktok_url.match(/tiktok\.com\/@([a-zA-Z0-9._-]+)/)?.[1];
+            if (username) {
+              // Análisis de TikTok (cuando esté disponible)
+              toast.info('Análisis de TikTok estará disponible próximamente');
+            }
+          }
+          break;
+
+        default:
+          toast.info(`Análisis para ${platformId} estará disponible próximamente`);
+      }
+
+      if (analysisResult) {
+        toast.success(`Análisis completado para ${platformId} - ${analysisResult.insights_generated || 0} insights generados`);
       }
 
       await loadMarketingData(); // Recargar datos
@@ -358,6 +408,7 @@ export default function MarketingHub() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {platforms.map((platform) => {
               const platformPosts = posts.filter(p => p.platform === platform.id);
+              const platformInsights = insights.filter(i => i.platforms.includes(platform.id));
               const isProcessing = processingPlatform === platform.id;
               
               return (
@@ -369,8 +420,19 @@ export default function MarketingHub() {
                     <div>
                       <h4 className="font-medium">{platform.name}</h4>
                       <p className="text-xs text-muted-foreground">
-                        {platformPosts.length} posts analizados
+                        {platformPosts.length} posts • {platformInsights.length} insights
                       </p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-center p-2 bg-muted/50 rounded">
+                      <p className="font-medium">{platformPosts.length}</p>
+                      <p className="text-muted-foreground">Posts</p>
+                    </div>
+                    <div className="text-center p-2 bg-muted/50 rounded">
+                      <p className="font-medium">{platformInsights.length}</p>
+                      <p className="text-muted-foreground">Insights</p>
                     </div>
                   </div>
                   
@@ -379,8 +441,9 @@ export default function MarketingHub() {
                     disabled={isProcessing}
                     size="sm"
                     className="w-full"
+                    variant={platformPosts.length > 0 ? "default" : "outline"}
                   >
-                    {isProcessing ? 'Analizando...' : 'Analizar Datos'}
+                    {isProcessing ? 'Analizando...' : platformPosts.length > 0 ? 'Analizar Datos' : 'Conectar'}
                   </Button>
                 </div>
               );

@@ -79,6 +79,9 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   const [instagramDetails, setInstagramDetails] = useState<any>(null);
   const [instagramPosts, setInstagramPosts] = useState<any>(null);
   const [loadingInstagram, setLoadingInstagram] = useState(false);
+  const [tikTokDetails, setTikTokDetails] = useState<any>(null);
+  const [tikTokPosts, setTikTokPosts] = useState<any>(null);
+  const [loadingTikTok, setLoadingTikTok] = useState(false);
 
   // Initialize social networks
   const initializeSocialNetworks = (companyData: any): SocialNetwork[] => {
@@ -103,7 +106,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         isValid: validateTikTokUrl(companyData?.tiktok_url),
         isActive: !!companyData?.tiktok_url && validateTikTokUrl(companyData?.tiktok_url),
         hasDetails: true,
-        hasPosts: false
+        hasPosts: true
       },
       {
         id: 'instagram',
@@ -353,16 +356,36 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   const loadTikTokDetails = async (network: SocialNetwork) => {
     if (!network.url || !network.isValid) return;
 
-    setLoadingLinkedIn(true);
+    setLoadingTikTok(true);
     try {
       const identifier = extractTikTokIdentifier(network.url);
       
       console.log('🔍 Loading TikTok details for:', identifier);
       
-      toast({
-        title: "Función en desarrollo",
-        description: "La funcionalidad de detalles de TikTok estará disponible próximamente",
+      const { data, error } = await supabase.functions.invoke('tiktok-scraper', {
+        body: {
+          action: 'get_user_details',
+          username: identifier
+        }
       });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setTikTokDetails(data.data);
+        console.log('✅ TikTok details loaded:', data.data);
+        
+        toast({
+          title: "Análisis de TikTok completo",
+          description: "Se ha cargado exitosamente la información de TikTok",
+        });
+      } else {
+        toast({
+          title: "Error cargando TikTok",
+          description: data.message || "No se pudieron cargar los detalles de TikTok",
+          variant: "destructive",
+        });
+      }
       
     } catch (error: any) {
       console.error('Error loading TikTok details:', error);
@@ -372,7 +395,52 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         variant: "destructive",
       });
     } finally {
-      setLoadingLinkedIn(false);
+      setLoadingTikTok(false);
+    }
+  };
+
+  const loadTikTokPosts = async (network: SocialNetwork) => {
+    if (!network.url || !network.isValid) return;
+
+    setLoadingTikTok(true);
+    try {
+      const identifier = extractTikTokIdentifier(network.url);
+      
+      console.log('📱 Loading TikTok posts for:', identifier);
+      
+      const { data, error } = await supabase.functions.invoke('tiktok-scraper', {
+        body: {
+          action: 'get_posts',
+          username: identifier
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setTikTokPosts(data.data);
+        console.log('✅ TikTok posts loaded:', data.data);
+        
+        toast({
+          title: "Posts de TikTok cargados",
+          description: `Se cargaron ${data.data.videos?.length || 0} posts para análisis`,
+        });
+      } else {
+        toast({
+          title: "Error cargando posts",
+          description: data.message || "No se pudieron cargar los posts de TikTok",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error loading TikTok posts:', error);
+      toast({
+        title: "Error cargando posts",
+        description: error.message || "No se pudieron cargar los posts de TikTok",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingTikTok(false);
     }
   };
 
@@ -581,9 +649,9 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                               loadInstagramDetails(network);
                             }
                           }}
-                          disabled={(loadingLinkedIn || loadingInstagram) && selectedNetwork?.id === network.id}
+                           disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok) && selectedNetwork?.id === network.id}
                         >
-                           {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') ? (
+                           {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') ? (
                              <Loader2 className="w-4 h-4 animate-spin" />
                            ) : (
                              <Eye className="w-4 h-4" />
@@ -600,17 +668,19 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                           variant="outline"
                           size="sm"
                           className="flex items-center gap-2 h-auto py-3 px-3"
-                           onClick={() => {
-                             setSelectedNetwork(network);
-                             if (network.id === 'linkedin') {
-                               loadLinkedInCompanyPosts(network);
-                             } else if (network.id === 'instagram') {
-                               loadInstagramPosts(network);
-                             }
-                           }}
-                           disabled={(loadingLinkedIn || loadingInstagram) && selectedNetwork?.id === network.id}
+                            onClick={() => {
+                              setSelectedNetwork(network);
+                              if (network.id === 'linkedin') {
+                                loadLinkedInCompanyPosts(network);
+                              } else if (network.id === 'instagram') {
+                                loadInstagramPosts(network);
+                              } else if (network.id === 'tiktok') {
+                                loadTikTokPosts(network);
+                              }
+                            }}
+                            disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok) && selectedNetwork?.id === network.id}
                         >
-                          {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') ? (
+                          {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <BarChart3 className="w-4 h-4" />

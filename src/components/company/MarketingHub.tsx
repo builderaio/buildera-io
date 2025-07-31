@@ -98,35 +98,36 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     if (!profile?.user_id) return;
 
     try {
-      // Check LinkedIn
-      const { data: linkedinData } = await supabase
-        .from('linkedin_connections')
-        .select('id')
-        .eq('user_id', profile.user_id)
+      // Get company data to check social media URLs
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('created_by', profile.user_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      // Check TikTok
-      const { data: tiktokData } = await supabase
-        .from('tiktok_connections')
-        .select('id')
-        .eq('user_id', profile.user_id)
-        .maybeSingle();
+      if (companyData) {
+        // Check if URLs are valid and not empty
+        const isValidUrl = (url: string | null) => {
+          if (!url || url.trim() === '' || url === 'No tiene') return false;
+          try {
+            new URL(url);
+            return true;
+          } catch {
+            return false;
+          }
+        };
 
-      // Check Facebook/Instagram
-      const { data: facebookData } = await supabase
-        .from('facebook_instagram_connections')
-        .select('id')
-        .eq('user_id', profile.user_id)
-        .maybeSingle();
-
-      setSocialConnections({
-        linkedin: !!linkedinData,
-        tiktok: !!tiktokData,
-        facebook: !!facebookData,
-        instagram: !!facebookData,
-        twitter: false,
-        youtube: false
-      });
+        setSocialConnections({
+          linkedin: isValidUrl(companyData.linkedin_url),
+          tiktok: isValidUrl(companyData.tiktok_url),
+          facebook: isValidUrl(companyData.facebook_url),
+          instagram: isValidUrl(companyData.instagram_url),
+          twitter: isValidUrl(companyData.twitter_url),
+          youtube: isValidUrl(companyData.youtube_url)
+        });
+      }
     } catch (error) {
       console.error('Error checking connections:', error);
     }

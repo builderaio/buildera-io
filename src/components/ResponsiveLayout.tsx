@@ -309,24 +309,24 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      <Sidebar variant="inset" collapsible="icon" className="border-r">
-          <SidebarHeader>
-            <div className="flex items-center gap-2 px-2 py-2">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-sidebar-primary-foreground">
-                <img 
-                  src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
-                  alt="Buildera Logo" 
-                  className="size-5 object-contain filter brightness-0 invert"
-                />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">BUILDERA</span>
-                <span className="truncate text-xs text-sidebar-foreground/70">AI Business Platform</span>
-              </div>
+      <Sidebar variant="sidebar" collapsible="icon" className="border-r bg-sidebar">
+        <SidebarHeader className="p-4">
+          <div className="flex items-center gap-2">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-primary-foreground">
+              <img 
+                src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
+                alt="Buildera Logo" 
+                className="size-5 object-contain filter brightness-0 invert"
+              />
             </div>
-          </SidebarHeader>
+            <div className="grid flex-1 text-left text-sm leading-tight">
+              <span className="truncate font-semibold text-sidebar-foreground">BUILDERA</span>
+              <span className="truncate text-xs text-sidebar-muted-foreground">AI Business Platform</span>
+            </div>
+          </div>
+        </SidebarHeader>
           
-          <SidebarContent>
+          <SidebarContent className="px-2 py-2">
             {menuItems.map((category) => (
               <SidebarGroup key={category.category}>
                 <SidebarGroupLabel>{category.category}</SidebarGroupLabel>
@@ -378,7 +378,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
             </SidebarGroup>
           </SidebarContent>
           
-          <SidebarFooter>
+          <SidebarFooter className="p-2">
             <div className="p-2 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-sidebar-foreground/70">Tema</span>

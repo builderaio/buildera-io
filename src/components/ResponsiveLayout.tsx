@@ -239,17 +239,17 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     const searchParams = new URLSearchParams(location.search);
     const viewParam = searchParams.get('view');
     
+    // Prioridad al parámetro view en la URL
     if (viewParam) return viewParam;
+    
+    // Rutas específicas
     if (path.includes('/agents')) return 'mis-agentes';
     if (path.includes('/marketplace')) return 'marketplace';
     if (path.includes('/profile')) return 'profile';
-    if (path.includes('/adn-empresa') || path.includes('view=adn-empresa')) return 'adn-empresa';
-    if (path.includes('/base-conocimiento')) return 'base-conocimiento';
-    if (path.includes('/marketing-hub')) return 'marketing-hub';
-    if (path.includes('/inteligencia-competitiva')) return 'inteligencia-competitiva';
-    if (path.includes('/academia-buildera')) return 'academia-buildera';
-    if (path.includes('/expertos')) return 'expertos';
-    if (path.includes('/configuracion')) return 'configuracion';
+    
+    // Por defecto mando central si estamos en company-dashboard
+    if (path.includes('/company-dashboard')) return 'mando-central';
+    
     return 'mando-central';
   };
 
@@ -260,10 +260,10 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     
     const routes: Record<string, string> = {
       'mando-central': '/company-dashboard',
-      'adn-empresa': '/company-dashboard?view=adn-empresa',
+      'adn-empresa': '/company-dashboard?view=adn-empresa', 
       'base-conocimiento': '/company-dashboard?view=base-conocimiento',
       'mis-agentes': '/company/agents',
-      'marketplace': '/marketplace/agents',
+      'marketplace': '/marketplace/agents', 
       'marketing-hub': '/company-dashboard?view=marketing-hub',
       'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
       'academia-buildera': '/company-dashboard?view=academia-buildera',
@@ -431,7 +431,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setActiveView('perfil')}>
+                  <DropdownMenuItem onClick={() => setActiveView('profile')}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Mi Perfil</span>
                   </DropdownMenuItem>

@@ -154,13 +154,27 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         console.log("Registro exitoso:", data);
         
         if (data.user) {
+          // Llamar manualmente al webhook después del registro exitoso
+          try {
+            await supabase.functions.invoke('process-company-webhooks', {
+              body: {
+                user_id: data.user.id,
+                company_name: companyName,
+                website_url: websiteUrl,
+                trigger_type: 'registration'
+              }
+            });
+            console.log("Webhook de registro enviado exitosamente");
+          } catch (webhookError) {
+            console.error("Error enviando webhook de registro:", webhookError);
+            // No bloquear el registro si falla el webhook
+          }
+          
           toast({
             title: "¡Registro exitoso!",
             description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
           });
           
-          // Los webhooks se ejecutarán automáticamente en background
-          // mediante el trigger de la base de datos
           console.log("Usuario de empresa registrado exitosamente");
           
           // Cambiar a modo login después del registro exitoso

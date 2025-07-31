@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useFirstTimeSave } from "@/hooks/useFirstTimeSave";
 import CompanySidebar from "@/components/company/CompanySidebar";
 import MandoCentral from "@/components/company/MandoCentral";
 import ADNEmpresa from "@/components/company/ADNEmpresa";
@@ -32,6 +33,9 @@ const CompanyDashboard = () => {
   
   // Era coach mark
   const { shouldShowCoachMark, hideCoachMark, resetTutorial, isLoading: coachMarkLoading } = useEraCoachMark(user?.id);
+  
+  // Hook para detectar primera vez guardando cambios (registro social)
+  const { triggerWebhookOnFirstSave } = useFirstTimeSave(user?.id);
 
   useEffect(() => {
     // Check for view parameter in URL
@@ -189,6 +193,17 @@ const CompanyDashboard = () => {
     
     // Actualizar el perfil en el estado
     setProfile(updatedProfile);
+    
+    // Detectar si es un usuario registrado por redes sociales (no tiene auth_provider 'email')
+    const isRegisteredViaSocial = profile?.auth_provider !== 'email';
+    
+    // Si es registro social y es la primera vez guardando, ejecutar webhook
+    if (isRegisteredViaSocial) {
+      await triggerWebhookOnFirstSave(
+        updatedProfile.company_name || 'sin nombre', 
+        updatedProfile.website_url
+      );
+    }
     
     // Si se actualizó la URL del sitio web y hay una nueva URL
     if (previousUrl !== newUrl && newUrl && newUrl.trim() !== "") {

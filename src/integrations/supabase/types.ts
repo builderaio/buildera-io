@@ -1820,6 +1820,57 @@ export type Database = {
         }
         Relationships: []
       }
+      facebook_posts: {
+        Row: {
+          comments_count: number | null
+          content: string | null
+          created_at: string
+          engagement_rate: number | null
+          id: string
+          likes_count: number | null
+          post_id: string
+          post_type: string | null
+          posted_at: string | null
+          raw_data: Json | null
+          reactions_count: number | null
+          shares_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string
+          engagement_rate?: number | null
+          id?: string
+          likes_count?: number | null
+          post_id: string
+          post_type?: string | null
+          posted_at?: string | null
+          raw_data?: Json | null
+          reactions_count?: number | null
+          shares_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string
+          engagement_rate?: number | null
+          id?: string
+          likes_count?: number | null
+          post_id?: string
+          post_type?: string | null
+          posted_at?: string | null
+          raw_data?: Json | null
+          reactions_count?: number | null
+          shares_count?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       followers_location_analysis: {
         Row: {
           analysis_date: string
@@ -2334,6 +2385,57 @@ export type Database = {
           scope?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      linkedin_posts: {
+        Row: {
+          comments_count: number | null
+          content: string | null
+          created_at: string
+          engagement_rate: number | null
+          id: string
+          likes_count: number | null
+          post_id: string
+          post_type: string | null
+          posted_at: string | null
+          raw_data: Json | null
+          shares_count: number | null
+          updated_at: string
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string
+          engagement_rate?: number | null
+          id?: string
+          likes_count?: number | null
+          post_id: string
+          post_type?: string | null
+          posted_at?: string | null
+          raw_data?: Json | null
+          shares_count?: number | null
+          updated_at?: string
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          comments_count?: number | null
+          content?: string | null
+          created_at?: string
+          engagement_rate?: number | null
+          id?: string
+          likes_count?: number | null
+          post_id?: string
+          post_type?: string | null
+          posted_at?: string | null
+          raw_data?: Json | null
+          shares_count?: number | null
+          updated_at?: string
+          user_id?: string
+          views_count?: number | null
         }
         Relationships: []
       }

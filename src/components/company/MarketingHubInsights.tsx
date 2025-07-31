@@ -259,21 +259,66 @@ export default function MarketingHub() {
 
         case 'facebook':
           if (company.facebook_url) {
-            console.log('📊 Running Facebook intelligent analysis...');
-            const { data, error } = await supabase.functions.invoke('facebook-intelligent-analysis');
-            if (error) {
-              console.error('Error in Facebook analysis:', error);
-              throw error;
-            }
-            analysisResult = data;
-            
-            // Análisis avanzado para Facebook
-            await supabase.functions.invoke('advanced-social-analyzer', {
-              body: {
-                platform: 'facebook',
-                action: 'process_calendar_data'
+            // Extraer page ID o name de la URL
+            const pageInfo = company.facebook_url.match(/facebook\.com\/([a-zA-Z0-9._-]+)/)?.[1];
+            if (pageInfo) {
+              console.log('📊 Scraping Facebook posts...');
+              // Obtener detalles de la página primero
+              const { data: pageData, error: pageError } = await supabase.functions.invoke('facebook-scraper', {
+                body: { action: 'get_page_details', page_url: company.facebook_url }
+              });
+              
+              if (pageError) {
+                console.error('Error getting Facebook page details:', pageError);
+                throw pageError;
               }
-            });
+              
+              // Obtener posts de la página
+              const { data: scrapeData, error: scrapeError } = await supabase.functions.invoke('facebook-scraper', {
+                body: { action: 'get_page_posts', page_id: pageData?.page_id }
+              });
+              
+              if (scrapeError) {
+                console.error('Error scraping Facebook posts:', scrapeError);
+                throw scrapeError;
+              }
+              
+              scraperResult = scrapeData;
+              
+              console.log('🧠 Running Facebook intelligent analysis...');
+              // Análisis inteligente que guarda en BD
+              const { data, error } = await supabase.functions.invoke('facebook-intelligent-analysis');
+              if (error) {
+                console.error('Error in Facebook analysis:', error);
+                throw error;
+              }
+              analysisResult = data;
+              
+              // Análisis avanzado para Facebook
+              console.log('📈 Running advanced calendar analysis...');
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'facebook',
+                  action: 'process_calendar_data'
+                }
+              });
+              
+              // Analizar ubicación de seguidores
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'facebook',
+                  action: 'analyze_followers_location'
+                }
+              });
+              
+              // Generar insights de audiencia
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'facebook',
+                  action: 'generate_audience_insights'
+                }
+              });
+            }
           }
           break;
 
@@ -297,7 +342,19 @@ export default function MarketingHub() {
               
               scraperResult = scrapeData;
               
+              console.log('🧠 Running LinkedIn intelligent analysis...');
+              // Crear función de análisis inteligente para LinkedIn similar a las otras
+              const { data, error } = await supabase.functions.invoke('linkedin-intelligent-analysis');
+              if (error) {
+                console.error('Error in LinkedIn analysis:', error);
+                // No lanzar error para no detener el proceso
+                console.log('LinkedIn intelligent analysis not available yet');
+              } else {
+                analysisResult = data;
+              }
+              
               // Procesar datos en calendario y generar análisis
+              console.log('📈 Running advanced calendar analysis...');
               await supabase.functions.invoke('advanced-social-analyzer', {
                 body: {
                   platform: 'linkedin',
@@ -305,7 +362,25 @@ export default function MarketingHub() {
                 }
               });
               
-              analysisResult = { success: true, platform: 'linkedin' };
+              // Analizar ubicación de seguidores para LinkedIn
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'linkedin',
+                  action: 'analyze_followers_location'
+                }
+              });
+              
+              // Generar insights de audiencia
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'linkedin',
+                  action: 'generate_audience_insights'
+                }
+              });
+              
+              if (!analysisResult) {
+                analysisResult = { success: true, platform: 'linkedin', message: 'Análisis básico completado' };
+              }
             }
           }
           break;
@@ -330,7 +405,17 @@ export default function MarketingHub() {
               
               scraperResult = scrapeData;
               
+              console.log('🧠 Running TikTok intelligent analysis...');
+              // Análisis inteligente que guarda en BD
+              const { data, error } = await supabase.functions.invoke('tiktok-intelligent-analysis');
+              if (error) {
+                console.error('Error in TikTok analysis:', error);
+                throw error;
+              }
+              analysisResult = data;
+              
               // Análisis avanzado para TikTok
+              console.log('📈 Running advanced calendar analysis...');
               await supabase.functions.invoke('advanced-social-analyzer', {
                 body: {
                   platform: 'tiktok',
@@ -338,6 +423,7 @@ export default function MarketingHub() {
                 }
               });
               
+              // Analizar ubicación de seguidores
               await supabase.functions.invoke('advanced-social-analyzer', {
                 body: {
                   platform: 'tiktok',
@@ -345,7 +431,13 @@ export default function MarketingHub() {
                 }
               });
               
-              analysisResult = { success: true, platform: 'tiktok' };
+              // Generar insights de audiencia
+              await supabase.functions.invoke('advanced-social-analyzer', {
+                body: {
+                  platform: 'tiktok',
+                  action: 'generate_audience_insights'
+                }
+              });
             }
           }
           break;

@@ -1329,6 +1329,113 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
           )}
         </div>
       )}
+
+      {/* Posts de TikTok */}
+      {selectedNetwork && tikTokPosts && selectedNetwork.id === 'tiktok' && (
+        <div className="space-y-6">
+          {/* Estadísticas de posts */}
+          <Card className="border-gray-800 bg-gradient-to-r from-gray-900/20 to-black/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-gray-800">
+                <BarChart3 className="w-5 h-5" />
+                Análisis de Videos de TikTok
+                <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+                  🎵 TikTok
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {tikTokPosts.total_count || tikTokPosts.length || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Videos analizados</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {tikTokPosts.data?.reduce((acc: number, video: any) => acc + (video.play_count || 0), 0)?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Reproducciones totales</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">
+                    {tikTokPosts.data?.reduce((acc: number, video: any) => acc + (video.digg_count || 0), 0)?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Likes totales</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {tikTokPosts.data?.reduce((acc: number, video: any) => acc + (video.comment_count || 0), 0)?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Comentarios totales</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Grid de videos */}
+          {tikTokPosts.data && tikTokPosts.data.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Music className="w-5 h-5" />
+                  Videos Recientes ({tikTokPosts.data.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {tikTokPosts.data.slice(0, 9).map((video: any, index: number) => (
+                    <div key={index} className="bg-white border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                      {video.cover_url && (
+                        <div className="aspect-video bg-muted relative">
+                          <img 
+                            src={video.cover_url} 
+                            alt="TikTok video thumbnail"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                          <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                            🎵 TikTok
+                          </div>
+                          {video.duration && (
+                            <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                              {Math.floor(video.duration / 1000)}s
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="p-4 space-y-3">
+                        {video.title && (
+                          <p className="text-sm line-clamp-3 font-medium">{video.title}</p>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4">
+                            <span>👁️ {video.play_count?.toLocaleString() || 0}</span>
+                            <span>❤️ {video.digg_count?.toLocaleString() || 0}</span>
+                            <span>💬 {video.comment_count?.toLocaleString() || 0}</span>
+                          </div>
+                          {video.create_time && (
+                            <span>{new Date(video.create_time * 1000).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span>🔗 {video.share_count || 0} shares</span>
+                          {video.collect_count > 0 && (
+                            <span>💾 {video.collect_count} guardados</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
     </div>
   );
 };

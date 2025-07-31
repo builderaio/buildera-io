@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useEnrichedCompanyData } from '@/hooks/useEnrichedCompanyData';
-import { Building, Globe, Users, Calendar, ExternalLink, RefreshCw, Sparkles, Bot, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
+import { Building, ExternalLink, Facebook, Twitter, Linkedin, Instagram, RefreshCw, Bot, Globe, Sparkles, Calendar } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 
 interface EnrichedCompanyInfoProps {
@@ -13,6 +13,7 @@ interface EnrichedCompanyInfoProps {
 export const EnrichedCompanyInfo = ({ companyId }: EnrichedCompanyInfoProps) => {
   const { 
     companyData, 
+    countryData,
     loading, 
     error, 
     refreshCompanyData, 
@@ -175,6 +176,19 @@ export const EnrichedCompanyInfo = ({ companyId }: EnrichedCompanyInfoProps) => 
                       </a>
                     </Button>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Información del País */}
+            {countryData && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-foreground">País de Operación</h4>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  <span className="font-medium text-foreground">{countryData}</span>
                 </div>
               </div>
             )}

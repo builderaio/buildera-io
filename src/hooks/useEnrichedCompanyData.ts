@@ -26,6 +26,7 @@ export interface EnrichedCompanyData {
 
 export const useEnrichedCompanyData = (companyId?: string) => {
   const [companyData, setCompanyData] = useState<EnrichedCompanyData | null>(null);
+  const [countryData, setCountryData] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +48,23 @@ export const useEnrichedCompanyData = (companyId?: string) => {
       }
 
       setCompanyData(data);
+      
+      // Obtener información del país del usuario principal de la empresa
+      const { data: countryInfo } = await supabase
+        .from('profiles')
+        .select('country')
+        .eq('user_id', (await supabase
+          .from('company_members')
+          .select('user_id')
+          .eq('company_id', id)
+          .eq('is_primary', true)
+          .single()
+        ).data?.user_id || '')
+        .single();
+      
+      if (countryInfo?.country) {
+        setCountryData(countryInfo.country);
+      }
     } catch (err: any) {
       console.error('Error in fetchEnrichedCompanyData:', err);
       setError(err.message);
@@ -121,6 +139,7 @@ export const useEnrichedCompanyData = (companyId?: string) => {
 
   return {
     companyData,
+    countryData,
     loading,
     error,
     refreshCompanyData,

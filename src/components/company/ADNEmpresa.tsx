@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
-import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Youtube, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar, Globe, Bot, Facebook, ExternalLink, RefreshCw } from "lucide-react";
+import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Youtube, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar, Globe, Bot, Facebook, ExternalLink, RefreshCw, MapPin, Save } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -1351,15 +1352,20 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Building2 className="w-5 h-5 mr-2" />
-                    Información de {profile?.company_name || 'tu Negocio'}
+                    <Building2 className="w-5 h-5 mr-2 text-primary" />
+                    Información General del Negocio
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Completa toda la información de tu negocio.
+                    Datos básicos, legales y de contacto de tu empresa
                   </p>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <CardContent className="space-y-6">
+                  {/* Datos Básicos */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
+                      Información Básica
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="company_name">Nombre del negocio *</Label>
                       <Input
@@ -1449,40 +1455,86 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         required
                       />
                     </div>
+                    </div>
                   </div>
 
-                  {/* Descripción de la Empresa */}
+                  {/* Descripción Generada por IA */}
                   {companyData?.descripcion_empresa && (
-                    <div className="space-y-2 col-span-2">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="company_description">Descripción de la empresa</Label>
-                        <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                          <Bot className="h-3 w-3" />
-                          Generado por ERA
+                    <>
+                      <Separator />
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Descripción del Negocio</h4>
+                          <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
+                            <Bot className="h-3 w-3" />
+                            Generado por ERA
+                          </div>
                         </div>
+                        <Textarea
+                          id="company_description"
+                          value={companyData?.descripcion_empresa || ""}
+                          onChange={(e) => updateCompanyData('descripcion_empresa', e.target.value)}
+                          placeholder="Descripción detallada de su empresa generada por IA"
+                          rows={4}
+                          className="bg-background/60 border-primary/20"
+                        />
                       </div>
-                      <Textarea
-                        id="company_description"
-                        value={companyData?.descripcion_empresa || ""}
-                        onChange={(e) => updateCompanyData('descripcion_empresa', e.target.value)}
-                        onBlur={(e) => updateCompanyData('descripcion_empresa', e.target.value)}
-                        placeholder="Descripción detallada de su empresa generada por IA"
-                        rows={4}
-                        className="bg-background/60 border-primary/20"
-                      />
-                    </div>
+                    </>
                   )}
 
-                  {/* Redes Sociales */}
-                  {companyData?.descripcion_empresa && (
-                    <div className="space-y-4 col-span-2">
-                      <div className="flex items-center gap-2">
-                        <Label className="font-semibold">Redes Sociales</Label>
-                        <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                          <Bot className="h-3 w-3" />
-                          Detectadas por ERA
-                        </div>
+                  <Separator />
+
+                  {/* Información Legal y Empresarial */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
+                      Información Legal y Empresarial
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="nit">NIT / Registro Fiscal</Label>
+                        <Input
+                          id="nit"
+                          value={profile?.nit || ""}
+                          onChange={(e) => onProfileUpdate({...profile, nit: e.target.value})}
+                          placeholder="Número de identificación tributaria"
+                        />
                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="company_size">Tamaño del negocio *</Label>
+                        <Select value={profile?.company_size || ""} onValueChange={(value) => onProfileUpdate({...profile, company_size: value})}>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Seleccione el tamaño" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border z-50">
+                            {companySizes.map((size) => (
+                              <SelectItem key={size} value={size} className="hover:bg-accent focus:bg-accent">
+                                {size}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="industry_sector">Sector de la industria *</Label>
+                        <Select value={profile?.industry_sector || ""} onValueChange={(value) => onProfileUpdate({...profile, industry_sector: value})}>
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Seleccione el sector" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background border z-50">
+                            {sectors.map((sector) => (
+                              <SelectItem key={sector} value={sector} className="hover:bg-accent focus:bg-accent">
+                                {sector}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* SECCIÓN 2: PRESENCIA DIGITAL Y REDES SOCIALES */}
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Facebook */}
@@ -1605,9 +1657,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                           description: "La información de la empresa ha sido actualizada correctamente",
                         });
                       }}
-                      className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    >
-                      Guardar cambios
+                       className="bg-primary text-primary-foreground hover:bg-primary/90 px-6"
+                     >
+                       <Save className="w-4 h-4 mr-2" />
+                       Guardar cambios
                     </Button>
                   </div>
                 </CardContent>

@@ -11,7 +11,7 @@ import CacheManager from "@/components/CacheManager";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import AuthenticatedLayout from "./components/AuthenticatedLayout";
+import ResponsiveLayout from "./components/ResponsiveLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import CompanyDashboard from "./pages/CompanyDashboard";
@@ -86,8 +86,15 @@ const App = () => {
               <Route path="/terms-of-service" element={<TermsOfService />} />
               
               {/* Authenticated Routes with Layout */}
-              <Route element={<AuthenticatedLayout />}>
+              <Route element={<ResponsiveLayout />}>
                 <Route path="/company-dashboard" element={<CompanyDashboard />} />
+                <Route path="/company-dashboard/adn-empresa" element={<CompanyDashboard />} />
+                <Route path="/company-dashboard/base-conocimiento" element={<CompanyDashboard />} />
+                <Route path="/company-dashboard/marketing-hub" element={<CompanyDashboard />} />
+                <Route path="/company-dashboard/inteligencia-competitiva" element={<CompanyDashboard />} />
+                <Route path="/company-dashboard/academia-buildera" element={<CompanyDashboard />} />
+                <Route path="/company-dashboard/expertos" element={<CompanyDashboard />} />
+                <Route path="/company-dashboard/configuracion" element={<CompanyDashboard />} />
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="/marketplace/agents" element={<AgentMarketplace />} />
                 <Route path="/marketplace/agents/:templateId/configure" element={<AgentConfigWizard />} />

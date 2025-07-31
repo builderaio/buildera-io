@@ -3838,6 +3838,10 @@ export type Database = {
         | "video_creation"
         | "data_analysis"
         | "competitive_intelligence"
+        | "instagram_intelligent_analysis"
+        | "linkedin_intelligent_analysis"
+        | "facebook_intelligent_analysis"
+        | "tiktok_intelligent_analysis"
       user_type: "developer" | "expert" | "company"
     }
     CompositeTypes: {
@@ -3982,6 +3986,10 @@ export const Constants = {
         "video_creation",
         "data_analysis",
         "competitive_intelligence",
+        "instagram_intelligent_analysis",
+        "linkedin_intelligent_analysis",
+        "facebook_intelligent_analysis",
+        "tiktok_intelligent_analysis",
       ],
       user_type: ["developer", "expert", "company"],
     },

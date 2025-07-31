@@ -142,25 +142,36 @@ serve(async (req) => {
       }
     ]
 
-    // Insertar insights
+    // Eliminar insights existentes para actualizar con nuevos datos
+    const { error: deleteError } = await supabase
+      .from('marketing_insights')
+      .delete()
+      .eq('user_id', user.id)
+      .in('insight_type', ['optimal_timing', 'content_performance', 'sentiment_analysis', 'hashtag_optimization'])
+
+    if (deleteError) {
+      console.warn('Warning deleting old insights:', deleteError)
+    }
+
+    // Insertar nuevos insights
     const { error: insightsError } = await supabase
       .from('marketing_insights')
-      .upsert(insights, {
-        onConflict: 'user_id,insight_type',
-        ignoreDuplicates: false
-      })
+      .insert(insights)
 
     if (insightsError) {
       console.error('Error saving insights:', insightsError)
+      throw new Error('Failed to save insights')
     }
 
     console.log(`✅ Advanced analysis completed with ${insights.length} insights`)
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Análisis avanzado completado',
+      message: 'Análisis avanzado completado y almacenado en base de datos',
       analysis: advancedAnalysis,
-      insights_generated: insights.length
+      insights_generated: insights.length,
+      posts_analyzed: posts.length,
+      analysis_timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

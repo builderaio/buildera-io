@@ -100,17 +100,30 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
     try {
       console.log('🚀 Starting advanced analysis...');
       
+      // Primero obtener posts nuevos de Instagram si es necesario
+      const { data: instagramData, error: instagramError } = await supabase.functions.invoke('instagram-scraper', {
+        body: { 
+          action: 'get_posts', 
+          username_or_url: 'biury.co' // Esto debería venir del perfil conectado
+        }
+      });
+      
+      if (instagramError) {
+        console.warn('Error obteniendo posts de Instagram:', instagramError);
+      }
+      
+      // Ejecutar el análisis avanzado con los datos disponibles en BD
       const { data, error } = await supabase.functions.invoke('advanced-social-analyzer');
       
       if (error) throw error;
       
       if (data.success) {
-        setAnalysis(data.analysis);
-        setLastAnalysis(new Date());
+        // Recargar datos existentes para mostrar análisis actualizado
+        await loadExistingAnalysis();
         
         toast({
           title: "🎯 Análisis Avanzado Completado",
-          description: `Se generaron ${data.insights_generated} insights profesionales sobre tu estrategia digital`,
+          description: `Se generaron ${data.insights_generated} insights con ${data.posts_analyzed || 0} posts analizados`,
         });
       }
     } catch (error: any) {
@@ -452,7 +465,7 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
             <Brain className="h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">Análisis Avanzado Disponible</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
-              Ejecuta un análisis completo con IA para obtener insights profesionales sobre tu estrategia de contenido, horarios óptimos, sentimientos y predicciones.
+              Ejecuta un análisis completo con IA para obtener insights profesionales sobre tu estrategia de contenido, horarios óptimos, sentimientos y predicciones. Los datos se almacenan en tu base de datos para análisis futuro.
             </p>
             <Button 
               onClick={runAdvancedAnalysis} 

@@ -176,17 +176,31 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
   const refreshAnalytics = async () => {
     setLoading(true);
     try {
-      // Trigger intelligent analysis for fresh insights
-      const { data, error } = await supabase.functions.invoke('instagram-intelligent-analysis');
+      // Primero obtener posts nuevos
+      const { data: scraperData, error: scraperError } = await supabase.functions.invoke('instagram-scraper', {
+        body: { 
+          action: 'get_posts', 
+          username_or_url: 'biury.co' // Esto debería venir del perfil conectado
+        }
+      });
+
+      if (scraperError) {
+        console.warn('Error obteniendo posts:', scraperError);
+      }
+
+      // Ejecutar análisis avanzado
+      const { data, error } = await supabase.functions.invoke('advanced-social-analyzer');
       
       if (error) throw error;
       
       // Reload data after analysis
       await loadAnalyticsData();
       
+      const newPostsCount = scraperData?.new_posts_count || 0;
+      
       toast({
         title: "Análisis actualizado",
-        description: "Se han generado nuevos insights con los datos más recientes",
+        description: `Se generaron nuevos insights. ${newPostsCount > 0 ? `Se agregaron ${newPostsCount} posts nuevos.` : 'Los datos están actualizados.'}`,
       });
     } catch (error: any) {
       console.error('Error refreshing analytics:', error);

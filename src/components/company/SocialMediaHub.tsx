@@ -27,7 +27,18 @@ import {
   Globe,
   Users,
   TrendingUp,
-  UserPlus
+  UserPlus,
+  Brain,
+  Timer,
+  Award,
+  Activity,
+  Sparkles,
+  Target,
+  Hash,
+  Clock,
+  Play,
+  Heart,
+  MessageCircle
 } from "lucide-react";
 
 interface SocialMediaHubProps {
@@ -1369,6 +1380,163 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                     {tikTokPosts.videos?.reduce((acc: number, video: any) => acc + (video.comment_count || 0), 0)?.toLocaleString() || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Comentarios totales</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Análisis Inteligente con IA */}
+          <Card className="overflow-hidden border-l-4 border-l-purple-500">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100">
+              <CardTitle className="flex items-center gap-2 text-purple-900">
+                <Brain className="w-5 h-5" />
+                Análisis Inteligente con IA
+                <Badge variant="outline" className="ml-auto">
+                  TikTok Analytics
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Rendimiento por Duración */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-purple-800 flex items-center gap-2">
+                    <Timer className="w-4 h-4" />
+                    Rendimiento por Duración
+                  </h4>
+                  {tikTokPosts.videos && (() => {
+                    const shortVideos = tikTokPosts.videos.filter((v: any) => v.duration <= 30);
+                    const mediumVideos = tikTokPosts.videos.filter((v: any) => v.duration > 30 && v.duration <= 60);
+                    const longVideos = tikTokPosts.videos.filter((v: any) => v.duration > 60);
+                    
+                    const shortAvg = shortVideos.length > 0 ? Math.round(shortVideos.reduce((acc: number, v: any) => acc + (v.play_count || 0), 0) / shortVideos.length) : 0;
+                    const mediumAvg = mediumVideos.length > 0 ? Math.round(mediumVideos.reduce((acc: number, v: any) => acc + (v.play_count || 0), 0) / mediumVideos.length) : 0;
+                    const longAvg = longVideos.length > 0 ? Math.round(longVideos.reduce((acc: number, v: any) => acc + (v.play_count || 0), 0) / longVideos.length) : 0;
+                    
+                    return (
+                      <div className="space-y-3">
+                        <div className="p-3 bg-purple-50 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">0-30s ({shortVideos.length} videos)</span>
+                            <span className="text-sm font-bold text-purple-600">{shortAvg.toLocaleString()}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">reproducciones promedio</div>
+                        </div>
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">31-60s ({mediumVideos.length} videos)</span>
+                            <span className="text-sm font-bold text-blue-600">{mediumAvg.toLocaleString()}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">reproducciones promedio</div>
+                        </div>
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">+60s ({longVideos.length} videos)</span>
+                            <span className="text-sm font-bold text-green-600">{longAvg.toLocaleString()}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">reproducciones promedio</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Top Performers */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-purple-800 flex items-center gap-2">
+                    <Award className="w-4 h-4" />
+                    Videos Destacados
+                  </h4>
+                  {tikTokPosts.videos && (
+                    <div className="space-y-3">
+                      {tikTokPosts.videos
+                        .sort((a: any, b: any) => (b.play_count || 0) - (a.play_count || 0))
+                        .slice(0, 3)
+                        .map((video: any, index: number) => (
+                        <div key={index} className="p-3 bg-yellow-50 rounded-lg border-l-4 border-l-yellow-400">
+                          <p className="text-sm mb-2 line-clamp-2">{video.title}</p>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              <Play className="h-3 w-3" />
+                              {video.play_count?.toLocaleString() || 0}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Heart className="h-3 w-3" />
+                              {video.digg_count?.toLocaleString() || 0}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Engagement Patterns */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-purple-800 flex items-center gap-2">
+                    <Activity className="w-4 h-4" />
+                    Patrones de Engagement
+                  </h4>
+                  {tikTokPosts.videos && (() => {
+                    const totalPlays = tikTokPosts.videos.reduce((acc: number, v: any) => acc + (v.play_count || 0), 0);
+                    const totalLikes = tikTokPosts.videos.reduce((acc: number, v: any) => acc + (v.digg_count || 0), 0);
+                    const totalComments = tikTokPosts.videos.reduce((acc: number, v: any) => acc + (v.comment_count || 0), 0);
+                    
+                    const likeRate = totalPlays > 0 ? ((totalLikes / totalPlays) * 100).toFixed(2) : 0;
+                    const commentRate = totalPlays > 0 ? ((totalComments / totalPlays) * 100).toFixed(2) : 0;
+                    
+                    return (
+                      <div className="space-y-3">
+                        <div className="p-3 bg-red-50 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">Tasa de Likes</span>
+                            <span className="text-sm font-bold text-red-600">{likeRate}%</span>
+                          </div>
+                        </div>
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">Tasa de Comentarios</span>
+                            <span className="text-sm font-bold text-blue-600">{commentRate}%</span>
+                          </div>
+                        </div>
+                        <div className="p-3 bg-purple-50 rounded-lg">
+                          <div className="text-sm font-medium mb-1">Engagement Total</div>
+                          <div className="text-lg font-bold text-purple-600">{(totalLikes + totalComments).toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground">interacciones totales</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Recomendaciones de IA */}
+              <div className="mt-8 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border">
+                <h4 className="font-semibold text-purple-800 flex items-center gap-2 mb-3">
+                  <Sparkles className="w-4 h-4" />
+                  Recomendaciones de IA
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Target className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                      <span>Publica videos de 15-30 segundos para mejor engagement</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Clock className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                      <span>Horarios óptimos: 7-9 PM para máximo alcance</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Hash className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                      <span>Usa hashtags trending relacionados con skincare</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <TrendingUp className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                      <span>Contenido educativo genera más interacción</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>

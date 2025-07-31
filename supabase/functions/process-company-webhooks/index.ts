@@ -183,9 +183,17 @@ const handler = async (req: Request): Promise<Response> => {
             console.log('✅ n8n webhook completado');
             
             // Procesar y almacenar la respuesta del webhook
-            if (n8nResponse.data && Array.isArray(n8nResponse.data) && n8nResponse.data.length > 0) {
-              console.log('📊 Procesando respuesta del webhook n8n...');
-              await processWebhookResponse(supabase, body.user_id, n8nResponse.data);
+            if (n8nResponse.data) {
+              console.log('📊 Procesando respuesta del webhook n8n:', n8nResponse.data);
+              // La respuesta viene en n8nResponse.data.data según la estructura de call-n8n-mybusiness-webhook
+              const webhookData = n8nResponse.data.data || n8nResponse.data;
+              if (webhookData && Array.isArray(webhookData) && webhookData.length > 0) {
+                await processWebhookResponse(supabase, body.user_id, webhookData);
+              } else {
+                console.log('⚠️ No hay datos válidos en la respuesta del webhook:', webhookData);
+              }
+            } else {
+              console.log('⚠️ No hay datos en la respuesta del webhook');
             }
           }
         } else {
@@ -206,9 +214,17 @@ const handler = async (req: Request): Promise<Response> => {
             console.log('✅ n8n webhook completado');
             
             // Procesar y almacenar la respuesta del webhook incluso sin URL
-            if (n8nResponse.data && Array.isArray(n8nResponse.data) && n8nResponse.data.length > 0) {
-              console.log('📊 Procesando respuesta del webhook n8n (sin URL)...');
-              await processWebhookResponse(supabase, body.user_id, n8nResponse.data);
+            if (n8nResponse.data) {
+              console.log('📊 Procesando respuesta del webhook n8n (sin URL):', n8nResponse.data);
+              // La respuesta viene en n8nResponse.data.data según la estructura de call-n8n-mybusiness-webhook
+              const webhookData = n8nResponse.data.data || n8nResponse.data;
+              if (webhookData && Array.isArray(webhookData) && webhookData.length > 0) {
+                await processWebhookResponse(supabase, body.user_id, webhookData);
+              } else {
+                console.log('⚠️ No hay datos válidos en la respuesta del webhook (sin URL):', webhookData);
+              }
+            } else {
+              console.log('⚠️ No hay datos en la respuesta del webhook (sin URL)');
             }
           }
         }

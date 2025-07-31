@@ -365,6 +365,47 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   };
 
+  const handleDeleteEraProduct = async (productIndex: number) => {
+    if (!confirm("¿Está seguro de que desea eliminar este producto detectado por ERA?")) {
+      return;
+    }
+
+    try {
+      // Para productos de ERA, los eliminamos modificando los webhook_data
+      const updatedWebhookData = [...(companyData?.webhook_data || [])];
+      if (updatedWebhookData[0]?.response) {
+        // Remover las entradas del producto específico
+        updatedWebhookData[0].response = updatedWebhookData[0].response.filter(
+          item => !item.key.includes(`producto_servicio_${productIndex}_`)
+        );
+      }
+
+      // Actualizar en la base de datos
+      const { error } = await supabase
+        .from('companies')
+        .update({ webhook_data: updatedWebhookData })
+        .eq('id', companyData?.id);
+
+      if (error) throw error;
+
+      // Actualizar el estado local
+      setCompanyData(prev => prev ? { ...prev, webhook_data: updatedWebhookData } : prev);
+
+      toast({
+        title: "Producto eliminado",
+        description: "El producto detectado por ERA se ha eliminado correctamente",
+      });
+
+    } catch (error: any) {
+      console.error('Error deleting ERA product:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el producto",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCancelProductForm = () => {
     setShowProductForm(false);
     setEditingProduct(null);
@@ -1940,59 +1981,87 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               </div>
 
               {/* Productos detectados por ERA */}
-              {companyData?.webhook_data && companyData.webhook_data.length > 0 && (
-                <Card className="mb-6">
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Bot className="h-4 w-4 text-primary" />
-                      Productos detectados por ERA
-                      <div className="flex items-center gap-1 px-2 py-1 bg-secondary/50 text-secondary-foreground rounded-full text-xs">
-                        Generado automáticamente
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {(() => {
-                        const webhookResponse = companyData.webhook_data[0]?.response || [];
-                        const productos = [];
-                        
-                        // Buscar productos en la respuesta del webhook
-                        for (let i = 1; i <= 10; i++) {
-                          const nombre = webhookResponse.find(item => item.key === `producto_servicio_${i}_nombre`)?.value;
-                          const descripcion = webhookResponse.find(item => item.key === `producto_servicio_${i}_descripcion`)?.value;
-                          
-                          if (nombre && nombre !== "No tiene") {
-                            productos.push({ nombre, descripcion, index: i });
-                          }
-                        }
-                        
-                        return productos.map((producto) => (
-                          <Card key={producto.index} className="border-primary/20 bg-primary/5">
+              {companyData?.webhook_data && companyData.webhook_data.length > 0 && (() => {
+                const webhookResponse = companyData.webhook_data[0]?.response || [];
+                const productos = [];
+                
+                // Buscar productos en la respuesta del webhook
+                for (let i = 1; i <= 10; i++) {
+                  const nombre = webhookResponse.find(item => item.key === `producto_servicio_${i}_nombre`)?.value;
+                  const descripcion = webhookResponse.find(item => item.key === `producto_servicio_${i}_descripcion`)?.value;
+                  
+                  if (nombre && nombre !== "No tiene") {
+                    productos.push({ 
+                      id: `era_${i}`, 
+                      name: nombre, 
+                      description: descripcion, 
+                      index: i,
+                      isEraProduct: true,
+                      created_at: companyData.webhook_processed_at || new Date().toISOString()
+                    });
+                  }
+                }
+                
+                return productos.length > 0 ? (
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Bot className="h-4 w-4 text-primary" />
+                        Productos detectados por ERA
+                        <div className="flex items-center gap-1 px-2 py-1 bg-secondary/50 text-secondary-foreground rounded-full text-xs">
+                          Detectados automáticamente
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {productos.map((product) => (
+                          <Card key={product.id} className="hover:shadow-md transition-shadow border-primary/20">
                             <CardContent className="p-4">
-                              <div className="flex items-start gap-2 mb-2">
-                                <Package className="w-4 h-4 text-primary mt-1" />
-                                <h4 className="font-semibold text-foreground leading-tight">
-                                  {producto.nombre}
-                                </h4>
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="font-semibold text-foreground">{product.name}</h4>
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditProduct(product)}
+                                    disabled={loadingProducts}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteEraProduct(product.index)}
+                                    disabled={loadingProducts}
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
                               </div>
-                              {producto.descripcion && (
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                  {producto.descripcion}
+                              {product.description && (
+                                <p className="text-sm text-muted-foreground line-clamp-3">
+                                  {product.description}
                                 </p>
                               )}
-                              <div className="mt-3 flex items-center gap-1 text-xs text-primary">
-                                <Bot className="h-3 w-3" />
-                                Detectado por IA
+                              <div className="mt-3 flex items-center justify-between">
+                                <div className="flex items-center gap-1 text-xs text-primary">
+                                  <Bot className="h-3 w-3" />
+                                  Detectado por IA
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {new Date(product.created_at).toLocaleDateString()}
+                                </div>
                               </div>
                             </CardContent>
                           </Card>
-                        ));
-                      })()}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null;
+              })()}
 
               {showProductForm && (
                 <Card>

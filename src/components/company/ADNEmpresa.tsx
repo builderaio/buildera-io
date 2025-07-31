@@ -1297,140 +1297,104 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Información Enriquecida por IA */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Bot className="w-5 h-5 mr-2 text-primary" />
-                    Información Enriquecida por IA
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Información automáticamente extraída y generada por nuestros sistemas de IA basada en el análisis de su empresa.
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-6">
                   {/* Descripción de la Empresa */}
-                  <div className="space-y-3">
+                  <div className="space-y-2 col-span-2">
                     <div className="flex items-center gap-2">
-                      <Label className="font-semibold">Descripción de la Empresa</Label>
+                      <Label htmlFor="company_description">Descripción de la empresa</Label>
                       <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
                         <Bot className="h-3 w-3" />
                         Generado por ERA
                       </div>
                     </div>
-                    <div className="bg-muted/30 border border-primary/20 rounded-lg p-4">
-                      <p className="text-sm leading-relaxed">
-                        {profile?.company_description || "Empresa innovadora dedicada al desarrollo de soluciones tecnológicas avanzadas para el sector empresarial. Especializada en transformación digital y automatización de procesos."}
-                      </p>
-                    </div>
+                    <Textarea
+                      id="company_description"
+                      value={profile?.company_description || "Empresa innovadora dedicada al desarrollo de soluciones tecnológicas avanzadas para el sector empresarial. Especializada en transformación digital y automatización de procesos."}
+                      onChange={(e) => onProfileUpdate({...profile, company_description: e.target.value})}
+                      placeholder="Descripción detallada de su empresa"
+                      rows={4}
+                      className="bg-background/60 border-primary/20"
+                    />
                   </div>
 
-                  {/* Sector Principal */}
-                  <div className="space-y-3">
+                  {/* Redes Sociales */}
+                  <div className="space-y-4 col-span-2">
                     <div className="flex items-center gap-2">
-                      <Label className="font-semibold">Sector Principal</Label>
+                      <Label className="font-semibold">Redes Sociales</Label>
                       <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
                         <Bot className="h-3 w-3" />
-                        Identificado por ERA
+                        Detectadas por ERA
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5 text-primary" />
-                      <span className="font-medium">{profile?.main_industry || "Tecnología"}</span>
-                    </div>
-                  </div>
-
-                  {/* País de Operación */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Label className="font-semibold">País de Operación</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-5 w-5 text-primary" />
-                      <span className="font-medium">{profile?.country || "Colombia"}</span>
-                    </div>
-                  </div>
-
-                  {/* Redes Sociales Detectadas */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Label className="font-semibold">Redes Sociales Detectadas</Label>
-                      <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                        <Bot className="h-3 w-3" />
-                        Encontradas por ERA
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Facebook */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="justify-start bg-background/60 hover:bg-background/80 border-primary/20"
-                      >
-                        <a
-                          href={profile?.facebook_url || "https://facebook.com/buiry"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Facebook className="h-4 w-4" />
-                          <span className="ml-2">Facebook</span>
-                        </a>
-                      </Button>
-                      
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Facebook className="h-4 w-4 text-blue-600" />
+                          <Label htmlFor="facebook_url">Facebook</Label>
+                          {profile?.facebook_url && (
+                            <div className="w-2 h-2 bg-green-500 rounded-full" title="URL definida"></div>
+                          )}
+                        </div>
+                        <Input
+                          id="facebook_url"
+                          value={profile?.facebook_url || ""}
+                          onChange={(e) => onProfileUpdate({...profile, facebook_url: e.target.value})}
+                          placeholder="https://facebook.com/tu-empresa"
+                        />
+                      </div>
+
                       {/* LinkedIn */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="justify-start bg-background/60 hover:bg-background/80 border-primary/20"
-                      >
-                        <a
-                          href={profile?.linkedin_url || "https://linkedin.com/company/buiry"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Linkedin className="h-4 w-4" />
-                          <span className="ml-2">LinkedIn</span>
-                        </a>
-                      </Button>
-                      
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Linkedin className="h-4 w-4 text-blue-700" />
+                          <Label htmlFor="linkedin_url">LinkedIn</Label>
+                          {profile?.linkedin_url && (
+                            <div className="w-2 h-2 bg-green-500 rounded-full" title="URL definida"></div>
+                          )}
+                        </div>
+                        <Input
+                          id="linkedin_url"
+                          value={profile?.linkedin_url || ""}
+                          onChange={(e) => onProfileUpdate({...profile, linkedin_url: e.target.value})}
+                          placeholder="https://linkedin.com/company/tu-empresa"
+                        />
+                      </div>
+
                       {/* Twitter */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="justify-start bg-background/60 hover:bg-background/80 border-primary/20"
-                      >
-                        <a
-                          href={profile?.twitter_url || "https://twitter.com/buiry"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Twitter className="h-4 w-4" />
-                          <span className="ml-2">Twitter</span>
-                        </a>
-                      </Button>
-                      
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Twitter className="h-4 w-4 text-sky-500" />
+                          <Label htmlFor="twitter_url">Twitter</Label>
+                          {profile?.twitter_url && (
+                            <div className="w-2 h-2 bg-green-500 rounded-full" title="URL definida"></div>
+                          )}
+                        </div>
+                        <Input
+                          id="twitter_url"
+                          value={profile?.twitter_url || ""}
+                          onChange={(e) => onProfileUpdate({...profile, twitter_url: e.target.value})}
+                          placeholder="https://twitter.com/tu-empresa"
+                        />
+                      </div>
+
                       {/* Instagram */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        className="justify-start bg-background/60 hover:bg-background/80 border-primary/20"
-                      >
-                        <a
-                          href={profile?.instagram_url || "https://instagram.com/buiry"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Instagram className="h-4 w-4" />
-                          <span className="ml-2">Instagram</span>
-                        </a>
-                      </Button>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Instagram className="h-4 w-4 text-pink-600" />
+                          <Label htmlFor="instagram_url">Instagram</Label>
+                          {profile?.instagram_url && (
+                            <div className="w-2 h-2 bg-green-500 rounded-full" title="URL definida"></div>
+                          )}
+                        </div>
+                        <Input
+                          id="instagram_url"
+                          value={profile?.instagram_url || ""}
+                          onChange={(e) => onProfileUpdate({...profile, instagram_url: e.target.value})}
+                          placeholder="https://instagram.com/tu-empresa"
+                        />
+                      </div>
                     </div>
                   </div>
                 </CardContent>

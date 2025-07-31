@@ -353,22 +353,41 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
   // Funciones para estrategia
   const fetchStrategy = async () => {
+    console.log('=== DEBUG: Iniciando fetchStrategy ===');
+    console.log('profile?.user_id:', profile?.user_id);
+    
+    if (!profile?.user_id) {
+      console.log('No hay user_id, saliendo de fetchStrategy');
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('company_strategy')
         .select('*')
-        .eq('user_id', profile?.user_id)
+        .eq('user_id', profile.user_id)
         .order('created_at', { ascending: false })
         .limit(1);
+
+      console.log('Strategy data from DB:', data);
+      console.log('Strategy error:', error);
 
       if (error) throw error;
 
       if (data && data.length > 0) {
         const strategy = data[0];
+        console.log('Setting strategy form with:', strategy);
         setStrategyForm({
           vision: strategy.vision || "",
           mission: strategy.mision || "",
           propuesta_valor: strategy.propuesta_valor || ""
+        });
+      } else {
+        console.log('No strategy found, setting empty form');
+        setStrategyForm({
+          vision: "",
+          mission: "",
+          propuesta_valor: ""
         });
       }
     } catch (error: any) {
@@ -523,37 +542,65 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
   // Función para guardar estrategia
   const handleSaveStrategy = async () => {
+    console.log('=== DEBUG: Iniciando handleSaveStrategy ===');
+    console.log('strategyForm:', strategyForm);
+    console.log('profile?.user_id:', profile?.user_id);
+    
+    if (!profile?.user_id) {
+      toast({
+        title: "Error",
+        description: "No se pudo identificar el usuario. Intenta recargar la página.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoadingStrategy(true);
     try {
-      const { data: existingStrategy } = await supabase
+      const { data: existingStrategy, error: selectError } = await supabase
         .from('company_strategy')
         .select('id')
-        .eq('user_id', profile?.user_id)
+        .eq('user_id', profile.user_id)
         .limit(1);
 
+      console.log('existingStrategy:', existingStrategy);
+      console.log('selectError:', selectError);
+
+      if (selectError) {
+        console.error('Error al buscar estrategia existente:', selectError);
+        throw selectError;
+      }
+
       if (existingStrategy && existingStrategy.length > 0) {
+        console.log('Actualizando estrategia existente...');
         // Actualizar estrategia existente
         const { error } = await supabase
           .from('company_strategy')
           .update({
-            vision: strategyForm.vision || null,
-            mision: strategyForm.mission || null,
-            propuesta_valor: strategyForm.propuesta_valor || null
+            vision: strategyForm.vision.trim() || null,
+            mision: strategyForm.mission.trim() || null,
+            propuesta_valor: strategyForm.propuesta_valor.trim() || null,
+            updated_at: new Date().toISOString()
           })
           .eq('id', existingStrategy[0].id);
 
+        console.log('Update error:', error);
         if (error) throw error;
       } else {
+        console.log('Creando nueva estrategia...');
         // Crear nueva estrategia
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('company_strategy')
           .insert({
-            vision: strategyForm.vision || null,
-            mision: strategyForm.mission || null,
-            propuesta_valor: strategyForm.propuesta_valor || null,
-            user_id: profile?.user_id
+            vision: strategyForm.vision.trim() || null,
+            mision: strategyForm.mission.trim() || null,
+            propuesta_valor: strategyForm.propuesta_valor.trim() || null,
+            user_id: profile.user_id,
+            generated_with_ai: false
           });
 
+        console.log('Insert data:', data);
+        console.log('Insert error:', error);
         if (error) throw error;
       }
 
@@ -561,6 +608,9 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         title: "Estrategia guardada",
         description: "Los fundamentos estratégicos se han guardado correctamente",
       });
+
+      // Recargar los datos para verificar que se guardaron
+      await fetchStrategy();
     } catch (error: any) {
       console.error('Error saving strategy:', error);
       toast({

@@ -60,17 +60,19 @@ serve(async (req) => {
       throw new Error('User not authenticated')
     }
 
-    const { action, unique_id, user_id } = await req.json()
+    const { action, unique_id, user_id, username } = await req.json()
 
     switch (action) {
       case 'get_user_info':
         return await getUserInfo(unique_id, user.id, supabaseClient, rapidApiKey)
+      case 'get_user_details':
+        return await getUserInfo(username, user.id, supabaseClient, rapidApiKey)
       case 'get_followers':
         return await getFollowers(user_id, user.id, supabaseClient, rapidApiKey)
       case 'get_following':
         return await getFollowing(user_id, user.id, supabaseClient, rapidApiKey)
       case 'get_posts':
-        return await getPosts(user_id, user.id, supabaseClient, rapidApiKey)
+        return await getPostsByUsername(username, user.id, supabaseClient, rapidApiKey)
       case 'get_complete_analysis':
         return await getCompleteAnalysis(unique_id, user.id, supabaseClient, rapidApiKey)
       default:
@@ -377,4 +379,36 @@ async function getCompleteAnalysis(uniqueId: string, userId: string, supabase: a
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   )
+}
+
+async function getPostsByUsername(username: string, userId: string, supabase: any, rapidApiKey: string) {
+  console.log(`📹 Getting posts for TikTok username: ${username}`)
+  
+  // Primero obtener el user_id de TikTok
+  const userInfoResponse = await fetch(`https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${encodeURIComponent(username)}`, {
+    headers: {
+      'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com',
+      'x-rapidapi-key': rapidApiKey
+    }
+  })
+
+  if (!userInfoResponse.ok) {
+    const errorText = await userInfoResponse.text()
+    console.error('TikTok User Info API error:', errorText)
+    throw new Error(`TikTok User Info API error: ${userInfoResponse.status}`)
+  }
+
+  const userInfoData = await userInfoResponse.json()
+  
+  if (userInfoData.code !== 0) {
+    throw new Error(`TikTok User Info API error: ${userInfoData.msg}`)
+  }
+
+  const tikTokUserId = userInfoData.data?.user?.id
+  if (!tikTokUserId) {
+    throw new Error('No user ID found for TikTok user')
+  }
+
+  // Ahora obtener los posts usando el user_id
+  return await getPosts(tikTokUserId, userId, supabase, rapidApiKey)
 }

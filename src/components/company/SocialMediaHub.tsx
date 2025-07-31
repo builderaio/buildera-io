@@ -1517,8 +1517,8 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
              </Card>
            )}
 
-           {/* Análisis de Propósito para Instagram basado en Posts */}
-           {instagramPosts.posts && instagramPosts.posts.length > 0 && (
+            {/* Análisis de Propósito para Instagram basado en Posts */}
+            {instagramPosts && instagramPosts.posts && instagramPosts.posts.length > 0 && (
              <Card className="overflow-hidden border-l-4 border-l-purple-500">
                <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-100">
                  <CardTitle className="flex items-center gap-2 text-purple-900">
@@ -1893,7 +1893,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
           </Card>
 
           {/* Grid de posts */}
-          {instagramPosts.posts && instagramPosts.posts.length > 0 && (
+          {instagramPosts && instagramPosts.posts && instagramPosts.posts.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

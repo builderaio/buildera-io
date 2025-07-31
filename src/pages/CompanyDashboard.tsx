@@ -37,10 +37,14 @@ const CompanyDashboard = () => {
   const { triggerWebhookOnFirstSave } = useFirstTimeSave(user?.id);
 
   useEffect(() => {
-    // Check for view parameter in URL
+    // Check for view parameter in URL and update activeView
     const viewParam = searchParams.get('view');
     if (viewParam) {
+      console.log('Setting activeView from URL param:', viewParam);
       setActiveView(viewParam);
+    } else {
+      console.log('No view param, defaulting to mando-central');
+      setActiveView('mando-central');
     }
 
     const checkAuth = async () => {
@@ -179,7 +183,7 @@ const CompanyDashboard = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, toast]);
+  }, [navigate, toast, searchParams]); // Agregar searchParams como dependencia
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -203,6 +207,7 @@ const CompanyDashboard = () => {
   };
 
   const renderContent = () => {
+    console.log('Rendering content for activeView:', activeView);
     switch (activeView) {
       case "mando-central":
         return <MandoCentral profile={profile} onNavigate={setActiveView} />;

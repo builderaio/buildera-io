@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Building, Bot, Store, Bell, Search, GraduationCap, Users, Settings, User, LogOut, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -337,17 +337,14 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                       return (
                         <SidebarMenuItem key={item.id}>
                           <SidebarMenuButton
-                            asChild={!isDisabled}
                             isActive={isActive}
                             disabled={isDisabled}
-                            onClick={isDisabled ? undefined : () => setActiveView(item.id)}
                             className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                            onClick={isDisabled ? undefined : () => setActiveView(item.id)}
                           >
-                            <div className="flex items-center gap-2">
-                              <Icon className="size-4" />
-                              <span>{item.label}</span>
-                              {isDisabled && <span className="ml-auto text-xs">🔒</span>}
-                            </div>
+                            <Icon className="size-4" />
+                            <span>{item.label}</span>
+                            {isDisabled && <span className="ml-auto text-xs">🔒</span>}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
@@ -363,17 +360,14 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      asChild={!isProfileIncomplete}
                       isActive={activeView === "configuracion"}
                       disabled={isProfileIncomplete}
-                      onClick={isProfileIncomplete ? undefined : () => setActiveView("configuracion")}
                       className={isProfileIncomplete ? "opacity-50 cursor-not-allowed" : ""}
+                      onClick={isProfileIncomplete ? undefined : () => setActiveView("configuracion")}
                     >
-                      <div className="flex items-center gap-2">
-                        <Settings className="size-4" />
-                        <span>Administración</span>
-                        {isProfileIncomplete && <span className="ml-auto text-xs">🔒</span>}
-                      </div>
+                      <Settings className="size-4" />
+                      <span>Administración</span>
+                      {isProfileIncomplete && <span className="ml-auto text-xs">🔒</span>}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>

@@ -155,12 +155,13 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   };
 
-  // Función para obtener información enriquecida de la empresa
-  const handleEnrichCompanyInfo = async () => {
-    if (!profile?.company_name || !profile?.website_url) {
+  
+  // Función para refrescar información existente de la empresa (solo lectura de BD)
+  const handleRefreshCompanyInfo = async () => {
+    if (!profile?.primary_company_id) {
       toast({
         title: "Error",
-        description: "Debe completar el nombre de la empresa y URL del sitio web primero",
+        description: "No se encontró información de la empresa principal",
         variant: "destructive",
       });
       return;
@@ -169,128 +170,36 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     setLoading(true);
     try {
       toast({
-        title: "Enriqueciendo información",
-        description: "Obteniendo información completa de la empresa con IA...",
+        title: "Actualizando",
+        description: "Cargando información más reciente...",
       });
 
-      const companyInfo = `${profile?.company_name}, ${profile.country}, ${profile?.website_url}`;
+      // Solo refrescar datos existentes de la BD
+      const { data: updatedCompanyData, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', profile.primary_company_id)
+        .single();
 
-      const response = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
-        body: {
-          KEY: 'INFO',
-          COMPANY_INFO: companyInfo
-        }
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Error al enriquecer información');
+      if (error) {
+        throw error;
       }
 
-      const { data } = response;
+      setCompanyData(updatedCompanyData);
       
-      if (!data.success) {
-        throw new Error(data.error || 'Error al enriquecer información');
-      }
-
-      // Procesar respuesta del API - array de objetos con key y value
-      const enrichedData = data.data;
-      
-      // Extraer información de la empresa
-      const descripcion_empresa = enrichedData.find((item: any) => item.key === 'descripcion_empresa')?.value || '';
-      const industria_principal = enrichedData.find((item: any) => item.key === 'industria_principal')?.value || '';
-      
-      // Extraer redes sociales
-      const facebook_url = enrichedData.find((item: any) => item.key === 'facebook')?.value || '';
-      const twitter_url = enrichedData.find((item: any) => item.key === 'twitter')?.value || '';
-      const linkedin_url = enrichedData.find((item: any) => item.key === 'linkedin')?.value || '';
-      const instagram_url = enrichedData.find((item: any) => item.key === 'instagram')?.value || '';
-      const youtube_url = enrichedData.find((item: any) => item.key === 'youtube')?.value || '';
-      const tiktok_url = enrichedData.find((item: any) => item.key === 'tiktok')?.value || '';
-
-      // Procesar productos/servicios
-      const productos_count = parseInt(enrichedData.find((item: any) => item.key === 'productos_servicios_count')?.value || '0');
-      const productos = [];
-      
-      for (let i = 1; i <= productos_count; i++) {
-        const nombre = enrichedData.find((item: any) => item.key === `producto_servicio_${i}_nombre`)?.value || '';
-        const descripcion = enrichedData.find((item: any) => item.key === `producto_servicio_${i}_descripcion`)?.value || '';
-        
-        if (nombre && descripcion) {
-          productos.push({ name: nombre, description: descripcion });
-        }
-      }
-
-      // Actualizar datos de la empresa en la tabla companies
-      const updateData: any = {};
-      
-      if (descripcion_empresa && descripcion_empresa !== 'No tiene') {
-        updateData.descripcion_empresa = descripcion_empresa;
-      }
-      
-      if (industria_principal && industria_principal !== 'No tiene') {
-        updateData.industria_principal = industria_principal;
-      }
-      
-      // Limpiar URLs de redes sociales (evitar 'No tiene')
-      const cleanUrl = (url: string) => url && url !== 'No tiene' ? url : null;
-      
-      updateData.facebook_url = cleanUrl(facebook_url);
-      updateData.twitter_url = cleanUrl(twitter_url);
-      updateData.linkedin_url = cleanUrl(linkedin_url);
-      updateData.instagram_url = cleanUrl(instagram_url);
-      updateData.youtube_url = cleanUrl(youtube_url);
-      updateData.tiktok_url = cleanUrl(tiktok_url);
-
-      // Actualizar información de la empresa
-      if (Object.keys(updateData).length > 0) {
-        const { error: companyError } = await supabase
-          .from('companies')
-          .update(updateData)
-          .eq('id', profile.primary_company_id);
-
-        if (companyError) {
-          console.error('Error updating company:', companyError);
-        } else {
-          setCompanyData(prev => ({ ...prev, ...updateData }));
-        }
-      }
-
-      // Guardar productos si existen
-      if (productos.length > 0) {
-        for (const producto of productos) {
-          // Verificar si el producto ya existe
-          const { data: existingProduct } = await supabase
-            .from('products')
-            .select('id')
-            .eq('user_id', profile.user_id)
-            .eq('name', producto.name)
-            .maybeSingle();
-
-          if (!existingProduct) {
-            await supabase
-              .from('products')
-              .insert({
-                user_id: profile.user_id,
-                name: producto.name,
-                description: producto.description
-              });
-          }
-        }
-        
-        // Recargar productos
-        await fetchProducts();
-      }
+      // También refrescar productos
+      await fetchProducts();
 
       toast({
-        title: "¡Información enriquecida!",
-        description: `Se actualizó la información de la empresa${productos.length > 0 ? ` y se agregaron ${productos.length} productos/servicios` : ''}`,
+        title: "¡Actualizado!",
+        description: "Información refrescada desde la base de datos",
       });
 
     } catch (error: any) {
-      console.error('Error enriching company info:', error);
+      console.error('Error refreshing company info:', error);
       toast({
         title: "Error",
-        description: error.message || "No se pudo enriquecer la información",
+        description: error.message || "No se pudo actualizar la información",
         variant: "destructive",
       });
     } finally {
@@ -1532,14 +1441,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         </div>
                       </div>
                       <Button
-                        onClick={handleEnrichCompanyInfo}
+                        onClick={handleRefreshCompanyInfo}
                         variant="outline"
                         size="sm"
                         className="gap-2"
                         disabled={loading}
+                        title="Refresca la información desde la base de datos"
                       >
                         <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                        {loading ? 'Actualizando...' : 'Actualizar información'}
+                        {loading ? 'Refrescando...' : 'Refrescar información'}
                       </Button>
                     </div>
                     

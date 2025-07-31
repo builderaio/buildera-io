@@ -1411,28 +1411,30 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   </div>
 
                   {/* Descripción de la Empresa */}
-                  <div className="space-y-2 col-span-2">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="company_description">Descripción de la empresa</Label>
-                      <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                        <Bot className="h-3 w-3" />
-                        Generado por ERA
+                  {companyData?.descripcion_empresa && (
+                    <div className="space-y-2 col-span-2">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="company_description">Descripción de la empresa</Label>
+                        <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
+                          <Bot className="h-3 w-3" />
+                          Generado por ERA
+                        </div>
                       </div>
+                      <Textarea
+                        id="company_description"
+                        value={companyData?.descripcion_empresa || ""}
+                        onChange={(e) => updateCompanyData('descripcion_empresa', e.target.value)}
+                        onBlur={(e) => updateCompanyData('descripcion_empresa', e.target.value)}
+                        placeholder="Descripción detallada de su empresa generada por IA"
+                        rows={4}
+                        className="bg-background/60 border-primary/20"
+                      />
                     </div>
-                    <Textarea
-                      id="company_description"
-                      value={companyData?.descripcion_empresa || ""}
-                      onChange={(e) => updateCompanyData('descripcion_empresa', e.target.value)}
-                      onBlur={(e) => updateCompanyData('descripcion_empresa', e.target.value)}
-                      placeholder="Descripción detallada de su empresa generada por IA"
-                      rows={4}
-                      className="bg-background/60 border-primary/20"
-                    />
-                  </div>
+                  )}
 
                   {/* Redes Sociales */}
-                  <div className="space-y-4 col-span-2">
-                    <div className="flex items-center justify-between">
+                  {companyData?.descripcion_empresa && (
+                    <div className="space-y-4 col-span-2">
                       <div className="flex items-center gap-2">
                         <Label className="font-semibold">Redes Sociales</Label>
                         <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
@@ -1440,18 +1442,6 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                           Detectadas por ERA
                         </div>
                       </div>
-                      <Button
-                        onClick={handleRefreshCompanyInfo}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        disabled={loading}
-                        title="Refresca la información desde la base de datos"
-                      >
-                        <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                        {loading ? 'Refrescando...' : 'Refrescar información'}
-                      </Button>
-                    </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Facebook */}
@@ -1562,6 +1552,22 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         />
                       </div>
                     </div>
+                  </div>
+                  )}
+
+                  {/* Botón para guardar cambios */}
+                  <div className="flex justify-end pt-4">
+                    <Button
+                      onClick={() => {
+                        toast({
+                          title: "Cambios guardados",
+                          description: "La información de la empresa ha sido actualizada correctamente",
+                        });
+                      }}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      Guardar cambios
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

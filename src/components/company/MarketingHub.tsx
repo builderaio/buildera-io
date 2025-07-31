@@ -445,42 +445,42 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Button 
             variant="outline" 
-            className="h-auto min-h-[100px] p-4 flex flex-col items-start gap-2 hover-scale"
+            className="h-auto min-h-[120px] p-4 flex flex-col items-start justify-start gap-3 hover-scale w-full"
             onClick={() => setActiveTab("content")}
           >
-            <div className="flex items-center gap-2 text-primary">
+            <div className="flex items-center gap-2 text-primary shrink-0">
               <Zap className="h-5 w-5" />
               <span className="font-medium">Generar Contenido</span>
             </div>
-            <p className="text-xs text-muted-foreground text-left leading-relaxed break-words">
+            <p className="text-xs text-muted-foreground text-left leading-relaxed w-full">
               Crea posts optimizados con IA para todas tus redes sociales
             </p>
           </Button>
           
           <Button 
             variant="outline" 
-            className="h-auto min-h-[100px] p-4 flex flex-col items-start gap-2 hover-scale"
+            className="h-auto min-h-[120px] p-4 flex flex-col items-start justify-start gap-3 hover-scale w-full"
             onClick={() => setActiveTab("calendar")}
           >
-            <div className="flex items-center gap-2 text-purple-600">
+            <div className="flex items-center gap-2 text-purple-600 shrink-0">
               <Calendar className="h-5 w-5" />
               <span className="font-medium">Programar Posts</span>
             </div>
-            <p className="text-xs text-muted-foreground text-left leading-relaxed break-words">
+            <p className="text-xs text-muted-foreground text-left leading-relaxed w-full">
               Organiza y programa tu contenido con nuestro calendario inteligente
             </p>
           </Button>
           
           <Button 
             variant="outline" 
-            className="h-auto min-h-[100px] p-4 flex flex-col items-start gap-2 hover-scale"
+            className="h-auto min-h-[120px] p-4 flex flex-col items-start justify-start gap-3 hover-scale w-full"
             onClick={() => setActiveTab("analytics")}
           >
-            <div className="flex items-center gap-2 text-green-600">
+            <div className="flex items-center gap-2 text-green-600 shrink-0">
               <BarChart3 className="h-5 w-5" />
               <span className="font-medium">Ver Analytics</span>
             </div>
-            <p className="text-xs text-muted-foreground text-left leading-relaxed break-words">
+            <p className="text-xs text-muted-foreground text-left leading-relaxed w-full">
               Analiza el rendimiento y optimiza tu estrategia de marketing
             </p>
           </Button>

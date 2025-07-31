@@ -1163,38 +1163,58 @@ export type Database = {
       content_embeddings: {
         Row: {
           content_text: string
+          content_type: string | null
           created_at: string
           embedding: string | null
+          embedding_model: string | null
           id: string
+          instagram_post_id: string | null
           metadata: Json | null
           platform: string
           post_id: string
+          processing_status: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           content_text: string
+          content_type?: string | null
           created_at?: string
           embedding?: string | null
+          embedding_model?: string | null
           id?: string
+          instagram_post_id?: string | null
           metadata?: Json | null
           platform: string
           post_id: string
+          processing_status?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           content_text?: string
+          content_type?: string | null
           created_at?: string
           embedding?: string | null
+          embedding_model?: string | null
           id?: string
+          instagram_post_id?: string | null
           metadata?: Json | null
           platform?: string
           post_id?: string
+          processing_status?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "content_embeddings_instagram_post_id_fkey"
+            columns: ["instagram_post_id"]
+            isOneToOne: false
+            referencedRelation: "instagram_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_recommendations: {
         Row: {
@@ -1553,6 +1573,170 @@ export type Database = {
           page_access_token?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      instagram_content_analysis: {
+        Row: {
+          ai_generated_tags: string[] | null
+          brand_mentions: string[] | null
+          competitor_mentions: string[] | null
+          content_category: string | null
+          content_quality_score: number | null
+          created_at: string
+          engagement_prediction: number | null
+          id: string
+          optimal_posting_time: string | null
+          post_id: string
+          sentiment_label: string | null
+          sentiment_score: number | null
+          text_complexity_score: number | null
+          topics: string[] | null
+          trending_keywords: string[] | null
+          updated_at: string
+          user_id: string
+          virality_score: number | null
+          visual_elements: string[] | null
+        }
+        Insert: {
+          ai_generated_tags?: string[] | null
+          brand_mentions?: string[] | null
+          competitor_mentions?: string[] | null
+          content_category?: string | null
+          content_quality_score?: number | null
+          created_at?: string
+          engagement_prediction?: number | null
+          id?: string
+          optimal_posting_time?: string | null
+          post_id: string
+          sentiment_label?: string | null
+          sentiment_score?: number | null
+          text_complexity_score?: number | null
+          topics?: string[] | null
+          trending_keywords?: string[] | null
+          updated_at?: string
+          user_id: string
+          virality_score?: number | null
+          visual_elements?: string[] | null
+        }
+        Update: {
+          ai_generated_tags?: string[] | null
+          brand_mentions?: string[] | null
+          competitor_mentions?: string[] | null
+          content_category?: string | null
+          content_quality_score?: number | null
+          created_at?: string
+          engagement_prediction?: number | null
+          id?: string
+          optimal_posting_time?: string | null
+          post_id?: string
+          sentiment_label?: string | null
+          sentiment_score?: number | null
+          text_complexity_score?: number | null
+          topics?: string[] | null
+          trending_keywords?: string[] | null
+          updated_at?: string
+          user_id?: string
+          virality_score?: number | null
+          visual_elements?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_content_analysis_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "instagram_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instagram_posts: {
+        Row: {
+          caption: string | null
+          comment_count: number | null
+          created_at: string
+          display_url: string | null
+          engagement_rate: number | null
+          hashtags: string[] | null
+          id: string
+          impressions: number | null
+          is_video: boolean | null
+          like_count: number | null
+          media_type: number | null
+          mentions: string[] | null
+          owner_full_name: string | null
+          owner_profile_pic_url: string | null
+          owner_username: string | null
+          platform: string
+          post_id: string
+          posted_at: string | null
+          raw_data: Json | null
+          reach: number | null
+          saves: number | null
+          shortcode: string | null
+          taken_at_timestamp: number | null
+          thumbnail_url: string | null
+          updated_at: string
+          user_id: string
+          video_view_count: number | null
+        }
+        Insert: {
+          caption?: string | null
+          comment_count?: number | null
+          created_at?: string
+          display_url?: string | null
+          engagement_rate?: number | null
+          hashtags?: string[] | null
+          id?: string
+          impressions?: number | null
+          is_video?: boolean | null
+          like_count?: number | null
+          media_type?: number | null
+          mentions?: string[] | null
+          owner_full_name?: string | null
+          owner_profile_pic_url?: string | null
+          owner_username?: string | null
+          platform?: string
+          post_id: string
+          posted_at?: string | null
+          raw_data?: Json | null
+          reach?: number | null
+          saves?: number | null
+          shortcode?: string | null
+          taken_at_timestamp?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id: string
+          video_view_count?: number | null
+        }
+        Update: {
+          caption?: string | null
+          comment_count?: number | null
+          created_at?: string
+          display_url?: string | null
+          engagement_rate?: number | null
+          hashtags?: string[] | null
+          id?: string
+          impressions?: number | null
+          is_video?: boolean | null
+          like_count?: number | null
+          media_type?: number | null
+          mentions?: string[] | null
+          owner_full_name?: string | null
+          owner_profile_pic_url?: string | null
+          owner_username?: string | null
+          platform?: string
+          post_id?: string
+          posted_at?: string | null
+          raw_data?: Json | null
+          reach?: number | null
+          saves?: number | null
+          shortcode?: string | null
+          taken_at_timestamp?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id?: string
+          video_view_count?: number | null
         }
         Relationships: []
       }
@@ -2453,6 +2637,10 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      calculate_engagement_rate: {
+        Args: { likes: number; comments: number; followers: number }
+        Returns: number
+      }
       create_company_with_owner: {
         Args:
           | {
@@ -2471,6 +2659,14 @@ export type Database = {
               user_id_param?: string
             }
         Returns: string
+      }
+      extract_hashtags: {
+        Args: { caption: string }
+        Returns: string[]
+      }
+      extract_mentions: {
+        Args: { caption: string }
+        Returns: string[]
       }
       get_admin_analytics_data: {
         Args: { start_date: string; end_date: string }

@@ -23,6 +23,7 @@ interface ADNEmpresaProps {
 }
 
 const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
+  const [companyData, setCompanyData] = useState<any>(null);
   const [formData, setFormData] = useState({
     mission: "",
     vision: "", 
@@ -94,6 +95,65 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   ];
   
   const { toast } = useToast();
+
+  // Cargar datos de la empresa
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      if (profile?.primary_company_id) {
+        try {
+          const { data, error } = await supabase
+            .from('companies')
+            .select('*')
+            .eq('id', profile.primary_company_id)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching company data:', error);
+          } else {
+            setCompanyData(data);
+          }
+        } catch (err) {
+          console.error('Error:', err);
+        }
+      }
+    };
+
+    fetchCompanyData();
+  }, [profile?.primary_company_id]);
+
+  // Función para actualizar datos de la empresa
+  const updateCompanyData = async (field: string, value: any) => {
+    if (!profile?.primary_company_id) return;
+
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update({ [field]: value })
+        .eq('id', profile.primary_company_id);
+
+      if (error) {
+        console.error('Error updating company:', error);
+        toast({
+          title: "Error",
+          description: "Error actualizando información de la empresa",
+          variant: "destructive",
+        });
+      } else {
+        setCompanyData(prev => ({ ...prev, [field]: value }));
+        toast({
+          title: "Guardado",
+          description: "Información actualizada correctamente",
+        });
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      toast({
+        title: "Error",
+        description: "Error actualizando información",
+        variant: "destructive",
+      });
+    }
+  };
 
   const companySizes = [
     "1-10 empleados",
@@ -1309,9 +1369,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     </div>
                     <Textarea
                       id="company_description"
-                      value={profile?.company_description || "Empresa innovadora dedicada al desarrollo de soluciones tecnológicas avanzadas para el sector empresarial. Especializada en transformación digital y automatización de procesos."}
-                      onChange={(e) => onProfileUpdate({...profile, company_description: e.target.value})}
-                      placeholder="Descripción detallada de su empresa"
+                      value={companyData?.descripcion_empresa || ""}
+                      onChange={(e) => updateCompanyData('descripcion_empresa', e.target.value)}
+                      onBlur={(e) => updateCompanyData('descripcion_empresa', e.target.value)}
+                      placeholder="Descripción detallada de su empresa generada por IA"
                       rows={4}
                       className="bg-background/60 border-primary/20"
                     />
@@ -1333,14 +1394,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         <div className="flex items-center gap-2">
                           <Facebook className="h-4 w-4 text-blue-600" />
                           <Label htmlFor="facebook_url">Facebook</Label>
-                          {profile?.facebook_url && (
+                          {companyData?.facebook_url && (
                             <div className="w-2 h-2 bg-green-500 rounded-full" title="URL definida"></div>
                           )}
                         </div>
                         <Input
                           id="facebook_url"
-                          value={profile?.facebook_url || ""}
-                          onChange={(e) => onProfileUpdate({...profile, facebook_url: e.target.value})}
+                          value={companyData?.facebook_url || ""}
+                          onChange={(e) => updateCompanyData('facebook_url', e.target.value)}
+                          onBlur={(e) => updateCompanyData('facebook_url', e.target.value)}
                           placeholder="https://facebook.com/tu-empresa"
                         />
                       </div>
@@ -1350,14 +1412,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         <div className="flex items-center gap-2">
                           <Linkedin className="h-4 w-4 text-blue-700" />
                           <Label htmlFor="linkedin_url">LinkedIn</Label>
-                          {profile?.linkedin_url && (
+                          {companyData?.linkedin_url && (
                             <div className="w-2 h-2 bg-green-500 rounded-full" title="URL definida"></div>
                           )}
                         </div>
                         <Input
                           id="linkedin_url"
-                          value={profile?.linkedin_url || ""}
-                          onChange={(e) => onProfileUpdate({...profile, linkedin_url: e.target.value})}
+                          value={companyData?.linkedin_url || ""}
+                          onChange={(e) => updateCompanyData('linkedin_url', e.target.value)}
+                          onBlur={(e) => updateCompanyData('linkedin_url', e.target.value)}
                           placeholder="https://linkedin.com/company/tu-empresa"
                         />
                       </div>
@@ -1367,14 +1430,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         <div className="flex items-center gap-2">
                           <Twitter className="h-4 w-4 text-sky-500" />
                           <Label htmlFor="twitter_url">Twitter</Label>
-                          {profile?.twitter_url && (
+                          {companyData?.twitter_url && (
                             <div className="w-2 h-2 bg-green-500 rounded-full" title="URL definida"></div>
                           )}
                         </div>
                         <Input
                           id="twitter_url"
-                          value={profile?.twitter_url || ""}
-                          onChange={(e) => onProfileUpdate({...profile, twitter_url: e.target.value})}
+                          value={companyData?.twitter_url || ""}
+                          onChange={(e) => updateCompanyData('twitter_url', e.target.value)}
+                          onBlur={(e) => updateCompanyData('twitter_url', e.target.value)}
                           placeholder="https://twitter.com/tu-empresa"
                         />
                       </div>
@@ -1384,14 +1448,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                         <div className="flex items-center gap-2">
                           <Instagram className="h-4 w-4 text-pink-600" />
                           <Label htmlFor="instagram_url">Instagram</Label>
-                          {profile?.instagram_url && (
+                          {companyData?.instagram_url && (
                             <div className="w-2 h-2 bg-green-500 rounded-full" title="URL definida"></div>
                           )}
                         </div>
                         <Input
                           id="instagram_url"
-                          value={profile?.instagram_url || ""}
-                          onChange={(e) => onProfileUpdate({...profile, instagram_url: e.target.value})}
+                          value={companyData?.instagram_url || ""}
+                          onChange={(e) => updateCompanyData('instagram_url', e.target.value)}
+                          onBlur={(e) => updateCompanyData('instagram_url', e.target.value)}
                           placeholder="https://instagram.com/tu-empresa"
                         />
                       </div>

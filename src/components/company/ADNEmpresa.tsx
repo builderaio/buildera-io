@@ -540,6 +540,53 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     });
   };
 
+  // Función auxiliar para guardar estrategia en la base de datos
+  const saveStrategyToDatabase = async (strategyData: any, generatedWithAI: boolean = false) => {
+    if (!profile?.user_id) {
+      throw new Error("No se pudo identificar el usuario");
+    }
+
+    const { data: existingStrategy, error: selectError } = await supabase
+      .from('company_strategy')
+      .select('id')
+      .eq('user_id', profile.user_id)
+      .limit(1);
+
+    if (selectError) {
+      console.error('Error al buscar estrategia existente:', selectError);
+      throw selectError;
+    }
+
+    if (existingStrategy && existingStrategy.length > 0) {
+      // Actualizar estrategia existente
+      const { error } = await supabase
+        .from('company_strategy')
+        .update({
+          vision: strategyData.vision?.trim() || null,
+          mision: strategyData.mission?.trim() || null,
+          propuesta_valor: strategyData.propuesta_valor?.trim() || null,
+          generated_with_ai: generatedWithAI,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingStrategy[0].id);
+
+      if (error) throw error;
+    } else {
+      // Crear nueva estrategia
+      const { error } = await supabase
+        .from('company_strategy')
+        .insert({
+          vision: strategyData.vision?.trim() || null,
+          mision: strategyData.mission?.trim() || null,
+          propuesta_valor: strategyData.propuesta_valor?.trim() || null,
+          user_id: profile.user_id,
+          generated_with_ai: generatedWithAI
+        });
+
+      if (error) throw error;
+    }
+  };
+
   // Función para guardar estrategia
   const handleSaveStrategy = async () => {
     console.log('=== DEBUG: Iniciando handleSaveStrategy ===');
@@ -557,52 +604,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
     setLoadingStrategy(true);
     try {
-      const { data: existingStrategy, error: selectError } = await supabase
-        .from('company_strategy')
-        .select('id')
-        .eq('user_id', profile.user_id)
-        .limit(1);
-
-      console.log('existingStrategy:', existingStrategy);
-      console.log('selectError:', selectError);
-
-      if (selectError) {
-        console.error('Error al buscar estrategia existente:', selectError);
-        throw selectError;
-      }
-
-      if (existingStrategy && existingStrategy.length > 0) {
-        console.log('Actualizando estrategia existente...');
-        // Actualizar estrategia existente
-        const { error } = await supabase
-          .from('company_strategy')
-          .update({
-            vision: strategyForm.vision.trim() || null,
-            mision: strategyForm.mission.trim() || null,
-            propuesta_valor: strategyForm.propuesta_valor.trim() || null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingStrategy[0].id);
-
-        console.log('Update error:', error);
-        if (error) throw error;
-      } else {
-        console.log('Creando nueva estrategia...');
-        // Crear nueva estrategia
-        const { data, error } = await supabase
-          .from('company_strategy')
-          .insert({
-            vision: strategyForm.vision.trim() || null,
-            mision: strategyForm.mission.trim() || null,
-            propuesta_valor: strategyForm.propuesta_valor.trim() || null,
-            user_id: profile.user_id,
-            generated_with_ai: false
-          });
-
-        console.log('Insert data:', data);
-        console.log('Insert error:', error);
-        if (error) throw error;
-      }
+      await saveStrategyToDatabase(strategyForm, false);
 
       toast({
         title: "Estrategia guardada",
@@ -667,9 +669,12 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
         setStrategyForm(strategyData);
 
+        // Guardar automáticamente en la base de datos
+        await saveStrategyToDatabase(strategyData, true);
+
         toast({
-          title: "Estrategia generada",
-          description: "Los fundamentos estratégicos han sido generados con IA",
+          title: "Estrategia generada y guardada",
+          description: "Los fundamentos estratégicos han sido generados con IA y guardados en la base de datos",
         });
       }
     } catch (error: any) {

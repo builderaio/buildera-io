@@ -113,6 +113,30 @@ serve(async (req) => {
       throw new Error(`Action not supported: ${action}`);
     }
 
+    // Trigger intelligent analysis after successful post processing
+    if (action === 'get_posts' && responseData.posts && responseData.posts.length > 0) {
+      console.log('🧠 Triggering intelligent analysis...')
+      
+      try {
+        const analysisResponse = await supabase.functions.invoke('instagram-intelligent-analysis', {
+          headers: {
+            Authorization: authHeader,
+          },
+        })
+        
+        if (analysisResponse.error) {
+          console.error('Error in intelligent analysis:', analysisResponse.error)
+        } else {
+          console.log('✅ Intelligent analysis completed successfully')
+          responseData.intelligent_analysis_triggered = true
+        }
+      } catch (analysisError) {
+        console.error('Error triggering analysis:', analysisError)
+        // Don't fail the main process if analysis fails
+        responseData.intelligent_analysis_triggered = false
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       data: responseData

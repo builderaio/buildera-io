@@ -357,53 +357,82 @@ async function getInstagramPosts(username: string): Promise<any> {
     console.log('✅ Instagram posts data received. Full response structure:');
     console.log('Response keys:', Object.keys(data));
     if (data.data) console.log('data.data keys:', Object.keys(data.data));
-    console.log('Sample data structure:', JSON.stringify(data, null, 2).substring(0, 1000) + '...');
     
-    // Handle different possible data structures with better debugging
+    // Log the entire response structure for debugging
+    console.log('Complete API response:', JSON.stringify(data, null, 2));
+    
+    // Handle different possible data structures
     let postsArray = [];
     let dataSource = '';
     
-    if (data.data?.edges && Array.isArray(data.data.edges)) {
-      // GraphQL-style response
+    // Check for direct posts array in response
+    if (data.posts && Array.isArray(data.posts)) {
+      postsArray = data.posts;
+      dataSource = 'posts';
+      console.log(`📊 Found ${postsArray.length} posts in data.posts`);
+    }
+    // Check for data.posts structure 
+    else if (data.data?.posts && Array.isArray(data.data.posts)) {
+      postsArray = data.data.posts;
+      dataSource = 'data.posts';
+      console.log(`📊 Found ${postsArray.length} posts in data.data.posts`);
+    }
+    // Check for edge-based structure
+    else if (data.data?.edges && Array.isArray(data.data.edges)) {
       postsArray = data.data.edges;
       dataSource = 'data.edges';
       console.log(`📊 Found ${postsArray.length} posts in data.edges`);
-    } else if (data.data && Array.isArray(data.data)) {
-      // Direct array response
+    } 
+    // Check for direct array in data
+    else if (data.data && Array.isArray(data.data)) {
       postsArray = data.data;
       dataSource = 'data (direct array)';
       console.log(`📊 Found ${postsArray.length} posts in data array`);
-    } else if (data.items && Array.isArray(data.items)) {
-      // Items array response
+    } 
+    // Check for items structure
+    else if (data.items && Array.isArray(data.items)) {
       postsArray = data.items;
       dataSource = 'items';
       console.log(`📊 Found ${postsArray.length} posts in items`);
-    } else if (data.user?.edge_owner_to_timeline_media?.edges) {
-      // User timeline format
+    }
+    // Check for user timeline structures
+    else if (data.user?.edge_owner_to_timeline_media?.edges) {
       postsArray = data.user.edge_owner_to_timeline_media.edges;
       dataSource = 'user.edge_owner_to_timeline_media.edges';
       console.log(`📊 Found ${postsArray.length} posts in user timeline`);
-    } else if (data.graphql?.user?.edge_owner_to_timeline_media?.edges) {
-      // GraphQL user format
-      postsArray = data.graphql.user.edge_owner_to_timeline_media.edges;
-      dataSource = 'graphql.user.edge_owner_to_timeline_media.edges';
-      console.log(`📊 Found ${postsArray.length} posts in graphql user timeline`);
-    } else {
-      console.log('⚠️ No recognized posts structure found. Available paths:');
-      console.log('Available data keys:', data ? Object.keys(data) : 'No data object');
-      if (data.data) console.log('data keys:', Object.keys(data.data));
+    }
+    // Check for feed structure
+    else if (data.feed?.media && Array.isArray(data.feed.media)) {
+      postsArray = data.feed.media;
+      dataSource = 'feed.media';
+      console.log(`📊 Found ${postsArray.length} posts in feed.media`);
+    }
+    // Check for media array
+    else if (data.media && Array.isArray(data.media)) {
+      postsArray = data.media;
+      dataSource = 'media';
+      console.log(`📊 Found ${postsArray.length} posts in media`);
+    }
+    else {
+      console.log('⚠️ No recognized posts structure found.');
+      console.log('Available top-level keys:', data ? Object.keys(data) : 'No data object');
+      if (data.data) console.log('data object keys:', Object.keys(data.data));
+      if (data.user) console.log('user object keys:', Object.keys(data.user));
       
       // Try to find any array in the response
-      const findArrays = (obj: any, path = ''): string[] => {
+      const findArrays = (obj: any, path = '', maxDepth = 3): string[] => {
         const arrays: string[] = [];
-        if (typeof obj === 'object' && obj !== null) {
-          for (const [key, value] of Object.entries(obj)) {
-            const currentPath = path ? `${path}.${key}` : key;
-            if (Array.isArray(value)) {
-              arrays.push(`${currentPath} (length: ${value.length})`);
-            } else if (typeof value === 'object') {
-              arrays.push(...findArrays(value, currentPath));
+        if (maxDepth <= 0 || typeof obj !== 'object' || obj === null) return arrays;
+        
+        for (const [key, value] of Object.entries(obj)) {
+          const currentPath = path ? `${path}.${key}` : key;
+          if (Array.isArray(value)) {
+            arrays.push(`${currentPath} (length: ${value.length})`);
+            if (value.length > 0 && typeof value[0] === 'object') {
+              arrays.push(`  └─ First item keys: ${Object.keys(value[0]).join(', ')}`);
             }
+          } else if (typeof value === 'object') {
+            arrays.push(...findArrays(value, currentPath, maxDepth - 1));
           }
         }
         return arrays;
@@ -414,7 +443,7 @@ async function getInstagramPosts(username: string): Promise<any> {
     }
 
     console.log(`📊 Using data source: ${dataSource}`);
-    console.log(`📊 Processing ${postsArray.length} items`);
+    console.log(`📊 Processing ${postsArray.length} raw items`);
 
     const posts: InstagramPost[] = postsArray.slice(0, 12).map((item: any, index: number) => {
       // Handle both edge.node and direct item structures
@@ -440,22 +469,28 @@ async function getInstagramPosts(username: string): Promise<any> {
       };
     });
 
-    console.log(`✅ Successfully processed ${posts.length} posts`);
+    console.log(`✅ Successfully processed ${posts.length} posts from real data`);
     
-    // Even if we have 0 posts, let's create some test data to verify the UI works
+    // Only add test data if we truly have 0 posts AND for debugging purposes
     if (posts.length === 0) {
-      console.log('⚠️ No posts found, creating test data for debugging...');
-      posts.push({
-        id: 'test_1',
-        shortcode: 'test_abc',
-        display_url: 'https://picsum.photos/400/400',
-        caption: 'Post de prueba para verificar la funcionalidad',
-        like_count: 123,
-        comment_count: 45,
-        taken_at_timestamp: Date.now() / 1000,
-        is_video: false,
-        video_view_count: 0,
-      });
+      console.log('⚠️ No posts found in API response. Check if:');
+      console.log('  - The Instagram account is public');
+      console.log('  - The account has posts');
+      console.log('  - The API endpoint is working correctly');
+      console.log('  - The account URL is correct');
+      
+      // Remove test data for now - let's see real API results
+      // posts.push({
+      //   id: 'test_1',
+      //   shortcode: 'test_abc',
+      //   display_url: 'https://picsum.photos/400/400',
+      //   caption: 'Post de prueba para verificar la funcionalidad',
+      //   like_count: 123,
+      //   comment_count: 45,
+      //   taken_at_timestamp: Date.now() / 1000,
+      //   is_video: false,
+      //   video_view_count: 0,
+      // });
     }
 
     console.log(`📊 Processing ${posts.length} posts for analysis`);

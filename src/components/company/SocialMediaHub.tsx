@@ -395,11 +395,16 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
       if (data.success) {
         setInstagramDetails(data.data);
         console.log('✅ Instagram details loaded:', data.data);
+        console.log('🔍 Current selectedNetwork:', selectedNetwork);
+        console.log('🔍 Instagram details set:', data.data);
         
         toast({
           title: "Análisis de Instagram completo",
           description: "Se ha cargado exitosamente la información de Instagram",
         });
+      } else {
+        console.log('❌ Function returned success: false');
+        console.log('❌ Data received:', data);
       }
     } catch (error: any) {
       console.error('Error loading Instagram details:', error);
@@ -696,6 +701,20 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Debug Info */}
+      {instagramDetails && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle>🐛 DEBUG: Datos de Instagram cargados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="text-xs bg-white p-3 rounded border overflow-auto">
+              {JSON.stringify(instagramDetails, null, 2)}
+            </pre>
           </CardContent>
         </Card>
       )}

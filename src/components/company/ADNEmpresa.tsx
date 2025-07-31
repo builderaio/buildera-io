@@ -58,13 +58,18 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
   // Estados para branding
   const [brandingForm, setBrandingForm] = useState({
-    primary_color: "#3b82f6",
-    secondary_color: "#10b981",
-    complementary_color_1: "#f59e0b",
-    complementary_color_2: "#ef4444",
-    visual_identity: "",
-    logo_url: "",
-    brand_manual_url: ""
+    primary_color: "",
+    secondary_color: "",
+    complementary_color_1: "",
+    complementary_color_2: "",
+    visual_identity: ""
+  });
+  const [loadingBranding, setLoadingBranding] = useState(false);
+  
+  // Estados para controlar el uso de ERA en branding
+  const [brandingEraUsage, setBrandingEraUsage] = useState({
+    generatedWithAI: false,
+    visualIdentityOptimized: false
   });
 
   // Estados para estrategia
@@ -345,13 +350,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
       if (data) {
         setBrandingForm({
-          primary_color: data.primary_color || "#3b82f6",
-          secondary_color: data.secondary_color || "#10b981",
-          complementary_color_1: data.complementary_color_1 || "#f59e0b",
-          complementary_color_2: data.complementary_color_2 || "#ef4444",
-          visual_identity: data.visual_identity || "",
-          logo_url: data.logo_url || "",
-          brand_manual_url: data.brand_manual_url || ""
+          primary_color: data.primary_color || "",
+          secondary_color: data.secondary_color || "",
+          complementary_color_1: data.complementary_color_1 || "",
+          complementary_color_2: data.complementary_color_2 || "",
+          visual_identity: data.visual_identity || ""
         });
       }
     } catch (error: any) {
@@ -825,6 +828,260 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       });
     } finally {
       setLoadingStrategy(false);
+    }
+  };
+
+  // Funciones para branding
+  const saveBrandingToDatabase = async (brandingData: any, generatedWithAI: boolean = false) => {
+    console.log('💾 saveBrandingToDatabase llamada con:', { brandingData, generatedWithAI, userId: profile?.user_id });
+    
+    if (!profile?.user_id) {
+      console.error('❌ No user_id available for saving branding');
+      return;
+    }
+
+    const normalizeLineBreaks = (text: string) => {
+      if (!text) return text;
+      return text.replace(/\\n/g, '\n').replace(/\r\n/g, '\n').trim();
+    };
+
+    const normalizedData = {
+      primary_color: brandingData.primary_color?.trim() || '',
+      secondary_color: brandingData.secondary_color?.trim() || '',
+      complementary_color_1: brandingData.complementary_color_1?.trim() || '',
+      complementary_color_2: brandingData.complementary_color_2?.trim() || '',
+      visual_identity: normalizeLineBreaks(brandingData.visual_identity) || ''
+    };
+
+    try {
+      // Verificar si ya existe un registro de branding
+      const { data: existing } = await supabase
+        .from('company_branding')
+        .select('id')
+        .eq('user_id', profile.user_id)
+        .single();
+
+      let result;
+      if (existing) {
+        console.log('📝 Actualizando branding existente...');
+        result = await supabase
+          .from('company_branding')
+          .update(normalizedData)
+          .eq('user_id', profile.user_id);
+      } else {
+        console.log('➕ Creando nuevo branding...');
+        result = await supabase
+          .from('company_branding')
+          .insert([{
+            user_id: profile.user_id,
+            ...normalizedData
+          }]);
+      }
+
+      console.log('💾 Resultado de guardado:', { insertData: result.data, error: result.error });
+
+      if (result.error) {
+        console.error('❌ Error guardando branding:', result.error);
+        throw new Error(`Error al guardar: ${result.error.message}`);
+      }
+
+      console.log('✅ Branding guardado exitosamente');
+    } catch (error: any) {
+      console.error('❌ Error en saveBrandingToDatabase:', error);
+      throw error;
+    }
+  };
+
+  const handleGenerateBranding = async () => {
+    console.log('🚀 Iniciando generación de branding con IA...');
+    setLoadingBranding(true);
+
+    if (!profile?.user_id) {
+      toast({
+        title: "Error",
+        description: "No se pudo identificar el usuario",
+        variant: "destructive",
+      });
+      setLoadingBranding(false);
+      return;
+    }
+
+    try {
+      // Crear la información de la empresa
+      const companyInfo = `Empresa ${profile?.company_name || 'Sin nombre'}, Sitio web: ${profile?.website_url || 'No especificado'}, País: ${profile?.country || 'No especificado'}, Descripción: ${companyData?.description || 'No se encontró información específica sobre la descripción, misión o visión de la empresa en su sitio web.'}`;
+      
+      // Crear la información adicional con redes sociales
+      const socialNetworks = [];
+      if (companyData?.facebook_url) socialNetworks.push(`Facebook: ${companyData.facebook_url}`);
+      if (companyData?.instagram_url) socialNetworks.push(`Instagram: ${companyData.instagram_url}`);
+      if (companyData?.twitter_url) socialNetworks.push(`Twitter: ${companyData.twitter_url}`);
+      if (companyData?.linkedin_url) socialNetworks.push(`LinkedIn: ${companyData.linkedin_url}`);
+      if (companyData?.youtube_url) socialNetworks.push(`YouTube: ${companyData.youtube_url}`);
+      if (companyData?.tiktok_url) socialNetworks.push(`TikTok: ${companyData.tiktok_url}`);
+      
+      const additionalInfo = socialNetworks.length > 0 
+        ? `Redes Sociales: ${socialNetworks.join(', ')}`
+        : 'Redes Sociales: No especificadas';
+
+      const brandWebhookData = {
+        KEY: "BRAND",
+        COMPANY_INFO: companyInfo,
+        ADDITIONAL_INFO: additionalInfo
+      };
+
+      console.log('🚀 Llamando al webhook con:', brandWebhookData);
+
+      const { data: response, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
+        body: brandWebhookData
+      });
+
+      console.log('📥 Respuesta del supabase.functions.invoke:', { data: response, error });
+
+      if (error) {
+        console.error('❌ Error en la función:', error);
+        throw new Error(`Error en la función: ${error.message}`);
+      }
+
+      if (!response?.success || !response?.data) {
+        console.error('❌ Respuesta inválida:', response);
+        throw new Error('No se recibió una respuesta válida del servicio');
+      }
+
+      console.log('🔍 Respuesta completa del webhook:', response);
+      console.log('📋 Webhook data completa:', response.data);
+
+      const brandData = response.data;
+      console.log('📋 Tipo de brandData:', typeof brandData, Array.isArray(brandData));
+
+      // Procesar la respuesta del webhook
+      if (Array.isArray(brandData) && brandData.length > 0) {
+        const responseData = brandData[0]?.response || brandData;
+        console.log('📋 Datos de branding extraídos:', responseData);
+        console.log('📋 Tipo de responseData:', typeof responseData, Array.isArray(responseData));
+
+        const brandingData = {
+          primary_color: '',
+          secondary_color: '',
+          complementary_color_1: '',
+          complementary_color_2: '',
+          visual_identity: ''
+        };
+
+        responseData.forEach((item: any) => {
+          if (item.key === 'color_principal') {
+            brandingData.primary_color = item.value;
+          } else if (item.key === 'color_secundario') {
+            brandingData.secondary_color = item.value;
+          } else if (item.key === 'color_complementario1') {
+            brandingData.complementary_color_1 = item.value;
+          } else if (item.key === 'color_complementario2') {
+            brandingData.complementary_color_2 = item.value;
+          } else if (item.key === 'identidad_visual') {
+            brandingData.visual_identity = item.value;
+          }
+        });
+
+        setBrandingForm(brandingData);
+
+        // Guardar automáticamente en la base de datos
+        await saveBrandingToDatabase(brandingData, true);
+
+        // Marcar que se generó con IA
+        setBrandingEraUsage({
+          generatedWithAI: true,
+          visualIdentityOptimized: true
+        });
+
+        toast({
+          title: "Branding generado y guardado",
+          description: "La identidad de marca ha sido generada con IA y guardada en la base de datos",
+        });
+      } else {
+        console.log('❌ No se recibieron datos válidos para el branding:', brandData);
+        toast({
+          title: "Error en los datos",
+          description: "No se recibieron datos válidos del servicio de IA. Intenta nuevamente.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error generating branding:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo generar el branding con IA",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingBranding(false);
+    }
+  };
+
+  const handleSaveBranding = async () => {
+    setLoadingBranding(true);
+    try {
+      await saveBrandingToDatabase(brandingForm);
+      toast({
+        title: "Branding guardado",
+        description: "La información de marca se ha guardado correctamente",
+      });
+    } catch (error: any) {
+      console.error('Error saving branding:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar el branding",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingBranding(false);
+    }
+  };
+
+  const optimizeBrandingFieldWithEra = async () => {
+    if (!brandingForm.visual_identity.trim()) {
+      toast({
+        title: "Campo vacío",
+        description: "Primero ingresa contenido en el campo para poder optimizarlo",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingBranding(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('era-content-optimizer', {
+        body: {
+          currentText: brandingForm.visual_identity,
+          fieldType: 'identidad visual',
+          context: {
+            company: companyData?.name || profile?.company_name,
+            industry: companyData?.industry_sector || profile?.industry_sector
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.optimizedText) {
+        setBrandingForm({...brandingForm, visual_identity: data.optimizedText});
+        setBrandingEraUsage({...brandingEraUsage, visualIdentityOptimized: true});
+        
+        // Guardar automáticamente
+        await saveBrandingToDatabase({...brandingForm, visual_identity: data.optimizedText});
+        
+        toast({
+          title: "Campo optimizado",
+          description: "La identidad visual ha sido optimizada y guardada",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error optimizing branding field:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo optimizar el campo",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingBranding(false);
     }
   };
 
@@ -1756,12 +2013,177 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             </TabsContent>
 
             <TabsContent value="marca" className="space-y-6 mt-6">
-              <div className="text-center py-8">
-                <Palette className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  La funcionalidad de marca está en desarrollo.
-                </p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <Palette className="w-5 h-5 mr-2 text-primary" />
+                    Identidad de Marca
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Define los colores y la identidad visual de tu marca para que los agentes de IA puedan crear contenido coherente.
+                  </p>
+                </div>
               </div>
+
+              {/* Paleta de Colores e Identidad Visual */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center text-lg">
+                      <Palette className="w-5 h-5 mr-2 text-primary" />
+                      Paleta de Colores e Identidad Visual
+                      {brandingEraUsage.generatedWithAI && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs ml-3">
+                          <Bot className="h-3 w-3" />
+                          Generado por ERA
+                        </div>
+                      )}
+                    </CardTitle>
+                    <Button 
+                      onClick={handleGenerateBranding}
+                      disabled={loadingBranding || brandingEraUsage.generatedWithAI}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Bot className="w-4 h-4 mr-2" />
+                      {loadingBranding ? "Generando..." : "Generar con IA"}
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Define los colores principales y la identidad visual de tu marca
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Paleta de Colores */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
+                      Paleta de Colores
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="primary_color">Color Principal</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="primary_color"
+                            type="color"
+                            value={brandingForm.primary_color}
+                            onChange={(e) => setBrandingForm({...brandingForm, primary_color: e.target.value})}
+                            className="w-16 h-10 p-1 border rounded"
+                          />
+                          <Input
+                            value={brandingForm.primary_color}
+                            onChange={(e) => setBrandingForm({...brandingForm, primary_color: e.target.value})}
+                            placeholder="#000000"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="secondary_color">Color Secundario</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="secondary_color"
+                            type="color"
+                            value={brandingForm.secondary_color}
+                            onChange={(e) => setBrandingForm({...brandingForm, secondary_color: e.target.value})}
+                            className="w-16 h-10 p-1 border rounded"
+                          />
+                          <Input
+                            value={brandingForm.secondary_color}
+                            onChange={(e) => setBrandingForm({...brandingForm, secondary_color: e.target.value})}
+                            placeholder="#000000"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="complementary_color_1">Color Complementario 1</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="complementary_color_1"
+                            type="color"
+                            value={brandingForm.complementary_color_1}
+                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_1: e.target.value})}
+                            className="w-16 h-10 p-1 border rounded"
+                          />
+                          <Input
+                            value={brandingForm.complementary_color_1}
+                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_1: e.target.value})}
+                            placeholder="#000000"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="complementary_color_2">Color Complementario 2</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="complementary_color_2"
+                            type="color"
+                            value={brandingForm.complementary_color_2}
+                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_2: e.target.value})}
+                            className="w-16 h-10 p-1 border rounded"
+                          />
+                          <Input
+                            value={brandingForm.complementary_color_2}
+                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_2: e.target.value})}
+                            placeholder="#000000"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Identidad Visual */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
+                      Identidad Visual
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Label htmlFor="visual_identity">Descripción de Identidad Visual</Label>
+                          {brandingEraUsage.visualIdentityOptimized && (
+                            <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
+                              <Bot className="h-3 w-3" />
+                              Generado por ERA
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          onClick={optimizeBrandingFieldWithEra}
+                          disabled={loadingBranding || brandingEraUsage.visualIdentityOptimized || !brandingForm.visual_identity.trim()}
+                          size="sm"
+                          variant="outline"
+                        >
+                          <Bot className="w-3 h-3 mr-1" />
+                          Optimizar con ERA
+                        </Button>
+                      </div>
+                      <Textarea
+                        id="visual_identity"
+                        rows={6}
+                        value={brandingForm.visual_identity}
+                        onChange={(e) => setBrandingForm({...brandingForm, visual_identity: e.target.value})}
+                        placeholder="Describe el estilo visual de tu marca: tipografías, tono comunicacional, valores, personalidad de marca..."
+                        className="resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={handleSaveBranding}
+                      disabled={loadingBranding}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {loadingBranding ? "Guardando..." : "Guardar Identidad"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="canales" className="space-y-6 mt-6">

@@ -828,52 +828,104 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                 <CardTitle className="flex items-center gap-2 text-green-800">
                   <TrendingUp className="w-5 h-5" />
                   Análisis Inteligente con IA
+                  {instagramDetails.analysis.ai_powered && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                      ✨ Potenciado por IA
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
+                  {/* Resumen del análisis */}
                   {instagramDetails.analysis.summary && (
                     <div>
-                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Resumen Ejecutivo</h4>
-                      <p className="text-sm leading-relaxed">{instagramDetails.analysis.summary}</p>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">
+                        {instagramDetails.analysis.ai_powered ? 'Resumen Ejecutivo (IA)' : 'Resumen'}
+                      </h4>
+                      <p className="text-sm leading-relaxed bg-white p-3 rounded border">{instagramDetails.analysis.summary}</p>
+                    </div>
+                  )}
+
+                  {/* Métricas clave (solo si hay análisis IA) */}
+                  {instagramDetails.analysis.metrics && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Métricas Clave</h4>
+                      <div className="bg-white p-3 rounded border">
+                        <p className="text-sm leading-relaxed">{instagramDetails.analysis.metrics}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Análisis de audiencia (solo si hay análisis IA) */}
+                  {instagramDetails.analysis.audience && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Análisis de Audiencia</h4>
+                      <div className="bg-white p-3 rounded border">
+                        <p className="text-sm leading-relaxed">{instagramDetails.analysis.audience}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Estrategia (solo si hay análisis IA) */}
+                  {instagramDetails.analysis.strategy && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Análisis de Estrategia</h4>
+                      <div className="bg-white p-3 rounded border">
+                        <p className="text-sm leading-relaxed">{instagramDetails.analysis.strategy}</p>
+                      </div>
                     </div>
                   )}
                   
+                  {/* Recomendaciones */}
                   {instagramDetails.analysis.recommendations && (
                     <div>
                       <h4 className="font-semibold text-sm text-muted-foreground mb-2">Recomendaciones</h4>
-                      {Array.isArray(instagramDetails.analysis.recommendations) ? (
-                        <ul className="text-sm space-y-1">
-                          {instagramDetails.analysis.recommendations.map((rec: string, index: number) => (
-                            <li key={index} className="flex items-start gap-2">
-                              <span className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></span>
-                              {rec}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-sm leading-relaxed">{instagramDetails.analysis.recommendations}</p>
-                      )}
+                      <div className="bg-white p-3 rounded border">
+                        {Array.isArray(instagramDetails.analysis.recommendations) ? (
+                          <ul className="text-sm space-y-2">
+                            {instagramDetails.analysis.recommendations.map((rec: string, index: number) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <span className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></span>
+                                {rec}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm leading-relaxed">{instagramDetails.analysis.recommendations}</p>
+                        )}
+                      </div>
                     </div>
                   )}
                   
+                  {/* Oportunidades */}
                   {instagramDetails.analysis.opportunities && (
                     <div>
                       <h4 className="font-semibold text-sm text-muted-foreground mb-2">Oportunidades</h4>
-                      {Array.isArray(instagramDetails.analysis.opportunities) ? (
-                        <ul className="text-sm space-y-1">
-                          {instagramDetails.analysis.opportunities.map((opp: string, index: number) => (
-                            <li key={index} className="flex items-start gap-2">
-                              <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
-                              {opp}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-sm leading-relaxed">{instagramDetails.analysis.opportunities}</p>
-                      )}
+                      <div className="bg-white p-3 rounded border">
+                        {Array.isArray(instagramDetails.analysis.opportunities) ? (
+                          <ul className="text-sm space-y-2">
+                            {instagramDetails.analysis.opportunities.map((opp: string, index: number) => (
+                              <li key={index} className="flex items-start gap-2">
+                                <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
+                                {opp}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-sm leading-relaxed">{instagramDetails.analysis.opportunities}</p>
+                        )}
+                      </div>
                     </div>
                   )}
+
+                  {/* Indicador de estado de IA */}
+                  <div className="text-xs text-muted-foreground p-2 bg-white rounded border">
+                    {instagramDetails.summary?.has_ai_analysis ? 
+                      '✅ Este análisis fue generado con inteligencia artificial avanzada' : 
+                      '⚠️ Análisis básico - La IA mejorará el análisis en la próxima consulta'
+                    }
+                  </div>
                 </div>
               </CardContent>
             </Card>

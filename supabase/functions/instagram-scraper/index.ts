@@ -224,11 +224,16 @@ async function getCompleteInstagramAnalysis(username: string): Promise<any> {
     let aiAnalysis = null;
     if (openAIApiKey) {
       try {
+        console.log('🤖 Starting AI analysis...');
         const analysisData = { profile: profileInfo, followers, following };
         aiAnalysis = await organizeInstagramDataWithAI(analysisData);
+        console.log('✅ AI analysis completed successfully');
       } catch (error) {
         console.error('❌ OpenAI analysis failed:', error);
+        // Continue without AI analysis but log the error
       }
+    } else {
+      console.log('⚠️ OpenAI API key not found, skipping AI analysis');
     }
 
     const result = {
@@ -248,7 +253,8 @@ async function getCompleteInstagramAnalysis(username: string): Promise<any> {
           "Utilizar stories más frecuentemente",
           "Colaboraciones con influencers locales",
           "Engagement con seguidores de cuentas similares"
-        ]
+        ],
+        ai_powered: !!aiAnalysis
       },
       summary: {
         total_followers: profileInfo.followers_count || 0,
@@ -258,7 +264,8 @@ async function getCompleteInstagramAnalysis(username: string): Promise<any> {
         account_type: profileInfo.is_business ? 'Empresa' : 'Personal',
         verification_status: profileInfo.is_verified ? 'Verificado' : 'No verificado',
         followers_sample: followers.length,
-        following_sample: following.length
+        following_sample: following.length,
+        has_ai_analysis: !!aiAnalysis
       }
     };
 

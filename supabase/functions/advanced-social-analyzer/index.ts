@@ -375,75 +375,87 @@ function analyzeHashtagPerformance(posts: any[]) {
   }
 }
 
-// Análisis de sentimientos con IA
+// Análisis de sentimientos con IA usando universal-ai-handler
 async function analyzeSentimentWithAI(posts: any[]) {
-  console.log('🧠 Checking OpenAI API key availability...')
-  if (!OPENAI_API_KEY) {
-    console.warn('⚠️ OpenAI API key not configured, skipping sentiment analysis')
+  console.log('🧠 Running AI sentiment analysis...')
+  
+  const recentPosts = posts.slice(0, 5).map(p => p.caption).join('\n\n')
+  
+  if (!recentPosts.trim()) {
+    console.warn('⚠️ No captions found for sentiment analysis')
     return {
       overall_sentiment: 'neutral',
-      brand_tone: 'Análisis de IA no disponible - configurar clave API',
+      brand_tone: 'No hay contenido suficiente para analizar',
       emotional_triggers: ['neutro'],
-      audience_connection: 'Análisis no disponible sin clave OpenAI',
-      recommendations: ['Configurar clave OpenAI para análisis avanzado'],
+      audience_connection: 'Necesita más contenido para análisis',
+      recommendations: ['Publica más contenido con texto para análisis completo'],
       confidence_score: 0
     }
   }
-
-  const recentPosts = posts.slice(0, 5).map(p => p.caption).join('\n\n')
   
-  const prompt = `
-Analiza el sentimiento y tono de estos posts de Instagram de una marca de skincare:
+  const systemPrompt = 'Eres un experto en análisis de sentimientos y marketing de marca. Analiza el contenido de redes sociales y responde en JSON válido con insights detallados sobre el tono emocional y conexión con la audiencia.';
+  
+  const userPrompt = `
+Analiza el sentimiento y tono de estos posts de Instagram:
 
 ${recentPosts}
 
-Responde en formato JSON con:
+Responde ÚNICAMENTE en formato JSON válido con:
 {
   "overall_sentiment": "positive/negative/neutral",
-  "brand_tone": "descripción del tono de marca",
-  "emotional_triggers": ["lista de emociones que genera"],
-  "audience_connection": "análisis de conexión con audiencia",
-  "recommendations": ["recomendaciones para mejorar"],
+  "brand_tone": "descripción del tono de marca detectado",
+  "emotional_triggers": ["lista de emociones que genera el contenido"],
+  "audience_connection": "análisis de la conexión emocional con la audiencia",
+  "recommendations": ["3-4 recomendaciones específicas para mejorar el engagement emocional"],
   "confidence_score": 0.85
 }
-`
+`;
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
+    // Usar el universal-ai-handler para el análisis
+    const response = await supabase.functions.invoke('universal-ai-handler', {
+      body: {
+        functionName: 'sentiment_analysis',
         messages: [
-          {
-            role: 'system',
-            content: 'Eres un experto en análisis de sentimientos y marketing de marca. Analiza el contenido y responde en JSON válido.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 1000
-      }),
-    })
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ]
+      }
+    });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`)
+    if (response.error) {
+      throw new Error(`Universal AI Handler error: ${response.error.message}`);
     }
 
-    const result = await response.json()
-    return JSON.parse(result.choices[0].message.content)
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Error en análisis de sentimientos');
+    }
+
+    // Intentar parsear la respuesta JSON
+    try {
+      const analysisResult = JSON.parse(response.data.response);
+      console.log('✅ Sentiment analysis completed successfully');
+      return analysisResult;
+    } catch (parseError) {
+      console.warn('⚠️ Failed to parse AI response as JSON, using fallback');
+      return {
+        overall_sentiment: 'neutral',
+        brand_tone: response.data.response.substring(0, 200) + '...',
+        emotional_triggers: ['análisis_textual'],
+        audience_connection: 'Análisis disponible en formato de texto',
+        recommendations: ['Revisar formato de respuesta del análisis'],
+        confidence_score: 0.5
+      };
+    }
   } catch (error) {
     console.error('Error in sentiment analysis:', error)
     return {
-      analysis: 'Error in AI analysis',
-      sentiment: 'neutral',
-      confidence: 0
+      overall_sentiment: 'neutral',
+      brand_tone: 'Error en análisis - revisar configuración de IA',
+      emotional_triggers: ['error'],
+      audience_connection: 'No se pudo analizar por error técnico',
+      recommendations: ['Verificar configuración de claves API', 'Intentar de nuevo más tarde'],
+      confidence_score: 0
     }
   }
 }

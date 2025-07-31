@@ -38,7 +38,11 @@ import {
   Clock,
   Play,
   Heart,
-  MessageCircle
+  MessageCircle,
+  FileText,
+  Camera,
+  Edit,
+  Lightbulb
 } from "lucide-react";
 
 interface SocialMediaHubProps {
@@ -983,6 +987,226 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         </Card>
       )}
 
+      {/* Análisis Inteligente con IA para LinkedIn */}
+      {selectedNetwork && linkedinPosts.length > 0 && selectedNetwork.id === 'linkedin' && (
+        <Card className="overflow-hidden border-l-4 border-l-blue-500">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
+            <CardTitle className="flex items-center gap-2 text-blue-900">
+              <Brain className="w-5 h-5" />
+              Análisis Inteligente con IA
+              <Badge variant="outline" className="ml-auto">
+                LinkedIn Analytics
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Rendimiento por Tipo de Contenido */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-sm text-blue-800 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Rendimiento por Tipo
+                </h4>
+                <div className="space-y-3">
+                  {(() => {
+                    const regularPosts = linkedinPosts.filter(post => post.post_type === 'regular');
+                    const avgRegularEngagement = regularPosts.length > 0 ? 
+                      regularPosts.reduce((acc, post) => acc + (post.stats?.total_reactions || 0) + (post.stats?.comments || 0), 0) / regularPosts.length : 0;
+                    
+                    const repostPosts = linkedinPosts.filter(post => post.post_type === 'repost');
+                    const avgRepostEngagement = repostPosts.length > 0 ? 
+                      repostPosts.reduce((acc, post) => acc + (post.stats?.total_reactions || 0) + (post.stats?.comments || 0), 0) / repostPosts.length : 0;
+
+                    return (
+                      <>
+                        <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium">Posts Originales</p>
+                            <p className="text-xs text-muted-foreground">{regularPosts.length} posts</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-blue-600">{avgRegularEngagement.toFixed(0)}</p>
+                            <p className="text-xs text-muted-foreground">Engagement promedio</p>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium">Reposts</p>
+                            <p className="text-xs text-muted-foreground">{repostPosts.length} posts</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-gray-600">{avgRepostEngagement.toFixed(0)}</p>
+                            <p className="text-xs text-muted-foreground">Engagement promedio</p>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Posts con Mejor Rendimiento */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-sm text-blue-800 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Posts Top
+                </h4>
+                <div className="space-y-3">
+                  {linkedinPosts
+                    .sort((a, b) => ((b.stats?.total_reactions || 0) + (b.stats?.comments || 0)) - ((a.stats?.total_reactions || 0) + (a.stats?.comments || 0)))
+                    .slice(0, 2)
+                    .map((post, index) => (
+                      <div key={post.activity_urn || index} className="p-3 bg-green-50 rounded-lg border border-green-200">
+                        <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                          {post.text?.substring(0, 80)}...
+                        </p>
+                        <div className="flex justify-between items-center">
+                          <div className="flex gap-2 text-xs">
+                            <span className="text-blue-600">{post.stats?.total_reactions || 0} reacciones</span>
+                            <span className="text-green-600">{post.stats?.comments || 0} comentarios</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            #{index + 1}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Patrones de Engagement */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-sm text-blue-800 flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Patrones de Engagement
+                </h4>
+                <div className="space-y-3">
+                  {(() => {
+                    const totalReactions = linkedinPosts.reduce((acc, post) => acc + (post.stats?.total_reactions || 0), 0);
+                    const totalComments = linkedinPosts.reduce((acc, post) => acc + (post.stats?.comments || 0), 0);
+                    const totalReposts = linkedinPosts.reduce((acc, post) => acc + (post.stats?.reposts || 0), 0);
+                    const avgReactions = linkedinPosts.length > 0 ? totalReactions / linkedinPosts.length : 0;
+                    const avgComments = linkedinPosts.length > 0 ? totalComments / linkedinPosts.length : 0;
+                    const avgReposts = linkedinPosts.length > 0 ? totalReposts / linkedinPosts.length : 0;
+
+                    return (
+                      <>
+                        <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                          <span className="text-sm">Reacciones promedio</span>
+                          <span className="font-bold text-blue-600">{avgReactions.toFixed(1)}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                          <span className="text-sm">Comentarios promedio</span>
+                          <span className="font-bold text-green-600">{avgComments.toFixed(1)}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                          <span className="text-sm">Reposts promedio</span>
+                          <span className="font-bold text-purple-600">{avgReposts.toFixed(1)}</span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Insights con IA */}
+              <div className="md:col-span-2 lg:col-span-3 space-y-4">
+                <h4 className="font-semibold text-sm text-blue-800 flex items-center gap-2">
+                  <Brain className="w-4 h-4" />
+                  Insights Generados por IA
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(() => {
+                    const postsWithMedia = linkedinPosts.filter(post => post.media?.items?.length > 0);
+                    const mediaEngagement = postsWithMedia.length > 0 ? 
+                      postsWithMedia.reduce((acc, post) => acc + (post.stats?.total_reactions || 0) + (post.stats?.comments || 0), 0) / postsWithMedia.length : 0;
+                    
+                    const textOnlyPosts = linkedinPosts.filter(post => !post.media?.items?.length);
+                    const textEngagement = textOnlyPosts.length > 0 ? 
+                      textOnlyPosts.reduce((acc, post) => acc + (post.stats?.total_reactions || 0) + (post.stats?.comments || 0), 0) / textOnlyPosts.length : 0;
+
+                    const editedPosts = linkedinPosts.filter(post => post.posted_at?.is_edited);
+                    const editedPercentage = linkedinPosts.length > 0 ? (editedPosts.length / linkedinPosts.length) * 100 : 0;
+
+                    return (
+                      <>
+                        <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Camera className="w-4 h-4 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <h5 className="font-medium text-blue-900 mb-1">Contenido Visual</h5>
+                              <p className="text-sm text-blue-700">
+                                Los posts con media obtienen {mediaEngagement > textEngagement ? 'mejor' : 'menor'} engagement 
+                                ({mediaEngagement.toFixed(1)} vs {textEngagement.toFixed(1)} promedio)
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Edit className="w-4 h-4 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <h5 className="font-medium text-green-900 mb-1">Edición de Posts</h5>
+                              <p className="text-sm text-green-700">
+                                {editedPercentage.toFixed(1)}% de tus posts han sido editados, 
+                                {editedPercentage > 20 ? ' considera planificar mejor el contenido' : ' buen control de calidad'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Recomendaciones */}
+                <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                  <h5 className="font-medium text-purple-900 mb-3 flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4" />
+                    Recomendaciones para Mejorar
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {(() => {
+                      const avgEngagement = linkedinPosts.length > 0 ? 
+                        linkedinPosts.reduce((acc, post) => acc + (post.stats?.total_reactions || 0) + (post.stats?.comments || 0), 0) / linkedinPosts.length : 0;
+                      
+                      const recentPosts = linkedinPosts.filter(post => {
+                        if (!post.posted_at?.timestamp) return false;
+                        const postDate = new Date(post.posted_at.timestamp);
+                        const monthAgo = new Date();
+                        monthAgo.setMonth(monthAgo.getMonth() - 1);
+                        return postDate >= monthAgo;
+                      });
+
+                      return (
+                        <>
+                          <div className="text-sm text-purple-700">
+                            • {avgEngagement < 10 ? 'Incrementa la frecuencia de publicación para mejor alcance' : 'Mantén la consistencia en tus publicaciones'}
+                          </div>
+                          <div className="text-sm text-purple-700">
+                            • {recentPosts.length < 3 ? 'Publica más contenido reciente para mayor visibilidad' : 'Excelente actividad reciente'}
+                          </div>
+                          <div className="text-sm text-purple-700">
+                            • Interactúa más con comentarios para aumentar el engagement
+                          </div>
+                          <div className="text-sm text-purple-700">
+                            • Considera publicar contenido con más elementos visuales
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Detalles de Instagram */}
       {selectedNetwork && instagramDetails && selectedNetwork.id === 'instagram' && (

@@ -305,26 +305,51 @@ async function getInstagramPosts(username: string): Promise<any> {
       },
     });
 
+    console.log(`📡 Instagram Posts API Response Status: ${response.status}`);
+    
     if (!response.ok) {
-      throw new Error(`Instagram API error: ${response.status} - ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`❌ Instagram Posts API Error: ${response.status} - ${response.statusText}`);
+      console.error(`❌ Error Response: ${errorText}`);
+      throw new Error(`Instagram API error: ${response.status} - ${response.statusText}. Details: ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('✅ Instagram posts data received');
+    console.log('✅ Instagram posts data received:', JSON.stringify(data, null, 2));
     
-    const posts: InstagramPost[] = data.data?.edges?.slice(0, 12).map((edge: any) => ({
-      id: edge.node.id,
-      shortcode: edge.node.shortcode,
-      display_url: edge.node.display_url,
-      caption: edge.node.edge_media_to_caption?.edges?.[0]?.node?.text || '',
-      like_count: edge.node.edge_liked_by?.count || 0,
-      comment_count: edge.node.edge_media_to_comment?.count || 0,
-      taken_at_timestamp: edge.node.taken_at_timestamp,
-      is_video: edge.node.is_video,
-      video_view_count: edge.node.video_view_count || 0,
-    })) || [];
+    // Handle different possible data structures
+    let postsArray = [];
+    if (data.data?.edges) {
+      // GraphQL-style response
+      postsArray = data.data.edges;
+    } else if (data.data && Array.isArray(data.data)) {
+      // Direct array response
+      postsArray = data.data;
+    } else if (data.items && Array.isArray(data.items)) {
+      // Items array response
+      postsArray = data.items;
+    } else {
+      console.log('⚠️ Unexpected data structure, using empty array');
+    }
 
-    // Analyze posts with AI if available
+    const posts: InstagramPost[] = postsArray.slice(0, 12).map((item: any) => {
+      // Handle both edge.node and direct item structures
+      const post = item.node || item;
+      
+      return {
+        id: post.id || post.pk,
+        shortcode: post.shortcode || post.code,
+        display_url: post.display_url || post.image_versions2?.candidates?.[0]?.url || post.thumbnail_url,
+        caption: post.edge_media_to_caption?.edges?.[0]?.node?.text || post.caption?.text || '',
+        like_count: post.edge_liked_by?.count || post.like_count || 0,
+        comment_count: post.edge_media_to_comment?.count || post.comment_count || 0,
+        taken_at_timestamp: post.taken_at_timestamp || post.taken_at,
+        is_video: post.is_video || post.media_type === 2,
+        video_view_count: post.video_view_count || post.view_count || 0,
+      };
+    });
+
+    console.log(`📊 Processing ${posts.length} posts for analysis`);
     let postsAnalysis = null;
     if (openAIApiKey && posts.length > 0) {
       try {

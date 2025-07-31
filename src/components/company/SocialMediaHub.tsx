@@ -96,13 +96,51 @@ interface LinkedInCompanyDetails {
 }
 
 interface LinkedInPost {
-  id?: string;
+  activity_urn?: string;
+  full_urn?: string;
+  post_url?: string;
+  posted_at?: {
+    relative?: string;
+    is_edited?: boolean;
+    date?: string;
+    timestamp?: number;
+  };
   text?: string;
-  likes?: number;
-  comments?: number;
-  shares?: number;
-  date?: string;
-  media?: any[];
+  post_language_code?: string;
+  post_type?: string;
+  author?: {
+    name?: string;
+    follower_count?: number;
+    company_url?: string;
+    logo_url?: string;
+  };
+  stats?: {
+    total_reactions?: number;
+    like?: number;
+    support?: number;
+    love?: number;
+    insight?: number;
+    celebrate?: number;
+    entertainment?: number;
+    comments?: number;
+    reposts?: number;
+  };
+  media?: {
+    type?: string;
+    items?: Array<{
+      url?: string;
+      width?: number;
+      height?: number;
+      duration?: number;
+      thumbnail?: string;
+    }>;
+  };
+  document?: {
+    title?: string;
+    page_count?: number;
+    url?: string;
+    thumbnail?: string;
+  };
 }
 
 const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
@@ -866,30 +904,76 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
           <CardContent>
             <div className="space-y-4">
               {linkedinPosts.slice(0, 5).map((post, index) => (
-                <div key={index} className="bg-white border border-blue-200 rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow">
-                  <p className="text-sm leading-relaxed">{post.text || 'Sin contenido de texto'}</p>
+                <div key={post.activity_urn || index} className="bg-white border border-blue-200 rounded-lg p-4 space-y-3 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm leading-relaxed flex-1">{post.text || 'Sin contenido de texto'}</p>
+                    {post.media?.items?.[0] && (
+                      <div className="flex-shrink-0">
+                        {post.media.type === 'image' && (
+                          <img 
+                            src={post.media.items[0].url} 
+                            alt="Post media" 
+                            className="w-20 h-20 object-cover rounded-lg border"
+                          />
+                        )}
+                        {post.media.type === 'video' && (
+                          <div className="relative">
+                            <img 
+                              src={post.media.items[0].thumbnail} 
+                              alt="Video thumbnail" 
+                              className="w-20 h-20 object-cover rounded-lg border"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M8 5v10l8-5-8-5z"/>
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
                   <div className="flex items-center gap-6 text-xs text-blue-600">
                     <div className="flex items-center gap-1">
                       <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-                      <span className="font-medium">{post.likes || 0}</span>
-                      <span className="text-muted-foreground">Me gusta</span>
+                      <span className="font-medium">{post.stats?.total_reactions || 0}</span>
+                      <span className="text-muted-foreground">Reacciones</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="w-2 h-2 bg-green-600 rounded-full"></span>
-                      <span className="font-medium">{post.comments || 0}</span>
+                      <span className="font-medium">{post.stats?.comments || 0}</span>
                       <span className="text-muted-foreground">Comentarios</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
-                      <span className="font-medium">{post.shares || 0}</span>
-                      <span className="text-muted-foreground">Compartidos</span>
+                      <span className="font-medium">{post.stats?.reposts || 0}</span>
+                      <span className="text-muted-foreground">Reposts</span>
                     </div>
-                    {post.date && (
+                    {post.posted_at?.date && (
                       <div className="flex items-center gap-1 ml-auto">
-                        <span className="text-muted-foreground">{new Date(post.date).toLocaleDateString()}</span>
+                        <span className="text-muted-foreground">{new Date(post.posted_at.date).toLocaleDateString()}</span>
                       </div>
                     )}
+                    {post.posted_at?.is_edited && (
+                      <span className="text-xs text-amber-600">• Editado</span>
+                    )}
                   </div>
+                  
+                  {post.post_url && (
+                    <div className="pt-2">
+                      <a 
+                        href={post.post_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        Ver post en LinkedIn →
+                      </a>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

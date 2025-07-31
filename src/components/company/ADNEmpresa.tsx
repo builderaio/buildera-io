@@ -377,10 +377,17 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       if (data && data.length > 0) {
         const strategy = data[0];
         console.log('Setting strategy form with:', strategy);
+        
+        // Función para normalizar saltos de línea al mostrar
+        const normalizeForDisplay = (text: string | null): string => {
+          if (!text) return "";
+          return text.replace(/\\n/g, '\n'); // Convertir \n literales a saltos reales
+        };
+        
         setStrategyForm({
-          vision: strategy.vision || "",
-          mission: strategy.mision || "",
-          propuesta_valor: strategy.propuesta_valor || ""
+          vision: normalizeForDisplay(strategy.vision),
+          mission: normalizeForDisplay(strategy.mision),
+          propuesta_valor: normalizeForDisplay(strategy.propuesta_valor)
         });
       } else {
         console.log('No strategy found, setting empty form');
@@ -549,6 +556,16 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       throw new Error("No se pudo identificar el usuario");
     }
 
+    // Función para normalizar saltos de línea
+    const normalizeLineBreaks = (text: string | null | undefined): string | null => {
+      if (!text) return null;
+      return text
+        .replace(/\\n/g, '\n') // Convertir \n literales a saltos de línea reales
+        .replace(/\r\n/g, '\n') // Normalizar saltos de línea de Windows
+        .replace(/\r/g, '\n') // Normalizar saltos de línea de Mac
+        .trim(); // Eliminar espacios al inicio y final
+    };
+
     const { data: existingStrategy, error: selectError } = await supabase
       .from('company_strategy')
       .select('id')
@@ -566,9 +583,9 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       const { error } = await supabase
         .from('company_strategy')
         .update({
-          vision: strategyData.vision?.trim() || null,
-          mision: strategyData.mission?.trim() || null,
-          propuesta_valor: strategyData.propuesta_valor?.trim() || null,
+          vision: normalizeLineBreaks(strategyData.vision),
+          mision: normalizeLineBreaks(strategyData.mission),
+          propuesta_valor: normalizeLineBreaks(strategyData.propuesta_valor),
           generated_with_ai: generatedWithAI,
           updated_at: new Date().toISOString()
         })
@@ -582,9 +599,9 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       const { data: insertData, error } = await supabase
         .from('company_strategy')
         .insert({
-          vision: strategyData.vision?.trim() || null,
-          mision: strategyData.mission?.trim() || null,
-          propuesta_valor: strategyData.propuesta_valor?.trim() || null,
+          vision: normalizeLineBreaks(strategyData.vision),
+          mision: normalizeLineBreaks(strategyData.mission),
+          propuesta_valor: normalizeLineBreaks(strategyData.propuesta_valor),
           user_id: profile.user_id,
           generated_with_ai: generatedWithAI
         });

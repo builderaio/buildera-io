@@ -2683,6 +2683,75 @@ export type Database = {
         }
         Relationships: []
       }
+      tiktok_posts: {
+        Row: {
+          aweme_id: string
+          collect_count: number | null
+          comment_count: number | null
+          cover_url: string | null
+          create_time: number | null
+          created_at: string
+          digg_count: number | null
+          download_count: number | null
+          duration: number | null
+          id: string
+          is_ad: boolean | null
+          play_count: number | null
+          posted_at: string | null
+          raw_data: Json | null
+          share_count: number | null
+          tiktok_user_id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          aweme_id: string
+          collect_count?: number | null
+          comment_count?: number | null
+          cover_url?: string | null
+          create_time?: number | null
+          created_at?: string
+          digg_count?: number | null
+          download_count?: number | null
+          duration?: number | null
+          id?: string
+          is_ad?: boolean | null
+          play_count?: number | null
+          posted_at?: string | null
+          raw_data?: Json | null
+          share_count?: number | null
+          tiktok_user_id: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          aweme_id?: string
+          collect_count?: number | null
+          comment_count?: number | null
+          cover_url?: string | null
+          create_time?: number | null
+          created_at?: string
+          digg_count?: number | null
+          download_count?: number | null
+          duration?: number | null
+          id?: string
+          is_ad?: boolean | null
+          play_count?: number | null
+          posted_at?: string | null
+          raw_data?: Json | null
+          share_count?: number | null
+          tiktok_user_id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
       tiktok_publications: {
         Row: {
           content_data: Json

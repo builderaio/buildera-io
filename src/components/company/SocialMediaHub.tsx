@@ -371,8 +371,9 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
       if (error) throw error;
 
       if (data.success) {
-        setLinkedinDetails(data.data);
-        console.log('✅ LinkedIn company details loaded:', data.data);
+        setLinkedinDetails(data.data.data);
+        setSelectedNetwork(network); // Asegurar que selectedNetwork esté establecido
+        console.log('✅ LinkedIn company details loaded:', data.data.data);
         
         toast({
           title: "Detalles cargados",

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import Header from "@/components/Header";
+
 import Hero from "@/components/Hero";
 import ProblemSolution from "@/components/ProblemSolution";
 import Ecosystem from "@/components/Ecosystem";
@@ -73,7 +73,27 @@ const Index = () => {
 
     return (
       <div className="min-h-screen">
-        <Header />
+        {/* Header simplificado para usuarios autenticados */}
+        <header className="bg-background/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center">
+                <img 
+                  src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
+                  alt="Buildera Logo" 
+                  className="h-8 w-8 mr-3"
+                />
+                <span className="text-xl font-bold text-foreground">BUILDERA</span>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <Button onClick={() => window.location.href = '/company-dashboard'}>
+                  Ir al Dashboard
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
         <main className="container mx-auto px-6 py-12">
           {/* Hero Section for Authenticated Users */}
           <div className="text-center mb-12">
@@ -172,7 +192,30 @@ const Index = () => {
   const renderPublicContent = () => {
     return (
       <div className="min-h-screen">
-        <Header />
+        {/* Header simplificado para landing */}
+        <header className="bg-background/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center">
+                <img 
+                  src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
+                  alt="Buildera Logo" 
+                  className="h-8 w-8 mr-3"
+                />
+                <span className="text-xl font-bold text-foreground">BUILDERA</span>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <Button variant="ghost" onClick={() => window.location.href = '/auth'}>
+                  Iniciar Sesión
+                </Button>
+                <Button onClick={() => window.location.href = '/auth'}>
+                  Registrarse
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
         <main>
           <Hero />
           <ProblemSolution />

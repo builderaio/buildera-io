@@ -360,14 +360,57 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       </Sidebar>
       
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background/95 backdrop-blur-sm sticky top-0 z-50">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
+          
+          {/* Logo y navegación principal para pantallas grandes */}
           <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">
-                {profile?.company_name || 'Mi Empresa'}
-              </h1>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-semibold">
+                  {profile?.company_name || 'Mi Empresa'}
+                </h1>
+              </div>
+              
+              {/* Navegación principal integrada */}
+              <nav className="hidden lg:flex items-center gap-1">
+                <Button 
+                  variant={activeView === 'mando-central' ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setActiveView('mando-central')}
+                  className="text-sm"
+                >
+                  Inicio
+                </Button>
+                <Button 
+                  variant={activeView.includes('agentes') || activeView === 'marketplace' ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setActiveView('mis-agentes')}
+                  className="text-sm"
+                  disabled={isProfileIncomplete}
+                >
+                  Agentes IA
+                </Button>
+                <Button 
+                  variant={activeView === 'marketing-hub' ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setActiveView('marketing-hub')}
+                  className="text-sm"
+                  disabled={isProfileIncomplete}
+                >
+                  Marketing
+                </Button>
+                <Button 
+                  variant={activeView === 'academia-buildera' ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setActiveView('academia-buildera')}
+                  className="text-sm"
+                  disabled={isProfileIncomplete}
+                >
+                  Academia
+                </Button>
+              </nav>
             </div>
             
             <div className="flex items-center gap-3">

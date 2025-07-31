@@ -1939,6 +1939,61 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 </Button>
               </div>
 
+              {/* Productos detectados por ERA */}
+              {companyData?.webhook_data && companyData.webhook_data.length > 0 && (
+                <Card className="mb-6">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Bot className="h-4 w-4 text-primary" />
+                      Productos detectados por ERA
+                      <div className="flex items-center gap-1 px-2 py-1 bg-secondary/50 text-secondary-foreground rounded-full text-xs">
+                        Generado automáticamente
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {(() => {
+                        const webhookResponse = companyData.webhook_data[0]?.response || [];
+                        const productos = [];
+                        
+                        // Buscar productos en la respuesta del webhook
+                        for (let i = 1; i <= 10; i++) {
+                          const nombre = webhookResponse.find(item => item.key === `producto_servicio_${i}_nombre`)?.value;
+                          const descripcion = webhookResponse.find(item => item.key === `producto_servicio_${i}_descripcion`)?.value;
+                          
+                          if (nombre && nombre !== "No tiene") {
+                            productos.push({ nombre, descripcion, index: i });
+                          }
+                        }
+                        
+                        return productos.map((producto) => (
+                          <Card key={producto.index} className="border-primary/20 bg-primary/5">
+                            <CardContent className="p-4">
+                              <div className="flex items-start gap-2 mb-2">
+                                <Package className="w-4 h-4 text-primary mt-1" />
+                                <h4 className="font-semibold text-foreground leading-tight">
+                                  {producto.nombre}
+                                </h4>
+                              </div>
+                              {producto.descripcion && (
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                  {producto.descripcion}
+                                </p>
+                              )}
+                              <div className="mt-3 flex items-center gap-1 text-xs text-primary">
+                                <Bot className="h-3 w-3" />
+                                Detectado por IA
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ));
+                      })()}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {showProductForm && (
                 <Card>
                   <CardHeader>

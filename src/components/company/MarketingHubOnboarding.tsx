@@ -344,6 +344,31 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
     }
   };
 
+  const completeOnboarding = async () => {
+    try {
+      // Mark onboarding as completed in the database
+      const { error } = await supabase
+        .from('marketing_onboarding_status')
+        .insert({
+          user_id: profile.user_id,
+          onboarding_version: '1.0'
+        });
+
+      if (error) {
+        console.error('Error saving onboarding completion:', error);
+        toast.error('Error al completar el onboarding');
+        return;
+      }
+
+      console.log('✅ Onboarding completed and saved');
+      toast.success('¡Marketing Hub configurado exitosamente!');
+      onComplete();
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      toast.error('Error al completar el onboarding');
+    }
+  };
+
   const nextStep = async () => {
     if (currentStep === 0) {
       await saveCompanyData();
@@ -699,7 +724,7 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
       </div>
       
       <div className="pt-6">
-        <Button onClick={onComplete} size="lg" className="gap-2">
+        <Button onClick={completeOnboarding} size="lg" className="gap-2">
           <Sparkles className="h-5 w-5" />
           Acceder al Marketing Hub
         </Button>

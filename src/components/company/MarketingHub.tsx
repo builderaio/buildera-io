@@ -102,48 +102,23 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     if (!profile?.user_id) return;
 
     try {
-      // Check if user has any social media connections configured
-      const { data: companyData } = await supabase
-        .from('companies')
+      // Check if user has completed onboarding
+      const { data: onboardingStatus } = await supabase
+        .from('marketing_onboarding_status')
         .select('*')
-        .eq('created_by', profile.user_id)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('user_id', profile.user_id)
         .maybeSingle();
 
-      // Check if user has any insights or actionables
-      const [insightsResult, actionablesResult] = await Promise.all([
-        supabase
-          .from('marketing_insights')
-          .select('id')
-          .eq('user_id', profile.user_id)
-          .limit(1),
-        supabase
-          .from('marketing_actionables')
-          .select('id')
-          .eq('user_id', profile.user_id)
-          .limit(1)
-      ]);
+      // If onboarding was completed, don't show it again
+      if (onboardingStatus) {
+        setNeedsOnboarding(false);
+        console.log('🎯 Onboarding already completed:', onboardingStatus.completed_at);
+        return;
+      }
 
-      const hasCompanyData = companyData && (
-        companyData.linkedin_url || 
-        companyData.instagram_url || 
-        companyData.facebook_url || 
-        companyData.tiktok_url
-      );
-
-      const hasInsights = (insightsResult.data && insightsResult.data.length > 0) ||
-                         (actionablesResult.data && actionablesResult.data.length > 0);
-
-      // Si no tiene datos de empresa configurados O no tiene insights, necesita onboarding
-      const needsOnboarding = !hasCompanyData || !hasInsights;
-      
-      setNeedsOnboarding(needsOnboarding);
-      console.log('🎯 Onboarding status:', {
-        hasCompanyData,
-        hasInsights,
-        needsOnboarding
-      });
+      // If no onboarding record exists, user needs onboarding
+      setNeedsOnboarding(true);
+      console.log('🎯 Onboarding required: No completion record found');
 
     } catch (error) {
       console.error('Error checking onboarding status:', error);

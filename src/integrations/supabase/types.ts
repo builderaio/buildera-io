@@ -2697,6 +2697,33 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_onboarding_status: {
+        Row: {
+          completed_at: string
+          created_at: string
+          id: string
+          onboarding_version: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          onboarding_version?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          id?: string
+          onboarding_version?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           created_at: string

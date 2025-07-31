@@ -57,9 +57,9 @@ const Hero = () => {
               Comenzar mi crecimiento gratis
             </Button>
           </a>
-          <a href="#como-funciona" className="w-full sm:w-auto">
+          <a href="/pricing" className="w-full sm:w-auto">
             <Button variant="outline-hero" size="xl" className="w-full sm:w-auto">
-              Ver cómo operamos tu negocio
+              Ver Planes y Precios
             </Button>
           </a>
         </div>

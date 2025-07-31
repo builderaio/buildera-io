@@ -3148,6 +3148,84 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: Json
+          id: string
+          is_active: boolean
+          limits: Json
+          name: string
+          price_monthly: number
+          price_yearly: number
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean
+          limits?: Json
+          name: string
+          price_monthly?: number
+          price_yearly?: number
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean
+          limits?: Json
+          name?: string
+          price_monthly?: number
+          price_yearly?: number
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscription_usage: {
+        Row: {
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          updated_at: string
+          usage_count: number
+          usage_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          updated_at?: string
+          usage_count?: number
+          usage_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          updated_at?: string
+          usage_count?: number
+          usage_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       system_analytics: {
         Row: {
           created_at: string
@@ -3501,6 +3579,62 @@ export type Database = {
           },
         ]
       }
+      user_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_end: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_tutorials: {
         Row: {
           completed_at: string | null
@@ -3589,6 +3723,14 @@ export type Database = {
       calculate_posting_optimal_times: {
         Args: { user_id_param: string; platform_param: string }
         Returns: Json
+      }
+      check_usage_limit: {
+        Args: {
+          user_id_param: string
+          usage_type_param: string
+          limit_key_param: string
+        }
+        Returns: boolean
       }
       create_company_with_owner: {
         Args:
@@ -3717,6 +3859,16 @@ export type Database = {
           active_last_30_days: number
         }[]
       }
+      get_user_subscription: {
+        Args: { user_id_param: string }
+        Returns: {
+          plan_name: string
+          plan_slug: string
+          limits: Json
+          status: string
+          current_period_end: string
+        }[]
+      }
       halfvec_avg: {
         Args: { "": number[] }
         Returns: unknown
@@ -3752,6 +3904,14 @@ export type Database = {
       hnswhandler: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      increment_usage: {
+        Args: {
+          user_id_param: string
+          usage_type_param: string
+          increment_by?: number
+        }
+        Returns: undefined
       }
       ivfflat_bit_support: {
         Args: { "": unknown }

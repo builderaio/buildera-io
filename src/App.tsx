@@ -43,6 +43,8 @@ import CompanyAgentView from "./pages/CompanyAgentView";
 import AgentConfigWizard from "./pages/AgentConfigWizard";
 
 import NotFound from "./pages/NotFound";
+import Pricing from "./pages/Pricing";
+import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +87,8 @@ const App = () => {
               <Route path="/auth/tiktok/callback" element={<TikTokCallback />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/subscription-success" element={<SubscriptionSuccess />} />
               
               {/* Authenticated Routes with Layout */}
               <Route element={<ResponsiveLayout />}>

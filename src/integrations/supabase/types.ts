@@ -2424,13 +2424,22 @@ export type Database = {
         Returns: unknown
       }
       create_company_with_owner: {
-        Args: {
-          company_name: string
-          company_description?: string
-          website_url?: string
-          industry_sector?: string
-          company_size?: string
-        }
+        Args:
+          | {
+              company_name: string
+              company_description?: string
+              website_url?: string
+              industry_sector?: string
+              company_size?: string
+            }
+          | {
+              company_name: string
+              company_description?: string
+              website_url?: string
+              industry_sector?: string
+              company_size?: string
+              user_id_param?: string
+            }
         Returns: string
       }
       get_admin_analytics_data: {

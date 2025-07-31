@@ -142,7 +142,7 @@ serve(async (req) => {
       }
     ]
 
-    // Eliminar insights existentes para actualizar con nuevos datos
+// Eliminar insights existentes para actualizar con nuevos datos
     const { error: deleteError } = await supabase
       .from('marketing_insights')
       .delete()
@@ -153,15 +153,25 @@ serve(async (req) => {
       console.warn('Warning deleting old insights:', deleteError)
     }
 
-    // Insertar nuevos insights
-    const { error: insightsError } = await supabase
-      .from('marketing_insights')
-      .insert(insights)
+    // Insertar nuevos insights uno por uno para evitar conflictos
+    let insertedCount = 0;
+    for (const insight of insights) {
+      try {
+        const { error: insertError } = await supabase
+          .from('marketing_insights')
+          .insert([insight])
 
-    if (insightsError) {
-      console.error('Error saving insights:', insightsError)
-      throw new Error('Failed to save insights')
+        if (insertError) {
+          console.error('Error inserting insight:', insertError, insight)
+        } else {
+          insertedCount++;
+        }
+      } catch (error) {
+        console.error('Error in insight insertion:', error)
+      }
     }
+
+    console.log(`✅ Successfully inserted ${insertedCount} of ${insights.length} insights`)
 
     console.log(`✅ Advanced analysis completed with ${insights.length} insights`)
 

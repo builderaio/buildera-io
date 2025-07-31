@@ -76,6 +76,8 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
   const loadAnalyticsData = async () => {
     setLoading(true);
     try {
+      console.log('📊 Loading analytics data for user:', profile.user_id);
+      
       // Cargar datos de múltiples tablas en paralelo
       const [insightsRes, actionablesRes, postsRes, analyticsRes] = await Promise.all([
         supabase
@@ -103,10 +105,23 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
           .order('period_start', { ascending: false })
       ]);
 
-      if (insightsRes.error) throw insightsRes.error;
-      if (actionablesRes.error) throw actionablesRes.error;
-      if (postsRes.error) throw postsRes.error;
-      if (analyticsRes.error) throw analyticsRes.error;
+      // Verificar errores y mostrar información detallada
+      if (insightsRes.error) {
+        console.error('Error loading insights:', insightsRes.error);
+        throw insightsRes.error;
+      }
+      if (actionablesRes.error) {
+        console.error('Error loading actionables:', actionablesRes.error);
+        throw actionablesRes.error;
+      }
+      if (postsRes.error) {
+        console.error('Error loading posts:', postsRes.error);
+        throw postsRes.error;
+      }
+      if (analyticsRes.error) {
+        console.error('Error loading analytics:', analyticsRes.error);
+        throw analyticsRes.error;
+      }
 
       const data = {
         insights: insightsRes.data || [],
@@ -116,6 +131,13 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
         embeddings: []
       };
 
+      console.log('📈 Data loaded:', {
+        insights: data.insights.length,
+        actionables: data.actionables.length,
+        posts: data.posts.length,
+        analytics: data.analytics.length
+      });
+
       setAnalyticsData(data);
       
       // Generar estadísticas por plataforma
@@ -124,8 +146,8 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
     } catch (error: any) {
       console.error('Error loading analytics data:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar los datos de análisis",
+        title: "Error cargando datos",
+        description: `No se pudieron cargar los datos: ${error.message}`,
         variant: "destructive",
       });
     } finally {

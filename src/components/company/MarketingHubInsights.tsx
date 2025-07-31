@@ -48,11 +48,16 @@ interface MarketingActionable {
 
 interface SocialMediaPost {
   id: string;
-  platform: string;
-  content: string;
-  metrics: any;
-  published_at: string;
-  hashtags: string[];
+  platform?: string;
+  content?: string;
+  caption?: string;
+  metrics?: any;
+  published_at?: string;
+  posted_at?: string;
+  hashtags?: string[];
+  like_count?: number;
+  comment_count?: number;
+  engagement_rate?: number;
 }
 
 interface SocialMediaAnalytics {
@@ -81,7 +86,12 @@ export default function MarketingHub() {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        console.log('🚫 No authenticated user found');
+        return;
+      }
+
+      console.log('📊 Loading marketing data for user:', user.id);
 
       // Cargar insights
       const { data: insightsData, error: insightsError } = await supabase
@@ -91,7 +101,11 @@ export default function MarketingHub() {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (insightsError) throw insightsError;
+      if (insightsError) {
+        console.error('Error loading insights:', insightsError);
+        throw insightsError;
+      }
+      console.log('💡 Insights loaded:', insightsData?.length || 0);
       setInsights(insightsData || []);
 
       // Cargar accionables
@@ -102,19 +116,39 @@ export default function MarketingHub() {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (actionablesError) throw actionablesError;
+      if (actionablesError) {
+        console.error('Error loading actionables:', actionablesError);
+        throw actionablesError;
+      }
+      console.log('🎯 Actionables loaded:', actionablesData?.length || 0);
       setActionables(actionablesData || []);
 
-      // Cargar posts recientes
+      // Cargar posts recientes - usar instagram_posts en lugar de social_media_posts
       const { data: postsData, error: postsError } = await supabase
-        .from('social_media_posts')
+        .from('instagram_posts')
         .select('*')
         .eq('user_id', user.id)
-        .order('published_at', { ascending: false })
+        .order('posted_at', { ascending: false })
         .limit(20);
 
-      if (postsError) throw postsError;
-      setPosts(postsData || []);
+      if (postsError) {
+        console.error('Error loading posts:', postsError);
+        throw postsError;
+      }
+      console.log('📱 Posts loaded:', postsData?.length || 0);
+      // Transformar posts de Instagram al formato esperado
+      const transformedPosts = postsData?.map(post => ({
+        ...post,
+        platform: 'instagram',
+        content: post.caption || '',
+        published_at: post.posted_at,
+        metrics: {
+          likes: post.like_count || 0,
+          comments: post.comment_count || 0,
+          engagement: post.engagement_rate || 0
+        }
+      })) || [];
+      setPosts(transformedPosts);
 
       // Cargar analytics
       const { data: analyticsData, error: analyticsError } = await supabase
@@ -123,12 +157,16 @@ export default function MarketingHub() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (analyticsError) throw analyticsError;
+      if (analyticsError) {
+        console.error('Error loading analytics:', analyticsError);
+        throw analyticsError;
+      }
+      console.log('📈 Analytics loaded:', analyticsData?.length || 0);
       setAnalytics(analyticsData || []);
 
     } catch (error) {
       console.error('Error loading marketing data:', error);
-      toast.error('Error al cargar los datos de marketing');
+      toast.error(`Error al cargar los datos: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -140,21 +178,37 @@ export default function MarketingHub() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase.functions.invoke('social-media-analyzer', {
-        body: {
-          userId: user.id,
-          platform: platformId,
-          connectionData: {} // En producción, aquí iría la data de conexión real
+      console.log(`🚀 Starting analysis for ${platformId}`);
+
+      // Si es Instagram, usar el endpoint específico
+      if (platformId === 'instagram') {
+        // Primero obtener posts
+        const { data: scraperData, error: scraperError } = await supabase.functions.invoke('instagram-scraper', {
+          body: { 
+            action: 'get_posts', 
+            username_or_url: 'biury.co'
+          }
+        });
+
+        if (scraperError) {
+          console.warn('Error obteniendo posts:', scraperError);
         }
-      });
 
-      if (error) throw error;
+        // Luego hacer análisis avanzado
+        const { data, error } = await supabase.functions.invoke('advanced-social-analyzer');
+        
+        if (error) throw error;
 
-      toast.success(`Análisis completado para ${platformId}`);
+        toast.success(`Análisis completado para ${platformId} - ${data.insights_generated || 0} insights generados`);
+      } else {
+        // Para otras plataformas, usar el endpoint genérico (cuando esté disponible)
+        toast.info(`Análisis para ${platformId} estará disponible próximamente`);
+      }
+
       await loadMarketingData(); // Recargar datos
     } catch (error) {
       console.error('Error analyzing platform:', error);
-      toast.error(`Error al analizar ${platformId}`);
+      toast.error(`Error al analizar ${platformId}: ${error.message}`);
     } finally {
       setProcessingPlatform(null);
     }
@@ -495,12 +549,12 @@ export default function MarketingHub() {
                         {getPlatformIcon(post.platform)}
                         <span className="font-medium capitalize">{post.platform}</span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(post.published_at).toLocaleDateString()}
-                        </span>
+                           {new Date(post.published_at || post.posted_at || '').toLocaleDateString()}
+                         </span>
                       </div>
                     </div>
                     
-                    <p className="text-sm mb-3 line-clamp-2">{post.content}</p>
+                    <p className="text-sm mb-3 line-clamp-2">{post.content || post.caption || ''}</p>
                     
                     {post.hashtags && post.hashtags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3">

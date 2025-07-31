@@ -59,6 +59,8 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
 
   const loadExistingAnalysis = async () => {
     try {
+      console.log('🔍 Loading existing analysis for user:', profile.user_id);
+      
       // Cargar insights existentes para mostrar datos previos
       const { data: insights, error } = await supabase
         .from('marketing_insights')
@@ -67,11 +69,17 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
         .in('insight_type', ['optimal_timing', 'content_performance', 'sentiment_analysis', 'hashtag_optimization'])
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading insights:', error);
+        throw error;
+      }
+
+      console.log('📊 Found insights:', insights?.length || 0);
 
       if (insights && insights.length > 0) {
         const parsedAnalysis: AdvancedAnalysis = {};
         insights.forEach(insight => {
+          console.log('Processing insight:', insight.insight_type);
           switch (insight.insight_type) {
             case 'optimal_timing':
               parsedAnalysis.optimalTiming = insight.data;
@@ -89,9 +97,18 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
         });
         setAnalysis(parsedAnalysis);
         setLastAnalysis(new Date(insights[0].created_at));
+      } else {
+        console.log('📝 No existing insights found');
+        setAnalysis({});
+        setLastAnalysis(null);
       }
     } catch (error: any) {
       console.error('Error loading existing analysis:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los análisis existentes",
+        variant: "destructive",
+      });
     }
   };
 
@@ -100,22 +117,51 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
     try {
       console.log('🚀 Starting advanced analysis...');
       
-      // Primero obtener posts nuevos de Instagram si es necesario
-      const { data: instagramData, error: instagramError } = await supabase.functions.invoke('instagram-scraper', {
-        body: { 
-          action: 'get_posts', 
-          username_or_url: 'biury.co' // Esto debería venir del perfil conectado
-        }
-      });
+      // Verificar si hay posts disponibles primero
+      const { data: existingPosts, error: postsError } = await supabase
+        .from('instagram_posts')
+        .select('count')
+        .eq('user_id', profile.user_id);
       
-      if (instagramError) {
-        console.warn('Error obteniendo posts de Instagram:', instagramError);
+      if (postsError) {
+        console.error('Error checking posts:', postsError);
+      }
+      
+      const postsCount = existingPosts?.[0]?.count || 0;
+      console.log('📊 Posts disponibles:', postsCount);
+      
+      if (postsCount === 0) {
+        // Si no hay posts, primero obtener posts de Instagram
+        console.log('🔄 No posts found, fetching from Instagram...');
+        const { data: instagramData, error: instagramError } = await supabase.functions.invoke('instagram-scraper', {
+          body: { 
+            action: 'get_posts', 
+            username_or_url: 'biury.co'
+          }
+        });
+        
+        if (instagramError) {
+          console.error('Error obteniendo posts de Instagram:', instagramError);
+          toast({
+            title: "Error",
+            description: "No se pudieron obtener posts de Instagram para análisis",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        console.log('✅ Posts obtenidos:', instagramData);
       }
       
       // Ejecutar el análisis avanzado con los datos disponibles en BD
       const { data, error } = await supabase.functions.invoke('advanced-social-analyzer');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error in advanced analyzer:', error);
+        throw error;
+      }
+      
+      console.log('📈 Analysis result:', data);
       
       if (data.success) {
         // Recargar datos existentes para mostrar análisis actualizado
@@ -123,14 +169,16 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
         
         toast({
           title: "🎯 Análisis Avanzado Completado",
-          description: `Se generaron ${data.insights_generated} insights con ${data.posts_analyzed || 0} posts analizados`,
+          description: `Se generaron ${data.insights_generated || 0} insights con ${data.posts_analyzed || 0} posts analizados`,
         });
+      } else {
+        throw new Error(data.error || 'El análisis no se completó correctamente');
       }
     } catch (error: any) {
       console.error('Error running advanced analysis:', error);
       toast({
-        title: "Error",
-        description: "No se pudo completar el análisis avanzado",
+        title: "Error en Análisis",
+        description: error.message || "No se pudo completar el análisis avanzado",
         variant: "destructive",
       });
     } finally {

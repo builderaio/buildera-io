@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -49,6 +50,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     description: ""
   });
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingObjectives, setLoadingObjectives] = useState(false);
 
   // Estados para gestión de datos de la empresa
   const [companyData, setCompanyData] = useState<any>(null);
@@ -393,6 +395,135 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     } catch (error: any) {
       console.error('Error fetching objectives:', error);
     }
+  };
+
+  const handleSaveObjective = async () => {
+    if (!objectiveForm.title.trim()) {
+      toast({
+        title: "Error",
+        description: "El título del objetivo es requerido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoadingObjectives(true);
+    try {
+      if (editingObjective) {
+        // Actualizar objetivo existente
+        const { error } = await supabase
+          .from('company_objectives')
+          .update({
+            title: objectiveForm.title,
+            description: objectiveForm.description || null,
+            objective_type: objectiveForm.objective_type,
+            target_date: objectiveForm.target_date || null,
+            priority: objectiveForm.priority,
+            status: objectiveForm.status
+          })
+          .eq('id', editingObjective.id)
+          .eq('user_id', profile?.user_id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Objetivo actualizado",
+          description: "El objetivo se ha actualizado correctamente",
+        });
+      } else {
+        // Crear nuevo objetivo
+        const { error } = await supabase
+          .from('company_objectives')
+          .insert({
+            title: objectiveForm.title,
+            description: objectiveForm.description || null,
+            objective_type: objectiveForm.objective_type,
+            target_date: objectiveForm.target_date || null,
+            priority: objectiveForm.priority,
+            status: objectiveForm.status,
+            user_id: profile?.user_id
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Objetivo creado",
+          description: "El objetivo se ha creado correctamente",
+        });
+      }
+
+      // Recargar objetivos y cerrar formulario
+      await fetchObjectives();
+      handleCancelObjectiveForm();
+    } catch (error: any) {
+      console.error('Error saving objective:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo guardar el objetivo",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingObjectives(false);
+    }
+  };
+
+  const handleEditObjective = (objective: any) => {
+    setEditingObjective(objective);
+    setObjectiveForm({
+      title: objective.title,
+      description: objective.description || "",
+      objective_type: objective.objective_type,
+      target_date: objective.target_date || "",
+      priority: objective.priority || 1,
+      status: objective.status
+    });
+    setShowObjectiveForm(true);
+  };
+
+  const handleDeleteObjective = async (objectiveId: string) => {
+    if (!confirm("¿Está seguro de que desea eliminar este objetivo?")) {
+      return;
+    }
+
+    setLoadingObjectives(true);
+    try {
+      const { error } = await supabase
+        .from('company_objectives')
+        .delete()
+        .eq('id', objectiveId)
+        .eq('user_id', profile?.user_id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Objetivo eliminado",
+        description: "El objetivo se ha eliminado correctamente",
+      });
+
+      await fetchObjectives();
+    } catch (error: any) {
+      console.error('Error deleting objective:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el objetivo",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingObjectives(false);
+    }
+  };
+
+  const handleCancelObjectiveForm = () => {
+    setShowObjectiveForm(false);
+    setEditingObjective(null);
+    setObjectiveForm({
+      title: "",
+      description: "",
+      objective_type: "short_term",
+      target_date: "",
+      priority: 1,
+      status: "active"
+    });
   };
 
   return (
@@ -920,12 +1051,250 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
             {/* Las demás pestañas (Estrategia, Marca, Canales) mantienen su estructura original */}
             <TabsContent value="estrategia" className="space-y-6 mt-6">
-              <div className="text-center py-8">
-                <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  La funcionalidad de estrategia está en desarrollo.
-                </p>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <Target className="w-5 h-5 mr-2 text-primary" />
+                    Estrategia Empresarial
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Define los objetivos estratégicos de tu negocio para que los agentes de IA puedan alinear sus acciones.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => setShowObjectiveForm(true)}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar Objetivo
+                </Button>
               </div>
+
+              {/* Lista de objetivos */}
+              <div className="space-y-4">
+                {objectives.length === 0 ? (
+                  <Card>
+                    <CardContent className="text-center py-8">
+                      <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h4 className="font-medium text-foreground mb-2">No hay objetivos definidos</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Comienza definiendo los objetivos estratégicos de tu negocio.
+                      </p>
+                      <Button 
+                        onClick={() => setShowObjectiveForm(true)}
+                        variant="outline"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Crear primer objetivo
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {['short_term', 'medium_term', 'long_term'].map((term) => {
+                      const termObjectives = objectives.filter(obj => obj.objective_type === term);
+                      const termLabels = {
+                        short_term: 'Corto Plazo (1-6 meses)',
+                        medium_term: 'Mediano Plazo (6 meses - 2 años)',
+                        long_term: 'Largo Plazo (2+ años)'
+                      };
+                      
+                      if (termObjectives.length === 0) return null;
+                      
+                      return (
+                        <Card key={term}>
+                          <CardHeader>
+                            <CardTitle className="text-base">{termLabels[term as keyof typeof termLabels]}</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-3">
+                              {termObjectives.map((objective) => (
+                                <div key={objective.id} className="flex items-start justify-between p-4 border rounded-lg">
+                                  <div className="flex-1">
+                                    <h4 className="font-medium text-foreground">{objective.title}</h4>
+                                    {objective.description && (
+                                      <p className="text-sm text-muted-foreground mt-1">{objective.description}</p>
+                                    )}
+                                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                      {objective.target_date && (
+                                        <div className="flex items-center gap-1">
+                                          <Calendar className="w-3 h-3" />
+                                          {new Date(objective.target_date).toLocaleDateString()}
+                                        </div>
+                                      )}
+                                      <Badge 
+                                        variant={objective.status === 'active' ? 'default' : 
+                                                objective.status === 'completed' ? 'secondary' : 'outline'}
+                                        className="text-xs"
+                                      >
+                                        {objective.status === 'active' ? 'Activo' : 
+                                         objective.status === 'completed' ? 'Completado' : 'Pausado'}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-1 ml-4">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditObjective(objective)}
+                                      disabled={loadingObjectives}
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleDeleteObjective(objective.id)}
+                                      disabled={loadingObjectives}
+                                      className="text-red-500 hover:text-red-700"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Formulario de objetivo */}
+              {showObjectiveForm && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{editingObjective ? "Editar Objetivo" : "Nuevo Objetivo Estratégico"}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="objective_type">Tipo de objetivo *</Label>
+                        <Select 
+                          value={objectiveForm.objective_type}
+                          onValueChange={(value) => setObjectiveForm({...objectiveForm, objective_type: value as any})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona el plazo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="short_term">Corto Plazo (1-6 meses)</SelectItem>
+                            <SelectItem value="medium_term">Mediano Plazo (6 meses - 2 años)</SelectItem>
+                            <SelectItem value="long_term">Largo Plazo (2+ años)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="objective_status">Estado</Label>
+                        <Select 
+                          value={objectiveForm.status}
+                          onValueChange={(value) => setObjectiveForm({...objectiveForm, status: value as any})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona el estado" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">Activo</SelectItem>
+                            <SelectItem value="completed">Completado</SelectItem>
+                            <SelectItem value="paused">Pausado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="objective_title">Título del objetivo *</Label>
+                      <Input
+                        id="objective_title"
+                        value={objectiveForm.title}
+                        onChange={(e) => setObjectiveForm({...objectiveForm, title: e.target.value})}
+                        placeholder="Ej: Aumentar ventas en un 25%"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="objective_description">Descripción detallada</Label>
+                        <EraOptimizerButton
+                          currentText={objectiveForm.description}
+                          fieldType="objetivo estratégico"
+                          context={{
+                            companyName: profile?.company_name,
+                            industry: profile?.industry_sector,
+                            objectiveType: objectiveForm.objective_type,
+                            objectiveTitle: objectiveForm.title
+                          }}
+                          onOptimized={(optimizedText) => setObjectiveForm({...objectiveForm, description: optimizedText})}
+                          size="sm"
+                          disabled={!objectiveForm.description.trim()}
+                        />
+                      </div>
+                      <Textarea
+                        id="objective_description"
+                        rows={3}
+                        value={objectiveForm.description}
+                        onChange={(e) => setObjectiveForm({...objectiveForm, description: e.target.value})}
+                        placeholder="Describe el objetivo y cómo planeas alcanzarlo"
+                        className="resize-none"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="objective_target_date">Fecha objetivo</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal"
+                          >
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {objectiveForm.target_date 
+                              ? new Date(objectiveForm.target_date).toLocaleDateString()
+                              : "Seleccionar fecha"
+                            }
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <CalendarComponent
+                            mode="single"
+                            selected={objectiveForm.target_date ? new Date(objectiveForm.target_date) : undefined}
+                            onSelect={(date) => setObjectiveForm({
+                              ...objectiveForm, 
+                              target_date: date ? date.toISOString().split('T')[0] : ""
+                            })}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowObjectiveForm(false);
+                          setEditingObjective(null);
+                          setObjectiveForm({
+                            objective_type: 'short_term',
+                            title: '',
+                            description: '',
+                            target_date: '',
+                            priority: 1,
+                            status: 'active'
+                          });
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        onClick={handleSaveObjective}
+                        disabled={loadingObjectives || !objectiveForm.title.trim()}
+                      >
+                        {loadingObjectives ? "Guardando..." : editingObjective ? "Actualizar" : "Crear Objetivo"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="marca" className="space-y-6 mt-6">

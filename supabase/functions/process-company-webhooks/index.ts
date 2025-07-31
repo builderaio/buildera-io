@@ -1,6 +1,73 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
+// Función para procesar la respuesta del webhook n8n
+const processWebhookResponse = async (supabase: any, userId: string, webhookData: any[]) => {
+  try {
+    console.log('🔍 Procesando respuesta del webhook n8n:', webhookData);
+    
+    // Buscar la empresa del usuario
+    const { data: companyMember, error: memberError } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', userId)
+      .eq('is_primary', true)
+      .single();
+    
+    if (memberError || !companyMember) {
+      console.error('❌ Error encontrando empresa del usuario:', memberError);
+      return;
+    }
+
+    // Procesar la respuesta del webhook
+    const webhookResponse = webhookData[0]?.response || [];
+    const updateData: any = {
+      webhook_data: webhookData,
+      webhook_processed_at: new Date().toISOString()
+    };
+
+    // Mapear los campos de la respuesta
+    webhookResponse.forEach((item: any) => {
+      switch (item.key) {
+        case 'descripcion_empresa':
+          updateData.descripcion_empresa = item.value;
+          break;
+        case 'industria_principal':
+          updateData.industria_principal = item.value;
+          break;
+        case 'facebook':
+          updateData.facebook_url = item.value !== 'No tiene' ? item.value : null;
+          break;
+        case 'twitter':
+          updateData.twitter_url = item.value !== 'No tiene' ? item.value : null;
+          break;
+        case 'linkedin':
+          updateData.linkedin_url = item.value !== 'No tiene' ? item.value : null;
+          break;
+        case 'instagram':
+          updateData.instagram_url = item.value !== 'No tiene' ? item.value : null;
+          break;
+      }
+    });
+
+    // Actualizar la empresa con los datos del webhook
+    const { error: updateError } = await supabase
+      .from('companies')
+      .update(updateData)
+      .eq('id', companyMember.company_id);
+
+    if (updateError) {
+      console.error('❌ Error actualizando empresa con datos del webhook:', updateError);
+    } else {
+      console.log('✅ Empresa actualizada con datos del webhook');
+      console.log('📊 Datos guardados:', updateData);
+    }
+
+  } catch (error) {
+    console.error('💥 Error procesando respuesta del webhook:', error);
+  }
+};
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -114,6 +181,12 @@ const handler = async (req: Request): Promise<Response> => {
             console.error('❌ Error en n8n webhook:', n8nResponse.error);
           } else {
             console.log('✅ n8n webhook completado');
+            
+            // Procesar y almacenar la respuesta del webhook
+            if (n8nResponse.data && Array.isArray(n8nResponse.data) && n8nResponse.data.length > 0) {
+              console.log('📊 Procesando respuesta del webhook n8n...');
+              await processWebhookResponse(supabase, body.user_id, n8nResponse.data);
+            }
           }
         } else {
           console.log('⚠️ No hay website_url, solo llamando a n8n webhook...');
@@ -131,6 +204,12 @@ const handler = async (req: Request): Promise<Response> => {
             console.error('❌ Error en n8n webhook:', n8nResponse.error);
           } else {
             console.log('✅ n8n webhook completado');
+            
+            // Procesar y almacenar la respuesta del webhook incluso sin URL
+            if (n8nResponse.data && Array.isArray(n8nResponse.data) && n8nResponse.data.length > 0) {
+              console.log('📊 Procesando respuesta del webhook n8n (sin URL)...');
+              await processWebhookResponse(supabase, body.user_id, n8nResponse.data);
+            }
           }
         }
         

@@ -27,6 +27,7 @@ import SocialMediaHub from './SocialMediaHub';
 import MarketingMetrics from './MarketingMetrics';
 import ContentGenerator from './ContentGenerator';
 import MarketingCalendar from './MarketingCalendar';
+import AdvancedMarketingDashboard from './AdvancedMarketingDashboard';
 
 interface MarketingHubProps {
   profile: any;
@@ -53,6 +54,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     youtube: false
   });
   const [loading, setLoading] = useState(false);
+  const [realMetrics, setRealMetrics] = useState<QuickStat[]>([]);
 
   // Mock quick stats - en producción vendría de la API
   const quickStats: QuickStat[] = [
@@ -92,6 +94,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
 
   useEffect(() => {
     checkConnections();
+    loadRealMetrics();
   }, [profile?.user_id]);
 
   const checkConnections = async () => {
@@ -133,12 +136,98 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     }
   };
 
+  const loadRealMetrics = async () => {
+    if (!profile?.user_id) return;
+
+    try {
+      // Obtener métricas reales de posts
+      const { data: posts, error: postsError } = await supabase
+        .from('instagram_posts')
+        .select('like_count, comment_count, posted_at')
+        .eq('user_id', profile.user_id);
+
+      if (postsError) throw postsError;
+
+      // Obtener insights para calcular tendencias
+      const { data: insights, error: insightsError } = await supabase
+        .from('marketing_insights')
+        .select('created_at')
+        .eq('user_id', profile.user_id);
+
+      if (insightsError) throw insightsError;
+
+      // Calcular métricas reales
+      if (posts && posts.length > 0) {
+        const totalLikes = posts.reduce((sum, post) => sum + (post.like_count || 0), 0);
+        const totalComments = posts.reduce((sum, post) => sum + (post.comment_count || 0), 0);
+        const totalEngagement = totalLikes + totalComments;
+        const avgEngagement = totalEngagement / posts.length;
+        const engagementRate = posts.length > 0 ? (avgEngagement / 100) * 100 : 0; // Simulado
+
+        // Calcular tendencias comparando últimos vs primeros posts
+        const recentPosts = posts.slice(0, Math.floor(posts.length / 2));
+        const olderPosts = posts.slice(Math.floor(posts.length / 2));
+        
+        const recentAvg = recentPosts.length > 0 ? 
+          recentPosts.reduce((sum, post) => sum + ((post.like_count || 0) + (post.comment_count || 0)), 0) / recentPosts.length : 0;
+        const olderAvg = olderPosts.length > 0 ? 
+          olderPosts.reduce((sum, post) => sum + ((post.like_count || 0) + (post.comment_count || 0)), 0) / olderPosts.length : 0;
+        
+        const engagementTrend = recentAvg > olderAvg ? 'up' : recentAvg < olderAvg ? 'down' : 'neutral';
+        const engagementChange = olderAvg > 0 ? `${Math.abs(((recentAvg - olderAvg) / olderAvg) * 100).toFixed(1)}%` : '0%';
+
+        const metrics: QuickStat[] = [
+          {
+            label: "Total Interacciones",
+            value: totalEngagement.toLocaleString(),
+            change: engagementChange,
+            trend: engagementTrend,
+            icon: Eye,
+            color: "text-blue-600"
+          },
+          {
+            label: "Engagement Promedio",
+            value: `${avgEngagement.toFixed(1)}`,
+            change: engagementChange,
+            trend: engagementTrend,
+            icon: Heart,
+            color: "text-pink-600"
+          },
+          {
+            label: "Posts Analizados",
+            value: posts.length.toString(),
+            change: posts.length > 10 ? '+High' : posts.length > 5 ? '+Med' : '+Low',
+            trend: posts.length > 10 ? 'up' : 'neutral',
+            icon: Target,
+            color: "text-green-600"
+          },
+          {
+            label: "Insights Generados",
+            value: (insights?.length || 0).toString(),
+            change: insights?.length ? '+Active' : 'Inactive',
+            trend: (insights?.length || 0) > 0 ? 'up' : 'neutral',
+            icon: TrendingUp,
+            color: "text-purple-600"
+          }
+        ];
+
+        setRealMetrics(metrics);
+      }
+    } catch (error) {
+      console.error('Error loading real metrics:', error);
+      // Mantener métricas mock en caso de error
+    }
+  };
+
   const connectedPlatforms = Object.values(socialConnections).filter(Boolean).length;
   const totalPlatforms = Object.keys(socialConnections).length;
 
-  const renderQuickStats = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      {quickStats.map((stat, index) => {
+  const renderQuickStats = () => {
+    const statsToShow = realMetrics.length > 0 ? realMetrics : quickStats;
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {statsToShow.map((stat, index) => {
         const IconComponent = stat.icon;
         return (
           <Card key={index} className="relative overflow-hidden transition-all duration-200 hover:shadow-md hover-scale">
@@ -159,9 +248,10 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
             </CardContent>
           </Card>
         );
-      })}
-    </div>
-  );
+        })}
+      </div>
+    );
+  };
 
   const renderConnectionStatus = () => (
     <Card className="mb-8 border-l-4 border-l-primary">
@@ -283,7 +373,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-        <TabsList className="grid w-full grid-cols-5 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-6 h-auto p-1">
           <TabsTrigger 
             value="overview" 
             className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -318,6 +408,13 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
           >
             <TrendingUp className="h-4 w-4" />
             <span className="text-xs">Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="advanced" 
+            className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="text-xs">IA Avanzado</span>
           </TabsTrigger>
         </TabsList>
 
@@ -401,6 +498,10 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
             profile={profile} 
             socialConnections={socialConnections}
           />
+        </TabsContent>
+
+        <TabsContent value="advanced" className="space-y-6">
+          <AdvancedMarketingDashboard profile={profile} />
         </TabsContent>
       </Tabs>
     </div>

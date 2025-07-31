@@ -140,115 +140,221 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     if (!profile?.user_id) return;
 
     try {
-      // Obtener métricas reales de posts
-      const { data: posts, error: postsError } = await supabase
-        .from('instagram_posts')
-        .select('like_count, comment_count, posted_at')
-        .eq('user_id', profile.user_id);
+      // Obtener datos de todas las plataformas de redes sociales
+      const [instagramPosts, insights, actionables, analyticsData] = await Promise.all([
+        supabase
+          .from('instagram_posts')
+          .select('like_count, comment_count, posted_at, reach, impressions, video_view_count')
+          .eq('user_id', profile.user_id),
+        
+        supabase
+          .from('marketing_insights')
+          .select('*')
+          .eq('user_id', profile.user_id),
+        
+        supabase
+          .from('marketing_actionables')
+          .select('*')
+          .eq('user_id', profile.user_id),
+        
+        supabase
+          .from('social_media_analytics')
+          .select('*')
+          .eq('user_id', profile.user_id)
+      ]);
 
-      if (postsError) throw postsError;
+      const posts = instagramPosts.data || [];
+      const insightsData = insights.data || [];
+      const actionablesData = actionables.data || [];
+      const analytics = analyticsData.data || [];
 
-      // Obtener insights para calcular tendencias
-      const { data: insights, error: insightsError } = await supabase
-        .from('marketing_insights')
-        .select('created_at')
-        .eq('user_id', profile.user_id);
-
-      if (insightsError) throw insightsError;
-
-      // Calcular métricas reales
-      if (posts && posts.length > 0) {
+      // Calcular métricas reales si hay datos
+      if (posts.length > 0 || analytics.length > 0) {
+        // Calcular alcance total real
+        const totalReach = posts.reduce((sum, post) => sum + (post.reach || post.impressions || 0), 0);
         const totalLikes = posts.reduce((sum, post) => sum + (post.like_count || 0), 0);
         const totalComments = posts.reduce((sum, post) => sum + (post.comment_count || 0), 0);
+        const totalViews = posts.reduce((sum, post) => sum + (post.video_view_count || post.impressions || 0), 0);
         const totalEngagement = totalLikes + totalComments;
-        const avgEngagement = totalEngagement / posts.length;
-        const engagementRate = posts.length > 0 ? (avgEngagement / 100) * 100 : 0; // Simulado
-
-        // Calcular tendencias comparando últimos vs primeros posts
-        const recentPosts = posts.slice(0, Math.floor(posts.length / 2));
-        const olderPosts = posts.slice(Math.floor(posts.length / 2));
         
-        const recentAvg = recentPosts.length > 0 ? 
-          recentPosts.reduce((sum, post) => sum + ((post.like_count || 0) + (post.comment_count || 0)), 0) / recentPosts.length : 0;
-        const olderAvg = olderPosts.length > 0 ? 
-          olderPosts.reduce((sum, post) => sum + ((post.like_count || 0) + (post.comment_count || 0)), 0) / olderPosts.length : 0;
+        // Calcular engagement rate real
+        const avgEngagementRate = totalReach > 0 ? ((totalEngagement / totalReach) * 100) : 0;
+        
+        // Calcular tendencias comparando últimos 30 días vs anteriores
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        
+        const recentPosts = posts.filter(post => new Date(post.posted_at || '') > thirtyDaysAgo);
+        const olderPosts = posts.filter(post => new Date(post.posted_at || '') <= thirtyDaysAgo);
+        
+        const recentEngagement = recentPosts.reduce((sum, post) => sum + ((post.like_count || 0) + (post.comment_count || 0)), 0);
+        const olderEngagement = olderPosts.reduce((sum, post) => sum + ((post.like_count || 0) + (post.comment_count || 0)), 0);
+        
+        const recentAvg = recentPosts.length > 0 ? recentEngagement / recentPosts.length : 0;
+        const olderAvg = olderPosts.length > 0 ? olderEngagement / olderPosts.length : 0;
         
         const engagementTrend = recentAvg > olderAvg ? 'up' : recentAvg < olderAvg ? 'down' : 'neutral';
-        const engagementChange = olderAvg > 0 ? `${Math.abs(((recentAvg - olderAvg) / olderAvg) * 100).toFixed(1)}%` : '0%';
+        const engagementChange = olderAvg > 0 ? `${(((recentAvg - olderAvg) / olderAvg) * 100).toFixed(1)}%` : '0%';
 
-        const metrics: QuickStat[] = [
+        // Calcular conversiones basadas en actionables completados
+        const completedActionables = actionablesData.filter(a => a.status === 'completed').length;
+        const pendingActionables = actionablesData.filter(a => a.status === 'pending').length;
+        const conversionTrend = completedActionables > pendingActionables ? 'up' : 'down';
+
+        // Calcular ROI estimado basado en insights y engagement
+        const highImpactInsights = insightsData.filter(i => i.impact_level === 'high').length;
+        const totalInsights = insightsData.length;
+        const roiEstimate = totalInsights > 0 ? (highImpactInsights / totalInsights * 100).toFixed(1) : '0';
+        const roiTrend = highImpactInsights > (totalInsights / 2) ? 'up' : 'down';
+
+        const realMetrics: QuickStat[] = [
           {
-            label: "Total Interacciones",
-            value: totalEngagement.toLocaleString(),
+            label: "Alcance Total",
+            value: totalReach > 0 ? formatNumber(totalReach) : formatNumber(totalViews),
             change: engagementChange,
             trend: engagementTrend,
             icon: Eye,
             color: "text-blue-600"
           },
           {
-            label: "Engagement Promedio",
-            value: `${avgEngagement.toFixed(1)}`,
+            label: "Engagement Rate",
+            value: `${avgEngagementRate.toFixed(1)}%`,
             change: engagementChange,
             trend: engagementTrend,
             icon: Heart,
             color: "text-pink-600"
           },
           {
-            label: "Posts Analizados",
-            value: posts.length.toString(),
-            change: posts.length > 10 ? '+High' : posts.length > 5 ? '+Med' : '+Low',
-            trend: posts.length > 10 ? 'up' : 'neutral',
+            label: "Acciones Completadas",
+            value: completedActionables.toString(),
+            change: `${actionablesData.length} total`,
+            trend: conversionTrend,
             icon: Target,
             color: "text-green-600"
           },
           {
-            label: "Insights Generados",
-            value: (insights?.length || 0).toString(),
-            change: insights?.length ? '+Active' : 'Inactive',
-            trend: (insights?.length || 0) > 0 ? 'up' : 'neutral',
+            label: "Score de Insights",
+            value: `${roiEstimate}%`,
+            change: `${insightsData.length} insights`,
+            trend: roiTrend,
             icon: TrendingUp,
             color: "text-purple-600"
           }
         ];
 
-        setRealMetrics(metrics);
+        setRealMetrics(realMetrics);
+        console.log('📊 Real metrics loaded:', {
+          totalReach,
+          avgEngagementRate: avgEngagementRate.toFixed(2),
+          completedActionables,
+          totalInsights: insightsData.length,
+          postsAnalyzed: posts.length
+        });
+      } else {
+        // Si no hay datos, mostrar métricas vacías pero reales
+        const emptyMetrics: QuickStat[] = [
+          {
+            label: "Alcance Total",
+            value: "0",
+            change: "Sin datos",
+            trend: "neutral",
+            icon: Eye,
+            color: "text-blue-600"
+          },
+          {
+            label: "Engagement Rate",
+            value: "0%",
+            change: "Sin datos",
+            trend: "neutral",
+            icon: Heart,
+            color: "text-pink-600"
+          },
+          {
+            label: "Acciones Completadas",
+            value: "0",
+            change: "Sin acciones",
+            trend: "neutral",
+            icon: Target,
+            color: "text-green-600"
+          },
+          {
+            label: "Score de Insights",
+            value: "0%",
+            change: "Sin insights",
+            trend: "neutral",
+            icon: TrendingUp,
+            color: "text-purple-600"
+          }
+        ];
+        setRealMetrics(emptyMetrics);
       }
     } catch (error) {
       console.error('Error loading real metrics:', error);
-      // Mantener métricas mock en caso de error
+      // En caso de error, usar métricas vacías en lugar de mock
+      setRealMetrics([]);
     }
+  };
+
+  // Función auxiliar para formatear números
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`;
+    }
+    return num.toString();
   };
 
   const connectedPlatforms = Object.values(socialConnections).filter(Boolean).length;
   const totalPlatforms = Object.keys(socialConnections).length;
 
   const renderQuickStats = () => {
+    // Usar siempre métricas reales, y solo mostrar mock si no hay datos reales disponibles
     const statsToShow = realMetrics.length > 0 ? realMetrics : quickStats;
+    const isUsingRealData = realMetrics.length > 0;
     
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {statsToShow.map((stat, index) => {
-        const IconComponent = stat.icon;
-        return (
-          <Card key={index} className="relative overflow-hidden transition-all duration-200 hover:shadow-md hover-scale">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <IconComponent className={`h-5 w-5 ${stat.color}`} />
-                <Badge 
-                  variant={stat.trend === 'up' ? 'default' : stat.trend === 'down' ? 'destructive' : 'secondary'}
-                  className="text-xs"
-                >
-                  {stat.change}
-                </Badge>
-              </div>
-              <div className="space-y-1">
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        );
-        })}
+      <div className="space-y-4">
+        {!isUsingRealData && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+            <div className="flex items-center gap-2 text-amber-800">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="text-sm font-medium">Mostrando datos de ejemplo</span>
+            </div>
+            <p className="text-xs text-amber-700 mt-1">
+              Conecta tus redes sociales para ver métricas reales de tu negocio
+            </p>
+          </div>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {statsToShow.map((stat, index) => {
+            const IconComponent = stat.icon;
+            return (
+              <Card key={index} className="relative overflow-hidden transition-all duration-200 hover:shadow-md hover-scale">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <IconComponent className={`h-5 w-5 ${stat.color}`} />
+                    <Badge 
+                      variant={stat.trend === 'up' ? 'default' : stat.trend === 'down' ? 'destructive' : 'secondary'}
+                      className="text-xs"
+                    >
+                      {stat.change}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  </div>
+                  {isUsingRealData && (
+                    <div className="absolute top-2 right-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Datos en tiempo real" />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
     );
   };

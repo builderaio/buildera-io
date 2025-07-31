@@ -170,6 +170,8 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   const [facebookDetails, setFacebookDetails] = useState<any>(null);
   const [facebookPosts, setFacebookPosts] = useState<any>(null);
   const [loadingFacebook, setLoadingFacebook] = useState(false);
+  const [facebookAnalysis, setFacebookAnalysis] = useState<any>(null);
+  const [loadingFacebookAnalysis, setLoadingFacebookAnalysis] = useState(false);
 
   // Initialize social networks
   const initializeSocialNetworks = (companyData: any): SocialNetwork[] => {
@@ -801,6 +803,38 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     }
   };
 
+  const loadFacebookAnalysis = async () => {
+    setLoadingFacebookAnalysis(true);
+    try {
+      console.log('🧠 Loading Facebook intelligent analysis...');
+      
+      const { data, error } = await supabase.functions.invoke('facebook-intelligent-analysis');
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.success) {
+        setFacebookAnalysis(data.analysis);
+        toast({
+          title: "Análisis completado",
+          description: "Se ha generado el análisis inteligente de Facebook",
+        });
+      } else {
+        throw new Error(data.message || 'Error en el análisis');
+      }
+    } catch (error: any) {
+      console.error('Error loading Facebook analysis:', error);
+      toast({
+        title: "Error en análisis",
+        description: error.message || "No se pudo generar el análisis inteligente",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingFacebookAnalysis(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -967,6 +1001,29 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                           <div className="text-left">
                             <div className="text-xs font-medium">Analizar</div>
                             <div className="text-xs text-muted-foreground">Posts</div>
+                          </div>
+                        </Button>
+                      )}
+                      
+                      {network.id === 'facebook' && network.hasPosts && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2 h-auto py-3 px-3 border-green-300 hover:bg-green-50"
+                          onClick={() => {
+                            setSelectedNetwork(network);
+                            loadFacebookAnalysis();
+                          }}
+                          disabled={loadingFacebookAnalysis}
+                        >
+                          {loadingFacebookAnalysis ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <TrendingUp className="w-4 h-4" />
+                          )}
+                          <div className="text-left">
+                            <div className="text-xs font-medium">Análisis</div>
+                            <div className="text-xs text-muted-foreground">Inteligente</div>
                           </div>
                         </Button>
                       )}
@@ -2831,6 +2888,106 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                   </div>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Facebook Intelligent Analysis Section */}
+      {selectedNetwork && facebookAnalysis && selectedNetwork.id === 'facebook' && (
+        <Card className="border-green-200 bg-green-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-800">
+              <TrendingUp className="w-5 h-5" />
+              Análisis Inteligente de Facebook
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                ✨ Potenciado por IA
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Análisis estratégico */}
+              {facebookAnalysis.strategic_analysis && (
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-2">Análisis Estratégico</h4>
+                  <div className="bg-white p-3 rounded border">
+                    <p className="text-sm leading-relaxed">{facebookAnalysis.strategic_analysis}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Rendimiento del contenido */}
+              {facebookAnalysis.content_performance && (
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-2">Rendimiento del Contenido</h4>
+                  <div className="bg-white p-3 rounded border">
+                    <p className="text-sm leading-relaxed">{facebookAnalysis.content_performance}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Engagement de audiencia */}
+              {facebookAnalysis.audience_engagement && (
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-2">Engagement de Audiencia</h4>
+                  <div className="bg-white p-3 rounded border">
+                    <p className="text-sm leading-relaxed">{facebookAnalysis.audience_engagement}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Hallazgos clave */}
+              {facebookAnalysis.key_findings && (
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-2">Hallazgos Clave</h4>
+                  <div className="bg-white p-3 rounded border">
+                    <p className="text-sm leading-relaxed">{facebookAnalysis.key_findings}</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Recomendaciones */}
+              {facebookAnalysis.recommendations && (
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-2">Recomendaciones</h4>
+                  <div className="bg-white p-3 rounded border">
+                    {Array.isArray(facebookAnalysis.recommendations) ? (
+                      <ul className="text-sm space-y-2">
+                        {facebookAnalysis.recommendations.map((rec: string, index: number) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></span>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm leading-relaxed">{facebookAnalysis.recommendations}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Oportunidades de optimización */}
+              {facebookAnalysis.optimization_opportunities && (
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-2">Oportunidades de Optimización</h4>
+                  <div className="bg-white p-3 rounded border">
+                    {Array.isArray(facebookAnalysis.optimization_opportunities) ? (
+                      <ul className="text-sm space-y-2">
+                        {facebookAnalysis.optimization_opportunities.map((opp: string, index: number) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
+                            {opp}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm leading-relaxed">{facebookAnalysis.optimization_opportunities}</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

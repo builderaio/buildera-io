@@ -1348,25 +1348,25 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {tikTokPosts.total_count || tikTokPosts.length || 0}
+                    {tikTokPosts.videos?.length || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Videos analizados</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {tikTokPosts.data?.reduce((acc: number, video: any) => acc + (video.play_count || 0), 0)?.toLocaleString() || 0}
+                    {tikTokPosts.videos?.reduce((acc: number, video: any) => acc + (video.play_count || 0), 0)?.toLocaleString() || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Reproducciones totales</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-red-600">
-                    {tikTokPosts.data?.reduce((acc: number, video: any) => acc + (video.digg_count || 0), 0)?.toLocaleString() || 0}
+                    {tikTokPosts.videos?.reduce((acc: number, video: any) => acc + (video.digg_count || 0), 0)?.toLocaleString() || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Likes totales</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {tikTokPosts.data?.reduce((acc: number, video: any) => acc + (video.comment_count || 0), 0)?.toLocaleString() || 0}
+                    {tikTokPosts.videos?.reduce((acc: number, video: any) => acc + (video.comment_count || 0), 0)?.toLocaleString() || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Comentarios totales</div>
                 </div>
@@ -1375,17 +1375,17 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
           </Card>
 
           {/* Grid de videos */}
-          {tikTokPosts.data && tikTokPosts.data.length > 0 && (
+          {tikTokPosts.videos && tikTokPosts.videos.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Music className="w-5 h-5" />
-                  Videos Recientes ({tikTokPosts.data.length})
+                  Videos Recientes ({tikTokPosts.videos.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {tikTokPosts.data.slice(0, 9).map((video: any, index: number) => (
+                  {tikTokPosts.videos.slice(0, 9).map((video: any, index: number) => (
                     <div key={index} className="bg-white border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                       {video.cover_url && (
                         <div className="aspect-video bg-muted relative">

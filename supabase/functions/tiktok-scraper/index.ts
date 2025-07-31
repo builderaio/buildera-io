@@ -441,7 +441,7 @@ async function getPostsByUsername(uniqueId: string, userId: string, supabase: an
   return new Response(
     JSON.stringify({ 
       success: true, 
-      data: videos,
+      data: apiResponse.data, // Devolver toda la data original que incluye videos
       saved_count: postsToSave.length,
       total_count: videos.length 
     }),

@@ -13,7 +13,7 @@ import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { 
   Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Youtube, Plus, Edit, Trash2, 
   Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar, Globe, 
-  Bot, Facebook, ExternalLink, RefreshCw, MapPin, Save 
+  Bot, Facebook, ExternalLink, RefreshCw, Save 
 } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -685,50 +685,6 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   </CardContent>
                 </Card>
               )}
-
-              {/* SECCIÓN 3: UBICACIÓN EMPRESARIAL */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    <MapPin className="w-5 h-5 mr-2 text-primary" />
-                    Ubicación de la Empresa
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Dirección física y ubicación de tu sede principal
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="headquarters_address">Dirección completa</Label>
-                      <Input
-                        id="headquarters_address"
-                        value={profile?.headquarters_address || ""}
-                        onChange={(e) => onProfileUpdate({...profile, headquarters_address: e.target.value})}
-                        placeholder="Dirección completa de tu sede principal"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="headquarters_city">Ciudad</Label>
-                      <Input
-                        id="headquarters_city"
-                        value={profile?.headquarters_city || ""}
-                        onChange={(e) => onProfileUpdate({...profile, headquarters_city: e.target.value})}
-                        placeholder="Ciudad"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="headquarters_country">País de la sede</Label>
-                      <Input
-                        id="headquarters_country"
-                        value={profile?.headquarters_country || ""}
-                        onChange={(e) => onProfileUpdate({...profile, headquarters_country: e.target.value})}
-                        placeholder="País de la sede principal"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* BOTÓN DE ACCIÓN */}
               <div className="flex justify-end pt-4">

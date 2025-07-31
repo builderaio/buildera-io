@@ -312,7 +312,8 @@ async function getInstagramPosts(username: string): Promise<any> {
     console.log(`📡 Response Headers:`, Object.fromEntries(response.headers.entries()));
     
     const responseText = await response.text();
-    console.log(`📄 Raw response (first 500 chars): ${responseText.substring(0, 500)}`);
+    console.log(`📄 Raw response for ${username} (first 1000 chars): ${responseText.substring(0, 1000)}`);
+    console.log(`📄 Raw response for ${username} (full response): ${responseText}`);
     
     if (!response.ok) {
       console.error(`❌ Instagram Posts API Error: ${response.status} - ${response.statusText}`);
@@ -341,6 +342,10 @@ async function getInstagramPosts(username: string): Promise<any> {
     let data;
     try {
       data = JSON.parse(responseText);
+      console.log(`✅ Successfully parsed JSON response for ${username}`);
+      console.log(`📊 Response structure keys:`, Object.keys(data));
+      if (data.data) console.log(`📊 data.data keys:`, Object.keys(data.data));
+      console.log(`📊 Complete response structure:`, JSON.stringify(data, null, 2));
     } catch (parseError) {
       console.error('❌ Failed to parse response as JSON:', parseError);
       return {
@@ -353,13 +358,6 @@ async function getInstagramPosts(username: string): Promise<any> {
         stats: { total_posts: 0, avg_likes: 0, avg_comments: 0, video_count: 0, has_ai_analysis: false, error: true }
       };
     }
-    
-    console.log('✅ Instagram posts data received. Full response structure:');
-    console.log('Response keys:', Object.keys(data));
-    if (data.data) console.log('data.data keys:', Object.keys(data.data));
-    
-    // Log the entire response structure for debugging
-    console.log('Complete API response:', JSON.stringify(data, null, 2));
     
     // Handle data.items structure first (as shown in your response)
     let postsArray = [];

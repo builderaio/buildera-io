@@ -7,7 +7,7 @@ import { Plus, Users, Building, Settings, UserPlus } from 'lucide-react';
 import { useCompanyManagement, Company, CompanyMember } from '@/hooks/useCompanyManagement';
 import { CreateCompanyDialog } from './CreateCompanyDialog';
 import { CompanyMembersDialog } from './CompanyMembersDialog';
-import { EnrichedCompanyInfo } from './EnrichedCompanyInfo';
+
 import { useToast } from '@/hooks/use-toast';
 
 export const CompanyManagementWidget = () => {
@@ -177,10 +177,6 @@ export const CompanyManagementWidget = () => {
         </CardContent>
       </Card>
 
-      {/* Información enriquecida de la empresa principal */}
-      {primaryCompany && (
-        <EnrichedCompanyInfo companyId={primaryCompany.id} />
-      )}
 
       <CreateCompanyDialog 
         open={showCreateDialog} 

@@ -542,7 +542,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
   // Función auxiliar para guardar estrategia en la base de datos
   const saveStrategyToDatabase = async (strategyData: any, generatedWithAI: boolean = false) => {
+    console.log('💾 saveStrategyToDatabase llamada con:', { strategyData, generatedWithAI, userId: profile?.user_id });
+    
     if (!profile?.user_id) {
+      console.error('❌ No hay user_id disponible');
       throw new Error("No se pudo identificar el usuario");
     }
 
@@ -558,6 +561,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
 
     if (existingStrategy && existingStrategy.length > 0) {
+      console.log('🔄 Actualizando estrategia existente:', existingStrategy[0].id);
       // Actualizar estrategia existente
       const { error } = await supabase
         .from('company_strategy')
@@ -570,10 +574,12 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         })
         .eq('id', existingStrategy[0].id);
 
+      console.log('🔄 Resultado de actualización:', { error });
       if (error) throw error;
     } else {
+      console.log('➕ Creando nueva estrategia...');
       // Crear nueva estrategia
-      const { error } = await supabase
+      const { data: insertData, error } = await supabase
         .from('company_strategy')
         .insert({
           vision: strategyData.vision?.trim() || null,
@@ -583,6 +589,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           generated_with_ai: generatedWithAI
         });
 
+      console.log('➕ Resultado de inserción:', { insertData, error });
       if (error) throw error;
     }
   };
@@ -640,6 +647,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     try {
       const companyInfo = `Empresa ${companyData?.name || profile?.company_name}, Sitio web: ${companyData?.website_url || profile?.website_url || 'No disponible'}, País: ${profile?.country || 'No especificado'}, Descripción: ${companyData?.descripcion_empresa || 'No disponible'}`;
 
+      console.log('🚀 Llamando al webhook con:', {
+        KEY: 'STRATEGY',
+        COMPANY_INFO: companyInfo
+      });
+
       const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
         body: {
           KEY: 'STRATEGY',
@@ -648,7 +660,12 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         }
       });
 
-      if (error) throw error;
+      console.log('📥 Respuesta del supabase.functions.invoke:', { data, error });
+
+      if (error) {
+        console.error('❌ Error en la llamada a supabase:', error);
+        throw error;
+      }
 
       console.log('🔍 Respuesta completa del webhook:', data);
 

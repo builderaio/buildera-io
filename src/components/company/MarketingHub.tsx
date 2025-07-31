@@ -49,9 +49,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     linkedin: false,
     instagram: false,
     facebook: false,
-    tiktok: false,
-    twitter: false,
-    youtube: false
+    tiktok: false
   });
   const [loading, setLoading] = useState(false);
   const [realMetrics, setRealMetrics] = useState<QuickStat[]>([]);
@@ -126,9 +124,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
           linkedin: isValidUrl(companyData.linkedin_url),
           tiktok: isValidUrl(companyData.tiktok_url),
           facebook: isValidUrl(companyData.facebook_url),
-          instagram: isValidUrl(companyData.instagram_url),
-          twitter: isValidUrl(companyData.twitter_url),
-          youtube: isValidUrl(companyData.youtube_url)
+          instagram: isValidUrl(companyData.instagram_url)
         });
       }
     } catch (error) {

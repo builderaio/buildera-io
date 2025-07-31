@@ -326,88 +326,102 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
           </div>
         </SidebarHeader>
           
-          <SidebarContent className="px-2 py-2">
-            {menuItems.map((category) => (
-              <SidebarGroup key={category.category}>
-                <SidebarGroupLabel>{category.category}</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {category.items.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeView === item.id;
-                      const isDisabled = isProfileIncomplete && item.id !== "adn-empresa";
-                      
-                      return (
-                        <SidebarMenuItem key={item.id}>
-                          <SidebarMenuButton
-                            isActive={isActive}
-                            disabled={isDisabled}
-                            className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
-                            onClick={isDisabled ? undefined : () => setActiveView(item.id)}
-                          >
-                            <Icon className="size-4" />
-                            <span>{item.label}</span>
-                            {isDisabled && <span className="ml-auto text-xs">🔒</span>}
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            ))}
-            
-            <SidebarGroup>
-              <SidebarGroupLabel>Sistema</SidebarGroupLabel>
+        <SidebarContent className="px-2 py-2">
+          {menuItems.map((category) => (
+            <SidebarGroup key={category.category}>
+              <SidebarGroupLabel>{category.category}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={activeView === "configuracion"}
-                      disabled={isProfileIncomplete}
-                      className={isProfileIncomplete ? "opacity-50 cursor-not-allowed" : ""}
-                      onClick={isProfileIncomplete ? undefined : () => setActiveView("configuracion")}
-                    >
-                      <Settings className="size-4" />
-                      <span>Administración</span>
-                      {isProfileIncomplete && <span className="ml-auto text-xs">🔒</span>}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  {category.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeView === item.id;
+                    const isDisabled = isProfileIncomplete && item.id !== "adn-empresa";
+                    
+                    return (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          disabled={isDisabled}
+                          className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                          onClick={isDisabled ? undefined : () => setActiveView(item.id)}
+                        >
+                          <Icon className="size-4" />
+                          <span>{item.label}</span>
+                          {isDisabled && <span className="ml-auto text-xs">🔒</span>}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
-          </SidebarContent>
-          
-          <SidebarFooter className="p-2">
-            <div className="p-2 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-sidebar-foreground/70">Tema</span>
-                <ThemeSelector />
-              </div>
-              <Separator />
+          ))}
+        </SidebarContent>
+      </Sidebar>
+      
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold">
+                {profile?.company_name || 'Mi Empresa'}
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <ThemeSelector />
+              
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start gap-2 h-auto p-2">
-                    <Avatar className="size-6">
+                  <Button variant="ghost" className="relative h-9 w-auto px-2 rounded-full hover:bg-accent">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="size-7">
+                        <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+                        <AvatarFallback className="text-xs">
+                          {profile?.full_name?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col items-start text-left hidden md:block">
+                        <span className="text-sm font-medium truncate max-w-[120px]">
+                          {profile?.full_name || "Usuario"}
+                        </span>
+                        <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                          {profile?.email}
+                        </span>
+                      </div>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-card border shadow-lg z-50">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <Avatar className="size-8">
                       <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
                       <AvatarFallback className="text-xs">
                         {profile?.full_name?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col items-start text-left">
-                      <span className="text-sm font-medium truncate max-w-[120px]">
-                        {profile?.full_name || "Usuario"}
-                      </span>
-                      <span className="text-xs text-sidebar-foreground/70 truncate max-w-[120px]">
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium">{profile?.full_name || "Usuario"}</p>
+                      <p className="w-[200px] truncate text-sm text-muted-foreground">
                         {profile?.email}
-                      </span>
+                      </p>
                     </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-card border shadow-lg z-50">
+                  </div>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setActiveView('perfil')}>
                     <User className="mr-2 h-4 w-4" />
-                    <span>Ver perfil</span>
+                    <span>Mi Perfil</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setActiveView('configuracion')}
+                    disabled={isProfileIncomplete}
+                    className={isProfileIncomplete ? "opacity-50 cursor-not-allowed" : ""}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Administración</span>
+                    {isProfileIncomplete && <span className="ml-auto text-xs">🔒</span>}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
@@ -417,19 +431,8 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          </SidebarFooter>
-        </Sidebar>
-        
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">
-                {profile?.company_name || 'Mi Empresa'}
-              </h1>
-            </div>
-          </header>
+          </div>
+        </header>
           
           <main className="flex-1 overflow-auto p-4 md:p-6">
             <Outlet />

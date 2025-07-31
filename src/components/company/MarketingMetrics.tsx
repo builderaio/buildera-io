@@ -28,8 +28,6 @@ interface MarketingMetricsProps {
     instagram: boolean;
     facebook: boolean;
     tiktok: boolean;
-    twitter: boolean;
-    youtube: boolean;
   };
 }
 
@@ -127,6 +125,17 @@ const MarketingMetrics = ({ profile, socialConnections }: MarketingMetricsProps)
         engagement: "8.1%",
         reach: "5.2K",
         posts: 6
+      }
+    },
+    {
+      platform: "Facebook",
+      icon: () => <div className="w-5 h-5 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold">f</div>,
+      color: "bg-blue-600",
+      metrics: {
+        followers: "3.2K",
+        engagement: "2.8%",
+        reach: "15.8K",
+        posts: 10
       }
     }
   ];
@@ -347,6 +356,12 @@ const MarketingMetrics = ({ profile, socialConnections }: MarketingMetricsProps)
                       content: "Tutorial rápido sobre productividad...",
                       metrics: { likes: 89, comments: 15, shares: 12 },
                       time: "Hace 1 semana"
+                    },
+                    {
+                      platform: "Facebook",
+                      content: "Evento especial para nuestros clientes este fin de semana...",
+                      metrics: { likes: 67, comments: 21, shares: 15 },
+                      time: "Hace 4 días"
                     }
                   ].map((post, index) => (
                     <div key={index} className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">

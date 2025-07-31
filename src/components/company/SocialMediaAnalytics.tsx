@@ -20,6 +20,7 @@ import {
   Instagram,
   Linkedin,
   Music,
+  Facebook,
   BarChart3,
   Zap,
   Lightbulb,
@@ -98,6 +99,15 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
           .eq('user_id', profile.user_id)
           .order('posted_at', { ascending: false }),
         
+        // TODO: Agregar Facebook posts cuando estén disponibles
+        /*
+        supabase
+          .from('facebook_posts')
+          .select('*')
+          .eq('user_id', profile.user_id)
+          .order('posted_at', { ascending: false }),
+        */
+        
         supabase
           .from('social_media_analytics')
           .select('*')
@@ -156,7 +166,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
   };
 
   const generatePlatformStats = (data: AnalyticsData) => {
-    const platforms = ['instagram', 'linkedin', 'tiktok'];
+    const platforms = ['instagram', 'linkedin', 'tiktok', 'facebook'];
     const stats: PlatformStats[] = [];
 
     platforms.forEach(platform => {
@@ -248,6 +258,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       case 'instagram': return Instagram;
       case 'linkedin': return Linkedin;
       case 'tiktok': return Music;
+      case 'facebook': return Facebook;
       default: return Activity;
     }
   };
@@ -257,6 +268,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       case 'instagram': return 'from-purple-500 to-pink-500';
       case 'linkedin': return 'from-blue-600 to-blue-700';
       case 'tiktok': return 'from-black to-gray-800';
+      case 'facebook': return 'from-blue-500 to-blue-600';
       default: return 'from-gray-500 to-gray-600';
     }
   };

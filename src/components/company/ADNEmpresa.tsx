@@ -2023,77 +2023,152 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide border-b pb-2">
                       Paleta de Colores
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="primary_color">Color Principal</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="primary_color"
-                            type="color"
-                            value={brandingForm.primary_color}
-                            onChange={(e) => setBrandingForm({...brandingForm, primary_color: e.target.value})}
-                            className="w-16 h-10 p-1 border rounded"
-                          />
-                          <Input
-                            value={brandingForm.primary_color}
-                            onChange={(e) => setBrandingForm({...brandingForm, primary_color: e.target.value})}
-                            placeholder="#000000"
-                            className="flex-1"
-                          />
+                    {/* Paleta de Colores Mejorada */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Color Principal */}
+                      <div className="space-y-3">
+                        <Label htmlFor="primary_color" className="text-sm font-medium">Color Principal</Label>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-16 h-16 rounded-lg border-2 border-border shadow-sm"
+                              style={{ backgroundColor: brandingForm.primary_color }}
+                            />
+                            <div className="flex-1 space-y-2">
+                              <Input
+                                id="primary_color"
+                                type="color"
+                                value={brandingForm.primary_color}
+                                onChange={(e) => setBrandingForm({...brandingForm, primary_color: e.target.value})}
+                                className="w-full h-10 p-1 cursor-pointer"
+                              />
+                              <Input
+                                value={brandingForm.primary_color}
+                                onChange={(e) => setBrandingForm({...brandingForm, primary_color: e.target.value})}
+                                placeholder="#000000"
+                                className="text-sm font-mono"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="secondary_color">Color Secundario</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="secondary_color"
-                            type="color"
-                            value={brandingForm.secondary_color}
-                            onChange={(e) => setBrandingForm({...brandingForm, secondary_color: e.target.value})}
-                            className="w-16 h-10 p-1 border rounded"
-                          />
-                          <Input
-                            value={brandingForm.secondary_color}
-                            onChange={(e) => setBrandingForm({...brandingForm, secondary_color: e.target.value})}
-                            placeholder="#000000"
-                            className="flex-1"
-                          />
+
+                      {/* Color Secundario */}
+                      <div className="space-y-3">
+                        <Label htmlFor="secondary_color" className="text-sm font-medium">Color Secundario</Label>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-16 h-16 rounded-lg border-2 border-border shadow-sm"
+                              style={{ backgroundColor: brandingForm.secondary_color }}
+                            />
+                            <div className="flex-1 space-y-2">
+                              <Input
+                                id="secondary_color"
+                                type="color"
+                                value={brandingForm.secondary_color}
+                                onChange={(e) => setBrandingForm({...brandingForm, secondary_color: e.target.value})}
+                                className="w-full h-10 p-1 cursor-pointer"
+                              />
+                              <Input
+                                value={brandingForm.secondary_color}
+                                onChange={(e) => setBrandingForm({...brandingForm, secondary_color: e.target.value})}
+                                placeholder="#000000"
+                                className="text-sm font-mono"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="complementary_color_1">Color Complementario 1</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="complementary_color_1"
-                            type="color"
-                            value={brandingForm.complementary_color_1}
-                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_1: e.target.value})}
-                            className="w-16 h-10 p-1 border rounded"
-                          />
-                          <Input
-                            value={brandingForm.complementary_color_1}
-                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_1: e.target.value})}
-                            placeholder="#000000"
-                            className="flex-1"
-                          />
+
+                      {/* Color Complementario 1 */}
+                      <div className="space-y-3">
+                        <Label htmlFor="complementary_color_1" className="text-sm font-medium">Color Complementario 1</Label>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-16 h-16 rounded-lg border-2 border-border shadow-sm"
+                              style={{ backgroundColor: brandingForm.complementary_color_1 }}
+                            />
+                            <div className="flex-1 space-y-2">
+                              <Input
+                                id="complementary_color_1"
+                                type="color"
+                                value={brandingForm.complementary_color_1}
+                                onChange={(e) => setBrandingForm({...brandingForm, complementary_color_1: e.target.value})}
+                                className="w-full h-10 p-1 cursor-pointer"
+                              />
+                              <Input
+                                value={brandingForm.complementary_color_1}
+                                onChange={(e) => setBrandingForm({...brandingForm, complementary_color_1: e.target.value})}
+                                placeholder="#000000"
+                                className="text-sm font-mono"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="complementary_color_2">Color Complementario 2</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="complementary_color_2"
-                            type="color"
-                            value={brandingForm.complementary_color_2}
-                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_2: e.target.value})}
-                            className="w-16 h-10 p-1 border rounded"
+
+                      {/* Color Complementario 2 */}
+                      <div className="space-y-3">
+                        <Label htmlFor="complementary_color_2" className="text-sm font-medium">Color Complementario 2</Label>
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-16 h-16 rounded-lg border-2 border-border shadow-sm"
+                              style={{ backgroundColor: brandingForm.complementary_color_2 }}
+                            />
+                            <div className="flex-1 space-y-2">
+                              <Input
+                                id="complementary_color_2"
+                                type="color"
+                                value={brandingForm.complementary_color_2}
+                                onChange={(e) => setBrandingForm({...brandingForm, complementary_color_2: e.target.value})}
+                                className="w-full h-10 p-1 cursor-pointer"
+                              />
+                              <Input
+                                value={brandingForm.complementary_color_2}
+                                onChange={(e) => setBrandingForm({...brandingForm, complementary_color_2: e.target.value})}
+                                placeholder="#000000"
+                                className="text-sm font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Previsualización de la Paleta */}
+                    <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                      <h5 className="text-sm font-medium mb-3 text-muted-foreground">Vista Previa de la Paleta</h5>
+                      <div className="flex gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-8 h-8 rounded-full border-2 border-background shadow-sm"
+                            style={{ backgroundColor: brandingForm.primary_color }}
                           />
-                          <Input
-                            value={brandingForm.complementary_color_2}
-                            onChange={(e) => setBrandingForm({...brandingForm, complementary_color_2: e.target.value})}
-                            placeholder="#000000"
-                            className="flex-1"
+                          <span className="text-xs text-muted-foreground">Principal</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-8 h-8 rounded-full border-2 border-background shadow-sm"
+                            style={{ backgroundColor: brandingForm.secondary_color }}
                           />
+                          <span className="text-xs text-muted-foreground">Secundario</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-8 h-8 rounded-full border-2 border-background shadow-sm"
+                            style={{ backgroundColor: brandingForm.complementary_color_1 }}
+                          />
+                          <span className="text-xs text-muted-foreground">Comp. 1</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-8 h-8 rounded-full border-2 border-background shadow-sm"
+                            style={{ backgroundColor: brandingForm.complementary_color_2 }}
+                          />
+                          <span className="text-xs text-muted-foreground">Comp. 2</span>
                         </div>
                       </div>
                     </div>

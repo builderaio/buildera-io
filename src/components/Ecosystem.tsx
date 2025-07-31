@@ -6,10 +6,10 @@ const Ecosystem = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-heading text-primary">
-            Buildera: donde la inteligencia artificial se vuelve simple
+            Cómo funciona tu equipo de especialistas
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-            En Buildera creemos que cada negocio necesita un equipo completo y actualizado. ERA crea asistentes especializados, investiga tu competencia y trae información externa relevante. Todo funciona junto para acelerar tu crecimiento sin complicaciones.
+            Simple: nosotros montamos y operamos todas las áreas de tu empresa mientras tú te enfocas en lo que mejor sabes hacer. Tu único trabajo es producir.
           </p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
@@ -20,9 +20,9 @@ const Ecosystem = () => {
                 <Database className="w-12 h-12 text-primary" />
               </div>
             </div>
-            <h3 className="font-heading text-2xl text-primary mb-4">ERA Recolecta</h3>
+            <h3 className="font-heading text-2xl text-primary mb-4">1. Analizamos tu Negocio</h3>
             <p className="text-muted-foreground">
-              Tu asistente reúne información de todas las fuentes: tus redes sociales, datos de competencia, tendencias del mercado y fuentes externas relevantes. Todo en un solo lugar para entender tu negocio completamente.
+              Estudiamos todo: tu empresa, competencia, mercado y oportunidades. Identificamos exactamente qué necesitas en cada área para crecer de forma inteligente.
             </p>
           </div>
           {/* Análisis */}
@@ -32,9 +32,9 @@ const Ecosystem = () => {
                 <Brain className="w-12 h-12 text-secondary" />
               </div>
             </div>
-            <h3 className="font-heading text-2xl text-secondary mb-4">ERA Entiende</h3>
+            <h3 className="font-heading text-2xl text-secondary mb-4">2. Montamos tu Equipo</h3>
             <p className="text-muted-foreground">
-              Con inteligencia artificial avanzada, ERA crea asistentes especializados para cada área: marketing, finanzas, recursos humanos, legal y más. Cada uno entiende las necesidades específicas de su función.
+              Creamos especialistas en cada área que necesitas: marketing, ventas, finanzas, RRHH, legal, etc. Cada uno experto en su campo, trabajando 24/7 para tu empresa.
             </p>
           </div>
           {/* Recomendaciones */}
@@ -44,9 +44,9 @@ const Ecosystem = () => {
                 <TrendingUp className="w-12 h-12 text-accent-foreground" />
               </div>
             </div>
-            <h3 className="font-heading text-2xl text-accent-foreground mb-4">ERA Recomienda</h3>
+            <h3 className="font-heading text-2xl text-accent-foreground mb-4">3. Operamos y Crecemos</h3>
             <p className="text-muted-foreground">
-              Combinando información interna, análisis de competencia y datos externos, cada asistente especializado te da recomendaciones precisas para acelerar su área específica y el crecimiento general del negocio.
+              Tu equipo ejecuta estrategias, optimiza procesos y hace crecer cada área. Tú solo produces y tomas decisiones finales. Nosotros operamos el resto.
             </p>
           </div>
         </div>

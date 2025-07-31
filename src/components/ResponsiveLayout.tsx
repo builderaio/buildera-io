@@ -387,9 +387,6 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                         <span className="text-sm font-medium truncate max-w-[120px]">
                           {profile?.full_name || "Usuario"}
                         </span>
-                        <span className="text-xs text-muted-foreground truncate max-w-[120px]">
-                          {profile?.email}
-                        </span>
                       </div>
                     </div>
                   </Button>

@@ -64,15 +64,28 @@ Deno.serve(async (req) => {
     const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    const { action, page_url } = await req.json();
+    const { action, page_url, page_id } = await req.json();
 
-    console.log('🔍 Facebook Scraper called with:', { action, page_url });
+    console.log('🔍 Facebook Scraper called with:', { action, page_url, page_id });
 
-    if (!page_url) {
+    if (action === 'get_page_posts' && !page_id) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'page_url is required' 
+          error: 'page_id is required for get_page_posts action' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    if ((action === 'get_page_details' && !page_url)) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'page_url is required for get_page_details action' 
         }),
         { 
           status: 400, 
@@ -156,11 +169,47 @@ Deno.serve(async (req) => {
         });
       }
 
+    } else if (action === 'get_page_posts') {
+      // Obtener posts de la página usando page_id directamente
+      console.log('📋 Getting Facebook page posts for ID:', page_id);
+      
+      const postsUrl = `https://facebook-scraper3.p.rapidapi.com/page/posts?page_id=${page_id}`;
+      const postsResponse = await fetch(postsUrl, { headers });
+      
+      if (!postsResponse.ok) {
+        throw new Error(`Failed to fetch page posts: ${postsResponse.status}`);
+      }
+      
+      const postsData = await postsResponse.json();
+      const posts = postsData.results || [];
+      console.log('✅ Posts retrieved:', posts.length);
+
+      result = {
+        success: true,
+        data: {
+          posts: posts.slice(0, 20), // Limitar a 20 posts
+          total_posts: posts.length,
+          cursor: postsData.cursor
+        }
+      };
+
+      // Guardar en base de datos para cache
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('facebook_page_data').upsert({
+          user_id: user.id,
+          page_url: `https://facebook.com/page_id/${page_id}`, // URL temporal
+          posts: posts.slice(0, 20),
+          total_posts: posts.length,
+          last_updated: new Date().toISOString()
+        });
+      }
+
     } else {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Invalid action. Use: get_page_details' 
+          error: 'Invalid action. Use: get_page_details or get_page_posts' 
         }),
         { 
           status: 400, 

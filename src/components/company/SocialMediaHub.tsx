@@ -42,7 +42,8 @@ import {
   FileText,
   Camera,
   Edit,
-  Lightbulb
+  Lightbulb,
+  Share
 } from "lucide-react";
 
 interface SocialMediaHubProps {
@@ -167,6 +168,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   const [youtubePosts, setYoutubePosts] = useState<any>(null);
   const [loadingYoutube, setLoadingYoutube] = useState(false);
   const [facebookDetails, setFacebookDetails] = useState<any>(null);
+  const [facebookPosts, setFacebookPosts] = useState<any>(null);
   const [loadingFacebook, setLoadingFacebook] = useState(false);
 
   // Initialize social networks
@@ -214,7 +216,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         isValid: validateFacebookUrl(companyData?.facebook_url),
         isActive: !!companyData?.facebook_url && validateFacebookUrl(companyData?.facebook_url),
         hasDetails: true,
-        hasPosts: false
+        hasPosts: true
       },
       {
         id: 'twitter',
@@ -733,6 +735,72 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     }
   };
 
+  const loadFacebookPosts = async (network: SocialNetwork) => {
+    if (!network.url || !network.isValid) return;
+
+    setLoadingFacebook(true);
+    try {
+      console.log('📋 Loading Facebook page posts for:', network.url);
+      
+      // Primero necesitamos obtener el page_id de la URL
+      const { data: pageIdData, error: pageIdError } = await supabase.functions.invoke('facebook-scraper', {
+        body: {
+          action: 'get_page_details', // Esto nos dará el page_id también
+          page_url: network.url
+        }
+      });
+
+      if (pageIdError) throw pageIdError;
+
+      if (pageIdData.success && pageIdData.data.page_details?.page_id) {
+        const pageId = pageIdData.data.page_details.page_id;
+        
+        // Ahora obtenemos los posts usando el page_id
+        const { data: postsData, error: postsError } = await supabase.functions.invoke('facebook-scraper', {
+          body: {
+            action: 'get_page_posts',
+            page_id: pageId
+          }
+        });
+
+        if (postsError) throw postsError;
+
+        if (postsData.success) {
+          setFacebookPosts(postsData.data);
+          setSelectedNetwork(network);
+          console.log('✅ Facebook posts loaded:', postsData.data);
+          
+          toast({
+            title: "Posts de Facebook cargados",
+            description: `Se cargaron ${postsData.data.posts?.length || 0} posts para análisis`,
+          });
+        } else {
+          toast({
+            title: "Error cargando posts",
+            description: postsData.error || "No se pudieron cargar los posts de Facebook",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Error obteniendo Page ID",
+          description: "No se pudo obtener el ID de la página de Facebook",
+          variant: "destructive",
+        });
+      }
+      
+    } catch (error: any) {
+      console.error('Error loading Facebook posts:', error);
+      toast({
+        title: "Error cargando posts",
+        description: error.message || "No se pudieron cargar los posts de Facebook",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingFacebook(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -885,11 +953,13 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                                 loadTikTokPosts(network);
                               } else if (network.id === 'youtube') {
                                 loadYoutubePosts(network);
+                              } else if (network.id === 'facebook') {
+                                loadFacebookPosts(network);
                               }
                             }}
-                            disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok || loadingYoutube) && selectedNetwork?.id === network.id}
+                            disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok || loadingYoutube || loadingFacebook) && selectedNetwork?.id === network.id}
                         >
-                          {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') || (loadingYoutube && selectedNetwork?.id === 'youtube') ? (
+                          {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') || (loadingYoutube && selectedNetwork?.id === 'youtube') || (loadingFacebook && selectedNetwork?.id === 'facebook') ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <BarChart3 className="w-4 h-4" />
@@ -2619,6 +2689,149 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Facebook Posts Section */}
+      {selectedNetwork && facebookPosts && selectedNetwork.id === 'facebook' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Facebook className="w-5 h-5" />
+              Posts de Facebook ({facebookPosts.posts?.length || 0})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Métricas generales */}
+            <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+              {(() => {
+                const totalReactions = facebookPosts.posts?.reduce((acc: number, post: any) => acc + (post.reactions_count || 0), 0) || 0;
+                const totalComments = facebookPosts.posts?.reduce((acc: number, post: any) => acc + (post.comments_count || 0), 0) || 0;
+                const totalShares = facebookPosts.posts?.reduce((acc: number, post: any) => acc + (post.reshare_count || 0), 0) || 0;
+                const avgEngagement = facebookPosts.posts?.length > 0 ? Math.round((totalReactions + totalComments + totalShares) / facebookPosts.posts.length) : 0;
+
+                return (
+                  <>
+                    <div className="p-3 bg-blue-50 rounded-lg text-center">
+                      <div className="text-lg font-bold text-blue-600">{totalReactions.toLocaleString()}</div>
+                      <div className="text-xs text-blue-800">Total Reacciones</div>
+                    </div>
+                    <div className="p-3 bg-green-50 rounded-lg text-center">
+                      <div className="text-lg font-bold text-green-600">{totalComments.toLocaleString()}</div>
+                      <div className="text-xs text-green-800">Total Comentarios</div>
+                    </div>
+                    <div className="p-3 bg-purple-50 rounded-lg text-center">
+                      <div className="text-lg font-bold text-purple-600">{totalShares.toLocaleString()}</div>
+                      <div className="text-xs text-purple-800">Total Compartidos</div>
+                    </div>
+                    <div className="p-3 bg-orange-50 rounded-lg text-center">
+                      <div className="text-lg font-bold text-orange-600">{avgEngagement}</div>
+                      <div className="text-xs text-orange-800">Engagement Promedio</div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Grid de posts */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {facebookPosts.posts?.slice(0, 12).map((post: any, index: number) => (
+                <div key={index} className="bg-white border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                  {/* Media (imagen o video thumbnail) */}
+                  {(post.image?.uri || post.video_thumbnail) && (
+                    <div className="aspect-video bg-muted relative">
+                      <img 
+                        src={post.image?.uri || post.video_thumbnail} 
+                        alt="Facebook post media"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      {post.video && (
+                        <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                          <Play className="w-3 h-3" />
+                          Video
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="p-4 space-y-3">
+                    {/* Mensaje del post */}
+                    {post.message && (
+                      <p className="text-sm text-muted-foreground line-clamp-3">{post.message}</p>
+                    )}
+                    
+                    {/* Métricas del post */}
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1">
+                          <Heart className="w-3 h-3" />
+                          {post.reactions_count?.toLocaleString() || 0}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="w-3 h-3" />
+                          {post.comments_count?.toLocaleString() || 0}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Share className="w-3 h-3" />
+                          {post.reshare_count?.toLocaleString() || 0}
+                        </span>
+                      </div>
+                      <div>
+                        {post.timestamp && new Date(post.timestamp * 1000).toLocaleDateString()}
+                      </div>
+                    </div>
+                    
+                    {/* Desglose de reacciones */}
+                    {post.reactions && (
+                      <div className="flex items-center gap-2 text-xs">
+                        {post.reactions.like > 0 && (
+                          <span className="flex items-center gap-1">
+                            👍 {post.reactions.like}
+                          </span>
+                        )}
+                        {post.reactions.love > 0 && (
+                          <span className="flex items-center gap-1">
+                            ❤️ {post.reactions.love}
+                          </span>
+                        )}
+                        {post.reactions.haha > 0 && (
+                          <span className="flex items-center gap-1">
+                            😂 {post.reactions.haha}
+                          </span>
+                        )}
+                        {post.reactions.wow > 0 && (
+                          <span className="flex items-center gap-1">
+                            😮 {post.reactions.wow}
+                          </span>
+                        )}
+                        {post.reactions.care > 0 && (
+                          <span className="flex items-center gap-1">
+                            🤗 {post.reactions.care}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Link al post */}
+                    {post.url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => window.open(post.url, '_blank')}
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        Ver Post Original
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

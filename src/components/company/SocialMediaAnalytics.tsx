@@ -198,6 +198,8 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
   const refreshAnalytics = async () => {
     setLoading(true);
     try {
+      console.log('🔄 Starting analytics refresh...');
+      
       // Primero obtener posts nuevos
       const { data: scraperData, error: scraperError } = await supabase.functions.invoke('instagram-scraper', {
         body: { 
@@ -207,13 +209,18 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       });
 
       if (scraperError) {
-        console.warn('Error obteniendo posts:', scraperError);
+        console.warn('⚠️ Error obteniendo posts:', scraperError);
+        // No fallar aquí, continuar con análisis de datos existentes
       }
 
-      // Ejecutar análisis avanzado
+      // Ejecutar análisis avanzado con mejor manejo de errores
+      console.log('📊 Ejecutando análisis avanzado...');
       const { data, error } = await supabase.functions.invoke('advanced-social-analyzer');
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error en análisis avanzado:', error);
+        throw new Error(`Error en análisis: ${error.message || 'Error desconocido'}`);
+      }
       
       // Reload data after analysis
       await loadAnalyticsData();

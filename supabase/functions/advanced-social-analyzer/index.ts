@@ -377,11 +377,16 @@ function analyzeHashtagPerformance(posts: any[]) {
 
 // Análisis de sentimientos con IA
 async function analyzeSentimentWithAI(posts: any[]) {
+  console.log('🧠 Checking OpenAI API key availability...')
   if (!OPENAI_API_KEY) {
+    console.warn('⚠️ OpenAI API key not configured, skipping sentiment analysis')
     return {
-      analysis: 'AI analysis not available',
-      sentiment: 'neutral',
-      confidence: 0
+      overall_sentiment: 'neutral',
+      brand_tone: 'Análisis de IA no disponible - configurar clave API',
+      emotional_triggers: ['neutro'],
+      audience_connection: 'Análisis no disponible sin clave OpenAI',
+      recommendations: ['Configurar clave OpenAI para análisis avanzado'],
+      confidence_score: 0
     }
   }
 

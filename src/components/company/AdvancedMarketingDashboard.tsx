@@ -117,17 +117,23 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
     try {
       console.log('🚀 Starting advanced analysis...');
       
+      toast({
+        title: "🔄 Iniciando análisis avanzado",
+        description: "Verificando datos disponibles...",
+      });
+      
       // Verificar si hay posts disponibles primero
       const { data: existingPosts, error: postsError } = await supabase
         .from('instagram_posts')
-        .select('count')
+        .select('id')
         .eq('user_id', profile.user_id);
       
       if (postsError) {
         console.error('Error checking posts:', postsError);
+        throw new Error(`Error verificando posts: ${postsError.message}`);
       }
       
-      const postsCount = existingPosts?.[0]?.count || 0;
+      const postsCount = existingPosts?.length || 0;
       console.log('📊 Posts disponibles:', postsCount);
       
       if (postsCount === 0) {

@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Target } from "lucide-react";
 import MarketingHubInsights from './MarketingHubInsights';
+import SocialMediaHub from './SocialMediaHub';
 
 // Tipificaciones para Facebook SDK
 declare global {
@@ -1382,14 +1383,19 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
 
       <Card>
         <CardContent className="p-8">
-          <Tabs defaultValue="performance" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+          <Tabs defaultValue="hub" className="w-full">
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="hub">Hub Social</TabsTrigger>
               <TabsTrigger value="performance">Performance</TabsTrigger>
               <TabsTrigger value="estrategias">Estrategias</TabsTrigger>
               <TabsTrigger value="calendario">Calendario</TabsTrigger>
               <TabsTrigger value="creacion">Creación con IA</TabsTrigger>
               <TabsTrigger value="pauta">Gestión de Pauta</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="hub" className="mt-6">
+              <SocialMediaHub profile={profile} />
+            </TabsContent>
 
             <TabsContent value="performance" className="mt-6">
               <h3 className="text-xl font-bold text-primary mb-6">Performance de Marketing</h3>

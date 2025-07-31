@@ -8,3 +8,4 @@ get-brand-by-url = { verify_jwt = false }
 generate-company-content = { verify_jwt = false }
 linkedin-oauth-callback = { verify_jwt = false }
 linkedin-data-sync = { verify_jwt = true }
+linkedin-scraper = { verify_jwt = true }

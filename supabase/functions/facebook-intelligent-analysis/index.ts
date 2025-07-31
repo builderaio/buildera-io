@@ -87,17 +87,12 @@ serve(async (req) => {
       engagement_rate: post.engagement_rate || 0
     }));
 
-    console.log('🤖 Calling OpenAI for intelligent analysis');
+    console.log('🤖 Calling Universal AI Handler for intelligent analysis');
 
-    // Call OpenAI for intelligent analysis
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
+    // Call Universal AI Handler for intelligent analysis
+    const aiResponse = await supabase.functions.invoke('universal-ai-handler', {
+      body: {
+        functionName: 'facebook_intelligent_analysis',
         messages: [
           {
             role: 'system',
@@ -150,26 +145,22 @@ serve(async (req) => {
               ]
             }`
           }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000
-      })
+        ]
+      }
     });
 
-    if (!openaiResponse.ok) {
-      const errorText = await openaiResponse.text();
-      console.error('OpenAI API error:', openaiResponse.status, errorText);
-      throw new Error(`OpenAI API error: ${openaiResponse.status}`);
+    if (aiResponse.error) {
+      console.error('Universal AI Handler error:', aiResponse.error);
+      throw new Error(`AI Analysis error: ${aiResponse.error.message}`);
     }
 
-    const aiResult = await openaiResponse.json();
-    console.log('✅ OpenAI analysis completed');
+    console.log('✅ AI analysis completed');
 
     let analysisResult;
     try {
-      analysisResult = JSON.parse(aiResult.choices[0].message.content);
+      analysisResult = JSON.parse(aiResponse.data.response);
     } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
+      console.error('Error parsing AI response:', parseError);
       throw new Error('Error parsing AI analysis result');
     }
 

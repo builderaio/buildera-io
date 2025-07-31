@@ -76,7 +76,7 @@ const App = () => {
             <Sonner />
            <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Navigate to="/company-dashboard" replace />} />
+              <Route path="/" element={<Index />} />
               <Route path="/home" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />

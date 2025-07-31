@@ -346,6 +346,32 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     }
   };
 
+  const loadTikTokDetails = async (network: SocialNetwork) => {
+    if (!network.url || !network.isValid) return;
+
+    setLoadingLinkedIn(true);
+    try {
+      const identifier = extractTikTokIdentifier(network.url);
+      
+      console.log('🔍 Loading TikTok details for:', identifier);
+      
+      toast({
+        title: "Función en desarrollo",
+        description: "La funcionalidad de detalles de TikTok estará disponible próximamente",
+      });
+      
+    } catch (error: any) {
+      console.error('Error loading TikTok details:', error);
+      toast({
+        title: "Error cargando TikTok",
+        description: error.message || "No se pudieron cargar los detalles de TikTok",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingLinkedIn(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -459,6 +485,8 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                             setSelectedNetwork(network);
                             if (network.id === 'linkedin') {
                               loadLinkedInCompanyDetails(network);
+                            } else if (network.id === 'tiktok') {
+                              loadTikTokDetails(network);
                             }
                           }}
                           disabled={loadingLinkedIn && selectedNetwork?.id === network.id}

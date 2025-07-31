@@ -42,7 +42,8 @@ import {
   FileText,
   Camera,
   Edit,
-  Lightbulb
+  Lightbulb,
+  Star
 } from "lucide-react";
 
 interface SocialMediaHubProps {
@@ -166,6 +167,9 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   const [youtubeDetails, setYoutubeDetails] = useState<any>(null);
   const [youtubePosts, setYoutubePosts] = useState<any>(null);
   const [loadingYoutube, setLoadingYoutube] = useState(false);
+  const [facebookDetails, setFacebookDetails] = useState<any>(null);
+  const [facebookReviews, setFacebookReviews] = useState<any>(null);
+  const [loadingFacebook, setLoadingFacebook] = useState(false);
 
   // Initialize social networks
   const initializeSocialNetworks = (companyData: any): SocialNetwork[] => {
@@ -211,7 +215,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         url: companyData?.facebook_url || null,
         isValid: validateFacebookUrl(companyData?.facebook_url),
         isActive: !!companyData?.facebook_url && validateFacebookUrl(companyData?.facebook_url),
-        hasDetails: false,
+        hasDetails: true,
         hasPosts: false
       },
       {
@@ -686,6 +690,48 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     }
   };
 
+  const loadFacebookDetails = async (network: SocialNetwork) => {
+    if (!network.url || !network.isValid) return;
+
+    setLoadingFacebook(true);
+    try {
+      console.log('📘 Loading Facebook details for:', network.url);
+      
+      const { data, error } = await supabase.functions.invoke('facebook-scraper', {
+        body: {
+          action: 'get_page_details',
+          page_url: network.url
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setFacebookDetails(data.data.page_details);
+        setFacebookReviews(data.data.reviews);
+        setSelectedNetwork(network);
+        console.log('✅ Facebook details loaded:', data.data);
+        
+        toast({
+          title: "Detalles de Facebook cargados",
+          description: `Se cargaron ${data.data.total_reviews || 0} reseñas para análisis`,
+        });
+      } else {
+        console.log('❌ Function returned success: false');
+        console.log('❌ Data received:', data);
+      }
+    } catch (error: any) {
+      console.error('Error loading Facebook details:', error);
+      toast({
+        title: "Error cargando Facebook",
+        description: error.message || "No se pudieron cargar los detalles de Facebook",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingFacebook(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -805,11 +851,13 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                               loadInstagramDetails(network);
                             } else if (network.id === 'youtube') {
                               loadYoutubeDetails(network);
+                            } else if (network.id === 'facebook') {
+                              loadFacebookDetails(network);
                             }
                           }}
-                           disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok || loadingYoutube) && selectedNetwork?.id === network.id}
+                           disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok || loadingYoutube || loadingFacebook) && selectedNetwork?.id === network.id}
                         >
-                            {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') || (loadingYoutube && selectedNetwork?.id === 'youtube') ? (
+                            {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') || (loadingYoutube && selectedNetwork?.id === 'youtube') || (loadingFacebook && selectedNetwork?.id === 'facebook') ? (
                              <Loader2 className="w-4 h-4 animate-spin" />
                            ) : (
                              <Eye className="w-4 h-4" />
@@ -2405,6 +2453,181 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
           )}
         </div>
       )}
+
+      {/* Detalles de Facebook */}
+      {selectedNetwork && selectedNetwork.id === 'facebook' && facebookDetails && (
+        <div className="space-y-6">
+            {/* Información General de la Página de Facebook */}
+            <Card className="overflow-hidden border-l-4 border-l-blue-500">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
+                <CardTitle className="flex items-center gap-2 text-blue-900">
+                  <Facebook className="w-5 h-5" />
+                  Información de la Página de Facebook
+                  <Badge variant="outline" className="ml-auto">
+                    Facebook Analytics
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* Imagen de perfil */}
+                  {facebookDetails.profile_picture && (
+                    <div className="text-center">
+                      <div className="w-20 h-20 mx-auto mb-2 rounded-full overflow-hidden border-2 border-blue-200">
+                        <img 
+                          src={facebookDetails.profile_picture} 
+                          alt="Facebook profile"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Imagen de perfil</p>
+                    </div>
+                  )}
+                  
+                  {/* Información básica */}
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-blue-800 mb-2">Información General</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-sm font-medium">Nombre:</p>
+                          <p className="text-sm text-muted-foreground">{facebookDetails.name || 'No disponible'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Categoría:</p>
+                          <p className="text-sm text-muted-foreground">{facebookDetails.category || 'No disponible'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Teléfono:</p>
+                          <p className="text-sm text-muted-foreground">{facebookDetails.phone || 'No disponible'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Métricas */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-blue-800">Métricas</h4>
+                    <div className="space-y-3">
+                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {facebookDetails.follower_count?.toLocaleString() || 'N/A'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Seguidores</div>
+                      </div>
+                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">
+                          {facebookDetails.like_count?.toLocaleString() || 'N/A'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Me gusta</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Información adicional */}
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-blue-800">Detalles</h4>
+                    <div className="space-y-2">
+                      {facebookDetails.website && (
+                        <div>
+                          <p className="text-sm font-medium">Sitio web:</p>
+                          <a 
+                            href={facebookDetails.website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            {facebookDetails.website}
+                          </a>
+                        </div>
+                      )}
+                      {facebookDetails.address && (
+                        <div>
+                          <p className="text-sm font-medium">Dirección:</p>
+                          <p className="text-sm text-muted-foreground">{facebookDetails.address}</p>
+                        </div>
+                      )}
+                      {facebookDetails.description && (
+                        <div>
+                          <p className="text-sm font-medium">Descripción:</p>
+                          <p className="text-sm text-muted-foreground line-clamp-3">{facebookDetails.description}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Reseñas de Facebook */}
+            {facebookReviews && facebookReviews.length > 0 && (
+              <Card className="overflow-hidden border-l-4 border-l-green-500">
+                <CardHeader className="bg-gradient-to-r from-green-50 to-green-100">
+                  <CardTitle className="flex items-center gap-2 text-green-900">
+                    <Star className="w-5 h-5" />
+                    Reseñas de Facebook ({facebookReviews.length})
+                    <Badge variant="outline" className="ml-auto">
+                      Facebook Reviews
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {facebookReviews.slice(0, 6).map((review: any, index: number) => (
+                      <div key={index} className="p-4 bg-white border rounded-lg shadow-sm">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <span className="text-xs font-medium text-blue-600">
+                                {review.author_name?.charAt(0)?.toUpperCase() || 'U'}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{review.author_name || 'Usuario anónimo'}</p>
+                              {review.date && (
+                                <p className="text-xs text-muted-foreground">{review.date}</p>
+                              )}
+                            </div>
+                          </div>
+                          {review.rating && (
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-3 h-3 ${
+                                    i < review.rating
+                                      ? 'text-yellow-400 fill-current'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {review.review_text && (
+                          <p className="text-sm text-muted-foreground line-clamp-3">
+                            {review.review_text}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {facebookReviews.length > 6 && (
+                    <div className="mt-4 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Mostrando las primeras 6 de {facebookReviews.length} reseñas
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

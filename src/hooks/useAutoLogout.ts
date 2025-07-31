@@ -60,24 +60,24 @@ export const useAutoLogout = () => {
       document.addEventListener(event, resetTimerOnActivity, true);
     });
 
-    // Detectar cuando el usuario cambia de pestaña o cierra el navegador
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        isActiveRef.current = false;
-        // Cerrar sesión inmediatamente si el usuario cambia de pestaña/cierra navegador
-        handleLogout();
-      } else {
-        isActiveRef.current = true;
-        resetTimer();
+  // Detectar cuando el usuario cambia de pestaña (solo para pausar el timer)
+  const handleVisibilityChange = () => {
+    if (document.hidden) {
+      isActiveRef.current = false;
+      // Solo pausar el timer, NO cerrar sesión
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
-    };
+    } else {
+      isActiveRef.current = true;
+      // Reiniciar timer cuando regrese a la pestaña
+      resetTimer();
+    }
+  };
 
-    const handleBeforeUnload = () => {
-      handleLogout();
-    };
+  // Removido handleBeforeUnload - era demasiado agresivo
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
 
     // Inicializar timer
     resetTimer();
@@ -93,7 +93,6 @@ export const useAutoLogout = () => {
       });
 
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 

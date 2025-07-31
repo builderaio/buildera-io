@@ -36,13 +36,46 @@ serve(async (req) => {
 
     console.log('ERA Content Optimizer - Processing request:', { fieldType, context });
 
-    // Call the universal AI handler
+    // Get prompt template for the field type
+    const { data: template } = await supabase
+      .from('era_prompt_templates')
+      .select('*')
+      .eq('field_type', fieldType.toLowerCase())
+      .eq('is_active', true)
+      .single();
+
+    if (!template) {
+      throw new Error(`No se encontró plantilla de prompt para el tipo de campo: ${fieldType}`);
+    }
+
+    const systemPrompt = template.system_prompt;
+    const instructions = template.specific_instructions;
+    const maxWords = template.max_words || 200;
+    const tone = template.tone || 'professional';
+
+    // Build the user message with context
+    let userMessage = `${instructions}\n\nTexto a optimizar: "${text}"`;
+    
+    if (context && Object.keys(context).length > 0) {
+      userMessage += `\n\nContexto adicional: ${JSON.stringify(context, null, 2)}`;
+    }
+
+    userMessage += `\n\nTono deseado: ${tone}\nMáximo de palabras: ${maxWords}`;
+
+    // Call the universal AI handler with proper function name
     const { data: response, error } = await supabase.functions.invoke('universal-ai-handler', {
       body: {
         functionName: 'content_optimization',
-        text,
-        fieldType,
-        context
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userMessage }
+        ],
+        context: {
+          fieldType,
+          maxWords,
+          tone,
+          ...context
+        }
       }
     });
 

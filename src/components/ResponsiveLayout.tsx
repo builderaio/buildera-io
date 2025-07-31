@@ -311,6 +311,9 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   ];
 
   const activeView = getActiveView();
+  
+  console.log('Current activeView:', activeView);
+  console.log('Current URL:', location.pathname + location.search);
 
   return (
     <div className="min-h-screen flex w-full bg-background">

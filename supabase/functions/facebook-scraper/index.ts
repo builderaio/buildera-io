@@ -7,15 +7,23 @@ const corsHeaders = {
 
 interface FacebookPageDetails {
   name?: string;
-  follower_count?: number;
-  like_count?: number;
-  description?: string;
-  category?: string;
-  website?: string;
+  type?: string;
+  page_id?: string;
+  url?: string;
+  image?: string;
+  intro?: string;
+  likes?: number;
+  followers?: number;
+  categories?: string[];
   phone?: string;
+  email?: string;
   address?: string;
-  profile_picture?: string;
-  cover_photo?: string;
+  rating?: number;
+  services?: string;
+  price_range?: string;
+  website?: string;
+  cover_image?: string;
+  verified?: boolean;
 }
 
 interface FacebookPageReview {
@@ -76,7 +84,8 @@ Deno.serve(async (req) => {
         throw new Error(`Failed to fetch page details: ${detailsResponse.status}`);
       }
       
-      const pageDetails: FacebookPageDetails = await detailsResponse.json();
+      const pageDetailsResponse = await detailsResponse.json();
+      const pageDetails: FacebookPageDetails = pageDetailsResponse.results || pageDetailsResponse;
       console.log('✅ Page details retrieved:', pageDetails);
 
       // 2. Obtener ID de la página para reviews

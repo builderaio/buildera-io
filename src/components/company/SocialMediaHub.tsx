@@ -2475,20 +2475,25 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                 <div className="space-y-3">
                   {facebookDetails.page_details?.name && (
                     <div className="p-3 bg-blue-50 rounded-lg">
-                      <div className="text-sm font-medium text-blue-800">Nombre</div>
+                      <div className="text-sm font-medium text-blue-800 flex items-center gap-2">
+                        Nombre
+                        {facebookDetails.page_details.verified && (
+                          <CheckCircle className="w-4 h-4 text-blue-600" />
+                        )}
+                      </div>
                       <div className="text-sm text-blue-700">{facebookDetails.page_details.name}</div>
                     </div>
                   )}
-                  {facebookDetails.page_details?.category && (
+                  {facebookDetails.page_details?.categories && facebookDetails.page_details.categories.length > 0 && (
                     <div className="p-3 bg-blue-50 rounded-lg">
                       <div className="text-sm font-medium text-blue-800">Categoría</div>
-                      <div className="text-sm text-blue-700">{facebookDetails.page_details.category}</div>
+                      <div className="text-sm text-blue-700">{facebookDetails.page_details.categories.join(', ')}</div>
                     </div>
                   )}
-                  {facebookDetails.page_details?.description && (
+                  {facebookDetails.page_details?.intro && (
                     <div className="p-3 bg-blue-50 rounded-lg">
                       <div className="text-sm font-medium text-blue-800">Descripción</div>
-                      <div className="text-sm text-blue-700">{facebookDetails.page_details.description}</div>
+                      <div className="text-sm text-blue-700">{facebookDetails.page_details.intro}</div>
                     </div>
                   )}
                   {facebookDetails.page_details?.website && (
@@ -2507,22 +2512,22 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                   Métricas
                 </h4>
                 <div className="space-y-3">
-                  {facebookDetails.page_details?.follower_count !== undefined && (
+                  {facebookDetails.page_details?.followers !== undefined && (
                     <div className="p-3 bg-green-50 rounded-lg">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-green-800">Seguidores</span>
                         <span className="text-lg font-bold text-green-600">
-                          {facebookDetails.page_details.follower_count.toLocaleString()}
+                          {facebookDetails.page_details.followers.toLocaleString()}
                         </span>
                       </div>
                     </div>
                   )}
-                  {facebookDetails.page_details?.like_count !== undefined && (
+                  {facebookDetails.page_details?.likes !== undefined && (
                     <div className="p-3 bg-red-50 rounded-lg">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-red-800">Me Gusta</span>
                         <span className="text-lg font-bold text-red-600">
-                          {facebookDetails.page_details.like_count.toLocaleString()}
+                          {facebookDetails.page_details.likes.toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -2541,7 +2546,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
               </div>
 
               {/* Imagen de Perfil */}
-              {facebookDetails.page_details?.profile_picture && (
+              {facebookDetails.page_details?.image && (
                 <div className="space-y-4">
                   <h4 className="font-semibold text-blue-800 flex items-center gap-2">
                     <Camera className="w-4 h-4" />
@@ -2550,7 +2555,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                   <div className="space-y-3">
                     <div className="aspect-square rounded-lg overflow-hidden bg-muted">
                       <img 
-                        src={facebookDetails.page_details.profile_picture} 
+                        src={facebookDetails.page_details.image} 
                         alt="Imagen de perfil de Facebook"
                         className="w-full h-full object-cover"
                         onError={(e) => {

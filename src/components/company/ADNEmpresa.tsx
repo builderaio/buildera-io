@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
-import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar, Globe, Bot, Facebook, ExternalLink } from "lucide-react";
+import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar, Globe, Bot, Facebook, ExternalLink, RefreshCw } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -1380,12 +1380,23 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
                   {/* Redes Sociales */}
                   <div className="space-y-4 col-span-2">
-                    <div className="flex items-center gap-2">
-                      <Label className="font-semibold">Redes Sociales</Label>
-                      <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-                        <Bot className="h-3 w-3" />
-                        Detectadas por ERA
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Label className="font-semibold">Redes Sociales</Label>
+                        <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
+                          <Bot className="h-3 w-3" />
+                          Detectadas por ERA
+                        </div>
                       </div>
+                      <Button
+                        onClick={() => window.location.reload()}
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        Actualizar información
+                      </Button>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

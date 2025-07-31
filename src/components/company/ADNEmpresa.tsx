@@ -1061,12 +1061,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       <Card>
         <CardContent className="p-4 sm:p-6 lg:p-8">
           <Tabs defaultValue="perfil" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto gap-1">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 h-auto gap-1">
               <TabsTrigger value="perfil" className="text-xs sm:text-sm px-2 py-2 sm:px-4">Info</TabsTrigger>
               <TabsTrigger value="estrategia" className="text-xs sm:text-sm px-2 py-2 sm:px-4">Estrategia</TabsTrigger>
               <TabsTrigger value="productos" className="text-xs sm:text-sm px-2 py-2 sm:px-4">Productos</TabsTrigger>
               <TabsTrigger value="marca" className="text-xs sm:text-sm px-2 py-2 sm:px-4">Marca</TabsTrigger>
-              <TabsTrigger value="canales" className="text-xs sm:text-sm px-2 py-2 sm:px-4">Canales</TabsTrigger>
             </TabsList>
 
             <TabsContent value="perfil" className="space-y-6 mt-6">
@@ -2239,14 +2238,6 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="canales" className="space-y-6 mt-6">
-              <div className="text-center py-8">
-                <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">
-                  La funcionalidad de canales está en desarrollo.
-                </p>
-              </div>
-            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>

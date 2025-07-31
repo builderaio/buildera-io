@@ -222,12 +222,13 @@ async function getCompleteInstagramAnalysis(username: string): Promise<any> {
 
     // Organize data with AI if OpenAI key is available
     let aiAnalysis = null;
+    console.log(`🔑 OpenAI API Key available: ${!!openAIApiKey}`);
     if (openAIApiKey) {
       try {
         console.log('🤖 Starting AI analysis...');
         const analysisData = { profile: profileInfo, followers, following };
         aiAnalysis = await organizeInstagramDataWithAI(analysisData);
-        console.log('✅ AI analysis completed successfully');
+        console.log('✅ AI analysis completed:', { hasAnalysis: !!aiAnalysis, aiPowered: aiAnalysis?.ai_powered });
       } catch (error) {
         console.error('❌ OpenAI analysis failed:', error);
         // Continue without AI analysis but log the error
@@ -240,21 +241,21 @@ async function getCompleteInstagramAnalysis(username: string): Promise<any> {
       profile: profileInfo,
       followers: followers,
       following: following,
-      analysis: aiAnalysis || {
+      analysis: aiAnalysis && aiAnalysis.ai_powered ? aiAnalysis : {
         summary: `Perfil de Instagram para @${profileInfo.username || username}. Cuenta ${profileInfo.is_business ? 'empresarial' : 'personal'} con ${profileInfo.followers_count || 0} seguidores.`,
         recommendations: [
           "Verificar configuración de la cuenta empresarial",
-          "Optimizar biografía para mejor engagement",
+          "Optimizar biografía para mejor engagement", 
           "Mantener contenido consistente",
           "Analizar patrones de seguidores para mejores horarios de publicación"
         ],
         opportunities: [
           "Aumentar frecuencia de publicaciones",
-          "Utilizar stories más frecuentemente",
+          "Utilizar stories más frecuentemente", 
           "Colaboraciones con influencers locales",
           "Engagement con seguidores de cuentas similares"
         ],
-        ai_powered: !!aiAnalysis
+        ai_powered: false
       },
       summary: {
         total_followers: profileInfo.followers_count || 0,
@@ -265,7 +266,7 @@ async function getCompleteInstagramAnalysis(username: string): Promise<any> {
         verification_status: profileInfo.is_verified ? 'Verificado' : 'No verificado',
         followers_sample: followers.length,
         following_sample: following.length,
-        has_ai_analysis: !!aiAnalysis
+        has_ai_analysis: !!(aiAnalysis && aiAnalysis.ai_powered)
       }
     };
 
@@ -344,11 +345,22 @@ Sé conciso pero informativo, y enfócate en insights accionables para marketing
     const aiResponse = await response.json();
     const analysisText = aiResponse.choices[0].message.content;
     
-    // Try to parse as JSON, fallback to text if parsing fails
+    // Try to parse as JSON, fallback to structured format if parsing fails
     try {
-      return JSON.parse(analysisText);
+      const parsed = JSON.parse(analysisText);
+      console.log('✅ Successfully parsed AI response as JSON');
+      return {
+        ...parsed,
+        ai_powered: true
+      };
     } catch {
-      return { analysis: analysisText };
+      console.log('⚠️ AI response not JSON, structuring as text analysis');
+      return { 
+        summary: analysisText,
+        recommendations: ["Análisis generado por IA - revisar texto completo arriba"],
+        opportunities: ["Potencial identificado por IA - consultar análisis completo"],
+        ai_powered: true
+      };
     }
 
   } catch (error) {

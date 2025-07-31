@@ -24,6 +24,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const [companySize, setCompanySize] = useState("");
   const [industrySector, setIndustrySector] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
+  const [country, setCountry] = useState("Colombia");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { authMethods, loading: authMethodsLoading } = useAuthMethods();
@@ -108,6 +109,16 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           return;
         }
 
+        if (!country.trim()) {
+          toast({
+            title: "Error",
+            description: "El país es requerido",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         if (password.length < 6) {
           toast({
             title: "Error",
@@ -141,7 +152,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
               company_name: companyName,
               company_size: companySize,
               industry_sector: industrySector,
-              website_url: websiteUrl
+              website_url: websiteUrl,
+              country: country
             }
           }
         });
@@ -161,6 +173,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 user_id: data.user.id,
                 company_name: companyName,
                 website_url: websiteUrl,
+                country: country,
                 trigger_type: 'registration'
               }
             });
@@ -187,6 +200,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           setCompanySize("");
           setIndustrySector("");
           setWebsiteUrl("");
+          setCountry("Colombia");
           setConfirmPassword("");
         }
       } else {
@@ -410,6 +424,39 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                   value={websiteUrl}
                   onChange={(e) => setWebsiteUrl(e.target.value)}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="country">
+                  País <span className="text-destructive">*</span>
+                </Label>
+                <Select value={country} onValueChange={setCountry} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el país" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Colombia">Colombia</SelectItem>
+                    <SelectItem value="México">México</SelectItem>
+                    <SelectItem value="Argentina">Argentina</SelectItem>
+                    <SelectItem value="Chile">Chile</SelectItem>
+                    <SelectItem value="Perú">Perú</SelectItem>
+                    <SelectItem value="Ecuador">Ecuador</SelectItem>
+                    <SelectItem value="Venezuela">Venezuela</SelectItem>
+                    <SelectItem value="Uruguay">Uruguay</SelectItem>
+                    <SelectItem value="Paraguay">Paraguay</SelectItem>
+                    <SelectItem value="Bolivia">Bolivia</SelectItem>
+                    <SelectItem value="Costa Rica">Costa Rica</SelectItem>
+                    <SelectItem value="Panamá">Panamá</SelectItem>
+                    <SelectItem value="Guatemala">Guatemala</SelectItem>
+                    <SelectItem value="Honduras">Honduras</SelectItem>
+                    <SelectItem value="Nicaragua">Nicaragua</SelectItem>
+                    <SelectItem value="El Salvador">El Salvador</SelectItem>
+                    <SelectItem value="República Dominicana">República Dominicana</SelectItem>
+                    <SelectItem value="Cuba">Cuba</SelectItem>
+                    <SelectItem value="España">España</SelectItem>
+                    <SelectItem value="Estados Unidos">Estados Unidos</SelectItem>
+                    <SelectItem value="Otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </>
           )}

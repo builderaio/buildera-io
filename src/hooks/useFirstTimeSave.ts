@@ -5,7 +5,7 @@ export const useFirstTimeSave = (userId: string | undefined) => {
   const [isFirstSave, setIsFirstSave] = useState(true);
   const [hasTriggeredWebhook, setHasTriggeredWebhook] = useState(false);
 
-  const triggerWebhookOnFirstSave = useCallback(async (companyName: string, websiteUrl?: string) => {
+  const triggerWebhookOnFirstSave = useCallback(async (companyName: string, websiteUrl?: string, country?: string) => {
     if (!userId || !isFirstSave || hasTriggeredWebhook) {
       return;
     }
@@ -18,6 +18,7 @@ export const useFirstTimeSave = (userId: string | undefined) => {
           user_id: userId,
           company_name: companyName,
           website_url: websiteUrl || '',
+          country: country,
           trigger_type: 'first_save_social'
         }
       });

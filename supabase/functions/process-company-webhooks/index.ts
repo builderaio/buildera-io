@@ -77,6 +77,7 @@ interface WebhookProcessRequest {
   user_id: string;
   company_name: string;
   website_url?: string;
+  country?: string;
   trigger_type: 'registration' | 'update';
 }
 
@@ -106,6 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
       user_id: body.user_id,
       company_name: body.company_name,
       website_url: body.website_url ? 'present' : 'missing',
+      country: body.country || 'not provided',
       trigger_type: body.trigger_type
     });
 
@@ -172,7 +174,7 @@ const handler = async (req: Request): Promise<Response> => {
           const n8nResponse = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
             body: {
               KEY: "INFO",
-              COMPANY_INFO: `Empresa ${body.company_name} sitio web ${body.website_url}`,
+              COMPANY_INFO: `Empresa: ${body.company_name}, sitio web: ${body.website_url}${body.country ? `, país: ${body.country}` : ''}`,
               ADDITIONAL_INFO: body.trigger_type === 'registration' ? 'Nuevo registro' : 'Actualización'
             }
           });
@@ -203,7 +205,7 @@ const handler = async (req: Request): Promise<Response> => {
           const n8nResponse = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
             body: {
               KEY: "INFO",
-              COMPANY_INFO: `Empresa ${body.company_name}`,
+              COMPANY_INFO: `Empresa: ${body.company_name}${body.country ? `, país: ${body.country}` : ''}`,
               ADDITIONAL_INFO: body.trigger_type === 'registration' ? 'Nuevo registro sin sitio web' : 'Actualización'
             }
           });

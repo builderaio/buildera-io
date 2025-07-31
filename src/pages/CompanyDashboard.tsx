@@ -193,8 +193,27 @@ const CompanyDashboard = () => {
     // Si se actualizó la URL del sitio web y hay una nueva URL
     if (previousUrl !== newUrl && newUrl && newUrl.trim() !== "") {
       try {
-        console.log("Llamando a n8n webhook por actualización de URL...");
+        console.log("Llamando a webhooks por actualización de URL...");
         
+        // Llamar a getDataByURL
+        const dataResponse = await supabase.functions.invoke('get-data-by-url', {
+          body: { url: newUrl, user_id: user?.id }
+        });
+        
+        if (dataResponse.error) {
+          console.error("Error calling getDataByURL:", dataResponse.error);
+        }
+        
+        // Llamar a getBrandByURL
+        const brandResponse = await supabase.functions.invoke('get-brand-by-url', {
+          body: { url: newUrl, user_id: user?.id }
+        });
+        
+        if (brandResponse.error) {
+          console.error("Error calling getBrandByURL:", brandResponse.error);
+        }
+        
+        // Llamar a n8n webhook para notificar actualización
         const response = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
           body: {
             KEY: "INFO",
@@ -206,10 +225,10 @@ const CompanyDashboard = () => {
         if (response.error) {
           console.error("Error calling n8n webhook:", response.error);
         } else {
-          console.log("N8n webhook ejecutado correctamente por actualización de URL");
+          console.log("Webhooks ejecutados correctamente por actualización de URL");
         }
       } catch (error) {
-        console.error("Error ejecutando n8n webhook:", error);
+        console.error("Error ejecutando webhooks:", error);
         // No mostramos error al usuario ya que la actualización del perfil fue exitosa
       }
     }

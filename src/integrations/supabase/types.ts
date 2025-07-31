@@ -801,6 +801,51 @@ export type Database = {
           },
         ]
       }
+      companies: {
+        Row: {
+          company_size: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          industry_sector: string | null
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          company_size?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          industry_sector?: string | null
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          company_size?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          industry_sector?: string | null
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       company_branding: {
         Row: {
           brand_manual_file_path: string | null
@@ -932,6 +977,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      company_members: {
+        Row: {
+          company_id: string
+          id: string
+          is_primary: boolean
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          id?: string
+          is_primary?: boolean
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          id?: string
+          is_primary?: boolean
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_objectives: {
         Row: {
@@ -1833,6 +1913,7 @@ export type Database = {
           nit: string | null
           phone: string | null
           position: string | null
+          primary_company_id: string | null
           skills: string[] | null
           updated_at: string
           user_id: string
@@ -1869,6 +1950,7 @@ export type Database = {
           nit?: string | null
           phone?: string | null
           position?: string | null
+          primary_company_id?: string | null
           skills?: string[] | null
           updated_at?: string
           user_id: string
@@ -1905,6 +1987,7 @@ export type Database = {
           nit?: string | null
           phone?: string | null
           position?: string | null
+          primary_company_id?: string | null
           skills?: string[] | null
           updated_at?: string
           user_id?: string
@@ -1912,7 +1995,15 @@ export type Database = {
           website_url?: string | null
           years_experience?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_primary_company_id_fkey"
+            columns: ["primary_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scheduled_posts: {
         Row: {
@@ -2332,6 +2423,16 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      create_company_with_owner: {
+        Args: {
+          company_name: string
+          company_description?: string
+          website_url?: string
+          industry_sector?: string
+          company_size?: string
+        }
+        Returns: string
+      }
       get_admin_analytics_data: {
         Args: { start_date: string; end_date: string }
         Returns: {
@@ -2417,6 +2518,10 @@ export type Database = {
           country: string
           location: string
         }[]
+      }
+      get_user_primary_company: {
+        Args: { user_id_param: string }
+        Returns: string
       }
       get_user_stats_admin: {
         Args: Record<PropertyKey, never>

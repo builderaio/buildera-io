@@ -924,6 +924,81 @@ export type Database = {
         }
         Relationships: []
       }
+      company_dashboard_metrics: {
+        Row: {
+          active_agents: number | null
+          agent_hours_saved: number | null
+          agent_missions_completed: number | null
+          created_at: string
+          efficiency_score: number | null
+          estimated_cost_savings: number | null
+          id: string
+          knowledge_base_size_mb: number | null
+          last_calculated_at: string | null
+          metadata: Json | null
+          period_end: string
+          period_start: string
+          reach_growth_percent: number | null
+          roi_percentage: number | null
+          tasks_automated: number | null
+          total_agents: number | null
+          total_engagement: number | null
+          total_files: number | null
+          total_posts: number | null
+          total_social_connections: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_agents?: number | null
+          agent_hours_saved?: number | null
+          agent_missions_completed?: number | null
+          created_at?: string
+          efficiency_score?: number | null
+          estimated_cost_savings?: number | null
+          id?: string
+          knowledge_base_size_mb?: number | null
+          last_calculated_at?: string | null
+          metadata?: Json | null
+          period_end: string
+          period_start: string
+          reach_growth_percent?: number | null
+          roi_percentage?: number | null
+          tasks_automated?: number | null
+          total_agents?: number | null
+          total_engagement?: number | null
+          total_files?: number | null
+          total_posts?: number | null
+          total_social_connections?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_agents?: number | null
+          agent_hours_saved?: number | null
+          agent_missions_completed?: number | null
+          created_at?: string
+          efficiency_score?: number | null
+          estimated_cost_savings?: number | null
+          id?: string
+          knowledge_base_size_mb?: number | null
+          last_calculated_at?: string | null
+          metadata?: Json | null
+          period_end?: string
+          period_start?: string
+          reach_growth_percent?: number | null
+          roi_percentage?: number | null
+          tasks_automated?: number | null
+          total_agents?: number | null
+          total_engagement?: number | null
+          total_files?: number | null
+          total_posts?: number | null
+          total_social_connections?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       company_external_data: {
         Row: {
           brand_data: Json | null
@@ -1255,6 +1330,54 @@ export type Database = {
           similar_post_ids?: string[] | null
           status?: string | null
           suggested_content?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dashboard_alerts: {
+        Row: {
+          action_text: string | null
+          action_url: string | null
+          alert_type: string
+          created_at: string
+          description: string
+          expires_at: string | null
+          id: string
+          is_read: boolean | null
+          metadata: Json | null
+          priority: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_text?: string | null
+          action_url?: string | null
+          alert_type: string
+          created_at?: string
+          description: string
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          metadata?: Json | null
+          priority?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_text?: string | null
+          action_url?: string | null
+          alert_type?: string
+          created_at?: string
+          description?: string
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          metadata?: Json | null
+          priority?: string
           title?: string
           updated_at?: string
           user_id?: string

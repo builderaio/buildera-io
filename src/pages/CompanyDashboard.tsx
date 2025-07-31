@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFirstTimeSave } from "@/hooks/useFirstTimeSave";
 
 import MandoCentral from "@/components/company/MandoCentral";
+import Dashboard360 from "@/components/company/Dashboard360";
 import ADNEmpresa from "@/components/company/ADNEmpresa";
 import MarketingHub from "@/components/company/MarketingHub";
 import InteligenciaCompetitiva from "@/components/company/InteligenciaCompetitiva";
@@ -210,7 +211,7 @@ const CompanyDashboard = () => {
     console.log('Rendering content for activeView:', activeView);
     switch (activeView) {
       case "mando-central":
-        return <MandoCentral profile={profile} onNavigate={setActiveView} />;
+        return <Dashboard360 profile={profile} onNavigate={setActiveView} />;
       case "adn-empresa":
         return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;
       case "mis-agentes":
@@ -232,7 +233,7 @@ const CompanyDashboard = () => {
       case "profile":
         return <UserProfile />;
       default:
-        return <MandoCentral profile={profile} onNavigate={setActiveView} />;
+        return <Dashboard360 profile={profile} onNavigate={setActiveView} />;
     }
   };
 

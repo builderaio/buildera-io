@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SocialMediaAnalytics from "./SocialMediaAnalytics";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -14,7 +16,9 @@ import {
   Users,
   Clock,
   Target,
-  RefreshCw
+  RefreshCw,
+  Activity,
+  Zap
 } from "lucide-react";
 
 interface MarketingMetricsProps {
@@ -156,206 +160,227 @@ const MarketingMetrics = ({ profile, socialConnections }: MarketingMetricsProps)
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header con controles */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Analytics de Marketing</h2>
-          <p className="text-muted-foreground">
-            Insights y métricas de rendimiento de tus redes sociales
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-            {["7d", "30d", "90d"].map((range) => (
-              <Button
-                key={range}
-                variant={timeRange === range ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setTimeRange(range)}
-                className="h-8 px-3"
-              >
-                {range === "7d" ? "7 días" : range === "30d" ? "30 días" : "90 días"}
-              </Button>
-            ))}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={refreshMetrics}
-            disabled={loading}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Actualizar
-          </Button>
-        </div>
-      </div>
+      <Tabs defaultValue="analytics" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Análisis Inteligente
+          </TabsTrigger>
+          <TabsTrigger value="traditional" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Métricas Tradicionales
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Métricas generales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {generalMetrics.map((metric, index) => {
-          const IconComponent = metric.icon;
-          return (
-            <Card key={index} className="transition-all duration-200 hover:shadow-md hover-scale">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <IconComponent className={`h-5 w-5 ${metric.color}`} />
-                  <Badge 
-                    variant={metric.trend === 'up' ? 'default' : metric.trend === 'down' ? 'destructive' : 'secondary'}
-                    className="text-xs"
-                  >
-                    {metric.trend === 'up' && <TrendingUp className="h-3 w-3 mr-1" />}
-                    {metric.trend === 'down' && <TrendingDown className="h-3 w-3 mr-1" />}
-                    {metric.change}
-                  </Badge>
+        <TabsContent value="analytics">
+          <SocialMediaAnalytics profile={profile} />
+        </TabsContent>
+
+        <TabsContent value="traditional">
+          <div className="space-y-6">
+            {/* Header con controles */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">Métricas Tradicionales</h2>
+                <p className="text-muted-foreground">
+                  Vista clásica de métricas de rendimiento
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                  {["7d", "30d", "90d"].map((range) => (
+                    <Button
+                      key={range}
+                      variant={timeRange === range ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setTimeRange(range)}
+                      className="h-8 px-3"
+                    >
+                      {range === "7d" ? "7 días" : range === "30d" ? "30 días" : "90 días"}
+                    </Button>
+                  ))}
                 </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">{metric.value}</p>
-                  <p className="text-sm text-muted-foreground">{metric.title}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={refreshMetrics}
+                  disabled={loading}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  Actualizar
+                </Button>
+              </div>
+            </div>
+
+            {/* Métricas generales */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {generalMetrics.map((metric, index) => {
+                const IconComponent = metric.icon;
+                return (
+                  <Card key={index} className="transition-all duration-200 hover:shadow-md hover-scale">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <IconComponent className={`h-5 w-5 ${metric.color}`} />
+                        <Badge 
+                          variant={metric.trend === 'up' ? 'default' : metric.trend === 'down' ? 'destructive' : 'secondary'}
+                          className="text-xs"
+                        >
+                          {metric.trend === 'up' && <TrendingUp className="h-3 w-3 mr-1" />}
+                          {metric.trend === 'down' && <TrendingDown className="h-3 w-3 mr-1" />}
+                          {metric.change}
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-2xl font-bold">{metric.value}</p>
+                        <p className="text-sm text-muted-foreground">{metric.title}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Métricas por plataforma */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {platformMetrics
+                .filter(platform => {
+                  const platformKey = platform.platform.toLowerCase();
+                  return socialConnections[platformKey as keyof typeof socialConnections];
+                })
+                .map((platform, index) => {
+                  const IconComponent = platform.icon;
+                  return (
+                    <Card key={index} className="overflow-hidden">
+                      <CardHeader className={`${platform.color} text-white pb-4`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <IconComponent />
+                            <div>
+                              <CardTitle className="text-lg">{platform.platform}</CardTitle>
+                              <p className="text-sm opacity-90">Últimos {timeRange}</p>
+                            </div>
+                          </div>
+                          <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                            {platform.metrics.posts} posts
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-6">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Users className="h-4 w-4" />
+                              Seguidores
+                            </div>
+                            <p className="text-xl font-bold">{platform.metrics.followers}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Heart className="h-4 w-4" />
+                              Engagement
+                            </div>
+                            <p className="text-xl font-bold">{platform.metrics.engagement}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Eye className="h-4 w-4" />
+                              Alcance
+                            </div>
+                            <p className="text-xl font-bold">{platform.metrics.reach}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Clock className="h-4 w-4" />
+                              Posts
+                            </div>
+                            <p className="text-xl font-bold">{platform.metrics.posts}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+            </div>
+
+            {/* Gráfico de rendimiento semanal */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Rendimiento Semanal
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 flex items-center justify-center bg-muted/50 rounded-lg">
+                  <div className="text-center">
+                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">Gráfico de rendimiento semanal</p>
+                    <p className="text-sm text-muted-foreground">Próximamente: Integración con Chart.js</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
-      </div>
 
-      {/* Métricas por plataforma */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {platformMetrics
-          .filter(platform => {
-            const platformKey = platform.platform.toLowerCase();
-            return socialConnections[platformKey as keyof typeof socialConnections];
-          })
-          .map((platform, index) => {
-            const IconComponent = platform.icon;
-            return (
-              <Card key={index} className="overflow-hidden">
-                <CardHeader className={`${platform.color} text-white pb-4`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <IconComponent />
-                      <div>
-                        <CardTitle className="text-lg">{platform.platform}</CardTitle>
-                        <p className="text-sm opacity-90">Últimos {timeRange}</p>
+            {/* Top posts */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Posts con Mejor Rendimiento</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    {
+                      platform: "LinkedIn",
+                      content: "Nuevas tendencias en marketing digital para 2024...",
+                      metrics: { likes: 45, comments: 12, shares: 8 },
+                      time: "Hace 2 días"
+                    },
+                    {
+                      platform: "Instagram",
+                      content: "Behind the scenes de nuestro equipo trabajando...",
+                      metrics: { likes: 123, comments: 18, shares: 5 },
+                      time: "Hace 3 días"
+                    },
+                    {
+                      platform: "TikTok",
+                      content: "Tutorial rápido sobre productividad...",
+                      metrics: { likes: 89, comments: 15, shares: 12 },
+                      time: "Hace 1 semana"
+                    }
+                  ].map((post, index) => (
+                    <div key={index} className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            {post.platform}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">{post.time}</span>
+                        </div>
+                        <p className="text-sm mb-3">{post.content}</p>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Heart className="h-3 w-3" />
+                            {post.metrics.likes}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <MessageCircle className="h-3 w-3" />
+                            {post.metrics.comments}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Share2 className="h-3 w-3" />
+                            {post.metrics.shares}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                      {platform.metrics.posts} posts
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        Seguidores
-                      </div>
-                      <p className="text-xl font-bold">{platform.metrics.followers}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Heart className="h-4 w-4" />
-                        Engagement
-                      </div>
-                      <p className="text-xl font-bold">{platform.metrics.engagement}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Eye className="h-4 w-4" />
-                        Alcance
-                      </div>
-                      <p className="text-xl font-bold">{platform.metrics.reach}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        Posts
-                      </div>
-                      <p className="text-xl font-bold">{platform.metrics.posts}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-      </div>
-
-      {/* Gráfico de rendimiento semanal */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Rendimiento Semanal
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 flex items-center justify-center bg-muted/50 rounded-lg">
-            <div className="text-center">
-              <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground">Gráfico de rendimiento semanal</p>
-              <p className="text-sm text-muted-foreground">Próximamente: Integración con Chart.js</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Top posts */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Posts con Mejor Rendimiento</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              {
-                platform: "LinkedIn",
-                content: "Nuevas tendencias en marketing digital para 2024...",
-                metrics: { likes: 45, comments: 12, shares: 8 },
-                time: "Hace 2 días"
-              },
-              {
-                platform: "Instagram",
-                content: "Behind the scenes de nuestro equipo trabajando...",
-                metrics: { likes: 123, comments: 18, shares: 5 },
-                time: "Hace 3 días"
-              },
-              {
-                platform: "TikTok",
-                content: "Tutorial rápido sobre productividad...",
-                metrics: { likes: 89, comments: 15, shares: 12 },
-                time: "Hace 1 semana"
-              }
-            ].map((post, index) => (
-              <div key={index} className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline" className="text-xs">
-                      {post.platform}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">{post.time}</span>
-                  </div>
-                  <p className="text-sm mb-3">{post.content}</p>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Heart className="h-3 w-3" />
-                      {post.metrics.likes}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MessageCircle className="h-3 w-3" />
-                      {post.metrics.comments}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Share2 className="h-3 w-3" />
-                      {post.metrics.shares}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

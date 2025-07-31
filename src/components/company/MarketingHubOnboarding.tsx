@@ -195,49 +195,79 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
       try {
         console.log(`🚀 Analyzing ${platform.name}...`);
         
-        // Simular análisis paso a paso
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
         let result: AnalysisResult;
         
         switch (platform.id) {
           case 'instagram':
             const username = platform.url.split('/').pop()?.replace('@', '');
             if (username) {
-              // Scraper
+              console.log(`📸 Analyzing Instagram: @${username}`);
+              
+              // 1. Scraper de Instagram
               const { data: scrapeData, error: scrapeError } = await supabase.functions.invoke('instagram-scraper', {
-                body: { action: 'get_posts', username_or_url: username }
+                body: { 
+                  action: 'get_posts', 
+                  username_or_url: username,
+                  user_id: profile.user_id
+                }
               });
               
-              if (scrapeError) throw scrapeError;
+              if (scrapeError) {
+                console.error('Instagram scraper error:', scrapeError);
+                throw new Error(`Error en scraper: ${scrapeError.message}`);
+              }
               
-              // Análisis inteligente
-              const { data: analysisData } = await supabase.functions.invoke('instagram-intelligent-analysis');
+              // 2. Análisis inteligente de Instagram
+              const { data: analysisData, error: analysisError } = await supabase.functions.invoke('instagram-intelligent-analysis', {
+                body: { user_id: profile.user_id }
+              });
+              
+              if (analysisError) {
+                console.error('Instagram analysis error:', analysisError);
+              }
               
               result = {
                 platform: platform.name,
                 success: true,
-                postsFound: scrapeData?.posts_count || 0,
+                postsFound: scrapeData?.posts_analyzed || scrapeData?.posts_count || 0,
                 insightsGenerated: analysisData?.insights_generated || 0,
                 actionablesGenerated: analysisData?.actionables_generated || 0
               };
             } else {
-              throw new Error('Username no válido');
+              throw new Error('Username de Instagram no válido');
             }
             break;
             
           case 'facebook':
-            // Análisis de Facebook
-            const { data: fbData } = await supabase.functions.invoke('facebook-scraper', {
-              body: { action: 'get_page_details', page_url: platform.url }
+            console.log(`📘 Analyzing Facebook: ${platform.url}`);
+            
+            // 1. Scraper de Facebook
+            const { data: fbData, error: fbScrapeError } = await supabase.functions.invoke('facebook-scraper', {
+              body: { 
+                action: 'get_page_details', 
+                page_url: platform.url,
+                user_id: profile.user_id
+              }
             });
             
-            const { data: fbAnalysis } = await supabase.functions.invoke('facebook-intelligent-analysis');
+            if (fbScrapeError) {
+              console.error('Facebook scraper error:', fbScrapeError);
+              throw new Error(`Error en scraper: ${fbScrapeError.message}`);
+            }
+            
+            // 2. Análisis inteligente de Facebook
+            const { data: fbAnalysis, error: fbAnalysisError } = await supabase.functions.invoke('facebook-intelligent-analysis', {
+              body: { user_id: profile.user_id }
+            });
+            
+            if (fbAnalysisError) {
+              console.error('Facebook analysis error:', fbAnalysisError);
+            }
             
             result = {
               platform: platform.name,
               success: true,
-              postsFound: fbData?.posts_count || 0,
+              postsFound: fbData?.posts_analyzed || fbData?.posts_count || 0,
               insightsGenerated: fbAnalysis?.insights_generated || 0,
               actionablesGenerated: fbAnalysis?.actionables_generated || 0
             };
@@ -246,16 +276,35 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
           case 'linkedin':
             const identifier = platform.url.match(/linkedin\.com\/company\/([a-zA-Z0-9-_]+)/)?.[1];
             if (identifier) {
-              const { data: linkedinData } = await supabase.functions.invoke('linkedin-scraper', {
-                body: { action: 'get_company_posts', company_identifier: identifier }
+              console.log(`💼 Analyzing LinkedIn: ${identifier}`);
+              
+              // 1. Scraper de LinkedIn
+              const { data: linkedinData, error: linkedinScrapeError } = await supabase.functions.invoke('linkedin-scraper', {
+                body: { 
+                  action: 'get_company_posts', 
+                  company_identifier: identifier,
+                  user_id: profile.user_id
+                }
               });
               
-              const { data: linkedinAnalysis } = await supabase.functions.invoke('linkedin-intelligent-analysis');
+              if (linkedinScrapeError) {
+                console.error('LinkedIn scraper error:', linkedinScrapeError);
+                throw new Error(`Error en scraper: ${linkedinScrapeError.message}`);
+              }
+              
+              // 2. Análisis inteligente de LinkedIn
+              const { data: linkedinAnalysis, error: linkedinAnalysisError } = await supabase.functions.invoke('linkedin-intelligent-analysis', {
+                body: { user_id: profile.user_id }
+              });
+              
+              if (linkedinAnalysisError) {
+                console.error('LinkedIn analysis error:', linkedinAnalysisError);
+              }
               
               result = {
                 platform: platform.name,
                 success: true,
-                postsFound: linkedinData?.posts_count || 0,
+                postsFound: linkedinData?.posts_analyzed || linkedinData?.posts_count || 0,
                 insightsGenerated: linkedinAnalysis?.insights_generated || 0,
                 actionablesGenerated: linkedinAnalysis?.actionables_generated || 0
               };
@@ -267,16 +316,35 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
           case 'tiktok':
             const tiktokUsername = platform.url.match(/tiktok\.com\/@([a-zA-Z0-9._-]+)/)?.[1];
             if (tiktokUsername) {
-              const { data: tiktokData } = await supabase.functions.invoke('tiktok-scraper', {
-                body: { action: 'get_posts', unique_id: tiktokUsername }
+              console.log(`🎵 Analyzing TikTok: @${tiktokUsername}`);
+              
+              // 1. Scraper de TikTok
+              const { data: tiktokData, error: tiktokScrapeError } = await supabase.functions.invoke('tiktok-scraper', {
+                body: { 
+                  action: 'get_posts', 
+                  unique_id: tiktokUsername,
+                  user_id: profile.user_id
+                }
               });
               
-              const { data: tiktokAnalysis } = await supabase.functions.invoke('tiktok-intelligent-analysis');
+              if (tiktokScrapeError) {
+                console.error('TikTok scraper error:', tiktokScrapeError);
+                throw new Error(`Error en scraper: ${tiktokScrapeError.message}`);
+              }
+              
+              // 2. Análisis inteligente de TikTok
+              const { data: tiktokAnalysis, error: tiktokAnalysisError } = await supabase.functions.invoke('tiktok-intelligent-analysis', {
+                body: { user_id: profile.user_id }
+              });
+              
+              if (tiktokAnalysisError) {
+                console.error('TikTok analysis error:', tiktokAnalysisError);
+              }
               
               result = {
                 platform: platform.name,
                 success: true,
-                postsFound: tiktokData?.posts_count || 0,
+                postsFound: tiktokData?.posts_analyzed || tiktokData?.posts_count || 0,
                 insightsGenerated: tiktokAnalysis?.insights_generated || 0,
                 actionablesGenerated: tiktokAnalysis?.actionables_generated || 0
               };
@@ -296,26 +364,32 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
             };
         }
         
+        console.log(`✅ ${platform.name} analysis completed:`, result);
         setAnalysisResults(prev => [...prev, result]);
         
       } catch (error) {
-        console.error(`Error analyzing ${platform.name}:`, error);
+        console.error(`❌ Error analyzing ${platform.name}:`, error);
         setAnalysisResults(prev => [...prev, {
           platform: platform.name,
           success: false,
           postsFound: 0,
           insightsGenerated: 0,
           actionablesGenerated: 0,
-          error: error.message
+          error: error.message || 'Error desconocido'
         }]);
       }
+      
+      // Esperar un poco entre análisis para no sobrecargar
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
     
-    // Cargar insights consolidados
+    // Cargar insights consolidados después de todos los análisis
     await loadConsolidatedData();
     
     setCurrentAnalyzing('');
     setAnalyzing(false);
+    
+    console.log('🎉 All social media analysis completed');
   };
 
   const loadConsolidatedData = async () => {

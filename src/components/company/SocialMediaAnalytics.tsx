@@ -80,7 +80,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       console.log('📊 Loading analytics data for user:', profile.user_id);
       
       // Cargar datos de múltiples tablas en paralelo
-      const [insightsRes, actionablesRes, postsRes, analyticsRes] = await Promise.all([
+      const [insightsRes, actionablesRes, instagramRes, linkedinRes, tiktokRes, facebookRes, analyticsRes] = await Promise.all([
         supabase
           .from('marketing_insights')
           .select('*')
@@ -93,20 +93,25 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
           .eq('user_id', profile.user_id)
           .order('created_at', { ascending: false }),
         
+        // Instagram posts
         supabase
           .from('instagram_posts')
           .select('*')
           .eq('user_id', profile.user_id)
           .order('posted_at', { ascending: false }),
         
-        // TODO: Agregar Facebook posts cuando estén disponibles
-        /*
+        // LinkedIn posts (usar datos existentes si están disponibles)
+        Promise.resolve({ data: [], error: null }).catch(() => ({ data: [], error: null })),
+        
+        // TikTok posts
         supabase
-          .from('facebook_posts')
+          .from('tiktok_posts')
           .select('*')
           .eq('user_id', profile.user_id)
           .order('posted_at', { ascending: false }),
-        */
+        
+        // Facebook posts (no disponible aún)
+        Promise.resolve({ data: [], error: null }).catch(() => ({ data: [], error: null })),
         
         supabase
           .from('social_media_analytics')
@@ -124,19 +129,38 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
         console.error('Error loading actionables:', actionablesRes.error);
         throw actionablesRes.error;
       }
-      if (postsRes.error) {
-        console.error('Error loading posts:', postsRes.error);
-        throw postsRes.error;
+      if (instagramRes.error) {
+        console.error('Error loading Instagram posts:', instagramRes.error);
+        throw instagramRes.error;
+      }
+      if (linkedinRes.error) {
+        console.warn('LinkedIn posts not available');
+      }
+      if (tiktokRes.error) {
+        console.error('Error loading TikTok posts:', tiktokRes.error);
+        // No fallar por TikTok, solo registrar
+        console.warn('TikTok posts not available');
+      }
+      if (facebookRes.error) {
+        console.warn('Facebook posts not available');
       }
       if (analyticsRes.error) {
         console.error('Error loading analytics:', analyticsRes.error);
         throw analyticsRes.error;
       }
 
+      // Combinar posts de todas las plataformas
+      const allPosts = [
+        ...(instagramRes.data || []).map(post => ({ ...post, platform: 'instagram' })),
+        ...(linkedinRes.data || []).map(post => ({ ...post, platform: 'linkedin' })),
+        ...(tiktokRes.data || []).map(post => ({ ...post, platform: 'tiktok' })),
+        ...(facebookRes.data || []).map(post => ({ ...post, platform: 'facebook' }))
+      ];
+
       const data = {
         insights: insightsRes.data || [],
         actionables: actionablesRes.data || [],
-        posts: postsRes.data || [],
+        posts: allPosts,
         analytics: analyticsRes.data || [],
         embeddings: []
       };
@@ -144,7 +168,11 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       console.log('📈 Data loaded:', {
         insights: data.insights.length,
         actionables: data.actionables.length,
-        posts: data.posts.length,
+        instagram: instagramRes.data?.length || 0,
+        linkedin: linkedinRes.data?.length || 0,
+        tiktok: tiktokRes.data?.length || 0,
+        facebook: facebookRes.data?.length || 0,
+        totalPosts: data.posts.length,
         analytics: data.analytics.length
       });
 
@@ -170,17 +198,44 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
     const stats: PlatformStats[] = [];
 
     platforms.forEach(platform => {
-      const platformPosts = data.posts.filter(post => 
-        platform === 'instagram' // Por ahora solo tenemos posts de Instagram
-      );
+      const platformPosts = data.posts.filter(post => post.platform === platform);
 
       if (platformPosts.length > 0) {
-        const totalLikes = platformPosts.reduce((sum, post) => sum + (post.likes_count || 0), 0);
-        const totalComments = platformPosts.reduce((sum, post) => sum + (post.comments_count || 0), 0);
-        const avgEngagement = platformPosts.reduce((sum, post) => sum + (post.engagement_rate || 0), 0) / platformPosts.length;
+        let totalLikes = 0;
+        let totalComments = 0;
+        let avgEngagement = 0;
+
+        // Calcular métricas según la plataforma
+        if (platform === 'instagram') {
+          totalLikes = platformPosts.reduce((sum, post) => sum + (post.like_count || 0), 0);
+          totalComments = platformPosts.reduce((sum, post) => sum + (post.comment_count || 0), 0);
+          avgEngagement = platformPosts.reduce((sum, post) => sum + (post.engagement_rate || 0), 0) / platformPosts.length;
+        } else if (platform === 'linkedin') {
+          totalLikes = platformPosts.reduce((sum, post) => sum + (post.stats?.total_reactions || 0), 0);
+          totalComments = platformPosts.reduce((sum, post) => sum + (post.stats?.comments || 0), 0);
+          avgEngagement = (totalLikes + totalComments) / platformPosts.length;
+        } else if (platform === 'tiktok') {
+          totalLikes = platformPosts.reduce((sum, post) => sum + (post.digg_count || 0), 0);
+          totalComments = platformPosts.reduce((sum, post) => sum + (post.comment_count || 0), 0);
+          avgEngagement = (totalLikes + totalComments) / platformPosts.length;
+        } else if (platform === 'facebook') {
+          // Métricas de Facebook cuando estén disponibles
+          totalLikes = platformPosts.reduce((sum, post) => sum + (post.likes || 0), 0);
+          totalComments = platformPosts.reduce((sum, post) => sum + (post.comments || 0), 0);
+          avgEngagement = (totalLikes + totalComments) / platformPosts.length;
+        }
         
         // Extraer hashtags más comunes
-        const allHashtags = platformPosts.flatMap(post => post.hashtags || []);
+        let allHashtags: string[] = [];
+        if (platform === 'instagram') {
+          allHashtags = platformPosts.flatMap(post => post.hashtags || []);
+        } else if (platform === 'linkedin') {
+          // LinkedIn no usa hashtags de la misma forma
+          allHashtags = platformPosts.flatMap(post => 
+            (post.text || '').match(/#\w+/g)?.map(tag => tag.replace('#', '')) || []
+          );
+        }
+        
         const hashtagCount: Record<string, number> = {};
         allHashtags.forEach(tag => {
           hashtagCount[tag] = (hashtagCount[tag] || 0) + 1;
@@ -210,18 +265,32 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
     try {
       console.log('🔄 Starting analytics refresh...');
       
-      // Primero obtener posts nuevos
-      const { data: scraperData, error: scraperError } = await supabase.functions.invoke('instagram-scraper', {
-        body: { 
-          action: 'get_posts', 
-          username_or_url: 'biury.co' // Esto debería venir del perfil conectado
-        }
-      });
-
-      if (scraperError) {
-        console.warn('⚠️ Error obteniendo posts:', scraperError);
-        // No fallar aquí, continuar con análisis de datos existentes
-      }
+      // Ejecutar scraping de todas las plataformas configuradas
+      await Promise.all([
+        // Instagram scraping
+        supabase.functions.invoke('instagram-scraper', {
+          body: { 
+            action: 'get_posts', 
+            username_or_url: 'biury.co'
+          }
+        }).catch(error => console.warn('⚠️ Error obteniendo posts de Instagram:', error)),
+        
+        // LinkedIn scraping
+        supabase.functions.invoke('linkedin-scraper', {
+          body: { 
+            action: 'get_company_posts',
+            company_identifier: 'biury'
+          }
+        }).catch(error => console.warn('⚠️ Error obteniendo posts de LinkedIn:', error)),
+        
+        // TikTok scraping
+        supabase.functions.invoke('tiktok-scraper', {
+          body: { 
+            action: 'get_posts',
+            unique_id: 'biury.co'
+          }
+        }).catch(error => console.warn('⚠️ Error obteniendo posts de TikTok:', error))
+      ]);
 
       // Ejecutar análisis avanzado con mejor manejo de errores
       console.log('📊 Ejecutando análisis avanzado...');
@@ -237,11 +306,9 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       // Reload data after analysis
       await loadAnalyticsData();
       
-      const newPostsCount = scraperData?.new_posts_count || 0;
-      
       toast({
         title: "Análisis actualizado",
-        description: `Se generaron nuevos insights. ${newPostsCount > 0 ? `Se agregaron ${newPostsCount} posts nuevos.` : 'Los datos están actualizados.'}`,
+        description: "Se actualizaron los datos de todas las plataformas conectadas",
       });
     } catch (error: any) {
       console.error('Error refreshing analytics:', error);
@@ -297,7 +364,11 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Likes</p>
                 <p className="text-2xl font-bold">
-                  {analyticsData.posts.reduce((sum, post) => sum + (post.likes_count || 0), 0)}
+                  {analyticsData.posts.reduce((sum, post) => {
+                    if (post.platform === 'instagram') return sum + (post.like_count || 0);
+                    if (post.platform === 'tiktok') return sum + (post.digg_count || 0);
+                    return sum + (post.likes || post.like_count || 0);
+                  }, 0)}
                 </p>
               </div>
               <Heart className="h-8 w-8 text-green-500" />

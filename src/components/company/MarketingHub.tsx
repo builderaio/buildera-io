@@ -141,10 +141,15 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
 
     try {
       // Obtener datos de todas las plataformas de redes sociales
-      const [instagramPosts, insights, actionables, analyticsData] = await Promise.all([
+      const [instagramPosts, tiktokPosts, insights, actionables, analyticsData] = await Promise.all([
         supabase
           .from('instagram_posts')
           .select('like_count, comment_count, posted_at, reach, impressions, video_view_count')
+          .eq('user_id', profile.user_id),
+        
+        supabase
+          .from('tiktok_posts')
+          .select('digg_count, comment_count, posted_at, play_count')
           .eq('user_id', profile.user_id),
         
         supabase
@@ -163,41 +168,67 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
           .eq('user_id', profile.user_id)
       ]);
 
-      const posts = instagramPosts.data || [];
+      const instagramData = instagramPosts.data || [];
+      const tiktokData = tiktokPosts.data || [];
       const insightsData = insights.data || [];
       const actionablesData = actionables.data || [];
       const analytics = analyticsData.data || [];
 
+      const totalPosts = instagramData.length + tiktokData.length;
+
       // Calcular métricas reales si hay datos
-      if (posts.length > 0 || analytics.length > 0) {
-        // Calcular alcance total real
-        const totalReach = posts.reduce((sum, post) => sum + (post.reach || post.impressions || 0), 0);
-        const totalLikes = posts.reduce((sum, post) => sum + (post.like_count || 0), 0);
-        const totalComments = posts.reduce((sum, post) => sum + (post.comment_count || 0), 0);
-        const totalViews = posts.reduce((sum, post) => sum + (post.video_view_count || post.impressions || 0), 0);
-        const totalEngagement = totalLikes + totalComments;
+      if (totalPosts > 0 || analytics.length > 0) {
+        // Calcular alcance total real combinando plataformas
+        const instagramReach = instagramData.reduce((sum, post) => sum + (post.reach || post.impressions || 0), 0);
+        const tiktokReach = tiktokData.reduce((sum, post) => sum + (post.play_count || 0), 0);
+        const totalReach = instagramReach + tiktokReach;
         
-        // Calcular engagement rate real
-        const avgEngagementRate = totalReach > 0 ? ((totalEngagement / totalReach) * 100) : 0;
+        // Calcular likes totales
+        const instagramLikes = instagramData.reduce((sum, post) => sum + (post.like_count || 0), 0);
+        const tiktokLikes = tiktokData.reduce((sum, post) => sum + (post.digg_count || 0), 0);
+        const totalLikes = instagramLikes + tiktokLikes;
         
-        // Calcular tendencias comparando últimos 30 días vs anteriores
-        const now = new Date();
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        
-        const recentPosts = posts.filter(post => new Date(post.posted_at || '') > thirtyDaysAgo);
-        const olderPosts = posts.filter(post => new Date(post.posted_at || '') <= thirtyDaysAgo);
-        
-        const recentEngagement = recentPosts.reduce((sum, post) => sum + ((post.like_count || 0) + (post.comment_count || 0)), 0);
-        const olderEngagement = olderPosts.reduce((sum, post) => sum + ((post.like_count || 0) + (post.comment_count || 0)), 0);
-        
-        const recentAvg = recentPosts.length > 0 ? recentEngagement / recentPosts.length : 0;
-        const olderAvg = olderPosts.length > 0 ? olderEngagement / olderPosts.length : 0;
+        // Calcular comentarios totales
+        const instagramComments = instagramData.reduce((sum, post) => sum + (post.comment_count || 0), 0);
+        const tiktokComments = tiktokData.reduce((sum, post) => sum + (post.comment_count || 0), 0);
+         const totalComments = instagramComments + tiktokComments;
+         const totalEngagement = totalLikes + totalComments;
+         
+         // Calcular acciones completadas
+         const completedActionables = actionablesData.filter(a => a.status === 'completed').length;
+         
+         // Calcular score de insights basado en la calidad y cantidad
+         const insightScore = insightsData.length > 0 ? 
+           Math.min((insightsData.length * 10) + (actionablesData.length * 5), 100) : 0;
+
+         // Datos anteriores para comparación (últimos 30 días vs anteriores)
+         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+         const recentInstagramPosts = instagramData.filter(post => new Date(post.posted_at) > thirtyDaysAgo);
+         const recentTikTokPosts = tiktokData.filter(post => new Date(post.posted_at) > thirtyDaysAgo);
+         const olderInstagramPosts = instagramData.filter(post => new Date(post.posted_at) <= thirtyDaysAgo);
+         const olderTikTokPosts = tiktokData.filter(post => new Date(post.posted_at) <= thirtyDaysAgo);
+         
+         // Calcular engagement rate real
+         const engagementRate = totalReach > 0 ? ((totalEngagement / totalReach) * 100) : 0;
+         
+         // Calcular engagement promedio para tendencias
+         const recentInstagramEng = recentInstagramPosts.reduce((sum, post) => sum + ((post.like_count || 0) + (post.comment_count || 0)), 0);
+         const recentTikTokEng = recentTikTokPosts.reduce((sum, post) => sum + ((post.digg_count || 0) + (post.comment_count || 0)), 0);
+         const recentEngagement = recentInstagramEng + recentTikTokEng;
+         
+         const olderInstagramEng = olderInstagramPosts.reduce((sum, post) => sum + ((post.like_count || 0) + (post.comment_count || 0)), 0);
+         const olderTikTokEng = olderTikTokPosts.reduce((sum, post) => sum + ((post.digg_count || 0) + (post.comment_count || 0)), 0);
+         const olderEngagement = olderInstagramEng + olderTikTokEng;
+         
+         const recentTotalPosts = recentInstagramPosts.length + recentTikTokPosts.length;
+         const olderTotalPosts = olderInstagramPosts.length + olderTikTokPosts.length;
+         const recentAvg = recentTotalPosts > 0 ? recentEngagement / recentTotalPosts : 0;
+         const olderAvg = olderTotalPosts > 0 ? olderEngagement / olderTotalPosts : 0;
         
         const engagementTrend = recentAvg > olderAvg ? 'up' : recentAvg < olderAvg ? 'down' : 'neutral';
         const engagementChange = olderAvg > 0 ? `${(((recentAvg - olderAvg) / olderAvg) * 100).toFixed(1)}%` : '0%';
 
         // Calcular conversiones basadas en actionables completados
-        const completedActionables = actionablesData.filter(a => a.status === 'completed').length;
         const pendingActionables = actionablesData.filter(a => a.status === 'pending').length;
         const conversionTrend = completedActionables > pendingActionables ? 'up' : 'down';
 
@@ -207,18 +238,18 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
         const roiEstimate = totalInsights > 0 ? (highImpactInsights / totalInsights * 100).toFixed(1) : '0';
         const roiTrend = highImpactInsights > (totalInsights / 2) ? 'up' : 'down';
 
-        const realMetrics: QuickStat[] = [
-          {
-            label: "Alcance Total",
-            value: totalReach > 0 ? formatNumber(totalReach) : formatNumber(totalViews),
-            change: engagementChange,
-            trend: engagementTrend,
-            icon: Eye,
-            color: "text-blue-600"
-          },
-          {
-            label: "Engagement Rate",
-            value: `${avgEngagementRate.toFixed(1)}%`,
+         const realMetrics: QuickStat[] = [
+           {
+             label: "Alcance Total",
+             value: totalReach > 0 ? formatNumber(totalReach) : formatNumber(totalLikes + totalComments),
+             change: engagementChange,
+             trend: engagementTrend,
+             icon: Eye,
+             color: "text-blue-600"
+           },
+           {
+             label: "Engagement Rate",
+             value: `${engagementRate.toFixed(1)}%`,
             change: engagementChange,
             trend: engagementTrend,
             icon: Heart,
@@ -242,14 +273,14 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
           }
         ];
 
-        setRealMetrics(realMetrics);
-        console.log('📊 Real metrics loaded:', {
-          totalReach,
-          avgEngagementRate: avgEngagementRate.toFixed(2),
-          completedActionables,
-          totalInsights: insightsData.length,
-          postsAnalyzed: posts.length
-        });
+         setRealMetrics(realMetrics);
+          console.log('📊 Real metrics loaded:', {
+            totalReach,
+            engagementRate: engagementRate.toFixed(2),
+            completedActionables,
+            totalInsights: insightsData.length,
+            postsAnalyzed: totalPosts
+          });
       } else {
         // Si no hay datos, mostrar métricas vacías pero reales
         const emptyMetrics: QuickStat[] = [

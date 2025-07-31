@@ -650,14 +650,20 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
       if (error) throw error;
 
-      if (data && Array.isArray(data)) {
+      console.log('🔍 Respuesta completa del webhook:', data);
+
+      // La respuesta está encapsulada en data.data
+      const responseData = data?.data;
+      console.log('📋 Datos de estrategia recibidos:', responseData);
+
+      if (responseData && Array.isArray(responseData)) {
         const strategyData = {
           mission: '',
           vision: '',
           propuesta_valor: ''
         };
 
-        data.forEach((item: any) => {
+        responseData.forEach((item: any) => {
           if (item.key === 'mision') {
             strategyData.mission = item.value;
           } else if (item.key === 'vision') {
@@ -675,6 +681,13 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         toast({
           title: "Estrategia generada y guardada",
           description: "Los fundamentos estratégicos han sido generados con IA y guardados en la base de datos",
+        });
+      } else {
+        console.log('❌ No se recibieron datos válidos para la estrategia:', responseData);
+        toast({
+          title: "Error en los datos",
+          description: "No se recibieron datos válidos del servicio de IA. Intenta nuevamente.",
+          variant: "destructive",
         });
       }
     } catch (error: any) {

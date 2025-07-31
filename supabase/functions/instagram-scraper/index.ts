@@ -39,52 +39,75 @@ serve(async (req) => {
 
   try {
     console.log('🚀 Instagram Scraper Function Started');
+    console.log('🔑 Checking API keys...');
+    console.log(`RAPIDAPI_KEY configured: ${!!rapidApiKey}`);
+    console.log(`OPENAI_API_KEY configured: ${!!openAIApiKey}`);
     
-    if (!rapidApiKey) {
-      console.error('❌ RAPIDAPI_KEY not configured');
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'RAPIDAPI_KEY not configured'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // Remove the API key requirement temporarily for testing
+    // if (!rapidApiKey) {
+    //   console.error('❌ RAPIDAPI_KEY not configured');
+    //   return new Response(JSON.stringify({
+    //     success: false,
+    //     error: 'RAPIDAPI_KEY not configured'
+    //   }), {
+    //     status: 500,
+    //     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    //   });
+    // }
 
-    if (!openAIApiKey) {
-      console.error('❌ OPENAI_API_KEY not configured');
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'OPENAI_API_KEY not configured'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // if (!openAIApiKey) {
+    //   console.error('❌ OPENAI_API_KEY not configured');
+    //   return new Response(JSON.stringify({
+    //     success: false,
+    //     error: 'OPENAI_API_KEY not configured'
+    //   }), {
+    //     status: 500,
+    //     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    //   });
+    // }
 
     const { action, username_or_url } = await req.json();
     console.log(`📱 Instagram Scraper - Action: ${action}, Username: ${username_or_url}`);
 
     // Extract username from URL or use as is
     const username = extractInstagramUsername(username_or_url);
+    console.log(`✅ Extracted username: ${username}`);
     
     let responseData: any = {};
 
-    switch (action) {
-      case 'get_profile_details':
-        responseData = await getInstagramProfileDetails(username);
-        break;
-      case 'get_followers':
-        responseData = await getInstagramFollowers(username);
-        break;
-      case 'get_following':
-        responseData = await getInstagramFollowing(username);
-        break;
-      case 'get_complete_analysis':
-        responseData = await getCompleteInstagramAnalysis(username);
-        break;
-      default:
-        throw new Error(`Unknown action: ${action}`);
+    // Simplified test - return static data first to ensure function works
+    if (action === 'get_complete_analysis') {
+      console.log('🧪 Testing with static data...');
+      responseData = {
+        profile: {
+          username: username,
+          full_name: 'Test Profile',
+          followers_count: 1000,
+          following_count: 500,
+          media_count: 50,
+          is_business: true,
+          is_verified: false,
+          biography: 'Test biography'
+        },
+        summary: {
+          total_followers: 1000,
+          total_following: 500,
+          total_posts: 50,
+          account_type: 'Empresa',
+          verification_status: 'No verificado',
+          engagement_ratio: 0.05
+        },
+        analysis: {
+          summary: 'Análisis de prueba exitoso',
+          recommendations: ['Recomendación 1', 'Recomendación 2'],
+          opportunities: ['Oportunidad 1', 'Oportunidad 2']
+        },
+        followers: [],
+        following: []
+      };
+      console.log('✅ Static test data prepared');
+    } else {
+      throw new Error(`Action not supported in test mode: ${action}`);
     }
 
     return new Response(JSON.stringify({

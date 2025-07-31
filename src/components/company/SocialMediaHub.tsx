@@ -26,7 +26,8 @@ import {
   Link,
   Globe,
   Users,
-  TrendingUp
+  TrendingUp,
+  UserPlus
 } from "lucide-react";
 
 interface SocialMediaHubProps {
@@ -705,19 +706,6 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         </Card>
       )}
 
-      {/* Debug Info */}
-      {instagramDetails && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle>🐛 DEBUG: Datos de Instagram cargados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <pre className="text-xs bg-white p-3 rounded border overflow-auto">
-              {JSON.stringify(instagramDetails, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Detalles de Instagram */}
       {selectedNetwork && instagramDetails && selectedNetwork.id === 'instagram' && (
@@ -731,31 +719,50 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-700">
-                    {instagramDetails.summary?.total_followers?.toLocaleString() || 'N/A'}
+                  <div className="text-2xl font-bold text-blue-600">
+                    {instagramDetails.summary?.total_followers?.toLocaleString() || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Seguidores</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-700">
-                    {instagramDetails.summary?.total_following?.toLocaleString() || 'N/A'}
+                  <div className="text-2xl font-bold text-green-600">
+                    {instagramDetails.summary?.total_following?.toLocaleString() || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Siguiendo</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-700">
-                    {instagramDetails.summary?.total_posts?.toLocaleString() || 'N/A'}
+                  <div className="text-2xl font-bold text-purple-600">
+                    {instagramDetails.summary?.total_posts?.toLocaleString() || 0}
                   </div>
                   <div className="text-sm text-muted-foreground">Publicaciones</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-700">
-                    {instagramDetails.summary?.account_type || 'N/A'}
+                  <div className="text-2xl font-bold text-orange-600">
+                    {(instagramDetails.summary?.engagement_ratio * 100)?.toFixed(1) || 0}%
                   </div>
-                  <div className="text-sm text-muted-foreground">Tipo de cuenta</div>
+                  <div className="text-sm text-muted-foreground">Engagement</div>
                 </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-muted rounded-lg">
+                <p className="text-sm">
+                  <span className="font-semibold">Tipo de cuenta:</span> {instagramDetails.summary?.account_type}
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Estado:</span> {instagramDetails.summary?.verification_status}
+                </p>
+                {instagramDetails.summary?.followers_sample && (
+                  <p className="text-sm">
+                    <span className="font-semibold">Muestra de seguidores:</span> {instagramDetails.summary.followers_sample}
+                  </p>
+                )}
+                {instagramDetails.summary?.following_sample && (
+                  <p className="text-sm">
+                    <span className="font-semibold">Muestra de seguidos:</span> {instagramDetails.summary.following_sample}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

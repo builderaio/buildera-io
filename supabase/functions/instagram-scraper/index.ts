@@ -43,28 +43,16 @@ serve(async (req) => {
     console.log(`RAPIDAPI_KEY configured: ${!!rapidApiKey}`);
     console.log(`OPENAI_API_KEY configured: ${!!openAIApiKey}`);
     
-    // Remove the API key requirement temporarily for testing
-    // if (!rapidApiKey) {
-    //   console.error('❌ RAPIDAPI_KEY not configured');
-    //   return new Response(JSON.stringify({
-    //     success: false,
-    //     error: 'RAPIDAPI_KEY not configured'
-    //   }), {
-    //     status: 500,
-    //     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    //   });
-    // }
-
-    // if (!openAIApiKey) {
-    //   console.error('❌ OPENAI_API_KEY not configured');
-    //   return new Response(JSON.stringify({
-    //     success: false,
-    //     error: 'OPENAI_API_KEY not configured'
-    //   }), {
-    //     status: 500,
-    //     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    //   });
-    // }
+    if (!rapidApiKey) {
+      console.error('❌ RAPIDAPI_KEY not configured');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'RAPIDAPI_KEY not configured'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const { action, username_or_url } = await req.json();
     console.log(`📱 Instagram Scraper - Action: ${action}, Username: ${username_or_url}`);
@@ -75,39 +63,10 @@ serve(async (req) => {
     
     let responseData: any = {};
 
-    // Simplified test - return static data first to ensure function works
     if (action === 'get_complete_analysis') {
-      console.log('🧪 Testing with static data...');
-      responseData = {
-        profile: {
-          username: username,
-          full_name: 'Test Profile',
-          followers_count: 1000,
-          following_count: 500,
-          media_count: 50,
-          is_business: true,
-          is_verified: false,
-          biography: 'Test biography'
-        },
-        summary: {
-          total_followers: 1000,
-          total_following: 500,
-          total_posts: 50,
-          account_type: 'Empresa',
-          verification_status: 'No verificado',
-          engagement_ratio: 0.05
-        },
-        analysis: {
-          summary: 'Análisis de prueba exitoso',
-          recommendations: ['Recomendación 1', 'Recomendación 2'],
-          opportunities: ['Oportunidad 1', 'Oportunidad 2']
-        },
-        followers: [],
-        following: []
-      };
-      console.log('✅ Static test data prepared');
+      responseData = await getCompleteInstagramAnalysis(username);
     } else {
-      throw new Error(`Action not supported in test mode: ${action}`);
+      throw new Error(`Action not supported: ${action}`);
     }
 
     return new Response(JSON.stringify({
@@ -251,27 +210,44 @@ async function getCompleteInstagramAnalysis(username: string): Promise<any> {
   console.log(`📊 Getting complete Instagram analysis for: ${username}`);
   
   try {
-    // Start with just profile info to test
-    console.log('🔄 Step 1: Getting profile details...');
-    const profileInfo = await getInstagramProfileDetails(username);
-    console.log('✅ Step 1 completed successfully');
+    // Get all data in parallel for better performance
+    console.log('🔄 Getting Instagram data...');
+    const [profileInfo, followers, following] = await Promise.all([
+      getInstagramProfileDetails(username),
+      getInstagramFollowers(username),
+      getInstagramFollowing(username)
+    ]);
 
-    // For now, return simplified response to test basic functionality
+    console.log('✅ All Instagram data retrieved successfully');
+
+    // Organize data with AI if OpenAI key is available
+    let aiAnalysis = null;
+    if (openAIApiKey) {
+      try {
+        const analysisData = { profile: profileInfo, followers, following };
+        aiAnalysis = await organizeInstagramDataWithAI(analysisData);
+      } catch (error) {
+        console.error('❌ OpenAI analysis failed:', error);
+      }
+    }
+
     const result = {
       profile: profileInfo,
-      followers: [], // Temporarily empty to avoid API issues
-      following: [], // Temporarily empty to avoid API issues
-      analysis: {
+      followers: followers,
+      following: following,
+      analysis: aiAnalysis || {
         summary: `Perfil de Instagram para @${profileInfo.username || username}. Cuenta ${profileInfo.is_business ? 'empresarial' : 'personal'} con ${profileInfo.followers_count || 0} seguidores.`,
         recommendations: [
           "Verificar configuración de la cuenta empresarial",
           "Optimizar biografía para mejor engagement",
-          "Mantener contenido consistente"
+          "Mantener contenido consistente",
+          "Analizar patrones de seguidores para mejores horarios de publicación"
         ],
         opportunities: [
           "Aumentar frecuencia de publicaciones",
           "Utilizar stories más frecuentemente",
-          "Colaboraciones con influencers locales"
+          "Colaboraciones con influencers locales",
+          "Engagement con seguidores de cuentas similares"
         ]
       },
       summary: {
@@ -281,6 +257,8 @@ async function getCompleteInstagramAnalysis(username: string): Promise<any> {
         engagement_ratio: calculateEngagementRatio(profileInfo),
         account_type: profileInfo.is_business ? 'Empresa' : 'Personal',
         verification_status: profileInfo.is_verified ? 'Verificado' : 'No verificado',
+        followers_sample: followers.length,
+        following_sample: following.length
       }
     };
 

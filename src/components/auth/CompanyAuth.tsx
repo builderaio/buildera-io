@@ -159,54 +159,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
           });
           
-          // Llamar a los webhooks para obtener datos del negocio
-          if (websiteUrl) {
-            try {
-              console.log("Llamando a webhooks para obtener datos del negocio...");
-              
-              // Llamar a getDataByURL
-              const dataResponse = await supabase.functions.invoke('get-data-by-url', {
-                body: { 
-                  url: websiteUrl,
-                  user_id: data.user.id 
-                }
-              });
-              
-              if (dataResponse.error) {
-                console.error("Error calling getDataByURL:", dataResponse.error);
-              }
-              
-              // Llamar a getBrandByURL
-              const brandResponse = await supabase.functions.invoke('get-brand-by-url', {
-                body: { 
-                  url: websiteUrl,
-                  user_id: data.user.id 
-                }
-              });
-              
-              if (brandResponse.error) {
-                console.error("Error calling getBrandByURL:", brandResponse.error);
-              }
-              
-              // Llamar a n8n webhook para notificar registro
-              const n8nResponse = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
-                body: {
-                  KEY: "INFO",
-                  COMPANY_INFO: `Empresa ${companyName} sitio web ${websiteUrl}`,
-                  ADDITIONAL_INFO: ""
-                }
-              });
-              
-              if (n8nResponse.error) {
-                console.error("Error calling n8n webhook:", n8nResponse.error);
-              }
-              
-              console.log("Webhooks ejecutados para obtener datos del negocio");
-            } catch (error) {
-              console.error("Error ejecutando webhooks:", error);
-              // No mostramos error al usuario ya que el registro fue exitoso
-            }
-          }
+          // Los webhooks se ejecutarán automáticamente en background
+          // mediante el trigger de la base de datos
+          console.log("Usuario de empresa registrado exitosamente");
           
           // Cambiar a modo login después del registro exitoso
           if (onModeChange) {

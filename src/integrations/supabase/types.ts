@@ -2558,6 +2558,10 @@ export type Database = {
         Args: { "": unknown[] }
         Returns: number
       }
+      handle_webhook_notification: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       hnsw_bit_support: {
         Args: { "": unknown }
         Returns: unknown

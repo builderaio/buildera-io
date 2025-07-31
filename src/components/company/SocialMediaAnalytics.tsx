@@ -225,7 +225,9 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
 
       // Ejecutar análisis avanzado con mejor manejo de errores
       console.log('📊 Ejecutando análisis avanzado...');
-      const { data, error } = await supabase.functions.invoke('advanced-social-analyzer');
+      const { data, error } = await supabase.functions.invoke('advanced-social-analyzer', {
+        body: { platform: 'instagram', action: 'process_calendar_data' }
+      });
       
       if (error) {
         console.error('❌ Error en análisis avanzado:', error);

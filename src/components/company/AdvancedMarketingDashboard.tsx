@@ -160,7 +160,9 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
       }
       
       // Ejecutar el análisis avanzado con los datos disponibles en BD
-      const { data, error } = await supabase.functions.invoke('advanced-social-analyzer');
+      const { data, error } = await supabase.functions.invoke('advanced-social-analyzer', {
+        body: { platform: 'instagram', action: 'process_calendar_data' }
+      });
       
       if (error) {
         console.error('Error in advanced analyzer:', error);

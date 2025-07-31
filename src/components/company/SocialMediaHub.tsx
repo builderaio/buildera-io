@@ -701,7 +701,9 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     try {
       console.log('🧠 Loading Facebook intelligent analysis...');
       
-      const { data, error } = await supabase.functions.invoke('facebook-intelligent-analysis');
+      const { data, error } = await supabase.functions.invoke('facebook-intelligent-analysis', {
+        body: { user_id: profile?.user_id }
+      });
 
       if (error) {
         throw error;

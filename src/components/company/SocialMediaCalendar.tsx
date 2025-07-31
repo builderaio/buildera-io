@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, TrendingUp, MapPin, Hash, Users, BarChart3 } from 'lucide-react';
+import { Calendar, Clock, TrendingUp, MapPin, Hash, Users, BarChart3, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -266,8 +266,17 @@ export function SocialMediaCalendar() {
             ))}
           </select>
           <Button onClick={processCalendarData} disabled={loading}>
-            <BarChart3 className="w-4 h-4 mr-2" />
-            {loading ? 'Procesando...' : 'Actualizar Datos'}
+            {loading ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Procesando...
+              </>
+            ) : (
+              <>
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Actualizar Datos
+              </>
+            )}
           </Button>
         </div>
       </div>

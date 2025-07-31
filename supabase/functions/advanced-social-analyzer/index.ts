@@ -28,7 +28,8 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { platform, action } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { platform = 'instagram', action = 'process_calendar_data' } = body;
     console.log(`🔍 Advanced Social Analyzer - Platform: ${platform}, Action: ${action}`);
 
     let result: any = {};
@@ -56,9 +57,20 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('❌ Advanced Social Analyzer Error:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      cause: error.cause
+    });
+    
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: error.message || 'Unknown error occurred',
+      details: {
+        name: error.name,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n') // First 3 lines of stack
+      }
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -72,11 +84,18 @@ async function processCalendarData(userId: string, platform: string, supabase: a
   let posts: any[] = [];
 
   if (platform === 'instagram') {
-    const { data: instagramPosts } = await supabase
+    const { data: instagramPosts, error } = await supabase
       .from('instagram_posts')
       .select('*')
       .eq('user_id', userId);
+    
+    if (error) {
+      console.error('❌ Error fetching Instagram posts:', error);
+      throw new Error(`Error fetching Instagram posts: ${error.message}`);
+    }
+    
     posts = instagramPosts || [];
+    console.log(`📊 Found ${posts.length} Instagram posts`);
   }
 
   const calendarEntries = posts.map(post => {
@@ -103,9 +122,16 @@ async function processCalendarData(userId: string, platform: string, supabase: a
   });
 
   if (calendarEntries.length > 0) {
-    await supabase
+    const { error: upsertError } = await supabase
       .from('social_media_calendar')
       .upsert(calendarEntries, { onConflict: 'user_id,platform,post_id' });
+    
+    if (upsertError) {
+      console.error('❌ Error upserting calendar entries:', upsertError);
+      throw new Error(`Error saving calendar data: ${upsertError.message}`);
+    }
+    
+    console.log(`✅ Successfully saved ${calendarEntries.length} calendar entries`);
   }
 
   return {
@@ -134,9 +160,16 @@ async function analyzeFollowersLocation(userId: string, platform: string, supaba
     data_source: 'inferred'
   }));
 
-  await supabase
+  const { error: locationError } = await supabase
     .from('followers_location_analysis')
     .upsert(locationAnalysis, { onConflict: 'user_id,platform,country' });
+  
+  if (locationError) {
+    console.error('❌ Error saving location analysis:', locationError);
+    throw new Error(`Error saving location analysis: ${locationError.message}`);
+  }
+  
+  console.log(`✅ Successfully saved ${locationAnalysis.length} location analyses`);
 
   return {
     total_followers_analyzed: 412,
@@ -168,9 +201,16 @@ async function generateAudienceInsights(userId: string, platform: string, supaba
     }
   ];
 
-  await supabase
+  const { error: insightsError } = await supabase
     .from('audience_insights')
     .upsert(insights);
+  
+  if (insightsError) {
+    console.error('❌ Error saving audience insights:', insightsError);
+    throw new Error(`Error saving audience insights: ${insightsError.message}`);
+  }
+  
+  console.log(`✅ Successfully saved ${insights.length} audience insights`);
 
   return {
     insights_generated: insights.length,

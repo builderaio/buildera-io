@@ -21,6 +21,15 @@ export const EnrichedCompanyInfo = ({ companyId }: EnrichedCompanyInfoProps) => 
     isDataEnriched,
     getEnrichmentStatus 
   } = useEnrichedCompanyData(companyId);
+
+  console.log('🔍 EnrichedCompanyInfo Debug:', {
+    companyId,
+    loading,
+    error,
+    hasCompanyData: !!companyData,
+    countryData,
+    enrichmentStatus: companyData ? getEnrichmentStatus() : 'no-data'
+  });
   const { toast } = useToast();
 
   const handleRefresh = () => {

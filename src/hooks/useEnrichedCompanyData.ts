@@ -32,6 +32,7 @@ export const useEnrichedCompanyData = (companyId?: string) => {
 
   const fetchEnrichedCompanyData = async (id: string) => {
     try {
+      console.log('🔍 fetchEnrichedCompanyData called with id:', id);
       setLoading(true);
       setError(null);
 
@@ -39,31 +40,35 @@ export const useEnrichedCompanyData = (companyId?: string) => {
         .from('companies')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
-        console.error('Error fetching enriched company data:', fetchError);
+        console.error('❌ Error fetching enriched company data:', fetchError);
         setError(fetchError.message);
         return;
       }
 
+      console.log('✅ Company data fetched:', data);
       setCompanyData(data);
       
       // Obtener información del país del usuario principal de la empresa
-      const { data: countryInfo } = await supabase
-        .from('profiles')
-        .select('country')
-        .eq('user_id', (await supabase
-          .from('company_members')
-          .select('user_id')
-          .eq('company_id', id)
-          .eq('is_primary', true)
-          .single()
-        ).data?.user_id || '')
-        .single();
+      const { data: memberData } = await supabase
+        .from('company_members')
+        .select('user_id')
+        .eq('company_id', id)
+        .eq('is_primary', true)
+        .maybeSingle();
       
-      if (countryInfo?.country) {
-        setCountryData(countryInfo.country);
+      if (memberData?.user_id) {
+        const { data: countryInfo } = await supabase
+          .from('profiles')
+          .select('country')
+          .eq('user_id', memberData.user_id)
+          .maybeSingle();
+        
+        if (countryInfo?.country) {
+          setCountryData(countryInfo.country);
+        }
       }
     } catch (err: any) {
       console.error('Error in fetchEnrichedCompanyData:', err);

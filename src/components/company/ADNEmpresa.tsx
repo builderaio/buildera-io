@@ -1195,6 +1195,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             </TabsList>
 
             <TabsContent value="perfil" className="space-y-6 mt-6">
+              {/* Información Enriquecida por IA */}
+              {profile?.primary_company_id && (
+                <EnrichedCompanyInfo companyId={profile.primary_company_id} />
+              )}
               {/* Información de la Empresa */}
               <Card>
                 <CardHeader>
@@ -2040,11 +2044,6 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             </TabsContent>
 
             <TabsContent value="perfil" className="space-y-6 mt-6">
-              {/* Información Enriquecida por IA */}
-              {profile?.primary_company_id && (
-                <EnrichedCompanyInfo companyId={profile.primary_company_id} />
-              )}
-              
               <CompanyProfileForm profile={profile} onProfileUpdate={onProfileUpdate} />
             </TabsContent>
 

@@ -744,6 +744,105 @@ export type Database = {
         }
         Relationships: []
       }
+      audience_insights: {
+        Row: {
+          age_ranges: Json | null
+          analysis_period_end: string | null
+          analysis_period_start: string | null
+          audience_segment: string | null
+          brand_affinities: string[] | null
+          confidence_level: number | null
+          content_consumption_habits: Json | null
+          content_preferences: Json | null
+          conversion_potential: number | null
+          created_at: string
+          device_usage: Json | null
+          education_levels: Json | null
+          engagement_patterns: Json | null
+          gender_split: Json | null
+          id: string
+          income_ranges: Json | null
+          insight_type: string
+          interests: Json | null
+          lifetime_value_estimate: number | null
+          online_activity_patterns: Json | null
+          platform: string
+          purchase_intent_score: number | null
+          raw_insights: Json | null
+          relationship_status: Json | null
+          sample_size: number | null
+          segment_percentage: number | null
+          segment_size: number | null
+          shopping_behaviors: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age_ranges?: Json | null
+          analysis_period_end?: string | null
+          analysis_period_start?: string | null
+          audience_segment?: string | null
+          brand_affinities?: string[] | null
+          confidence_level?: number | null
+          content_consumption_habits?: Json | null
+          content_preferences?: Json | null
+          conversion_potential?: number | null
+          created_at?: string
+          device_usage?: Json | null
+          education_levels?: Json | null
+          engagement_patterns?: Json | null
+          gender_split?: Json | null
+          id?: string
+          income_ranges?: Json | null
+          insight_type: string
+          interests?: Json | null
+          lifetime_value_estimate?: number | null
+          online_activity_patterns?: Json | null
+          platform: string
+          purchase_intent_score?: number | null
+          raw_insights?: Json | null
+          relationship_status?: Json | null
+          sample_size?: number | null
+          segment_percentage?: number | null
+          segment_size?: number | null
+          shopping_behaviors?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age_ranges?: Json | null
+          analysis_period_end?: string | null
+          analysis_period_start?: string | null
+          audience_segment?: string | null
+          brand_affinities?: string[] | null
+          confidence_level?: number | null
+          content_consumption_habits?: Json | null
+          content_preferences?: Json | null
+          conversion_potential?: number | null
+          created_at?: string
+          device_usage?: Json | null
+          education_levels?: Json | null
+          engagement_patterns?: Json | null
+          gender_split?: Json | null
+          id?: string
+          income_ranges?: Json | null
+          insight_type?: string
+          interests?: Json | null
+          lifetime_value_estimate?: number | null
+          online_activity_patterns?: Json | null
+          platform?: string
+          purchase_intent_score?: number | null
+          raw_insights?: Json | null
+          relationship_status?: Json | null
+          sample_size?: number | null
+          segment_percentage?: number | null
+          segment_size?: number | null
+          shopping_behaviors?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       business_function_configurations: {
         Row: {
           configuration: Json | null
@@ -1190,6 +1289,99 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_analysis: {
+        Row: {
+          analysis_data: Json | null
+          avg_engagement_rate: number | null
+          best_performing_content_types: string[] | null
+          collaboration_potential: number | null
+          competitor_name: string | null
+          competitor_url: string | null
+          competitor_username: string
+          content_gaps: string[] | null
+          content_similarity_score: number | null
+          content_themes: string[] | null
+          created_at: string
+          engagement_comparison: number | null
+          engagement_trend: string | null
+          follower_overlap_percentage: number | null
+          followers_count: number | null
+          following_count: number | null
+          growth_rate_monthly: number | null
+          hashtag_opportunities: string[] | null
+          id: string
+          last_analyzed: string
+          optimal_posting_days: number[] | null
+          optimal_posting_times: number[] | null
+          platform: string
+          posting_frequency: number | null
+          posts_count: number | null
+          top_hashtags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_data?: Json | null
+          avg_engagement_rate?: number | null
+          best_performing_content_types?: string[] | null
+          collaboration_potential?: number | null
+          competitor_name?: string | null
+          competitor_url?: string | null
+          competitor_username: string
+          content_gaps?: string[] | null
+          content_similarity_score?: number | null
+          content_themes?: string[] | null
+          created_at?: string
+          engagement_comparison?: number | null
+          engagement_trend?: string | null
+          follower_overlap_percentage?: number | null
+          followers_count?: number | null
+          following_count?: number | null
+          growth_rate_monthly?: number | null
+          hashtag_opportunities?: string[] | null
+          id?: string
+          last_analyzed?: string
+          optimal_posting_days?: number[] | null
+          optimal_posting_times?: number[] | null
+          platform: string
+          posting_frequency?: number | null
+          posts_count?: number | null
+          top_hashtags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_data?: Json | null
+          avg_engagement_rate?: number | null
+          best_performing_content_types?: string[] | null
+          collaboration_potential?: number | null
+          competitor_name?: string | null
+          competitor_url?: string | null
+          competitor_username?: string
+          content_gaps?: string[] | null
+          content_similarity_score?: number | null
+          content_themes?: string[] | null
+          created_at?: string
+          engagement_comparison?: number | null
+          engagement_trend?: string | null
+          follower_overlap_percentage?: number | null
+          followers_count?: number | null
+          following_count?: number | null
+          growth_rate_monthly?: number | null
+          hashtag_opportunities?: string[] | null
+          id?: string
+          last_analyzed?: string
+          optimal_posting_days?: number[] | null
+          optimal_posting_times?: number[] | null
+          platform?: string
+          posting_frequency?: number | null
+          posts_count?: number | null
+          top_hashtags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       content_clusters: {
         Row: {
           avg_engagement: number | null
@@ -1592,6 +1784,126 @@ export type Database = {
         }
         Relationships: []
       }
+      facebook_page_data: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_updated: string | null
+          page_details: Json | null
+          page_url: string
+          reviews: Json | null
+          total_reviews: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_updated?: string | null
+          page_details?: Json | null
+          page_url: string
+          reviews?: Json | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_updated?: string | null
+          page_details?: Json | null
+          page_url?: string
+          reviews?: Json | null
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      followers_location_analysis: {
+        Row: {
+          analysis_date: string
+          avg_age: number | null
+          avg_purchasing_power: number | null
+          city: string | null
+          confidence_score: number | null
+          coordinates: unknown | null
+          country: string
+          country_code: string | null
+          created_at: string
+          data_source: string | null
+          followers_count: number
+          gender_distribution: Json | null
+          id: string
+          interest_categories: Json | null
+          language_distribution: Json | null
+          market_potential_score: number | null
+          peak_activity_days: number[] | null
+          peak_activity_hours: number[] | null
+          percentage: number | null
+          platform: string
+          raw_data: Json | null
+          region: string | null
+          timezone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_date?: string
+          avg_age?: number | null
+          avg_purchasing_power?: number | null
+          city?: string | null
+          confidence_score?: number | null
+          coordinates?: unknown | null
+          country: string
+          country_code?: string | null
+          created_at?: string
+          data_source?: string | null
+          followers_count?: number
+          gender_distribution?: Json | null
+          id?: string
+          interest_categories?: Json | null
+          language_distribution?: Json | null
+          market_potential_score?: number | null
+          peak_activity_days?: number[] | null
+          peak_activity_hours?: number[] | null
+          percentage?: number | null
+          platform: string
+          raw_data?: Json | null
+          region?: string | null
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_date?: string
+          avg_age?: number | null
+          avg_purchasing_power?: number | null
+          city?: string | null
+          confidence_score?: number | null
+          coordinates?: unknown | null
+          country?: string
+          country_code?: string | null
+          created_at?: string
+          data_source?: string | null
+          followers_count?: number
+          gender_distribution?: Json | null
+          id?: string
+          interest_categories?: Json | null
+          language_distribution?: Json | null
+          market_potential_score?: number | null
+          peak_activity_days?: number[] | null
+          peak_activity_hours?: number[] | null
+          percentage?: number | null
+          platform?: string
+          raw_data?: Json | null
+          region?: string | null
+          timezone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       function_model_assignments: {
         Row: {
           api_key_id: string | null
@@ -1772,6 +2084,96 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      instagram_followers_detailed: {
+        Row: {
+          created_at: string
+          follower_avg_comments: number | null
+          follower_avg_likes: number | null
+          follower_bio: string | null
+          follower_business_category: string | null
+          follower_city: string | null
+          follower_country: string | null
+          follower_engagement_rate: number | null
+          follower_external_url: string | null
+          follower_followers_count: number | null
+          follower_following_count: number | null
+          follower_full_name: string | null
+          follower_is_private: boolean | null
+          follower_is_verified: boolean | null
+          follower_language: string | null
+          follower_last_activity: string | null
+          follower_location: string | null
+          follower_media_count: number | null
+          follower_profile_pic_url: string | null
+          follower_timezone: string | null
+          follower_user_id: string
+          follower_username: string | null
+          id: string
+          instagram_user_id: string
+          raw_data: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_avg_comments?: number | null
+          follower_avg_likes?: number | null
+          follower_bio?: string | null
+          follower_business_category?: string | null
+          follower_city?: string | null
+          follower_country?: string | null
+          follower_engagement_rate?: number | null
+          follower_external_url?: string | null
+          follower_followers_count?: number | null
+          follower_following_count?: number | null
+          follower_full_name?: string | null
+          follower_is_private?: boolean | null
+          follower_is_verified?: boolean | null
+          follower_language?: string | null
+          follower_last_activity?: string | null
+          follower_location?: string | null
+          follower_media_count?: number | null
+          follower_profile_pic_url?: string | null
+          follower_timezone?: string | null
+          follower_user_id: string
+          follower_username?: string | null
+          id?: string
+          instagram_user_id: string
+          raw_data?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_avg_comments?: number | null
+          follower_avg_likes?: number | null
+          follower_bio?: string | null
+          follower_business_category?: string | null
+          follower_city?: string | null
+          follower_country?: string | null
+          follower_engagement_rate?: number | null
+          follower_external_url?: string | null
+          follower_followers_count?: number | null
+          follower_following_count?: number | null
+          follower_full_name?: string | null
+          follower_is_private?: boolean | null
+          follower_is_verified?: boolean | null
+          follower_language?: string | null
+          follower_last_activity?: string | null
+          follower_location?: string | null
+          follower_media_count?: number | null
+          follower_profile_pic_url?: string | null
+          follower_timezone?: string | null
+          follower_user_id?: string
+          follower_username?: string | null
+          id?: string
+          instagram_user_id?: string
+          raw_data?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       instagram_posts: {
         Row: {
@@ -2423,6 +2825,96 @@ export type Database = {
         }
         Relationships: []
       }
+      social_media_calendar: {
+        Row: {
+          comments_count: number | null
+          created_at: string
+          day_of_week: number | null
+          engagement_rate: number | null
+          has_location: boolean | null
+          hashtags: string[] | null
+          hour_of_day: number | null
+          id: string
+          impressions: number | null
+          likes_count: number | null
+          location_name: string | null
+          mentions: string[] | null
+          performance_score: number | null
+          platform: string
+          platform_specific_data: Json | null
+          post_caption: string | null
+          post_id: string
+          post_title: string | null
+          post_type: string | null
+          published_at: string
+          reach: number | null
+          scheduled_at: string | null
+          shares_count: number | null
+          time_zone: string | null
+          updated_at: string
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          comments_count?: number | null
+          created_at?: string
+          day_of_week?: number | null
+          engagement_rate?: number | null
+          has_location?: boolean | null
+          hashtags?: string[] | null
+          hour_of_day?: number | null
+          id?: string
+          impressions?: number | null
+          likes_count?: number | null
+          location_name?: string | null
+          mentions?: string[] | null
+          performance_score?: number | null
+          platform: string
+          platform_specific_data?: Json | null
+          post_caption?: string | null
+          post_id: string
+          post_title?: string | null
+          post_type?: string | null
+          published_at: string
+          reach?: number | null
+          scheduled_at?: string | null
+          shares_count?: number | null
+          time_zone?: string | null
+          updated_at?: string
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          comments_count?: number | null
+          created_at?: string
+          day_of_week?: number | null
+          engagement_rate?: number | null
+          has_location?: boolean | null
+          hashtags?: string[] | null
+          hour_of_day?: number | null
+          id?: string
+          impressions?: number | null
+          likes_count?: number | null
+          location_name?: string | null
+          mentions?: string[] | null
+          performance_score?: number | null
+          platform?: string
+          platform_specific_data?: Json | null
+          post_caption?: string | null
+          post_id?: string
+          post_title?: string | null
+          post_type?: string | null
+          published_at?: string
+          reach?: number | null
+          scheduled_at?: string | null
+          shares_count?: number | null
+          time_zone?: string | null
+          updated_at?: string
+          user_id?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       social_media_comments: {
         Row: {
           author_id: string | null
@@ -2964,6 +3456,10 @@ export type Database = {
       calculate_engagement_rate: {
         Args: { likes: number; comments: number; followers: number }
         Returns: number
+      }
+      calculate_posting_optimal_times: {
+        Args: { user_id_param: string; platform_param: string }
+        Returns: Json
       }
       create_company_with_owner: {
         Args:

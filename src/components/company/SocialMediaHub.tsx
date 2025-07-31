@@ -1171,38 +1171,123 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                     Recomendaciones para Mejorar
                   </h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {(() => {
-                      const avgEngagement = linkedinPosts.length > 0 ? 
-                        linkedinPosts.reduce((acc, post) => acc + (post.stats?.total_reactions || 0) + (post.stats?.comments || 0), 0) / linkedinPosts.length : 0;
-                      
-                      const recentPosts = linkedinPosts.filter(post => {
-                        if (!post.posted_at?.timestamp) return false;
-                        const postDate = new Date(post.posted_at.timestamp);
-                        const monthAgo = new Date();
-                        monthAgo.setMonth(monthAgo.getMonth() - 1);
-                        return postDate >= monthAgo;
-                      });
+                     {(() => {
+                       // Análisis del propósito de LinkedIn basado en contenido
+                       const analyzeLinkedInPurpose = () => {
+                         const jobKeywords = ['hiring', 'trabajo', 'empleo', 'únete', 'team', 'equipo', 'talento', 'carrera', 'oportunidad', 'vacante', 'job', 'careers'];
+                         const salesKeywords = ['producto', 'servicio', 'venta', 'cliente', 'compra', 'oferta', 'descuento', 'lanzamiento', 'product', 'service', 'sale'];
+                         const thoughtLeadershipKeywords = ['insight', 'tendencia', 'futuro', 'industria', 'opinión', 'experiencia', 'aprendizaje', 'reflexión', 'trend', 'future'];
+                         const companyUpdateKeywords = ['empresa', 'company', 'anuncio', 'noticia', 'actualización', 'logro', 'milestone', 'achievement'];
 
-                      return (
-                        <>
-                          <div className="text-sm text-purple-700">
-                            • {avgEngagement < 10 ? 'Incrementa la frecuencia de publicación para mejor alcance' : 'Mantén la consistencia en tus publicaciones'}
-                          </div>
-                          <div className="text-sm text-purple-700">
-                            • {recentPosts.length < 3 ? 'Publica más contenido reciente para mayor visibilidad' : 'Excelente actividad reciente'}
-                          </div>
-                          <div className="text-sm text-purple-700">
-                            • Interactúa más con comentarios para aumentar el engagement
-                          </div>
-                          <div className="text-sm text-purple-700">
-                            • Considera publicar contenido con más elementos visuales
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </div>
+                         let jobPostsCount = 0;
+                         let salesPostsCount = 0;
+                         let thoughtLeadershipCount = 0;
+                         let companyUpdatesCount = 0;
+
+                         linkedinPosts.forEach(post => {
+                           const text = post.text?.toLowerCase() || '';
+                           
+                           if (jobKeywords.some(keyword => text.includes(keyword))) jobPostsCount++;
+                           if (salesKeywords.some(keyword => text.includes(keyword))) salesPostsCount++;
+                           if (thoughtLeadershipKeywords.some(keyword => text.includes(keyword))) thoughtLeadershipCount++;
+                           if (companyUpdateKeywords.some(keyword => text.includes(keyword))) companyUpdatesCount++;
+                         });
+
+                         const total = linkedinPosts.length;
+                         const jobPercentage = (jobPostsCount / total) * 100;
+                         const salesPercentage = (salesPostsCount / total) * 100;
+                         const thoughtPercentage = (thoughtLeadershipCount / total) * 100;
+                         const updatesPercentage = (companyUpdatesCount / total) * 100;
+
+                         let primaryPurpose = '';
+                         let recommendations = [];
+
+                         if (jobPercentage > 40) {
+                           primaryPurpose = 'Marca Empleadora';
+                           recommendations = [
+                             'Incluye testimonios de empleados para aumentar credibilidad',
+                             'Muestra la cultura empresarial con fotos del equipo',
+                             'Comparte historias de crecimiento profesional',
+                             'Destaca beneficios únicos para atraer talento'
+                           ];
+                         } else if (salesPercentage > 30) {
+                           primaryPurpose = 'Generación de Leads/Ventas';
+                           recommendations = [
+                             'Incluye casos de éxito de clientes',
+                             'Crea contenido educativo sobre tu industria',
+                             'Añade llamadas a la acción claras',
+                             'Comparte demostraciones de producto'
+                           ];
+                         } else if (thoughtPercentage > 25) {
+                           primaryPurpose = 'Thought Leadership';
+                           recommendations = [
+                             'Comparte insights únicos de la industria',
+                             'Participa en conversaciones trending',
+                             'Publica análisis de tendencias del mercado',
+                             'Invita a la reflexión con preguntas abiertas'
+                           ];
+                         } else {
+                           primaryPurpose = 'Mix Equilibrado';
+                           recommendations = [
+                             'Mantén el balance entre contenido personal y corporativo',
+                             'Experimenta con diferentes tipos de contenido',
+                             'Monitorea qué tipo de post genera más engagement',
+                             'Considera enfocar más en el propósito que mejor funcione'
+                           ];
+                         }
+
+                         return {
+                           primaryPurpose,
+                           distribution: { jobPercentage, salesPercentage, thoughtPercentage, updatesPercentage },
+                           recommendations
+                         };
+                       };
+
+                       const purposeAnalysis = analyzeLinkedInPurpose();
+                       
+                       return (
+                         <div className="col-span-full space-y-4">
+                           {/* Análisis del Propósito */}
+                           <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border border-indigo-200">
+                             <h6 className="font-medium text-indigo-900 mb-3 flex items-center gap-2">
+                               <Target className="w-4 h-4" />
+                               Propósito Identificado: {purposeAnalysis.primaryPurpose}
+                             </h6>
+                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                               <div className="text-center p-2 bg-white rounded">
+                                 <div className="text-lg font-bold text-blue-600">{purposeAnalysis.distribution.jobPercentage.toFixed(0)}%</div>
+                                 <div className="text-xs text-muted-foreground">Marca Empleadora</div>
+                               </div>
+                               <div className="text-center p-2 bg-white rounded">
+                                 <div className="text-lg font-bold text-green-600">{purposeAnalysis.distribution.salesPercentage.toFixed(0)}%</div>
+                                 <div className="text-xs text-muted-foreground">Ventas/Leads</div>
+                               </div>
+                               <div className="text-center p-2 bg-white rounded">
+                                 <div className="text-lg font-bold text-purple-600">{purposeAnalysis.distribution.thoughtPercentage.toFixed(0)}%</div>
+                                 <div className="text-xs text-muted-foreground">Thought Leadership</div>
+                               </div>
+                               <div className="text-center p-2 bg-white rounded">
+                                 <div className="text-lg font-bold text-orange-600">{purposeAnalysis.distribution.updatesPercentage.toFixed(0)}%</div>
+                                 <div className="text-xs text-muted-foreground">Noticias Empresa</div>
+                               </div>
+                             </div>
+                           </div>
+                           
+                           {/* Recomendaciones Específicas */}
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                             {purposeAnalysis.recommendations.map((rec, index) => (
+                               <div key={index} className="text-sm text-purple-700 flex items-start gap-2">
+                                 <span className="text-purple-500 mt-1">•</span>
+                                 <span>{rec}</span>
+                               </div>
+                             ))}
+                           </div>
+                         </div>
+                       );
+                      })()}
+                   </div>
+                 </div>
+               </div>
             </div>
           </CardContent>
         </Card>
@@ -1427,10 +1512,157 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                       '⚠️ Análisis básico - La IA mejorará el análisis en la próxima consulta'
                     }
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                 </div>
+               </CardContent>
+             </Card>
+           )}
+
+           {/* Análisis de Propósito para Instagram basado en Posts */}
+           {instagramPosts.posts && instagramPosts.posts.length > 0 && (
+             <Card className="overflow-hidden border-l-4 border-l-purple-500">
+               <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-100">
+                 <CardTitle className="flex items-center gap-2 text-purple-900">
+                   <Brain className="w-5 h-5" />
+                   Análisis Inteligente con IA
+                   <Badge variant="outline" className="ml-auto">
+                     Instagram Analytics
+                   </Badge>
+                 </CardTitle>
+               </CardHeader>
+               <CardContent className="p-6">
+                 <div className="space-y-6">
+                   {(() => {
+                     // Análisis del propósito de Instagram basado en contenido
+                     const analyzeInstagramPurpose = () => {
+                       const ecommerceKeywords = ['shop', 'buy', 'sale', 'discount', 'product', 'order', 'purchase', 'compra', 'venta', 'producto', 'descuento', 'pedido'];
+                       const brandingKeywords = ['brand', 'lifestyle', 'story', 'behind', 'values', 'mission', 'marca', 'estilo', 'historia', 'valores', 'misión'];
+                       const communityKeywords = ['community', 'together', 'family', 'team', 'friends', 'comunidad', 'juntos', 'familia', 'equipo', 'amigos'];
+                       const educationalKeywords = ['tips', 'how', 'tutorial', 'learn', 'guide', 'consejos', 'cómo', 'aprende', 'guía', 'tutorial'];
+
+                       let ecommerceCount = 0;
+                       let brandingCount = 0;
+                       let communityCount = 0;
+                       let educationalCount = 0;
+
+                       instagramPosts.posts.forEach((post: any) => {
+                         const caption = post.caption?.toLowerCase() || '';
+                         
+                         if (ecommerceKeywords.some(keyword => caption.includes(keyword))) ecommerceCount++;
+                         if (brandingKeywords.some(keyword => caption.includes(keyword))) brandingCount++;
+                         if (communityKeywords.some(keyword => caption.includes(keyword))) communityCount++;
+                         if (educationalKeywords.some(keyword => caption.includes(keyword))) educationalCount++;
+                       });
+
+                       const total = instagramPosts.posts.length;
+                       const ecommercePercentage = (ecommerceCount / total) * 100;
+                       const brandingPercentage = (brandingCount / total) * 100;
+                       const communityPercentage = (communityCount / total) * 100;
+                       const educationalPercentage = (educationalCount / total) * 100;
+
+                       let primaryPurpose = '';
+                       let recommendations = [];
+
+                       if (ecommercePercentage > 35) {
+                         primaryPurpose = 'E-commerce/Ventas';
+                         recommendations = [
+                           'Usa Instagram Shopping para facilitar las compras',
+                           'Incluye testimonios de clientes en Stories',
+                           'Crea contenido de product placement natural',
+                           'Aprovecha las funciones de carrito de compras'
+                         ];
+                       } else if (brandingPercentage > 30) {
+                         primaryPurpose = 'Brand Awareness';
+                         recommendations = [
+                           'Mantén consistencia visual en tu feed',
+                           'Comparte el behind-the-scenes de tu marca',
+                           'Utiliza Stories para mostrar personalidad',
+                           'Colabora con influencers afines a tu marca'
+                         ];
+                       } else if (communityPercentage > 25) {
+                         primaryPurpose = 'Community Building';
+                         recommendations = [
+                           'Responde activamente a comentarios y DMs',
+                           'Crea contenido generado por usuarios',
+                           'Usa hashtags para fomentar participación',
+                           'Organiza concursos y actividades interactivas'
+                         ];
+                       } else if (educationalPercentage > 20) {
+                         primaryPurpose = 'Contenido Educativo';
+                         recommendations = [
+                           'Crea carruseles informativos y tutoriales',
+                           'Usa Reels para tips rápidos y consejos',
+                           'Comparte infografías valiosas',
+                           'Establece una serie educativa semanal'
+                         ];
+                       } else {
+                         primaryPurpose = 'Mix Estratégico';
+                         recommendations = [
+                           'Analiza qué tipo de contenido genera más engagement',
+                           'Experimenta con diferentes formatos de contenido',
+                           'Considera especializarte en el propósito que mejor funcione',
+                           'Mantén un calendario de contenido equilibrado'
+                         ];
+                       }
+
+                       return {
+                         primaryPurpose,
+                         distribution: { ecommercePercentage, brandingPercentage, communityPercentage, educationalPercentage },
+                         recommendations
+                       };
+                     };
+
+                     const purposeAnalysis = analyzeInstagramPurpose();
+                     
+                     return (
+                       <>
+                         {/* Análisis del Propósito */}
+                         <div className="p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg border border-pink-200">
+                           <h6 className="font-medium text-purple-900 mb-3 flex items-center gap-2">
+                             <Target className="w-4 h-4" />
+                             Propósito Identificado: {purposeAnalysis.primaryPurpose}
+                           </h6>
+                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                             <div className="text-center p-2 bg-white rounded">
+                               <div className="text-lg font-bold text-green-600">{purposeAnalysis.distribution.ecommercePercentage.toFixed(0)}%</div>
+                               <div className="text-xs text-muted-foreground">E-commerce</div>
+                             </div>
+                             <div className="text-center p-2 bg-white rounded">
+                               <div className="text-lg font-bold text-blue-600">{purposeAnalysis.distribution.brandingPercentage.toFixed(0)}%</div>
+                               <div className="text-xs text-muted-foreground">Branding</div>
+                             </div>
+                             <div className="text-center p-2 bg-white rounded">
+                               <div className="text-lg font-bold text-purple-600">{purposeAnalysis.distribution.communityPercentage.toFixed(0)}%</div>
+                               <div className="text-xs text-muted-foreground">Comunidad</div>
+                             </div>
+                             <div className="text-center p-2 bg-white rounded">
+                               <div className="text-lg font-bold text-orange-600">{purposeAnalysis.distribution.educationalPercentage.toFixed(0)}%</div>
+                               <div className="text-xs text-muted-foreground">Educativo</div>
+                             </div>
+                           </div>
+                         </div>
+                         
+                         {/* Recomendaciones Específicas */}
+                         <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                           <h5 className="font-medium text-purple-900 mb-3 flex items-center gap-2">
+                             <Lightbulb className="w-4 h-4" />
+                             Recomendaciones Específicas para {purposeAnalysis.primaryPurpose}
+                           </h5>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                             {purposeAnalysis.recommendations.map((rec, index) => (
+                               <div key={index} className="text-sm text-purple-700 flex items-start gap-2">
+                                 <span className="text-purple-500 mt-1">•</span>
+                                 <span>{rec}</span>
+                               </div>
+                             ))}
+                           </div>
+                         </div>
+                       </>
+                     );
+                   })()}
+                 </div>
+               </CardContent>
+             </Card>
+           )}
 
           {/* Seguidores destacados */}
           {instagramDetails.followers && instagramDetails.followers.length > 0 && (
@@ -1885,34 +2117,151 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                 </div>
               </div>
 
-              {/* Recomendaciones de IA */}
-              <div className="mt-8 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border">
-                <h4 className="font-semibold text-purple-800 flex items-center gap-2 mb-3">
-                  <Sparkles className="w-4 h-4" />
-                  Recomendaciones de IA
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-2">
-                    <div className="flex items-start gap-2">
-                      <Target className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <span>Publica videos de 15-30 segundos para mejor engagement</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Clock className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <span>Horarios óptimos: 7-9 PM para máximo alcance</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-start gap-2">
-                      <Hash className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <span>Usa hashtags trending relacionados con skincare</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <TrendingUp className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <span>Contenido educativo genera más interacción</span>
-                    </div>
-                  </div>
-                </div>
+              {/* Análisis de Propósito y Recomendaciones de IA */}
+              <div className="mt-8 space-y-6">
+                {(() => {
+                  // Análisis del propósito de TikTok basado en contenido
+                  const analyzeTikTokPurpose = () => {
+                    if (!tikTokPosts.videos || tikTokPosts.videos.length === 0) {
+                      return {
+                        primaryPurpose: 'Datos Insuficientes',
+                        distribution: { viral: 0, educational: 0, entertainment: 0, brand: 0 },
+                        recommendations: [
+                          'Publica más contenido para obtener análisis detallado',
+                          'Experimenta con diferentes tipos de videos',
+                          'Usa hashtags trending para aumentar alcance',
+                          'Mantén consistencia en la publicación'
+                        ]
+                      };
+                    }
+
+                    const viralKeywords = ['trend', 'viral', 'challenge', 'dance', 'music', 'tendencia', 'reto', 'baile', 'música'];
+                    const educationalKeywords = ['tips', 'how', 'tutorial', 'learn', 'guide', 'diy', 'consejos', 'cómo', 'aprende', 'guía'];
+                    const entertainmentKeywords = ['funny', 'comedy', 'fun', 'entertainment', 'joke', 'divertido', 'comedia', 'entretenimiento', 'gracioso'];
+                    const brandKeywords = ['product', 'brand', 'behind', 'company', 'business', 'producto', 'marca', 'empresa', 'negocio'];
+
+                    let viralCount = 0;
+                    let educationalCount = 0;
+                    let entertainmentCount = 0;
+                    let brandCount = 0;
+
+                    tikTokPosts.videos.forEach((video: any) => {
+                      const title = video.title?.toLowerCase() || '';
+                      const desc = video.desc?.toLowerCase() || '';
+                      const content = `${title} ${desc}`;
+                      
+                      if (viralKeywords.some(keyword => content.includes(keyword))) viralCount++;
+                      if (educationalKeywords.some(keyword => content.includes(keyword))) educationalCount++;
+                      if (entertainmentKeywords.some(keyword => content.includes(keyword))) entertainmentCount++;
+                      if (brandKeywords.some(keyword => content.includes(keyword))) brandCount++;
+                    });
+
+                    const total = tikTokPosts.videos.length;
+                    const viralPercentage = (viralCount / total) * 100;
+                    const educationalPercentage = (educationalCount / total) * 100;
+                    const entertainmentPercentage = (entertainmentCount / total) * 100;
+                    const brandPercentage = (brandCount / total) * 100;
+
+                    let primaryPurpose = '';
+                    let recommendations = [];
+
+                    if (viralPercentage > 40) {
+                      primaryPurpose = 'Marketing Viral';
+                      recommendations = [
+                        'Mantente al día con trends y challenges populares',
+                        'Crea contenido que invite a participar y compartir',
+                        'Usa música trending para aumentar alcance',
+                        'Publica en horarios de máxima actividad (7-9 PM)'
+                      ];
+                    } else if (educationalPercentage > 30) {
+                      primaryPurpose = 'Contenido Educativo';
+                      recommendations = [
+                        'Crea series de tutoriales cortos y concisos',
+                        'Usa texto en pantalla para destacar puntos clave',
+                        'Estructura el contenido con principio, desarrollo y conclusión',
+                        'Responde preguntas frecuentes en formato video'
+                      ];
+                    } else if (entertainmentPercentage > 25) {
+                      primaryPurpose = 'Entretenimiento';
+                      recommendations = [
+                        'Mantén un tono divertido y auténtico',
+                        'Experimenta con efectos y filtros creativos',
+                        'Crea contenido que genere sonrisas y reacciones',
+                        'Colabora con otros creadores para variedad'
+                      ];
+                    } else if (brandPercentage > 20) {
+                      primaryPurpose = 'Brand Awareness';
+                      recommendations = [
+                        'Muestra el behind-the-scenes de tu empresa',
+                        'Presenta tu equipo de manera auténtica',
+                        'Comparte la historia y valores de tu marca',
+                        'Equilibra contenido promocional con entretenimiento'
+                      ];
+                    } else {
+                      primaryPurpose = 'Estrategia Mixta';
+                      recommendations = [
+                        'Identifica qué tipo de contenido genera más engagement',
+                        'Experimenta con diferentes formatos y estilos',
+                        'Analiza las métricas para optimizar el enfoque',
+                        'Considera especializarte en el contenido más exitoso'
+                      ];
+                    }
+
+                    return {
+                      primaryPurpose,
+                      distribution: { viralPercentage, educationalPercentage, entertainmentPercentage, brandPercentage },
+                      recommendations
+                    };
+                  };
+
+                  const purposeAnalysis = analyzeTikTokPurpose();
+                  
+                  return (
+                    <>
+                      {/* Análisis del Propósito */}
+                      <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                        <h6 className="font-medium text-purple-900 mb-3 flex items-center gap-2">
+                          <Target className="w-4 h-4" />
+                          Propósito Identificado: {purposeAnalysis.primaryPurpose}
+                        </h6>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                          <div className="text-center p-2 bg-white rounded">
+                            <div className="text-lg font-bold text-red-600">{purposeAnalysis.distribution.viralPercentage.toFixed(0)}%</div>
+                            <div className="text-xs text-muted-foreground">Viral</div>
+                          </div>
+                          <div className="text-center p-2 bg-white rounded">
+                            <div className="text-lg font-bold text-blue-600">{purposeAnalysis.distribution.educationalPercentage.toFixed(0)}%</div>
+                            <div className="text-xs text-muted-foreground">Educativo</div>
+                          </div>
+                          <div className="text-center p-2 bg-white rounded">
+                            <div className="text-lg font-bold text-green-600">{purposeAnalysis.distribution.entertainmentPercentage.toFixed(0)}%</div>
+                            <div className="text-xs text-muted-foreground">Entretenimiento</div>
+                          </div>
+                          <div className="text-center p-2 bg-white rounded">
+                            <div className="text-lg font-bold text-purple-600">{purposeAnalysis.distribution.brandPercentage.toFixed(0)}%</div>
+                            <div className="text-xs text-muted-foreground">Branding</div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Recomendaciones Específicas */}
+                      <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                        <h5 className="font-medium text-purple-900 mb-3 flex items-center gap-2">
+                          <Sparkles className="w-4 h-4" />
+                          Recomendaciones Específicas para {purposeAnalysis.primaryPurpose}
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {purposeAnalysis.recommendations.map((rec, index) => (
+                            <div key={index} className="text-sm text-purple-700 flex items-start gap-2">
+                              <span className="text-purple-500 mt-1">•</span>
+                              <span>{rec}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>

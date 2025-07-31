@@ -1080,6 +1080,104 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         </div>
       )}
 
+      {/* Detalles de TikTok */}
+      {selectedNetwork && tikTokDetails && selectedNetwork.id === 'tiktok' && (
+        <div className="space-y-6">
+          {/* Resumen del perfil */}
+          <Card className="border-gray-800 bg-gradient-to-r from-gray-900 to-black text-white">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Music className="w-5 h-5" />
+                Análisis de TikTok - @{tikTokDetails.unique_id}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-400">
+                    {tikTokDetails.follower_count?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-sm text-gray-300">Seguidores</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-400">
+                    {tikTokDetails.following_count?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-sm text-gray-300">Siguiendo</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-400">
+                    {tikTokDetails.video_count?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-sm text-gray-300">Videos</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-pink-400">
+                    {tikTokDetails.heart_count?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-sm text-gray-300">Me gusta</div>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-gray-800 rounded-lg">
+                <p className="text-sm">
+                  <span className="font-semibold">Nombre:</span> {tikTokDetails.nickname || 'No disponible'}
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Descripción:</span> {tikTokDetails.signature || 'No disponible'}
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Verificado:</span> {tikTokDetails.verified ? 'Sí' : 'No'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Información del perfil */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Información del Perfil</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground">ID de usuario</h4>
+                    <p className="text-sm">{tikTokDetails.user_id || 'No disponible'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground">Nombre único</h4>
+                    <p className="text-sm">@{tikTokDetails.unique_id || 'No disponible'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground">Descripción</h4>
+                    <p className="text-sm">{tikTokDetails.signature || 'No disponible'}</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground">Estado de verificación</h4>
+                    <Badge variant={tikTokDetails.verified ? "default" : "outline"}>
+                      {tikTokDetails.verified ? "Verificado" : "No verificado"}
+                    </Badge>
+                  </div>
+                  {tikTokDetails.avatar_thumb && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground">Avatar</h4>
+                      <img 
+                        src={tikTokDetails.avatar_thumb} 
+                        alt="Avatar de TikTok"
+                        className="w-16 h-16 rounded-full border"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Posts de Instagram */}
       {selectedNetwork && instagramPosts && selectedNetwork.id === 'instagram' && (
         <div className="space-y-6">

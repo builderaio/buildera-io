@@ -669,9 +669,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
       console.log('🔍 Respuesta completa del webhook:', data);
 
-      // La respuesta está encapsulada en data.data
+      // La respuesta de supabase.functions.invoke ya contiene el objeto completo
+      // Necesitamos acceder a data.data donde están los datos reales del array
       const responseData = data?.data;
       console.log('📋 Datos de estrategia recibidos:', responseData);
+      console.log('📋 Tipo de responseData:', typeof responseData, Array.isArray(responseData));
 
       if (responseData && Array.isArray(responseData)) {
         const strategyData = {

@@ -96,12 +96,27 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Get response body
     const responseText = await webhookResponse.text();
+    console.log('📄 Texto de respuesta crudo:', responseText);
+    
     let responseData;
     
     try {
       responseData = JSON.parse(responseText);
+      console.log('📋 Datos parseados de JSON:', JSON.stringify(responseData, null, 2));
     } catch (e) {
+      console.log('❌ Error parseando JSON, usando texto crudo:', e);
       responseData = responseText;
+    }
+
+    // Log específico para STRATEGY
+    if (body.KEY === 'STRATEGY') {
+      console.log('🎯 STRATEGY - Respuesta específica:', {
+        type: typeof responseData,
+        isArray: Array.isArray(responseData),
+        length: Array.isArray(responseData) ? responseData.length : 'N/A',
+        keys: typeof responseData === 'object' ? Object.keys(responseData) : 'N/A',
+        sample: responseData
+      });
     }
 
     if (!webhookResponse.ok) {

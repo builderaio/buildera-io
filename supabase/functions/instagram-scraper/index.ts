@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const rapidApiKey = Deno.env.get('RAPIDAPI_KEY');
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -66,8 +67,37 @@ serve(async (req) => {
       });
     }
 
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get user from auth header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'No authorization header'
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authError || !user) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Unauthorized'
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { action, username_or_url } = await req.json();
-    console.log(`📱 Instagram Scraper - Action: ${action}, Username: ${username_or_url}`);
+    console.log(`📱 Instagram Scraper - Action: ${action}, Username: ${username_or_url}, User: ${user.id}`);
 
     // Extract username from URL or use as is
     const username = extractInstagramUsername(username_or_url);
@@ -76,9 +106,9 @@ serve(async (req) => {
     let responseData: any = {};
 
     if (action === 'get_complete_analysis') {
-      responseData = await getCompleteInstagramAnalysis(username);
+      responseData = await getCompleteInstagramAnalysis(username, user.id, supabase);
     } else if (action === 'get_posts') {
-      responseData = await getInstagramPosts(username);
+      responseData = await getInstagramPosts(username, user.id, supabase);
     } else {
       throw new Error(`Action not supported: ${action}`);
     }
@@ -220,7 +250,7 @@ async function getInstagramFollowing(username: string): Promise<InstagramFollowe
   }
 }
 
-async function getCompleteInstagramAnalysis(username: string): Promise<any> {
+async function getCompleteInstagramAnalysis(username: string, userId: string, supabase: any): Promise<any> {
   console.log(`📊 Getting complete Instagram analysis for: ${username}`);
   
   try {
@@ -293,7 +323,7 @@ async function getCompleteInstagramAnalysis(username: string): Promise<any> {
   }
 }
 
-async function getInstagramPosts(username: string): Promise<any> {
+async function getInstagramPosts(username: string, userId: string, supabase: any): Promise<any> {
   console.log(`📱 Getting Instagram posts for: ${username}`);
   
   try {
@@ -434,6 +464,12 @@ async function getInstagramPosts(username: string): Promise<any> {
 
     console.log(`✅ Successfully processed ${posts.length} posts from real data`);
     
+    // Store posts in database if we have any
+    if (posts.length > 0) {
+      console.log(`💾 Storing ${posts.length} posts in database...`);
+      await savePostsToDatabase(posts, username, userId, supabase);
+    }
+    
     // Only add test data if we truly have 0 posts AND for debugging purposes
     if (posts.length === 0) {
       console.log('⚠️ No posts found in API response. Check if:');
@@ -441,19 +477,6 @@ async function getInstagramPosts(username: string): Promise<any> {
       console.log('  - The account has posts');
       console.log('  - The API endpoint is working correctly');
       console.log('  - The account URL is correct');
-      
-      // Remove test data for now - let's see real API results
-      // posts.push({
-      //   id: 'test_1',
-      //   shortcode: 'test_abc',
-      //   display_url: 'https://picsum.photos/400/400',
-      //   caption: 'Post de prueba para verificar la funcionalidad',
-      //   like_count: 123,
-      //   comment_count: 45,
-      //   taken_at_timestamp: Date.now() / 1000,
-      //   is_video: false,
-      //   video_view_count: 0,
-      // });
     }
 
     console.log(`📊 Processing ${posts.length} posts for analysis`);
@@ -463,6 +486,10 @@ async function getInstagramPosts(username: string): Promise<any> {
         console.log('🤖 Starting posts AI analysis...');
         postsAnalysis = await analyzePostsWithAI(posts, username);
         console.log('✅ Posts AI analysis completed');
+        
+        // Generate embeddings for content analysis
+        console.log('🧠 Generating embeddings for posts...');
+        await generatePostEmbeddings(posts, userId, supabase);
       } catch (error) {
         console.error('❌ Posts AI analysis failed:', error);
       }
@@ -718,4 +745,178 @@ function calculateEngagementRatio(profile: InstagramInfo): number {
   const mediaRatio = (profile.media_count || 0) / profile.followers_count;
   
   return Math.round((followingRatio + mediaRatio) * 100) / 100;
+}
+
+// Function to save posts to database
+async function savePostsToDatabase(posts: InstagramPost[], username: string, userId: string, supabase: any): Promise<void> {
+  console.log(`💾 Saving ${posts.length} posts to database for user ${userId}`);
+  
+  try {
+    for (const post of posts) {
+      const postedAt = post.taken_at_timestamp ? 
+        new Date(post.taken_at_timestamp * 1000).toISOString() : 
+        new Date().toISOString();
+      
+      // Extract hashtags and mentions from caption
+      const hashtags = extractHashtagsFromText(post.caption || '');
+      const mentions = extractMentionsFromText(post.caption || '');
+      
+      const instagramPost = {
+        user_id: userId,
+        post_id: post.id || '',
+        shortcode: post.shortcode || '',
+        caption: post.caption || '',
+        like_count: post.like_count || 0,
+        comment_count: post.comment_count || 0,
+        media_type: post.is_video ? 2 : 1,
+        is_video: post.is_video || false,
+        video_view_count: post.video_view_count || 0,
+        display_url: post.display_url || '',
+        thumbnail_url: post.display_url || '',
+        taken_at_timestamp: post.taken_at_timestamp || Math.floor(Date.now() / 1000),
+        posted_at: postedAt,
+        hashtags: hashtags,
+        mentions: mentions,
+        owner_username: username,
+        raw_data: post,
+        engagement_rate: calculatePostEngagementRate(post.like_count || 0, post.comment_count || 0)
+      };
+      
+      // Insert or update post
+      const { data, error } = await supabase
+        .from('instagram_posts')
+        .upsert(instagramPost, { 
+          onConflict: 'user_id,post_id',
+          ignoreDuplicates: false 
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error(`❌ Error saving post ${post.id}:`, error);
+      } else {
+        console.log(`✅ Saved post ${post.id} to database`);
+      }
+    }
+    
+    console.log(`✅ Successfully saved ${posts.length} posts to database`);
+  } catch (error) {
+    console.error('❌ Error saving posts to database:', error);
+    throw error;
+  }
+}
+
+// Function to generate embeddings for posts
+async function generatePostEmbeddings(posts: InstagramPost[], userId: string, supabase: any): Promise<void> {
+  console.log(`🧠 Generating embeddings for ${posts.length} posts`);
+  
+  if (!openAIApiKey) {
+    console.log('⚠️ OpenAI API key not available, skipping embeddings generation');
+    return;
+  }
+  
+  try {
+    for (const post of posts) {
+      if (!post.caption || post.caption.trim().length < 10) {
+        console.log(`⏭️ Skipping post ${post.id} - caption too short or empty`);
+        continue;
+      }
+      
+      console.log(`🔤 Generating embedding for post ${post.id}`);
+      
+      // Generate embedding for caption
+      const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'text-embedding-3-small',
+          input: post.caption,
+          encoding_format: 'float'
+        }),
+      });
+      
+      if (!embeddingResponse.ok) {
+        console.error(`❌ Error generating embedding for post ${post.id}: ${embeddingResponse.status}`);
+        continue;
+      }
+      
+      const embeddingData = await embeddingResponse.json();
+      const embedding = embeddingData.data[0].embedding;
+      
+      // Get the Instagram post ID from database
+      const { data: dbPost, error: dbError } = await supabase
+        .from('instagram_posts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('post_id', post.id)
+        .single();
+      
+      if (dbError || !dbPost) {
+        console.error(`❌ Could not find database post for ${post.id}:`, dbError);
+        continue;
+      }
+      
+      // Save embedding to database
+      const { error: embeddingError } = await supabase
+        .from('content_embeddings')
+        .upsert({
+          user_id: userId,
+          post_id: post.id,
+          instagram_post_id: dbPost.id,
+          platform: 'instagram',
+          content_text: post.caption,
+          content_type: 'caption',
+          embedding: embedding,
+          embedding_model: 'text-embedding-3-small',
+          processing_status: 'completed'
+        }, {
+          onConflict: 'user_id,post_id',
+          ignoreDuplicates: false
+        });
+      
+      if (embeddingError) {
+        console.error(`❌ Error saving embedding for post ${post.id}:`, embeddingError);
+      } else {
+        console.log(`✅ Generated and saved embedding for post ${post.id}`);
+      }
+      
+      // Add a small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    console.log(`✅ Completed embedding generation for ${posts.length} posts`);
+  } catch (error) {
+    console.error('❌ Error generating embeddings:', error);
+  }
+}
+
+// Helper function to extract hashtags from text
+function extractHashtagsFromText(text: string): string[] {
+  if (!text) return [];
+  
+  const hashtagRegex = /#([a-zA-Z0-9_]+)/g;
+  const matches = text.match(hashtagRegex);
+  
+  return matches ? matches.map(tag => tag.toLowerCase().substring(1)) : [];
+}
+
+// Helper function to extract mentions from text
+function extractMentionsFromText(text: string): string[] {
+  if (!text) return [];
+  
+  const mentionRegex = /@([a-zA-Z0-9_.]+)/g;
+  const matches = text.match(mentionRegex);
+  
+  return matches ? matches.map(mention => mention.toLowerCase().substring(1)) : [];
+}
+
+// Helper function to calculate engagement rate for a post
+function calculatePostEngagementRate(likes: number, comments: number, followers?: number): number {
+  if (!followers) return 0;
+  
+  const totalEngagement = likes + comments;
+  return Math.round((totalEngagement / followers) * 10000) / 100; // Return percentage with 2 decimal places
 }

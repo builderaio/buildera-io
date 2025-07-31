@@ -411,12 +411,13 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
       if (error) throw error;
 
       if (data.success) {
-        setLinkedinPosts(data.data.posts || []);
+        setLinkedinPosts(data.data.data.posts || []);
+        setSelectedNetwork(network); // Asegurar que selectedNetwork esté establecido
         console.log('✅ LinkedIn company posts loaded:', data.data);
         
         toast({
           title: "Posts cargados",
-          description: `Se cargaron ${data.data.posts?.length || 0} posts de LinkedIn`,
+          description: `Se cargaron ${data.data.data.posts?.length || 0} posts de LinkedIn`,
         });
       }
     } catch (error: any) {

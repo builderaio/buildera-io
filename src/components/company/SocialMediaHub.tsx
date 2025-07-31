@@ -75,6 +75,8 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   const [linkedinDetails, setLinkedinDetails] = useState<LinkedInCompanyDetails | null>(null);
   const [linkedinPosts, setLinkedinPosts] = useState<LinkedInPost[]>([]);
   const [loadingLinkedIn, setLoadingLinkedIn] = useState(false);
+  const [instagramDetails, setInstagramDetails] = useState<any>(null);
+  const [loadingInstagram, setLoadingInstagram] = useState(false);
 
   // Initialize social networks
   const initializeSocialNetworks = (companyData: any): SocialNetwork[] => {
@@ -109,7 +111,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         url: companyData?.instagram_url || null,
         isValid: validateInstagramUrl(companyData?.instagram_url),
         isActive: !!companyData?.instagram_url && validateInstagramUrl(companyData?.instagram_url),
-        hasDetails: false,
+        hasDetails: true,
         hasPosts: false
       },
       {
@@ -372,6 +374,45 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     }
   };
 
+  const loadInstagramDetails = async (network: SocialNetwork) => {
+    if (!network.url || !network.isValid) return;
+
+    setLoadingInstagram(true);
+    try {
+      const usernameOrUrl = network.url;
+      
+      console.log('📸 Loading Instagram details for:', usernameOrUrl);
+      
+      const { data, error } = await supabase.functions.invoke('instagram-scraper', {
+        body: {
+          action: 'get_complete_analysis',
+          username_or_url: usernameOrUrl
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setInstagramDetails(data.data);
+        console.log('✅ Instagram details loaded:', data.data);
+        
+        toast({
+          title: "Análisis de Instagram completo",
+          description: "Se ha cargado exitosamente la información de Instagram",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error loading Instagram details:', error);
+      toast({
+        title: "Error cargando Instagram",
+        description: error.message || "No se pudieron cargar los detalles de Instagram",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingInstagram(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -487,15 +528,17 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                               loadLinkedInCompanyDetails(network);
                             } else if (network.id === 'tiktok') {
                               loadTikTokDetails(network);
+                            } else if (network.id === 'instagram') {
+                              loadInstagramDetails(network);
                             }
                           }}
-                          disabled={loadingLinkedIn && selectedNetwork?.id === network.id}
+                          disabled={(loadingLinkedIn || loadingInstagram) && selectedNetwork?.id === network.id}
                         >
-                          {loadingLinkedIn && selectedNetwork?.id === network.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
+                           {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') ? (
+                             <Loader2 className="w-4 h-4 animate-spin" />
+                           ) : (
+                             <Eye className="w-4 h-4" />
+                           )}
                           <div className="text-left">
                             <div className="text-xs font-medium">Ver Detalles</div>
                             <div className="text-xs text-muted-foreground">Información</div>
@@ -655,6 +698,193 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Detalles de Instagram */}
+      {selectedNetwork && instagramDetails && selectedNetwork.id === 'instagram' && (
+        <div className="space-y-6">
+          {/* Resumen del perfil */}
+          <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-800">
+                <Instagram className="w-5 h-5" />
+                Análisis de Instagram - @{instagramDetails.profile?.username}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-700">
+                    {instagramDetails.summary?.total_followers?.toLocaleString() || 'N/A'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Seguidores</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-700">
+                    {instagramDetails.summary?.total_following?.toLocaleString() || 'N/A'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Siguiendo</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-700">
+                    {instagramDetails.summary?.total_posts?.toLocaleString() || 'N/A'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Publicaciones</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-700">
+                    {instagramDetails.summary?.account_type || 'N/A'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Tipo de cuenta</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Información del perfil */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Información del Perfil</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground">Nombre completo</h4>
+                    <p className="text-sm">{instagramDetails.profile?.full_name || 'No disponible'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground">Biografía</h4>
+                    <p className="text-sm">{instagramDetails.profile?.biography || 'No disponible'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground">Estado de verificación</h4>
+                    <Badge variant={instagramDetails.profile?.is_verified ? "default" : "outline"}>
+                      {instagramDetails.profile?.is_verified ? "Verificado" : "No verificado"}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground">Cuenta de empresa</h4>
+                    <Badge variant={instagramDetails.profile?.is_business ? "default" : "outline"}>
+                      {instagramDetails.profile?.is_business ? "Sí" : "No"}
+                    </Badge>
+                  </div>
+                  {instagramDetails.profile?.business_category && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground">Categoría de negocio</h4>
+                      <p className="text-sm">{instagramDetails.profile.business_category}</p>
+                    </div>
+                  )}
+                  {instagramDetails.profile?.external_url && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground">Enlace externo</h4>
+                      <a 
+                        href={instagramDetails.profile.external_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        {instagramDetails.profile.external_url}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Análisis con IA */}
+          {instagramDetails.analysis && (
+            <Card className="border-green-200 bg-green-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-green-800">
+                  <TrendingUp className="w-5 h-5" />
+                  Análisis Inteligente con IA
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {instagramDetails.analysis.summary && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Resumen Ejecutivo</h4>
+                      <p className="text-sm leading-relaxed">{instagramDetails.analysis.summary}</p>
+                    </div>
+                  )}
+                  
+                  {instagramDetails.analysis.recommendations && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Recomendaciones</h4>
+                      {Array.isArray(instagramDetails.analysis.recommendations) ? (
+                        <ul className="text-sm space-y-1">
+                          {instagramDetails.analysis.recommendations.map((rec: string, index: number) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-green-600 rounded-full mt-2 flex-shrink-0"></span>
+                              {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm leading-relaxed">{instagramDetails.analysis.recommendations}</p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {instagramDetails.analysis.opportunities && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">Oportunidades</h4>
+                      {Array.isArray(instagramDetails.analysis.opportunities) ? (
+                        <ul className="text-sm space-y-1">
+                          {instagramDetails.analysis.opportunities.map((opp: string, index: number) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
+                              {opp}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm leading-relaxed">{instagramDetails.analysis.opportunities}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Seguidores destacados */}
+          {instagramDetails.followers && instagramDetails.followers.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Seguidores Destacados (muestra de {instagramDetails.followers.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {instagramDetails.followers.slice(0, 12).map((follower: any, index: number) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        {follower.username ? follower.username[0].toUpperCase() : '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">@{follower.username || 'Usuario'}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {follower.full_name || 'Sin nombre'}
+                        </p>
+                        {follower.is_verified && (
+                          <Badge variant="outline" className="text-xs">Verificado</Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
     </div>
   );

@@ -9,3 +9,4 @@ generate-company-content = { verify_jwt = false }
 linkedin-oauth-callback = { verify_jwt = false }
 linkedin-data-sync = { verify_jwt = true }
 linkedin-scraper = { verify_jwt = true }
+instagram-scraper = { verify_jwt = false }

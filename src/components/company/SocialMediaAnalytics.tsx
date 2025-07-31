@@ -80,7 +80,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       console.log('📊 Loading analytics data for user:', profile.user_id);
       
       // Cargar datos de múltiples tablas en paralelo
-      const [insightsRes, actionablesRes, instagramRes, linkedinRes, tiktokRes, facebookRes, analyticsRes] = await Promise.all([
+      const [insightsRes, actionablesRes, instagramRes, linkedinConnectionRes, tiktokRes, facebookConnectionRes, analyticsRes] = await Promise.all([
         supabase
           .from('marketing_insights')
           .select('*')
@@ -100,8 +100,12 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
           .eq('user_id', profile.user_id)
           .order('posted_at', { ascending: false }),
         
-        // LinkedIn posts (usar datos existentes si están disponibles)
-        Promise.resolve({ data: [], error: null }).catch(() => ({ data: [], error: null })),
+        // LinkedIn connections check
+        supabase
+          .from('linkedin_connections')
+          .select('*')
+          .eq('user_id', profile.user_id)
+          .limit(1),
         
         // TikTok posts
         supabase
@@ -110,8 +114,12 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
           .eq('user_id', profile.user_id)
           .order('posted_at', { ascending: false }),
         
-        // Facebook posts (no disponible aún)
-        Promise.resolve({ data: [], error: null }).catch(() => ({ data: [], error: null })),
+        // Facebook connections check
+        supabase
+          .from('facebook_instagram_connections')
+          .select('*')
+          .eq('user_id', profile.user_id)
+          .limit(1),
         
         supabase
           .from('social_media_analytics')
@@ -133,29 +141,38 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
         console.error('Error loading Instagram posts:', instagramRes.error);
         throw instagramRes.error;
       }
-      if (linkedinRes.error) {
-        console.warn('LinkedIn posts not available');
+      if (linkedinConnectionRes.error) {
+        console.warn('LinkedIn connection not available');
       }
       if (tiktokRes.error) {
         console.error('Error loading TikTok posts:', tiktokRes.error);
-        // No fallar por TikTok, solo registrar
         console.warn('TikTok posts not available');
       }
-      if (facebookRes.error) {
-        console.warn('Facebook posts not available');
+      if (facebookConnectionRes.error) {
+        console.warn('Facebook connection not available');
       }
       if (analyticsRes.error) {
         console.error('Error loading analytics:', analyticsRes.error);
         throw analyticsRes.error;
       }
 
-      // Combinar posts de todas las plataformas
+      // Verificar conexiones y obtener posts
+      const hasLinkedinConnection = linkedinConnectionRes.data && linkedinConnectionRes.data.length > 0;
+      const hasFacebookConnection = facebookConnectionRes.data && facebookConnectionRes.data.length > 0;
+      
+      // Combinar posts de todas las plataformas disponibles
       const allPosts = [
         ...(instagramRes.data || []).map(post => ({ ...post, platform: 'instagram' })),
-        ...(linkedinRes.data || []).map(post => ({ ...post, platform: 'linkedin' })),
-        ...(tiktokRes.data || []).map(post => ({ ...post, platform: 'tiktok' })),
-        ...(facebookRes.data || []).map(post => ({ ...post, platform: 'facebook' }))
+        ...(tiktokRes.data || []).map(post => ({ ...post, platform: 'tiktok' }))
       ];
+      
+      // Agregar indicadores de estado de conexión
+      const connectionStatus = {
+        instagram: instagramRes.data && instagramRes.data.length > 0,
+        linkedin: hasLinkedinConnection,
+        facebook: hasFacebookConnection,
+        tiktok: tiktokRes.data && tiktokRes.data.length > 0
+      };
 
       const data = {
         insights: insightsRes.data || [],
@@ -169,11 +186,12 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
         insights: data.insights.length,
         actionables: data.actionables.length,
         instagram: instagramRes.data?.length || 0,
-        linkedin: linkedinRes.data?.length || 0,
+        linkedin: hasLinkedinConnection ? 'Connected but no posts' : 'Not connected',
         tiktok: tiktokRes.data?.length || 0,
-        facebook: facebookRes.data?.length || 0,
+        facebook: hasFacebookConnection ? 'Connected but no posts' : 'Not connected',
         totalPosts: data.posts.length,
-        analytics: data.analytics.length
+        analytics: data.analytics.length,
+        connections: connectionStatus
       });
 
       setAnalyticsData(data);

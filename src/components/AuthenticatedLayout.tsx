@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
-import CompanySidebar from '@/components/company/CompanySidebar';
+
 
 interface Profile {
   id: string;
@@ -132,32 +132,11 @@ const AuthenticatedLayout = () => {
     return null;
   }
 
-  // Solo mostrar sidebar para usuarios tipo empresa
+  // Solo mostrar sidebar para usuarios tipo empresa - ahora usando ResponsiveLayout
   if (profile.user_type === 'company') {
-    return (
-      <div className="flex h-screen bg-background">
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="fixed top-4 left-4 z-30 p-2 bg-sidebar text-sidebar-foreground rounded-lg shadow-lg md:hidden"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
-
-        <CompanySidebar 
-          activeView={getActiveView()} 
-          setActiveView={setActiveView}
-          profile={profile}
-          onSignOut={handleSignOut}
-          isMobileMenuOpen={isMobileMenuOpen}
-          setIsMobileMenuOpen={setIsMobileMenuOpen}
-        />
-        
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto md:ml-64 pt-16 md:pt-8">
-          <Outlet />
-        </main>
-      </div>
-    );
+    // Redirigir al ResponsiveLayout
+    window.location.href = '/company-dashboard';
+    return null;
   }
 
   // Layout simplificado para desarrolladores y expertos

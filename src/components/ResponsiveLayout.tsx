@@ -236,10 +236,14 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   const getActiveView = () => {
     const path = location.pathname;
+    const searchParams = new URLSearchParams(location.search);
+    const viewParam = searchParams.get('view');
+    
+    if (viewParam) return viewParam;
     if (path.includes('/agents')) return 'mis-agentes';
     if (path.includes('/marketplace')) return 'marketplace';
-    if (path.includes('/profile')) return 'perfil';
-    if (path.includes('/adn-empresa')) return 'adn-empresa';
+    if (path.includes('/profile')) return 'profile';
+    if (path.includes('/adn-empresa') || path.includes('view=adn-empresa')) return 'adn-empresa';
     if (path.includes('/base-conocimiento')) return 'base-conocimiento';
     if (path.includes('/marketing-hub')) return 'marketing-hub';
     if (path.includes('/inteligencia-competitiva')) return 'inteligencia-competitiva';
@@ -256,16 +260,16 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     
     const routes: Record<string, string> = {
       'mando-central': '/company-dashboard',
-      'adn-empresa': '/company-dashboard/adn-empresa',
-      'base-conocimiento': '/company-dashboard/base-conocimiento',
+      'adn-empresa': '/company-dashboard?view=adn-empresa',
+      'base-conocimiento': '/company-dashboard?view=base-conocimiento',
       'mis-agentes': '/company/agents',
       'marketplace': '/marketplace/agents',
-      'marketing-hub': '/company-dashboard/marketing-hub',
-      'inteligencia-competitiva': '/company-dashboard/inteligencia-competitiva',
-      'academia-buildera': '/company-dashboard/academia-buildera',
-      'expertos': '/company-dashboard/expertos',
-      'configuracion': '/company-dashboard/configuracion',
-      'perfil': '/profile',
+      'marketing-hub': '/company-dashboard?view=marketing-hub',
+      'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
+      'academia-buildera': '/company-dashboard?view=academia-buildera',
+      'expertos': '/company-dashboard?view=expertos',
+      'configuracion': '/company-dashboard?view=configuracion',
+      'profile': '/profile',
     };
     
     if (routes[view]) {
@@ -273,34 +277,35 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     }
   };
 
-  const menuItems = [
+  // Nueva estructura de menú integrada en la sidebar
+  const sidebarMenuItems = [
     {
-      category: "General",
+      category: "🏢 Mi Empresa",
       items: [
-        { id: "mando-central", label: "Mando Central", icon: Activity },
-        { id: "adn-empresa", label: "Mi Negocio", icon: Building },
-        { id: "base-conocimiento", label: "Mi Información", icon: User },
+        { id: "mando-central", label: "Mando Central", icon: Activity, description: "Dashboard principal" },
+        { id: "adn-empresa", label: "Mi Negocio", icon: Building, description: "Información empresarial" },
+        { id: "base-conocimiento", label: "Mi Información", icon: User, description: "Base de conocimiento" },
       ]
     },
     {
-      category: "Agentes IA", 
+      category: "🤖 Inteligencia Artificial", 
       items: [
-        { id: "mis-agentes", label: "Mis Agentes", icon: Bot },
-        { id: "marketplace", label: "Marketplace", icon: Store },
+        { id: "mis-agentes", label: "Mis Agentes", icon: Bot, description: "Agentes creados" },
+        { id: "marketplace", label: "Marketplace", icon: Store, description: "Explorar agentes" },
       ]
     },
     {
-      category: "Operaciones", 
+      category: "📈 Operaciones", 
       items: [
-        { id: "marketing-hub", label: "Marketing Hub", icon: Bell },
-        { id: "inteligencia-competitiva", label: "Inteligencia Competitiva", icon: Search },
+        { id: "marketing-hub", label: "Marketing Hub", icon: Bell, description: "Campañas y promociones" },
+        { id: "inteligencia-competitiva", label: "Inteligencia Competitiva", icon: Search, description: "Análisis de mercado" },
       ]
     },
     {
-      category: "Recursos",
+      category: "🎓 Recursos",
       items: [
-        { id: "academia-buildera", label: "Academia Buildera", icon: GraduationCap },
-        { id: "expertos", label: "Conectar Expertos", icon: Users },
+        { id: "academia-buildera", label: "Academia", icon: GraduationCap, description: "Cursos y tutoriales" },
+        { id: "expertos", label: "Expertos", icon: Users, description: "Conectar con especialistas" },
       ]
     }
   ];
@@ -309,29 +314,36 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      <Sidebar variant="sidebar" collapsible="icon" className="border-r bg-sidebar">
-        <SidebarHeader className="p-4">
-          <div className="flex items-center gap-2">
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-primary-foreground">
+      <Sidebar variant="sidebar" collapsible="icon" className="border-r bg-sidebar shadow-lg">
+        <SidebarHeader className="p-4 border-b border-sidebar-border/50">
+          <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-all duration-300 group"
+               onClick={() => setActiveView('mando-central')}>
+            <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
               <img 
                 src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
                 alt="Buildera Logo" 
-                className="size-5 object-contain filter brightness-0 invert"
+                className="size-6 object-contain filter brightness-0 invert"
               />
             </div>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold text-sidebar-foreground">BUILDERA</span>
-              <span className="truncate text-xs text-sidebar-muted-foreground">AI Business Platform</span>
+            <div className="grid flex-1 text-left leading-tight">
+              <span className="truncate font-black text-lg tracking-wide text-sidebar-foreground bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                BUILDERA
+              </span>
+              <span className="truncate text-[10px] font-medium text-sidebar-muted-foreground tracking-widest uppercase">
+                AI Business Platform
+              </span>
             </div>
           </div>
         </SidebarHeader>
           
-        <SidebarContent className="px-2 py-2">
-          {menuItems.map((category) => (
-            <SidebarGroup key={category.category}>
-              <SidebarGroupLabel>{category.category}</SidebarGroupLabel>
+        <SidebarContent className="px-3 py-4">
+          {sidebarMenuItems.map((category) => (
+            <SidebarGroup key={category.category} className="mb-6">
+              <SidebarGroupLabel className="px-3 text-xs font-bold uppercase text-sidebar-foreground/70 mb-3 tracking-wider">
+                {category.category}
+              </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="space-y-1">
                   {category.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = activeView === item.id;
@@ -342,11 +354,22 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                         <SidebarMenuButton
                           isActive={isActive}
                           disabled={isDisabled}
-                          className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                          className={`
+                            relative group transition-all duration-200 rounded-lg p-3
+                            ${isActive 
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm transform translate-x-1" 
+                              : isDisabled
+                              ? "opacity-50 cursor-not-allowed text-sidebar-foreground/50"
+                              : "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground hover:transform hover:translate-x-1"
+                            }
+                          `}
                           onClick={isDisabled ? undefined : () => setActiveView(item.id)}
                         >
-                          <Icon className="size-4" />
-                          <span>{item.label}</span>
+                          <Icon className="size-5 mr-3 flex-shrink-0" />
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{item.label}</span>
+                            <span className="text-xs text-sidebar-foreground/60">{item.description}</span>
+                          </div>
                           {isDisabled && <span className="ml-auto text-xs">🔒</span>}
                         </SidebarMenuButton>
                       </SidebarMenuItem>

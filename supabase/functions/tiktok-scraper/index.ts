@@ -60,19 +60,19 @@ serve(async (req) => {
       throw new Error('User not authenticated')
     }
 
-    const { action, unique_id, user_id, username } = await req.json()
+    const { action, unique_id, user_id } = await req.json()
 
     switch (action) {
       case 'get_user_info':
         return await getUserInfo(unique_id, user.id, supabaseClient, rapidApiKey)
       case 'get_user_details':
-        return await getUserInfo(username, user.id, supabaseClient, rapidApiKey)
+        return await getUserInfo(unique_id, user.id, supabaseClient, rapidApiKey)
       case 'get_followers':
         return await getFollowers(user_id, user.id, supabaseClient, rapidApiKey)
       case 'get_following':
         return await getFollowing(user_id, user.id, supabaseClient, rapidApiKey)
       case 'get_posts':
-        return await getPostsByUsername(username, user.id, supabaseClient, rapidApiKey)
+        return await getPostsByUsername(unique_id, user.id, supabaseClient, rapidApiKey)
       case 'get_complete_analysis':
         return await getCompleteAnalysis(unique_id, user.id, supabaseClient, rapidApiKey)
       default:
@@ -381,11 +381,11 @@ async function getCompleteAnalysis(uniqueId: string, userId: string, supabase: a
   )
 }
 
-async function getPostsByUsername(username: string, userId: string, supabase: any, rapidApiKey: string) {
-  console.log(`📹 Getting posts for TikTok username: ${username}`)
+async function getPostsByUsername(uniqueId: string, userId: string, supabase: any, rapidApiKey: string) {
+  console.log(`📹 Getting posts for TikTok unique_id: ${uniqueId}`)
   
   // Primero obtener el user_id de TikTok
-  const userInfoResponse = await fetch(`https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${encodeURIComponent(username)}`, {
+  const userInfoResponse = await fetch(`https://tiktok-scraper7.p.rapidapi.com/user/info?unique_id=${encodeURIComponent(uniqueId)}`, {
     headers: {
       'x-rapidapi-host': 'tiktok-scraper7.p.rapidapi.com',
       'x-rapidapi-key': rapidApiKey

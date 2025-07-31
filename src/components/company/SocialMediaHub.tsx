@@ -365,7 +365,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
       const { data, error } = await supabase.functions.invoke('tiktok-scraper', {
         body: {
           action: 'get_user_details',
-          username: identifier
+          unique_id: identifier
         }
       });
 
@@ -411,7 +411,7 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
       const { data, error } = await supabase.functions.invoke('tiktok-scraper', {
         body: {
           action: 'get_posts',
-          username: identifier
+          unique_id: identifier
         }
       });
 

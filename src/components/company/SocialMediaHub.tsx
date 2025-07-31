@@ -13,8 +13,6 @@ import {
   Music, 
   Instagram, 
   Facebook,
-  Twitter,
-  Youtube,
   ExternalLink,
   CheckCircle,
   AlertTriangle,
@@ -164,9 +162,6 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   const [tikTokDetails, setTikTokDetails] = useState<any>(null);
   const [tikTokPosts, setTikTokPosts] = useState<any>(null);
   const [loadingTikTok, setLoadingTikTok] = useState(false);
-  const [youtubeDetails, setYoutubeDetails] = useState<any>(null);
-  const [youtubePosts, setYoutubePosts] = useState<any>(null);
-  const [loadingYoutube, setLoadingYoutube] = useState(false);
   const [facebookDetails, setFacebookDetails] = useState<any>(null);
   const [facebookPosts, setFacebookPosts] = useState<any>(null);
   const [loadingFacebook, setLoadingFacebook] = useState(false);
@@ -219,28 +214,6 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
         isActive: !!companyData?.facebook_url && validateFacebookUrl(companyData?.facebook_url),
         hasDetails: true,
         hasPosts: true
-      },
-      {
-        id: 'twitter',
-        name: 'Twitter/X',
-        icon: Twitter,
-        color: 'bg-black',
-        url: companyData?.twitter_url || null,
-        isValid: validateTwitterUrl(companyData?.twitter_url),
-        isActive: !!companyData?.twitter_url && validateTwitterUrl(companyData?.twitter_url),
-        hasDetails: false,
-        hasPosts: false
-      },
-      {
-        id: 'youtube',
-        name: 'YouTube',
-        icon: Youtube,
-        color: 'bg-red-600',
-        url: companyData?.youtube_url || null,
-        isValid: validateYouTubeUrl(companyData?.youtube_url),
-        isActive: !!companyData?.youtube_url && validateYouTubeUrl(companyData?.youtube_url),
-        hasDetails: true,
-        hasPosts: true
       }
     ];
   };
@@ -270,23 +243,6 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     return facebookRegex.test(url);
   };
 
-  const validateTwitterUrl = (url: string | null): boolean => {
-    if (!url) return false;
-    const twitterRegex = /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/?$/;
-    return twitterRegex.test(url);
-  };
-
-  const validateYouTubeUrl = (url: string | null): boolean => {
-    if (!url) return false;
-    const youtubeRegex = /^https?:\/\/(www\.)?youtube\.com\/(c\/|channel\/|user\/|@)[a-zA-Z0-9_-]+\/?$/;
-    return youtubeRegex.test(url);
-  };
-
-  // Extract channel identifier from YouTube URL
-  const extractYouTubeIdentifier = (url: string): string => {
-    const match = url.match(/youtube\.com\/(c\/|channel\/|user\/|@)([a-zA-Z0-9_-]+)/);
-    return match ? match[2] : '';
-  };
 
   // Extract company identifier from LinkedIn URL
   const extractLinkedInIdentifier = (url: string): string => {
@@ -628,69 +584,6 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     }
   };
 
-  const loadYoutubeDetails = async (network: SocialNetwork) => {
-    if (!network.url || !network.isValid) return;
-
-    setLoadingYoutube(true);
-    try {
-      const identifier = extractYouTubeIdentifier(network.url);
-      
-      console.log('🔍 Loading YouTube details for:', identifier);
-      
-      toast({
-        title: "Conectando YouTube",
-        description: "Esta funcionalidad estará disponible próximamente",
-      });
-      
-      // Placeholder data for now
-      setYoutubeDetails({
-        channel_name: identifier,
-        subscriber_count: 'Próximamente',
-        video_count: 'Próximamente',
-        total_views: 'Próximamente'
-      });
-      setSelectedNetwork(network);
-      
-    } catch (error: any) {
-      console.error('Error loading YouTube details:', error);
-      toast({
-        title: "Error cargando YouTube",
-        description: error.message || "No se pudieron cargar los detalles de YouTube",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingYoutube(false);
-    }
-  };
-
-  const loadYoutubePosts = async (network: SocialNetwork) => {
-    if (!network.url || !network.isValid) return;
-
-    setLoadingYoutube(true);
-    try {
-      const identifier = extractYouTubeIdentifier(network.url);
-      
-      console.log('📹 Loading YouTube posts for:', identifier);
-      
-      toast({
-        title: "Cargando videos",
-        description: "Esta funcionalidad estará disponible próximamente",
-      });
-      
-      // Placeholder data for now
-      setYoutubePosts([]);
-      
-    } catch (error: any) {
-      console.error('Error loading YouTube posts:', error);
-      toast({
-        title: "Error cargando videos",
-        description: error.message || "No se pudieron cargar los videos de YouTube",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingYoutube(false);
-    }
-  };
 
   const loadFacebookDetails = async (network: SocialNetwork) => {
     if (!network.url || !network.isValid) return;
@@ -952,15 +845,13 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                               loadTikTokDetails(network);
                             } else if (network.id === 'instagram') {
                               loadInstagramDetails(network);
-                            } else if (network.id === 'youtube') {
-                              loadYoutubeDetails(network);
                             } else if (network.id === 'facebook') {
                               loadFacebookDetails(network);
                             }
                           }}
-                           disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok || loadingYoutube || loadingFacebook) && selectedNetwork?.id === network.id}
+                           disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok || loadingFacebook) && selectedNetwork?.id === network.id}
                         >
-                            {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') || (loadingYoutube && selectedNetwork?.id === 'youtube') || (loadingFacebook && selectedNetwork?.id === 'facebook') ? (
+                             {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') || (loadingFacebook && selectedNetwork?.id === 'facebook') ? (
                              <Loader2 className="w-4 h-4 animate-spin" />
                            ) : (
                              <Eye className="w-4 h-4" />
@@ -985,15 +876,13 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
                                 loadInstagramPosts(network);
                               } else if (network.id === 'tiktok') {
                                 loadTikTokPosts(network);
-                              } else if (network.id === 'youtube') {
-                                loadYoutubePosts(network);
-                              } else if (network.id === 'facebook') {
+                               } else if (network.id === 'facebook') {
                                 loadFacebookPosts(network);
                               }
                             }}
-                            disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok || loadingYoutube || loadingFacebook) && selectedNetwork?.id === network.id}
+                            disabled={(loadingLinkedIn || loadingInstagram || loadingTikTok || loadingFacebook) && selectedNetwork?.id === network.id}
                         >
-                          {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') || (loadingYoutube && selectedNetwork?.id === 'youtube') || (loadingFacebook && selectedNetwork?.id === 'facebook') ? (
+                          {(loadingLinkedIn && selectedNetwork?.id === 'linkedin') || (loadingInstagram && selectedNetwork?.id === 'instagram') || (loadingTikTok && selectedNetwork?.id === 'tiktok') || (loadingFacebook && selectedNetwork?.id === 'facebook') ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <BarChart3 className="w-4 h-4" />
@@ -3002,9 +2891,7 @@ const getUrlPlaceholder = (networkId: string): string => {
     linkedin: 'https://linkedin.com/company/tu-empresa',
     tiktok: 'https://tiktok.com/@tu-empresa',
     instagram: 'https://instagram.com/tu-empresa',
-    facebook: 'https://facebook.com/tu-empresa',
-    twitter: 'https://twitter.com/tu-empresa',
-    youtube: 'https://youtube.com/@tu-empresa'
+    facebook: 'https://facebook.com/tu-empresa'
   };
   
   return placeholders[networkId] || 'URL de la red social';

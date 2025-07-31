@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
-import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar, Globe, Bot, Facebook, ExternalLink, RefreshCw } from "lucide-react";
+import { Lightbulb, Upload, Twitter, Linkedin, Instagram, Music, Youtube, Plus, Edit, Trash2, Package, Palette, FileImage, FileText, Download, Target, Building2, Calendar, Globe, Bot, Facebook, ExternalLink, RefreshCw } from "lucide-react";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -1523,6 +1523,42 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                           onChange={(e) => updateCompanyData('instagram_url', e.target.value)}
                           onBlur={(e) => updateCompanyData('instagram_url', e.target.value)}
                           placeholder="https://instagram.com/tu-empresa"
+                        />
+                      </div>
+
+                      {/* TikTok */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Music className="h-4 w-4 text-black" />
+                          <Label htmlFor="tiktok_url">TikTok</Label>
+                          {companyData?.tiktok_url && (
+                            <div className="w-2 h-2 bg-green-500 rounded-full" title="URL definida"></div>
+                          )}
+                        </div>
+                        <Input
+                          id="tiktok_url"
+                          value={companyData?.tiktok_url || ""}
+                          onChange={(e) => updateCompanyData('tiktok_url', e.target.value)}
+                          onBlur={(e) => updateCompanyData('tiktok_url', e.target.value)}
+                          placeholder="https://tiktok.com/@tu-empresa"
+                        />
+                      </div>
+
+                      {/* YouTube */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Youtube className="h-4 w-4 text-red-600" />
+                          <Label htmlFor="youtube_url">YouTube</Label>
+                          {companyData?.youtube_url && (
+                            <div className="w-2 h-2 bg-green-500 rounded-full" title="URL definida"></div>
+                          )}
+                        </div>
+                        <Input
+                          id="youtube_url"
+                          value={companyData?.youtube_url || ""}
+                          onChange={(e) => updateCompanyData('youtube_url', e.target.value)}
+                          onBlur={(e) => updateCompanyData('youtube_url', e.target.value)}
+                          placeholder="https://youtube.com/@tu-empresa"
                         />
                       </div>
                     </div>

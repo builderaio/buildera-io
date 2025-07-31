@@ -818,11 +818,13 @@ export type Database = {
           name: string
           primary_color: string | null
           secondary_color: string | null
+          tiktok_url: string | null
           twitter_url: string | null
           updated_at: string
           webhook_data: Json | null
           webhook_processed_at: string | null
           website_url: string | null
+          youtube_url: string | null
         }
         Insert: {
           company_size?: string | null
@@ -840,11 +842,13 @@ export type Database = {
           name: string
           primary_color?: string | null
           secondary_color?: string | null
+          tiktok_url?: string | null
           twitter_url?: string | null
           updated_at?: string
           webhook_data?: Json | null
           webhook_processed_at?: string | null
           website_url?: string | null
+          youtube_url?: string | null
         }
         Update: {
           company_size?: string | null
@@ -862,11 +866,13 @@ export type Database = {
           name?: string
           primary_color?: string | null
           secondary_color?: string | null
+          tiktok_url?: string | null
           twitter_url?: string | null
           updated_at?: string
           webhook_data?: Json | null
           webhook_processed_at?: string | null
           website_url?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }

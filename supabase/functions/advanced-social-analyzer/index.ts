@@ -57,21 +57,27 @@ serve(async (req) => {
     console.log(`📊 Analyzing ${posts.length} posts for advanced insights`)
 
     // ANÁLISIS 1: Horarios óptimos de publicación
+    console.log('📊 Analyzing optimal timing...')
     const timeAnalysis = analyzeOptimalTimes(posts)
     
     // ANÁLISIS 2: Análisis de engagement por contenido
+    console.log('📈 Analyzing content performance...')
     const contentPerformance = analyzeContentPerformance(posts)
     
     // ANÁLISIS 3: Análisis de hashtags y tendencias
+    console.log('🏷️ Analyzing hashtag performance...')
     const hashtagAnalysis = analyzeHashtagPerformance(posts)
     
     // ANÁLISIS 4: Análisis de sentimientos con IA
+    console.log('🧠 Running AI sentiment analysis...')
     const sentimentAnalysis = await analyzeSentimentWithAI(posts)
     
     // ANÁLISIS 5: Predicciones de rendimiento
+    console.log('🔮 Generating performance predictions...')
     const performancePredictions = analyzePerformanceTrends(posts)
     
     // ANÁLISIS 6: Análisis competitivo
+    console.log('🥊 Running competitive analysis...')
     const competitiveAnalysis = generateCompetitiveInsights(posts)
 
     const advancedAnalysis = {

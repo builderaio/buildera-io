@@ -465,11 +465,15 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
                           <p className="text-xs font-medium text-muted-foreground capitalize">
                             {key.replace('_', ' ')}
                           </p>
-                          {recs.slice(0, 2).map((rec: string, i: number) => (
+                          {Array.isArray(recs) ? recs.slice(0, 2).map((rec: string, i: number) => (
                             <p key={i} className="text-xs bg-blue-50 p-2 rounded border-l-2 border-blue-200">
                               {rec}
                             </p>
-                          ))}
+                          )) : (
+                            <p className="text-xs bg-blue-50 p-2 rounded border-l-2 border-blue-200">
+                              {typeof recs === 'string' ? recs : JSON.stringify(recs)}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>

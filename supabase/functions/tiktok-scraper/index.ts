@@ -103,20 +103,33 @@ async function getUserInfo(uniqueId: string, userId: string, supabase: any, rapi
     throw new Error(`TikTok API error: ${response.status}`)
   }
 
-  const data = await response.json()
+  const apiResponse = await response.json()
+  console.log('TikTok API Response:', JSON.stringify(apiResponse, null, 2))
   
-  // Guardar información básica del usuario
+  // Verificar que la respuesta sea exitosa
+  if (apiResponse.code !== 0) {
+    throw new Error(`TikTok API error: ${apiResponse.msg}`)
+  }
+
+  const userData = apiResponse.data?.user
+  const statsData = apiResponse.data?.stats
+  
+  if (!userData) {
+    throw new Error('No user data found in TikTok API response')
+  }
+
+  // Guardar información básica del usuario con la estructura correcta
   const userInfo: TikTokUserInfo = {
-    user_id: data.data?.user_id || data.data?.id,
-    unique_id: data.data?.unique_id,
-    nickname: data.data?.nickname,
-    follower_count: data.data?.follower_count || 0,
-    following_count: data.data?.following_count || 0,
-    video_count: data.data?.video_count || 0,
-    heart_count: data.data?.heart_count || 0,
-    signature: data.data?.signature || '',
-    avatar_thumb: data.data?.avatar_thumb?.url_list?.[0],
-    verified: data.data?.verified || false
+    user_id: userData.id,
+    unique_id: userData.uniqueId,
+    nickname: userData.nickname,
+    follower_count: statsData?.followerCount || 0,
+    following_count: statsData?.followingCount || 0,
+    video_count: statsData?.videoCount || 0,
+    heart_count: statsData?.heartCount || statsData?.heart || 0,
+    signature: userData.signature || '',
+    avatar_thumb: userData.avatarThumb,
+    verified: userData.verified || false
   }
 
   // Guardar en la base de datos
@@ -132,7 +145,7 @@ async function getUserInfo(uniqueId: string, userId: string, supabase: any, rapi
     signature: userInfo.signature,
     avatar_url: userInfo.avatar_thumb,
     is_verified: userInfo.verified,
-    raw_data: data,
+    raw_data: apiResponse,
     updated_at: new Date().toISOString()
   })
 

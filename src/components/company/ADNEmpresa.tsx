@@ -955,47 +955,59 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
       // Procesar la respuesta del webhook
       if (Array.isArray(brandData) && brandData.length > 0) {
+        // Verificar si tiene la estructura con "response"
         const responseData = brandData[0]?.response || brandData;
         console.log('📋 Datos de branding extraídos:', responseData);
         console.log('📋 Tipo de responseData:', typeof responseData, Array.isArray(responseData));
 
-        const brandingData = {
-          primary_color: '',
-          secondary_color: '',
-          complementary_color_1: '',
-          complementary_color_2: '',
-          visual_identity: ''
-        };
+        // Verificar que responseData sea un array válido
+        if (Array.isArray(responseData) && responseData.length > 0) {
+          const brandingData = {
+            primary_color: '',
+            secondary_color: '',
+            complementary_color_1: '',
+            complementary_color_2: '',
+            visual_identity: ''
+          };
 
-        responseData.forEach((item: any) => {
-          if (item.key === 'color_principal') {
-            brandingData.primary_color = item.value;
-          } else if (item.key === 'color_secundario') {
-            brandingData.secondary_color = item.value;
-          } else if (item.key === 'color_complementario1') {
-            brandingData.complementary_color_1 = item.value;
-          } else if (item.key === 'color_complementario2') {
-            brandingData.complementary_color_2 = item.value;
-          } else if (item.key === 'identidad_visual') {
-            brandingData.visual_identity = item.value;
-          }
-        });
+          responseData.forEach((item: any) => {
+            console.log('🔍 Procesando item:', item);
+            if (item.key === 'color_principal') {
+              brandingData.primary_color = item.value;
+            } else if (item.key === 'color_secundario') {
+              brandingData.secondary_color = item.value;
+            } else if (item.key === 'color_complementario1') {
+              brandingData.complementary_color_1 = item.value;
+            } else if (item.key === 'color_complementario2') {
+              brandingData.complementary_color_2 = item.value;
+            } else if (item.key === 'identidad_visual') {
+              brandingData.visual_identity = item.value;
+            }
+          });
 
-        setBrandingForm(brandingData);
+          setBrandingForm(brandingData);
 
-        // Guardar automáticamente en la base de datos
-        await saveBrandingToDatabase(brandingData, true);
+          // Guardar automáticamente en la base de datos
+          await saveBrandingToDatabase(brandingData, true);
 
-        // Marcar que se generó con IA
-        setBrandingEraUsage({
-          generatedWithAI: true,
-          visualIdentityOptimized: true
-        });
+          // Marcar que se generó con IA
+          setBrandingEraUsage({
+            generatedWithAI: true,
+            visualIdentityOptimized: true
+          });
 
-        toast({
-          title: "Branding generado y guardado",
-          description: "La identidad de marca ha sido generada con IA y guardada en la base de datos",
-        });
+          toast({
+            title: "Branding generado y guardado",
+            description: "La identidad de marca ha sido generada con IA y guardada en la base de datos",
+          });
+        } else {
+          console.log('❌ responseData no es un array válido:', responseData);
+          toast({
+            title: "Error en el formato de datos",
+            description: "Los datos recibidos no tienen el formato esperado",
+            variant: "destructive",
+          });
+        }
       } else {
         console.log('❌ No se recibieron datos válidos para el branding:', brandData);
         toast({

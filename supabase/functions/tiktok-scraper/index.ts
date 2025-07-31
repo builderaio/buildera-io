@@ -240,8 +240,8 @@ async function getFollowing(tikTokUserId: string, userId: string, supabase: any,
     throw new Error(`TikTok Following API error: ${apiResponse.msg}`)
   }
 
-  // Asumir que la respuesta de following tiene la misma estructura que followers
-  const following = apiResponse.data?.following || apiResponse.data?.user_list || []
+  // Usar la estructura correcta para followings
+  const following = apiResponse.data?.followings || []
 
   // Guardar muestra de seguidos con la estructura correcta
   const followingToSave = following.slice(0, 50).map((followedUser: any) => ({

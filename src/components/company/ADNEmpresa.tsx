@@ -1048,54 +1048,6 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   };
 
-  const optimizeBrandingFieldWithEra = async () => {
-    if (!brandingForm.visual_identity.trim()) {
-      toast({
-        title: "Campo vacío",
-        description: "Primero ingresa contenido en el campo para poder optimizarlo",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoadingBranding(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('era-content-optimizer', {
-        body: {
-          currentText: brandingForm.visual_identity,
-          fieldType: 'identidad visual',
-          context: {
-            company: companyData?.name || profile?.company_name,
-            industry: companyData?.industry_sector || profile?.industry_sector
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.optimizedText) {
-        setBrandingForm({...brandingForm, visual_identity: data.optimizedText});
-        setBrandingEraUsage({...brandingEraUsage, visualIdentityOptimized: true});
-        
-        // Guardar automáticamente
-        await saveBrandingToDatabase({...brandingForm, visual_identity: data.optimizedText});
-        
-        toast({
-          title: "Campo optimizado",
-          description: "La identidad visual ha sido optimizada y guardada",
-        });
-      }
-    } catch (error: any) {
-      console.error('Error optimizing branding field:', error);
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo optimizar el campo",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingBranding(false);
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -2163,15 +2115,29 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                             </div>
                           )}
                         </div>
-                        <Button
-                          onClick={optimizeBrandingFieldWithEra}
-                          disabled={loadingBranding || brandingEraUsage.visualIdentityOptimized || !brandingForm.visual_identity.trim()}
+                        <EraOptimizerButton
+                          currentText={brandingForm.visual_identity}
+                          fieldType="identidad visual"
+                          context={{
+                            companyName: profile?.company_name,
+                            industry: profile?.industry_sector,
+                            primaryColor: brandingForm.primary_color,
+                            secondaryColor: brandingForm.secondary_color
+                          }}
+                          onOptimized={async (optimizedText) => {
+                            setBrandingForm({...brandingForm, visual_identity: optimizedText});
+                            setBrandingEraUsage({...brandingEraUsage, visualIdentityOptimized: true});
+                            
+                            // Guardar automáticamente
+                            try {
+                              await saveBrandingToDatabase({...brandingForm, visual_identity: optimizedText});
+                            } catch (error) {
+                              console.error('Error saving optimized branding:', error);
+                            }
+                          }}
                           size="sm"
-                          variant="outline"
-                        >
-                          <Bot className="w-3 h-3 mr-1" />
-                          Optimizar con ERA
-                        </Button>
+                          disabled={!brandingForm.visual_identity.trim() || brandingEraUsage.visualIdentityOptimized}
+                        />
                       </div>
                       <Textarea
                         id="visual_identity"

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuthMethods } from "@/hooks/useAuthMethods";
 import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 import { EmailVerificationInfo } from "./EmailVerificationInfo";
+import { ForgotPasswordForm } from "./ForgotPasswordForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Linkedin, Mail, Chrome } from "lucide-react";
 
@@ -30,6 +31,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const [loading, setLoading] = useState(false);
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { toast } = useToast();
   const { authMethods, loading: authMethodsLoading } = useAuthMethods();
   const { sendWelcomeEmail } = useWelcomeEmail();
@@ -361,6 +363,15 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
     );
   }
 
+  // Mostrar formulario de recuperación de contraseña
+  if (showForgotPassword) {
+    return (
+      <ForgotPasswordForm 
+        onBackToLogin={() => setShowForgotPassword(false)}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {showSocialAuth && (
@@ -560,6 +571,18 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}
           </Button>
+
+          {mode === "signin" && (
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-primary hover:text-primary/80 underline"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+          )}
         </form>
       )}
 

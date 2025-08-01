@@ -15,6 +15,7 @@ import { useThemeInitializer } from "@/hooks/useThemeInitializer";
 import ResponsiveLayout from "./components/ResponsiveLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CompleteProfile from "./pages/CompleteProfile";
 import Waitlist from "./pages/Waitlist";
@@ -94,6 +95,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/home" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/waitlist" element={<Waitlist />} />
               <Route path="/auth/linkedin/callback" element={<LinkedInCallback />} />

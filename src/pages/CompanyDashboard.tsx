@@ -25,7 +25,7 @@ import { User } from "@supabase/supabase-js";
 const CompanyDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [activeView, setActiveView] = useState("mando-central");
+  const [activeView, setActiveView] = useState("dashboard");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -44,8 +44,8 @@ const CompanyDashboard = () => {
       console.log('Setting activeView from URL param:', viewParam);
       setActiveView(viewParam);
     } else {
-      console.log('No view param, defaulting to mando-central');
-      setActiveView('mando-central');
+      console.log('No view param, defaulting to dashboard');
+      setActiveView('dashboard');
     }
 
     const checkAuth = async () => {
@@ -165,7 +165,7 @@ const CompanyDashboard = () => {
                               !profileData?.full_name;
       
       if (stillIncomplete) {
-        setActiveView("adn-empresa");
+        setActiveView("profile");
         toast({
           title: "Complete su perfil",
           description: "Debes completar toda la información de tu negocio para continuar.",
@@ -210,28 +210,14 @@ const CompanyDashboard = () => {
   const renderContent = () => {
     console.log('Rendering content for activeView:', activeView);
     switch (activeView) {
-      case "mando-central":
+      case "dashboard":
         return <Dashboard360 profile={profile} onNavigate={setActiveView} />;
-      case "adn-empresa":
-        return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;
-      case "mis-agentes":
-        return <CompanyAgents />;
-      case "marketing-hub":
+      case "marketing":
         return <MarketingHub profile={profile} />;
-      case "inteligencia-competitiva":
-        return <InteligenciaCompetitiva />;
-      case "base-conocimiento":
-        return <MisArchivos />;
-      case "academia-buildera":
-        return <AcademiaBuildiera />;
-      case "marketplace":
-        return <Marketplace />;
-      case "expertos":
-        return <Expertos />;
-      case "configuracion":
-        return <Configuracion profile={profile} resetTutorial={resetTutorial} />;
+      case "agents":
+        return <CompanyAgents />;
       case "profile":
-        return <UserProfile />;
+        return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;
       default:
         return <Dashboard360 profile={profile} onNavigate={setActiveView} />;
     }
@@ -249,8 +235,63 @@ const CompanyDashboard = () => {
   }
 
   return (
-    <div className="w-full">
-      {renderContent()}
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted/30">
+      {/* Simplified Navigation */}
+      <div className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-8">
+              <h1 className="text-xl font-semibold text-foreground">
+                {profile?.company_name || 'Mi Negocio'}
+              </h1>
+              
+              {/* Simplified Navigation */}
+              <nav className="hidden md:flex space-x-1">
+                {[
+                  { id: 'dashboard', label: 'Panel', icon: '📊' },
+                  { id: 'marketing', label: 'Marketing', icon: '🎯' },
+                  { id: 'agents', label: 'Agentes', icon: '🤖' }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveView(item.id)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      activeView === item.id
+                        ? 'bg-primary text-primary-foreground shadow-lg scale-105'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    <span className="mr-2">{item.icon}</span>
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setActiveView('profile')}
+                className="p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                title="Perfil"
+              >
+                ⚙️
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                title="Cerrar sesión"
+              >
+                🚪
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div className="animate-fade-in">
+        {renderContent()}
+      </div>
       
       {/* Era Coach Mark */}
       {user && shouldShowCoachMark && (

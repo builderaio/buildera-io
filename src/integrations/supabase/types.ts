@@ -2415,6 +2415,69 @@ export type Database = {
         }
         Relationships: []
       }
+      instagram_user_profiles: {
+        Row: {
+          biography: string | null
+          business_category: string | null
+          created_at: string
+          external_url: string | null
+          followers_count: number | null
+          following_count: number | null
+          full_name: string | null
+          id: string
+          instagram_user_id: string
+          is_business: boolean | null
+          is_verified: boolean | null
+          last_updated: string | null
+          media_count: number | null
+          profile_pic_url: string | null
+          raw_data: Json | null
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          biography?: string | null
+          business_category?: string | null
+          created_at?: string
+          external_url?: string | null
+          followers_count?: number | null
+          following_count?: number | null
+          full_name?: string | null
+          id?: string
+          instagram_user_id: string
+          is_business?: boolean | null
+          is_verified?: boolean | null
+          last_updated?: string | null
+          media_count?: number | null
+          profile_pic_url?: string | null
+          raw_data?: Json | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          biography?: string | null
+          business_category?: string | null
+          created_at?: string
+          external_url?: string | null
+          followers_count?: number | null
+          following_count?: number | null
+          full_name?: string | null
+          id?: string
+          instagram_user_id?: string
+          is_business?: boolean | null
+          is_verified?: boolean | null
+          last_updated?: string | null
+          media_count?: number | null
+          profile_pic_url?: string | null
+          raw_data?: Json | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       linkedin_connections: {
         Row: {
           access_token: string

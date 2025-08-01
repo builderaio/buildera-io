@@ -288,6 +288,37 @@ async function getCompleteInstagramAnalysis(username: string, userId: string, su
 
     console.log('✅ All Instagram data retrieved successfully');
 
+    // Guardar información del perfil de Instagram
+    if (profileInfo && profileInfo.id) {
+      console.log(`💾 Saving Instagram profile data for user ${userId}`);
+      
+      const { error: profileError } = await supabase.from('instagram_user_profiles').upsert({
+        user_id: userId,
+        instagram_user_id: profileInfo.id,
+        username: profileInfo.username,
+        full_name: profileInfo.full_name,
+        biography: profileInfo.biography,
+        profile_pic_url: profileInfo.profile_pic_url,
+        followers_count: profileInfo.followers_count || 0,
+        following_count: profileInfo.following_count || 0,
+        media_count: profileInfo.media_count || 0,
+        is_verified: profileInfo.is_verified || false,
+        is_business: profileInfo.is_business || false,
+        business_category: profileInfo.business_category,
+        external_url: profileInfo.external_url,
+        raw_data: profileInfo,
+        last_updated: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,instagram_user_id'
+      });
+
+      if (profileError) {
+        console.error('❌ Error saving Instagram profile:', profileError);
+      } else {
+        console.log('✅ Instagram profile data saved successfully');
+      }
+    }
+
     // Organize data with AI if OpenAI key is available
     let aiAnalysis = null;
     console.log(`🔑 OpenAI API Key available: ${!!openAIApiKey}`);

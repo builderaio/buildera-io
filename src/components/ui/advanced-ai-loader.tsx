@@ -20,11 +20,20 @@ import {
 
 interface AdvancedAILoaderProps {
   isVisible: boolean;
+  currentStep?: number;
+  totalSteps?: number;
+  stepTitle?: string;
+  stepDescription?: string;
 }
 
-const AdvancedAILoader = ({ isVisible }: AdvancedAILoaderProps) => {
+const AdvancedAILoader = ({ 
+  isVisible, 
+  currentStep: externalStep = 0, 
+  totalSteps = 6,
+  stepTitle,
+  stepDescription 
+}: AdvancedAILoaderProps) => {
   const [progress, setProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   const steps = [
@@ -77,55 +86,58 @@ const AdvancedAILoader = ({ isVisible }: AdvancedAILoaderProps) => {
     "🎨 Insights sobre contenido de alto rendimiento"
   ];
 
+  // Usar step externo si está disponible, sino usar el interno simulado
+  const currentStep = externalStep > 0 ? externalStep - 1 : Math.floor(progress / (100 / totalSteps));
+  const currentStepData = steps[currentStep] || steps[0];
+
   useEffect(() => {
     if (!isVisible) {
       setProgress(0);
-      setCurrentStep(0);
       setCompletedSteps([]);
       return;
     }
 
-    let totalDuration = 0;
-    const stepDurations = steps.map(step => step.duration);
-    const totalTime = stepDurations.reduce((acc, duration) => acc + duration, 0);
-
-    const progressTimer = setInterval(() => {
-      totalDuration += 100;
-      const newProgress = Math.min((totalDuration / totalTime) * 100, 100);
+    // Si tenemos un step externo, usar ese progreso
+    if (externalStep > 0) {
+      const newProgress = (externalStep / totalSteps) * 100;
       setProgress(newProgress);
-
-      // Determinar el paso actual
-      let accumulatedTime = 0;
-      let currentStepIndex = 0;
       
-      for (let i = 0; i < stepDurations.length; i++) {
-        accumulatedTime += stepDurations[i];
-        if (totalDuration <= accumulatedTime) {
-          currentStepIndex = i;
-          break;
-        }
-      }
-
-      setCurrentStep(currentStepIndex);
-
       // Marcar pasos completados
       const completed = [];
-      let completedTime = 0;
-      for (let i = 0; i < stepDurations.length; i++) {
-        completedTime += stepDurations[i];
-        if (totalDuration > completedTime) {
-          completed.push(i);
-        }
+      for (let i = 0; i < externalStep - 1; i++) {
+        completed.push(i);
       }
       setCompletedSteps(completed);
+    } else {
+      // Fallback a simulación si no hay step externo
+      let totalDuration = 0;
+      const stepDurations = steps.map(step => step.duration);
+      const totalTime = stepDurations.reduce((acc, duration) => acc + duration, 0);
 
-      if (newProgress >= 100) {
-        clearInterval(progressTimer);
-      }
-    }, 100);
+      const progressTimer = setInterval(() => {
+        totalDuration += 100;
+        const newProgress = Math.min((totalDuration / totalTime) * 100, 100);
+        setProgress(newProgress);
 
-    return () => clearInterval(progressTimer);
-  }, [isVisible]);
+        // Marcar pasos completados
+        const completed = [];
+        let completedTime = 0;
+        for (let i = 0; i < stepDurations.length; i++) {
+          completedTime += stepDurations[i];
+          if (totalDuration > completedTime) {
+            completed.push(i);
+          }
+        }
+        setCompletedSteps(completed);
+
+        if (newProgress >= 100) {
+          clearInterval(progressTimer);
+        }
+      }, 100);
+
+      return () => clearInterval(progressTimer);
+    }
+  }, [isVisible, externalStep, totalSteps]);
 
   if (!isVisible) return null;
 
@@ -162,11 +174,15 @@ const AdvancedAILoader = ({ isVisible }: AdvancedAILoaderProps) => {
           <div className="mb-8">
             <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
               <div className="p-2 bg-primary/10 rounded-full">
-                {steps[currentStep]?.icon}
+                {currentStepData?.icon}
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-primary">{steps[currentStep]?.title}</h3>
-                <p className="text-sm text-muted-foreground">{steps[currentStep]?.description}</p>
+                <h3 className="font-semibold text-primary">
+                  {stepTitle || currentStepData?.title}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {stepDescription || currentStepData?.description}
+                </p>
               </div>
               <div className="animate-spin">
                 <Zap className="h-5 w-5 text-primary" />

@@ -53,6 +53,9 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AdvancedAnalysis>({});
   const [lastAnalysis, setLastAnalysis] = useState<Date | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(6);
+  const [stepDetails, setStepDetails] = useState({ title: '', description: '' });
 
   useEffect(() => {
     if (profile?.user_id) {
@@ -126,8 +129,17 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
 
   const runAdvancedAnalysis = async () => {
     setLoading(true);
+    setCurrentStep(0);
+    
+    const updateStep = (step: number, title: string, description: string) => {
+      setCurrentStep(step);
+      setStepDetails({ title, description });
+    };
+    
     try {
       console.log('🚀 Starting comprehensive advanced analysis...');
+      
+      updateStep(1, "Inicializando análisis", "Verificando conexiones y configuración...");
       
       toast({
         title: "🔄 Iniciando análisis avanzado integral",
@@ -157,6 +169,7 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
       const processPlatform = async (platformName: string, urlField: string) => {
         if (company[urlField]) {
           try {
+            updateStep(2, `Analizando ${platformName}`, `Procesando datos de ${platformName}...`);
             console.log(`📊 Procesando ${platformName}...`);
             
             // Verificar primero si hay posts disponibles para esta plataforma
@@ -219,6 +232,7 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
             // Análisis premium de IA (solo una vez por sesión, independiente de plataforma)
             if (platformName === 'Instagram') { // Solo ejecutar una vez
               try {
+                updateStep(4, "Análisis con IA Avanzada", "Ejecutando análisis estratégico premium...");
                 console.log('🧠 Ejecutando análisis estratégico premium de IA...');
                 const { data: premiumAnalysis, error: premiumError } = await supabase.functions.invoke('premium-ai-insights', {
                   body: { platform: null } // Analizar todas las plataformas
@@ -258,6 +272,7 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
 
       // Análisis cross-platform si hay múltiples plataformas
       if (totalPlataformas > 1) {
+        updateStep(5, "Análisis Cross-Platform", "Integrando datos de múltiples plataformas...");
         console.log('🔄 Ejecutando análisis cross-platform...');
         try {
           await supabase.functions.invoke('content-insights-analyzer', {
@@ -271,6 +286,7 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
       }
 
       // Recargar datos existentes para mostrar análisis actualizado
+      updateStep(6, "Finalizando", "Cargando resultados del análisis...");
       await loadExistingAnalysis();
 
       if (processedPlatforms.length === 0) {
@@ -311,6 +327,7 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
       });
     } finally {
       setLoading(false);
+      setCurrentStep(0);
     }
   };
 
@@ -820,7 +837,13 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
   return (
     <>
       {/* Advanced AI Loader */}
-      <AdvancedAILoader isVisible={loading} />
+      <AdvancedAILoader 
+        isVisible={loading} 
+        currentStep={currentStep}
+        totalSteps={totalSteps}
+        stepTitle={stepDetails.title}
+        stepDescription={stepDetails.description}
+      />
       
       <div className="space-y-8 animate-fade-in">
         {/* Header */}

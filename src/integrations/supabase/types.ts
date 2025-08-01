@@ -3063,7 +3063,7 @@ export type Database = {
           metric_type: string
           period_end: string
           period_start: string
-          period_type: string
+          period_type?: string
           platform: string
           user_id: string
           value?: number | null

@@ -57,6 +57,7 @@ serve(async (req) => {
           value: totalPosts,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         },
         {
@@ -66,6 +67,7 @@ serve(async (req) => {
           value: totalLikes,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         },
         {
@@ -75,6 +77,7 @@ serve(async (req) => {
           value: totalComments,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         },
         {
@@ -84,6 +87,7 @@ serve(async (req) => {
           value: Math.round(avgEngagement * 100) / 100,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days', total_followers: totalFollowers }
         }
       ];
@@ -116,6 +120,7 @@ serve(async (req) => {
           value: totalPosts,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         },
         {
@@ -125,6 +130,7 @@ serve(async (req) => {
           value: totalLikes,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         },
         {
@@ -134,6 +140,7 @@ serve(async (req) => {
           value: totalComments,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         },
         {
@@ -143,6 +150,7 @@ serve(async (req) => {
           value: totalShares,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         }
       ];
@@ -175,6 +183,7 @@ serve(async (req) => {
           value: totalPosts,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         },
         {
@@ -184,6 +193,7 @@ serve(async (req) => {
           value: totalViews,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         },
         {
@@ -193,6 +203,7 @@ serve(async (req) => {
           value: totalLikes,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         },
         {
@@ -202,6 +213,7 @@ serve(async (req) => {
           value: totalComments,
           period_start: periodStart.toISOString(),
           period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
           metadata: { timeframe: '30_days' }
         }
       ];

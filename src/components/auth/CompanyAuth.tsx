@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthMethods } from "@/hooks/useAuthMethods";
+import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 import { supabase } from "@/integrations/supabase/client";
 import { Linkedin, Mail, Chrome } from "lucide-react";
 
@@ -28,6 +29,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { authMethods, loading: authMethodsLoading } = useAuthMethods();
+  const { sendWelcomeEmail } = useWelcomeEmail();
 
   const companySizes = [
     "1-10 empleados",
@@ -145,7 +147,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/company-dashboard`,
             data: {
               full_name: fullName,
               user_type: 'company',
@@ -166,6 +168,15 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         console.log("Registro exitoso:", data);
         
         if (data.user) {
+          // Enviar email de bienvenida usando el sistema de Buildera
+          try {
+            await sendWelcomeEmail(email, fullName, 'company');
+            console.log("Email de bienvenida enviado exitosamente");
+          } catch (emailError) {
+            console.error("Error enviando email de bienvenida:", emailError);
+            // No bloquear el registro si falla el email
+          }
+
           // Llamar manualmente al webhook después del registro exitoso
           try {
             await supabase.functions.invoke('process-company-webhooks', {
@@ -185,7 +196,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           
           toast({
             title: "¡Registro exitoso!",
-            description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
+            description: data.user.email_confirmed_at 
+              ? "Tu cuenta ha sido creada. Ahora puedes iniciar sesión."
+              : "Tu cuenta ha sido creada. Revisa tu email para verificar tu cuenta antes de iniciar sesión.",
           });
           
           console.log("Usuario de empresa registrado exitosamente");
@@ -249,9 +262,11 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       if (error.message?.includes('Invalid login credentials')) {
         errorMessage = "Email o contraseña incorrectos";
       } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = "Tu cuenta fue creada pero necesita confirmación. Por favor revisa tu email y haz clic en el enlace de confirmación, o contacta al administrador para activar tu cuenta.";
+        errorMessage = "Tu cuenta necesita ser verificada. Por favor revisa tu email y haz clic en el enlace de verificación. Si no encuentras el email, revisa tu carpeta de spam.";
       } else if (error.message?.includes('User already registered')) {
         errorMessage = "Ya existe una cuenta con este email";
+      } else if (error.message?.includes('Signup not allowed')) {
+        errorMessage = "El registro no está permitido en este momento";
       }
       
       toast({

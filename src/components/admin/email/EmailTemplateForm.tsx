@@ -6,6 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, Code, Smartphone } from "lucide-react";
 import { EmailTemplate, useEmailSystem } from "@/hooks/useEmailSystem";
 
 interface EmailTemplateFormProps {
@@ -77,6 +80,47 @@ export const EmailTemplateForm = ({ template, onClose, onSave }: EmailTemplateFo
 
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Sample data for preview
+  const getSampleVariables = () => ({
+    buildera_name: "Buildera",
+    buildera_logo: "https://buildera.io/logo.png",
+    buildera_website: "https://buildera.io",
+    current_year: new Date().getFullYear().toString(),
+    user_name: "Juan Pérez",
+    user_email: "juan.perez@ejemplo.com",
+    login_url: "https://buildera.io/login",
+    dashboard_url: "https://buildera.io/dashboard",
+    reset_url: "https://buildera.io/reset-password",
+    report_period: "Enero 2025",
+    total_actions: "156",
+    new_projects: "12",
+    active_users: "1,234",
+    expiry_time: "24",
+    subject_here: "Notificación importante",
+    title_here: "Título del mensaje",
+    content_here: "Aquí va el contenido principal del mensaje."
+  });
+
+  const replaceVariables = (content: string) => {
+    const variables = getSampleVariables();
+    let result = content;
+    
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      result = result.replace(regex, value);
+    });
+    
+    return result;
+  };
+
+  const getPreviewContent = () => {
+    return {
+      subject: replaceVariables(formData.subject),
+      html: replaceVariables(formData.html_content),
+      text: replaceVariables(formData.text_content)
+    };
   };
 
   const getDefaultTemplate = (type: string) => {
@@ -229,114 +273,216 @@ export const EmailTemplateForm = ({ template, onClose, onSave }: EmailTemplateFo
     }
   };
 
+  const previewContent = getPreviewContent();
+
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {template ? "Editar Plantilla" : "Nueva Plantilla"}
           </DialogTitle>
           <DialogDescription>
-            Crea o edita plantillas de email con variables dinámicas.
+            Crea o edita plantillas de email con variables dinámicas y ve el preview en tiempo real.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre de la plantilla</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => updateField("name", e.target.value)}
-                placeholder="Ej: Bienvenida nuevos usuarios"
-                required
-              />
+        <div className="grid grid-cols-2 gap-6 h-[calc(95vh-120px)]">
+          {/* Panel izquierdo - Formulario */}
+          <div className="overflow-y-auto pr-2">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nombre de la plantilla</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => updateField("name", e.target.value)}
+                    placeholder="Ej: Bienvenida nuevos usuarios"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="template_type">Tipo de plantilla</Label>
+                  <Select value={formData.template_type} onValueChange={handleTypeChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona un tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TEMPLATE_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subject">Asunto del email</Label>
+                <Input
+                  id="subject"
+                  value={formData.subject}
+                  onChange={(e) => updateField("subject", e.target.value)}
+                  placeholder="Ej: ¡Bienvenido a {{buildera_name}}!"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="html_content">Contenido HTML</Label>
+                <Textarea
+                  id="html_content"
+                  value={formData.html_content}
+                  onChange={(e) => updateField("html_content", e.target.value)}
+                  placeholder="Contenido HTML del email con variables como {{user_name}}"
+                  className="min-h-[200px] font-mono text-sm"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="text_content">Contenido de texto (opcional)</Label>
+                <Textarea
+                  id="text_content"
+                  value={formData.text_content}
+                  onChange={(e) => updateField("text_content", e.target.value)}
+                  placeholder="Versión en texto plano del email"
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Plantilla activa</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Esta plantilla estará disponible para envío de emails
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => updateField("is_active", checked)}
+                />
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2 text-sm">Variables disponibles</h4>
+                <div className="text-xs text-blue-700 space-y-1">
+                  <p><strong>Generales:</strong> {`{{buildera_name}}, {{buildera_logo}}, {{buildera_website}}, {{current_year}}`}</p>
+                  <p><strong>Usuario:</strong> {`{{user_name}}, {{user_email}}`}</p>
+                  <p><strong>URLs:</strong> {`{{login_url}}, {{dashboard_url}}, {{reset_url}}`}</p>
+                  <p><strong>Reportes:</strong> {`{{report_period}}, {{total_actions}}, {{new_projects}}`}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Guardando..." : "Guardar"}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          {/* Panel derecho - Preview */}
+          <div className="border-l pl-6 overflow-y-auto">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Eye className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-lg">Preview del Email</h3>
+              </div>
+
+              <Tabs defaultValue="visual" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="visual" className="flex items-center gap-2">
+                    <Eye className="w-4 h-4" />
+                    Visual
+                  </TabsTrigger>
+                  <TabsTrigger value="mobile" className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4" />
+                    Mobile
+                  </TabsTrigger>
+                  <TabsTrigger value="code" className="flex items-center gap-2">
+                    <Code className="w-4 h-4" />
+                    HTML
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="visual" className="space-y-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Asunto</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm font-medium border p-2 rounded bg-gray-50">
+                        {previewContent.subject || "Sin asunto"}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Contenido del Email</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div 
+                        className="border rounded p-4 bg-white min-h-[400px] overflow-auto"
+                        style={{ maxHeight: '500px' }}
+                        dangerouslySetInnerHTML={{ 
+                          __html: previewContent.html || "<p>Sin contenido HTML</p>" 
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="mobile" className="space-y-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Vista Mobile</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mx-auto" style={{ width: '320px' }}>
+                        <div className="border rounded-lg p-2 bg-gray-100">
+                          <div className="bg-white rounded p-2 mb-2">
+                            <p className="text-xs font-medium text-gray-600 mb-1">Asunto:</p>
+                            <p className="text-sm font-medium">
+                              {previewContent.subject || "Sin asunto"}
+                            </p>
+                          </div>
+                          <div 
+                            className="bg-white rounded p-2 text-sm overflow-auto"
+                            style={{ maxHeight: '400px', fontSize: '12px' }}
+                            dangerouslySetInnerHTML={{ 
+                              __html: previewContent.html || "<p>Sin contenido HTML</p>" 
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="code" className="space-y-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Código HTML</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <pre className="text-xs bg-gray-100 p-3 rounded overflow-auto max-h-[500px] whitespace-pre-wrap">
+                        {previewContent.html || "Sin contenido HTML"}
+                      </pre>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="template_type">Tipo de plantilla</Label>
-              <Select value={formData.template_type} onValueChange={handleTypeChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TEMPLATE_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="subject">Asunto del email</Label>
-            <Input
-              id="subject"
-              value={formData.subject}
-              onChange={(e) => updateField("subject", e.target.value)}
-              placeholder="Ej: ¡Bienvenido a {{buildera_name}}!"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="html_content">Contenido HTML</Label>
-            <Textarea
-              id="html_content"
-              value={formData.html_content}
-              onChange={(e) => updateField("html_content", e.target.value)}
-              placeholder="Contenido HTML del email con variables como {{user_name}}"
-              className="min-h-[200px] font-mono text-sm"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="text_content">Contenido de texto (opcional)</Label>
-            <Textarea
-              id="text_content"
-              value={formData.text_content}
-              onChange={(e) => updateField("text_content", e.target.value)}
-              placeholder="Versión en texto plano del email"
-              className="min-h-[100px]"
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Plantilla activa</Label>
-              <p className="text-sm text-muted-foreground">
-                Esta plantilla estará disponible para envío de emails
-              </p>
-            </div>
-            <Switch
-              checked={formData.is_active}
-              onCheckedChange={(checked) => updateField("is_active", checked)}
-            />
-          </div>
-
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">Variables disponibles</h4>
-            <div className="text-sm text-blue-700 space-y-1">
-              <p><strong>Generales:</strong> {`{{buildera_name}}, {{buildera_logo}}, {{buildera_website}}, {{current_year}}`}</p>
-              <p><strong>Usuario:</strong> {`{{user_name}}, {{user_email}}`}</p>
-              <p><strong>URLs:</strong> {`{{login_url}}, {{dashboard_url}}, {{reset_url}}`}</p>
-              <p><strong>Reportes:</strong> {`{{report_period}}, {{total_actions}}, {{new_projects}}`}</p>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Guardando..." : "Guardar"}
-            </Button>
-          </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -530,14 +530,14 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
         </SidebarFooter>
       </Sidebar>
       
-      <SidebarInset className="flex-1 overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background/95 backdrop-blur-sm sticky top-0 z-40">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
+      <SidebarInset className="flex-1 overflow-hidden bg-background">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border/50 px-4 bg-background/95 backdrop-blur-sm sticky top-0 z-40 shadow-sm">
+          <SidebarTrigger className="-ml-1 text-sidebar-foreground hover:bg-accent" />
+          <Separator orientation="vertical" className="mr-2 h-4 bg-border" />
           
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">
+              <h1 className="text-lg font-semibold text-foreground">
                 {profile?.company_name || 'Mi Empresa'}
               </h1>
             </div>
@@ -548,53 +548,59 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-auto px-2 rounded-full hover:bg-accent">
+                  <Button variant="ghost" className="relative h-9 w-auto px-2 rounded-full hover:bg-accent border border-transparent hover:border-border/50">
                     <div className="flex items-center gap-2">
-                      <Avatar className="size-7">
+                      <Avatar className="size-7 ring-1 ring-border/20">
                         <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
-                        <AvatarFallback className="text-xs">
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
                           {profile?.full_name?.charAt(0) || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col items-start text-left hidden md:block">
-                        <span className="text-sm font-medium truncate max-w-[120px]">
+                        <span className="text-sm font-medium truncate max-w-[120px] text-foreground">
                           {profile?.full_name || "Usuario"}
                         </span>
                       </div>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-[60]">
+                <DropdownMenuContent align="end" className="w-56 bg-background border border-border shadow-lg z-[60] backdrop-blur-sm">
                   <div className="flex items-center justify-start gap-2 p-2">
-                    <Avatar className="size-8">
+                    <Avatar className="size-8 ring-1 ring-border/20">
                       <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
-                      <AvatarFallback className="text-xs">
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
                         {profile?.full_name?.charAt(0) || "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{profile?.full_name || "Usuario"}</p>
+                      <p className="font-medium text-foreground">{profile?.full_name || "Usuario"}</p>
                       <p className="w-[200px] truncate text-sm text-muted-foreground">
                         {profile?.email}
                       </p>
                     </div>
                   </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setActiveView('profile')}>
+                  <DropdownMenuSeparator className="bg-border" />
+                  <DropdownMenuItem 
+                    onClick={() => setActiveView('profile')}
+                    className="cursor-pointer hover:bg-accent focus:bg-accent"
+                  >
                     <User className="mr-2 h-4 w-4" />
                     <span>Mi Perfil</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setActiveView('configuracion')}
                     disabled={isProfileIncomplete}
-                    className={isProfileIncomplete ? "opacity-50 cursor-not-allowed" : ""}
+                    className={`cursor-pointer ${isProfileIncomplete ? "opacity-50 cursor-not-allowed" : "hover:bg-accent focus:bg-accent"}`}
                   >
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Administración</span>
                     {isProfileIncomplete && <span className="ml-auto text-xs">🔒</span>}
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
+                  <DropdownMenuSeparator className="bg-border" />
+                  <DropdownMenuItem 
+                    onClick={handleSignOut}
+                    className="cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10 text-destructive"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Cerrar sesión</span>
                   </DropdownMenuItem>
@@ -604,8 +610,10 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
           </div>
         </header>
           
-        <main className="flex-1 overflow-auto p-4 md:p-6 relative">
-          <Outlet />
+        <main className="flex-1 w-full h-full overflow-auto bg-background">
+          <div className="w-full h-full p-4 md:p-6">
+            <Outlet />
+          </div>
         </main>
       </SidebarInset>
       </div>

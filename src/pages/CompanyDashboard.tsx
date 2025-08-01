@@ -250,10 +250,12 @@ const CompanyDashboard = () => {
   }
 
   return (
-    <div className="w-full">
-      {/* Content Area optimizado para sidebar */}
-      <div className="animate-fade-in">
-        {renderContent()}
+    <div className="w-full min-h-full">
+      {/* Content Area optimizado para sidebar con padding y espaciado correcto */}
+      <div className="animate-fade-in w-full">
+        <div className="max-w-full">
+          {renderContent()}
+        </div>
       </div>
       
       {/* Era Coach Mark */}

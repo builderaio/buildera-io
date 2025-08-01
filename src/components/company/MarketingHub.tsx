@@ -4,8 +4,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   BarChart3, 
   Calendar, 
@@ -21,7 +23,8 @@ import {
   ArrowRight,
   Sparkles,
   Network,
-  PlusCircle
+  PlusCircle,
+  HelpCircle
 } from "lucide-react";
 import SocialMediaHub from './SocialMediaHub';
 import MarketingMetrics from './MarketingMetrics';
@@ -55,6 +58,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
   const [realMetrics, setRealMetrics] = useState<QuickStat[]>([]);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const isMobile = useIsMobile();
 
   // Mock quick stats - en producción vendría de la API
   const quickStats: QuickStat[] = [
@@ -384,35 +388,76 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
             </p>
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {statsToShow.map((stat, index) => {
-            const IconComponent = stat.icon;
-            return (
-              <Card key={index} className="relative overflow-hidden transition-all duration-200 hover:shadow-md hover-scale">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <IconComponent className={`h-5 w-5 ${stat.color}`} />
-                    <Badge 
-                      variant={stat.trend === 'up' ? 'default' : stat.trend === 'down' ? 'destructive' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {stat.change}
-                    </Badge>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  </div>
-                  {isUsingRealData && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Datos en tiempo real" />
+        <TooltipProvider>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {statsToShow.map((stat, index) => {
+              const IconComponent = stat.icon;
+              
+              // Definir explicaciones para cada métrica
+              const getExplanation = (label: string) => {
+                switch(label) {
+                  case "Alcance Total":
+                    return "Número único de personas que vieron tu contenido";
+                  case "Engagement Rate":
+                  case "Engagement":
+                    return "% de interacciones vs alcance promedio";
+                  case "Score de Insights":
+                    return "Calidad y cantidad de insights generados por IA";
+                  case "Acciones Completadas":
+                    return "Recomendaciones por implementar";
+                  case "ROI":
+                    return "Retorno de inversión estimado";
+                  case "Conversiones":
+                    return "Objetivos completados exitosamente";
+                  default:
+                    return label;
+                }
+              };
+              
+              return (
+                <Card key={index} className="relative overflow-hidden transition-all duration-200 hover:shadow-md hover-scale">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <IconComponent className={`h-5 w-5 ${stat.color}`} />
+                        {isMobile && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{getExplanation(stat.label)}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                      <Badge 
+                        variant={stat.trend === 'up' ? 'default' : stat.trend === 'down' ? 'destructive' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {stat.change}
+                      </Badge>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    <div className="space-y-1">
+                      <p className="text-2xl font-bold">{stat.value}</p>
+                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      {!isMobile && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {getExplanation(stat.label)}
+                        </p>
+                      )}
+                    </div>
+                    {isUsingRealData && (
+                      <div className="absolute top-2 right-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Datos en tiempo real" />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </TooltipProvider>
       </div>
     );
   };

@@ -544,6 +544,54 @@ export type Database = {
           },
         ]
       }
+      ai_model_assignments: {
+        Row: {
+          ai_model_id: string | null
+          ai_provider_id: string | null
+          business_function: string
+          configuration: Json | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_model_id?: string | null
+          ai_provider_id?: string | null
+          business_function: string
+          configuration?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_model_id?: string | null
+          ai_provider_id?: string | null
+          business_function?: string
+          configuration?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_model_assignments_ai_model_id_fkey"
+            columns: ["ai_model_id"]
+            isOneToOne: false
+            referencedRelation: "ai_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_model_assignments_ai_provider_id_fkey"
+            columns: ["ai_provider_id"]
+            isOneToOne: false
+            referencedRelation: "ai_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_model_configurations: {
         Row: {
           created_at: string
@@ -648,6 +696,59 @@ export type Database = {
           uptime?: number
         }
         Relationships: []
+      }
+      ai_models: {
+        Row: {
+          configuration: Json | null
+          cost_per_token: number | null
+          created_at: string | null
+          display_name: string
+          id: string
+          is_active: boolean | null
+          max_tokens: number | null
+          model_type: string
+          name: string
+          provider_id: string | null
+          supports_streaming: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          configuration?: Json | null
+          cost_per_token?: number | null
+          created_at?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean | null
+          max_tokens?: number | null
+          model_type: string
+          name: string
+          provider_id?: string | null
+          supports_streaming?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          configuration?: Json | null
+          cost_per_token?: number | null
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean | null
+          max_tokens?: number | null
+          model_type?: string
+          name?: string
+          provider_id?: string | null
+          supports_streaming?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_models_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "ai_providers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_provider_models: {
         Row: {

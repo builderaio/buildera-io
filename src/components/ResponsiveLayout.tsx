@@ -393,7 +393,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      <Sidebar variant="sidebar" collapsible="icon" className="w-80 data-[state=collapsed]:w-16 border-r border-sidebar-border bg-sidebar shadow-xl">
+      <Sidebar variant="sidebar" collapsible="icon" className="w-80 data-[state=collapsed]:w-16 border-r border-sidebar-border bg-sidebar shadow-xl z-40">
         {/* Header mejorado - oculto cuando está colapsado */}
         <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95 data-[state=collapsed]:hidden">
           <div 
@@ -530,8 +530,8 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
         </SidebarFooter>
       </Sidebar>
       
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background/95 backdrop-blur-sm sticky top-0 z-50">
+      <SidebarInset className="flex-1 overflow-hidden">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 bg-background/95 backdrop-blur-sm sticky top-0 z-40">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           
@@ -564,7 +564,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
+                <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-[60]">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <Avatar className="size-8">
                       <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
@@ -604,10 +604,10 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
           </div>
         </header>
           
-          <main className="flex-1 overflow-auto p-4 md:p-6">
-            <Outlet />
-          </main>
-        </SidebarInset>
+        <main className="flex-1 overflow-auto p-4 md:p-6 relative">
+          <Outlet />
+        </main>
+      </SidebarInset>
       </div>
   );
 };

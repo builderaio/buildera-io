@@ -91,34 +91,52 @@ serve(async (req) => {
         console.log('✅ Company posts fetched successfully')
         
         // Guardar posts en la base de datos
-        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-        if (result && result.posts && result.posts.length > 0 && user) {
-          const postsToInsert = result.posts.map(post => ({
-            user_id: user.id,
-            post_id: post.post_id || post.activity_id || post.id || '',
-            content: post.text || post.description || '',
-            likes_count: post.reactions?.like_count || 0,
-            comments_count: post.comments_count || 0,
-            shares_count: post.reposts_count || 0,
-            views_count: post.views_count || 0,
-            post_type: post.type || 'post',
-            posted_at: post.posted_date ? new Date(post.posted_date).toISOString() : null,
-            raw_data: post,
-            engagement_rate: 0 // Se calculará después
-          }));
+        if (result && result.posts && result.posts.length > 0) {
+          console.log(`🔍 Processing ${result.posts.length} LinkedIn posts for user ${user.id}`);
+          
+          const postsToInsert = result.posts.map((post, index) => {
+            const postId = post.post_id || post.activity_id || post.id || `li_${company_identifier}_${index}`;
+            console.log('📝 Processing LinkedIn post:', { postId, hasText: !!post.text, hasDescription: !!post.description });
+            
+            return {
+              user_id: user.id,
+              post_id: postId,
+              content: post.text || post.description || post.commentary || '',
+              likes_count: parseInt(post.reactions?.like_count || post.likes_count || post.likes || 0),
+              comments_count: parseInt(post.comments_count || post.comments || 0),
+              shares_count: parseInt(post.reposts_count || post.shares_count || post.shares || 0),
+              views_count: parseInt(post.views_count || post.views || 0),
+              post_type: post.type || 'post',
+              posted_at: post.posted_date ? new Date(post.posted_date).toISOString() : (post.time ? new Date(post.time).toISOString() : null),
+              raw_data: post,
+              engagement_rate: 0
+            };
+          });
 
-          // Insertar posts en lotes
+          console.log(`💾 Attempting to insert ${postsToInsert.length} LinkedIn posts`);
+          
+          // Insertar posts uno por uno para ver errores específicos
+          let insertedCount = 0;
           for (const postData of postsToInsert) {
             try {
-              await supabase.from('linkedin_posts').upsert(postData, {
+              const { data, error } = await supabase.from('linkedin_posts').upsert(postData, {
                 onConflict: 'user_id,post_id'
               });
+              
+              if (error) {
+                console.error('❌ Error inserting LinkedIn post:', error, 'Post data:', postData);
+              } else {
+                insertedCount++;
+                console.log(`✅ Inserted LinkedIn post: ${postData.post_id}`);
+              }
             } catch (error) {
-              console.error('Error inserting LinkedIn post:', error);
+              console.error('❌ Exception inserting LinkedIn post:', error, 'Post data:', postData);
             }
           }
 
-          console.log(`💾 Inserted ${postsToInsert.length} LinkedIn posts into database`);
+          console.log(`💾 Successfully inserted ${insertedCount}/${postsToInsert.length} LinkedIn posts into database`);
+        } else {
+          console.log('⚠️ No posts found in LinkedIn result or no valid result');
         }
         break
 

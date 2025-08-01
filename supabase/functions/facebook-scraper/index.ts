@@ -157,16 +157,19 @@ Deno.serve(async (req) => {
       };
 
       // Guardar en base de datos para cache
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('facebook_page_data').upsert({
-          user_id: user.id,
-          page_url: page_url,
-          page_details: pageDetails,
-          reviews: reviews.slice(0, 10),
-          total_reviews: reviews.length,
-          last_updated: new Date().toISOString()
-        });
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader) {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+        if (user) {
+          await supabase.from('facebook_page_data').upsert({
+            user_id: user.id,
+            page_url: page_url,
+            page_details: pageDetails,
+            reviews: reviews.slice(0, 10),
+            total_reviews: reviews.length,
+            last_updated: new Date().toISOString()
+          });
+        }
       }
 
     } else if (action === 'get_page_posts') {
@@ -194,43 +197,67 @@ Deno.serve(async (req) => {
       };
 
       // Guardar posts individuales en la tabla facebook_posts
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && posts.length > 0) {
-        // Preparar los posts para insertar
-        const postsToInsert = posts.slice(0, 20).map(post => ({
-          user_id: user.id,
-          post_id: post.post_id || post.id || '',
-          content: post.text || post.message || '',
-          likes_count: post.reactions_count || post.like_count || 0,
-          comments_count: post.comments_count || 0,
-          shares_count: post.shares_count || post.share_count || 0,
-          post_type: post.type || 'post',
-          posted_at: post.time ? new Date(post.time * 1000).toISOString() : null,
-          raw_data: post,
-          engagement_rate: 0 // Se calculará después
-        }));
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader && posts.length > 0) {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+        if (user) {
+          console.log(`🔍 Processing ${posts.length} Facebook posts for user ${user.id}`);
+          
+          // Preparar los posts para insertar
+          const postsToInsert = posts.slice(0, 20).map((post, index) => {
+            const postId = post.post_id || post.id || `fb_${page_id}_${index}`;
+            console.log('📝 Processing post:', { postId, hasText: !!post.text, hasMessage: !!post.message });
+            
+            return {
+              user_id: user.id,
+              post_id: postId,
+              content: post.text || post.message || post.content || '',
+              likes_count: parseInt(post.reactions_count || post.like_count || post.likes || 0),
+              comments_count: parseInt(post.comments_count || post.comments || 0),
+              shares_count: parseInt(post.shares_count || post.share_count || post.shares || 0),
+              post_type: post.type || 'post',
+              posted_at: post.time ? new Date(post.time * 1000).toISOString() : (post.created_time ? new Date(post.created_time).toISOString() : null),
+              raw_data: post,
+              engagement_rate: 0
+            };
+          });
 
-        // Insertar posts en lotes para evitar errores
-        for (const postData of postsToInsert) {
-          try {
-            await supabase.from('facebook_posts').upsert(postData, {
-              onConflict: 'user_id,post_id'
-            });
-          } catch (error) {
-            console.error('Error inserting Facebook post:', error);
+          console.log(`💾 Attempting to insert ${postsToInsert.length} Facebook posts`);
+          
+          // Insertar posts uno por uno para ver errores específicos
+          let insertedCount = 0;
+          for (const postData of postsToInsert) {
+            try {
+              const { data, error } = await supabase.from('facebook_posts').upsert(postData, {
+                onConflict: 'user_id,post_id'
+              });
+              
+              if (error) {
+                console.error('❌ Error inserting Facebook post:', error, 'Post data:', postData);
+              } else {
+                insertedCount++;
+                console.log(`✅ Inserted Facebook post: ${postData.post_id}`);
+              }
+            } catch (error) {
+              console.error('❌ Exception inserting Facebook post:', error, 'Post data:', postData);
+            }
           }
-        }
 
-        console.log(`💾 Inserted ${postsToInsert.length} Facebook posts into database`);
-        
-        // También guardar en cache
-        await supabase.from('facebook_page_data').upsert({
-          user_id: user.id,
-          page_url: `https://facebook.com/page_id/${page_id}`,
-          posts: posts.slice(0, 20),
-          total_posts: posts.length,
-          last_updated: new Date().toISOString()
-        });
+          console.log(`💾 Successfully inserted ${insertedCount}/${postsToInsert.length} Facebook posts into database`);
+          
+          // También guardar en cache
+          await supabase.from('facebook_page_data').upsert({
+            user_id: user.id,
+            page_url: `https://facebook.com/page_id/${page_id}`,
+            posts: posts.slice(0, 20),
+            total_posts: posts.length,
+            last_updated: new Date().toISOString()
+          });
+        } else {
+          console.error('❌ No user found in Facebook scraper');
+        }
+      } else {
+        console.log('⚠️ No auth header or no posts to save in Facebook scraper');
       }
 
     } else {

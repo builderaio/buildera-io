@@ -134,17 +134,14 @@ async function loadProviderConfigs() {
 async function getActiveModelAssignment(functionName: string) {
   try {
     const { data: assignment, error } = await supabase
-      .from('function_model_assignments')
+      .from('ai_model_assignments')
       .select(`
         *,
-        function_config:business_function_configurations(*),
         provider:ai_providers(*),
-        model:ai_provider_models(*),
-        api_key:llm_api_keys(*)
+        model:ai_models(*)
       `)
       .eq('is_active', true)
-      .eq('function_config.function_name', functionName)
-      .order('priority')
+      .eq('business_function', functionName)
       .limit(1)
       .single();
 
@@ -160,13 +157,7 @@ async function getActiveModelAssignment(functionName: string) {
  * Get API key for provider
  */
 async function getAPIKey(assignment: any) {
-  // If we have an API key reference, return it (in production this would be decrypted)
-  if (assignment.api_key) {
-    console.log(`Using configured API key: ${assignment.api_key.api_key_name}`);
-    // In production, decrypt the API key here
-  }
-
-  // Fallback to environment variable
+  // For now, use environment variable
   const provider = assignment.provider;
   const envKey = provider.env_key;
   const apiKey = Deno.env.get(envKey);

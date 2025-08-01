@@ -68,37 +68,27 @@ serve(async (req) => {
         result = await detailsResponse.json()
         console.log('✅ Company details fetched successfully')
 
-        // Guardar información del perfil de LinkedIn
+        // Actualizar posts existentes con información del perfil LinkedIn
         if (result && result.data) {
-          console.log(`💾 Saving LinkedIn company profile data for user ${user.id}`)
+          console.log(`💾 Updating LinkedIn posts with profile data for user ${user.id}`)
           
           const companyData = result.data;
           
-          // Guardar en linkedin_profiles
-          const { error: profileError } = await supabase.from('linkedin_profiles').upsert({
-            user_id: user.id,
-            linkedin_user_id: companyData.company_id || company_identifier,
-            profile_url: companyData.company_url || `https://linkedin.com/company/${company_identifier}`,
-            name: companyData.name,
-            headline: companyData.tagline,
-            location: companyData.location,
-            connections_count: 0,
-            followers_count: companyData.follower_count || 0,
-            following_count: 0,
-            posts_count: 0,
-            industry: companyData.industry,
-            profile_picture_url: companyData.logo_url,
-            summary: companyData.description,
-            raw_data: companyData,
-            last_updated: new Date().toISOString()
-          }, {
-            onConflict: 'user_id,linkedin_user_id'
-          });
+          const { error: updateError } = await supabase.from('linkedin_posts')
+            .update({
+              profile_name: companyData.name,
+              profile_headline: companyData.tagline,
+              profile_followers_count: companyData.follower_count || 0,
+              profile_industry: companyData.industry,
+              profile_location: companyData.location,
+              profile_url: companyData.company_url || `https://linkedin.com/company/${company_identifier}`
+            })
+            .eq('user_id', user.id);
 
-          if (profileError) {
-            console.error('❌ Error saving LinkedIn profile:', profileError);
+          if (updateError) {
+            console.error('❌ Error updating LinkedIn posts with profile data:', updateError);
           } else {
-            console.log('✅ LinkedIn profile data saved successfully');
+            console.log('✅ LinkedIn posts updated with profile data successfully');
           }
         }
         break

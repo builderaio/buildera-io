@@ -65,7 +65,7 @@ const AdminDatabase = () => {
         supabase.from('linkedin_connections').select('*', { count: 'exact', head: true }),
         supabase.from('facebook_instagram_connections').select('*', { count: 'exact', head: true }),
         supabase.from('tiktok_connections').select('*', { count: 'exact', head: true }),
-        supabase.from('social_media_posts').select('*', { count: 'exact', head: true }),
+        supabase.from('instagram_posts').select('*', { count: 'exact', head: true }),
         supabase.from('social_media_comments').select('*', { count: 'exact', head: true }),
         supabase.from('marketing_insights').select('*', { count: 'exact', head: true }),
         supabase.from('company_files').select('*', { count: 'exact', head: true }),

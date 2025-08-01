@@ -288,34 +288,26 @@ async function getCompleteInstagramAnalysis(username: string, userId: string, su
 
     console.log('✅ All Instagram data retrieved successfully');
 
-    // Guardar información del perfil de Instagram
-    if (profileInfo && profileInfo.id) {
-      console.log(`💾 Saving Instagram profile data for user ${userId}`);
+    // Actualizar posts existentes con información del perfil
+    if (profileInfo) {
+      console.log(`💾 Updating Instagram posts with profile data for user ${userId}`);
       
-      const { error: profileError } = await supabase.from('instagram_user_profiles').upsert({
-        user_id: userId,
-        instagram_user_id: profileInfo.id,
-        username: profileInfo.username,
-        full_name: profileInfo.full_name,
-        biography: profileInfo.biography,
-        profile_pic_url: profileInfo.profile_pic_url,
-        followers_count: profileInfo.followers_count || 0,
-        following_count: profileInfo.following_count || 0,
-        media_count: profileInfo.media_count || 0,
-        is_verified: profileInfo.is_verified || false,
-        is_business: profileInfo.is_business || false,
-        business_category: profileInfo.business_category,
-        external_url: profileInfo.external_url,
-        raw_data: profileInfo,
-        last_updated: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,instagram_user_id'
-      });
+      const { error: updateError } = await supabase.from('instagram_posts')
+        .update({
+          profile_username: profileInfo.username,
+          profile_full_name: profileInfo.full_name,
+          profile_followers_count: profileInfo.followers_count || 0,
+          profile_following_count: profileInfo.following_count || 0,
+          profile_is_verified: profileInfo.is_verified || false,
+          profile_is_business: profileInfo.is_business || false,
+          profile_pic_url: profileInfo.profile_pic_url
+        })
+        .eq('user_id', userId);
 
-      if (profileError) {
-        console.error('❌ Error saving Instagram profile:', profileError);
+      if (updateError) {
+        console.error('❌ Error updating Instagram posts with profile data:', updateError);
       } else {
-        console.log('✅ Instagram profile data saved successfully');
+        console.log('✅ Instagram posts updated with profile data successfully');
       }
     }
 

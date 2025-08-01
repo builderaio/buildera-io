@@ -1820,75 +1820,6 @@ export type Database = {
         }
         Relationships: []
       }
-      facebook_page_profiles: {
-        Row: {
-          categories: string[] | null
-          cover_image_url: string | null
-          created_at: string
-          description: string | null
-          email: string | null
-          followers_count: number | null
-          id: string
-          last_updated: string | null
-          likes_count: number | null
-          page_id: string
-          page_name: string | null
-          page_url: string | null
-          phone: string | null
-          profile_picture_url: string | null
-          rating: number | null
-          raw_data: Json | null
-          updated_at: string
-          user_id: string
-          verified: boolean | null
-          website: string | null
-        }
-        Insert: {
-          categories?: string[] | null
-          cover_image_url?: string | null
-          created_at?: string
-          description?: string | null
-          email?: string | null
-          followers_count?: number | null
-          id?: string
-          last_updated?: string | null
-          likes_count?: number | null
-          page_id: string
-          page_name?: string | null
-          page_url?: string | null
-          phone?: string | null
-          profile_picture_url?: string | null
-          rating?: number | null
-          raw_data?: Json | null
-          updated_at?: string
-          user_id: string
-          verified?: boolean | null
-          website?: string | null
-        }
-        Update: {
-          categories?: string[] | null
-          cover_image_url?: string | null
-          created_at?: string
-          description?: string | null
-          email?: string | null
-          followers_count?: number | null
-          id?: string
-          last_updated?: string | null
-          likes_count?: number | null
-          page_id?: string
-          page_name?: string | null
-          page_url?: string | null
-          phone?: string | null
-          profile_picture_url?: string | null
-          rating?: number | null
-          raw_data?: Json | null
-          updated_at?: string
-          user_id?: string
-          verified?: boolean | null
-          website?: string | null
-        }
-        Relationships: []
-      }
       facebook_posts: {
         Row: {
           comments_count: number | null
@@ -1900,6 +1831,12 @@ export type Database = {
           post_id: string
           post_type: string | null
           posted_at: string | null
+          profile_category: string | null
+          profile_followers_count: number | null
+          profile_likes_count: number | null
+          profile_page_id: string | null
+          profile_page_name: string | null
+          profile_website: string | null
           raw_data: Json | null
           reactions_count: number | null
           shares_count: number | null
@@ -1916,6 +1853,12 @@ export type Database = {
           post_id: string
           post_type?: string | null
           posted_at?: string | null
+          profile_category?: string | null
+          profile_followers_count?: number | null
+          profile_likes_count?: number | null
+          profile_page_id?: string | null
+          profile_page_name?: string | null
+          profile_website?: string | null
           raw_data?: Json | null
           reactions_count?: number | null
           shares_count?: number | null
@@ -1932,6 +1875,12 @@ export type Database = {
           post_id?: string
           post_type?: string | null
           posted_at?: string | null
+          profile_category?: string | null
+          profile_followers_count?: number | null
+          profile_likes_count?: number | null
+          profile_page_id?: string | null
+          profile_page_name?: string | null
+          profile_website?: string | null
           raw_data?: Json | null
           reactions_count?: number | null
           shares_count?: number | null
@@ -2315,6 +2264,13 @@ export type Database = {
           platform: string
           post_id: string
           posted_at: string | null
+          profile_followers_count: number | null
+          profile_following_count: number | null
+          profile_full_name: string | null
+          profile_is_business: boolean | null
+          profile_is_verified: boolean | null
+          profile_pic_url: string | null
+          profile_username: string | null
           raw_data: Json | null
           reach: number | null
           saves: number | null
@@ -2344,6 +2300,13 @@ export type Database = {
           platform?: string
           post_id: string
           posted_at?: string | null
+          profile_followers_count?: number | null
+          profile_following_count?: number | null
+          profile_full_name?: string | null
+          profile_is_business?: boolean | null
+          profile_is_verified?: boolean | null
+          profile_pic_url?: string | null
+          profile_username?: string | null
           raw_data?: Json | null
           reach?: number | null
           saves?: number | null
@@ -2373,6 +2336,13 @@ export type Database = {
           platform?: string
           post_id?: string
           posted_at?: string | null
+          profile_followers_count?: number | null
+          profile_following_count?: number | null
+          profile_full_name?: string | null
+          profile_is_business?: boolean | null
+          profile_is_verified?: boolean | null
+          profile_pic_url?: string | null
+          profile_username?: string | null
           raw_data?: Json | null
           reach?: number | null
           saves?: number | null
@@ -2382,99 +2352,6 @@ export type Database = {
           updated_at?: string
           user_id?: string
           video_view_count?: number | null
-        }
-        Relationships: []
-      }
-      instagram_publications: {
-        Row: {
-          content_data: Json
-          created_at: string
-          id: string
-          instagram_account_id: string
-          media_id: string
-          published_at: string
-          user_id: string
-        }
-        Insert: {
-          content_data: Json
-          created_at?: string
-          id?: string
-          instagram_account_id: string
-          media_id: string
-          published_at?: string
-          user_id: string
-        }
-        Update: {
-          content_data?: Json
-          created_at?: string
-          id?: string
-          instagram_account_id?: string
-          media_id?: string
-          published_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      instagram_user_profiles: {
-        Row: {
-          biography: string | null
-          business_category: string | null
-          created_at: string
-          external_url: string | null
-          followers_count: number | null
-          following_count: number | null
-          full_name: string | null
-          id: string
-          instagram_user_id: string
-          is_business: boolean | null
-          is_verified: boolean | null
-          last_updated: string | null
-          media_count: number | null
-          profile_pic_url: string | null
-          raw_data: Json | null
-          updated_at: string
-          user_id: string
-          username: string | null
-        }
-        Insert: {
-          biography?: string | null
-          business_category?: string | null
-          created_at?: string
-          external_url?: string | null
-          followers_count?: number | null
-          following_count?: number | null
-          full_name?: string | null
-          id?: string
-          instagram_user_id: string
-          is_business?: boolean | null
-          is_verified?: boolean | null
-          last_updated?: string | null
-          media_count?: number | null
-          profile_pic_url?: string | null
-          raw_data?: Json | null
-          updated_at?: string
-          user_id: string
-          username?: string | null
-        }
-        Update: {
-          biography?: string | null
-          business_category?: string | null
-          created_at?: string
-          external_url?: string | null
-          followers_count?: number | null
-          following_count?: number | null
-          full_name?: string | null
-          id?: string
-          instagram_user_id?: string
-          is_business?: boolean | null
-          is_verified?: boolean | null
-          last_updated?: string | null
-          media_count?: number | null
-          profile_pic_url?: string | null
-          raw_data?: Json | null
-          updated_at?: string
-          user_id?: string
-          username?: string | null
         }
         Relationships: []
       }
@@ -2531,6 +2408,12 @@ export type Database = {
           post_id: string
           post_type: string | null
           posted_at: string | null
+          profile_followers_count: number | null
+          profile_headline: string | null
+          profile_industry: string | null
+          profile_location: string | null
+          profile_name: string | null
+          profile_url: string | null
           raw_data: Json | null
           shares_count: number | null
           updated_at: string
@@ -2547,6 +2430,12 @@ export type Database = {
           post_id: string
           post_type?: string | null
           posted_at?: string | null
+          profile_followers_count?: number | null
+          profile_headline?: string | null
+          profile_industry?: string | null
+          profile_location?: string | null
+          profile_name?: string | null
+          profile_url?: string | null
           raw_data?: Json | null
           shares_count?: number | null
           updated_at?: string
@@ -2563,86 +2452,17 @@ export type Database = {
           post_id?: string
           post_type?: string | null
           posted_at?: string | null
+          profile_followers_count?: number | null
+          profile_headline?: string | null
+          profile_industry?: string | null
+          profile_location?: string | null
+          profile_name?: string | null
+          profile_url?: string | null
           raw_data?: Json | null
           shares_count?: number | null
           updated_at?: string
           user_id?: string
           views_count?: number | null
-        }
-        Relationships: []
-      }
-      linkedin_profiles: {
-        Row: {
-          background_image_url: string | null
-          connections_count: number | null
-          created_at: string
-          education: Json | null
-          experience: Json | null
-          followers_count: number | null
-          following_count: number | null
-          headline: string | null
-          id: string
-          industry: string | null
-          last_updated: string | null
-          linkedin_user_id: string | null
-          location: string | null
-          name: string | null
-          posts_count: number | null
-          profile_picture_url: string | null
-          profile_url: string | null
-          raw_data: Json | null
-          skills: Json | null
-          summary: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          background_image_url?: string | null
-          connections_count?: number | null
-          created_at?: string
-          education?: Json | null
-          experience?: Json | null
-          followers_count?: number | null
-          following_count?: number | null
-          headline?: string | null
-          id?: string
-          industry?: string | null
-          last_updated?: string | null
-          linkedin_user_id?: string | null
-          location?: string | null
-          name?: string | null
-          posts_count?: number | null
-          profile_picture_url?: string | null
-          profile_url?: string | null
-          raw_data?: Json | null
-          skills?: Json | null
-          summary?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          background_image_url?: string | null
-          connections_count?: number | null
-          created_at?: string
-          education?: Json | null
-          experience?: Json | null
-          followers_count?: number | null
-          following_count?: number | null
-          headline?: string | null
-          id?: string
-          industry?: string | null
-          last_updated?: string | null
-          linkedin_user_id?: string | null
-          location?: string | null
-          name?: string | null
-          posts_count?: number | null
-          profile_picture_url?: string | null
-          profile_url?: string | null
-          raw_data?: Json | null
-          skills?: Json | null
-          summary?: string | null
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -3294,65 +3114,6 @@ export type Database = {
           sentiment_score?: number | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "social_media_comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "social_media_posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      social_media_posts: {
-        Row: {
-          content: string | null
-          created_at: string
-          hashtags: string[] | null
-          id: string
-          media_urls: string[] | null
-          mentions: string[] | null
-          metrics: Json | null
-          platform: string
-          platform_post_id: string
-          post_type: string | null
-          published_at: string
-          raw_data: Json | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string
-          hashtags?: string[] | null
-          id?: string
-          media_urls?: string[] | null
-          mentions?: string[] | null
-          metrics?: Json | null
-          platform: string
-          platform_post_id: string
-          post_type?: string | null
-          published_at: string
-          raw_data?: Json | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          content?: string | null
-          created_at?: string
-          hashtags?: string[] | null
-          id?: string
-          media_urls?: string[] | null
-          mentions?: string[] | null
-          metrics?: Json | null
-          platform?: string
-          platform_post_id?: string
-          post_type?: string | null
-          published_at?: string
-          raw_data?: Json | null
-          updated_at?: string
-          user_id?: string
-        }
         Relationships: []
       }
       subscription_plans: {
@@ -3604,6 +3365,12 @@ export type Database = {
           is_ad: boolean | null
           play_count: number | null
           posted_at: string | null
+          profile_avatar_url: string | null
+          profile_display_name: string | null
+          profile_followers_count: number | null
+          profile_following_count: number | null
+          profile_is_verified: boolean | null
+          profile_username: string | null
           raw_data: Json | null
           share_count: number | null
           tiktok_user_id: string
@@ -3626,6 +3393,12 @@ export type Database = {
           is_ad?: boolean | null
           play_count?: number | null
           posted_at?: string | null
+          profile_avatar_url?: string | null
+          profile_display_name?: string | null
+          profile_followers_count?: number | null
+          profile_following_count?: number | null
+          profile_is_verified?: boolean | null
+          profile_username?: string | null
           raw_data?: Json | null
           share_count?: number | null
           tiktok_user_id: string
@@ -3648,41 +3421,17 @@ export type Database = {
           is_ad?: boolean | null
           play_count?: number | null
           posted_at?: string | null
+          profile_avatar_url?: string | null
+          profile_display_name?: string | null
+          profile_followers_count?: number | null
+          profile_following_count?: number | null
+          profile_is_verified?: boolean | null
+          profile_username?: string | null
           raw_data?: Json | null
           share_count?: number | null
           tiktok_user_id?: string
           title?: string | null
           updated_at?: string
-          user_id?: string
-          video_id?: string
-        }
-        Relationships: []
-      }
-      tiktok_publications: {
-        Row: {
-          content_data: Json
-          created_at: string
-          id: string
-          published_at: string
-          tiktok_user_id: string
-          user_id: string
-          video_id: string
-        }
-        Insert: {
-          content_data: Json
-          created_at?: string
-          id?: string
-          published_at?: string
-          tiktok_user_id: string
-          user_id: string
-          video_id: string
-        }
-        Update: {
-          content_data?: Json
-          created_at?: string
-          id?: string
-          published_at?: string
-          tiktok_user_id?: string
           user_id?: string
           video_id?: string
         }

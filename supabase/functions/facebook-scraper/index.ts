@@ -191,34 +191,25 @@ Deno.serve(async (req) => {
             });
           }
 
-          // Crear o actualizar entrada de perfil de Facebook
+          // Actualizar posts existentes con información del perfil de Facebook  
           if (pageDetails.page_id) {
-            const { error: profileError } = await supabase.from('facebook_page_profiles').upsert({
-              user_id: user.id,
-              page_id: pageDetails.page_id,
-              page_name: pageDetails.name,
-              page_url: pageDetails.url || page_url,
-              followers_count: pageDetails.followers || 0,
-              likes_count: pageDetails.likes || 0,
-              categories: pageDetails.categories || [],
-              description: pageDetails.intro,
-              phone: pageDetails.phone,
-              email: pageDetails.email,
-              website: pageDetails.website,
-              rating: pageDetails.rating ? parseFloat(pageDetails.rating) : null,
-              verified: pageDetails.verified || false,
-              profile_picture_url: pageDetails.image,
-              cover_image_url: pageDetails.cover_image,
-              raw_data: pageDetails,
-              last_updated: new Date().toISOString()
-            }, {
-              onConflict: 'user_id,page_id'
-            });
+            console.log(`💾 Updating Facebook posts with profile data for user ${user.id}`);
+            
+            const { error: updateError } = await supabase.from('facebook_posts')
+              .update({
+                profile_page_name: pageDetails.name,
+                profile_page_id: pageDetails.page_id,
+                profile_followers_count: pageDetails.followers || 0,
+                profile_likes_count: pageDetails.likes || 0,
+                profile_category: pageDetails.categories ? pageDetails.categories[0] : null,
+                profile_website: pageDetails.website
+              })
+              .eq('user_id', user.id);
 
-            if (profileError) {
-              console.error('❌ Error saving Facebook profile:', profileError);
+            if (updateError) {
+              console.error('❌ Error updating Facebook posts with profile data:', updateError);
             } else {
-              console.log('✅ Facebook profile data saved successfully');
+              console.log('✅ Facebook posts updated with profile data successfully');
             }
           }
         }

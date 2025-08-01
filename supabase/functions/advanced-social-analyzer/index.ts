@@ -88,15 +88,20 @@ async function processCalendarData(userId: string, platform: string, supabase: a
     const { data: instagramPosts, error } = await supabase
       .from('instagram_posts')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .order('posted_at', { ascending: false })
+      .limit(100);
     
     if (error) {
       console.error('❌ Error fetching Instagram posts:', error);
     } else {
       posts = instagramPosts || [];
       console.log(`📊 Found ${posts.length} Instagram posts`);
+      if (posts.length > 0) {
+        console.log(`📊 Sample Instagram post:`, JSON.stringify(posts[0], null, 2));
+      }
     }
-  } else if (platform === 'linkedin') {
+    } else if (platform === 'linkedin') {
     const { data: linkedinPosts, error } = await supabase
       .from('linkedin_posts')
       .select('*')

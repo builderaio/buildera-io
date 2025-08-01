@@ -152,6 +152,7 @@ async function getActiveModelAssignment(functionName: string) {
     }
     
     console.log(`🎯 Assignment found:`, assignment ? 'YES' : 'NO');
+    console.log(`📋 Assignment result:`, assignment ? 'Found ' + JSON.stringify(assignment, null, 2) : 'None');
     return assignment;
   } catch (error) {
     console.error('Error getting model assignment:', error);
@@ -222,8 +223,9 @@ async function callAIProvider(
   // Get headers
   const headers = adapter.getHeaders(apiKey);
 
-  // Format request
-  const requestBody = adapter.formatRequest(model.model_name, messages, config);
+  // Format request - ensure model name is available
+  const modelName = model.name || model.model_name || 'gpt-4o-mini';
+  const requestBody = adapter.formatRequest(modelName, messages, config);
 
   console.log(`Calling ${url} with:`, { requestBody });
 

@@ -544,6 +544,80 @@ export type Database = {
           },
         ]
       }
+      ai_assessments: {
+        Row: {
+          ai_evaluation: Json | null
+          assessment_type: string
+          certification_eligible: boolean | null
+          created_at: string | null
+          difficulty_adapted: boolean | null
+          id: string
+          improvement_areas: string[] | null
+          knowledge_areas_assessed: string[] | null
+          max_score: number
+          module_id: string | null
+          next_recommendations: string[] | null
+          passed: boolean | null
+          questions: Json | null
+          score: number
+          strengths_identified: string[] | null
+          taken_at: string | null
+          time_taken_minutes: number | null
+          user_answers: Json | null
+          user_id: string
+        }
+        Insert: {
+          ai_evaluation?: Json | null
+          assessment_type?: string
+          certification_eligible?: boolean | null
+          created_at?: string | null
+          difficulty_adapted?: boolean | null
+          id?: string
+          improvement_areas?: string[] | null
+          knowledge_areas_assessed?: string[] | null
+          max_score: number
+          module_id?: string | null
+          next_recommendations?: string[] | null
+          passed?: boolean | null
+          questions?: Json | null
+          score: number
+          strengths_identified?: string[] | null
+          taken_at?: string | null
+          time_taken_minutes?: number | null
+          user_answers?: Json | null
+          user_id: string
+        }
+        Update: {
+          ai_evaluation?: Json | null
+          assessment_type?: string
+          certification_eligible?: boolean | null
+          created_at?: string | null
+          difficulty_adapted?: boolean | null
+          id?: string
+          improvement_areas?: string[] | null
+          knowledge_areas_assessed?: string[] | null
+          max_score?: number
+          module_id?: string | null
+          next_recommendations?: string[] | null
+          passed?: boolean | null
+          questions?: Json | null
+          score?: number
+          strengths_identified?: string[] | null
+          taken_at?: string | null
+          time_taken_minutes?: number | null
+          user_answers?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_assessments_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "learning_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_model_assignments: {
         Row: {
           ai_model_id: string | null
@@ -844,6 +918,68 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      ai_tutor_sessions: {
+        Row: {
+          ai_personality: Json | null
+          created_at: string | null
+          ended_at: string | null
+          id: string
+          knowledge_gaps_identified: string[] | null
+          learning_effectiveness_score: number | null
+          messages: Json | null
+          module_id: string | null
+          recommendations: string[] | null
+          satisfaction_rating: number | null
+          session_duration_minutes: number | null
+          session_type: string
+          started_at: string | null
+          topics_covered: string[] | null
+          user_id: string
+        }
+        Insert: {
+          ai_personality?: Json | null
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          knowledge_gaps_identified?: string[] | null
+          learning_effectiveness_score?: number | null
+          messages?: Json | null
+          module_id?: string | null
+          recommendations?: string[] | null
+          satisfaction_rating?: number | null
+          session_duration_minutes?: number | null
+          session_type?: string
+          started_at?: string | null
+          topics_covered?: string[] | null
+          user_id: string
+        }
+        Update: {
+          ai_personality?: Json | null
+          created_at?: string | null
+          ended_at?: string | null
+          id?: string
+          knowledge_gaps_identified?: string[] | null
+          learning_effectiveness_score?: number | null
+          messages?: Json | null
+          module_id?: string | null
+          recommendations?: string[] | null
+          satisfaction_rating?: number | null
+          session_duration_minutes?: number | null
+          session_type?: string
+          started_at?: string | null
+          topics_covered?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_tutor_sessions_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "learning_modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audience_insights: {
         Row: {
@@ -2456,6 +2592,102 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_badges: {
+        Row: {
+          badge_image_url: string | null
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          level: number
+          linkedin_badge_data: Json | null
+          name: string
+          points_required: number | null
+          requirements: Json | null
+        }
+        Insert: {
+          badge_image_url?: string | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level?: number
+          linkedin_badge_data?: Json | null
+          name: string
+          points_required?: number | null
+          requirements?: Json | null
+        }
+        Update: {
+          badge_image_url?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level?: number
+          linkedin_badge_data?: Json | null
+          name?: string
+          points_required?: number | null
+          requirements?: Json | null
+        }
+        Relationships: []
+      }
+      learning_modules: {
+        Row: {
+          ai_tutor_personality: Json | null
+          badge_design: Json | null
+          category: string
+          content_outline: Json | null
+          created_at: string | null
+          description: string | null
+          difficulty_level: string
+          estimated_duration_minutes: number | null
+          id: string
+          is_active: boolean | null
+          learning_objectives: string[] | null
+          points_reward: number | null
+          prerequisites: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          ai_tutor_personality?: Json | null
+          badge_design?: Json | null
+          category: string
+          content_outline?: Json | null
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string
+          estimated_duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          learning_objectives?: string[] | null
+          points_reward?: number | null
+          prerequisites?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          ai_tutor_personality?: Json | null
+          badge_design?: Json | null
+          category?: string
+          content_outline?: Json | null
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string
+          estimated_duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          learning_objectives?: string[] | null
+          points_reward?: number | null
+          prerequisites?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       linkedin_connections: {
         Row: {
           access_token: string
@@ -3642,6 +3874,181 @@ export type Database = {
           },
         ]
       }
+      user_badges: {
+        Row: {
+          badge_id: string | null
+          certificate_url: string | null
+          created_at: string | null
+          earned_at: string | null
+          id: string
+          linkedin_shared: boolean | null
+          linkedin_shared_at: string | null
+          metadata: Json | null
+          user_id: string
+          verification_code: string | null
+        }
+        Insert: {
+          badge_id?: string | null
+          certificate_url?: string | null
+          created_at?: string | null
+          earned_at?: string | null
+          id?: string
+          linkedin_shared?: boolean | null
+          linkedin_shared_at?: string | null
+          metadata?: Json | null
+          user_id: string
+          verification_code?: string | null
+        }
+        Update: {
+          badge_id?: string | null
+          certificate_url?: string | null
+          created_at?: string | null
+          earned_at?: string | null
+          id?: string
+          linkedin_shared?: boolean | null
+          linkedin_shared_at?: string | null
+          metadata?: Json | null
+          user_id?: string
+          verification_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "learning_badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_gamification: {
+        Row: {
+          achievements: Json | null
+          ai_interactions_count: number | null
+          badges_earned: number | null
+          created_at: string | null
+          experience_points: number | null
+          id: string
+          last_activity: string | null
+          level: number | null
+          longest_streak: number | null
+          modules_completed: number | null
+          rank_position: number | null
+          streak_days: number | null
+          total_points: number | null
+          total_study_time_minutes: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievements?: Json | null
+          ai_interactions_count?: number | null
+          badges_earned?: number | null
+          created_at?: string | null
+          experience_points?: number | null
+          id?: string
+          last_activity?: string | null
+          level?: number | null
+          longest_streak?: number | null
+          modules_completed?: number | null
+          rank_position?: number | null
+          streak_days?: number | null
+          total_points?: number | null
+          total_study_time_minutes?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievements?: Json | null
+          ai_interactions_count?: number | null
+          badges_earned?: number | null
+          created_at?: string | null
+          experience_points?: number | null
+          id?: string
+          last_activity?: string | null
+          level?: number | null
+          longest_streak?: number | null
+          modules_completed?: number | null
+          rank_position?: number | null
+          streak_days?: number | null
+          total_points?: number | null
+          total_study_time_minutes?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_learning_progress: {
+        Row: {
+          ai_feedback: Json | null
+          ai_interactions_count: number | null
+          best_quiz_score: number | null
+          completed_at: string | null
+          created_at: string | null
+          current_lesson: number | null
+          id: string
+          last_interaction: string | null
+          learning_notes: string | null
+          module_id: string | null
+          progress_percentage: number | null
+          quiz_attempts: number | null
+          started_at: string | null
+          status: string
+          time_spent_minutes: number | null
+          total_lessons: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_feedback?: Json | null
+          ai_interactions_count?: number | null
+          best_quiz_score?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_lesson?: number | null
+          id?: string
+          last_interaction?: string | null
+          learning_notes?: string | null
+          module_id?: string | null
+          progress_percentage?: number | null
+          quiz_attempts?: number | null
+          started_at?: string | null
+          status?: string
+          time_spent_minutes?: number | null
+          total_lessons?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_feedback?: Json | null
+          ai_interactions_count?: number | null
+          best_quiz_score?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          current_lesson?: number | null
+          id?: string
+          last_interaction?: string | null
+          learning_notes?: string | null
+          module_id?: string | null
+          progress_percentage?: number | null
+          quiz_attempts?: number | null
+          started_at?: string | null
+          status?: string
+          time_spent_minutes?: number | null
+          total_lessons?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_learning_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "learning_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -3786,6 +4193,10 @@ export type Database = {
       calculate_posting_optimal_times: {
         Args: { user_id_param: string; platform_param: string }
         Returns: Json
+      }
+      calculate_user_level: {
+        Args: { total_points: number }
+        Returns: number
       }
       check_usage_limit: {
         Args: {
@@ -4019,6 +4430,10 @@ export type Database = {
       sparsevec_typmod_in: {
         Args: { "": unknown[] }
         Returns: number
+      }
+      update_user_gamification: {
+        Args: { p_user_id: string; p_points_earned?: number }
+        Returns: undefined
       }
       vector_avg: {
         Args: { "": number[] }

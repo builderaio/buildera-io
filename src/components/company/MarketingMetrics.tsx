@@ -85,6 +85,12 @@ const MarketingMetrics = ({ profile, socialConnections }: MarketingMetricsProps)
         supabase.from('facebook_posts').select('*').eq('user_id', profile.user_id)
       ]);
 
+      // Verificar conexiones de redes sociales
+      const [linkedinConn, facebookConn] = await Promise.all([
+        supabase.from('linkedin_connections').select('*').eq('user_id', profile.user_id).limit(1),
+        supabase.from('facebook_instagram_connections').select('*').eq('user_id', profile.user_id).limit(1)
+      ]);
+
       setRealMetrics({ 
         analyticsData: analyticsData || [], 
         posts: {
@@ -92,6 +98,12 @@ const MarketingMetrics = ({ profile, socialConnections }: MarketingMetricsProps)
           linkedin: linkedinPosts.data || [],
           tiktok: tiktokPosts.data || [],
           facebook: facebookPosts.data || []
+        },
+        connections: {
+          linkedin: (linkedinConn.data?.length || 0) > 0 || (linkedinPosts.data?.length || 0) > 0,
+          facebook: (facebookConn.data?.length || 0) > 0 || (facebookPosts.data?.length || 0) > 0,
+          instagram: (instagramPosts.data?.length || 0) > 0,
+          tiktok: (tiktokPosts.data?.length || 0) > 0
         }
       });
     } catch (error) {
@@ -187,20 +199,70 @@ const MarketingMetrics = ({ profile, socialConnections }: MarketingMetricsProps)
 
   // Obtener métricas por plataforma basadas en datos reales
   const getPlatformMetrics = (): PlatformMetric[] => {
-    if (!realMetrics?.analyticsData) {
+    if (!realMetrics) {
       return [];
     }
 
-    const platforms = ['Instagram', 'TikTok', 'LinkedIn', 'Facebook'];
-    const analytics = realMetrics.analyticsData;
+    const platforms = [
+      { name: 'Instagram', key: 'instagram' },
+      { name: 'TikTok', key: 'tiktok' },
+      { name: 'LinkedIn', key: 'linkedin' },
+      { name: 'Facebook', key: 'facebook' }
+    ];
     
-    return platforms.map(platform => {
-      const platformData = analytics.filter(a => a.platform === platform.toLowerCase());
-      const totalPosts = platformData.find(a => a.metric_type === 'total_posts')?.value || 0;
-      const totalLikes = platformData.find(a => a.metric_type === 'total_likes')?.value || 0;
-      const totalViews = platformData.find(a => a.metric_type === 'total_views')?.value || 0;
-      const engagement = platformData.find(a => a.metric_type === 'avg_engagement_rate')?.value || 0;
-      const followers = platformData.find(a => a.metric_type === 'total_followers')?.metadata?.total_followers || 0;
+    return platforms.map(({ name: platform, key }) => {
+      const posts = realMetrics.posts[key] || [];
+      const analyticsData = realMetrics.analyticsData.filter(a => a.platform === key.toLowerCase());
+      
+      // Calcular métricas directamente desde posts si no hay en analytics
+      let totalPosts = posts.length;
+      let totalLikes = 0;
+      let totalComments = 0;
+      let totalShares = 0;
+      let totalViews = 0;
+      let followers = 0;
+      let engagement = 0;
+
+      if (analyticsData.length > 0) {
+        // Usar datos de analytics si están disponibles
+        totalPosts = analyticsData.find(a => a.metric_type === 'total_posts')?.value || posts.length;
+        totalLikes = analyticsData.find(a => a.metric_type === 'total_likes')?.value || 0;
+        totalViews = analyticsData.find(a => a.metric_type === 'total_views')?.value || 0;
+        engagement = analyticsData.find(a => a.metric_type === 'avg_engagement_rate')?.value || 0;
+        followers = analyticsData.find(a => a.metric_type === 'total_followers')?.metadata?.total_followers || 0;
+      } else {
+        // Calcular desde posts directamente
+        posts.forEach(post => {
+          switch(key) {
+            case 'instagram':
+              totalLikes += post.like_count || 0;
+              totalComments += post.comment_count || 0;
+              break;
+            case 'linkedin':
+              totalLikes += post.likes_count || 0;
+              totalComments += post.comments_count || 0;
+              totalShares += post.shares_count || 0;
+              totalViews += post.views_count || 0;
+              break;
+            case 'tiktok':
+              totalLikes += post.digg_count || 0;
+              totalComments += post.comment_count || 0;
+              totalShares += post.share_count || 0;
+              totalViews += post.play_count || 0;
+              break;
+            case 'facebook':
+              totalLikes += post.likes_count || 0;
+              totalComments += post.comments_count || 0;
+              totalShares += post.shares_count || 0;
+              break;
+          }
+        });
+        
+        // Calcular engagement básico
+        if (totalPosts > 0) {
+          engagement = ((totalLikes + totalComments + totalShares) / totalPosts) * 0.1; // Factor aproximado
+        }
+      }
 
       return {
         platform,
@@ -225,8 +287,11 @@ const MarketingMetrics = ({ profile, socialConnections }: MarketingMetricsProps)
         }
       };
     }).filter(platform => {
+      // Mostrar plataforma si tiene posts O si está conectada
       const platformKey = platform.platform.toLowerCase();
-      return socialConnections[platformKey as keyof typeof socialConnections] && platform.metrics.posts > 0;
+      const hasConnection = realMetrics.connections?.[platformKey] || socialConnections[platformKey as keyof typeof socialConnections];
+      const hasPosts = platform.metrics.posts > 0;
+      return hasConnection || hasPosts;
     });
   };
 

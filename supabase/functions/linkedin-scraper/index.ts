@@ -89,6 +89,37 @@ serve(async (req) => {
 
         result = await postsResponse.json()
         console.log('✅ Company posts fetched successfully')
+        
+        // Guardar posts en la base de datos
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+        if (result && result.posts && result.posts.length > 0 && user) {
+          const postsToInsert = result.posts.map(post => ({
+            user_id: user.id,
+            post_id: post.post_id || post.activity_id || post.id || '',
+            content: post.text || post.description || '',
+            likes_count: post.reactions?.like_count || 0,
+            comments_count: post.comments_count || 0,
+            shares_count: post.reposts_count || 0,
+            views_count: post.views_count || 0,
+            post_type: post.type || 'post',
+            posted_at: post.posted_date ? new Date(post.posted_date).toISOString() : null,
+            raw_data: post,
+            engagement_rate: 0 // Se calculará después
+          }));
+
+          // Insertar posts en lotes
+          for (const postData of postsToInsert) {
+            try {
+              await supabase.from('linkedin_posts').upsert(postData, {
+                onConflict: 'user_id,post_id'
+              });
+            } catch (error) {
+              console.error('Error inserting LinkedIn post:', error);
+            }
+          }
+
+          console.log(`💾 Inserted ${postsToInsert.length} LinkedIn posts into database`);
+        }
         break
 
       default:

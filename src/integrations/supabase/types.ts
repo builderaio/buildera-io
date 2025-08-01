@@ -2785,9 +2785,11 @@ export type Database = {
           date_range_end: string | null
           date_range_start: string | null
           description: string
+          generated_by: string | null
           id: string
           impact_level: string | null
           insight_type: string
+          platform: string | null
           platforms: string[]
           title: string
           updated_at: string
@@ -2800,9 +2802,11 @@ export type Database = {
           date_range_end?: string | null
           date_range_start?: string | null
           description: string
+          generated_by?: string | null
           id?: string
           impact_level?: string | null
           insight_type: string
+          platform?: string | null
           platforms: string[]
           title: string
           updated_at?: string
@@ -2815,9 +2819,11 @@ export type Database = {
           date_range_end?: string | null
           date_range_start?: string | null
           description?: string
+          generated_by?: string | null
           id?: string
           impact_level?: string | null
           insight_type?: string
+          platform?: string | null
           platforms?: string[]
           title?: string
           updated_at?: string

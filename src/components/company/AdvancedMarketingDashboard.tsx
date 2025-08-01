@@ -63,12 +63,12 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
     try {
       console.log('🔍 Loading comprehensive analysis for user:', profile.user_id);
       
-      // Cargar insights existentes para mostrar datos previos (ahora incluyendo nuevos tipos)
+      // Cargar insights existentes para mostrar datos previos (incluye análisis premium)
       const { data: insights, error } = await supabase
         .from('marketing_insights')
         .select('*')
         .eq('user_id', profile.user_id)
-        .in('insight_type', ['optimal_timing', 'content_performance', 'sentiment_analysis', 'hashtag_optimization', 'performance_predictions', 'competitive_analysis', 'growth_strategies'])
+        .in('insight_type', ['optimal_timing', 'content_performance', 'sentiment_analysis', 'hashtag_optimization', 'performance_predictions', 'competitive_analysis', 'growth_strategies', 'premium_strategic_analysis'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -215,14 +215,27 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
               errors.push(`Error en análisis de ${platformName}: ${analysisResult?.message || 'Error desconocido'}`);
             }
 
-            // Análisis de contenido avanzado adicional
-            try {
-              await supabase.functions.invoke('advanced-content-analyzer', {
-                body: { platform: platformName.toLowerCase() }
-              });
-              console.log(`✅ Análisis de contenido adicional completado para ${platformName}`);
-            } catch (error) {
-              console.error(`Error en análisis de contenido para ${platformName}:`, error);
+            // Análisis premium de IA (solo una vez por sesión, independiente de plataforma)
+            if (platformName === 'Instagram') { // Solo ejecutar una vez
+              try {
+                console.log('🧠 Ejecutando análisis estratégico premium de IA...');
+                const { data: premiumAnalysis, error: premiumError } = await supabase.functions.invoke('premium-ai-insights', {
+                  body: { platform: null } // Analizar todas las plataformas
+                });
+                
+                if (premiumError) {
+                  console.error('Error en análisis premium:', premiumError);
+                } else {
+                  console.log(`🎉 Análisis premium completado: ${premiumAnalysis.posts_analyzed} posts analizados, ${premiumAnalysis.total_data_points} puntos de datos`);
+                  
+                  toast({
+                    title: "🧠 Análisis Premium Completado",
+                    description: `Se analizaron ${premiumAnalysis.total_data_points} puntos de datos con IA avanzada`,
+                  });
+                }
+              } catch (error) {
+                console.error('Error en análisis premium de IA:', error);
+              }
             }
 
           } catch (error) {

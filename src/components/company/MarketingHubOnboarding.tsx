@@ -370,21 +370,21 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
         throw new Error(`Error calculando métricas: ${analyticsError.message}`);
       }
       
-      // 2. Ejecutar análisis avanzado de contenido con IA
-      setCurrentAnalyzing('Generando insights con IA...');
-      const { data: advancedAnalysis, error: advancedError } = await supabase.functions.invoke('advanced-content-analyzer', {
-        body: {} // Sin platform = todas las plataformas
+      // 2. Ejecutar análisis premium con IA (independiente del universal handler)
+      setCurrentAnalyzing('Generando insights premium con IA avanzada...');
+      const { data: premiumAnalysis, error: premiumError } = await supabase.functions.invoke('premium-ai-insights', {
+        body: { platform: null } // Analizar todas las plataformas
       });
       
-      if (advancedError) {
-        console.error('Error in advanced analysis:', advancedError);
-        throw new Error(`Error en análisis avanzado: ${advancedError.message}`);
+      if (premiumError) {
+        console.error('Error in premium analysis:', premiumError);
+        throw new Error(`Error en análisis premium: ${premiumError.message}`);
       }
       
       // Consolidar resultados
-      const totalInsights = advancedAnalysis?.insights || 0;
-      const totalActionables = advancedAnalysis?.actionables || 0;
-      const totalRecommendations = advancedAnalysis?.recommendations || 0;
+      const totalInsights = premiumAnalysis?.analysis?.insights?.length || 0;
+      const totalActionables = premiumAnalysis?.analysis?.actionables?.length || 0;
+      const totalRecommendations = premiumAnalysis?.analysis?.recommendations?.length || 0;
       
       console.log(`✅ Análisis completado: ${totalInsights} insights, ${totalActionables} actionables, ${totalRecommendations} recomendaciones`);
       

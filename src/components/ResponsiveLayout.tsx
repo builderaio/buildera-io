@@ -383,7 +383,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar shadow-xl">
+      <Sidebar variant="sidebar" collapsible="icon" className="w-80 border-r border-sidebar-border bg-sidebar shadow-xl">
         {/* Header mejorado */}
         <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95">
           <div 

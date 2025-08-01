@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.3";
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -64,9 +65,7 @@ async function sendSMTPEmail(
     attachments?: Array<{ filename: string; content: string; contentType?: string }>;
   }
 ) {
-  // For now, we'll use a simple validation approach
-  // In production, you would implement a proper SMTP client
-  console.log("Simulating email send with config:", {
+  console.log("Sending email with config:", {
     host: config.smtp_host,
     port: config.smtp_port,
     user: config.smtp_user,
@@ -76,7 +75,7 @@ async function sendSMTPEmail(
     subject: emailData.subject
   });
 
-  // Simple validation of SMTP settings
+  // Validation of SMTP settings
   if (!config.smtp_host || !config.smtp_user || !config.smtp_password) {
     throw new Error("Missing required SMTP configuration");
   }
@@ -85,9 +84,44 @@ async function sendSMTPEmail(
     throw new Error("Missing required email data");
   }
 
-  // Simulate successful email send
-  // In a real implementation, you would use a proper SMTP library
-  return { success: true };
+  try {
+    // Create SMTP client
+    const client = new SMTPClient({
+      connection: {
+        hostname: config.smtp_host,
+        port: config.smtp_port,
+        tls: config.smtp_secure,
+        auth: {
+          username: config.smtp_user,
+          password: config.smtp_password,
+        },
+      },
+    });
+
+    // Prepare recipients
+    const toList = [`${emailData.toName ? `${emailData.toName} <${emailData.to}>` : emailData.to}`];
+    const ccList = emailData.cc?.map(email => email) || [];
+    const bccList = emailData.bcc?.map(email => email) || [];
+
+    // Send email
+    await client.send({
+      from: `${config.from_name} <${config.from_email}>`,
+      to: toList,
+      cc: ccList.length > 0 ? ccList : undefined,
+      bcc: bccList.length > 0 ? bccList : undefined,
+      subject: emailData.subject,
+      content: emailData.textContent || emailData.htmlContent,
+      html: emailData.htmlContent,
+    });
+
+    await client.close();
+    
+    console.log("Email sent successfully to:", emailData.to);
+    return { success: true };
+  } catch (error) {
+    console.error("SMTP Error:", error);
+    throw new Error(`Failed to send email via SMTP: ${error.message}`);
+  }
 }
 
 function replaceVariables(content: string, variables: Record<string, string>): string {

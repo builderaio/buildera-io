@@ -303,7 +303,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
   const runAnalysis = async (platform?: string) => {
     setLoading(true);
     try {
-      console.log(`🔄 Iniciando análisis para ${platform || 'todas las plataformas'}...`);
+      console.log(`🔄 Generando insights básicos para ${platform || 'todas las plataformas'}...`);
       
       // 1. Calcular analytics básicos
       const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke(
@@ -313,20 +313,15 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
 
       if (analyticsError) throw analyticsError;
 
-      // 2. Ejecutar análisis avanzado de contenido
-      const { data, error } = await supabase.functions.invoke(
-        'content-insights-analyzer',
-        { body: { platform } }
-      );
-
-      if (error) throw error;
-
+      // 2. Generar insights básicos sin IA
+      await generateBasicInsights();
+      
       // 3. Recargar datos después del análisis
       await loadAnalyticsData();
       
       toast({
         title: "Análisis completado",
-        description: `Se generaron ${data.insights || 0} insights, ${data.actionables || 0} acciones y ${data.recommendations || 0} recomendaciones`,
+        description: "Se generaron insights básicos basados en tus métricas de redes sociales",
       });
     } catch (error: any) {
       console.error('Error en análisis:', error);
@@ -338,6 +333,117 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateBasicInsights = async () => {
+    const userId = profile.user_id;
+    const insights = [];
+    const actionables = [];
+
+    // Analizar posts más exitosos
+    const topPosts = analyticsData.posts
+      .sort((a, b) => {
+        const aEngagement = (a.like_count || a.likes_count || a.digg_count || 0) + (a.comment_count || a.comments_count || 0);
+        const bEngagement = (b.like_count || b.likes_count || b.digg_count || 0) + (b.comment_count || b.comments_count || 0);
+        return bEngagement - aEngagement;
+      })
+      .slice(0, 5);
+
+    if (topPosts.length > 0) {
+      insights.push({
+        user_id: userId,
+        title: "Posts con Mayor Engagement",
+        description: `Tus ${topPosts.length} posts con mejor rendimiento han generado un promedio de ${Math.round(topPosts.reduce((sum, post) => sum + ((post.like_count || post.likes_count || post.digg_count || 0) + (post.comment_count || post.comments_count || 0)), 0) / topPosts.length)} interacciones.`,
+        insight_type: "content_performance",
+        platform: null,
+        confidence_score: 0.8,
+        data: { top_posts: topPosts.length },
+        generated_by: 'basic_analyzer'
+      });
+
+      actionables.push({
+        user_id: userId,
+        title: "Replicar Contenido Exitoso",
+        description: "Analiza los elementos comunes de tus posts más exitosos y créa contenido similar",
+        action_type: "content_optimization",
+        priority: "high",
+        estimated_impact: "Aumento del 15-25% en engagement"
+      });
+    }
+
+    // Analizar frecuencia de publicación
+    const recentPosts = analyticsData.posts.filter(post => {
+      const postDate = new Date(post.posted_at || post.posted_at);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return postDate >= thirtyDaysAgo;
+    });
+
+    if (recentPosts.length > 0) {
+      const postsPerWeek = Math.round((recentPosts.length / 30) * 7);
+      insights.push({
+        user_id: userId,
+        title: "Frecuencia de Publicación",
+        description: `Publicas aproximadamente ${postsPerWeek} posts por semana. ${postsPerWeek < 3 ? 'Considera aumentar la frecuencia para mayor visibilidad.' : postsPerWeek > 10 ? 'Buena frecuencia, mantén la calidad.' : 'Frecuencia óptima para engagement.'}`,
+        insight_type: "posting_frequency",
+        platform: null,
+        confidence_score: 0.9,
+        data: { posts_per_week: postsPerWeek },
+        generated_by: 'basic_analyzer'
+      });
+
+      if (postsPerWeek < 3) {
+        actionables.push({
+          user_id: userId,
+          title: "Aumentar Frecuencia de Publicación",
+          description: "Planifica publicar al menos 3-4 posts por semana para mantener el engagement",
+          action_type: "content_planning",
+          priority: "medium",
+          estimated_impact: "Mejora en visibilidad del 20-30%"
+        });
+      }
+    }
+
+    // Analizar plataformas más exitosas
+    const platformPerformance = platformStats.map(stats => ({
+      platform: stats.platform,
+      avgEngagement: stats.avgEngagement,
+      totalPosts: stats.postsCount
+    })).sort((a, b) => b.avgEngagement - a.avgEngagement);
+
+    if (platformPerformance.length > 1) {
+      const topPlatform = platformPerformance[0];
+      insights.push({
+        user_id: userId,
+        title: "Plataforma Más Exitosa",
+        description: `${topPlatform.platform.charAt(0).toUpperCase() + topPlatform.platform.slice(1)} es tu plataforma con mejor rendimiento (${topPlatform.avgEngagement.toFixed(1)}% engagement promedio).`,
+        insight_type: "platform_performance",
+        platform: topPlatform.platform,
+        confidence_score: 0.85,
+        data: { best_platform: topPlatform.platform, engagement_rate: topPlatform.avgEngagement },
+        generated_by: 'basic_analyzer'
+      });
+
+      actionables.push({
+        user_id: userId,
+        title: "Enfocar Esfuerzos en Plataforma Principal",
+        description: `Concentra más recursos en ${topPlatform.platform} donde tienes mejor rendimiento`,
+        action_type: "platform_optimization",
+        priority: "high",
+        estimated_impact: "Optimización del ROI en redes sociales"
+      });
+    }
+
+    // Guardar insights y actionables
+    if (insights.length > 0) {
+      await supabase.from('marketing_insights').insert(insights);
+    }
+    
+    if (actionables.length > 0) {
+      await supabase.from('marketing_actionables').insert(actionables);
+    }
+
+    console.log(`✅ Generados ${insights.length} insights y ${actionables.length} actionables básicos`);
   };
 
   const refreshAnalytics = async () => {

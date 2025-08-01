@@ -1526,98 +1526,302 @@ export type Database = {
         }
         Relationships: []
       }
-      competitor_analysis: {
+      competitive_analysis_sessions: {
         Row: {
-          analysis_data: Json | null
-          avg_engagement_rate: number | null
-          best_performing_content_types: string[] | null
-          collaboration_potential: number | null
-          competitor_name: string | null
-          competitor_url: string | null
-          competitor_username: string
-          content_gaps: string[] | null
-          content_similarity_score: number | null
-          content_themes: string[] | null
+          analysis_id: string | null
+          collected_data: Json | null
+          conversation_history: Json | null
           created_at: string
-          engagement_comparison: number | null
-          engagement_trend: string | null
-          follower_overlap_percentage: number | null
-          followers_count: number | null
-          following_count: number | null
-          growth_rate_monthly: number | null
-          hashtag_opportunities: string[] | null
+          current_step: string | null
           id: string
-          last_analyzed: string
-          optimal_posting_days: number[] | null
-          optimal_posting_times: number[] | null
-          platform: string
-          posting_frequency: number | null
-          posts_count: number | null
-          top_hashtags: string[] | null
+          last_interaction: string | null
+          session_status: string | null
+          step_progress: number | null
+          total_steps: number | null
           updated_at: string
           user_id: string
+          user_responses: Json | null
         }
         Insert: {
-          analysis_data?: Json | null
-          avg_engagement_rate?: number | null
-          best_performing_content_types?: string[] | null
-          collaboration_potential?: number | null
-          competitor_name?: string | null
-          competitor_url?: string | null
-          competitor_username: string
-          content_gaps?: string[] | null
-          content_similarity_score?: number | null
-          content_themes?: string[] | null
+          analysis_id?: string | null
+          collected_data?: Json | null
+          conversation_history?: Json | null
           created_at?: string
-          engagement_comparison?: number | null
-          engagement_trend?: string | null
-          follower_overlap_percentage?: number | null
-          followers_count?: number | null
-          following_count?: number | null
-          growth_rate_monthly?: number | null
-          hashtag_opportunities?: string[] | null
+          current_step?: string | null
           id?: string
-          last_analyzed?: string
-          optimal_posting_days?: number[] | null
-          optimal_posting_times?: number[] | null
-          platform: string
-          posting_frequency?: number | null
-          posts_count?: number | null
-          top_hashtags?: string[] | null
+          last_interaction?: string | null
+          session_status?: string | null
+          step_progress?: number | null
+          total_steps?: number | null
           updated_at?: string
           user_id: string
+          user_responses?: Json | null
         }
         Update: {
-          analysis_data?: Json | null
-          avg_engagement_rate?: number | null
-          best_performing_content_types?: string[] | null
-          collaboration_potential?: number | null
-          competitor_name?: string | null
-          competitor_url?: string | null
-          competitor_username?: string
-          content_gaps?: string[] | null
-          content_similarity_score?: number | null
-          content_themes?: string[] | null
+          analysis_id?: string | null
+          collected_data?: Json | null
+          conversation_history?: Json | null
           created_at?: string
-          engagement_comparison?: number | null
-          engagement_trend?: string | null
-          follower_overlap_percentage?: number | null
-          followers_count?: number | null
-          following_count?: number | null
-          growth_rate_monthly?: number | null
-          hashtag_opportunities?: string[] | null
+          current_step?: string | null
           id?: string
-          last_analyzed?: string
-          optimal_posting_days?: number[] | null
-          optimal_posting_times?: number[] | null
-          platform?: string
-          posting_frequency?: number | null
-          posts_count?: number | null
-          top_hashtags?: string[] | null
+          last_interaction?: string | null
+          session_status?: string | null
+          step_progress?: number | null
+          total_steps?: number | null
           updated_at?: string
           user_id?: string
+          user_responses?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "competitive_analysis_sessions_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "competitive_intelligence"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitive_intelligence: {
+        Row: {
+          ai_discovered_competitors: Json | null
+          ai_model_used: string | null
+          analysis_confidence_score: number | null
+          analysis_depth: string | null
+          analysis_session_id: string | null
+          analysis_status: string | null
+          business_model: string | null
+          company_id: string | null
+          competitive_advantages: Json | null
+          competitive_landscape: Json | null
+          competitive_positioning: Json | null
+          competitor_strengths_weaknesses: Json | null
+          completed_at: string | null
+          created_at: string
+          data_sources: Json | null
+          differentiation_opportunities: Json | null
+          direct_competitors: Json | null
+          geographic_scope: string[] | null
+          global_competitors: string[] | null
+          growth_opportunities: Json | null
+          id: string
+          indirect_competitors: Json | null
+          industry_sector: string | null
+          local_competitors: string[] | null
+          market_gaps: Json | null
+          market_leaders: Json | null
+          market_size_analysis: Json | null
+          market_trends: Json | null
+          marketing_strategies_analysis: Json | null
+          pricing_analysis: Json | null
+          product_comparison: Json | null
+          strategic_recommendations: Json | null
+          target_market: string | null
+          threat_assessment: Json | null
+          updated_at: string
+          user_id: string
+          user_identified_competitors: string[] | null
+        }
+        Insert: {
+          ai_discovered_competitors?: Json | null
+          ai_model_used?: string | null
+          analysis_confidence_score?: number | null
+          analysis_depth?: string | null
+          analysis_session_id?: string | null
+          analysis_status?: string | null
+          business_model?: string | null
+          company_id?: string | null
+          competitive_advantages?: Json | null
+          competitive_landscape?: Json | null
+          competitive_positioning?: Json | null
+          competitor_strengths_weaknesses?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          data_sources?: Json | null
+          differentiation_opportunities?: Json | null
+          direct_competitors?: Json | null
+          geographic_scope?: string[] | null
+          global_competitors?: string[] | null
+          growth_opportunities?: Json | null
+          id?: string
+          indirect_competitors?: Json | null
+          industry_sector?: string | null
+          local_competitors?: string[] | null
+          market_gaps?: Json | null
+          market_leaders?: Json | null
+          market_size_analysis?: Json | null
+          market_trends?: Json | null
+          marketing_strategies_analysis?: Json | null
+          pricing_analysis?: Json | null
+          product_comparison?: Json | null
+          strategic_recommendations?: Json | null
+          target_market?: string | null
+          threat_assessment?: Json | null
+          updated_at?: string
+          user_id: string
+          user_identified_competitors?: string[] | null
+        }
+        Update: {
+          ai_discovered_competitors?: Json | null
+          ai_model_used?: string | null
+          analysis_confidence_score?: number | null
+          analysis_depth?: string | null
+          analysis_session_id?: string | null
+          analysis_status?: string | null
+          business_model?: string | null
+          company_id?: string | null
+          competitive_advantages?: Json | null
+          competitive_landscape?: Json | null
+          competitive_positioning?: Json | null
+          competitor_strengths_weaknesses?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          data_sources?: Json | null
+          differentiation_opportunities?: Json | null
+          direct_competitors?: Json | null
+          geographic_scope?: string[] | null
+          global_competitors?: string[] | null
+          growth_opportunities?: Json | null
+          id?: string
+          indirect_competitors?: Json | null
+          industry_sector?: string | null
+          local_competitors?: string[] | null
+          market_gaps?: Json | null
+          market_leaders?: Json | null
+          market_size_analysis?: Json | null
+          market_trends?: Json | null
+          marketing_strategies_analysis?: Json | null
+          pricing_analysis?: Json | null
+          product_comparison?: Json | null
+          strategic_recommendations?: Json | null
+          target_market?: string | null
+          threat_assessment?: Json | null
+          updated_at?: string
+          user_id?: string
+          user_identified_competitors?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitive_intelligence_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitor_profiles: {
+        Row: {
+          analysis_id: string | null
+          business_model: string | null
+          company_name: string
+          competitive_threat_score: number | null
+          confidence_level: string | null
+          content_strategy: Json | null
+          created_at: string
+          data_sources: string[] | null
+          description: string | null
+          employee_count: string | null
+          estimated_revenue: string | null
+          funding_status: string | null
+          geographic_presence: string[] | null
+          id: string
+          innovation_score: number | null
+          last_updated: string | null
+          market_position: string | null
+          market_share_percentage: number | null
+          marketing_channels: string[] | null
+          opportunities: string[] | null
+          pricing_strategy: Json | null
+          products_services: Json | null
+          seo_performance: Json | null
+          social_media_presence: Json | null
+          strengths: string[] | null
+          target_market: string | null
+          threats: string[] | null
+          unique_value_propositions: string[] | null
+          updated_at: string
+          valuation: string | null
+          weaknesses: string[] | null
+          website_url: string | null
+        }
+        Insert: {
+          analysis_id?: string | null
+          business_model?: string | null
+          company_name: string
+          competitive_threat_score?: number | null
+          confidence_level?: string | null
+          content_strategy?: Json | null
+          created_at?: string
+          data_sources?: string[] | null
+          description?: string | null
+          employee_count?: string | null
+          estimated_revenue?: string | null
+          funding_status?: string | null
+          geographic_presence?: string[] | null
+          id?: string
+          innovation_score?: number | null
+          last_updated?: string | null
+          market_position?: string | null
+          market_share_percentage?: number | null
+          marketing_channels?: string[] | null
+          opportunities?: string[] | null
+          pricing_strategy?: Json | null
+          products_services?: Json | null
+          seo_performance?: Json | null
+          social_media_presence?: Json | null
+          strengths?: string[] | null
+          target_market?: string | null
+          threats?: string[] | null
+          unique_value_propositions?: string[] | null
+          updated_at?: string
+          valuation?: string | null
+          weaknesses?: string[] | null
+          website_url?: string | null
+        }
+        Update: {
+          analysis_id?: string | null
+          business_model?: string | null
+          company_name?: string
+          competitive_threat_score?: number | null
+          confidence_level?: string | null
+          content_strategy?: Json | null
+          created_at?: string
+          data_sources?: string[] | null
+          description?: string | null
+          employee_count?: string | null
+          estimated_revenue?: string | null
+          funding_status?: string | null
+          geographic_presence?: string[] | null
+          id?: string
+          innovation_score?: number | null
+          last_updated?: string | null
+          market_position?: string | null
+          market_share_percentage?: number | null
+          marketing_channels?: string[] | null
+          opportunities?: string[] | null
+          pricing_strategy?: Json | null
+          products_services?: Json | null
+          seo_performance?: Json | null
+          social_media_presence?: Json | null
+          strengths?: string[] | null
+          target_market?: string | null
+          threats?: string[] | null
+          unique_value_propositions?: string[] | null
+          updated_at?: string
+          valuation?: string | null
+          weaknesses?: string[] | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitor_profiles_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "competitive_intelligence"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_clusters: {
         Row: {
@@ -1905,6 +2109,84 @@ export type Database = {
         }
         Relationships: []
       }
+      email_attachments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_path: string
+          file_size: number
+          id: string
+          mime_type: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_path: string
+          file_size: number
+          id?: string
+          mime_type: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_path?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      email_configurations: {
+        Row: {
+          created_at: string
+          from_email: string
+          from_name: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          smtp_host: string
+          smtp_password: string
+          smtp_port: number
+          smtp_secure: boolean
+          smtp_user: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          from_email: string
+          from_name: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          smtp_host: string
+          smtp_password: string
+          smtp_port?: number
+          smtp_secure?: boolean
+          smtp_user: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          from_email?: string
+          from_name?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          smtp_host?: string
+          smtp_password?: string
+          smtp_port?: number
+          smtp_secure?: boolean
+          smtp_user?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_integrations: {
         Row: {
           agent_id: string
@@ -1948,6 +2230,123 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_send_history: {
+        Row: {
+          attachments: Json | null
+          bcc_emails: string[] | null
+          cc_emails: string[] | null
+          configuration_id: string | null
+          created_at: string
+          error_message: string | null
+          html_content: string
+          id: string
+          sent_at: string | null
+          status: string
+          subject: string
+          template_id: string | null
+          text_content: string | null
+          to_email: string
+          to_name: string | null
+          variables: Json | null
+        }
+        Insert: {
+          attachments?: Json | null
+          bcc_emails?: string[] | null
+          cc_emails?: string[] | null
+          configuration_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          html_content: string
+          id?: string
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template_id?: string | null
+          text_content?: string | null
+          to_email: string
+          to_name?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          attachments?: Json | null
+          bcc_emails?: string[] | null
+          cc_emails?: string[] | null
+          configuration_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          html_content?: string
+          id?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_id?: string | null
+          text_content?: string | null
+          to_email?: string
+          to_name?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_send_history_configuration_id_fkey"
+            columns: ["configuration_id"]
+            isOneToOne: false
+            referencedRelation: "email_configurations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_send_history_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          attachments: Json | null
+          created_at: string
+          created_by: string | null
+          html_content: string
+          id: string
+          is_active: boolean
+          name: string
+          subject: string
+          template_type: string
+          text_content: string | null
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string
+          created_by?: string | null
+          html_content: string
+          id?: string
+          is_active?: boolean
+          name: string
+          subject: string
+          template_type: string
+          text_content?: string | null
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string
+          created_by?: string | null
+          html_content?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          subject?: string
+          template_type?: string
+          text_content?: string | null
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
       }
       era_prompt_templates: {
         Row: {
@@ -4404,6 +4803,10 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      calculate_competitive_landscape_score: {
+        Args: { analysis_id_param: string }
+        Returns: number
       }
       calculate_engagement_rate: {
         Args: { likes: number; comments: number; followers: number }

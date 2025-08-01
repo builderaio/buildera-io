@@ -4059,6 +4059,8 @@ export type Database = {
         | "linkedin_intelligent_analysis"
         | "facebook_intelligent_analysis"
         | "tiktok_intelligent_analysis"
+        | "content_analysis"
+        | "marketing_analysis"
       user_type: "developer" | "expert" | "company"
     }
     CompositeTypes: {
@@ -4207,6 +4209,8 @@ export const Constants = {
         "linkedin_intelligent_analysis",
         "facebook_intelligent_analysis",
         "tiktok_intelligent_analysis",
+        "content_analysis",
+        "marketing_analysis",
       ],
       user_type: ["developer", "expert", "company"],
     },

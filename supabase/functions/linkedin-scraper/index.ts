@@ -177,16 +177,12 @@ function extractLinkedInMentionsFromText(text: string): string[] {
 async function getLinkedInCompanyDetails(companyIdentifier: string, userId: string, supabase: any) {
   console.log(`🏢 Getting LinkedIn company details for: ${companyIdentifier}`);
   try {
-    const response = await fetch('https://linkedin-data-scraper.p.rapidapi.com/company_details', {
-      method: 'POST',
+    const response = await fetch(`https://linkedin-scraper-api-real-time-fast-affordable.p.rapidapi.com/companies/detail?identifier=${encodeURIComponent(companyIdentifier)}`, {
+      method: 'GET',
       headers: {
-        'x-rapidapi-host': 'linkedin-data-scraper.p.rapidapi.com',
-        'x-rapidapi-key': rapidApiKey!,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        company_url: companyIdentifier.includes('linkedin.com') ? companyIdentifier : `https://www.linkedin.com/company/${companyIdentifier}`
-      })
+        'x-rapidapi-host': 'linkedin-scraper-api-real-time-fast-affordable.p.rapidapi.com',
+        'x-rapidapi-key': rapidApiKey!
+      }
     });
 
     console.log(`📡 LinkedIn Company API Response Status: ${response.status}`);
@@ -201,11 +197,8 @@ async function getLinkedInCompanyDetails(companyIdentifier: string, userId: stri
     const apiResponse = JSON.parse(responseText); // Parse responseText
     console.log('✅ LinkedIn Company Details Response received');
 
-    if (!apiResponse.success && !apiResponse.data) {
-      throw new Error(apiResponse.message || 'Failed to get company details from API response');
-    }
-
-    const companyData = apiResponse.data;
+    // La nueva API devuelve los datos directamente
+    const companyData = apiResponse;
 
     // Save company data to database
     if (companyData) {
@@ -274,17 +267,12 @@ async function getLinkedInCompanyDetails(companyIdentifier: string, userId: stri
 async function getLinkedInCompanyPosts(companyIdentifier: string, userId: string, supabase: any, companyFollowers: number = 0) {
   console.log(`📝 Getting LinkedIn company posts for: ${companyIdentifier}`);
   try {
-    const response = await fetch('https://linkedin-data-scraper.p.rapidapi.com/company_posts', {
-      method: 'POST',
+    const response = await fetch(`https://linkedin-scraper-api-real-time-fast-affordable.p.rapidapi.com/companies/posts?identifier=${encodeURIComponent(companyIdentifier)}&limit=20`, {
+      method: 'GET',
       headers: {
-        'x-rapidapi-host': 'linkedin-data-scraper.p.rapidapi.com',
-        'x-rapidapi-key': rapidApiKey!,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        company_url: companyIdentifier.includes('linkedin.com') ? companyIdentifier : `https://www.linkedin.com/company/${companyIdentifier}`,
-        limit: 20 // Limite de posts como en Instagram (12 posts en el análisis, aquí 20 para tener más disponibles)
-      })
+        'x-rapidapi-host': 'linkedin-scraper-api-real-time-fast-affordable.p.rapidapi.com',
+        'x-rapidapi-key': rapidApiKey!
+      }
     });
 
     console.log(`📡 LinkedIn Posts API Response Status: ${response.status}`);

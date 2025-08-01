@@ -337,7 +337,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
 
   const generateBasicInsights = async () => {
     try {
-      console.log('🔍 Iniciando generación de insights básicos...');
+      console.log('🔍 Iniciando generación de insights basados en TODOS los posts y buenas prácticas...');
       const userId = profile.user_id;
       
       if (!userId) {
@@ -347,49 +347,72 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       const insights = [];
       const actionables = [];
 
-      console.log('📊 Datos disponibles:', {
+      console.log('📊 Analizando datos de:', {
         posts: analyticsData.posts.length,
-        platformStats: platformStats.length
+        instagram: analyticsData.posts.filter(p => p.platform === 'instagram').length,
+        tiktok: analyticsData.posts.filter(p => p.platform === 'tiktok').length,
+        linkedin: analyticsData.posts.filter(p => p.platform === 'linkedin').length,
+        facebook: analyticsData.posts.filter(p => p.platform === 'facebook').length
       });
 
-      // Analizar posts más exitosos
+      // ANÁLISIS 1: Posts con mejor rendimiento por plataforma
       const topPosts = analyticsData.posts
-        .sort((a, b) => {
-          const aEngagement = (a.like_count || a.likes_count || a.digg_count || 0) + (a.comment_count || a.comments_count || 0);
-          const bEngagement = (b.like_count || b.likes_count || b.digg_count || 0) + (b.comment_count || b.comments_count || 0);
-          return bEngagement - aEngagement;
-        })
-        .slice(0, 5);
+        .map(post => ({
+          ...post,
+          totalEngagement: (post.like_count || post.likes_count || post.digg_count || 0) + 
+                          (post.comment_count || post.comments_count || 0) + 
+                          (post.share_count || post.shares_count || 0)
+        }))
+        .sort((a, b) => b.totalEngagement - a.totalEngagement)
+        .slice(0, 10);
 
       if (topPosts.length > 0) {
-        const avgInteractions = Math.round(topPosts.reduce((sum, post) => {
-          return sum + ((post.like_count || post.likes_count || post.digg_count || 0) + (post.comment_count || post.comments_count || 0));
-        }, 0) / topPosts.length);
+        const avgInteractions = Math.round(topPosts.reduce((sum, post) => sum + post.totalEngagement, 0) / topPosts.length);
+        
+        // Analizar elementos comunes en posts exitosos
+        const topHashtags = {};
+        const bestPlatforms = {};
+        
+        topPosts.forEach(post => {
+          // Contar hashtags más efectivos
+          if (post.hashtags) {
+            post.hashtags.forEach(tag => {
+              topHashtags[tag] = (topHashtags[tag] || 0) + post.totalEngagement;
+            });
+          }
+          
+          // Contar rendimiento por plataforma
+          bestPlatforms[post.platform] = (bestPlatforms[post.platform] || 0) + 1;
+        });
 
-      insights.push({
-        user_id: userId,
-        title: "Posts con Mayor Engagement",
-        description: `Tus ${topPosts.length} posts con mejor rendimiento han generado un promedio de ${avgInteractions} interacciones.`,
-        insight_type: "content_performance",
-        platforms: ["instagram", "tiktok", "linkedin"],
-        confidence_score: 0.8,
-        impact_level: "high",
-        data: { top_posts: topPosts.length, avg_interactions: avgInteractions }
-      });
+        insights.push({
+          user_id: userId,
+          title: "Análisis de Contenido de Alto Rendimiento",
+          description: `Tus ${topPosts.length} posts más exitosos generaron un promedio de ${avgInteractions} interacciones. Los hashtags más efectivos y horarios óptimos están identificados.`,
+          insight_type: "content_performance",
+          platforms: Object.keys(bestPlatforms),
+          confidence_score: 0.85,
+          impact_level: "high",
+          data: { 
+            top_posts: topPosts.length, 
+            avg_interactions: avgInteractions,
+            top_hashtags: Object.keys(topHashtags).slice(0, 5),
+            platform_performance: bestPlatforms
+          }
+        });
 
         actionables.push({
           user_id: userId,
-          title: "Replicar Contenido Exitoso",
-          description: "Analiza los elementos comunes de tus posts más exitosos y créa contenido similar",
+          title: "Optimizar Contenido Basado en Datos",
+          description: `Replica los elementos de tus ${topPosts.length} posts más exitosos: usa hashtags como ${Object.keys(topHashtags).slice(0, 3).join(', ')} y mantén el estilo de contenido que mejor funciona`,
           action_type: "content_creation",
           priority: "high",
-          estimated_impact: "Aumento del 15-25% en engagement"
+          estimated_impact: "Aumento potencial del 25-40% en engagement"
         });
-
-        console.log('✅ Insight de posts exitosos creado');
       }
 
-      // Analizar frecuencia de publicación
+      // ANÁLISIS 2: Frecuencia óptima por plataforma (buenas prácticas)
+      const platformFrequencyAnalysis = {};
       const recentPosts = analyticsData.posts.filter(post => {
         const postDate = new Date(post.posted_at || post.create_time);
         const thirtyDaysAgo = new Date();
@@ -397,84 +420,232 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
         return postDate >= thirtyDaysAgo;
       });
 
-      if (recentPosts.length > 0) {
-        const postsPerWeek = Math.round((recentPosts.length / 30) * 7);
-        let recommendation = '';
+      recentPosts.forEach(post => {
+        if (!platformFrequencyAnalysis[post.platform]) {
+          platformFrequencyAnalysis[post.platform] = {
+            count: 0,
+            totalEngagement: 0,
+            avgEngagement: 0
+          };
+        }
+        platformFrequencyAnalysis[post.platform].count++;
+        const engagement = (post.like_count || post.likes_count || post.digg_count || 0) + 
+                          (post.comment_count || post.comments_count || 0);
+        platformFrequencyAnalysis[post.platform].totalEngagement += engagement;
+      });
+
+      // Calcular promedios y aplicar buenas prácticas
+      Object.keys(platformFrequencyAnalysis).forEach(platform => {
+        const data = platformFrequencyAnalysis[platform];
+        data.avgEngagement = data.count > 0 ? data.totalEngagement / data.count : 0;
+        data.postsPerWeek = Math.round((data.count / 30) * 7);
         
-        if (postsPerWeek < 3) {
-          recommendation = 'Considera aumentar la frecuencia para mayor visibilidad.';
-        } else if (postsPerWeek > 10) {
-          recommendation = 'Buena frecuencia, mantén la calidad.';
-        } else {
-          recommendation = 'Frecuencia óptima para engagement.';
+        // Buenas prácticas por plataforma
+        let recommendation = '';
+        let needsAction = false;
+        
+        switch(platform) {
+          case 'instagram':
+            if (data.postsPerWeek < 3) {
+              recommendation = 'Instagram: Publica 3-5 veces por semana para mantener visibilidad en el algoritmo.';
+              needsAction = true;
+            } else if (data.postsPerWeek > 7) {
+              recommendation = 'Instagram: Reducir frecuencia puede mejorar calidad. Máximo 1 post diario.';
+              needsAction = true;
+            } else {
+              recommendation = 'Instagram: Frecuencia óptima para el algoritmo.';
+            }
+            break;
+          case 'tiktok':
+            if (data.postsPerWeek < 3) {
+              recommendation = 'TikTok: Publica 3-5 veces por semana mínimo. El algoritmo premia la consistencia.';
+              needsAction = true;
+            } else {
+              recommendation = 'TikTok: Buena frecuencia para mantener relevancia en el feed.';
+            }
+            break;
+          case 'linkedin':
+            if (data.postsPerWeek < 1) {
+              recommendation = 'LinkedIn: Publica 1-3 veces por semana para networking profesional efectivo.';
+              needsAction = true;
+            } else if (data.postsPerWeek > 5) {
+              recommendation = 'LinkedIn: Demasiadas publicaciones pueden parecer spam. Máximo 3-5 por semana.';
+              needsAction = true;
+            } else {
+              recommendation = 'LinkedIn: Frecuencia adecuada para engagement profesional.';
+            }
+            break;
+          case 'facebook':
+            if (data.postsPerWeek < 1) {
+              recommendation = 'Facebook: Publica 1-2 veces por semana para mantener audiencia activa.';
+              needsAction = true;
+            } else {
+              recommendation = 'Facebook: Frecuencia apropiada para el algoritmo.';
+            }
+            break;
         }
 
-        insights.push({
-          user_id: userId,
-          title: "Frecuencia de Publicación",
-          description: `Publicas aproximadamente ${postsPerWeek} posts por semana. ${recommendation}`,
-          insight_type: "performance_trends",
-          platforms: ["instagram", "tiktok", "linkedin"],
-          confidence_score: 0.9,
-          impact_level: "medium",
-          data: { posts_per_week: postsPerWeek, recent_posts: recentPosts.length }
-        });
-
-        if (postsPerWeek < 3) {
-          actionables.push({
+        if (data.count > 0) {
+          insights.push({
             user_id: userId,
-            title: "Aumentar Frecuencia de Publicación",
-            description: "Planifica publicar al menos 3-4 posts por semana para mantener el engagement",
-            action_type: "posting_schedule",
-            priority: "medium",
-            estimated_impact: "Mejora en visibilidad del 20-30%"
+            title: `Optimización de Frecuencia - ${platform.charAt(0).toUpperCase() + platform.slice(1)}`,
+            description: `${recommendation} Actualmente publicas ${data.postsPerWeek} veces por semana con ${Math.round(data.avgEngagement)} interacciones promedio.`,
+            insight_type: "performance_trends",
+            platforms: [platform],
+            confidence_score: 0.9,
+            impact_level: needsAction ? "high" : "medium",
+            data: { 
+              posts_per_week: data.postsPerWeek, 
+              avg_engagement: Math.round(data.avgEngagement),
+              platform: platform,
+              needs_optimization: needsAction
+            }
+          });
+
+          if (needsAction) {
+            actionables.push({
+              user_id: userId,
+              title: `Ajustar Estrategia de Publicación - ${platform.charAt(0).toUpperCase() + platform.slice(1)}`,
+              description: recommendation.split(':')[1].trim(),
+              action_type: "posting_schedule",
+              priority: data.postsPerWeek < 1 ? "high" : "medium",
+              estimated_impact: `Mejora potencial del 15-30% en alcance en ${platform}`
+            });
+          }
+        }
+      });
+
+      // ANÁLISIS 3: Hashtags y engagement por plataforma
+      const hashtagAnalysis = {};
+      analyticsData.posts.forEach(post => {
+        if (post.hashtags && post.hashtags.length > 0) {
+          const engagement = (post.like_count || post.likes_count || post.digg_count || 0) + 
+                           (post.comment_count || post.comments_count || 0);
+          
+          if (!hashtagAnalysis[post.platform]) {
+            hashtagAnalysis[post.platform] = {};
+          }
+          
+          post.hashtags.forEach(tag => {
+            if (!hashtagAnalysis[post.platform][tag]) {
+              hashtagAnalysis[post.platform][tag] = { count: 0, totalEngagement: 0 };
+            }
+            hashtagAnalysis[post.platform][tag].count++;
+            hashtagAnalysis[post.platform][tag].totalEngagement += engagement;
           });
         }
+      });
 
-        console.log('✅ Insight de frecuencia creado');
-      }
-
-      // Analizar plataformas más exitosas
-      if (platformStats.length > 1) {
-        const platformPerformance = platformStats
-          .map(stats => ({
-            platform: stats.platform,
-            avgEngagement: stats.avgEngagement,
-            totalPosts: stats.postsCount
+      // Generar insights de hashtags por plataforma
+      Object.keys(hashtagAnalysis).forEach(platform => {
+        const platformHashtags = hashtagAnalysis[platform];
+        const sortedHashtags = Object.entries(platformHashtags)
+          .map(([tag, data]: [string, any]) => ({
+            tag,
+            avgEngagement: (data as any).totalEngagement / (data as any).count,
+            usage: (data as any).count
           }))
-          .sort((a, b) => b.avgEngagement - a.avgEngagement);
+          .sort((a, b) => b.avgEngagement - a.avgEngagement)
+          .slice(0, 5);
 
-        const topPlatform = platformPerformance[0];
-        const platformName = topPlatform.platform.charAt(0).toUpperCase() + topPlatform.platform.slice(1);
+        if (sortedHashtags.length > 0) {
+          insights.push({
+            user_id: userId,
+            title: `Hashtags de Alto Rendimiento - ${platform.charAt(0).toUpperCase() + platform.slice(1)}`,
+            description: `Los hashtags ${sortedHashtags.slice(0, 3).map(h => h.tag).join(', ')} generan el mayor engagement en ${platform}. Promedio: ${Math.round(sortedHashtags[0].avgEngagement)} interacciones.`,
+            insight_type: "hashtag_optimization",
+            platforms: [platform],
+            confidence_score: 0.8,
+            impact_level: "medium",
+            data: {
+              top_hashtags: sortedHashtags,
+              platform: platform
+            }
+          });
 
-        insights.push({
-          user_id: userId,
-          title: "Plataforma Más Exitosa",
-          description: `${platformName} es tu plataforma con mejor rendimiento (${topPlatform.avgEngagement.toFixed(1)}% engagement promedio).`,
-          insight_type: "competitive_analysis",
-          platforms: [topPlatform.platform],
-          confidence_score: 0.85,
-          impact_level: "high",
-          data: { 
-            best_platform: topPlatform.platform, 
-            engagement_rate: topPlatform.avgEngagement,
-            total_posts: topPlatform.totalPosts
+          actionables.push({
+            user_id: userId,
+            title: `Optimizar Hashtags en ${platform.charAt(0).toUpperCase() + platform.slice(1)}`,
+            description: `Usa más frecuentemente: ${sortedHashtags.slice(0, 5).map(h => h.tag).join(', ')}. Estos hashtags generan el mayor engagement en tu audiencia.`,
+            action_type: "hashtag_optimization",
+            priority: "medium",
+            estimated_impact: `Aumento del 10-20% en alcance orgánico en ${platform}`
+          });
+        }
+      });
+
+      // ANÁLISIS 4: Horarios óptimos de publicación
+      const timeAnalysis = {};
+      analyticsData.posts.forEach(post => {
+        if (post.posted_at || post.create_time) {
+          const postDate = new Date(post.posted_at || post.create_time * 1000);
+          const hour = postDate.getHours();
+          const dayOfWeek = postDate.getDay();
+          const engagement = (post.like_count || post.likes_count || post.digg_count || 0) + 
+                           (post.comment_count || post.comments_count || 0);
+          
+          if (!timeAnalysis[post.platform]) {
+            timeAnalysis[post.platform] = { hours: {}, days: {} };
           }
-        });
+          
+          if (!timeAnalysis[post.platform].hours[hour]) {
+            timeAnalysis[post.platform].hours[hour] = { count: 0, totalEngagement: 0 };
+          }
+          if (!timeAnalysis[post.platform].days[dayOfWeek]) {
+            timeAnalysis[post.platform].days[dayOfWeek] = { count: 0, totalEngagement: 0 };
+          }
+          
+          timeAnalysis[post.platform].hours[hour].count++;
+          timeAnalysis[post.platform].hours[hour].totalEngagement += engagement;
+          timeAnalysis[post.platform].days[dayOfWeek].count++;
+          timeAnalysis[post.platform].days[dayOfWeek].totalEngagement += engagement;
+        }
+      });
 
-        actionables.push({
-          user_id: userId,
-          title: "Enfocar Esfuerzos en Plataforma Principal",
-          description: `Concentra más recursos en ${platformName} donde tienes mejor rendimiento`,
-          action_type: "audience_targeting",
-          priority: "high",
-          estimated_impact: "Optimización del ROI en redes sociales"
-        });
+      // Generar insights de timing óptimo
+      Object.keys(timeAnalysis).forEach(platform => {
+        const platformTiming = timeAnalysis[platform];
+        
+        // Mejores horas
+        const bestHours = Object.entries(platformTiming.hours)
+          .filter(([hour, data]: [string, any]) => (data as any).count >= 2) // Mínimo 2 posts para ser significativo
+          .map(([hour, data]: [string, any]) => ({
+            hour: parseInt(hour),
+            avgEngagement: (data as any).totalEngagement / (data as any).count,
+            posts: (data as any).count
+          }))
+          .sort((a, b) => b.avgEngagement - a.avgEngagement)
+          .slice(0, 3);
 
-        console.log('✅ Insight de plataforma exitosa creado');
-      }
+        if (bestHours.length > 0) {
+          const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+          
+          insights.push({
+            user_id: userId,
+            title: `Horarios Óptimos - ${platform.charAt(0).toUpperCase() + platform.slice(1)}`,
+            description: `Tus mejores horarios en ${platform} son: ${bestHours.map(h => `${h.hour}:00h (${Math.round(h.avgEngagement)} interacciones promedio)`).join(', ')}.`,
+            insight_type: "optimal_timing",
+            platforms: [platform],
+            confidence_score: 0.75,
+            impact_level: "medium",
+            data: {
+              best_hours: bestHours,
+              platform: platform
+            }
+          });
 
-      console.log(`💾 Guardando ${insights.length} insights y ${actionables.length} actionables...`);
+          actionables.push({
+            user_id: userId,
+            title: `Programar Posts en Horarios Óptimos - ${platform.charAt(0).toUpperCase() + platform.slice(1)}`,
+            description: `Programa tus publicaciones en ${platform} entre las ${bestHours[0].hour}:00h y ${bestHours[1]?.hour || bestHours[0].hour}:00h para maximizar engagement.`,
+            action_type: "posting_schedule",
+            priority: "medium",
+            estimated_impact: `Mejora del 15-25% en engagement inmediato`
+          });
+        }
+      });
+
+      console.log(`💾 Guardando ${insights.length} insights detallados y ${actionables.length} actionables estratégicos...`);
 
       // Guardar insights con manejo de errores mejorado
       if (insights.length > 0) {
@@ -506,7 +677,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
         console.log('✅ Actionables guardados:', insertedActionables?.length || 0);
       }
 
-      console.log(`🎉 Proceso completado: ${insights.length} insights y ${actionables.length} actionables generados`);
+      console.log(`🎉 Análisis completo: ${insights.length} insights y ${actionables.length} actionables generados basados en ${analyticsData.posts.length} posts`);
       
     } catch (error: any) {
       console.error('❌ Error en generateBasicInsights:', error);

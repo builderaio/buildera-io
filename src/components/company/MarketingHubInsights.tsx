@@ -17,10 +17,13 @@ import {
   AlertCircle,
   Linkedin,
   Instagram,
-  Facebook
+  Facebook,
+  HelpCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MarketingInsight {
   id: string;
@@ -74,6 +77,7 @@ export default function MarketingHub() {
   const [analytics, setAnalytics] = useState<SocialMediaAnalytics[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingPlatform, setProcessingPlatform] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const platforms = [
     { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'bg-blue-600' },
@@ -646,69 +650,127 @@ export default function MarketingHub() {
       </div>
 
       {/* Métricas principales con explicaciones */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Alcance Total</p>
-                <p className="text-2xl font-bold">{totalReach.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Número único de personas que vieron tu contenido
-                </p>
+      <TooltipProvider>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">Alcance Total</p>
+                    {isMobile ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Número único de personas que vieron tu contenido</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : null}
+                  </div>
+                  <p className="text-2xl font-bold">{totalReach.toLocaleString()}</p>
+                  {!isMobile && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Número único de personas que vieron tu contenido
+                    </p>
+                  )}
+                </div>
+                <Eye className="h-8 w-8 text-primary" />
               </div>
-              <Eye className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Engagement Rate</p>
-                <p className="text-2xl font-bold">{avgEngagement.toFixed(1)}%</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  % de interacciones vs alcance promedio
-                </p>
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">Engagement Rate</p>
+                    {isMobile ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>% de interacciones vs alcance promedio</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : null}
+                  </div>
+                  <p className="text-2xl font-bold">{avgEngagement.toFixed(1)}%</p>
+                  {!isMobile && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      % de interacciones vs alcance promedio
+                    </p>
+                  )}
+                </div>
+                <TrendingUp className="h-8 w-8 text-green-500" />
               </div>
-              <TrendingUp className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Score Insights</p>
-                <p className="text-2xl font-bold">{Math.min(insightScore, 999)}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Calidad y cantidad de insights generados por IA
-                </p>
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">Score Insights</p>
+                    {isMobile ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Calidad y cantidad de insights generados por IA</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : null}
+                  </div>
+                  <p className="text-2xl font-bold">{Math.min(insightScore, 999)}</p>
+                  {!isMobile && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Calidad y cantidad de insights generados por IA
+                    </p>
+                  )}
+                </div>
+                <Lightbulb className="h-8 w-8 text-yellow-500" />
               </div>
-              <Lightbulb className="h-8 w-8 text-yellow-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Acciones Pendientes</p>
-                <p className="text-2xl font-bold">
-                  {actionables.filter(a => a.status === 'pending').length}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Recomendaciones por implementar
-                </p>
+          <Card className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">Acciones Pendientes</p>
+                    {isMobile ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Recomendaciones por implementar</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : null}
+                  </div>
+                  <p className="text-2xl font-bold">
+                    {actionables.filter(a => a.status === 'pending').length}
+                  </p>
+                  {!isMobile && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Recomendaciones por implementar
+                    </p>
+                  )}
+                </div>
+                <Target className="h-8 w-8 text-blue-500" />
               </div>
-              <Target className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      </TooltipProvider>
 
       {/* Información adicional sobre las métricas */}
       <Card className="bg-muted/30">

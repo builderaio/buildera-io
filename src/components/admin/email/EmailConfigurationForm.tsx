@@ -5,7 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { EmailConfiguration } from "@/hooks/useEmailSystem";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, XCircle, Wifi } from "lucide-react";
+import { EmailConfiguration, useEmailSystem } from "@/hooks/useEmailSystem";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface EmailConfigurationFormProps {
   configuration?: EmailConfiguration | null;
@@ -14,6 +18,7 @@ interface EmailConfigurationFormProps {
 }
 
 export const EmailConfigurationForm = ({ configuration, onClose, onSave }: EmailConfigurationFormProps) => {
+  const { testEmailConfiguration } = useEmailSystem();
   const [formData, setFormData] = useState({
     name: "",
     smtp_host: "",
@@ -28,6 +33,8 @@ export const EmailConfigurationForm = ({ configuration, onClose, onSave }: Email
   });
 
   const [loading, setLoading] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     if (configuration) {
@@ -58,6 +65,47 @@ export const EmailConfigurationForm = ({ configuration, onClose, onSave }: Email
 
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear test result when configuration changes
+    setTestResult(null);
+  };
+
+  const handleTestConnection = async () => {
+    if (!formData.smtp_host || !formData.smtp_user || !formData.smtp_password) {
+      toast.error("Por favor completa todos los campos obligatorios antes de probar la conexión");
+      return;
+    }
+
+    setTesting(true);
+    setTestResult(null);
+
+    try {
+      // Test the configuration directly using the edge function
+      const { data, error } = await supabase.functions.invoke('send-buildera-email', {
+        body: {
+          to: formData.from_email,
+          subject: 'Prueba de Configuración SMTP - Buildera',
+          content: 'Esta es una prueba de conexión SMTP. Si recibes este correo, la configuración es correcta.',
+          configuration: formData,
+          test: true
+        }
+      });
+
+      if (error) throw error;
+
+      setTestResult({ 
+        success: true, 
+        message: "Conexión exitosa. Los parámetros SMTP son válidos." 
+      });
+      toast.success("Conexión SMTP verificada correctamente");
+    } catch (error: any) {
+      setTestResult({ 
+        success: false, 
+        message: error.message || "Error al conectar con el servidor SMTP" 
+      });
+      toast.error("Error en la conexión SMTP");
+    } finally {
+      setTesting(false);
+    }
   };
 
   return (
@@ -157,6 +205,42 @@ export const EmailConfigurationForm = ({ configuration, onClose, onSave }: Email
                 required
               />
             </div>
+          </div>
+
+          {/* Test Connection Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Prueba de Conexión</Label>
+                <p className="text-sm text-muted-foreground">
+                  Verifica que los parámetros SMTP son correctos
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleTestConnection}
+                disabled={testing || !formData.smtp_host || !formData.smtp_user || !formData.smtp_password}
+              >
+                <Wifi className="w-4 h-4 mr-2" />
+                {testing ? "Probando..." : "Probar Conexión"}
+              </Button>
+            </div>
+
+            {testResult && (
+              <Alert className={testResult.success ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
+                <div className="flex items-center gap-2">
+                  {testResult.success ? (
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <XCircle className="w-4 h-4 text-red-600" />
+                  )}
+                  <AlertDescription className={testResult.success ? "text-green-800" : "text-red-800"}>
+                    {testResult.message}
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
           </div>
 
           <div className="space-y-4">

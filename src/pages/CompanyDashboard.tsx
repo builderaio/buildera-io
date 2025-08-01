@@ -210,16 +210,31 @@ const CompanyDashboard = () => {
   const renderContent = () => {
     console.log('Rendering content for activeView:', activeView);
     switch (activeView) {
+      case "mando-central":
       case "dashboard":
-        return <Dashboard360 profile={profile} onNavigate={setActiveView} />;
-      case "marketing":
+        return <MandoCentral profile={profile} />;
+      case "adn-empresa":
+        return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;
+      case "base-conocimiento":
+        return <MisArchivos />;
+      case "marketing-hub":
         return <MarketingHub profile={profile} />;
-      case "agents":
+      case "inteligencia-competitiva":
+        return <InteligenciaCompetitiva />;
+      case "academia-buildera":
+        return <AcademiaBuildiera />;
+      case "expertos":
+        return <Expertos />;
+      case "configuracion":
+        return <Configuracion profile={profile} />;
+      case "marketplace":
+        return <Marketplace />;
+      case "mis-agentes":
         return <CompanyAgents />;
       case "profile":
-        return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;
+        return <UserProfile />;
       default:
-        return <Dashboard360 profile={profile} onNavigate={setActiveView} />;
+        return <MandoCentral profile={profile} />;
     }
   };
 
@@ -235,60 +250,8 @@ const CompanyDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted/30">
-      {/* Simplified Navigation */}
-      <div className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-semibold text-foreground">
-                {profile?.company_name || 'Mi Negocio'}
-              </h1>
-              
-              {/* Simplified Navigation */}
-              <nav className="hidden md:flex space-x-1">
-                {[
-                  { id: 'dashboard', label: 'Panel', icon: '📊' },
-                  { id: 'marketing', label: 'Marketing', icon: '🎯' },
-                  { id: 'agents', label: 'Agentes', icon: '🤖' }
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveView(item.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      activeView === item.id
-                        ? 'bg-primary text-primary-foreground shadow-lg scale-105'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                    }`}
-                  >
-                    <span className="mr-2">{item.icon}</span>
-                    {item.label}
-                  </button>
-                ))}
-              </nav>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setActiveView('profile')}
-                className="p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                title="Perfil"
-              >
-                ⚙️
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
-                title="Cerrar sesión"
-              >
-                🚪
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content Area */}
+    <div className="w-full">
+      {/* Content Area optimizado para sidebar */}
       <div className="animate-fade-in">
         {renderContent()}
       </div>

@@ -4,9 +4,30 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+async function getOpenAIApiKey() {
+  console.log('🔑 Fetching OpenAI API key from database...');
+  const { data, error } = await supabase
+    .from('llm_api_keys')
+    .select('api_key_hash')
+    .eq('provider', 'openai')
+    .eq('status', 'active')
+    .single();
+  
+  if (error || !data?.api_key_hash) {
+    console.log('⚠️ Could not get API key from database, using environment variable');
+    const envKey = Deno.env.get('OPENAI_API_KEY');
+    if (!envKey) {
+      throw new Error('OpenAI API key not found in database or environment');
+    }
+    return envKey;
+  }
+  
+  console.log('✅ OpenAI API key retrieved successfully from database');
+  return data.api_key_hash;
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,9 +44,7 @@ serve(async (req) => {
     
     console.log(`🔍 Análisis semántico para ${platform} - Usuario: ${userId}`);
 
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
+    const openAIApiKey = await getOpenAIApiKey();
 
     // Obtener embeddings existentes para clustering
     const { data: embeddings, error: embeddingsError } = await supabase
@@ -258,6 +277,7 @@ async function generateClusterTheme(posts: any[]): Promise<string> {
   const sampleContent = posts.slice(0, 5).map(p => p.content_text).join(' ');
   
   try {
+    const openAIApiKey = await getOpenAIApiKey();
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {

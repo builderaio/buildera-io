@@ -7,6 +7,41 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function getOpenAIApiKey(supabase: any) {
+  console.log('🔑 Fetching OpenAI API key from database...');
+  const { data, error } = await supabase
+    .from('llm_api_keys')
+    .select('api_key_hash')
+    .eq('provider', 'openai')
+    .eq('status', 'active')
+    .single();
+  
+  if (error) {
+    console.error('❌ Error fetching OpenAI API key:', error);
+    // Fallback to environment variable
+    const envKey = Deno.env.get('OPENAI_API_KEY');
+    if (!envKey) {
+      throw new Error('OpenAI API key not found in database or environment');
+    }
+    console.log('✅ Using OpenAI API key from environment variable');
+    return envKey;
+  }
+  
+  if (!data?.api_key_hash) {
+    console.error('❌ No active OpenAI API key found');
+    // Fallback to environment variable
+    const envKey = Deno.env.get('OPENAI_API_KEY');
+    if (!envKey) {
+      throw new Error('No active OpenAI API key configured');
+    }
+    console.log('✅ Using OpenAI API key from environment variable');
+    return envKey;
+  }
+  
+  console.log('✅ OpenAI API key retrieved successfully from database');
+  return data.api_key_hash;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

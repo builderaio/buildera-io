@@ -164,15 +164,35 @@ async function getActiveModelAssignment(functionName: string) {
  * Get API key for provider
  */
 async function getAPIKey(assignment: any) {
-  // For now, use environment variable
   const provider = assignment.provider;
+  console.log(`🔑 Getting API key for provider: ${provider.name}`);
+  
+  // Try to get API key from database first
+  try {
+    const { data, error } = await supabase
+      .from('llm_api_keys')
+      .select('api_key_hash')
+      .eq('provider', provider.name.toLowerCase())
+      .eq('status', 'active')
+      .single();
+    
+    if (!error && data?.api_key_hash) {
+      console.log(`✅ Found API key in database for ${provider.name}`);
+      return data.api_key_hash;
+    }
+  } catch (dbError) {
+    console.log(`⚠️ Could not get API key from database for ${provider.name}:`, dbError);
+  }
+  
+  // Fallback to environment variable
   const envKey = provider.env_key;
   const apiKey = Deno.env.get(envKey);
   
   if (!apiKey) {
-    throw new Error(`API key not found for provider ${provider.name}. Check ${envKey} environment variable.`);
+    throw new Error(`API key not found for provider ${provider.name}. Check ${envKey} environment variable or configure it in llm_api_keys table.`);
   }
 
+  console.log(`✅ Using environment variable API key for ${provider.name}`);
   return apiKey;
 }
 

@@ -38,6 +38,7 @@ import AdminCreateAgentTemplate from "./pages/AdminCreateAgentTemplate";
 import AdminAgentTemplateView from "./pages/AdminAgentTemplateView";
 import AdminAgentTemplateEdit from "./pages/AdminAgentTemplateEdit";
 import AdminAgentTemplateVersions from "./pages/AdminAgentTemplateVersions";
+import AdminEmailSystem from "./pages/AdminEmailSystem";
 import AgentMarketplace from "./pages/AgentMarketplace";
 import CompanyAgents from "./pages/CompanyAgents";
 import CompanyAgentView from "./pages/CompanyAgentView";
@@ -189,6 +190,11 @@ const App = () => {
               <Route path="/admin/agent-templates/:id/versions" element={
                 <AdminProtectedRoute>
                   <AdminAgentTemplateVersions />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/email-system" element={
+                <AdminProtectedRoute>
+                  <AdminEmailSystem />
                 </AdminProtectedRoute>
               } />
               

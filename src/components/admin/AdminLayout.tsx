@@ -30,6 +30,7 @@ import {
   Settings,
   Brain,
   Eye,
+  Mail,
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -82,6 +83,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       group: "Sistema",
       items: [
         { icon: Database, label: "Base de Datos", path: "/admin/database" },
+        { icon: Mail, label: "Sistema de Email", path: "/admin/email-system" },
       ]
     }
   ];

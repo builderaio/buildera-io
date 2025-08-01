@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
+import { SmartNotifications } from '@/components/ui/smart-notifications';
 
 
 interface Profile {
@@ -151,6 +152,7 @@ const AuthenticatedLayout = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              <SmartNotifications />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">

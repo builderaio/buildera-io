@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
 import ThemeSelector from '@/components/ThemeSelector';
+import { SmartNotifications } from '@/components/ui/smart-notifications';
 
 interface Profile {
   id: string;
@@ -172,6 +173,7 @@ const ResponsiveLayout = () => {
               
               <div className="flex items-center space-x-4">
                 <ThemeSelector />
+                <SmartNotifications />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -399,6 +401,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
             
             <div className="flex items-center gap-3">
               <ThemeSelector />
+              <SmartNotifications />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

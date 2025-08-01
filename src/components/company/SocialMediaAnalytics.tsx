@@ -336,114 +336,185 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
   };
 
   const generateBasicInsights = async () => {
-    const userId = profile.user_id;
-    const insights = [];
-    const actionables = [];
+    try {
+      console.log('🔍 Iniciando generación de insights básicos...');
+      const userId = profile.user_id;
+      
+      if (!userId) {
+        throw new Error('User ID no encontrado');
+      }
 
-    // Analizar posts más exitosos
-    const topPosts = analyticsData.posts
-      .sort((a, b) => {
-        const aEngagement = (a.like_count || a.likes_count || a.digg_count || 0) + (a.comment_count || a.comments_count || 0);
-        const bEngagement = (b.like_count || b.likes_count || b.digg_count || 0) + (b.comment_count || b.comments_count || 0);
-        return bEngagement - aEngagement;
-      })
-      .slice(0, 5);
+      const insights = [];
+      const actionables = [];
 
-    if (topPosts.length > 0) {
-      insights.push({
-        user_id: userId,
-        title: "Posts con Mayor Engagement",
-        description: `Tus ${topPosts.length} posts con mejor rendimiento han generado un promedio de ${Math.round(topPosts.reduce((sum, post) => sum + ((post.like_count || post.likes_count || post.digg_count || 0) + (post.comment_count || post.comments_count || 0)), 0) / topPosts.length)} interacciones.`,
-        insight_type: "content_performance",
-        platform: null,
-        confidence_score: 0.8,
-        data: { top_posts: topPosts.length },
-        generated_by: 'basic_analyzer'
+      console.log('📊 Datos disponibles:', {
+        posts: analyticsData.posts.length,
+        platformStats: platformStats.length
       });
 
-      actionables.push({
-        user_id: userId,
-        title: "Replicar Contenido Exitoso",
-        description: "Analiza los elementos comunes de tus posts más exitosos y créa contenido similar",
-        action_type: "content_optimization",
-        priority: "high",
-        estimated_impact: "Aumento del 15-25% en engagement"
-      });
-    }
+      // Analizar posts más exitosos
+      const topPosts = analyticsData.posts
+        .sort((a, b) => {
+          const aEngagement = (a.like_count || a.likes_count || a.digg_count || 0) + (a.comment_count || a.comments_count || 0);
+          const bEngagement = (b.like_count || b.likes_count || b.digg_count || 0) + (b.comment_count || b.comments_count || 0);
+          return bEngagement - aEngagement;
+        })
+        .slice(0, 5);
 
-    // Analizar frecuencia de publicación
-    const recentPosts = analyticsData.posts.filter(post => {
-      const postDate = new Date(post.posted_at || post.posted_at);
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      return postDate >= thirtyDaysAgo;
-    });
+      if (topPosts.length > 0) {
+        const avgInteractions = Math.round(topPosts.reduce((sum, post) => {
+          return sum + ((post.like_count || post.likes_count || post.digg_count || 0) + (post.comment_count || post.comments_count || 0));
+        }, 0) / topPosts.length);
 
-    if (recentPosts.length > 0) {
-      const postsPerWeek = Math.round((recentPosts.length / 30) * 7);
-      insights.push({
-        user_id: userId,
-        title: "Frecuencia de Publicación",
-        description: `Publicas aproximadamente ${postsPerWeek} posts por semana. ${postsPerWeek < 3 ? 'Considera aumentar la frecuencia para mayor visibilidad.' : postsPerWeek > 10 ? 'Buena frecuencia, mantén la calidad.' : 'Frecuencia óptima para engagement.'}`,
-        insight_type: "posting_frequency",
-        platform: null,
-        confidence_score: 0.9,
-        data: { posts_per_week: postsPerWeek },
-        generated_by: 'basic_analyzer'
-      });
+        insights.push({
+          user_id: userId,
+          title: "Posts con Mayor Engagement",
+          description: `Tus ${topPosts.length} posts con mejor rendimiento han generado un promedio de ${avgInteractions} interacciones.`,
+          insight_type: "content_performance",
+          platforms: ["instagram", "tiktok", "linkedin"],
+          confidence_score: 0.8,
+          impact_level: "high",
+          data: { top_posts: topPosts.length, avg_interactions: avgInteractions },
+          generated_by: 'basic_analyzer'
+        });
 
-      if (postsPerWeek < 3) {
         actionables.push({
           user_id: userId,
-          title: "Aumentar Frecuencia de Publicación",
-          description: "Planifica publicar al menos 3-4 posts por semana para mantener el engagement",
-          action_type: "content_planning",
-          priority: "medium",
-          estimated_impact: "Mejora en visibilidad del 20-30%"
+          title: "Replicar Contenido Exitoso",
+          description: "Analiza los elementos comunes de tus posts más exitosos y créa contenido similar",
+          action_type: "content_optimization",
+          priority: "high",
+          estimated_impact: "Aumento del 15-25% en engagement"
         });
+
+        console.log('✅ Insight de posts exitosos creado');
       }
-    }
 
-    // Analizar plataformas más exitosas
-    const platformPerformance = platformStats.map(stats => ({
-      platform: stats.platform,
-      avgEngagement: stats.avgEngagement,
-      totalPosts: stats.postsCount
-    })).sort((a, b) => b.avgEngagement - a.avgEngagement);
-
-    if (platformPerformance.length > 1) {
-      const topPlatform = platformPerformance[0];
-      insights.push({
-        user_id: userId,
-        title: "Plataforma Más Exitosa",
-        description: `${topPlatform.platform.charAt(0).toUpperCase() + topPlatform.platform.slice(1)} es tu plataforma con mejor rendimiento (${topPlatform.avgEngagement.toFixed(1)}% engagement promedio).`,
-        insight_type: "platform_performance",
-        platform: topPlatform.platform,
-        confidence_score: 0.85,
-        data: { best_platform: topPlatform.platform, engagement_rate: topPlatform.avgEngagement },
-        generated_by: 'basic_analyzer'
+      // Analizar frecuencia de publicación
+      const recentPosts = analyticsData.posts.filter(post => {
+        const postDate = new Date(post.posted_at || post.create_time);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        return postDate >= thirtyDaysAgo;
       });
 
-      actionables.push({
-        user_id: userId,
-        title: "Enfocar Esfuerzos en Plataforma Principal",
-        description: `Concentra más recursos en ${topPlatform.platform} donde tienes mejor rendimiento`,
-        action_type: "platform_optimization",
-        priority: "high",
-        estimated_impact: "Optimización del ROI en redes sociales"
-      });
-    }
+      if (recentPosts.length > 0) {
+        const postsPerWeek = Math.round((recentPosts.length / 30) * 7);
+        let recommendation = '';
+        
+        if (postsPerWeek < 3) {
+          recommendation = 'Considera aumentar la frecuencia para mayor visibilidad.';
+        } else if (postsPerWeek > 10) {
+          recommendation = 'Buena frecuencia, mantén la calidad.';
+        } else {
+          recommendation = 'Frecuencia óptima para engagement.';
+        }
 
-    // Guardar insights y actionables
-    if (insights.length > 0) {
-      await supabase.from('marketing_insights').insert(insights);
-    }
-    
-    if (actionables.length > 0) {
-      await supabase.from('marketing_actionables').insert(actionables);
-    }
+        insights.push({
+          user_id: userId,
+          title: "Frecuencia de Publicación",
+          description: `Publicas aproximadamente ${postsPerWeek} posts por semana. ${recommendation}`,
+          insight_type: "posting_frequency",
+          platforms: ["instagram", "tiktok", "linkedin"],
+          confidence_score: 0.9,
+          impact_level: "medium",
+          data: { posts_per_week: postsPerWeek, recent_posts: recentPosts.length },
+          generated_by: 'basic_analyzer'
+        });
 
-    console.log(`✅ Generados ${insights.length} insights y ${actionables.length} actionables básicos`);
+        if (postsPerWeek < 3) {
+          actionables.push({
+            user_id: userId,
+            title: "Aumentar Frecuencia de Publicación",
+            description: "Planifica publicar al menos 3-4 posts por semana para mantener el engagement",
+            action_type: "content_planning",
+            priority: "medium",
+            estimated_impact: "Mejora en visibilidad del 20-30%"
+          });
+        }
+
+        console.log('✅ Insight de frecuencia creado');
+      }
+
+      // Analizar plataformas más exitosas
+      if (platformStats.length > 1) {
+        const platformPerformance = platformStats
+          .map(stats => ({
+            platform: stats.platform,
+            avgEngagement: stats.avgEngagement,
+            totalPosts: stats.postsCount
+          }))
+          .sort((a, b) => b.avgEngagement - a.avgEngagement);
+
+        const topPlatform = platformPerformance[0];
+        const platformName = topPlatform.platform.charAt(0).toUpperCase() + topPlatform.platform.slice(1);
+
+        insights.push({
+          user_id: userId,
+          title: "Plataforma Más Exitosa",
+          description: `${platformName} es tu plataforma con mejor rendimiento (${topPlatform.avgEngagement.toFixed(1)}% engagement promedio).`,
+          insight_type: "platform_performance",
+          platforms: [topPlatform.platform],
+          confidence_score: 0.85,
+          impact_level: "high",
+          data: { 
+            best_platform: topPlatform.platform, 
+            engagement_rate: topPlatform.avgEngagement,
+            total_posts: topPlatform.totalPosts
+          },
+          generated_by: 'basic_analyzer'
+        });
+
+        actionables.push({
+          user_id: userId,
+          title: "Enfocar Esfuerzos en Plataforma Principal",
+          description: `Concentra más recursos en ${platformName} donde tienes mejor rendimiento`,
+          action_type: "platform_optimization",
+          priority: "high",
+          estimated_impact: "Optimización del ROI en redes sociales"
+        });
+
+        console.log('✅ Insight de plataforma exitosa creado');
+      }
+
+      console.log(`💾 Guardando ${insights.length} insights y ${actionables.length} actionables...`);
+
+      // Guardar insights con manejo de errores mejorado
+      if (insights.length > 0) {
+        const { data: insertedInsights, error: insightsError } = await supabase
+          .from('marketing_insights')
+          .insert(insights)
+          .select();
+        
+        if (insightsError) {
+          console.error('❌ Error guardando insights:', insightsError);
+          throw new Error(`Error guardando insights: ${insightsError.message}`);
+        }
+        
+        console.log('✅ Insights guardados:', insertedInsights?.length || 0);
+      }
+      
+      // Guardar actionables con manejo de errores mejorado
+      if (actionables.length > 0) {
+        const { data: insertedActionables, error: actionablesError } = await supabase
+          .from('marketing_actionables')
+          .insert(actionables)
+          .select();
+        
+        if (actionablesError) {
+          console.error('❌ Error guardando actionables:', actionablesError);
+          throw new Error(`Error guardando actionables: ${actionablesError.message}`);
+        }
+        
+        console.log('✅ Actionables guardados:', insertedActionables?.length || 0);
+      }
+
+      console.log(`🎉 Proceso completado: ${insights.length} insights y ${actionables.length} actionables generados`);
+      
+    } catch (error: any) {
+      console.error('❌ Error en generateBasicInsights:', error);
+      throw error;
+    }
   };
 
   const refreshAnalytics = async () => {

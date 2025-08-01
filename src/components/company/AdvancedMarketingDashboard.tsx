@@ -174,38 +174,39 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
             
             // Verificar primero si hay posts disponibles para esta plataforma
             let existingPosts = null;
+            let postsCount = 0;
             switch (platformName.toLowerCase()) {
               case 'instagram':
-                const { data: instagramPosts } = await supabase
+                const { data: instagramPosts, count: igCount } = await supabase
                   .from('instagram_posts')
-                  .select('id')
-                  .eq('user_id', profile.user_id)
-                  .limit(1);
+                  .select('id', { count: 'exact' })
+                  .eq('user_id', profile.user_id);
                 existingPosts = instagramPosts;
+                postsCount = igCount || 0;
                 break;
               case 'linkedin':
-                const { data: linkedinPosts } = await supabase
+                const { data: linkedinPosts, count: liCount } = await supabase
                   .from('linkedin_posts')
-                  .select('id')
-                  .eq('user_id', profile.user_id)
-                  .limit(1);
+                  .select('id', { count: 'exact' })
+                  .eq('user_id', profile.user_id);
                 existingPosts = linkedinPosts;
+                postsCount = liCount || 0;
                 break;
               case 'facebook':
-                const { data: facebookPosts } = await supabase
+                const { data: facebookPosts, count: fbCount } = await supabase
                   .from('facebook_posts')
-                  .select('id')
-                  .eq('user_id', profile.user_id)
-                  .limit(1);
+                  .select('id', { count: 'exact' })
+                  .eq('user_id', profile.user_id);
                 existingPosts = facebookPosts;
+                postsCount = fbCount || 0;
                 break;
               case 'tiktok':
-                const { data: tiktokPosts } = await supabase
+                const { data: tiktokPosts, count: ttCount } = await supabase
                   .from('tiktok_posts')
-                  .select('id')
-                  .eq('user_id', profile.user_id)
-                  .limit(1);
+                  .select('id', { count: 'exact' })
+                  .eq('user_id', profile.user_id);
                 existingPosts = tiktokPosts;
+                postsCount = ttCount || 0;
                 break;
             }
 
@@ -214,18 +215,29 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
               errors.push(`No hay datos disponibles para ${platformName}. Conecta e importa datos primero.`);
               return;
             }
+            
+            console.log(`📊 Found ${postsCount} posts for ${platformName}`);
 
             const { data: analysisResult } = await supabase.functions.invoke('advanced-social-analyzer', {
               body: { platform: platformName.toLowerCase(), action: 'process_calendar_data' }
             });
 
             if (analysisResult?.success) {
-              totalInsights += analysisResult.insights_generated || 0;
-              totalPosts += analysisResult.posts_analyzed || 0;
+              const insights = analysisResult.insights_generated || 0;
+              const posts = analysisResult.posts_analyzed || postsCount;
+              totalInsights += insights;
+              totalPosts += posts;
               totalPlataformas++;
               processedPlatforms.push(platformName);
-              console.log(`✅ ${platformName}: ${analysisResult.insights_generated} insights generados`);
+              console.log(`✅ ${platformName}: ${insights} insights generados de ${posts} posts`);
             } else {
+              // Aunque falle el análisis, contamos los posts encontrados
+              if (postsCount > 0) {
+                totalPosts += postsCount;
+                totalPlataformas++;
+                processedPlatforms.push(platformName);
+                console.log(`⚠️ ${platformName}: ${postsCount} posts encontrados pero el análisis falló`);
+              }
               errors.push(`Error en análisis de ${platformName}: ${analysisResult?.message || 'Error desconocido'}`);
             }
 

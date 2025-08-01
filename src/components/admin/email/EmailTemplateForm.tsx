@@ -266,10 +266,24 @@ export const EmailTemplateForm = ({ template, onClose, onSave }: EmailTemplateFo
   const handleTypeChange = (type: string) => {
     updateField("template_type", type);
     
-    if (!formData.name && !formData.subject && !formData.html_content) {
+    // Siempre cargar plantilla por defecto al cambiar tipo, a menos que ya haya contenido significativo
+    const hasSignificantContent = formData.html_content.length > 100 || 
+                                 formData.subject.length > 10 || 
+                                 formData.name.length > 0;
+    
+    if (!hasSignificantContent || 
+        confirm("¿Deseas cargar la plantilla predefinida? Esto reemplazará el contenido actual.")) {
       const defaultTemplate = getDefaultTemplate(type);
-      updateField("subject", defaultTemplate.subject);
-      updateField("html_content", defaultTemplate.html_content);
+      if (defaultTemplate) {
+        updateField("subject", defaultTemplate.subject);
+        updateField("html_content", defaultTemplate.html_content);
+        
+        // Generar un nombre por defecto basado en el tipo
+        const typeName = TEMPLATE_TYPES.find(t => t.value === type)?.label || "Plantilla";
+        if (!formData.name) {
+          updateField("name", `${typeName} - ${new Date().toLocaleDateString()}`);
+        }
+      }
     }
   };
 

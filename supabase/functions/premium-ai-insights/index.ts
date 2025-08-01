@@ -280,7 +280,7 @@ ${JSON.stringify(socialData.recommendations, null, 2)}
 Genera un análisis estratégico profundo basado en todos estos datos.`;
 
   try {
-    console.log('🔄 Calling OpenAI with o3-2025-04-16 reasoning model...');
+    console.log('🔄 Calling OpenAI with GPT-4 Turbo (fallback from o3 model)...');
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -289,15 +289,14 @@ Genera un análisis estratégico profundo basado en todos estos datos.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'o3-2025-04-16', // Modelo de reasoning más potente
+        model: 'gpt-4-turbo-preview', // Modelo disponible y potente
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.3, // Menos creatividad, más precisión
         max_tokens: 4000, // Respuesta extensa
-        top_p: 0.9,
-        reasoning_effort: 'high' // Máximo esfuerzo de reasoning
+        top_p: 0.9
       }),
     });
 

@@ -129,6 +129,12 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
       }
     });
 
+    console.log('🔍 Universal AI Handler Response:', { 
+      success: !aiError, 
+      error: aiError, 
+      response: aiResponse 
+    });
+
     if (aiError) {
       console.error('❌ Error calling universal-ai-handler:', aiError);
       throw new Error(`Error en análisis IA: ${aiError.message}`);

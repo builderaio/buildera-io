@@ -133,6 +133,7 @@ async function loadProviderConfigs() {
  */
 async function getActiveModelAssignment(functionName: string) {
   try {
+    console.log(`🔍 Searching for assignment with business_function: ${functionName}`);
     const { data: assignment, error } = await supabase
       .from('ai_model_assignments')
       .select(`
@@ -143,9 +144,14 @@ async function getActiveModelAssignment(functionName: string) {
       .eq('is_active', true)
       .eq('business_function', functionName)
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Database error in getActiveModelAssignment:', error);
+      throw error;
+    }
+    
+    console.log(`🎯 Assignment found:`, assignment ? 'YES' : 'NO');
     return assignment;
   } catch (error) {
     console.error('Error getting model assignment:', error);
@@ -270,9 +276,12 @@ serve(async (req) => {
     }
 
     // Get active model assignment for this function
+    console.log(`🔍 Getting model assignment for function: ${functionName}`);
     const assignment = await getActiveModelAssignment(functionName);
+    console.log('📋 Assignment result:', assignment ? 'Found' : 'Not found', assignment);
     
     if (!assignment) {
+      console.error(`❌ No assignment found for function: ${functionName}`);
       return new Response(JSON.stringify({ 
         success: false,
         error: `No active model assignment found for function: ${functionName}` 

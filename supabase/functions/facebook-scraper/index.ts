@@ -156,11 +156,12 @@ Deno.serve(async (req) => {
         }
       };
 
-      // Guardar en base de datos para cache
+      // Guardar en base de datos para cache y perfil
       const authHeader = req.headers.get('Authorization');
       if (authHeader) {
         const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
         if (user) {
+          // Guardar cache original
           await supabase.from('facebook_page_data').upsert({
             user_id: user.id,
             page_url: page_url,
@@ -169,6 +170,57 @@ Deno.serve(async (req) => {
             total_reviews: reviews.length,
             last_updated: new Date().toISOString()
           });
+
+          // Guardar información del perfil de Facebook
+          console.log(`💾 Saving Facebook page profile data for user ${user.id}`);
+          
+          // Guardar en facebook_instagram_connections si no existe
+          const { data: existingConnection } = await supabase
+            .from('facebook_instagram_connections')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (!existingConnection && pageDetails.page_id) {
+            await supabase.from('facebook_instagram_connections').insert({
+              user_id: user.id,
+              facebook_page_id: pageDetails.page_id,
+              facebook_access_token: 'scraped_data',
+              facebook_page_name: pageDetails.name,
+              expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+            });
+          }
+
+          // Crear o actualizar entrada de perfil de Facebook
+          if (pageDetails.page_id) {
+            const { error: profileError } = await supabase.from('facebook_page_profiles').upsert({
+              user_id: user.id,
+              page_id: pageDetails.page_id,
+              page_name: pageDetails.name,
+              page_url: pageDetails.url || page_url,
+              followers_count: pageDetails.followers || 0,
+              likes_count: pageDetails.likes || 0,
+              categories: pageDetails.categories || [],
+              description: pageDetails.intro,
+              phone: pageDetails.phone,
+              email: pageDetails.email,
+              website: pageDetails.website,
+              rating: pageDetails.rating ? parseFloat(pageDetails.rating) : null,
+              verified: pageDetails.verified || false,
+              profile_picture_url: pageDetails.image,
+              cover_image_url: pageDetails.cover_image,
+              raw_data: pageDetails,
+              last_updated: new Date().toISOString()
+            }, {
+              onConflict: 'user_id,page_id'
+            });
+
+            if (profileError) {
+              console.error('❌ Error saving Facebook profile:', profileError);
+            } else {
+              console.log('✅ Facebook profile data saved successfully');
+            }
+          }
         }
       }
 

@@ -67,6 +67,40 @@ serve(async (req) => {
 
         result = await detailsResponse.json()
         console.log('✅ Company details fetched successfully')
+
+        // Guardar información del perfil de LinkedIn
+        if (result && result.data) {
+          console.log(`💾 Saving LinkedIn company profile data for user ${user.id}`)
+          
+          const companyData = result.data;
+          
+          // Guardar en linkedin_profiles
+          const { error: profileError } = await supabase.from('linkedin_profiles').upsert({
+            user_id: user.id,
+            linkedin_user_id: companyData.company_id || company_identifier,
+            profile_url: companyData.company_url || `https://linkedin.com/company/${company_identifier}`,
+            name: companyData.name,
+            headline: companyData.tagline,
+            location: companyData.location,
+            connections_count: 0,
+            followers_count: companyData.follower_count || 0,
+            following_count: 0,
+            posts_count: 0,
+            industry: companyData.industry,
+            profile_picture_url: companyData.logo_url,
+            summary: companyData.description,
+            raw_data: companyData,
+            last_updated: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,linkedin_user_id'
+          });
+
+          if (profileError) {
+            console.error('❌ Error saving LinkedIn profile:', profileError);
+          } else {
+            console.log('✅ LinkedIn profile data saved successfully');
+          }
+        }
         break
 
       case 'get_company_posts':

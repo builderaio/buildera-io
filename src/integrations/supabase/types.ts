@@ -1820,6 +1820,75 @@ export type Database = {
         }
         Relationships: []
       }
+      facebook_page_profiles: {
+        Row: {
+          categories: string[] | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          email: string | null
+          followers_count: number | null
+          id: string
+          last_updated: string | null
+          likes_count: number | null
+          page_id: string
+          page_name: string | null
+          page_url: string | null
+          phone: string | null
+          profile_picture_url: string | null
+          rating: number | null
+          raw_data: Json | null
+          updated_at: string
+          user_id: string
+          verified: boolean | null
+          website: string | null
+        }
+        Insert: {
+          categories?: string[] | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          followers_count?: number | null
+          id?: string
+          last_updated?: string | null
+          likes_count?: number | null
+          page_id: string
+          page_name?: string | null
+          page_url?: string | null
+          phone?: string | null
+          profile_picture_url?: string | null
+          rating?: number | null
+          raw_data?: Json | null
+          updated_at?: string
+          user_id: string
+          verified?: boolean | null
+          website?: string | null
+        }
+        Update: {
+          categories?: string[] | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          email?: string | null
+          followers_count?: number | null
+          id?: string
+          last_updated?: string | null
+          likes_count?: number | null
+          page_id?: string
+          page_name?: string | null
+          page_url?: string | null
+          phone?: string | null
+          profile_picture_url?: string | null
+          rating?: number | null
+          raw_data?: Json | null
+          updated_at?: string
+          user_id?: string
+          verified?: boolean | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       facebook_posts: {
         Row: {
           comments_count: number | null
@@ -2436,6 +2505,81 @@ export type Database = {
           updated_at?: string
           user_id?: string
           views_count?: number | null
+        }
+        Relationships: []
+      }
+      linkedin_profiles: {
+        Row: {
+          background_image_url: string | null
+          connections_count: number | null
+          created_at: string
+          education: Json | null
+          experience: Json | null
+          followers_count: number | null
+          following_count: number | null
+          headline: string | null
+          id: string
+          industry: string | null
+          last_updated: string | null
+          linkedin_user_id: string | null
+          location: string | null
+          name: string | null
+          posts_count: number | null
+          profile_picture_url: string | null
+          profile_url: string | null
+          raw_data: Json | null
+          skills: Json | null
+          summary: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          background_image_url?: string | null
+          connections_count?: number | null
+          created_at?: string
+          education?: Json | null
+          experience?: Json | null
+          followers_count?: number | null
+          following_count?: number | null
+          headline?: string | null
+          id?: string
+          industry?: string | null
+          last_updated?: string | null
+          linkedin_user_id?: string | null
+          location?: string | null
+          name?: string | null
+          posts_count?: number | null
+          profile_picture_url?: string | null
+          profile_url?: string | null
+          raw_data?: Json | null
+          skills?: Json | null
+          summary?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          background_image_url?: string | null
+          connections_count?: number | null
+          created_at?: string
+          education?: Json | null
+          experience?: Json | null
+          followers_count?: number | null
+          following_count?: number | null
+          headline?: string | null
+          id?: string
+          industry?: string | null
+          last_updated?: string | null
+          linkedin_user_id?: string | null
+          location?: string | null
+          name?: string | null
+          posts_count?: number | null
+          profile_picture_url?: string | null
+          profile_url?: string | null
+          raw_data?: Json | null
+          skills?: Json | null
+          summary?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

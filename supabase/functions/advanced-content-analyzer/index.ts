@@ -19,10 +19,7 @@ serve(async (req) => {
       { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
     );
 
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key no configurada');
-    }
+    // Ya no necesitamos verificar OpenAI API key aquí porque usamos universal-ai-handler
 
     // Obtener el usuario autenticado
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
@@ -72,8 +69,16 @@ serve(async (req) => {
       posted_at: post.posted_at
     }));
 
-    // Análisis con IA
-    const systemPrompt = `Eres un experto en análisis de contenido de redes sociales. Analiza los posts proporcionados y genera insights avanzados y recomendaciones accionables.
+    // Análisis con IA usando universal-ai-handler
+    console.log('🤖 Llamando a universal-ai-handler para análisis...');
+    
+    const { data: aiResponse, error: aiError } = await supabaseClient.functions.invoke('universal-ai-handler', {
+      body: {
+        functionName: 'content_analysis',
+        messages: [
+          {
+            role: 'system',
+            content: `Eres un experto en análisis de contenido de redes sociales. Analiza los posts proporcionados y genera insights avanzados y recomendaciones accionables.
 
 Tu análisis debe incluir:
 1. Patrones de contenido exitoso
@@ -83,7 +88,7 @@ Tu análisis debe incluir:
 5. Recomendaciones específicas para cada plataforma
 6. Oportunidades de crecimiento
 
-Responde en formato JSON con esta estructura:
+Responde ÚNICAMENTE con un JSON válido con esta estructura:
 {
   "insights": [
     {
@@ -100,47 +105,48 @@ Responde en formato JSON con esta estructura:
       "type": "optimization",
       "title": "Acción recomendada",
       "description": "Descripción de la acción",
-      "priority": "high|medium|low",
+      "priority": "high",
       "estimated_impact": "Impacto estimado",
       "platform": "plataforma específica"
     }
   ],
   "recommendations": [
     {
-      "type": "hashtag|timing|content",
+      "type": "hashtag",
       "title": "Recomendación",
       "description": "Descripción detallada",
       "suggested_content": {},
       "confidence_score": 0.85
     }
   ]
-}`;
-
-    const userContent = `Analiza estos ${postsForAnalysis.length} posts de redes sociales:\n\n${JSON.stringify(postsForAnalysis, null, 2)}`;
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userContent }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
+}`
+          },
+          {
+            role: 'user',
+            content: `Analiza estos ${postsForAnalysis.length} posts de redes sociales:\n\n${JSON.stringify(postsForAnalysis, null, 2)}`
+          }
+        ]
+      }
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+    if (aiError) {
+      console.error('❌ Error calling universal-ai-handler:', aiError);
+      throw new Error(`Error en análisis IA: ${aiError.message}`);
     }
 
-    const data = await response.json();
-    const analysisResult = JSON.parse(data.choices[0].message.content);
+    if (!aiResponse?.output) {
+      throw new Error('No se recibió respuesta válida del análisis IA');
+    }
+
+    // Parsear respuesta de IA
+    let analysisResult;
+    try {
+      analysisResult = JSON.parse(aiResponse.output);
+    } catch (parseError) {
+      console.error('❌ Error parsing AI response:', parseError);
+      console.log('Raw AI output:', aiResponse.output);
+      throw new Error('Error procesando respuesta del análisis IA');
+    }
 
     // Guardar insights
     if (analysisResult.insights && analysisResult.insights.length > 0) {

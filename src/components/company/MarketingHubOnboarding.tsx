@@ -42,10 +42,17 @@ interface SocialPlatform {
   hasAccount: boolean | null;
 }
 
-interface AnalysisResult {
+interface DataLoadResult {
   platform: string;
   success: boolean;
   postsFound: number;
+  profileData?: any;
+  error?: string;
+}
+
+interface AnalysisResult {
+  platform: string;
+  success: boolean;
   insightsGenerated: number;
   actionablesGenerated: number;
   error?: string;
@@ -59,6 +66,9 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
     { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'bg-blue-700', url: '', connected: false, hasAccount: null },
     { id: 'tiktok', name: 'TikTok', icon: MessageCircle, color: 'bg-black', url: '', connected: false, hasAccount: null }
   ]);
+  const [loadingData, setLoadingData] = useState(false);
+  const [dataResults, setDataResults] = useState<DataLoadResult[]>([]);
+  const [currentLoading, setCurrentLoading] = useState<string>('');
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
   const [currentAnalyzing, setCurrentAnalyzing] = useState<string>('');
@@ -68,18 +78,18 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
   const steps = [
     {
       title: "Configuración de Redes Sociales",
-      description: "Configura tus redes sociales para comenzar el análisis",
+      description: "Configura tus redes sociales para comenzar",
       component: "social-config"
     },
     {
-      title: "Análisis Automático",
-      description: "Analizamos tus redes sociales y generamos insights",
-      component: "analysis"
+      title: "Carga de Datos",
+      description: "Cargamos todos los posts e información de cada red social",
+      component: "data-loading"
     },
     {
-      title: "Insights Consolidados",
-      description: "Revisa los insights y recomendaciones generadas",
-      component: "insights"
+      title: "Análisis y Diagnóstico",
+      description: "Generamos insights, recomendaciones y diagnóstico especializado",
+      component: "analysis"
     },
     {
       title: "¡Listo para Crecer!",
@@ -183,6 +193,165 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
     }
   };
 
+  const loadSocialData = async () => {
+    setLoadingData(true);
+    setDataResults([]);
+    
+    const connectedPlatforms = platforms.filter(p => p.connected);
+    
+    for (const platform of connectedPlatforms) {
+      setCurrentLoading(platform.name);
+      
+      try {
+        console.log(`📥 Loading data from ${platform.name}...`);
+        
+        let result: DataLoadResult;
+        
+        switch (platform.id) {
+          case 'instagram':
+            console.log(`📸 Loading Instagram data: ${platform.url}`);
+            
+            const { data: instagramData, error: instagramError } = await supabase.functions.invoke('instagram-scraper', {
+              body: { 
+                action: 'get_posts', 
+                username_or_url: platform.url
+              }
+            });
+            
+            if (instagramError) {
+              console.error('Instagram scraper error:', instagramError);
+              throw new Error(`Error cargando datos: ${instagramError.message}`);
+            }
+            
+            result = {
+              platform: platform.name,
+              success: true,
+              postsFound: instagramData?.data?.posts?.length || 0,
+              profileData: instagramData?.data?.profile || null
+            };
+            break;
+            
+          case 'facebook':
+            console.log(`📘 Loading Facebook data: ${platform.url}`);
+            
+            const { data: fbPageData, error: fbPageError } = await supabase.functions.invoke('facebook-scraper', {
+              body: { 
+                action: 'get_page_details', 
+                page_url: platform.url
+              }
+            });
+            
+            if (fbPageError) {
+              console.error('Facebook scraper error:', fbPageError);
+              throw new Error(`Error cargando datos: ${fbPageError.message}`);
+            }
+            
+            let fbPostsCount = 0;
+            if (fbPageData?.success && fbPageData?.data?.page_details?.page_id) {
+              const { data: fbPostsData } = await supabase.functions.invoke('facebook-scraper', {
+                body: {
+                  action: 'get_page_posts',
+                  page_id: fbPageData.data.page_details.page_id
+                }
+              });
+              fbPostsCount = fbPostsData?.data?.posts?.length || 0;
+            }
+            
+            result = {
+              platform: platform.name,
+              success: true,
+              postsFound: fbPostsCount,
+              profileData: fbPageData?.data?.page_details || null
+            };
+            break;
+            
+          case 'linkedin':
+            const identifier = platform.url.match(/linkedin\.com\/company\/([a-zA-Z0-9-_]+)/)?.[1];
+            if (identifier) {
+              console.log(`💼 Loading LinkedIn data: ${identifier}`);
+              
+              const { data: linkedinData, error: linkedinError } = await supabase.functions.invoke('linkedin-scraper', {
+                body: { 
+                  action: 'get_company_posts', 
+                  company_identifier: identifier
+                }
+              });
+              
+              if (linkedinError) {
+                console.error('LinkedIn scraper error:', linkedinError);
+                throw new Error(`Error cargando datos: ${linkedinError.message}`);
+              }
+              
+              result = {
+                platform: platform.name,
+                success: true,
+                postsFound: linkedinData?.data?.data?.posts?.length || 0,
+                profileData: linkedinData?.data?.data?.company || null
+              };
+            } else {
+              throw new Error('URL de LinkedIn no válida');
+            }
+            break;
+            
+          case 'tiktok':
+            const tiktokId = platform.url.match(/tiktok\.com\/@([a-zA-Z0-9._-]+)/)?.[1];
+            if (tiktokId) {
+              console.log(`🎵 Loading TikTok data: @${tiktokId}`);
+              
+              const { data: tiktokData, error: tiktokError } = await supabase.functions.invoke('tiktok-scraper', {
+                body: { 
+                  action: 'get_posts', 
+                  unique_id: tiktokId
+                }
+              });
+              
+              if (tiktokError) {
+                console.error('TikTok scraper error:', tiktokError);
+                throw new Error(`Error cargando datos: ${tiktokError.message}`);
+              }
+              
+              result = {
+                platform: platform.name,
+                success: true,
+                postsFound: tiktokData?.data?.videos?.length || 0,
+                profileData: tiktokData?.data?.profile || null
+              };
+            } else {
+              throw new Error('Username de TikTok no válido');
+            }
+            break;
+            
+          default:
+            result = {
+              platform: platform.name,
+              success: false,
+              postsFound: 0,
+              error: 'Plataforma no soportada'
+            };
+        }
+        
+        console.log(`✅ ${platform.name} data loading completed:`, result);
+        setDataResults(prev => [...prev, result]);
+        
+      } catch (error) {
+        console.error(`❌ Error loading data from ${platform.name}:`, error);
+        setDataResults(prev => [...prev, {
+          platform: platform.name,
+          success: false,
+          postsFound: 0,
+          error: error.message || 'Error desconocido'
+        }]);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    setCurrentLoading('');
+    setLoadingData(false);
+    
+    console.log('🎉 All social media data loading completed');
+  };
+
   const runAnalysis = async () => {
     setAnalyzing(true);
     setAnalysisResults([]);
@@ -199,170 +368,81 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
         
         switch (platform.id) {
           case 'instagram':
-            console.log(`📸 Analyzing Instagram: ${platform.url}`);
-            
-            // Usar la misma implementación que SocialMediaHub
-            const { data: instagramData, error: instagramError } = await supabase.functions.invoke('instagram-scraper', {
-              body: { 
-                action: 'get_posts', 
-                username_or_url: platform.url
-              }
-            });
-            
-            if (instagramError) {
-              console.error('Instagram scraper error:', instagramError);
-              throw new Error(`Error en scraper: ${instagramError.message}`);
-            }
-            
-            // Análisis inteligente de Instagram
             const { data: instagramAnalysis, error: instagramAnalysisError } = await supabase.functions.invoke('instagram-intelligent-analysis', {
               body: { user_id: profile.user_id }
             });
             
             if (instagramAnalysisError) {
               console.error('Instagram analysis error:', instagramAnalysisError);
+              throw new Error(`Error en análisis: ${instagramAnalysisError.message}`);
             }
             
             result = {
               platform: platform.name,
               success: true,
-              postsFound: instagramData?.data?.posts?.length || 0,
               insightsGenerated: instagramAnalysis?.insights_generated || 0,
               actionablesGenerated: instagramAnalysis?.actionables_generated || 0
             };
             break;
             
           case 'facebook':
-            console.log(`📘 Analyzing Facebook: ${platform.url}`);
-            
-            // Usar la misma implementación que SocialMediaHub
-            const { data: fbPageData, error: fbPageError } = await supabase.functions.invoke('facebook-scraper', {
-              body: { 
-                action: 'get_page_details', 
-                page_url: platform.url
-              }
-            });
-            
-            if (fbPageError) {
-              console.error('Facebook scraper error:', fbPageError);
-              throw new Error(`Error en scraper: ${fbPageError.message}`);
-            }
-            
-            // Obtener posts si tenemos el page_id
-            let fbPostsCount = 0;
-            if (fbPageData?.success && fbPageData?.data?.page_details?.page_id) {
-              const { data: fbPostsData } = await supabase.functions.invoke('facebook-scraper', {
-                body: {
-                  action: 'get_page_posts',
-                  page_id: fbPageData.data.page_details.page_id
-                }
-              });
-              fbPostsCount = fbPostsData?.data?.posts?.length || 0;
-            }
-            
-            // Análisis inteligente de Facebook
             const { data: fbAnalysis, error: fbAnalysisError } = await supabase.functions.invoke('facebook-intelligent-analysis', {
               body: { user_id: profile.user_id }
             });
             
             if (fbAnalysisError) {
               console.error('Facebook analysis error:', fbAnalysisError);
+              throw new Error(`Error en análisis: ${fbAnalysisError.message}`);
             }
             
             result = {
               platform: platform.name,
               success: true,
-              postsFound: fbPostsCount,
               insightsGenerated: fbAnalysis?.insights_generated || 0,
               actionablesGenerated: fbAnalysis?.actionables_generated || 0
             };
             break;
             
           case 'linkedin':
-            // Extraer identificador como en SocialMediaHub
-            const identifier = platform.url.match(/linkedin\.com\/company\/([a-zA-Z0-9-_]+)/)?.[1];
-            if (identifier) {
-              console.log(`💼 Analyzing LinkedIn: ${identifier}`);
-              
-              // Usar la misma implementación que SocialMediaHub
-              const { data: linkedinData, error: linkedinError } = await supabase.functions.invoke('linkedin-scraper', {
-                body: { 
-                  action: 'get_company_posts', 
-                  company_identifier: identifier
-                }
-              });
-              
-              if (linkedinError) {
-                console.error('LinkedIn scraper error:', linkedinError);
-                throw new Error(`Error en scraper: ${linkedinError.message}`);
-              }
-              
-              // Análisis inteligente de LinkedIn
-              const { data: linkedinAnalysis, error: linkedinAnalysisError } = await supabase.functions.invoke('linkedin-intelligent-analysis', {
-                body: { user_id: profile.user_id }
-              });
-              
-              if (linkedinAnalysisError) {
-                console.error('LinkedIn analysis error:', linkedinAnalysisError);
-              }
-              
-              result = {
-                platform: platform.name,
-                success: true,
-                postsFound: linkedinData?.data?.data?.posts?.length || 0,
-                insightsGenerated: linkedinAnalysis?.insights_generated || 0,
-                actionablesGenerated: linkedinAnalysis?.actionables_generated || 0
-              };
-            } else {
-              throw new Error('URL de LinkedIn no válida');
+            const { data: linkedinAnalysis, error: linkedinAnalysisError } = await supabase.functions.invoke('linkedin-intelligent-analysis', {
+              body: { user_id: profile.user_id }
+            });
+            
+            if (linkedinAnalysisError) {
+              console.error('LinkedIn analysis error:', linkedinAnalysisError);
+              throw new Error(`Error en análisis: ${linkedinAnalysisError.message}`);
             }
+            
+            result = {
+              platform: platform.name,
+              success: true,
+              insightsGenerated: linkedinAnalysis?.insights_generated || 0,
+              actionablesGenerated: linkedinAnalysis?.actionables_generated || 0
+            };
             break;
             
           case 'tiktok':
-            // Extraer unique_id como en SocialMediaHub
-            const tiktokId = platform.url.match(/tiktok\.com\/@([a-zA-Z0-9._-]+)/)?.[1];
-            if (tiktokId) {
-              console.log(`🎵 Analyzing TikTok: @${tiktokId}`);
-              
-              // Usar la misma implementación que SocialMediaHub
-              const { data: tiktokData, error: tiktokError } = await supabase.functions.invoke('tiktok-scraper', {
-                body: { 
-                  action: 'get_posts', 
-                  unique_id: tiktokId
-                }
-              });
-              
-              if (tiktokError) {
-                console.error('TikTok scraper error:', tiktokError);
-                throw new Error(`Error en scraper: ${tiktokError.message}`);
-              }
-              
-              // Análisis inteligente de TikTok
-              const { data: tiktokAnalysis, error: tiktokAnalysisError } = await supabase.functions.invoke('tiktok-intelligent-analysis', {
-                body: { user_id: profile.user_id }
-              });
-              
-              if (tiktokAnalysisError) {
-                console.error('TikTok analysis error:', tiktokAnalysisError);
-              }
-              
-              result = {
-                platform: platform.name,
-                success: true,
-                postsFound: tiktokData?.data?.videos?.length || 0,
-                insightsGenerated: tiktokAnalysis?.insights_generated || 0,
-                actionablesGenerated: tiktokAnalysis?.actionables_generated || 0
-              };
-            } else {
-              throw new Error('Username de TikTok no válido');
+            const { data: tiktokAnalysis, error: tiktokAnalysisError } = await supabase.functions.invoke('tiktok-intelligent-analysis', {
+              body: { user_id: profile.user_id }
+            });
+            
+            if (tiktokAnalysisError) {
+              console.error('TikTok analysis error:', tiktokAnalysisError);
+              throw new Error(`Error en análisis: ${tiktokAnalysisError.message}`);
             }
+            
+            result = {
+              platform: platform.name,
+              success: true,
+              insightsGenerated: tiktokAnalysis?.insights_generated || 0,
+              actionablesGenerated: tiktokAnalysis?.actionables_generated || 0
+            };
             break;
             
           default:
             result = {
               platform: platform.name,
               success: false,
-              postsFound: 0,
               insightsGenerated: 0,
               actionablesGenerated: 0,
               error: 'Plataforma no soportada'
@@ -377,18 +457,15 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
         setAnalysisResults(prev => [...prev, {
           platform: platform.name,
           success: false,
-          postsFound: 0,
           insightsGenerated: 0,
           actionablesGenerated: 0,
           error: error.message || 'Error desconocido'
         }]);
       }
       
-      // Esperar un poco entre análisis para no sobrecargar
       await new Promise(resolve => setTimeout(resolve, 500));
     }
     
-    // Cargar insights consolidados después de todos los análisis
     await loadConsolidatedData();
     
     setCurrentAnalyzing('');
@@ -453,6 +530,9 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
       await saveCompanyData();
     }
     if (currentStep === 1) {
+      await loadSocialData();
+    }
+    if (currentStep === 2) {
       await runAnalysis();
     }
     setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
@@ -467,9 +547,9 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
       case 0:
         return platforms.some(p => p.hasAccount !== null);
       case 1:
-        return !analyzing;
+        return !loadingData;
       case 2:
-        return true;
+        return !analyzing;
       default:
         return true;
     }
@@ -573,6 +653,113 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
     </div>
   );
 
+  const renderDataLoading = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold mb-2">Cargando Datos de Redes Sociales</h2>
+        <p className="text-muted-foreground">
+          Estamos obteniendo todos los posts e información de cada red social conectada
+        </p>
+      </div>
+      
+      {loadingData && (
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="text-lg">Cargando datos de {currentLoading}...</span>
+          </div>
+          <Progress value={(dataResults.length / platforms.filter(p => p.connected).length) * 100} className="w-full max-w-md mx-auto" />
+        </div>
+      )}
+      
+      <div className="grid gap-4">
+        {platforms.filter(p => p.connected).map((platform) => {
+          const result = dataResults.find(r => r.platform === platform.name);
+          const IconComponent = platform.icon;
+          const isLoading = loadingData && currentLoading === platform.name;
+          
+          return (
+            <Card key={platform.id} className={`border-2 ${result?.success ? 'border-green-500' : result ? 'border-red-500' : 'border-border'}`}>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className={`p-3 rounded-full ${platform.color} text-white`}>
+                    <IconComponent className="h-6 w-6" />
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">{platform.name}</h3>
+                    {!result && !isLoading && (
+                      <p className="text-muted-foreground">Esperando carga de datos...</p>
+                    )}
+                    {isLoading && (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Cargando posts y información del perfil...</span>
+                      </div>
+                    )}
+                    {result && (
+                      <div className="space-y-2">
+                        {result.success ? (
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="font-medium">{result.postsFound}</p>
+                              <p className="text-muted-foreground">Posts cargados</p>
+                            </div>
+                            <div>
+                              <p className="font-medium">{result.profileData ? '✓' : '-'}</p>
+                              <p className="text-muted-foreground">Perfil cargado</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-red-500">Error: {result.error}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    {result?.success && <CheckCircle2 className="h-6 w-6 text-green-500" />}
+                    {result && !result.success && <X className="h-6 w-6 text-red-500" />}
+                    {isLoading && <Loader2 className="h-6 w-6 animate-spin text-blue-500" />}
+                    {!result && !isLoading && <Circle className="h-6 w-6 text-muted-foreground" />}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+      
+      {!loadingData && dataResults.length === 0 && (
+        <div className="text-center">
+          <Button onClick={loadSocialData} size="lg" className="gap-2">
+            <Sparkles className="h-5 w-5" />
+            Iniciar Carga de Datos
+          </Button>
+        </div>
+      )}
+
+      {!loadingData && dataResults.length > 0 && (
+        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-green-500 text-white rounded-full">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg">Datos Cargados Exitosamente</h3>
+                <p className="text-muted-foreground">
+                  Se cargaron {dataResults.reduce((acc, r) => acc + r.postsFound, 0)} posts de {dataResults.filter(r => r.success).length} plataformas. 
+                  Ahora podemos proceder al análisis y generación de insights.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+
   const renderAnalysis = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -620,11 +807,7 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
                     {result && (
                       <div className="space-y-2">
                         {result.success ? (
-                          <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div>
-                              <p className="font-medium">{result.postsFound}</p>
-                              <p className="text-muted-foreground">Posts</p>
-                            </div>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
                               <p className="font-medium">{result.insightsGenerated}</p>
                               <p className="text-muted-foreground">Insights</p>
@@ -748,7 +931,6 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
               <h3 className="font-semibold text-lg">Resumen del Análisis</h3>
               <p className="text-muted-foreground">
                 Análisis completado para {analysisResults.filter(r => r.success).length} plataformas. 
-                Total: {analysisResults.reduce((acc, r) => acc + r.postsFound, 0)} posts analizados, 
                 {consolidatedInsights.length} insights y {consolidatedActionables.length} acciones generadas.
               </p>
             </div>
@@ -845,8 +1027,8 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
         <Card className="mb-8">
           <CardContent className="p-8">
             {currentStep === 0 && renderSocialConfig()}
-            {currentStep === 1 && renderAnalysis()}
-            {currentStep === 2 && renderInsights()}
+            {currentStep === 1 && renderDataLoading()}
+            {currentStep === 2 && renderAnalysis()}
             {currentStep === 3 && renderComplete()}
           </CardContent>
         </Card>

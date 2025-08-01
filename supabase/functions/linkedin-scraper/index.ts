@@ -89,6 +89,34 @@ serve(async (req) => {
 
         result = await postsResponse.json()
         console.log('✅ Company posts fetched successfully')
+        
+        // Guardar posts en la tabla linkedin_posts
+        if (result?.posts && Array.isArray(result.posts)) {
+          const postsToSave = result.posts.slice(0, 20).map((post: any) => ({
+            user_id: user.id,
+            post_id: post.id || post.postId || `linkedin_${Date.now()}_${Math.random()}`,
+            post_type: post.type || 'unknown',
+            content: post.text || post.content || '',
+            likes_count: post.reactions_count || post.stats?.total_reactions || 0,
+            comments_count: post.comments_count || post.stats?.comments || 0,
+            shares_count: post.shares_count || post.stats?.shares || 0,
+            views_count: post.views_count || post.stats?.views || 0,
+            posted_at: post.posted_at || post.createdAt || new Date().toISOString(),
+            raw_data: post
+          }))
+          
+          if (postsToSave.length > 0) {
+            const { error: saveError } = await supabase
+              .from('linkedin_posts')
+              .upsert(postsToSave, { onConflict: 'user_id,post_id' })
+            
+            if (saveError) {
+              console.error('❌ Error saving LinkedIn posts:', saveError)
+            } else {
+              console.log(`✅ Saved ${postsToSave.length} LinkedIn posts to database`)
+            }
+          }
+        }
         break
 
       default:

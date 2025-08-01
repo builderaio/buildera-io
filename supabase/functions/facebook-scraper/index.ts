@@ -193,16 +193,33 @@ Deno.serve(async (req) => {
         }
       };
 
-      // Guardar en base de datos para cache
+      // Guardar posts en la tabla facebook_posts
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('facebook_page_data').upsert({
+      if (user && posts.length > 0) {
+        const postsToSave = posts.slice(0, 20).map((post: any) => ({
           user_id: user.id,
-          page_url: `https://facebook.com/page_id/${page_id}`, // URL temporal
-          posts: posts.slice(0, 20),
-          total_posts: posts.length,
-          last_updated: new Date().toISOString()
-        });
+          post_id: post.post_id || post.id || `facebook_${Date.now()}_${Math.random()}`,
+          post_type: post.type || 'unknown',
+          content: post.message || post.text || post.content || '',
+          author_name: post.author?.name || 'Unknown',
+          author_id: post.author?.id || '',
+          likes_count: post.reactions_count || post.likes || 0,
+          comments_count: post.comments_count || post.comments || 0,
+          shares_count: post.shares_count || post.shares || 0,
+          reactions_count: post.reactions_count || post.likes || 0,
+          posted_at: post.created_time || post.posted_at || new Date().toISOString(),
+          raw_data: post
+        }))
+        
+        const { error: saveError } = await supabase
+          .from('facebook_posts')
+          .upsert(postsToSave, { onConflict: 'user_id,post_id' })
+        
+        if (saveError) {
+          console.error('❌ Error saving Facebook posts:', saveError)
+        } else {
+          console.log(`✅ Saved ${postsToSave.length} Facebook posts to database`)
+        }
       }
 
     } else {

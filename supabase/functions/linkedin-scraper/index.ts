@@ -91,23 +91,73 @@ serve(async (req) => {
         console.log('✅ Company posts fetched successfully')
         
         // Guardar posts en la base de datos
-        if (result && result.posts && result.posts.length > 0) {
-          console.log(`🔍 Processing ${result.posts.length} LinkedIn posts for user ${user.id}`);
+        console.log('🔍 Full LinkedIn API result:', JSON.stringify(result, null, 2));
+        
+        // Verificar diferentes estructuras de respuesta de la API
+        let posts = [];
+        if (result && result.data && result.data.posts) {
+          posts = result.data.posts;
+          console.log(`📋 Found posts in result.data.posts: ${posts.length}`);
+        } else if (result && result.posts) {
+          posts = result.posts;
+          console.log(`📋 Found posts in result.posts: ${posts.length}`);
+        } else if (result && Array.isArray(result)) {
+          posts = result;
+          console.log(`📋 Found posts as array: ${posts.length}`);
+        } else if (result && result.data && Array.isArray(result.data)) {
+          posts = result.data;
+          console.log(`📋 Found posts in result.data array: ${posts.length}`);
+        }
+        
+        if (posts && posts.length > 0) {
+          console.log(`🔍 Processing ${posts.length} LinkedIn posts for user ${user.id}`);
           
-          const postsToInsert = result.posts.map((post, index) => {
-            const postId = post.post_id || post.activity_id || post.id || `li_${company_identifier}_${index}`;
-            console.log('📝 Processing LinkedIn post:', { postId, hasText: !!post.text, hasDescription: !!post.description });
+          const postsToInsert = posts.map((post, index) => {
+            // Intentar múltiples campos para el ID del post
+            const postId = post.post_id || post.activity_id || post.id || post.activity_urn || post.full_urn || `li_${company_identifier}_${index}`;
+            
+            // Intentar múltiples campos para el contenido
+            const content = post.text || post.description || post.commentary || post.content || '';
+            
+            // Intentar múltiples campos para la fecha
+            let postedAt = null;
+            if (post.posted_at && post.posted_at.timestamp) {
+              postedAt = new Date(post.posted_at.timestamp).toISOString();
+            } else if (post.posted_date) {
+              postedAt = new Date(post.posted_date).toISOString();
+            } else if (post.time) {
+              postedAt = new Date(post.time).toISOString();
+            } else if (post.created_at) {
+              postedAt = new Date(post.created_at).toISOString();
+            }
+            
+            // Intentar múltiples campos para métricas
+            const likesCount = parseInt(post.stats?.total_reactions || post.reactions?.like_count || post.likes_count || post.likes || 0);
+            const commentsCount = parseInt(post.stats?.comments || post.comments_count || post.comments || 0);
+            const sharesCount = parseInt(post.stats?.reposts || post.reposts_count || post.shares_count || post.shares || 0);
+            const viewsCount = parseInt(post.stats?.views || post.views_count || post.views || 0);
+            
+            console.log('📝 Processing LinkedIn post:', { 
+              postId, 
+              hasContent: !!content, 
+              postedAt,
+              likesCount,
+              commentsCount,
+              sharesCount,
+              viewsCount,
+              postKeys: Object.keys(post)
+            });
             
             return {
               user_id: user.id,
               post_id: postId,
-              content: post.text || post.description || post.commentary || '',
-              likes_count: parseInt(post.reactions?.like_count || post.likes_count || post.likes || 0),
-              comments_count: parseInt(post.comments_count || post.comments || 0),
-              shares_count: parseInt(post.reposts_count || post.shares_count || post.shares || 0),
-              views_count: parseInt(post.views_count || post.views || 0),
-              post_type: post.type || 'post',
-              posted_at: post.posted_date ? new Date(post.posted_date).toISOString() : (post.time ? new Date(post.time).toISOString() : null),
+              content: content,
+              likes_count: likesCount,
+              comments_count: commentsCount,
+              shares_count: sharesCount,
+              views_count: viewsCount,
+              post_type: post.post_type || post.type || 'post',
+              posted_at: postedAt,
               raw_data: post,
               engagement_rate: 0
             };
@@ -136,7 +186,8 @@ serve(async (req) => {
 
           console.log(`💾 Successfully inserted ${insertedCount}/${postsToInsert.length} LinkedIn posts into database`);
         } else {
-          console.log('⚠️ No posts found in LinkedIn result or no valid result');
+          console.log('⚠️ No posts found in LinkedIn result');
+          console.log('🔍 Available result keys:', result ? Object.keys(result) : 'No result');
         }
         break
 

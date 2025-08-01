@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import { 
   Clock,
   TrendingUp,
@@ -817,9 +818,13 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <>
+      {/* Advanced AI Loader */}
+      <AdvancedAILoader isVisible={loading} />
+      
+      <div className="space-y-8 animate-fade-in">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Análisis Avanzado con IA
@@ -954,7 +959,8 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
           )}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

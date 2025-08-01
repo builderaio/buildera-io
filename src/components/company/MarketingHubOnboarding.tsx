@@ -201,7 +201,7 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
           case 'instagram':
             console.log(`📸 Analyzing Instagram: ${platform.url}`);
             
-            // Usar la misma implementación que SocialMediaHub
+            // Scraping y análisis de Instagram
             const { data: instagramData, error: instagramError } = await supabase.functions.invoke('instagram-scraper', {
               body: { 
                 action: 'get_posts', 
@@ -214,7 +214,7 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
               throw new Error(`Error en scraper: ${instagramError.message}`);
             }
             
-            // Análisis inteligente de Instagram
+            // Análisis inteligente profundo de Instagram
             const { data: instagramAnalysis, error: instagramAnalysisError } = await supabase.functions.invoke('instagram-intelligent-analysis', {
               body: { user_id: profile.user_id }
             });
@@ -386,6 +386,25 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
       
       // Esperar un poco entre análisis para no sobrecargar
       await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    // Generar insights avanzados de negocio después de todos los análisis
+    setCurrentAnalyzing('Generando insights avanzados de negocio...');
+    console.log('🧠 Starting advanced business insights generation');
+    
+    try {
+      const { data: advancedInsights, error: advancedError } = await supabase.functions.invoke('advanced-business-insights', {
+        body: { user_id: profile.user_id }
+      });
+      
+      if (advancedError) {
+        console.error('Advanced insights error:', advancedError);
+      } else {
+        console.log('✅ Advanced business insights generated:', advancedInsights);
+        toast.success('Insights avanzados de negocio generados exitosamente');
+      }
+    } catch (error) {
+      console.error('Error generating advanced insights:', error);
     }
     
     // Cargar insights consolidados después de todos los análisis

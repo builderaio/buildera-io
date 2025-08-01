@@ -172,24 +172,44 @@ serve(async (req) => {
           });
 
           console.log(`💾 Attempting to insert ${postsToInsert.length} LinkedIn posts`);
-          console.log('📋 Sample post to insert:', postsToInsert[0]);
+          console.log('📋 Sample post to insert:', JSON.stringify(postsToInsert[0], null, 2));
+          
+          // Verificar que tenemos un supabase client válido con autenticación
+          const { data: authUser, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+          console.log('🔐 Auth check - User ID:', authUser?.user?.id, 'Error:', authError);
           
           // Insertar posts uno por uno para ver errores específicos
           let insertedCount = 0;
-          for (const postData of postsToInsert) {
+          for (const [index, postData] of postsToInsert.entries()) {
             try {
+              console.log(`📝 Inserting post ${index + 1}/${postsToInsert.length}: ${postData.post_id}`);
+              
               const { data, error } = await supabase.from('linkedin_posts').upsert(postData, {
                 onConflict: 'user_id,post_id'
               });
               
               if (error) {
-                console.error('❌ Error inserting LinkedIn post:', error, 'Post data keys:', Object.keys(postData));
+                console.error(`❌ Error inserting LinkedIn post ${index + 1}:`, {
+                  error: error,
+                  message: error.message,
+                  details: error.details,
+                  hint: error.hint,
+                  code: error.code,
+                  postId: postData.post_id,
+                  userId: postData.user_id
+                });
               } else {
                 insertedCount++;
-                console.log(`✅ Inserted LinkedIn post: ${postData.post_id}`);
+                console.log(`✅ Successfully inserted LinkedIn post ${index + 1}: ${postData.post_id}`);
+                console.log(`📊 Insert result:`, data);
               }
             } catch (error) {
-              console.error('❌ Exception inserting LinkedIn post:', error, 'Post data keys:', Object.keys(postData));
+              console.error(`❌ Exception inserting LinkedIn post ${index + 1}:`, {
+                error: error,
+                message: error.message,
+                postId: postData.post_id,
+                userId: postData.user_id
+              });
             }
           }
 

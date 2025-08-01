@@ -279,35 +279,99 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     }
   };
 
-  // Nueva estructura de menú integrada en la sidebar
+  // Arquitectura de información reorganizada con mejor jerarquía
   const sidebarMenuItems = [
     {
-      category: "🏢 Mi Empresa",
+      category: "Central", 
+      icon: "🎯",
       items: [
-        { id: "mando-central", label: "Mando Central", icon: Activity, description: "Dashboard principal" },
-        { id: "adn-empresa", label: "Mi Negocio", icon: Building, description: "Información empresarial" },
-        { id: "base-conocimiento", label: "Mi Información", icon: User, description: "Base de conocimiento" },
+        { 
+          id: "mando-central", 
+          label: "Dashboard", 
+          icon: Activity, 
+          description: "Vista general y KPIs",
+          priority: "high"
+        },
       ]
     },
     {
-      category: "🤖 Inteligencia Artificial", 
+      category: "Mi Empresa",
+      icon: "🏢", 
       items: [
-        { id: "mis-agentes", label: "Mis Agentes", icon: Bot, description: "Agentes creados" },
-        { id: "marketplace", label: "Marketplace", icon: Store, description: "Explorar agentes" },
+        { 
+          id: "adn-empresa", 
+          label: "Información Empresarial", 
+          icon: Building, 
+          description: "Datos y configuración",
+          priority: "high"
+        },
+        { 
+          id: "base-conocimiento", 
+          label: "Base de Conocimiento", 
+          icon: User, 
+          description: "Gestión de información",
+          priority: "medium"
+        },
       ]
     },
     {
-      category: "📈 Operaciones", 
+      category: "Marketing & Ventas",
+      icon: "📈", 
       items: [
-        { id: "marketing-hub", label: "Marketing Hub", icon: Bell, description: "Campañas y promociones" },
-        { id: "inteligencia-competitiva", label: "Inteligencia Competitiva", icon: Search, description: "Análisis de mercado" },
+        { 
+          id: "marketing-hub", 
+          label: "Marketing Hub", 
+          icon: Bell, 
+          description: "Campañas y automatización",
+          priority: "high"
+        },
+        { 
+          id: "inteligencia-competitiva", 
+          label: "Análisis Competitivo", 
+          icon: Search, 
+          description: "Inteligencia de mercado",
+          priority: "medium"
+        },
       ]
     },
     {
-      category: "🎓 Recursos",
+      category: "Agentes IA",
+      icon: "🤖", 
       items: [
-        { id: "academia-buildera", label: "Academia", icon: GraduationCap, description: "Cursos y tutoriales" },
-        { id: "expertos", label: "Expertos", icon: Users, description: "Conectar con especialistas" },
+        { 
+          id: "mis-agentes", 
+          label: "Mis Agentes", 
+          icon: Bot, 
+          description: "Gestionar agentes creados",
+          priority: "medium"
+        },
+        { 
+          id: "marketplace", 
+          label: "Marketplace", 
+          icon: Store, 
+          description: "Descubrir nuevos agentes",
+          priority: "medium"
+        },
+      ]
+    },
+    {
+      category: "Aprendizaje",
+      icon: "🎓",
+      items: [
+        { 
+          id: "academia-buildera", 
+          label: "Academia Buildera", 
+          icon: GraduationCap, 
+          description: "Cursos y certificaciones",
+          priority: "low"
+        },
+        { 
+          id: "expertos", 
+          label: "Red de Expertos", 
+          icon: Users, 
+          description: "Conectar con especialistas",
+          priority: "low"
+        },
       ]
     }
   ];
@@ -319,40 +383,51 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      <Sidebar variant="sidebar" collapsible="icon" className="border-r bg-sidebar shadow-lg">
-        <SidebarHeader className="p-4 border-b border-sidebar-border/50">
-          <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-all duration-300 group"
-               onClick={() => setActiveView('mando-central')}>
-            <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+      <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar shadow-xl">
+        {/* Header mejorado */}
+        <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95">
+          <div 
+            className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all duration-300 group"
+            onClick={() => setActiveView('mando-central')}
+          >
+            <div className="flex aspect-square size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105">
               <img 
                 src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
                 alt="Buildera Logo" 
-                className="size-6 object-contain filter brightness-0 invert"
+                className="size-7 object-contain filter brightness-0 invert"
               />
             </div>
             <div className="grid flex-1 text-left leading-tight">
-              <span className="truncate font-black text-lg tracking-wide text-sidebar-foreground bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">
                 BUILDERA
               </span>
-              <span className="truncate text-[10px] font-medium text-sidebar-muted-foreground tracking-widest uppercase">
+              <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide uppercase opacity-80">
                 AI Business Platform
               </span>
             </div>
           </div>
         </SidebarHeader>
           
-        <SidebarContent className="px-3 py-4">
-          {sidebarMenuItems.map((category) => (
-            <SidebarGroup key={category.category} className="mb-6">
-              <SidebarGroupLabel className="px-3 text-xs font-bold uppercase text-sidebar-foreground/70 mb-3 tracking-wider">
+        {/* Contenido del sidebar mejorado */}
+        <SidebarContent className="px-4 py-6 space-y-6">
+          {sidebarMenuItems.map((category, categoryIndex) => (
+            <SidebarGroup key={category.category} className="space-y-3">
+              <SidebarGroupLabel className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted-foreground tracking-wider flex items-center gap-2 border-b border-sidebar-border/30 pb-2">
+                <span className="text-sm">{category.icon}</span>
                 {category.category}
               </SidebarGroupLabel>
+              
               <SidebarGroupContent>
-                <SidebarMenu className="space-y-1">
+                <SidebarMenu className="space-y-2">
                   {category.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = activeView === item.id;
                     const isDisabled = isProfileIncomplete && item.id !== "adn-empresa";
+                    const priorityColors = {
+                      high: isActive ? '' : 'hover:bg-primary/5',
+                      medium: isActive ? '' : 'hover:bg-sidebar-accent/30',
+                      low: isActive ? '' : 'hover:bg-sidebar/80'
+                    };
                     
                     return (
                       <SidebarMenuItem key={item.id}>
@@ -360,22 +435,51 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                           isActive={isActive}
                           disabled={isDisabled}
                           className={`
-                            relative group transition-all duration-200 rounded-lg p-3
+                            relative group transition-all duration-300 rounded-xl p-4 font-medium text-sm
                             ${isActive 
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm transform translate-x-1" 
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg border border-sidebar-accent/20 scale-[1.02]" 
                               : isDisabled
-                              ? "opacity-50 cursor-not-allowed text-sidebar-foreground/50"
-                              : "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground hover:transform hover:translate-x-1"
+                              ? "opacity-40 cursor-not-allowed text-sidebar-muted-foreground"
+                              : `text-sidebar-foreground ${priorityColors[item.priority]} hover:scale-[1.01] hover:shadow-md`
                             }
+                            ${!isDisabled && !isActive ? 'hover:border hover:border-sidebar-border/40' : ''}
                           `}
                           onClick={isDisabled ? undefined : () => setActiveView(item.id)}
                         >
-                          <Icon className="size-5 mr-3 flex-shrink-0" />
-                          <div className="flex flex-col items-start">
-                            <span className="font-medium">{item.label}</span>
-                            <span className="text-xs text-sidebar-foreground/60">{item.description}</span>
+                          <div className="flex items-center gap-4 w-full">
+                            <div className={`p-2 rounded-lg transition-all duration-300 ${
+                              isActive 
+                                ? 'bg-sidebar-accent-foreground/10' 
+                                : 'bg-sidebar-border/30 group-hover:bg-sidebar-border/50'
+                            }`}>
+                              <Icon className={`size-5 transition-all duration-300 ${
+                                isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'
+                              }`} />
+                            </div>
+                            
+                            <div className="flex flex-col items-start flex-1 min-w-0">
+                              <span className={`font-medium truncate transition-colors duration-300 ${
+                                isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'
+                              }`}>
+                                {item.label}
+                              </span>
+                              <span className={`text-xs truncate transition-colors duration-300 ${
+                                isActive ? 'text-sidebar-accent-foreground/70' : 'text-sidebar-muted-foreground'
+                              }`}>
+                                {item.description}
+                              </span>
+                            </div>
+                            
+                            {isDisabled && (
+                              <div className="flex items-center justify-center w-6 h-6 bg-sidebar-border/40 rounded-md">
+                                <span className="text-xs">🔒</span>
+                              </div>
+                            )}
+                            
+                            {isActive && (
+                              <div className="w-1 h-8 bg-sidebar-accent-foreground rounded-full opacity-60"></div>
+                            )}
                           </div>
-                          {isDisabled && <span className="ml-auto text-xs">🔒</span>}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
@@ -385,6 +489,22 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
             </SidebarGroup>
           ))}
         </SidebarContent>
+        
+        {/* Footer del sidebar con configuración */}
+        <SidebarFooter className="p-4 border-t border-sidebar-border/30 bg-sidebar/50">
+          <SidebarMenuButton
+            onClick={() => setActiveView('configuracion')}
+            className="flex items-center gap-3 p-3 rounded-xl bg-sidebar-border/20 hover:bg-sidebar-border/40 transition-all duration-300 text-sidebar-foreground hover:text-sidebar-accent hover:scale-[1.02]"
+          >
+            <div className="p-2 rounded-lg bg-sidebar-border/30">
+              <Settings className="size-4 text-sidebar-muted-foreground" />
+            </div>
+            <div className="flex flex-col items-start">
+              <span className="text-sm font-medium">Configuración</span>
+              <span className="text-xs text-sidebar-muted-foreground">Ajustes del sistema</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarFooter>
       </Sidebar>
       
       <SidebarInset>

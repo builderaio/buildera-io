@@ -45,15 +45,16 @@
     --shadow-card: 0 10px 30px -10px hsl(var(--primary) / 0.1);
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* Sidebar gris claro */
-    --sidebar-background: 0 0% 85%; /* #D8D8D8 */
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 0 0% 15%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 0 0% 90%;
-    --sidebar-accent-foreground: 0 0% 15%;
-    --sidebar-border: 0 0% 80%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar mejorado con mejor contraste */
+    --sidebar-background: 0 0% 99%; /* Blanco casi puro */
+    --sidebar-foreground: 220 13% 18%; /* Texto principal oscuro */
+    --sidebar-primary: 234 66% 47%; /* Buildera blue para elementos principales */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 234 66% 47%; /* Color de acento activo */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 13% 91%; /* Bordes sutiles */
+    --sidebar-ring: 234 66% 47%;
+    --sidebar-muted-foreground: 220 9% 46%; /* Texto secundario */
 
     /* Status Colors - Semantic tokens */
     --success: 142 76% 36%;
@@ -109,15 +110,16 @@
     --input: 215 27.9% 16.9%;
     --ring: 234 66% 65%;
 
-    /* Sidebar Dark Mode */
-    --sidebar-background: 224 71.4% 4.1%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 234 66% 65%;
+    /* Sidebar Dark Mode mejorado */
+    --sidebar-background: 224 71.4% 4.1%; /* Fondo oscuro */
+    --sidebar-foreground: 210 20% 98%; /* Texto claro */
+    --sidebar-primary: 234 66% 65%; /* Buildera blue más brillante */
     --sidebar-primary-foreground: 224 71.4% 4.1%;
-    --sidebar-accent: 215 27.9% 16.9%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 215 27.9% 16.9%;
+    --sidebar-accent: 234 66% 65%; /* Color de acento activo */
+    --sidebar-accent-foreground: 224 71.4% 4.1%;
+    --sidebar-border: 215 27.9% 16.9%; /* Bordes sutiles */
     --sidebar-ring: 234 66% 65%;
+    --sidebar-muted-foreground: 217.9 10.6% 64.9%; /* Texto secundario */
 
     /* Status Colors - Dark Mode */
     --success: 142 76% 45%;

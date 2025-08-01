@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuthMethods } from "@/hooks/useAuthMethods";
 import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
+import { EmailVerificationInfo } from "./EmailVerificationInfo";
 import { supabase } from "@/integrations/supabase/client";
 import { Linkedin, Mail, Chrome } from "lucide-react";
 
@@ -27,6 +28,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [country, setCountry] = useState("Colombia");
   const [loading, setLoading] = useState(false);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
   const { toast } = useToast();
   const { authMethods, loading: authMethodsLoading } = useAuthMethods();
   const { sendWelcomeEmail } = useWelcomeEmail();
@@ -194,12 +197,20 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             // No bloquear el registro si falla el webhook
           }
           
-          toast({
-            title: "¡Registro exitoso!",
-            description: data.user.email_confirmed_at 
-              ? "Tu cuenta ha sido creada. Ahora puedes iniciar sesión."
-              : "Tu cuenta ha sido creada. Revisa tu email para verificar tu cuenta antes de iniciar sesión.",
-          });
+          // Mostrar información de verificación si el email no está confirmado
+          if (!data.user.email_confirmed_at) {
+            setRegisteredEmail(email);
+            setShowEmailVerification(true);
+            toast({
+              title: "¡Registro exitoso!",
+              description: "Revisa tu email para verificar tu cuenta antes de iniciar sesión.",
+            });
+          } else {
+            toast({
+              title: "¡Registro exitoso!",
+              description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
+            });
+          }
           
           console.log("Usuario de empresa registrado exitosamente");
           
@@ -272,6 +283,34 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       toast({
         title: "Error",
         description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleResendVerification = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: registeredEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/company-dashboard`
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email reenviado",
+        description: "Hemos reenviado el enlace de verificación a tu email.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo reenviar el email de verificación",
         variant: "destructive",
       });
     } finally {
@@ -531,6 +570,14 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             Contacta al administrador para obtener ayuda.
           </p>
         </div>
+      )}
+
+      {showEmailVerification && registeredEmail && (
+        <EmailVerificationInfo 
+          email={registeredEmail}
+          onResendVerification={handleResendVerification}
+          loading={loading}
+        />
       )}
     </div>
   );

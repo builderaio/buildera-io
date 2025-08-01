@@ -9,7 +9,7 @@ import { useFirstTimeSave } from "@/hooks/useFirstTimeSave";
 import MandoCentral from "@/components/company/MandoCentral";
 import Dashboard360 from "@/components/company/Dashboard360";
 import ADNEmpresa from "@/components/company/ADNEmpresa";
-import MarketingHub from "@/components/company/MarketingHub";
+import MarketingHub from "@/components/company/MarketingHubSimplified";
 import InteligenciaCompetitiva from "@/components/company/InteligenciaCompetitiva";
 import MisArchivos from "@/components/company/BaseConocimiento";
 import AcademiaBuildiera from "@/components/company/AcademiaBuildera";

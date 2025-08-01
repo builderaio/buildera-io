@@ -470,16 +470,20 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
   };
 
   const nextStep = async () => {
+    // Execute actions BEFORE moving to next step
     if (currentStep === 0) {
       await saveCompanyData();
-    }
-    if (currentStep === 1) {
+      setCurrentStep(1);
+    } else if (currentStep === 1) {
       await loadSocialData();
-    }
-    if (currentStep === 2) {
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
       await runAnalysis();
+      setCurrentStep(3);
+    } else {
+      // For step 3 and beyond, just move forward
+      setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
     }
-    setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
   };
 
   const prevStep = () => {

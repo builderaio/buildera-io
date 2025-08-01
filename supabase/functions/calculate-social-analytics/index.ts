@@ -156,6 +156,79 @@ serve(async (req) => {
       ];
     };
 
+    // Función para calcular analytics de Facebook
+    const calculateFacebookAnalytics = async () => {
+      const { data: posts, error } = await supabaseClient
+        .from('facebook_posts')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      if (!posts || posts.length === 0) return [];
+
+      const totalPosts = posts.length;
+      const totalLikes = posts.reduce((sum, post) => sum + (post.likes_count || 0), 0);
+      const totalComments = posts.reduce((sum, post) => sum + (post.comments_count || 0), 0);
+      const totalShares = posts.reduce((sum, post) => sum + (post.shares_count || 0), 0);
+      const totalReactions = posts.reduce((sum, post) => sum + (post.reactions_count || 0), 0);
+
+      const periodStart = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const periodEnd = new Date();
+
+      return [
+        {
+          user_id: userId,
+          platform: 'facebook',
+          metric_type: 'total_posts',
+          value: totalPosts,
+          period_start: periodStart.toISOString(),
+          period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
+          metadata: { timeframe: '30_days' }
+        },
+        {
+          user_id: userId,
+          platform: 'facebook',
+          metric_type: 'total_likes',
+          value: totalLikes,
+          period_start: periodStart.toISOString(),
+          period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
+          metadata: { timeframe: '30_days' }
+        },
+        {
+          user_id: userId,
+          platform: 'facebook',
+          metric_type: 'total_comments',
+          value: totalComments,
+          period_start: periodStart.toISOString(),
+          period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
+          metadata: { timeframe: '30_days' }
+        },
+        {
+          user_id: userId,
+          platform: 'facebook',
+          metric_type: 'total_shares',
+          value: totalShares,
+          period_start: periodStart.toISOString(),
+          period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
+          metadata: { timeframe: '30_days' }
+        },
+        {
+          user_id: userId,
+          platform: 'facebook',
+          metric_type: 'total_reactions',
+          value: totalReactions,
+          period_start: periodStart.toISOString(),
+          period_end: periodEnd.toISOString(),
+          period_type: 'monthly',
+          metadata: { timeframe: '30_days' }
+        }
+      ];
+    };
+
     // Función para calcular analytics de TikTok
     const calculateTikTokAnalytics = async () => {
       const { data: posts, error } = await supabaseClient
@@ -219,7 +292,7 @@ serve(async (req) => {
       ];
     };
 
-    // Calcular analytics según plataforma
+    // Calcular analytics para todas las plataformas
     let analyticsData = [];
     
     if (!platform || platform === 'instagram') {
@@ -230,6 +303,11 @@ serve(async (req) => {
     if (!platform || platform === 'linkedin') {
       const linkedinAnalytics = await calculateLinkedInAnalytics();
       analyticsData.push(...linkedinAnalytics);
+    }
+    
+    if (!platform || platform === 'facebook') {
+      const facebookAnalytics = await calculateFacebookAnalytics();
+      analyticsData.push(...facebookAnalytics);
     }
     
     if (!platform || platform === 'tiktok') {

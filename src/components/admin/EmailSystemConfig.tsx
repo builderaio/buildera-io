@@ -148,14 +148,6 @@ export const EmailSystemConfig = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Sistema de Email</h1>
-          <p className="text-muted-foreground">
-            Gestiona configuraciones SMTP, plantillas y envíos de email
-          </p>
-        </div>
-      </div>
 
       <Tabs defaultValue="configurations" className="space-y-4">
         <TabsList className="grid w-full grid-cols-4">

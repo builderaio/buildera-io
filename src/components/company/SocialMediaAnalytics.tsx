@@ -188,6 +188,15 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
         ...(tiktokRes.data || []).map(post => ({ ...post, platform: 'tiktok' }))
       ];
       
+      // Si no hay posts pero hay conexiones, mostrar plataformas con 0 posts para completitud
+      const platformsWithConnections = [];
+      if (hasLinkedinConnection && !linkedinPostsRes.data?.length) {
+        console.log('📋 LinkedIn connected but no posts in linkedin_posts table');
+      }
+      if (hasFacebookConnection && !facebookPostsRes.data?.length) {
+        console.log('📘 Facebook connected but no posts in facebook_posts table');
+      }
+      
       // Agregar indicadores de estado de conexión
       const connectionStatus = {
         instagram: instagramRes.data && instagramRes.data.length > 0,
@@ -237,8 +246,22 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
     const platforms = ['instagram', 'linkedin', 'tiktok', 'facebook'];
     const stats: PlatformStats[] = [];
 
+    console.log('🔍 Generating platform stats from data:', {
+      totalPosts: data.posts.length,
+      postsByPlatform: platforms.map(p => ({
+        platform: p,
+        count: data.posts.filter(post => post.platform === p).length
+      }))
+    });
+
     platforms.forEach(platform => {
       const platformPosts = data.posts.filter(post => post.platform === platform);
+
+      // Mostrar siempre las plataformas, incluso sin posts para debug
+      console.log(`📊 Platform ${platform}:`, {
+        postsFound: platformPosts.length,
+        samplePost: platformPosts[0] || 'No posts'
+      });
 
       if (platformPosts.length > 0) {
         let totalLikes = 0;
@@ -251,17 +274,17 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
           totalComments = platformPosts.reduce((sum, post) => sum + (post.comment_count || 0), 0);
           avgEngagement = platformPosts.reduce((sum, post) => sum + (post.engagement_rate || 0), 0) / platformPosts.length;
         } else if (platform === 'linkedin') {
-          totalLikes = platformPosts.reduce((sum, post) => sum + (post.stats?.total_reactions || 0), 0);
-          totalComments = platformPosts.reduce((sum, post) => sum + (post.stats?.comments || 0), 0);
+          totalLikes = platformPosts.reduce((sum, post) => sum + (post.reactions_count || post.stats?.total_reactions || 0), 0);
+          totalComments = platformPosts.reduce((sum, post) => sum + (post.comments_count || post.stats?.comments || 0), 0);
           avgEngagement = (totalLikes + totalComments) / platformPosts.length;
         } else if (platform === 'tiktok') {
           totalLikes = platformPosts.reduce((sum, post) => sum + (post.digg_count || 0), 0);
           totalComments = platformPosts.reduce((sum, post) => sum + (post.comment_count || 0), 0);
           avgEngagement = (totalLikes + totalComments) / platformPosts.length;
         } else if (platform === 'facebook') {
-          // Métricas de Facebook cuando estén disponibles
-          totalLikes = platformPosts.reduce((sum, post) => sum + (post.likes || 0), 0);
-          totalComments = platformPosts.reduce((sum, post) => sum + (post.comments || 0), 0);
+          // Métricas de Facebook
+          totalLikes = platformPosts.reduce((sum, post) => sum + (post.reactions_count || post.likes || 0), 0);
+          totalComments = platformPosts.reduce((sum, post) => sum + (post.comments_count || post.comments || 0), 0);
           avgEngagement = (totalLikes + totalComments) / platformPosts.length;
         }
         
@@ -270,9 +293,14 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
         if (platform === 'instagram') {
           allHashtags = platformPosts.flatMap(post => post.hashtags || []);
         } else if (platform === 'linkedin') {
-          // LinkedIn no usa hashtags de la misma forma
+          // LinkedIn usa texto libre con hashtags
           allHashtags = platformPosts.flatMap(post => 
-            (post.text || '').match(/#\w+/g)?.map(tag => tag.replace('#', '')) || []
+            (post.text || post.content || '').match(/#\w+/g)?.map(tag => tag.replace('#', '')) || []
+          );
+        } else if (platform === 'facebook') {
+          // Facebook también puede tener hashtags en el texto
+          allHashtags = platformPosts.flatMap(post => 
+            (post.text || post.message || '').match(/#\w+/g)?.map(tag => tag.replace('#', '')) || []
           );
         }
         

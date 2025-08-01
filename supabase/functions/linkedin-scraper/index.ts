@@ -93,9 +93,14 @@ serve(async (req) => {
         // Guardar posts en la base de datos
         console.log('🔍 Full LinkedIn API result:', JSON.stringify(result, null, 2));
         
-        // Verificar diferentes estructuras de respuesta de la API
+        // Verificar diferentes estructuras de respuesta de la API específica de LinkedIn que estamos usando
         let posts = [];
-        if (result && result.data && result.data.posts) {
+        
+        // La API linkedin-scraper-api-real-time-fast-affordable devuelve la estructura: result.data.data.posts
+        if (result && result.data && result.data.data && result.data.data.posts) {
+          posts = result.data.data.posts;
+          console.log(`📋 Found posts in result.data.data.posts: ${posts.length}`);
+        } else if (result && result.data && result.data.posts) {
           posts = result.data.posts;
           console.log(`📋 Found posts in result.data.posts: ${posts.length}`);
         } else if (result && result.posts) {
@@ -103,36 +108,37 @@ serve(async (req) => {
           console.log(`📋 Found posts in result.posts: ${posts.length}`);
         } else if (result && Array.isArray(result)) {
           posts = result;
-          console.log(`📋 Found posts as array: ${posts.length}`);
-        } else if (result && result.data && Array.isArray(result.data)) {
-          posts = result.data;
-          console.log(`📋 Found posts in result.data array: ${posts.length}`);
+          console.log(`📋 Found posts as direct array: ${posts.length}`);
         }
+        
+        console.log('🔍 Posts structure sample:', posts.length > 0 ? posts[0] : 'No posts');
         
         if (posts && posts.length > 0) {
           console.log(`🔍 Processing ${posts.length} LinkedIn posts for user ${user.id}`);
           
           const postsToInsert = posts.map((post, index) => {
-            // Intentar múltiples campos para el ID del post
-            const postId = post.post_id || post.activity_id || post.id || post.activity_urn || post.full_urn || `li_${company_identifier}_${index}`;
+            // La API devuelve posts con activity_urn, full_urn, etc.
+            const postId = post.activity_urn || post.full_urn || post.post_id || post.activity_id || post.id || `li_${company_identifier}_${index}`;
             
-            // Intentar múltiples campos para el contenido
+            // El contenido está en post.text
             const content = post.text || post.description || post.commentary || post.content || '';
             
-            // Intentar múltiples campos para la fecha
+            // La fecha está en post.posted_at con estructura específica
             let postedAt = null;
-            if (post.posted_at && post.posted_at.timestamp) {
-              postedAt = new Date(post.posted_at.timestamp).toISOString();
-            } else if (post.posted_date) {
-              postedAt = new Date(post.posted_date).toISOString();
-            } else if (post.time) {
-              postedAt = new Date(post.time).toISOString();
-            } else if (post.created_at) {
-              postedAt = new Date(post.created_at).toISOString();
+            if (post.posted_at) {
+              if (post.posted_at.timestamp) {
+                postedAt = new Date(post.posted_at.timestamp).toISOString();
+              } else if (post.posted_at.date) {
+                postedAt = new Date(post.posted_at.date).toISOString();
+              } else if (typeof post.posted_at === 'string') {
+                postedAt = new Date(post.posted_at).toISOString();
+              } else if (typeof post.posted_at === 'number') {
+                postedAt = new Date(post.posted_at).toISOString();
+              }
             }
             
-            // Intentar múltiples campos para métricas
-            const likesCount = parseInt(post.stats?.total_reactions || post.reactions?.like_count || post.likes_count || post.likes || 0);
+            // Las métricas están en post.stats
+            const likesCount = parseInt(post.stats?.total_reactions || post.stats?.like || post.reactions?.like_count || post.likes_count || post.likes || 0);
             const commentsCount = parseInt(post.stats?.comments || post.comments_count || post.comments || 0);
             const sharesCount = parseInt(post.stats?.reposts || post.reposts_count || post.shares_count || post.shares || 0);
             const viewsCount = parseInt(post.stats?.views || post.views_count || post.views || 0);
@@ -140,12 +146,14 @@ serve(async (req) => {
             console.log('📝 Processing LinkedIn post:', { 
               postId, 
               hasContent: !!content, 
+              contentLength: content.length,
               postedAt,
               likesCount,
               commentsCount,
               sharesCount,
               viewsCount,
-              postKeys: Object.keys(post)
+              postKeys: Object.keys(post),
+              statsKeys: post.stats ? Object.keys(post.stats) : 'No stats'
             });
             
             return {
@@ -164,6 +172,7 @@ serve(async (req) => {
           });
 
           console.log(`💾 Attempting to insert ${postsToInsert.length} LinkedIn posts`);
+          console.log('📋 Sample post to insert:', postsToInsert[0]);
           
           // Insertar posts uno por uno para ver errores específicos
           let insertedCount = 0;
@@ -174,13 +183,13 @@ serve(async (req) => {
               });
               
               if (error) {
-                console.error('❌ Error inserting LinkedIn post:', error, 'Post data:', postData);
+                console.error('❌ Error inserting LinkedIn post:', error, 'Post data keys:', Object.keys(postData));
               } else {
                 insertedCount++;
                 console.log(`✅ Inserted LinkedIn post: ${postData.post_id}`);
               }
             } catch (error) {
-              console.error('❌ Exception inserting LinkedIn post:', error, 'Post data:', postData);
+              console.error('❌ Exception inserting LinkedIn post:', error, 'Post data keys:', Object.keys(postData));
             }
           }
 
@@ -188,6 +197,12 @@ serve(async (req) => {
         } else {
           console.log('⚠️ No posts found in LinkedIn result');
           console.log('🔍 Available result keys:', result ? Object.keys(result) : 'No result');
+          if (result && result.data) {
+            console.log('🔍 result.data keys:', Object.keys(result.data));
+            if (result.data.data) {
+              console.log('🔍 result.data.data keys:', Object.keys(result.data.data));
+            }
+          }
         }
         break
 

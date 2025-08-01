@@ -383,9 +383,9 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      <Sidebar variant="sidebar" collapsible="icon" className="w-80 data-[state=collapsed]:w-20 border-r border-sidebar-border bg-sidebar shadow-xl">
-        {/* Header mejorado */}
-        <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95">
+      <Sidebar variant="sidebar" collapsible="icon" className="w-80 data-[state=collapsed]:w-16 border-r border-sidebar-border bg-sidebar shadow-xl">
+        {/* Header mejorado - oculto cuando está colapsado */}
+        <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95 data-[state=collapsed]:hidden">
           <div 
             className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all duration-300 group"
             onClick={() => setActiveView('mando-central')}
@@ -407,18 +407,29 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
             </div>
           </div>
         </SidebarHeader>
+
+        {/* Logo colapsado - solo visible cuando está colapsado */}
+        <div className="hidden data-[state=collapsed]:flex items-center justify-center p-4 border-b border-sidebar-border/30">
+          <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-lg">
+            <img 
+              src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
+              alt="Buildera Logo" 
+              className="size-5 object-contain filter brightness-0 invert"
+            />
+          </div>
+        </div>
           
         {/* Contenido del sidebar mejorado */}
-        <SidebarContent className="px-4 py-6 space-y-6">
+        <SidebarContent className="px-4 py-6 space-y-6 data-[state=collapsed]:px-2 data-[state=collapsed]:space-y-3">
           {sidebarMenuItems.map((category, categoryIndex) => (
-            <SidebarGroup key={category.category} className="space-y-3">
-              <SidebarGroupLabel className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted-foreground tracking-wider flex items-center gap-2 border-b border-sidebar-border/30 pb-2">
+            <SidebarGroup key={category.category} className="space-y-3 data-[state=collapsed]:space-y-2">
+              <SidebarGroupLabel className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted-foreground tracking-wider flex items-center gap-2 border-b border-sidebar-border/30 pb-2 data-[state=collapsed]:hidden">
                 <span className="text-sm">{category.icon}</span>
                 {category.category}
               </SidebarGroupLabel>
               
               <SidebarGroupContent>
-                <SidebarMenu className="space-y-2">
+                <SidebarMenu className="space-y-2 data-[state=collapsed]:space-y-1">
                   {category.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = activeView === item.id;
@@ -492,15 +503,16 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
         </SidebarContent>
         
         {/* Footer del sidebar con configuración */}
-        <SidebarFooter className="p-4 border-t border-sidebar-border/30 bg-sidebar/50">
+        <SidebarFooter className="p-4 border-t border-sidebar-border/30 bg-sidebar/50 data-[state=collapsed]:p-2">
           <SidebarMenuButton
             onClick={() => setActiveView('configuracion')}
-            className="flex items-center gap-3 p-3 rounded-xl bg-sidebar-border/20 hover:bg-sidebar-border/40 transition-all duration-300 text-sidebar-foreground hover:text-sidebar-accent hover:scale-[1.02]"
+            className="flex items-center gap-3 p-3 rounded-xl bg-sidebar-border/20 hover:bg-sidebar-border/40 transition-all duration-300 text-sidebar-foreground hover:text-sidebar-accent hover:scale-[1.02] group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:p-2"
+            tooltip="Configuración"
           >
-            <div className="p-2 rounded-lg bg-sidebar-border/30">
-              <Settings className="size-4 text-sidebar-muted-foreground" />
+            <div className="p-2 rounded-lg bg-sidebar-border/30 group-data-[state=collapsed]:p-1.5">
+              <Settings className="size-4 text-sidebar-muted-foreground group-data-[state=collapsed]:size-5" />
             </div>
-            <div className="flex flex-col items-start">
+            <div className="flex flex-col items-start group-data-[state=collapsed]:hidden">
               <span className="text-sm font-medium">Configuración</span>
               <span className="text-xs text-sidebar-muted-foreground">Ajustes del sistema</span>
             </div>

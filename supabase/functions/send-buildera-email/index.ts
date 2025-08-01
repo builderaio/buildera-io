@@ -103,6 +103,10 @@ async function sendSMTPEmail(
     const ccList = emailData.cc?.map(email => email) || [];
     const bccList = emailData.bcc?.map(email => email) || [];
 
+    // Normalize line endings to CRLF for email standards
+    const normalizeContent = (content: string) => 
+      content.replace(/\r?\n/g, '\r\n');
+
     // Send email
     await client.send({
       from: `${config.from_name} <${config.from_email}>`,
@@ -110,8 +114,8 @@ async function sendSMTPEmail(
       cc: ccList.length > 0 ? ccList : undefined,
       bcc: bccList.length > 0 ? bccList : undefined,
       subject: emailData.subject,
-      content: emailData.textContent || emailData.htmlContent,
-      html: emailData.htmlContent,
+      content: emailData.textContent ? normalizeContent(emailData.textContent) : normalizeContent(emailData.htmlContent),
+      html: normalizeContent(emailData.htmlContent),
     });
 
     await client.close();

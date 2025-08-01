@@ -315,7 +315,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
 
       // 2. Ejecutar análisis avanzado de contenido
       const { data, error } = await supabase.functions.invoke(
-        'advanced-content-analyzer',
+        'content-insights-analyzer',
         { body: { platform } }
       );
 

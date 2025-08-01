@@ -58,6 +58,8 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
   const [realMetrics, setRealMetrics] = useState<QuickStat[]>([]);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [upcomingPosts, setUpcomingPosts] = useState([]);
   const isMobile = useIsMobile();
 
   // Mock quick stats - en producción vendría de la API
@@ -100,6 +102,8 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     checkOnboardingStatus();
     checkConnections();
     loadRealMetrics();
+    loadRecentActivity();
+    loadUpcomingPosts();
   }, [profile?.user_id]);
 
   const checkOnboardingStatus = async () => {
@@ -354,6 +358,198 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
       console.error('Error loading real metrics:', error);
       // En caso de error, usar métricas vacías en lugar de mock
       setRealMetrics([]);
+    }
+  };
+
+  const loadRecentActivity = async () => {
+    if (!profile?.user_id) return;
+
+    try {
+      // Obtener actividad reciente de múltiples fuentes
+      const [insights, actionables, posts, tiktokPosts, instagramPosts] = await Promise.all([
+        supabase
+          .from('marketing_insights')
+          .select('created_at, insight_type, title')
+          .eq('user_id', profile.user_id)
+          .order('created_at', { ascending: false })
+          .limit(3),
+        
+        supabase
+          .from('marketing_actionables')
+          .select('created_at, status, description')
+          .eq('user_id', profile.user_id)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(2),
+        
+        supabase
+          .from('linkedin_posts')
+          .select('posted_at, content')
+          .eq('user_id', profile.user_id)
+          .order('posted_at', { ascending: false })
+          .limit(2),
+        
+        supabase
+          .from('tiktok_posts')
+          .select('posted_at, title')
+          .eq('user_id', profile.user_id)
+          .order('posted_at', { ascending: false })
+          .limit(2),
+        
+        supabase
+          .from('instagram_posts')
+          .select('posted_at, caption')
+          .eq('user_id', profile.user_id)
+          .order('posted_at', { ascending: false })
+          .limit(2)
+      ]);
+
+      const activities = [];
+
+      // Agregar actividad de insights
+      if (insights.data?.length > 0) {
+        insights.data.forEach(insight => {
+          activities.push({
+            icon: Sparkles,
+            iconColor: 'text-purple-600',
+            title: `Nuevo insight: ${insight.title || 'Análisis generado'}`,
+            time: formatTimeAgo(insight.created_at),
+            type: 'insight'
+          });
+        });
+      }
+
+      // Agregar acciones completadas
+      if (actionables.data?.length > 0) {
+        actionables.data.forEach(action => {
+          activities.push({
+            icon: CheckCircle2,
+            iconColor: 'text-green-600',
+            title: 'Acción completada',
+            time: formatTimeAgo(action.created_at),
+            type: 'action'
+          });
+        });
+      }
+
+      // Agregar posts publicados
+      if (posts.data?.length > 0) {
+        posts.data.forEach(post => {
+          activities.push({
+            icon: CheckCircle2,
+            iconColor: 'text-blue-600',
+            title: 'Post publicado en LinkedIn',
+            time: formatTimeAgo(post.posted_at),
+            type: 'linkedin_post'
+          });
+        });
+      }
+
+      if (tiktokPosts.data?.length > 0) {
+        tiktokPosts.data.forEach(post => {
+          activities.push({
+            icon: CheckCircle2,
+            iconColor: 'text-pink-600',
+            title: 'Video publicado en TikTok',
+            time: formatTimeAgo(post.posted_at),
+            type: 'tiktok_post'
+          });
+        });
+      }
+
+      if (instagramPosts.data?.length > 0) {
+        instagramPosts.data.forEach(post => {
+          activities.push({
+            icon: CheckCircle2,
+            iconColor: 'text-orange-600',
+            title: 'Post publicado en Instagram',
+            time: formatTimeAgo(post.posted_at),
+            type: 'instagram_post'
+          });
+        });
+      }
+
+      // Ordenar por tiempo y tomar solo los más recientes
+      activities.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      setRecentActivity(activities.slice(0, 5));
+
+    } catch (error) {
+      console.error('Error loading recent activity:', error);
+      setRecentActivity([]);
+    }
+  };
+
+  const loadUpcomingPosts = async () => {
+    if (!profile?.user_id) return;
+
+    try {
+      // Obtener posts programados
+      const { data: scheduledPosts } = await supabase
+        .from('scheduled_posts')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .gte('scheduled_for', new Date().toISOString())
+        .order('scheduled_for', { ascending: true })
+        .limit(5);
+
+      const upcoming = [];
+
+      if (scheduledPosts?.length > 0) {
+        scheduledPosts.forEach(post => {
+          upcoming.push({
+            icon: Calendar,
+            iconColor: getPlatformColor(post.platform),
+            title: typeof post.content === 'string' ? post.content.substring(0, 50) + '...' : 'Post programado',
+            time: formatScheduledTime(post.scheduled_for),
+            platform: post.platform
+          });
+        });
+      }
+
+      setUpcomingPosts(upcoming);
+
+    } catch (error) {
+      console.error('Error loading upcoming posts:', error);
+      setUpcomingPosts([]);
+    }
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffHours < 1) return 'Hace menos de 1 hora';
+    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+    if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+    return date.toLocaleDateString();
+  };
+
+  const formatScheduledTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffHours < 24) {
+      if (diffHours < 1) return 'En menos de 1 hora';
+      return `En ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+    }
+    if (diffDays === 1) return 'Mañana';
+    if (diffDays < 7) return `En ${diffDays} días`;
+    return date.toLocaleDateString();
+  };
+
+  const getPlatformColor = (platform: string) => {
+    switch (platform?.toLowerCase()) {
+      case 'linkedin': return 'text-blue-600';
+      case 'instagram': return 'text-pink-600';
+      case 'tiktok': return 'text-black';
+      case 'facebook': return 'text-blue-700';
+      default: return 'text-gray-600';
     }
   };
 
@@ -680,27 +876,28 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
                 <CardTitle className="text-lg">Actividad Reciente</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Post publicado en LinkedIn</p>
-                    <p className="text-xs text-muted-foreground">Hace 2 horas</p>
+                {recentActivity.length > 0 ? (
+                  recentActivity.map((activity, index) => {
+                    const IconComponent = activity.icon;
+                    return (
+                      <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                        <IconComponent className={`h-5 w-5 ${activity.iconColor}`} />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{activity.title}</p>
+                          <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-6">
+                    <Eye className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No hay actividad reciente</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Conecta tus redes sociales para ver la actividad
+                    </p>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Eye className="h-5 w-5 text-blue-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Nuevas métricas disponibles</p>
-                    <p className="text-xs text-muted-foreground">Hace 4 horas</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Sparkles className="h-5 w-5 text-purple-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Contenido generado con IA</p>
-                    <p className="text-xs text-muted-foreground">Ayer</p>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -709,23 +906,50 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
                 <CardTitle className="text-lg">Próximas Publicaciones</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <Calendar className="h-5 w-5 text-orange-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Post sobre nuevos productos</p>
-                    <p className="text-xs text-muted-foreground">Hoy, 3:00 PM</p>
+                {upcomingPosts.length > 0 ? (
+                  <>
+                    {upcomingPosts.map((post, index) => {
+                      const IconComponent = post.icon;
+                      return (
+                        <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                          <IconComponent className={`h-5 w-5 ${post.iconColor}`} />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{post.title}</p>
+                            <p className="text-xs text-muted-foreground">{post.time}</p>
+                          </div>
+                          {post.platform && (
+                            <Badge variant="outline" className="text-xs capitalize">
+                              {post.platform}
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setActiveTab("calendar")}
+                    >
+                      Ver todo el calendario
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center py-6">
+                    <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No hay publicaciones programadas</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Programa contenido desde el calendario
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-3"
+                      onClick={() => setActiveTab("calendar")}
+                    >
+                      Programar ahora
+                    </Button>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Actualización de empresa</p>
-                    <p className="text-xs text-muted-foreground">Mañana, 10:00 AM</p>
-                  </div>
-                </div>
-                <Button variant="outline" className="w-full">
-                  Ver todo el calendario
-                </Button>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -429,17 +429,32 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura expandida:
 
     console.log('🎯 AI Response received:', aiResponse);
     
-    if (!aiResponse?.output) {
-      console.error('❌ No output from AI');
+    // El universal-ai-handler devuelve la respuesta en diferentes formatos
+    const responseContent = aiResponse?.response || aiResponse?.optimizedText || aiResponse?.output;
+    
+    if (!responseContent) {
+      console.error('❌ No content from AI');
       return await generateBasicInsights(userId, platform, posts, supabase);
     }
 
     // Parsear respuesta de IA
     let aiInsights;
     try {
-      aiInsights = JSON.parse(aiResponse.output);
+      // Limpiar respuesta JSON si viene envuelta en markdown
+      let cleanedResponse = responseContent;
+      if (typeof responseContent === 'string') {
+        cleanedResponse = responseContent.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        const jsonStart = cleanedResponse.indexOf('{');
+        const jsonEnd = cleanedResponse.lastIndexOf('}');
+        if (jsonStart >= 0 && jsonEnd > jsonStart) {
+          cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1);
+        }
+      }
+      
+      aiInsights = typeof cleanedResponse === 'string' ? JSON.parse(cleanedResponse) : cleanedResponse;
     } catch (parseError) {
       console.error('❌ Error parsing AI response:', parseError);
+      console.log('Raw response content:', responseContent);
       return await generateBasicInsights(userId, platform, posts, supabase);
     }
 

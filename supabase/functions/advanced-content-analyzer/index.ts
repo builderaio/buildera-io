@@ -155,19 +155,21 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
       throw new Error(`Error en análisis IA: ${aiError.message}`);
     }
 
-    if (!aiResponse?.output) {
+    if (!aiResponse?.response && !aiResponse?.optimizedText) {
+      console.error('❌ No response content from universal-ai-handler');
       throw new Error('No se recibió respuesta válida del análisis IA');
     }
 
-    // Parsear respuesta de IA
+    // Parsear respuesta de IA - el universal-ai-handler puede devolver en diferentes formatos
     let analysisResult;
     try {
-      const cleanedResponse = cleanJsonResponse(aiResponse.output || '');
+      const responseContent = aiResponse.response || aiResponse.optimizedText || '';
+      const cleanedResponse = cleanJsonResponse(responseContent);
       console.log('🧹 Cleaned response:', cleanedResponse.substring(0, 200) + '...');
       analysisResult = JSON.parse(cleanedResponse);
     } catch (parseError) {
       console.error('❌ Error parsing AI response:', parseError);
-      console.log('Raw AI output:', aiResponse.output);
+      console.log('Raw AI output:', aiResponse);
       throw new Error('Error procesando respuesta del análisis IA');
     }
 

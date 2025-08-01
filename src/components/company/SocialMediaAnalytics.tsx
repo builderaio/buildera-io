@@ -300,66 +300,48 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
     setPlatformStats(stats);
   };
 
-  const refreshAnalytics = async () => {
+  const runAnalysis = async (platform?: string) => {
     setLoading(true);
     try {
-      console.log('🔄 Starting analytics refresh...');
+      console.log(`🔄 Iniciando análisis para ${platform || 'todas las plataformas'}...`);
       
-      // Ejecutar scraping de todas las plataformas configuradas
-      await Promise.all([
-        // Instagram scraping
-        supabase.functions.invoke('instagram-scraper', {
-          body: { 
-            action: 'get_posts', 
-            username_or_url: 'biury.co'
-          }
-        }).catch(error => console.warn('⚠️ Error obteniendo posts de Instagram:', error)),
-        
-        // LinkedIn scraping
-        supabase.functions.invoke('linkedin-scraper', {
-          body: { 
-            action: 'get_company_posts',
-            company_identifier: 'biury'
-          }
-        }).catch(error => console.warn('⚠️ Error obteniendo posts de LinkedIn:', error)),
-        
-        // TikTok scraping
-        supabase.functions.invoke('tiktok-scraper', {
-          body: { 
-            action: 'get_posts',
-            unique_id: 'biury.co'
-          }
-        }).catch(error => console.warn('⚠️ Error obteniendo posts de TikTok:', error))
-      ]);
+      // 1. Calcular analytics básicos
+      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke(
+        'calculate-social-analytics',
+        { body: { platform } }
+      );
 
-      // Ejecutar análisis avanzado con mejor manejo de errores
-      console.log('📊 Ejecutando análisis avanzado...');
-      const { data, error } = await supabase.functions.invoke('advanced-social-analyzer', {
-        body: { platform: 'instagram', action: 'process_calendar_data' }
-      });
-      
-      if (error) {
-        console.error('❌ Error en análisis avanzado:', error);
-        throw new Error(`Error en análisis: ${error.message || 'Error desconocido'}`);
-      }
-      
-      // Reload data after analysis
+      if (analyticsError) throw analyticsError;
+
+      // 2. Ejecutar análisis avanzado de contenido
+      const { data, error } = await supabase.functions.invoke(
+        'advanced-content-analyzer',
+        { body: { platform } }
+      );
+
+      if (error) throw error;
+
+      // 3. Recargar datos después del análisis
       await loadAnalyticsData();
       
       toast({
-        title: "Análisis actualizado",
-        description: "Se actualizaron los datos de todas las plataformas conectadas",
+        title: "Análisis completado",
+        description: `Se generaron ${data.insights || 0} insights, ${data.actionables || 0} acciones y ${data.recommendations || 0} recomendaciones`,
       });
     } catch (error: any) {
-      console.error('Error refreshing analytics:', error);
+      console.error('Error en análisis:', error);
       toast({
-        title: "Error",
-        description: "No se pudo actualizar el análisis",
+        title: "Error en el análisis",
+        description: error.message,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const refreshAnalytics = async () => {
+    await runAnalysis(); // Análisis completo de todas las plataformas
   };
 
   const getPlatformIcon = (platform: string) => {

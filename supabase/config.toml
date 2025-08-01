@@ -1,5 +1,11 @@
 project_id = "ubhzzppmkhxbuiajfswa"
 
+[functions.calculate-social-analytics]
+verify_jwt = true
+
+[functions.advanced-content-analyzer]
+verify_jwt = true
+
 [functions.send-welcome-email]
 verify_jwt = false
 

@@ -98,6 +98,11 @@ async function processCalendarData(userId: string, platform: string, supabase: a
     console.log(`📊 Found ${posts.length} Instagram posts`);
   }
 
+  if (posts.length === 0) {
+    throw new Error('No hay posts disponibles para analizar. Primero importa posts de tus redes sociales.');
+  }
+
+  // Procesar calendario
   const calendarEntries = posts.map(post => {
     const publishedAt = new Date(post.posted_at || post.created_at);
     const engagement = (post.like_count || 0) + (post.comment_count || 0);
@@ -134,9 +139,15 @@ async function processCalendarData(userId: string, platform: string, supabase: a
     console.log(`✅ Successfully saved ${calendarEntries.length} calendar entries`);
   }
 
+  // Generar insights de marketing con IA
+  console.log('🤖 Generating marketing insights with AI...');
+  const insightsGenerated = await generateMarketingInsights(userId, platform, posts, supabase);
+
   return {
     calendar_entries: calendarEntries.length,
-    message: `Procesados ${calendarEntries.length} posts para el calendario`
+    insights_generated: insightsGenerated,
+    posts_analyzed: posts.length,
+    message: `Procesados ${calendarEntries.length} posts y generados ${insightsGenerated} insights`
   };
 }
 
@@ -216,4 +227,218 @@ async function generateAudienceInsights(userId: string, platform: string, supaba
     insights_generated: insights.length,
     message: 'Insights de audiencia generados exitosamente'
   };
+}
+
+async function generateMarketingInsights(userId: string, platform: string, posts: any[], supabase: any) {
+  console.log(`🤖 Generating marketing insights with AI for ${posts.length} posts`);
+  
+  try {
+    // Preparar datos de los posts para el análisis
+    const postsData = posts.slice(0, 20).map(post => ({
+      caption: post.caption || '',
+      likes: post.like_count || 0,
+      comments: post.comment_count || 0,
+      posted_at: post.posted_at,
+      hashtags: post.hashtags || [],
+      is_video: post.is_video || false
+    }));
+
+    console.log('📊 Calling universal-ai-handler for insights...');
+    
+    // Llamar al universal-ai-handler para análisis con IA
+    const { data: aiResponse, error: aiError } = await supabase.functions.invoke('universal-ai-handler', {
+      body: {
+        functionName: 'marketing_analysis',
+        messages: [
+          {
+            role: 'system',
+            content: `Eres un experto en marketing digital y análisis de redes sociales. Analiza los siguientes posts de ${platform} y genera insights detallados en formato JSON.`
+          },
+          {
+            role: 'user',
+            content: `Analiza estos ${postsData.length} posts y genera insights de marketing:
+
+${JSON.stringify(postsData, null, 2)}
+
+Responde ÚNICAMENTE con un JSON válido con esta estructura:
+{
+  "optimal_timing": {
+    "bestHours": [{"hour": 18, "posts": 5, "avgEngagement": "8.5%"}],
+    "bestDays": [{"dayLabel": "Lunes", "posts": 8, "avgEngagement": "7.2%"}]
+  },
+  "content_performance": {
+    "byContentType": [{"type": "video", "count": 10, "avgLikes": 150, "avgComments": 12, "performance": "Alto"}],
+    "topPerformers": [{"caption": "...", "likes": 200, "comments": 15}]
+  },
+  "sentiment_analysis": {
+    "overall_sentiment": "positive",
+    "confidence_score": 0.85,
+    "brand_tone": "Profesional y amigable",
+    "audience_connection": "Fuerte conexión emocional",
+    "emotional_triggers": ["confianza", "inspiración"],
+    "recommendations": ["Mantener tono actual", "Incrementar contenido educativo"]
+  },
+  "hashtag_insights": {
+    "topPerforming": [{"hashtag": "skincare", "uses": 15, "avgEngagement": "9.1%", "performance": "Excelente"}]
+  }
+}`
+          }
+        ]
+      }
+    });
+
+    if (aiError) {
+      console.error('❌ Error calling universal-ai-handler:', aiError);
+      // Generar insights básicos si falla la IA
+      return await generateBasicInsights(userId, platform, posts, supabase);
+    }
+
+    console.log('🎯 AI Response received:', aiResponse);
+    
+    if (!aiResponse?.output) {
+      console.error('❌ No output from AI');
+      return await generateBasicInsights(userId, platform, posts, supabase);
+    }
+
+    // Parsear respuesta de IA
+    let aiInsights;
+    try {
+      aiInsights = JSON.parse(aiResponse.output);
+    } catch (parseError) {
+      console.error('❌ Error parsing AI response:', parseError);
+      return await generateBasicInsights(userId, platform, posts, supabase);
+    }
+
+    // Guardar insights en la base de datos
+    const insightsToSave = [
+      {
+        user_id: userId,
+        platform: platform,
+        insight_type: 'optimal_timing',
+        title: 'Análisis de Horarios Óptimos',
+        description: 'Mejores horarios y días para publicar contenido',
+        data: aiInsights.optimal_timing
+      },
+      {
+        user_id: userId,
+        platform: platform,
+        insight_type: 'content_performance',
+        title: 'Análisis de Rendimiento de Contenido',
+        description: 'Análisis del rendimiento por tipo de contenido',
+        data: aiInsights.content_performance
+      },
+      {
+        user_id: userId,
+        platform: platform,
+        insight_type: 'sentiment_analysis',
+        title: 'Análisis de Sentimientos con IA',
+        description: 'Análisis del tono de marca y conexión con audiencia',
+        data: aiInsights.sentiment_analysis
+      },
+      {
+        user_id: userId,
+        platform: platform,
+        insight_type: 'hashtag_optimization',
+        title: 'Optimización de Hashtags',
+        description: 'Análisis del rendimiento de hashtags',
+        data: aiInsights.hashtag_insights
+      }
+    ];
+
+    // Eliminar insights existentes para el usuario y plataforma
+    await supabase
+      .from('marketing_insights')
+      .delete()
+      .eq('user_id', userId)
+      .eq('platform', platform)
+      .in('insight_type', ['optimal_timing', 'content_performance', 'sentiment_analysis', 'hashtag_optimization']);
+
+    // Insertar nuevos insights
+    const { error: insertError } = await supabase
+      .from('marketing_insights')
+      .insert(insightsToSave);
+
+    if (insertError) {
+      console.error('❌ Error saving insights:', insertError);
+      throw new Error(`Error saving insights: ${insertError.message}`);
+    }
+
+    console.log(`✅ Successfully saved ${insightsToSave.length} marketing insights`);
+    return insightsToSave.length;
+
+  } catch (error: any) {
+    console.error('❌ Error in generateMarketingInsights:', error);
+    return await generateBasicInsights(userId, platform, posts, supabase);
+  }
+}
+
+async function generateBasicInsights(userId: string, platform: string, posts: any[], supabase: any) {
+  console.log('📊 Generating basic insights without AI...');
+  
+  // Análisis básico de horarios
+  const hourlyData: { [key: number]: { posts: number; totalEngagement: number } } = {};
+  const dailyData: { [key: number]: { posts: number; totalEngagement: number } } = {};
+  
+  posts.forEach(post => {
+    const publishedAt = new Date(post.posted_at || post.created_at);
+    const hour = publishedAt.getHours();
+    const day = publishedAt.getDay();
+    const engagement = (post.like_count || 0) + (post.comment_count || 0);
+    
+    if (!hourlyData[hour]) hourlyData[hour] = { posts: 0, totalEngagement: 0 };
+    if (!dailyData[day]) dailyData[day] = { posts: 0, totalEngagement: 0 };
+    
+    hourlyData[hour].posts++;
+    hourlyData[hour].totalEngagement += engagement;
+    dailyData[day].posts++;
+    dailyData[day].totalEngagement += engagement;
+  });
+
+  const basicInsights = [
+    {
+      user_id: userId,
+      platform: platform,
+      insight_type: 'optimal_timing',
+      title: 'Análisis de Horarios Básico',
+      description: 'Análisis básico de horarios óptimos',
+      data: {
+        bestHours: Object.entries(hourlyData)
+          .map(([hour, data]) => ({
+            hour: parseInt(hour),
+            posts: data.posts,
+            avgEngagement: data.posts > 0 ? `${(data.totalEngagement / data.posts).toFixed(1)}` : '0'
+          }))
+          .sort((a, b) => parseFloat(b.avgEngagement) - parseFloat(a.avgEngagement))
+          .slice(0, 5),
+        bestDays: Object.entries(dailyData)
+          .map(([day, data]) => ({
+            dayLabel: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][parseInt(day)],
+            posts: data.posts,
+            avgEngagement: data.posts > 0 ? `${(data.totalEngagement / data.posts).toFixed(1)}` : '0'
+          }))
+          .sort((a, b) => parseFloat(b.avgEngagement) - parseFloat(a.avgEngagement))
+          .slice(0, 5)
+      }
+    }
+  ];
+
+  // Guardar insights básicos
+  await supabase
+    .from('marketing_insights')
+    .delete()
+    .eq('user_id', userId)
+    .eq('platform', platform)
+    .eq('insight_type', 'optimal_timing');
+
+  const { error: insertError } = await supabase
+    .from('marketing_insights')
+    .insert(basicInsights);
+
+  if (insertError) {
+    console.error('❌ Error saving basic insights:', insertError);
+    return 0;
+  }
+
+  console.log('✅ Successfully saved basic insights');
+  return basicInsights.length;
 }

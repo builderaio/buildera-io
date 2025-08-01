@@ -356,122 +356,66 @@ export default function MarketingHubOnboarding({ profile, onComplete }: Onboardi
     setAnalyzing(true);
     setAnalysisResults([]);
     
-    const connectedPlatforms = platforms.filter(p => p.connected);
-    
-    for (const platform of connectedPlatforms) {
-      setCurrentAnalyzing(platform.name);
+    try {
+      console.log('🚀 Iniciando análisis completo...');
       
-      try {
-        console.log(`🚀 Analyzing ${platform.name}...`);
-        
-        let result: AnalysisResult;
-        
-        switch (platform.id) {
-          case 'instagram':
-            const { data: instagramAnalysis, error: instagramAnalysisError } = await supabase.functions.invoke('instagram-intelligent-analysis', {
-              body: { user_id: profile.user_id }
-            });
-            
-            if (instagramAnalysisError) {
-              console.error('Instagram analysis error:', instagramAnalysisError);
-              throw new Error(`Error en análisis: ${instagramAnalysisError.message}`);
-            }
-            
-            result = {
-              platform: platform.name,
-              success: true,
-              insightsGenerated: instagramAnalysis?.insights_generated || 0,
-              actionablesGenerated: instagramAnalysis?.actionables_generated || 0
-            };
-            break;
-            
-          case 'facebook':
-            const { data: fbAnalysis, error: fbAnalysisError } = await supabase.functions.invoke('facebook-intelligent-analysis', {
-              body: { user_id: profile.user_id }
-            });
-            
-            if (fbAnalysisError) {
-              console.error('Facebook analysis error:', fbAnalysisError);
-              throw new Error(`Error en análisis: ${fbAnalysisError.message}`);
-            }
-            
-            result = {
-              platform: platform.name,
-              success: true,
-              insightsGenerated: fbAnalysis?.insights_generated || 0,
-              actionablesGenerated: fbAnalysis?.actionables_generated || 0
-            };
-            break;
-            
-          case 'linkedin':
-            const { data: linkedinAnalysis, error: linkedinAnalysisError } = await supabase.functions.invoke('linkedin-intelligent-analysis', {
-              body: { user_id: profile.user_id }
-            });
-            
-            if (linkedinAnalysisError) {
-              console.error('LinkedIn analysis error:', linkedinAnalysisError);
-              throw new Error(`Error en análisis: ${linkedinAnalysisError.message}`);
-            }
-            
-            result = {
-              platform: platform.name,
-              success: true,
-              insightsGenerated: linkedinAnalysis?.insights_generated || 0,
-              actionablesGenerated: linkedinAnalysis?.actionables_generated || 0
-            };
-            break;
-            
-          case 'tiktok':
-            const { data: tiktokAnalysis, error: tiktokAnalysisError } = await supabase.functions.invoke('tiktok-intelligent-analysis', {
-              body: { user_id: profile.user_id }
-            });
-            
-            if (tiktokAnalysisError) {
-              console.error('TikTok analysis error:', tiktokAnalysisError);
-              throw new Error(`Error en análisis: ${tiktokAnalysisError.message}`);
-            }
-            
-            result = {
-              platform: platform.name,
-              success: true,
-              insightsGenerated: tiktokAnalysis?.insights_generated || 0,
-              actionablesGenerated: tiktokAnalysis?.actionables_generated || 0
-            };
-            break;
-            
-          default:
-            result = {
-              platform: platform.name,
-              success: false,
-              insightsGenerated: 0,
-              actionablesGenerated: 0,
-              error: 'Plataforma no soportada'
-            };
-        }
-        
-        console.log(`✅ ${platform.name} analysis completed:`, result);
-        setAnalysisResults(prev => [...prev, result]);
-        
-      } catch (error) {
-        console.error(`❌ Error analyzing ${platform.name}:`, error);
-        setAnalysisResults(prev => [...prev, {
-          platform: platform.name,
-          success: false,
-          insightsGenerated: 0,
-          actionablesGenerated: 0,
-          error: error.message || 'Error desconocido'
-        }]);
+      // 1. Calcular métricas de analytics para todas las plataformas
+      setCurrentAnalyzing('Calculando métricas de rendimiento...');
+      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke('calculate-social-analytics', {
+        body: {} // Sin platform = todas las plataformas
+      });
+      
+      if (analyticsError) {
+        console.error('Error calculating analytics:', analyticsError);
+        throw new Error(`Error calculando métricas: ${analyticsError.message}`);
       }
       
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 2. Ejecutar análisis avanzado de contenido con IA
+      setCurrentAnalyzing('Generando insights con IA...');
+      const { data: advancedAnalysis, error: advancedError } = await supabase.functions.invoke('advanced-content-analyzer', {
+        body: {} // Sin platform = todas las plataformas
+      });
+      
+      if (advancedError) {
+        console.error('Error in advanced analysis:', advancedError);
+        throw new Error(`Error en análisis avanzado: ${advancedError.message}`);
+      }
+      
+      // Consolidar resultados
+      const totalInsights = advancedAnalysis?.insights || 0;
+      const totalActionables = advancedAnalysis?.actionables || 0;
+      const totalRecommendations = advancedAnalysis?.recommendations || 0;
+      
+      console.log(`✅ Análisis completado: ${totalInsights} insights, ${totalActionables} actionables, ${totalRecommendations} recomendaciones`);
+      
+      // Crear resultado consolidado
+      const result: AnalysisResult = {
+        platform: 'Todas las plataformas',
+        success: true,
+        insightsGenerated: totalInsights,
+        actionablesGenerated: totalActionables
+      };
+      
+      setAnalysisResults([result]);
+      
+      // Cargar datos consolidados
+      await loadConsolidatedData();
+      
+    } catch (error) {
+      console.error('❌ Error en análisis completo:', error);
+      setAnalysisResults([{
+        platform: 'Análisis completo',
+        success: false,
+        insightsGenerated: 0,
+        actionablesGenerated: 0,
+        error: error.message || 'Error desconocido'
+      }]);
     }
-    
-    await loadConsolidatedData();
     
     setCurrentAnalyzing('');
     setAnalyzing(false);
     
-    console.log('🎉 All social media analysis completed');
+    console.log('🎉 Análisis completo finalizado');
   };
 
   const loadConsolidatedData = async () => {

@@ -164,6 +164,13 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
   // Funciones para la gestión de productos
   const fetchProducts = async () => {
+    if (!profile?.user_id) {
+      console.log('No user_id available for fetching products');
+      return;
+    }
+
+    console.log('Fetching products for user_id:', profile.user_id);
+    
     try {
       const { data, error } = await supabase
         .from('products')
@@ -171,7 +178,12 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         .eq('user_id', profile?.user_id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching products:', error);
+        throw error;
+      }
+
+      console.log('Products fetched successfully:', data);
       setProducts(data || []);
     } catch (error: any) {
       console.error('Error fetching products:', error);
@@ -184,6 +196,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   };
 
   const handleSaveProduct = async () => {
+    console.log('handleSaveProduct called', { productForm, editingProduct, profile });
+    
     if (!productForm.name.trim()) {
       toast({
         title: "Error",
@@ -193,9 +207,20 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       return;
     }
 
+    if (!profile?.user_id) {
+      console.error('No user_id found in profile:', profile);
+      toast({
+        title: "Error",
+        description: "No se pudo identificar el usuario",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoadingProducts(true);
     try {
       if (editingProduct) {
+        console.log('Updating existing product:', editingProduct.id);
         // Actualizar producto existente
         const { error } = await supabase
           .from('products')
@@ -206,24 +231,34 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           .eq('id', editingProduct.id)
           .eq('user_id', profile?.user_id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating product:', error);
+          throw error;
+        }
 
         toast({
           title: "Producto actualizado",
           description: "El producto se ha actualizado correctamente",
         });
       } else {
+        console.log('Creating new product for user_id:', profile?.user_id);
         // Crear nuevo producto
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('products')
           .insert({
             name: productForm.name,
             description: productForm.description || null,
             user_id: profile?.user_id
-          });
+          })
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error creating product:', error);
+          throw error;
+        }
 
+        console.log('Product created successfully:', data);
+        
         toast({
           title: "Producto creado",
           description: "El producto se ha creado correctamente",

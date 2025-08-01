@@ -309,6 +309,7 @@ async function getLinkedInCompanyPosts(companyIdentifier: string, userId: string
     try {
         apiResponse = JSON.parse(responseText);
         console.log(`✅ Successfully parsed JSON response for ${companyIdentifier}`);
+        console.log(`📄 Full API response structure:`, JSON.stringify(apiResponse, null, 2));
     } catch (parseError) {
         console.error('❌ Failed to parse response as JSON:', parseError);
         return {
@@ -331,11 +332,11 @@ async function getLinkedInCompanyPosts(companyIdentifier: string, userId: string
         };
     }
 
-    if (!apiResponse.success && !apiResponse.data) {
-      throw new Error(apiResponse.message || 'Failed to get posts from API response');
-    }
-
-    const posts = (apiResponse.data || []).slice(0, 12).map((post: any) => { // Limitar a 12 posts para análisis como Instagram
+    // La nueva API devuelve los posts directamente
+    console.log(`📊 Posts data structure:`, typeof apiResponse, Array.isArray(apiResponse));
+    console.log(`📊 Number of posts received:`, apiResponse?.length || 0);
+    
+    const posts = (apiResponse || []).slice(0, 12).map((post: any) => { // Limitar a 12 posts para análisis como Instagram
       const content = post.text || post.description || '';
       const hashtags = extractLinkedInHashtagsFromText(content);
       const mentions = extractLinkedInMentionsFromText(content);
@@ -366,13 +367,19 @@ async function getLinkedInCompanyPosts(companyIdentifier: string, userId: string
 
     // Save posts to database
     if (posts.length > 0) {
-      const { error: saveError } = await supabase.from('linkedin_posts').upsert(posts, {
+      // Agregar user_id a cada post para la base de datos
+      const postsWithUserId = posts.map(post => ({
+        ...post,
+        user_id: userId
+      }));
+      
+      const { error: saveError } = await supabase.from('linkedin_posts').upsert(postsWithUserId, {
         onConflict: 'user_id,post_id'
       });
       if (saveError) {
         console.error('❌ Error saving LinkedIn posts:', saveError);
       } else {
-        console.log(`✅ Saved ${posts.length} LinkedIn posts to database`);
+        console.log(`✅ Saved ${postsWithUserId.length} LinkedIn posts to database`);
       }
     }
 

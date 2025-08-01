@@ -366,17 +366,16 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
           return sum + ((post.like_count || post.likes_count || post.digg_count || 0) + (post.comment_count || post.comments_count || 0));
         }, 0) / topPosts.length);
 
-        insights.push({
-          user_id: userId,
-          title: "Posts con Mayor Engagement",
-          description: `Tus ${topPosts.length} posts con mejor rendimiento han generado un promedio de ${avgInteractions} interacciones.`,
-          insight_type: "content_performance",
-          platforms: ["instagram", "tiktok", "linkedin"],
-          confidence_score: 0.8,
-          impact_level: "high",
-          data: { top_posts: topPosts.length, avg_interactions: avgInteractions },
-          generated_by: 'basic_analyzer'
-        });
+      insights.push({
+        user_id: userId,
+        title: "Posts con Mayor Engagement",
+        description: `Tus ${topPosts.length} posts con mejor rendimiento han generado un promedio de ${avgInteractions} interacciones.`,
+        insight_type: "content_performance",
+        platforms: ["instagram", "tiktok", "linkedin"],
+        confidence_score: 0.8,
+        impact_level: "high",
+        data: { top_posts: topPosts.length, avg_interactions: avgInteractions }
+      });
 
         actionables.push({
           user_id: userId,
@@ -418,8 +417,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
           platforms: ["instagram", "tiktok", "linkedin"],
           confidence_score: 0.9,
           impact_level: "medium",
-          data: { posts_per_week: postsPerWeek, recent_posts: recentPosts.length },
-          generated_by: 'basic_analyzer'
+          data: { posts_per_week: postsPerWeek, recent_posts: recentPosts.length }
         });
 
         if (postsPerWeek < 3) {
@@ -461,8 +459,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
             best_platform: topPlatform.platform, 
             engagement_rate: topPlatform.avgEngagement,
             total_posts: topPlatform.totalPosts
-          },
-          generated_by: 'basic_analyzer'
+          }
         });
 
         actionables.push({

@@ -381,7 +381,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
           user_id: userId,
           title: "Replicar Contenido Exitoso",
           description: "Analiza los elementos comunes de tus posts más exitosos y créa contenido similar",
-          action_type: "content_optimization",
+          action_type: "content_creation",
           priority: "high",
           estimated_impact: "Aumento del 15-25% en engagement"
         });
@@ -425,7 +425,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
             user_id: userId,
             title: "Aumentar Frecuencia de Publicación",
             description: "Planifica publicar al menos 3-4 posts por semana para mantener el engagement",
-            action_type: "content_planning",
+            action_type: "posting_schedule",
             priority: "medium",
             estimated_impact: "Mejora en visibilidad del 20-30%"
           });
@@ -466,7 +466,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
           user_id: userId,
           title: "Enfocar Esfuerzos en Plataforma Principal",
           description: `Concentra más recursos en ${platformName} donde tienes mejor rendimiento`,
-          action_type: "platform_optimization",
+          action_type: "audience_targeting",
           priority: "high",
           estimated_impact: "Optimización del ROI en redes sociales"
         });

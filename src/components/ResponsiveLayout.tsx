@@ -26,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
 import ThemeSelector from '@/components/ThemeSelector';
 import { SmartNotifications } from '@/components/ui/smart-notifications';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Profile {
   id: string;
@@ -229,6 +230,8 @@ const ResponsiveLayout = () => {
 const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSignOut: () => void }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
   
   const isProfileIncomplete = !profile?.company_name || 
                                profile.company_name === 'Mi Negocio' ||
@@ -276,6 +279,13 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     
     if (routes[view]) {
       navigate(routes[view]);
+      
+      // Cerrar sidebar en móvil después de navegar
+      if (isMobile) {
+        setTimeout(() => {
+          setOpenMobile(false);
+        }, 100);
+      }
     }
   };
 

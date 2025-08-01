@@ -245,21 +245,30 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     const viewParam = searchParams.get('view');
     
     // Prioridad al parámetro view en la URL
-    if (viewParam) return viewParam;
+    if (viewParam) {
+      console.log('Active view from URL param:', viewParam);
+      return viewParam;
+    }
     
-    // Rutas específicas
-    if (path.includes('/agents')) return 'mis-agentes';
-    if (path.includes('/marketplace')) return 'marketplace';
+    // Rutas específicas que no usan query params
+    if (path.includes('/company/agents')) return 'mis-agentes';
+    if (path.includes('/marketplace/agents')) return 'marketplace';
     if (path.includes('/profile')) return 'profile';
     
     // Por defecto mando central si estamos en company-dashboard
-    if (path.includes('/company-dashboard')) return 'mando-central';
+    if (path.includes('/company-dashboard')) {
+      console.log('Default view: mando-central');
+      return 'mando-central';
+    }
     
     return 'mando-central';
   };
 
   const setActiveView = (view: string) => {
+    console.log('setActiveView called with:', view);
+    
     if (isProfileIncomplete && view !== "adn-empresa") {
+      console.log('Profile incomplete, redirecting to adn-empresa');
       return;
     }
     
@@ -267,18 +276,21 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       'mando-central': '/company-dashboard',
       'adn-empresa': '/company-dashboard?view=adn-empresa', 
       'base-conocimiento': '/company-dashboard?view=base-conocimiento',
-      'mis-agentes': '/company/agents',
-      'marketplace': '/marketplace/agents', 
       'marketing-hub': '/company-dashboard?view=marketing-hub',
       'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
       'academia-buildera': '/company-dashboard?view=academia-buildera',
       'expertos': '/company-dashboard?view=expertos',
       'configuracion': '/company-dashboard?view=configuracion',
+      'mis-agentes': '/company/agents',
+      'marketplace': '/marketplace/agents',
       'profile': '/profile',
     };
     
-    if (routes[view]) {
-      navigate(routes[view]);
+    const targetRoute = routes[view];
+    console.log('Navigating to:', targetRoute);
+    
+    if (targetRoute) {
+      navigate(targetRoute);
       
       // Cerrar sidebar en móvil después de navegar
       if (isMobile) {
@@ -286,6 +298,8 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
           setOpenMobile(false);
         }, 100);
       }
+    } else {
+      console.warn('No route found for view:', view);
     }
   };
 

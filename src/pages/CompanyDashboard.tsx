@@ -25,7 +25,7 @@ import { User } from "@supabase/supabase-js";
 const CompanyDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [activeView, setActiveView] = useState("dashboard");
+  const [activeView, setActiveView] = useState("mando-central");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -44,8 +44,8 @@ const CompanyDashboard = () => {
       console.log('Setting activeView from URL param:', viewParam);
       setActiveView(viewParam);
     } else {
-      console.log('No view param, defaulting to dashboard');
-      setActiveView('dashboard');
+      console.log('No view param, defaulting to mando-central');
+      setActiveView('mando-central');
     }
 
     const checkAuth = async () => {

@@ -83,6 +83,7 @@ async function processCalendarData(userId: string, platform: string, supabase: a
 
   let posts: any[] = [];
 
+  // Obtener posts según la plataforma
   if (platform === 'instagram') {
     const { data: instagramPosts, error } = await supabase
       .from('instagram_posts')
@@ -91,15 +92,56 @@ async function processCalendarData(userId: string, platform: string, supabase: a
     
     if (error) {
       console.error('❌ Error fetching Instagram posts:', error);
-      throw new Error(`Error fetching Instagram posts: ${error.message}`);
+    } else {
+      posts = instagramPosts || [];
+      console.log(`📊 Found ${posts.length} Instagram posts`);
     }
+  } else if (platform === 'linkedin') {
+    const { data: linkedinPosts, error } = await supabase
+      .from('linkedin_posts')
+      .select('*')
+      .eq('user_id', userId);
     
-    posts = instagramPosts || [];
-    console.log(`📊 Found ${posts.length} Instagram posts`);
+    if (error) {
+      console.error('❌ Error fetching LinkedIn posts:', error);
+    } else {
+      posts = linkedinPosts || [];
+      console.log(`📊 Found ${posts.length} LinkedIn posts`);
+    }
+  } else if (platform === 'facebook') {
+    const { data: facebookPosts, error } = await supabase
+      .from('facebook_posts')
+      .select('*')
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error('❌ Error fetching Facebook posts:', error);
+    } else {
+      posts = facebookPosts || [];
+      console.log(`📊 Found ${posts.length} Facebook posts`);
+    }
+  } else if (platform === 'tiktok') {
+    const { data: tiktokPosts, error } = await supabase
+      .from('tiktok_posts')
+      .select('*')
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error('❌ Error fetching TikTok posts:', error);
+    } else {
+      posts = tiktokPosts || [];
+      console.log(`📊 Found ${posts.length} TikTok posts`);
+    }
   }
 
   if (posts.length === 0) {
-    throw new Error('No hay posts disponibles para analizar. Primero importa posts de tus redes sociales.');
+    console.log(`⚠️ No posts found for ${platform}. Skipping analysis for this platform.`);
+    return {
+      calendar_entries: 0,
+      insights_generated: 0,
+      posts_analyzed: 0,
+      message: `No hay posts disponibles para analizar en ${platform}. Conecta o importa datos de esta plataforma primero.`
+    };
   }
 
   // Procesar calendario

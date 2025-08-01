@@ -130,7 +130,7 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
       
       toast({
         title: "🔄 Iniciando análisis avanzado integral",
-        description: "Ejecutando múltiples análisis de IA...",
+        description: "Analizando todas las plataformas conectadas...",
       });
 
       // Verificar conexiones disponibles
@@ -148,132 +148,144 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
 
       let totalInsights = 0;
       let totalPosts = 0;
+      let totalPlataformas = 0;
       const processedPlatforms = [];
+      const errors = [];
 
-      // Análisis para Instagram
-      if (company.instagram_url) {
-        try {
-          console.log('📊 Procesando Instagram...');
-          const { data: instagramAnalysis } = await supabase.functions.invoke('advanced-social-analyzer', {
-            body: { platform: 'instagram', action: 'process_calendar_data' }
-          });
+      // Función para procesar cada plataforma
+      const processPlatform = async (platformName: string, urlField: string) => {
+        if (company[urlField]) {
+          try {
+            console.log(`📊 Procesando ${platformName}...`);
+            
+            // Verificar primero si hay posts disponibles para esta plataforma
+            let existingPosts = null;
+            switch (platformName.toLowerCase()) {
+              case 'instagram':
+                const { data: instagramPosts } = await supabase
+                  .from('instagram_posts')
+                  .select('id')
+                  .eq('user_id', profile.user_id)
+                  .limit(1);
+                existingPosts = instagramPosts;
+                break;
+              case 'linkedin':
+                const { data: linkedinPosts } = await supabase
+                  .from('linkedin_posts')
+                  .select('id')
+                  .eq('user_id', profile.user_id)
+                  .limit(1);
+                existingPosts = linkedinPosts;
+                break;
+              case 'facebook':
+                const { data: facebookPosts } = await supabase
+                  .from('facebook_posts')
+                  .select('id')
+                  .eq('user_id', profile.user_id)
+                  .limit(1);
+                existingPosts = facebookPosts;
+                break;
+              case 'tiktok':
+                const { data: tiktokPosts } = await supabase
+                  .from('tiktok_posts')
+                  .select('id')
+                  .eq('user_id', profile.user_id)
+                  .limit(1);
+                existingPosts = tiktokPosts;
+                break;
+            }
 
-          if (instagramAnalysis?.success) {
-            totalInsights += instagramAnalysis.insights_generated || 0;
-            totalPosts += instagramAnalysis.posts_analyzed || 0;
-            processedPlatforms.push('Instagram');
+            if (!existingPosts || existingPosts.length === 0) {
+              console.log(`⚠️ No posts found for ${platformName}, skipping...`);
+              errors.push(`No hay datos disponibles para ${platformName}. Conecta e importa datos primero.`);
+              return;
+            }
+
+            const { data: analysisResult } = await supabase.functions.invoke('advanced-social-analyzer', {
+              body: { platform: platformName.toLowerCase(), action: 'process_calendar_data' }
+            });
+
+            if (analysisResult?.success) {
+              totalInsights += analysisResult.insights_generated || 0;
+              totalPosts += analysisResult.posts_analyzed || 0;
+              totalPlataformas++;
+              processedPlatforms.push(platformName);
+              console.log(`✅ ${platformName}: ${analysisResult.insights_generated} insights generados`);
+            } else {
+              errors.push(`Error en análisis de ${platformName}: ${analysisResult?.message || 'Error desconocido'}`);
+            }
+
+            // Análisis de contenido avanzado adicional
+            try {
+              await supabase.functions.invoke('advanced-content-analyzer', {
+                body: { platform: platformName.toLowerCase() }
+              });
+              console.log(`✅ Análisis de contenido adicional completado para ${platformName}`);
+            } catch (error) {
+              console.error(`Error en análisis de contenido para ${platformName}:`, error);
+            }
+
+          } catch (error) {
+            console.error(`Error en análisis de ${platformName}:`, error);
+            errors.push(`Error procesando ${platformName}: ${error.message}`);
           }
-
-          // Análisis de contenido avanzado para Instagram
-          await supabase.functions.invoke('advanced-content-analyzer', {
-            body: { platform: 'instagram' }
-          });
-
-          // Análisis de ubicación de audiencia
-          await supabase.functions.invoke('advanced-social-analyzer', {
-            body: { platform: 'instagram', action: 'analyze_followers_location' }
-          });
-
-          // Insights de audiencia
-          await supabase.functions.invoke('advanced-social-analyzer', {
-            body: { platform: 'instagram', action: 'generate_audience_insights' }
-          });
-
-        } catch (error) {
-          console.error('Error en análisis de Instagram:', error);
+        } else {
+          console.log(`⚠️ ${platformName} no está conectado (no hay URL configurada)`);
         }
-      }
+      };
 
-      // Análisis para LinkedIn
-      if (company.linkedin_url) {
+      // Procesar todas las plataformas en paralelo para mayor eficiencia
+      await Promise.all([
+        processPlatform('Instagram', 'instagram_url'),
+        processPlatform('LinkedIn', 'linkedin_url'),
+        processPlatform('Facebook', 'facebook_url'),
+        processPlatform('TikTok', 'tiktok_url')
+      ]);
+
+      // Análisis cross-platform si hay múltiples plataformas
+      if (totalPlataformas > 1) {
+        console.log('🔄 Ejecutando análisis cross-platform...');
         try {
-          console.log('📊 Procesando LinkedIn...');
-          const { data: linkedinAnalysis } = await supabase.functions.invoke('advanced-social-analyzer', {
-            body: { platform: 'linkedin', action: 'process_calendar_data' }
+          await supabase.functions.invoke('content-insights-analyzer', {
+            body: { platform: null } // Analizar todas las plataformas
           });
-
-          if (linkedinAnalysis?.success) {
-            totalInsights += linkedinAnalysis.insights_generated || 0;
-            totalPosts += linkedinAnalysis.posts_analyzed || 0;
-            processedPlatforms.push('LinkedIn');
-          }
-
-          // Análisis específicos de LinkedIn
-          await supabase.functions.invoke('advanced-content-analyzer', {
-            body: { platform: 'linkedin' }
-          });
-
+          console.log('✅ Análisis cross-platform completado');
         } catch (error) {
-          console.error('Error en análisis de LinkedIn:', error);
+          console.error('Error en análisis cross-platform:', error);
+          errors.push('Error en análisis cross-platform');
         }
-      }
-
-      // Análisis para Facebook
-      if (company.facebook_url) {
-        try {
-          console.log('📊 Procesando Facebook...');
-          const { data: facebookAnalysis } = await supabase.functions.invoke('advanced-social-analyzer', {
-            body: { platform: 'facebook', action: 'process_calendar_data' }
-          });
-
-          if (facebookAnalysis?.success) {
-            totalInsights += facebookAnalysis.insights_generated || 0;
-            totalPosts += facebookAnalysis.posts_analyzed || 0;
-            processedPlatforms.push('Facebook');
-          }
-
-          await supabase.functions.invoke('advanced-content-analyzer', {
-            body: { platform: 'facebook' }
-          });
-
-        } catch (error) {
-          console.error('Error en análisis de Facebook:', error);
-        }
-      }
-
-      // Análisis para TikTok
-      if (company.tiktok_url) {
-        try {
-          console.log('📊 Procesando TikTok...');
-          const { data: tiktokAnalysis } = await supabase.functions.invoke('advanced-social-analyzer', {
-            body: { platform: 'tiktok', action: 'process_calendar_data' }
-          });
-
-          if (tiktokAnalysis?.success) {
-            totalInsights += tiktokAnalysis.insights_generated || 0;
-            totalPosts += tiktokAnalysis.posts_analyzed || 0;
-            processedPlatforms.push('TikTok');
-          }
-
-          await supabase.functions.invoke('advanced-content-analyzer', {
-            body: { platform: 'tiktok' }
-          });
-
-        } catch (error) {
-          console.error('Error en análisis de TikTok:', error);
-        }
-      }
-
-      // Análisis cross-platform integral
-      console.log('🔄 Ejecutando análisis cross-platform...');
-      try {
-        await supabase.functions.invoke('content-insights-analyzer', {
-          body: { platform: null } // Analizar todas las plataformas
-        });
-      } catch (error) {
-        console.error('Error en análisis cross-platform:', error);
       }
 
       // Recargar datos existentes para mostrar análisis actualizado
       await loadExistingAnalysis();
 
       if (processedPlatforms.length === 0) {
-        throw new Error('No se encontraron plataformas conectadas o datos para analizar');
+        let errorMessage = 'No se encontraron plataformas con datos para analizar.\n\n';
+        errorMessage += 'Acciones necesarias:\n';
+        errorMessage += '1. Ve a la pestaña "Redes Sociales"\n';
+        errorMessage += '2. Conecta tus plataformas (Instagram, LinkedIn, etc.)\n';
+        errorMessage += '3. Importa datos usando los botones "Analizar"\n';
+        errorMessage += '4. Regresa aquí para ejecutar el análisis avanzado';
+        
+        if (errors.length > 0) {
+          errorMessage += '\n\nDetalles de errores:\n' + errors.join('\n');
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      let successMessage = `✅ Análisis completado exitosamente!\n\n`;
+      successMessage += `📊 Plataformas analizadas: ${processedPlatforms.join(', ')}\n`;
+      successMessage += `🎯 Total insights generados: ${totalInsights}\n`;
+      successMessage += `📝 Posts analizados: ${totalPosts}`;
+
+      if (errors.length > 0) {
+        successMessage += `\n\n⚠️ Advertencias:\n${errors.join('\n')}`;
       }
 
       toast({
         title: "🎯 Análisis Avanzado Completado",
-        description: `Analizadas ${processedPlatforms.length} plataformas: ${processedPlatforms.join(', ')}. Total: ${totalInsights} insights de ${totalPosts} posts`,
+        description: successMessage,
       });
 
     } catch (error: any) {

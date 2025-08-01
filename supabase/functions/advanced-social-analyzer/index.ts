@@ -230,56 +230,102 @@ async function generateAudienceInsights(userId: string, platform: string, supaba
 }
 
 async function generateMarketingInsights(userId: string, platform: string, posts: any[], supabase: any) {
-  console.log(`🤖 Generating marketing insights with AI for ${posts.length} posts`);
+  console.log(`🤖 Generating advanced marketing insights with AI for ${posts.length} posts on ${platform}`);
   
   try {
     // Preparar datos de los posts para el análisis
-    const postsData = posts.slice(0, 20).map(post => ({
+    const postsData = posts.slice(0, 30).map(post => ({
       caption: post.caption || '',
       likes: post.like_count || 0,
       comments: post.comment_count || 0,
       posted_at: post.posted_at,
       hashtags: post.hashtags || [],
-      is_video: post.is_video || false
+      is_video: post.is_video || false,
+      reach: post.reach || 0,
+      impressions: post.impressions || 0,
+      engagement_rate: post.engagement_rate || 0
     }));
 
-    console.log('📊 Calling universal-ai-handler for insights...');
+    console.log('📊 Calling universal-ai-handler for comprehensive insights...');
     
-    // Llamar al universal-ai-handler para análisis con IA
+    // Llamar al universal-ai-handler para análisis con IA más avanzado
     const { data: aiResponse, error: aiError } = await supabase.functions.invoke('universal-ai-handler', {
       body: {
-        functionName: 'marketing_analysis',
+        functionName: 'advanced_marketing_analysis',
         messages: [
           {
             role: 'system',
-            content: `Eres un experto en marketing digital y análisis de redes sociales. Analiza los siguientes posts de ${platform} y genera insights detallados en formato JSON.`
+            content: `Eres un experto consultor en marketing digital y análisis de redes sociales con más de 15 años de experiencia. Tu misión es analizar los posts de ${platform} y generar insights profundos y accionables que impulsen el crecimiento del negocio.
+
+ANÁLISIS REQUERIDO:
+1. Análisis de timing óptimo (horarios/días con mejor performance)
+2. Rendimiento por tipo de contenido (video vs imagen vs carrusel)
+3. Análisis de sentimientos y tono de marca
+4. Optimización de hashtags y palabras clave
+5. Predicciones de rendimiento futuro
+6. Análisis competitivo y oportunidades
+7. Recomendaciones específicas para crecimiento
+
+ENFOQUE ANALÍTICO:
+- Identifica patrones ocultos en los datos
+- Proporciona insights únicos y no obvios
+- Incluye métricas avanzadas y correlaciones
+- Sugiere estrategias específicas para ${platform}
+- Calcula ROI potencial de las recomendaciones`
           },
           {
             role: 'user',
-            content: `Analiza estos ${postsData.length} posts y genera insights de marketing:
+            content: `Realiza un análisis profundo de estos ${postsData.length} posts de ${platform}:
 
 ${JSON.stringify(postsData, null, 2)}
 
-Responde ÚNICAMENTE con un JSON válido con esta estructura:
+Responde ÚNICAMENTE con un JSON válido con esta estructura expandida:
 {
   "optimal_timing": {
-    "bestHours": [{"hour": 18, "posts": 5, "avgEngagement": "8.5%"}],
-    "bestDays": [{"dayLabel": "Lunes", "posts": 8, "avgEngagement": "7.2%"}]
+    "bestHours": [{"hour": 18, "posts": 5, "avgEngagement": "8.5%", "reach": 2500, "conversionRate": "3.2%"}],
+    "bestDays": [{"dayLabel": "Lunes", "posts": 8, "avgEngagement": "7.2%", "audienceActivity": "alta"}],
+    "recommendations": ["Publicar entre 18-20h para máximo alcance", "Evitar domingos - baja actividad"]
   },
   "content_performance": {
-    "byContentType": [{"type": "video", "count": 10, "avgLikes": 150, "avgComments": 12, "performance": "Alto"}],
-    "topPerformers": [{"caption": "...", "likes": 200, "comments": 15}]
+    "byContentType": [{"type": "video", "count": 10, "avgLikes": 150, "avgComments": 12, "performance": "Alto", "roi": "245%", "viralityScore": 0.8}],
+    "topPerformers": [{"caption": "...", "likes": 200, "comments": 15, "shares": 8, "viralityFactors": ["timing", "hashtags"]}],
+    "contentGaps": ["Falta contenido educativo", "Oportunidad en tendencias actuales"],
+    "recommendations": ["Incrementar videos en 40%", "Usar más contenido user-generated"]
   },
   "sentiment_analysis": {
     "overall_sentiment": "positive",
     "confidence_score": 0.85,
     "brand_tone": "Profesional y amigable",
     "audience_connection": "Fuerte conexión emocional",
-    "emotional_triggers": ["confianza", "inspiración"],
-    "recommendations": ["Mantener tono actual", "Incrementar contenido educativo"]
+    "emotional_triggers": ["confianza", "inspiración", "aspiración"],
+    "sentiment_trends": {"positive": 65, "neutral": 25, "negative": 10},
+    "voice_consistency": 0.9,
+    "recommendations": ["Mantener tono actual", "Incrementar contenido inspiracional en 25%", "Añadir más historias personales"]
   },
   "hashtag_insights": {
-    "topPerforming": [{"hashtag": "skincare", "uses": 15, "avgEngagement": "9.1%", "performance": "Excelente"}]
+    "topPerforming": [{"hashtag": "skincare", "uses": 15, "avgEngagement": "9.1%", "performance": "Excelente", "trendingScore": 0.95, "competitorUsage": "baja"}],
+    "underutilized": [{"hashtag": "beautytech", "potential": "alto", "reason": "trending pero poco usado"}],
+    "seasonalOpportunities": ["#verano2024", "#backtoschool"],
+    "recommendations": ["Usar #beautytech para diferenciación", "Crear hashtag de marca propio"]
+  },
+  "performance_predictions": {
+    "trend": "ascending",
+    "growthRate": "+15% mensual",
+    "predictions": ["Engagement crecerá 20% próximos 3 meses", "Videos tendrán 40% más alcance"],
+    "risks": ["Saturación de hashtags populares", "Cambios algoritmo"],
+    "opportunities": ["Colaboraciones con micro-influencers", "Contenido interactivo"]
+  },
+  "competitive_analysis": {
+    "positioning": "fuerte en educación, débil en entretenimiento",
+    "opportunities": ["Aprovechar gap en contenido nocturno", "Liderar en beautytech"],
+    "threats": ["Competidores aumentando video content", "Nuevos players en nicho"],
+    "recommendations": ["Duplicar presupuesto video", "Crear series educativas exclusivas"]
+  },
+  "growth_strategies": {
+    "short_term": ["Optimizar horarios posting", "Usar hashtags sugeridos", "Incrementar frecuencia"],
+    "medium_term": ["Lanzar serie contenido semanal", "Colaborar con 3 influencers", "Crear challenges virales"],
+    "long_term": ["Construir comunidad exclusiva", "Desarrollar productos basados en insights", "Expandir a nuevas plataformas"],
+    "roi_projections": {"3_meses": "+35% engagement", "6_meses": "+60% followers", "12_meses": "+150% conversiones"}
   }
 }`
           }
@@ -289,7 +335,6 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
 
     if (aiError) {
       console.error('❌ Error calling universal-ai-handler:', aiError);
-      // Generar insights básicos si falla la IA
       return await generateBasicInsights(userId, platform, posts, supabase);
     }
 
@@ -309,41 +354,122 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
       return await generateBasicInsights(userId, platform, posts, supabase);
     }
 
-    // Guardar insights en la base de datos
+    // Guardar insights expandidos en la base de datos
     const insightsToSave = [
       {
         user_id: userId,
         platform: platform,
         insight_type: 'optimal_timing',
-        title: 'Análisis de Horarios Óptimos',
-        description: 'Mejores horarios y días para publicar contenido',
-        data: aiInsights.optimal_timing
+        title: 'Análisis Avanzado de Timing Óptimo',
+        description: 'Horarios y días óptimos con predicciones de conversión',
+        data: aiInsights.optimal_timing,
+        confidence_score: 0.9,
+        impact_level: 'high',
+        generated_by: 'advanced_ai_analyzer'
       },
       {
         user_id: userId,
         platform: platform,
         insight_type: 'content_performance',
-        title: 'Análisis de Rendimiento de Contenido',
-        description: 'Análisis del rendimiento por tipo de contenido',
-        data: aiInsights.content_performance
+        title: 'Análisis Profundo de Rendimiento de Contenido',
+        description: 'Rendimiento por tipo con ROI y factores de viralidad',
+        data: aiInsights.content_performance,
+        confidence_score: 0.85,
+        impact_level: 'high',
+        generated_by: 'advanced_ai_analyzer'
       },
       {
         user_id: userId,
         platform: platform,
         insight_type: 'sentiment_analysis',
-        title: 'Análisis de Sentimientos con IA',
-        description: 'Análisis del tono de marca y conexión con audiencia',
-        data: aiInsights.sentiment_analysis
+        title: 'Análisis Avanzado de Sentimientos y Tono',
+        description: 'Análisis completo del tono de marca y conexión emocional',
+        data: aiInsights.sentiment_analysis,
+        confidence_score: 0.88,
+        impact_level: 'medium',
+        generated_by: 'advanced_ai_analyzer'
       },
       {
         user_id: userId,
         platform: platform,
         insight_type: 'hashtag_optimization',
-        title: 'Optimización de Hashtags',
-        description: 'Análisis del rendimiento de hashtags',
-        data: aiInsights.hashtag_insights
+        title: 'Optimización Estratégica de Hashtags',
+        description: 'Hashtags de alto rendimiento y oportunidades ocultas',
+        data: aiInsights.hashtag_insights,
+        confidence_score: 0.82,
+        impact_level: 'medium',
+        generated_by: 'advanced_ai_analyzer'
+      },
+      {
+        user_id: userId,
+        platform: platform,
+        insight_type: 'performance_predictions',
+        title: 'Predicciones de Rendimiento Futuro',
+        description: 'Proyecciones de crecimiento y identificación de riesgos',
+        data: aiInsights.performance_predictions,
+        confidence_score: 0.75,
+        impact_level: 'high',
+        generated_by: 'advanced_ai_analyzer'
+      },
+      {
+        user_id: userId,
+        platform: platform,
+        insight_type: 'competitive_analysis',
+        title: 'Análisis Competitivo y Posicionamiento',
+        description: 'Posición competitiva y oportunidades de diferenciación',
+        data: aiInsights.competitive_analysis,
+        confidence_score: 0.8,
+        impact_level: 'high',
+        generated_by: 'advanced_ai_analyzer'
+      },
+      {
+        user_id: userId,
+        platform: platform,
+        insight_type: 'growth_strategies',
+        title: 'Estrategias de Crecimiento Personalizadas',
+        description: 'Plan de crecimiento a corto, medio y largo plazo con ROI proyectado',
+        data: aiInsights.growth_strategies,
+        confidence_score: 0.85,
+        impact_level: 'high',
+        generated_by: 'advanced_ai_analyzer'
       }
     ];
+
+    // Generar actionables específicos basados en los insights
+    const actionablesToSave = [];
+    
+    if (aiInsights.optimal_timing?.recommendations) {
+      actionablesToSave.push({
+        user_id: userId,
+        title: 'Optimizar Horarios de Publicación',
+        description: aiInsights.optimal_timing.recommendations[0] || 'Ajustar horarios según análisis',
+        action_type: 'timing_optimization',
+        priority: 'high',
+        estimated_impact: 'Incremento 15-25% en engagement'
+      });
+    }
+
+    if (aiInsights.content_performance?.recommendations) {
+      actionablesToSave.push({
+        user_id: userId,
+        title: 'Ajustar Mix de Contenido',
+        description: aiInsights.content_performance.recommendations[0] || 'Optimizar tipos de contenido',
+        action_type: 'content_optimization',
+        priority: 'high',
+        estimated_impact: 'Mejora 20-30% en alcance'
+      });
+    }
+
+    if (aiInsights.hashtag_insights?.recommendations) {
+      actionablesToSave.push({
+        user_id: userId,
+        title: 'Implementar Estrategia de Hashtags',
+        description: aiInsights.hashtag_insights.recommendations[0] || 'Usar hashtags recomendados',
+        action_type: 'hashtag_optimization',
+        priority: 'medium',
+        estimated_impact: 'Aumento 10-15% en descubrimiento'
+      });
+    }
 
     // Eliminar insights existentes para el usuario y plataforma
     await supabase
@@ -351,7 +477,7 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
       .delete()
       .eq('user_id', userId)
       .eq('platform', platform)
-      .in('insight_type', ['optimal_timing', 'content_performance', 'sentiment_analysis', 'hashtag_optimization']);
+      .in('insight_type', ['optimal_timing', 'content_performance', 'sentiment_analysis', 'hashtag_optimization', 'performance_predictions', 'competitive_analysis', 'growth_strategies']);
 
     // Insertar nuevos insights
     const { error: insertError } = await supabase
@@ -363,7 +489,20 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
       throw new Error(`Error saving insights: ${insertError.message}`);
     }
 
-    console.log(`✅ Successfully saved ${insightsToSave.length} marketing insights`);
+    // Insertar actionables si existen
+    if (actionablesToSave.length > 0) {
+      const { error: actionablesError } = await supabase
+        .from('marketing_actionables')
+        .insert(actionablesToSave);
+
+      if (actionablesError) {
+        console.error('❌ Error saving actionables:', actionablesError);
+      } else {
+        console.log(`✅ Successfully saved ${actionablesToSave.length} actionables`);
+      }
+    }
+
+    console.log(`✅ Successfully saved ${insightsToSave.length} advanced marketing insights`);
     return insightsToSave.length;
 
   } catch (error: any) {

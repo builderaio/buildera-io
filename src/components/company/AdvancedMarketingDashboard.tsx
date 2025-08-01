@@ -28,7 +28,9 @@ import {
   Award,
   Activity,
   PieChart,
-  LineChart
+  LineChart,
+  AlertTriangle,
+  CheckCircle2
 } from "lucide-react";
 
 interface AdvancedMarketingDashboardProps {
@@ -42,7 +44,7 @@ interface AdvancedAnalysis {
   sentimentAnalysis?: any;
   performancePredictions?: any;
   competitiveAnalysis?: any;
-  summary?: any;
+  summary?: any; // Usado para growth_strategies
 }
 
 const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps) => {
@@ -59,14 +61,14 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
 
   const loadExistingAnalysis = async () => {
     try {
-      console.log('🔍 Loading existing analysis for user:', profile.user_id);
+      console.log('🔍 Loading comprehensive analysis for user:', profile.user_id);
       
-      // Cargar insights existentes para mostrar datos previos
+      // Cargar insights existentes para mostrar datos previos (ahora incluyendo nuevos tipos)
       const { data: insights, error } = await supabase
         .from('marketing_insights')
         .select('*')
         .eq('user_id', profile.user_id)
-        .in('insight_type', ['optimal_timing', 'content_performance', 'sentiment_analysis', 'hashtag_optimization'])
+        .in('insight_type', ['optimal_timing', 'content_performance', 'sentiment_analysis', 'hashtag_optimization', 'performance_predictions', 'competitive_analysis', 'growth_strategies'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -93,6 +95,15 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
             case 'hashtag_optimization':
               parsedAnalysis.hashtagInsights = insight.data;
               break;
+            case 'performance_predictions':
+              parsedAnalysis.performancePredictions = insight.data;
+              break;
+            case 'competitive_analysis':
+              parsedAnalysis.competitiveAnalysis = insight.data;
+              break;
+            case 'growth_strategies':
+              parsedAnalysis.summary = insight.data; // Usar summary para growth_strategies
+              break;
           }
         });
         setAnalysis(parsedAnalysis);
@@ -115,77 +126,160 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
   const runAdvancedAnalysis = async () => {
     setLoading(true);
     try {
-      console.log('🚀 Starting advanced analysis...');
+      console.log('🚀 Starting comprehensive advanced analysis...');
       
       toast({
-        title: "🔄 Iniciando análisis avanzado",
-        description: "Verificando datos disponibles...",
+        title: "🔄 Iniciando análisis avanzado integral",
+        description: "Ejecutando múltiples análisis de IA...",
       });
-      
-      // Verificar si hay posts disponibles primero
-      const { data: existingPosts, error: postsError } = await supabase
-        .from('instagram_posts')
-        .select('id')
-        .eq('user_id', profile.user_id);
-      
-      if (postsError) {
-        console.error('Error checking posts:', postsError);
-        throw new Error(`Error verificando posts: ${postsError.message}`);
+
+      // Verificar conexiones disponibles
+      const { data: companies } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('created_by', profile.user_id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      const company = companies?.[0];
+      if (!company) {
+        throw new Error('No se encontró información de empresa');
       }
-      
-      const postsCount = existingPosts?.length || 0;
-      console.log('📊 Posts disponibles:', postsCount);
-      
-      if (postsCount === 0) {
-        // Si no hay posts, primero obtener posts de Instagram
-        console.log('🔄 No posts found, fetching from Instagram...');
-        const { data: instagramData, error: instagramError } = await supabase.functions.invoke('instagram-scraper', {
-          body: { 
-            action: 'get_posts', 
-            username_or_url: 'biury.co'
-          }
-        });
-        
-        if (instagramError) {
-          console.error('Error obteniendo posts de Instagram:', instagramError);
-          toast({
-            title: "Error",
-            description: "No se pudieron obtener posts de Instagram para análisis",
-            variant: "destructive",
+
+      let totalInsights = 0;
+      let totalPosts = 0;
+      const processedPlatforms = [];
+
+      // Análisis para Instagram
+      if (company.instagram_url) {
+        try {
+          console.log('📊 Procesando Instagram...');
+          const { data: instagramAnalysis } = await supabase.functions.invoke('advanced-social-analyzer', {
+            body: { platform: 'instagram', action: 'process_calendar_data' }
           });
-          return;
+
+          if (instagramAnalysis?.success) {
+            totalInsights += instagramAnalysis.insights_generated || 0;
+            totalPosts += instagramAnalysis.posts_analyzed || 0;
+            processedPlatforms.push('Instagram');
+          }
+
+          // Análisis de contenido avanzado para Instagram
+          await supabase.functions.invoke('advanced-content-analyzer', {
+            body: { platform: 'instagram' }
+          });
+
+          // Análisis de ubicación de audiencia
+          await supabase.functions.invoke('advanced-social-analyzer', {
+            body: { platform: 'instagram', action: 'analyze_followers_location' }
+          });
+
+          // Insights de audiencia
+          await supabase.functions.invoke('advanced-social-analyzer', {
+            body: { platform: 'instagram', action: 'generate_audience_insights' }
+          });
+
+        } catch (error) {
+          console.error('Error en análisis de Instagram:', error);
         }
-        
-        console.log('✅ Posts obtenidos:', instagramData);
       }
-      
-      // Ejecutar el análisis avanzado con los datos disponibles en BD
-      const { data, error } = await supabase.functions.invoke('advanced-social-analyzer', {
-        body: { platform: 'instagram', action: 'process_calendar_data' }
-      });
-      
-      if (error) {
-        console.error('Error in advanced analyzer:', error);
-        throw error;
+
+      // Análisis para LinkedIn
+      if (company.linkedin_url) {
+        try {
+          console.log('📊 Procesando LinkedIn...');
+          const { data: linkedinAnalysis } = await supabase.functions.invoke('advanced-social-analyzer', {
+            body: { platform: 'linkedin', action: 'process_calendar_data' }
+          });
+
+          if (linkedinAnalysis?.success) {
+            totalInsights += linkedinAnalysis.insights_generated || 0;
+            totalPosts += linkedinAnalysis.posts_analyzed || 0;
+            processedPlatforms.push('LinkedIn');
+          }
+
+          // Análisis específicos de LinkedIn
+          await supabase.functions.invoke('advanced-content-analyzer', {
+            body: { platform: 'linkedin' }
+          });
+
+        } catch (error) {
+          console.error('Error en análisis de LinkedIn:', error);
+        }
       }
-      
-      console.log('📈 Analysis result:', data);
-      
-      if (data.success) {
-        // Recargar datos existentes para mostrar análisis actualizado
-        await loadExistingAnalysis();
-        
-        toast({
-          title: "🎯 Análisis Avanzado Completado",
-          description: `Se generaron ${data.insights_generated || 0} insights con ${data.posts_analyzed || 0} posts analizados`,
+
+      // Análisis para Facebook
+      if (company.facebook_url) {
+        try {
+          console.log('📊 Procesando Facebook...');
+          const { data: facebookAnalysis } = await supabase.functions.invoke('advanced-social-analyzer', {
+            body: { platform: 'facebook', action: 'process_calendar_data' }
+          });
+
+          if (facebookAnalysis?.success) {
+            totalInsights += facebookAnalysis.insights_generated || 0;
+            totalPosts += facebookAnalysis.posts_analyzed || 0;
+            processedPlatforms.push('Facebook');
+          }
+
+          await supabase.functions.invoke('advanced-content-analyzer', {
+            body: { platform: 'facebook' }
+          });
+
+        } catch (error) {
+          console.error('Error en análisis de Facebook:', error);
+        }
+      }
+
+      // Análisis para TikTok
+      if (company.tiktok_url) {
+        try {
+          console.log('📊 Procesando TikTok...');
+          const { data: tiktokAnalysis } = await supabase.functions.invoke('advanced-social-analyzer', {
+            body: { platform: 'tiktok', action: 'process_calendar_data' }
+          });
+
+          if (tiktokAnalysis?.success) {
+            totalInsights += tiktokAnalysis.insights_generated || 0;
+            totalPosts += tiktokAnalysis.posts_analyzed || 0;
+            processedPlatforms.push('TikTok');
+          }
+
+          await supabase.functions.invoke('advanced-content-analyzer', {
+            body: { platform: 'tiktok' }
+          });
+
+        } catch (error) {
+          console.error('Error en análisis de TikTok:', error);
+        }
+      }
+
+      // Análisis cross-platform integral
+      console.log('🔄 Ejecutando análisis cross-platform...');
+      try {
+        await supabase.functions.invoke('content-insights-analyzer', {
+          body: { platform: null } // Analizar todas las plataformas
         });
-      } else {
-        throw new Error(data.error || 'El análisis no se completó correctamente');
+      } catch (error) {
+        console.error('Error en análisis cross-platform:', error);
       }
+
+      // Recargar datos existentes para mostrar análisis actualizado
+      await loadExistingAnalysis();
+
+      if (processedPlatforms.length === 0) {
+        throw new Error('No se encontraron plataformas conectadas o datos para analizar');
+      }
+
+      toast({
+        title: "🎯 Análisis Avanzado Completado",
+        description: `Analizadas ${processedPlatforms.length} plataformas: ${processedPlatforms.join(', ')}. Total: ${totalInsights} insights de ${totalPosts} posts`,
+      });
+
     } catch (error: any) {
       console.error('Error running advanced analysis:', error);
       toast({
-        title: "Error en Análisis",
+        title: "Error en Análisis Avanzado",
         description: error.message || "No se pudo completar el análisis avanzado",
         variant: "destructive",
       });
@@ -444,35 +538,256 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
   const renderPerformancePredictions = () => {
     if (!analysis.performancePredictions) return null;
 
-    const { trend, predictions } = analysis.performancePredictions;
+    const { trend, predictions, growthRate, risks, opportunities } = analysis.performancePredictions;
 
     return (
-      <Card className={`border-l-4 ${trend === 'ascending' ? 'border-l-green-500' : 'border-l-red-500'}`}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {trend === 'ascending' ? <TrendingUp className="h-5 w-5 text-green-600" /> : <TrendingDown className="h-5 w-5 text-red-600" />}
-            Predicciones de Rendimiento
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Alert className={trend === 'ascending' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
-              <AlertDescription className={trend === 'ascending' ? 'text-green-800' : 'text-red-800'}>
-                Tendencia: <strong>{trend === 'ascending' ? 'Crecimiento' : 'Declive'}</strong> en engagement
-              </AlertDescription>
-            </Alert>
-            
-            <div className="space-y-3">
-              {predictions?.map((prediction: string, index: number) => (
-                <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                  <Target className="h-4 w-4 text-blue-500 mt-0.5" />
-                  <p className="text-sm">{prediction}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className={`border-l-4 ${trend === 'ascending' ? 'border-l-green-500' : 'border-l-red-500'}`}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {trend === 'ascending' ? <TrendingUp className="h-5 w-5 text-green-600" /> : <TrendingDown className="h-5 w-5 text-red-600" />}
+              Predicciones de Rendimiento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Alert className={trend === 'ascending' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+                <AlertDescription className={trend === 'ascending' ? 'text-green-800' : 'text-red-800'}>
+                  Tendencia: <strong>{trend === 'ascending' ? 'Crecimiento' : 'Declive'}</strong> ({growthRate || 'N/A'})
+                </AlertDescription>
+              </Alert>
+              
+              <div className="space-y-3">
+                {predictions?.map((prediction: string, index: number) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                    <Target className="h-4 w-4 text-blue-500 mt-0.5" />
+                    <p className="text-sm">{prediction}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-600" />
+              Riesgos y Oportunidades
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {risks && risks.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-red-600 mb-2 flex items-center gap-2">
+                    <ArrowDown className="h-4 w-4" />
+                    Riesgos Identificados
+                  </h4>
+                  <div className="space-y-2">
+                    {risks.map((risk: string, index: number) => (
+                      <div key={index} className="flex items-start gap-2 p-2 bg-red-50 rounded-lg">
+                        <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0" />
+                        <p className="text-sm text-red-800">{risk}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {opportunities && opportunities.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-green-600 mb-2 flex items-center gap-2">
+                    <ArrowUp className="h-4 w-4" />
+                    Oportunidades
+                  </h4>
+                  <div className="space-y-2">
+                    {opportunities.map((opportunity: string, index: number) => (
+                      <div key={index} className="flex items-start gap-2 p-2 bg-green-50 rounded-lg">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
+                        <p className="text-sm text-green-800">{opportunity}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  const renderCompetitiveAnalysis = () => {
+    if (!analysis.competitiveAnalysis) return null;
+
+    const { positioning, opportunities, threats, recommendations } = analysis.competitiveAnalysis;
+
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-900">
+              <Eye className="h-5 w-5" />
+              Posicionamiento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">{positioning}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-900">
+              <Star className="h-5 w-5" />
+              Oportunidades
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {opportunities?.map((opportunity: string, index: number) => (
+                <div key={index} className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
+                  <p className="text-sm">{opportunity}</p>
                 </div>
               ))}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-red-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-900">
+              <AlertTriangle className="h-5 w-5" />
+              Amenazas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {threats?.map((threat: string, index: number) => (
+                <div key={index} className="flex items-start gap-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0" />
+                  <p className="text-sm">{threat}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {recommendations && recommendations.length > 0 && (
+          <Card className="lg:col-span-3 border-l-4 border-l-purple-500">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-900">
+                <Sparkles className="h-5 w-5" />
+                Recomendaciones Estratégicas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {recommendations.map((rec: string, index: number) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+                    <Zap className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">{rec}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  };
+
+  const renderGrowthStrategies = () => {
+    if (!analysis.summary) return null;
+
+    const { short_term, medium_term, long_term, roi_projections } = analysis.summary;
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-green-900">
+                <Timer className="h-5 w-5" />
+                Corto Plazo (1-3 meses)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {short_term?.map((strategy: string, index: number) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">{strategy}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-orange-500">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-900">
+                <Calendar className="h-5 w-5" />
+                Medio Plazo (3-6 meses)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {medium_term?.map((strategy: string, index: number) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
+                    <Target className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">{strategy}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-900">
+                <Star className="h-5 w-5" />
+                Largo Plazo (6-12 meses)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {long_term?.map((strategy: string, index: number) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                    <TrendingUp className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">{strategy}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {roi_projections && (
+          <Card className="border-l-4 border-l-purple-500">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-900">
+                <BarChart3 className="h-5 w-5" />
+                Proyecciones de ROI
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Object.entries(roi_projections).map(([period, projection]: [string, any], index: number) => (
+                  <div key={index} className="text-center p-4 bg-purple-50 rounded-lg">
+                    <h4 className="font-semibold text-purple-900 mb-2">
+                      {period.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </h4>
+                    <p className="text-lg font-bold text-purple-600">{projection}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     );
   };
 
@@ -588,6 +903,28 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
                 Predicciones y Tendencias
               </h3>
               {renderPerformancePredictions()}
+            </div>
+          )}
+
+          {/* Competitive Analysis */}
+          {analysis.competitiveAnalysis && (
+            <div>
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Target className="h-5 w-5 text-red-600" />
+                Análisis Competitivo
+              </h3>
+              {renderCompetitiveAnalysis()}
+            </div>
+          )}
+
+          {/* Growth Strategies */}
+          {analysis.summary && (
+            <div>
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+                Estrategias de Crecimiento
+              </h3>
+              {renderGrowthStrategies()}
             </div>
           )}
         </div>

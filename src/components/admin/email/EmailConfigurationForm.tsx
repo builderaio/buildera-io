@@ -84,7 +84,17 @@ export const EmailConfigurationForm = ({ configuration, onClose, onSave }: Email
         body: {
           to: formData.from_email,
           subject: 'Prueba de Configuración SMTP - Buildera',
-          content: 'Esta es una prueba de conexión SMTP. Si recibes este correo, la configuración es correcta.',
+          htmlContent: `
+            <h2>Prueba de Configuración SMTP</h2>
+            <p>Este correo confirma que tu configuración SMTP está funcionando correctamente.</p>
+            <p><strong>Configuración probada:</strong></p>
+            <ul>
+              <li>Servidor: ${formData.smtp_host}:${formData.smtp_port}</li>
+              <li>Usuario: ${formData.smtp_user}</li>
+              <li>Seguro: ${formData.smtp_secure ? 'Sí' : 'No'}</li>
+            </ul>
+            <p>Si recibes este email, tu configuración es válida.</p>
+          `,
           configuration: formData,
           test: true
         }

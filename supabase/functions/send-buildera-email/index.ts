@@ -9,6 +9,8 @@ const corsHeaders = {
 interface SendEmailRequest {
   templateId?: string;
   configurationId?: string;
+  configuration?: EmailConfiguration; // For testing purposes
+  test?: boolean; // Indicates this is a test email
   to: string;
   toName?: string;
   cc?: string[];
@@ -227,14 +229,19 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let requestData: SendEmailRequest;
+  
   try {
-    const requestData: SendEmailRequest = await req.json();
+    requestData = await req.json();
 
     let emailConfig: EmailConfiguration;
     let template: EmailTemplate | null = null;
 
     // Get email configuration
-    if (requestData.configurationId) {
+    if (requestData.configuration && requestData.test) {
+      // Use provided configuration for testing
+      emailConfig = requestData.configuration;
+    } else if (requestData.configurationId) {
       const { data: configData, error: configError } = await supabase
         .from("email_configurations")
         .select("*")
@@ -319,27 +326,29 @@ const handler = async (req: Request): Promise<Response> => {
       attachments: requestData.attachments,
     });
 
-    // Save to history
-    const { error: historyError } = await supabase
-      .from("email_send_history")
-      .insert({
-        template_id: requestData.templateId || null,
-        configuration_id: emailConfig.id,
-        to_email: requestData.to,
-        to_name: requestData.toName || null,
-        cc_emails: requestData.cc || null,
-        bcc_emails: requestData.bcc || null,
-        subject,
-        html_content: htmlContent,
-        text_content: textContent || null,
-        attachments: requestData.attachments || [],
-        variables,
-        status: "sent",
-        sent_at: new Date().toISOString(),
-      });
+    // Save to history (only if not a test)
+    if (!requestData.test) {
+      const { error: historyError } = await supabase
+        .from("email_send_history")
+        .insert({
+          template_id: requestData.templateId || null,
+          configuration_id: emailConfig.id,
+          to_email: requestData.to,
+          to_name: requestData.toName || null,
+          cc_emails: requestData.cc || null,
+          bcc_emails: requestData.bcc || null,
+          subject,
+          html_content: htmlContent,
+          text_content: textContent || null,
+          attachments: requestData.attachments || [],
+          variables,
+          status: "sent",
+          sent_at: new Date().toISOString(),
+        });
 
-    if (historyError) {
-      console.error("Error saving email history:", historyError);
+      if (historyError) {
+        console.error("Error saving email history:", historyError);
+      }
     }
 
     return new Response(
@@ -358,10 +367,9 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error sending email:", error);
 
-    // Save failed attempt to history if we have enough data
-    try {
-      const requestData: SendEmailRequest = await req.json();
-      if (requestData.to) {
+    // Save failed attempt to history if we have enough data and it's not a test
+    if (requestData && requestData.to && !requestData.test) {
+      try {
         await supabase
           .from("email_send_history")
           .insert({
@@ -374,9 +382,9 @@ const handler = async (req: Request): Promise<Response> => {
             status: "failed",
             error_message: error.message,
           });
+      } catch {
+        // Ignore errors when saving failed attempts
       }
-    } catch {
-      // Ignore errors when saving failed attempts
     }
 
     return new Response(

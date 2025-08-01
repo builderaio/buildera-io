@@ -101,7 +101,7 @@ async function processCalendarData(userId: string, platform: string, supabase: a
         console.log(`📊 Sample Instagram post:`, JSON.stringify(posts[0], null, 2));
       }
     }
-    } else if (platform === 'linkedin') {
+  } else if (platform === 'linkedin') {
     const { data: linkedinPosts, error } = await supabase
       .from('linkedin_posts')
       .select('*')
@@ -279,6 +279,11 @@ async function generateAudienceInsights(userId: string, platform: string, supaba
 async function generateMarketingInsights(userId: string, platform: string, posts: any[], supabase: any) {
   console.log(`🤖 Generating advanced marketing insights with AI for ${posts.length} posts on ${platform}`);
   
+  if (!posts || posts.length === 0) {
+    console.log(`⚠️ No posts available for AI analysis on ${platform}`);
+    return 0;
+  }
+  
   try {
     // Preparar datos de los posts para el análisis
     const postsData = posts.slice(0, 30).map(post => ({
@@ -292,6 +297,8 @@ async function generateMarketingInsights(userId: string, platform: string, posts
       impressions: post.impressions || 0,
       engagement_rate: post.engagement_rate || 0
     }));
+
+    console.log(`📊 Prepared ${postsData.length} posts for AI analysis`);
 
     console.log('📊 Calling universal-ai-handler for comprehensive insights...');
     

@@ -68,9 +68,9 @@ const MarketingCalendar = ({ profile }: MarketingCalendarProps) => {
   const platforms = {
     linkedin: { name: 'LinkedIn', icon: Linkedin, color: 'bg-blue-700' },
     instagram: { name: 'Instagram', icon: Instagram, color: 'bg-pink-600' },
-    tiktok: { name: 'TikTok', icon: Music, color: 'bg-black' },
+    tiktok: { name: 'TikTok', icon: Music, color: 'bg-[#000000]' },
     facebook: { name: 'Facebook', icon: Facebook, color: 'bg-blue-600' },
-    twitter: { name: 'Twitter/X', icon: Twitter, color: 'bg-black' },
+    twitter: { name: 'Twitter/X', icon: Twitter, color: 'bg-[#000000]' },
     youtube: { name: 'YouTube', icon: Youtube, color: 'bg-red-600' }
   };
 

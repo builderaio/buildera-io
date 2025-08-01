@@ -1236,7 +1236,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       {/* Facebook */}
                       <div className="space-y-2">
                         <Label htmlFor="facebook_url" className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded bg-blue-600 flex items-center justify-center">
+                          <div className="w-4 h-4 rounded bg-[#1877F2] flex items-center justify-center">
                             <span className="text-white text-xs font-bold">f</span>
                           </div>
                           Facebook
@@ -1270,7 +1270,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       {/* YouTube */}
                       <div className="space-y-2">
                         <Label htmlFor="youtube_url" className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded bg-red-600 flex items-center justify-center">
+                          <div className="w-4 h-4 rounded bg-[#FF0000] flex items-center justify-center">
                             <span className="text-white text-xs font-bold">▶</span>
                           </div>
                           YouTube
@@ -1287,7 +1287,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       {/* TikTok */}
                       <div className="space-y-2">
                         <Label htmlFor="tiktok_url" className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded bg-black flex items-center justify-center">
+                          <div className="w-4 h-4 rounded bg-[#000000] flex items-center justify-center">
                             <span className="text-white text-xs font-bold">tt</span>
                           </div>
                           TikTok
@@ -1304,7 +1304,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       {/* LinkedIn */}
                       <div className="space-y-2">
                         <Label htmlFor="linkedin_url" className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded bg-blue-700 flex items-center justify-center">
+                          <div className="w-4 h-4 rounded bg-[#0077B5] flex items-center justify-center">
                             <span className="text-white text-xs font-bold">in</span>
                           </div>
                           LinkedIn
@@ -1321,7 +1321,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       {/* Twitter/X */}
                       <div className="space-y-2">
                         <Label htmlFor="twitter_url" className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded bg-black flex items-center justify-center">
+                          <div className="w-4 h-4 rounded bg-[#000000] flex items-center justify-center">
                             <span className="text-white text-xs font-bold">X</span>
                           </div>
                           Twitter / X

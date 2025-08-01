@@ -25,7 +25,7 @@ const ThemeSelector = () => {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-popover border border-border">
+      <DropdownMenuContent align="end" className="bg-popover border border-border z-50">
         <DropdownMenuItem 
           onClick={() => setTheme('light')}
           className="flex items-center gap-2 cursor-pointer hover:bg-accent"

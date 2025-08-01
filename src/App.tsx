@@ -11,6 +11,7 @@ import CacheManager from "@/components/CacheManager";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { useThemeInitializer } from "@/hooks/useThemeInitializer";
 import ResponsiveLayout from "./components/ResponsiveLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -48,6 +49,11 @@ import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 
 const queryClient = new QueryClient();
 
+const ThemeInitializer = () => {
+  useThemeInitializer();
+  return null;
+};
+
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
 
@@ -69,7 +75,13 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <ThemeProvider 
+        attribute="class" 
+        defaultTheme="system" 
+        enableSystem
+        disableTransitionOnChange
+      >
+        <ThemeInitializer />
         <AdminAuthProvider>
           <TooltipProvider>
             <CacheManager />

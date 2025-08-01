@@ -183,7 +183,7 @@ const ResponsiveLayout = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-card border shadow-lg z-50" align="end" forceMount>
+                  <DropdownMenuContent className="w-56 bg-popover border border-border shadow-lg z-50" align="end" forceMount>
                     <div className="flex items-center justify-start gap-2 p-2">
                       <div className="flex flex-col space-y-1 leading-none">
                         <p className="font-medium">{profile.full_name}</p>
@@ -418,7 +418,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-card border shadow-lg z-50">
+                <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg z-50">
                   <div className="flex items-center justify-start gap-2 p-2">
                     <Avatar className="size-8">
                       <AvatarImage src={profile.avatar_url} alt={profile.full_name} />

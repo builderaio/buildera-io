@@ -7,6 +7,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function cleanJsonResponse(content: string): string {
+  // Remover bloques de markdown ```json
+  let cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+  
+  // Buscar el JSON válido en la respuesta
+  const jsonStart = cleaned.indexOf('{');
+  const jsonEnd = cleaned.lastIndexOf('}');
+  
+  if (jsonStart >= 0 && jsonEnd > jsonStart) {
+    cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+  }
+  
+  return cleaned.trim();
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -147,7 +162,9 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
     // Parsear respuesta de IA
     let analysisResult;
     try {
-      analysisResult = JSON.parse(aiResponse.output);
+      const cleanedResponse = cleanJsonResponse(aiResponse.output || '');
+      console.log('🧹 Cleaned response:', cleanedResponse.substring(0, 200) + '...');
+      analysisResult = JSON.parse(cleanedResponse);
     } catch (parseError) {
       console.error('❌ Error parsing AI response:', parseError);
       console.log('Raw AI output:', aiResponse.output);

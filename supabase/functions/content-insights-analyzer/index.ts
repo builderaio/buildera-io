@@ -7,6 +7,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function cleanJsonResponse(content: string): string {
+  // Remover bloques de markdown ```json
+  let cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+  
+  // Buscar el JSON válido en la respuesta
+  const jsonStart = cleaned.indexOf('{');
+  const jsonEnd = cleaned.lastIndexOf('}');
+  
+  if (jsonStart >= 0 && jsonEnd > jsonStart) {
+    cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+  }
+  
+  return cleaned.trim();
+}
+
 async function getOpenAIApiKey(supabase: any) {
   console.log('🔑 Fetching OpenAI API key from database...');
   const { data, error } = await supabase
@@ -182,7 +197,9 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
     // Parsear respuesta de IA
     let analysisResult;
     try {
-      analysisResult = JSON.parse(aiContent);
+      const cleanedContent = cleanJsonResponse(aiContent);
+      console.log('🧹 Cleaned AI content:', cleanedContent.substring(0, 200) + '...');
+      analysisResult = JSON.parse(cleanedContent);
     } catch (parseError) {
       console.error('❌ Error parsing AI response:', parseError);
       console.log('Raw AI content:', aiContent);

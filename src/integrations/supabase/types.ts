@@ -1985,6 +1985,225 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          expert_id: string
+          id: string
+          is_active: boolean | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          expert_id: string
+          id?: string
+          is_active?: boolean | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          expert_id?: string
+          id?: string
+          is_active?: boolean | null
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_availability_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expert_sessions: {
+        Row: {
+          client_feedback: string | null
+          client_rating: number | null
+          client_user_id: string
+          created_at: string
+          description: string | null
+          duration_minutes: number
+          expert_id: string
+          expert_notes: string | null
+          id: string
+          meeting_link: string | null
+          notes: string | null
+          price_paid: number | null
+          scheduled_at: string
+          session_type: string
+          status: string
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          client_feedback?: string | null
+          client_rating?: number | null
+          client_user_id: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          expert_id: string
+          expert_notes?: string | null
+          id?: string
+          meeting_link?: string | null
+          notes?: string | null
+          price_paid?: number | null
+          scheduled_at: string
+          session_type?: string
+          status?: string
+          topic: string
+          updated_at?: string
+        }
+        Update: {
+          client_feedback?: string | null
+          client_rating?: number | null
+          client_user_id?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number
+          expert_id?: string
+          expert_notes?: string | null
+          id?: string
+          meeting_link?: string | null
+          notes?: string | null
+          price_paid?: number | null
+          scheduled_at?: string
+          session_type?: string
+          status?: string
+          topic?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_sessions_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expert_specializations: {
+        Row: {
+          category: string
+          certifications: string[] | null
+          created_at: string
+          description: string | null
+          expert_id: string
+          id: string
+          skill_level: string
+          subcategory: string
+          years_experience: number | null
+        }
+        Insert: {
+          category: string
+          certifications?: string[] | null
+          created_at?: string
+          description?: string | null
+          expert_id: string
+          id?: string
+          skill_level?: string
+          subcategory: string
+          years_experience?: number | null
+        }
+        Update: {
+          category?: string
+          certifications?: string[] | null
+          created_at?: string
+          description?: string | null
+          expert_id?: string
+          id?: string
+          skill_level?: string
+          subcategory?: string
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_specializations_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experts: {
+        Row: {
+          bio: string | null
+          created_at: string
+          email: string
+          experience_years: number | null
+          full_name: string
+          hourly_rate: number | null
+          id: string
+          is_available: boolean | null
+          is_verified: boolean | null
+          languages: string[] | null
+          linkedin_url: string | null
+          profile_image_url: string | null
+          rating: number | null
+          specialization: string
+          timezone: string | null
+          total_sessions: number | null
+          updated_at: string
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          email: string
+          experience_years?: number | null
+          full_name: string
+          hourly_rate?: number | null
+          id?: string
+          is_available?: boolean | null
+          is_verified?: boolean | null
+          languages?: string[] | null
+          linkedin_url?: string | null
+          profile_image_url?: string | null
+          rating?: number | null
+          specialization: string
+          timezone?: string | null
+          total_sessions?: number | null
+          updated_at?: string
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          email?: string
+          experience_years?: number | null
+          full_name?: string
+          hourly_rate?: number | null
+          id?: string
+          is_available?: boolean | null
+          is_verified?: boolean | null
+          languages?: string[] | null
+          linkedin_url?: string | null
+          profile_image_url?: string | null
+          rating?: number | null
+          specialization?: string
+          timezone?: string | null
+          total_sessions?: number | null
+          updated_at?: string
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       facebook_instagram_connections: {
         Row: {
           access_token: string

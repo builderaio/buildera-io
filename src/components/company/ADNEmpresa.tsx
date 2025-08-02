@@ -882,16 +882,6 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     </div>
                   </div>
 
-                  <div className="flex gap-3 justify-center">
-                    <Button onClick={acceptGeneratedStrategy} disabled={loading}>
-                      {loading ? (
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <ArrowRight className="w-4 h-4 mr-2" />
-                      )}
-                      Continuar
-                    </Button>
-                  </div>
                 </div>
               ) : !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor ? (
                 <div className="text-center space-y-4">

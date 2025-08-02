@@ -268,6 +268,125 @@ Responde únicamente con el JSON solicitado.`;
       }
     }
 
+    // Nuevo: Generar branding visual
+    if (body.generateBranding) {
+      console.log('🎨 Generando branding visual...');
+      
+      const { companyName, industryType, description, mission, vision, valueProposition } = body;
+      
+      const systemPrompt = `Eres un experto en branding y diseño de identidad corporativa especializado en crear identidades visuales coherentes y memorables.
+
+INSTRUCCIONES:
+- Genera una identidad visual completa basada en la estrategia empresarial
+- Los colores deben estar alineados con la industria y valores de la empresa
+- Proporciona códigos hexadecimales válidos
+- La identidad visual debe ser profesional y distintiva
+- Considera la psicología del color para la industria específica
+
+FORMATO DE RESPUESTA (JSON):
+{
+  "branding": {
+    "primary_color": "#XXXXXX",
+    "secondary_color": "#XXXXXX", 
+    "complementary_color_1": "#XXXXXX",
+    "complementary_color_2": "#XXXXXX",
+    "visual_identity": "Descripción de la identidad visual (2-3 oraciones)"
+  }
+}`;
+
+      const userPrompt = `Crea una identidad visual completa para la empresa "${companyName}" que opera en el sector "${industryType}".
+
+INFORMACIÓN ESTRATÉGICA:
+- Misión: ${mission || 'No definida'}
+- Visión: ${vision || 'No definida'}
+- Propuesta de valor: ${valueProposition || 'No definida'}
+- Descripción: ${description || 'No disponible'}
+
+COLORES A GENERAR:
+1. Color primario: El color principal de la marca, debe reflejar los valores core
+2. Color secundario: Color complementario para balance visual
+3. Color complementario 1: Para acentos y elementos destacados
+4. Color complementario 2: Para backgrounds y elementos sutiles
+
+IDENTIDAD VISUAL:
+Descripción de cómo estos elementos trabajjan juntos para crear una identidad cohesiva y memorable.
+
+Los colores deben ser apropiados para la industria ${industryType} y transmitir profesionalismo, confianza y los valores únicos de la empresa.
+
+Responde únicamente con el JSON solicitado.`;
+
+      // Obtener configuración de IA
+      const { data: config, error: configError } = await supabase
+        .from('ai_model_configurations')
+        .select('*')
+        .eq('function_name', 'generate-company-content')
+        .single();
+
+      const aiConfig = config || {
+        model_name: 'gpt-4o-mini',
+        temperature: 0.7,
+        max_tokens: 800,
+        top_p: 1.0,
+        frequency_penalty: 0.0,
+        presence_penalty: 0.0
+      };
+
+      console.log('📤 Enviando request a OpenAI para branding...');
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: aiConfig.model_name,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: aiConfig.max_tokens,
+          temperature: aiConfig.temperature,
+          top_p: aiConfig.top_p,
+          frequency_penalty: aiConfig.frequency_penalty,
+          presence_penalty: aiConfig.presence_penalty,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('❌ Error de OpenAI:', response.status, errorData);
+        throw new Error(`Error de OpenAI: ${response.status} - ${errorData}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Respuesta recibida de OpenAI para branding');
+
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('❌ Respuesta inválida de OpenAI:', data);
+        throw new Error('Respuesta inválida de OpenAI');
+      }
+
+      const generatedContent = data.choices[0].message.content.trim();
+      console.log('📄 Branding generado:', generatedContent);
+
+      try {
+        const brandingData = JSON.parse(generatedContent);
+        console.log('✅ Branding parseado:', brandingData);
+        
+        return new Response(JSON.stringify({ 
+          success: true,
+          branding: brandingData.branding
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (parseError) {
+        console.error('❌ Error parsing branding JSON:', parseError);
+        console.log('Raw content:', generatedContent);
+        throw new Error('Error procesando la respuesta de branding de IA');
+      }
+    }
+
     // Mantener compatibilidad con el formato anterior
     const { field, companyInfo } = body;
     console.log('📝 Generando contenido para:', field);

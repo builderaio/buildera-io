@@ -398,9 +398,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         description: companyData?.descripcion_empresa || companyData?.description || ''
       };
 
-      const { data, error } = await supabase.functions.invoke('generate-company-content', {
+      const { data, error } = await supabase.functions.invoke('get-company-objetivos', {
         body: {
-          type: 'objectives',
           companyInfo: companyInfo,
           strategyData: strategyData
         }

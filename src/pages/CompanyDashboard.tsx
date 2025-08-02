@@ -18,8 +18,6 @@ import Expertos from "@/components/company/Expertos";
 import Configuracion from "@/components/company/Configuracion";
 import UserProfile from "./UserProfile";
 import CompanyAgents from "./CompanyAgents";
-import EraCoachMark from "@/components/ui/era-coach-mark";
-import { useEraCoachMark } from "@/hooks/useEraCoachMark";
 import { User } from "@supabase/supabase-js";
 
 const CompanyDashboard = () => {
@@ -31,8 +29,6 @@ const CompanyDashboard = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
-  // Era coach mark
-  const { shouldShowCoachMark, hideCoachMark, resetTutorial, isLoading: coachMarkLoading } = useEraCoachMark(user?.id);
   
   // Hook para detectar primera vez guardando cambios (registro social)
   const { triggerWebhookOnFirstSave } = useFirstTimeSave(user?.id);
@@ -257,15 +253,6 @@ const CompanyDashboard = () => {
           {renderContent()}
         </div>
       </div>
-      
-      {/* Era Coach Mark */}
-      {user && shouldShowCoachMark && (
-        <EraCoachMark
-          isOpen={shouldShowCoachMark}
-          onClose={hideCoachMark}
-          userId={user.id}
-        />
-      )}
     </div>
   );
 };

@@ -20,11 +20,15 @@ async function getOpenAIApiKey(): Promise<string> {
       .select('api_key_hash')
       .eq('provider', 'openai')
       .eq('status', 'active')
-      .single();
+      .maybeSingle();
     
-    if (!error && data?.api_key_hash) {
+    if (error) {
+      console.log('⚠️ Database error getting API key:', error.message);
+    } else if (data?.api_key_hash) {
       console.log('✅ Found OpenAI API key in database');
       return data.api_key_hash;
+    } else {
+      console.log('⚠️ No API key found in database');
     }
   } catch (dbError) {
     console.log('⚠️ Could not get API key from database:', dbError);

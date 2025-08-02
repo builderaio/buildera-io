@@ -971,8 +971,14 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   Anterior
                 </Button>
                 <Button 
-                  onClick={nextStep} 
-                  disabled={!strategyData.vision || !strategyData.mission || !strategyData.propuesta_valor}
+                  onClick={async () => {
+                    // Si hay estrategia generada sin guardar, guardarla primero
+                    if (showGeneratedStrategy && tempStrategyData) {
+                      await acceptGeneratedStrategy();
+                    }
+                    nextStep();
+                  }} 
+                  disabled={(!strategyData.vision || !strategyData.mission || !strategyData.propuesta_valor) && (!showGeneratedStrategy || !tempStrategyData.vision || !tempStrategyData.mission || !tempStrategyData.propuesta_valor)}
                 >
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />

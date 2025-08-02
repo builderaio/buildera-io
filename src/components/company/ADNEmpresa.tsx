@@ -887,17 +887,9 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       {loading ? (
                         <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
-                        <CheckCircle className="w-4 h-4 mr-2" />
+                        <ArrowRight className="w-4 h-4 mr-2" />
                       )}
-                      Aceptar estrategia
-                    </Button>
-                    <Button onClick={regenerateStrategy} variant="outline" disabled={loading}>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Regenerar
-                    </Button>
-                    <Button onClick={rejectGeneratedStrategy} variant="outline" disabled={loading}>
-                      <X className="w-4 h-4 mr-2" />
-                      Cancelar
+                      Continuar
                     </Button>
                   </div>
                 </div>

@@ -250,36 +250,62 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const generateStrategyWithAI = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-company-content', {
+      // Preparar información de la empresa para el webhook
+      const companyInfo = {
+        company_name: profile?.company_name || companyData?.name,
+        industry_sector: profile?.industry_sector || companyData?.industry_sector,
+        company_size: profile?.company_size || companyData?.company_size,
+        website_url: profile?.website_url || companyData?.website_url,
+        description: companyData?.descripcion_empresa
+      };
+
+      const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
         body: {
-          companyName: profile?.company_name || companyData?.name,
-          industryType: profile?.industry_sector || companyData?.industry_sector,
-          companySize: profile?.company_size || companyData?.company_size,
-          websiteUrl: profile?.website_url || companyData?.website_url,
-          description: companyData?.descripcion_empresa
+          KEY: 'STRATEGY',
+          COMPANY_INFO: JSON.stringify(companyInfo)
         }
       });
 
       if (error) throw error;
 
-      if (data?.strategy) {
-        setStrategyData({
-          vision: data.strategy.vision || "",
-          mission: data.strategy.mission || "",
-          propuesta_valor: data.strategy.value_proposition || ""
-        });
+      if (data?.success && data?.data) {
+        console.log('Respuesta del webhook STRATEGY:', data.data);
+        
+        // Procesar la respuesta dependiendo del formato
+        let strategyResponse = data.data;
+        
+        // Si la respuesta es un string, intentar parsearlo
+        if (typeof strategyResponse === 'string') {
+          try {
+            strategyResponse = JSON.parse(strategyResponse);
+          } catch (parseError) {
+            console.error('Error parsing strategy response:', parseError);
+            throw new Error('Error procesando la respuesta de estrategia');
+          }
+        }
 
-        // Guardar en la base de datos
-        await saveStrategy({
-          vision: data.strategy.vision || "",
-          mission: data.strategy.mission || "",
-          propuesta_valor: data.strategy.value_proposition || ""
-        });
+        // Actualizar el estado con la estrategia generada
+        if (strategyResponse) {
+          const newStrategyData = {
+            vision: strategyResponse.vision || strategyResponse.Vision || "",
+            mission: strategyResponse.mission || strategyResponse.Mission || strategyResponse.mision || "",
+            propuesta_valor: strategyResponse.value_proposition || strategyResponse.propuesta_valor || strategyResponse.ValueProposition || ""
+          };
 
-        toast({
-          title: "Estrategia generada",
-          description: "ERA ha generado automáticamente tu estrategia empresarial.",
-        });
+          setStrategyData(newStrategyData);
+
+          // Guardar en la base de datos
+          await saveStrategy(newStrategyData);
+
+          toast({
+            title: "Estrategia generada",
+            description: "ERA ha generado automáticamente tu estrategia empresarial.",
+          });
+        } else {
+          throw new Error('Respuesta de estrategia vacía o inválida');
+        }
+      } else {
+        throw new Error(data?.message || 'Error en la generación de estrategia');
       }
     } catch (error: any) {
       console.error('Error generating strategy:', error);

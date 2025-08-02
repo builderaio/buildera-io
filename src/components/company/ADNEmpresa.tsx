@@ -389,17 +389,20 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const generateObjectivesWithAI = async () => {
     setGeneratingObjectives(true);
     try {
+      // Preparar la información de la empresa y estrategia
+      const companyInfo = {
+        name: companyData?.name || profile?.company_name || 'Empresa',
+        industry_sector: companyData?.industry_sector || companyData?.industria_principal || profile?.industry_sector,
+        company_size: companyData?.company_size || profile?.company_size || 'No especificado',
+        website_url: companyData?.website_url || profile?.website_url || '',
+        description: companyData?.descripcion_empresa || companyData?.description || ''
+      };
+
       const { data, error } = await supabase.functions.invoke('generate-company-content', {
         body: {
-          companyName: profile?.company_name || companyData?.name,
-          industryType: profile?.industry_sector || companyData?.industry_sector,
-          companySize: profile?.company_size || companyData?.company_size,
-          websiteUrl: profile?.website_url || companyData?.website_url,
-          description: companyData?.descripcion_empresa,
-          mission: strategyData.mission,
-          vision: strategyData.vision,
-          valueProposition: strategyData.propuesta_valor,
-          generateObjectives: true
+          type: 'objectives',
+          companyInfo: companyInfo,
+          strategyData: strategyData
         }
       });
 
@@ -658,9 +661,18 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
+      const newStep = currentStep + 1;
+      setCurrentStep(newStep);
+      
+      // Auto-generar objetivos cuando se llega al paso 4 y no hay objetivos existentes
+      if (newStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives) {
+        // Pequeña pausa para que se renderice el nuevo paso
+        setTimeout(() => {
+          generateObjectivesWithAI();
+        }, 500);
+      }
     }
   };
 
@@ -1004,21 +1016,26 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {!showGeneratedObjectives && objectives.length === 0 ? (
+              {!showGeneratedObjectives && objectives.length === 0 && !generatingObjectives ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 border-2 border-dashed border-muted rounded-lg">
                     <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground mb-4">
-                      ERA puede identificar objetivos estratégicos específicos para el crecimiento de tu negocio
+                      ERA generará automáticamente 3 objetivos de crecimiento basados en tu estrategia empresarial
                     </p>
                     <Button onClick={generateObjectivesWithAI} disabled={generatingObjectives}>
-                      {generatingObjectives ? (
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Bot className="w-4 h-4 mr-2" />
-                      )}
+                      <Bot className="w-4 h-4 mr-2" />
                       Generar objetivos con ERA
                     </Button>
+                  </div>
+                </div>
+              ) : generatingObjectives ? (
+                <div className="text-center space-y-4">
+                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
+                    <RefreshCw className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+                    <p className="text-muted-foreground mb-4">
+                      ERA está analizando tu estrategia empresarial para generar objetivos específicos de crecimiento...
+                    </p>
                   </div>
                 </div>
               ) : showGeneratedObjectives ? (
@@ -1034,23 +1051,85 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   
                   <div className="space-y-3">
                     {generatedObjectives.map((objective, index) => (
-                      <div key={index} className="p-4 border rounded-lg">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium">{objective.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {objective.description}
-                            </p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">
-                                {objective.type === 'short_term' ? 'Corto plazo' : 
-                                 objective.type === 'medium_term' ? 'Mediano plazo' : 'Largo plazo'}
-                              </Badge>
-                              <Badge variant="secondary" className="text-xs">
-                                Prioridad {objective.priority}
-                              </Badge>
-                            </div>
+                      <div key={index} className="p-4 border rounded-lg space-y-3">
+                        <div>
+                          <label className="text-sm font-medium">Título del objetivo</label>
+                          <input
+                            type="text"
+                            value={objective.title}
+                            onChange={(e) => {
+                              const updated = [...generatedObjectives];
+                              updated[index].title = e.target.value;
+                              setGeneratedObjectives(updated);
+                            }}
+                            className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
+                            placeholder="Título del objetivo..."
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="text-sm font-medium">Descripción</label>
+                          <textarea
+                            value={objective.description}
+                            onChange={(e) => {
+                              const updated = [...generatedObjectives];
+                              updated[index].description = e.target.value;
+                              setGeneratedObjectives(updated);
+                            }}
+                            className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
+                            rows={3}
+                            placeholder="Descripción detallada del objetivo..."
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-sm font-medium">Plazo</label>
+                            <select
+                              value={objective.type}
+                              onChange={(e) => {
+                                const updated = [...generatedObjectives];
+                                updated[index].type = e.target.value;
+                                setGeneratedObjectives(updated);
+                              }}
+                              className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
+                            >
+                              <option value="short_term">Corto plazo</option>
+                              <option value="medium_term">Mediano plazo</option>
+                              <option value="long_term">Largo plazo</option>
+                            </select>
                           </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium">Prioridad</label>
+                            <select
+                              value={objective.priority}
+                              onChange={(e) => {
+                                const updated = [...generatedObjectives];
+                                updated[index].priority = e.target.value;
+                                setGeneratedObjectives(updated);
+                              }}
+                              className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
+                            >
+                              <option value="alta">Alta</option>
+                              <option value="media">Media</option>
+                            </select>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {objective.type === 'short_term' ? 'Corto plazo' : 
+                             objective.type === 'medium_term' ? 'Mediano plazo' : 'Largo plazo'}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            Prioridad {objective.priority}
+                          </Badge>
+                          {objective.timeframe && (
+                            <Badge variant="default" className="text-xs">
+                              {objective.timeframe}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -1063,13 +1142,19 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       ) : (
                         <Check className="w-4 h-4 mr-2" />
                       )}
-                      Aceptar objetivos
+                      Continuar con estos objetivos
                     </Button>
                     <Button 
-                      onClick={() => setShowGeneratedObjectives(false)} 
+                      onClick={generateObjectivesWithAI} 
                       variant="outline"
+                      disabled={generatingObjectives}
                     >
-                      <X className="w-4 h-4" />
+                      {generatingObjectives ? (
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                      )}
+                      Regenerar
                     </Button>
                   </div>
                 </div>

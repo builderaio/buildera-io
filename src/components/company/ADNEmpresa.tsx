@@ -294,21 +294,36 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         }
 
         // Actualizar el estado con la estrategia generada para revisión
-        if (strategyResponse) {
-          const newGeneratedStrategy = {
-            vision: strategyResponse.vision || strategyResponse.Vision || "",
-            mission: strategyResponse.mission || strategyResponse.Mission || strategyResponse.mision || "",
-            propuesta_valor: strategyResponse.value_proposition || strategyResponse.propuesta_valor || strategyResponse.ValueProposition || ""
-          };
+        if (strategyResponse && Array.isArray(strategyResponse) && strategyResponse.length > 0) {
+          const firstResponse = strategyResponse[0];
+          const responseArray = firstResponse.response;
+          
+          if (responseArray && Array.isArray(responseArray)) {
+            // Convertir el array de objetos {key, value} a un objeto plano
+            const strategyObject: any = {};
+            responseArray.forEach((item: any) => {
+              if (item.key && item.value) {
+                strategyObject[item.key] = item.value;
+              }
+            });
 
-          setGeneratedStrategy(newGeneratedStrategy);
-          setTempStrategyData(newGeneratedStrategy);
-          setShowGeneratedStrategy(true);
+            const newGeneratedStrategy = {
+              vision: strategyObject.vision || "",
+              mission: strategyObject.mision || strategyObject.mission || "",
+              propuesta_valor: strategyObject.propuesta_valor || strategyObject.value_proposition || ""
+            };
 
-          toast({
-            title: "Estrategia generada",
-            description: "ERA ha generado tu estrategia empresarial. Revísala y ajústala si es necesario.",
-          });
+            setGeneratedStrategy(newGeneratedStrategy);
+            setTempStrategyData(newGeneratedStrategy);
+            setShowGeneratedStrategy(true);
+
+            toast({
+              title: "Estrategia generada",
+              description: "ERA ha generado tu estrategia empresarial. Revísala y ajústala si es necesario.",
+            });
+          } else {
+            throw new Error('Formato de respuesta inesperado - response array no encontrado');
+          }
         } else {
           throw new Error('Respuesta de estrategia vacía o inválida');
         }

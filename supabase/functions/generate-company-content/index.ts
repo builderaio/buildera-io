@@ -27,7 +27,123 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY no está configurada');
     }
 
-    const { field, companyInfo } = await req.json();
+    const body = await req.json();
+    console.log('📝 Datos recibidos:', body);
+
+    // Verificar si es una llamada para generar estrategia completa
+    if (body.companyName) {
+      // Nuevo formato para generar estrategia completa
+      const { companyName, industryType, companySize, websiteUrl, description } = body;
+      
+      console.log('🏢 Generando estrategia completa para:', companyName);
+
+      const systemPrompt = `Eres un experto consultor en estrategia empresarial especializado en crear estrategias empresariales completas y coherentes.
+
+INSTRUCCIONES:
+- Crea una estrategia empresarial completa con misión, visión y propuesta de valor
+- Todos los elementos deben estar alineados y ser coherentes entre sí
+- Usa un lenguaje claro, inspirador y específico
+- Evita clichés y frases genéricas
+- Enfócate en lo que hace única a esta empresa
+
+FORMATO DE RESPUESTA (JSON):
+{
+  "mission": "Declaración de misión (2-3 oraciones máximo)",
+  "vision": "Declaración de visión (2-3 oraciones máximo)", 
+  "value_proposition": "Propuesta de valor (3-4 oraciones máximo)"
+}`;
+
+      const userPrompt = `Crea una estrategia empresarial completa para la empresa "${companyName}" que opera en el sector "${industryType}" con ${companySize}.
+
+${websiteUrl ? `Sitio web: ${websiteUrl}` : ''}
+${description ? `Descripción de la empresa: ${description}` : ''}
+
+ELEMENTOS A GENERAR:
+1. MISIÓN: El propósito fundamental de la empresa, qué hace y por qué existe
+2. VISIÓN: Dónde quiere estar la empresa en el futuro (5-10 años)
+3. PROPUESTA DE VALOR: Qué hace única a la empresa y por qué los clientes deben elegirla
+
+Responde únicamente con el JSON solicitado.`;
+
+      // Obtener configuración de IA desde la base de datos
+      const { data: config, error: configError } = await supabase
+        .from('ai_model_configurations')
+        .select('*')
+        .eq('function_name', 'generate-company-content')
+        .single();
+
+      if (configError) {
+        console.error('Error loading AI config:', configError);
+      }
+
+      const aiConfig = config || {
+        model_name: 'gpt-4o-mini',
+        temperature: 0.7,
+        max_tokens: 800,
+        top_p: 1.0,
+        frequency_penalty: 0.0,
+        presence_penalty: 0.0
+      };
+
+      console.log('Using AI config:', aiConfig);
+      console.log('📤 Enviando request a OpenAI...');
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: aiConfig.model_name,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: aiConfig.max_tokens,
+          temperature: aiConfig.temperature,
+          top_p: aiConfig.top_p,
+          frequency_penalty: aiConfig.frequency_penalty,
+          presence_penalty: aiConfig.presence_penalty,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('❌ Error de OpenAI:', response.status, errorData);
+        throw new Error(`Error de OpenAI: ${response.status} - ${errorData}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Respuesta recibida de OpenAI');
+
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('❌ Respuesta inválida de OpenAI:', data);
+        throw new Error('Respuesta inválida de OpenAI');
+      }
+
+      const generatedContent = data.choices[0].message.content.trim();
+      console.log('📄 Contenido generado:', generatedContent);
+
+      try {
+        const strategy = JSON.parse(generatedContent);
+        console.log('✅ Estrategia parseada:', strategy);
+        
+        return new Response(JSON.stringify({ 
+          success: true,
+          strategy: strategy
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (parseError) {
+        console.error('❌ Error parsing JSON:', parseError);
+        console.log('Raw content:', generatedContent);
+        throw new Error('Error procesando la respuesta de IA');
+      }
+    }
+
+    // Mantener compatibilidad con el formato anterior
+    const { field, companyInfo } = body;
     console.log('📝 Generando contenido para:', field);
     console.log('🏢 Información de la empresa:', companyInfo);
 

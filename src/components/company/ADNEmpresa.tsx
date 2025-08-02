@@ -978,7 +978,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     }
                     nextStep();
                   }} 
-                  disabled={(!strategyData.vision || !strategyData.mission || !strategyData.propuesta_valor) && (!showGeneratedStrategy || !tempStrategyData.vision || !tempStrategyData.mission || !tempStrategyData.propuesta_valor)}
+                  disabled={
+                    !showGeneratedStrategy && 
+                    (!strategyData.vision || !strategyData.mission || !strategyData.propuesta_valor)
+                  }
                 >
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />

@@ -2,11 +2,44 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+/**
+ * Get OpenAI API key from database or environment variable
+ */
+async function getOpenAIApiKey(): Promise<string> {
+  console.log('🔑 Getting OpenAI API key...');
+  
+  // Try to get API key from database first
+  try {
+    const { data, error } = await supabase
+      .from('llm_api_keys')
+      .select('api_key_hash')
+      .eq('provider', 'openai')
+      .eq('status', 'active')
+      .single();
+    
+    if (!error && data?.api_key_hash) {
+      console.log('✅ Found OpenAI API key in database');
+      return data.api_key_hash;
+    }
+  } catch (dbError) {
+    console.log('⚠️ Could not get API key from database:', dbError);
+  }
+  
+  // Fallback to environment variable
+  const apiKey = Deno.env.get('OPENAI_API_KEY');
+  
+  if (!apiKey) {
+    throw new Error('OpenAI API key not found. Configure it in llm_api_keys table or set OPENAI_API_KEY environment variable.');
+  }
+
+  console.log('✅ Using environment variable API key');
+  return apiKey;
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,10 +55,8 @@ serve(async (req) => {
   try {
     console.log('🎯 Iniciando generación de objetivos estratégicos...');
     
-    if (!openAIApiKey) {
-      console.error('❌ OPENAI_API_KEY no está configurada');
-      throw new Error('OPENAI_API_KEY no está configurada');
-    }
+    // Obtener API key de OpenAI
+    const openAIApiKey = await getOpenAIApiKey();
 
     const body = await req.json();
     console.log('📝 Datos recibidos:', body);

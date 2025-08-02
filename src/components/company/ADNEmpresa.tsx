@@ -240,6 +240,13 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   };
 
+  // Auto-generar estrategia cuando se entre al paso 3
+  useEffect(() => {
+    if (currentStep === 3 && !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.descripcion_empresa && !loading) {
+      generateStrategyWithAI();
+    }
+  }, [currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.descripcion_empresa]);
+
   const generateStrategyWithAI = async () => {
     setLoading(true);
     try {
@@ -728,17 +735,18 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 <div className="text-center space-y-4">
                   <div className="p-6 border-2 border-dashed border-muted rounded-lg">
                     <Bot className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      ERA puede generar automáticamente tu estrategia empresarial basada en la información de tu negocio
-                    </p>
-                    <Button onClick={generateStrategyWithAI} disabled={loading}>
-                      {loading ? (
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Bot className="w-4 h-4 mr-2" />
-                      )}
-                      Generar estrategia con ERA
-                    </Button>
+                    {loading ? (
+                      <>
+                        <RefreshCw className="w-8 h-8 text-primary mx-auto mb-4 animate-spin" />
+                        <p className="text-muted-foreground">
+                          ERA está generando automáticamente tu estrategia empresarial...
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        Generando estrategia automáticamente con ERA
+                      </p>
+                    )}
                   </div>
                 </div>
               ) : (

@@ -28,8 +28,8 @@ import {
   RefreshCw,
   Save,
   Edit3,
-  Check,
-  X
+  X,
+  Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -77,6 +77,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const [generatingObjectives, setGeneratingObjectives] = useState(false);
   const [generatedObjectives, setGeneratedObjectives] = useState<any[]>([]);
   const [showGeneratedObjectives, setShowGeneratedObjectives] = useState(false);
+  
+  // Estados para revisión de estrategia generada
+  const [generatedStrategy, setGeneratedStrategy] = useState<any>(null);
+  const [showGeneratedStrategy, setShowGeneratedStrategy] = useState(false);
+  const [tempStrategyData, setTempStrategyData] = useState({
+    vision: "",
+    mission: "",
+    propuesta_valor: ""
+  });
 
   const totalSteps = 6;
 
@@ -284,22 +293,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           }
         }
 
-        // Actualizar el estado con la estrategia generada
+        // Actualizar el estado con la estrategia generada para revisión
         if (strategyResponse) {
-          const newStrategyData = {
+          const newGeneratedStrategy = {
             vision: strategyResponse.vision || strategyResponse.Vision || "",
             mission: strategyResponse.mission || strategyResponse.Mission || strategyResponse.mision || "",
             propuesta_valor: strategyResponse.value_proposition || strategyResponse.propuesta_valor || strategyResponse.ValueProposition || ""
           };
 
-          setStrategyData(newStrategyData);
-
-          // Guardar en la base de datos
-          await saveStrategy(newStrategyData);
+          setGeneratedStrategy(newGeneratedStrategy);
+          setTempStrategyData(newGeneratedStrategy);
+          setShowGeneratedStrategy(true);
 
           toast({
             title: "Estrategia generada",
-            description: "ERA ha generado automáticamente tu estrategia empresarial.",
+            description: "ERA ha generado tu estrategia empresarial. Revísala y ajústala si es necesario.",
           });
         } else {
           throw new Error('Respuesta de estrategia vacía o inválida');
@@ -319,6 +327,50 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   };
 
+  const acceptGeneratedStrategy = async () => {
+    setLoading(true);
+    try {
+      // Actualizar el estado principal con la estrategia temporal
+      setStrategyData(tempStrategyData);
+      
+      // Guardar en la base de datos
+      await saveStrategy(tempStrategyData);
+      
+      // Limpiar estados temporales
+      setShowGeneratedStrategy(false);
+      setGeneratedStrategy(null);
+      
+      toast({
+        title: "Estrategia aceptada",
+        description: "La estrategia empresarial ha sido guardada exitosamente.",
+      });
+    } catch (error: any) {
+      console.error('Error saving strategy:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar la estrategia.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const rejectGeneratedStrategy = () => {
+    setShowGeneratedStrategy(false);
+    setGeneratedStrategy(null);
+    setTempStrategyData({
+      vision: "",
+      mission: "",
+      propuesta_valor: ""
+    });
+  };
+
+  const regenerateStrategy = async () => {
+    setShowGeneratedStrategy(false);
+    setGeneratedStrategy(null);
+    await generateStrategyWithAI();
+  };
   const generateObjectivesWithAI = async () => {
     setGeneratingObjectives(true);
     try {
@@ -757,7 +809,84 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {!strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor ? (
+              {showGeneratedStrategy ? (
+                <div className="space-y-6">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Bot className="w-5 h-5 text-blue-500" />
+                      <h3 className="font-medium text-blue-900 dark:text-blue-100">
+                        Estrategia generada por ERA
+                      </h3>
+                    </div>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                      Revisa la estrategia generada y ajústala si es necesario antes de continuar.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Misión</label>
+                      <textarea
+                        className="w-full p-3 border rounded-lg resize-none"
+                        rows={3}
+                        value={tempStrategyData.mission}
+                        onChange={(e) => setTempStrategyData(prev => ({
+                          ...prev,
+                          mission: e.target.value
+                        }))}
+                        placeholder="Misión de la empresa..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Visión</label>
+                      <textarea
+                        className="w-full p-3 border rounded-lg resize-none"
+                        rows={3}
+                        value={tempStrategyData.vision}
+                        onChange={(e) => setTempStrategyData(prev => ({
+                          ...prev,
+                          vision: e.target.value
+                        }))}
+                        placeholder="Visión de la empresa..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Propuesta de Valor</label>
+                      <textarea
+                        className="w-full p-3 border rounded-lg resize-none"
+                        rows={3}
+                        value={tempStrategyData.propuesta_valor}
+                        onChange={(e) => setTempStrategyData(prev => ({
+                          ...prev,
+                          propuesta_valor: e.target.value
+                        }))}
+                        placeholder="Propuesta de valor..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 justify-center">
+                    <Button onClick={acceptGeneratedStrategy} disabled={loading}>
+                      {loading ? (
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      )}
+                      Aceptar estrategia
+                    </Button>
+                    <Button onClick={regenerateStrategy} variant="outline" disabled={loading}>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Regenerar
+                    </Button>
+                    <Button onClick={rejectGeneratedStrategy} variant="outline" disabled={loading}>
+                      <X className="w-4 h-4 mr-2" />
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 border-2 border-dashed border-muted rounded-lg">
                     <Bot className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

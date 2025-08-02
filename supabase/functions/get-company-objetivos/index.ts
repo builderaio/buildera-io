@@ -176,7 +176,17 @@ Responde únicamente con el JSON solicitado.`;
     console.log('📄 Objetivos generados:', generatedContent);
 
     try {
-      const objectivesData = JSON.parse(generatedContent);
+      // Limpiar el contenido antes de parsear
+      let cleanContent = generatedContent.trim();
+      
+      // Remover markdown code blocks si existen
+      if (cleanContent.startsWith('```json')) {
+        cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanContent.startsWith('```')) {
+        cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      
+      const objectivesData = JSON.parse(cleanContent);
       console.log('✅ Objetivos parseados:', objectivesData);
       
       return new Response(JSON.stringify({ 

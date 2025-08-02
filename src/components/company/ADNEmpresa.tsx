@@ -92,9 +92,13 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   useEffect(() => {
     if (profile?.user_id) {
       fetchAllData();
-      checkOnboardingStatus();
     }
   }, [profile?.user_id]);
+
+  // Separar useEffect para checkOnboardingStatus para evitar loops
+  useEffect(() => {
+    checkOnboardingStatus();
+  }, [companyData, strategyData, objectives, brandingData, socialConnections]);
 
   const fetchAllData = async () => {
     await Promise.all([
@@ -245,7 +249,9 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     if (!isOnboardingComplete) {
       const nextIncompleteStep = Array.from({length: totalSteps}, (_, i) => i + 1)
         .find(step => !completed.includes(step));
-      if (nextIncompleteStep) setCurrentStep(nextIncompleteStep);
+      if (nextIncompleteStep && nextIncompleteStep !== currentStep) {
+        setCurrentStep(nextIncompleteStep);
+      }
     }
   };
 
@@ -431,36 +437,73 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const generateBrandingWithAI = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-company-content', {
+      // Preparar información de la empresa para el webhook
+      const companyInfo = {
+        company_name: profile?.company_name || companyData?.name,
+        industry_sector: profile?.industry_sector || companyData?.industry_sector,
+        company_size: profile?.company_size || companyData?.company_size,
+        website_url: profile?.website_url || companyData?.website_url,
+        description: companyData?.descripcion_empresa,
+        mission: strategyData.mission,
+        vision: strategyData.vision,
+        value_proposition: strategyData.propuesta_valor
+      };
+
+      const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
         body: {
-          companyName: profile?.company_name || companyData?.name,
-          industryType: profile?.industry_sector || companyData?.industry_sector,
-          description: companyData?.descripcion_empresa,
-          mission: strategyData.mission,
-          vision: strategyData.vision,
-          valueProposition: strategyData.propuesta_valor,
-          generateBranding: true
+          KEY: 'BRAND',
+          COMPANY_INFO: JSON.stringify(companyInfo)
         }
       });
 
       if (error) throw error;
 
-      if (data?.branding) {
-        setBrandingData({
-          primary_color: data.branding.primary_color || "",
-          secondary_color: data.branding.secondary_color || "",
-          complementary_color_1: data.branding.complementary_color_1 || "",
-          complementary_color_2: data.branding.complementary_color_2 || "",
-          visual_identity: data.branding.visual_identity || ""
-        });
+      if (data?.success && data?.data) {
+        console.log('Respuesta del webhook BRAND:', data.data);
+        
+        // Procesar la respuesta del branding
+        let brandingResponse = data.data;
+        
+        if (typeof brandingResponse === 'string') {
+          try {
+            brandingResponse = JSON.parse(brandingResponse);
+          } catch (parseError) {
+            console.error('Error parsing branding response:', parseError);
+            throw new Error('Error procesando la respuesta de branding');
+          }
+        }
 
-        // Guardar en la base de datos
-        await saveBranding(data.branding);
+        if (brandingResponse && Array.isArray(brandingResponse) && brandingResponse.length > 0) {
+          const firstResponse = brandingResponse[0];
+          const responseArray = firstResponse.response;
+          
+          if (responseArray && Array.isArray(responseArray)) {
+            const brandingObject: any = {};
+            responseArray.forEach((item: any) => {
+              if (item.key && item.value) {
+                brandingObject[item.key] = item.value;
+              }
+            });
 
-        toast({
-          title: "Identidad de marca generada",
-          description: "ERA ha definido automáticamente tu identidad visual.",
-        });
+            const newBrandingData = {
+              primary_color: brandingObject.primary_color || "",
+              secondary_color: brandingObject.secondary_color || "",
+              complementary_color_1: brandingObject.complementary_color_1 || "",
+              complementary_color_2: brandingObject.complementary_color_2 || "",
+              visual_identity: brandingObject.visual_identity || ""
+            };
+
+            setBrandingData(newBrandingData);
+            await saveBranding(newBrandingData);
+
+            toast({
+              title: "Identidad de marca generada",
+              description: "ERA ha definido automáticamente tu identidad visual.",
+            });
+          }
+        }
+      } else {
+        throw new Error(data?.message || 'Error en la generación de branding');
       }
     } catch (error: any) {
       console.error('Error generating branding:', error);

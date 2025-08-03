@@ -1212,6 +1212,45 @@ export type Database = {
         }
         Relationships: []
       }
+      company_agents: {
+        Row: {
+          agent_id: string
+          agent_name: string
+          company_id: string
+          created_at: string
+          id: string
+          instructions: string
+          is_active: boolean | null
+          tools: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          agent_name: string
+          company_id: string
+          created_at?: string
+          id?: string
+          instructions: string
+          is_active?: boolean | null
+          tools?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          agent_name?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          instructions?: string
+          is_active?: boolean | null
+          tools?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       company_branding: {
         Row: {
           brand_manual_file_path: string | null

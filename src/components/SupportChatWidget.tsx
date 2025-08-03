@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCompanyAgent } from "@/hooks/useCompanyAgent";
 
 interface Message {
   id: string;
@@ -29,6 +30,9 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  // Hook para manejar el agente empresarial
+  const { updateCompanyAgent } = useCompanyAgent({ user, enabled: !!user });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,14 +79,12 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('era-chat', {
+      // Try company agent chat first
+      const { data, error } = await supabase.functions.invoke('company-agent-chat', {
         body: {
           message: inputMessage,
-          context: pageContext,
-          userInfo: {
-            display_name: user?.display_name || user?.full_name,
-            user_type: user?.user_type
-          }
+          user_id: user?.user_id,
+          context: pageContext
         }
       });
 
@@ -99,24 +101,53 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
       setIsLoading(false);
 
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending message to company agent:', error);
       
-      // Fallback response if Era service fails
-      const fallbackMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `Hola ${user?.display_name || 'Usuario'}, soy Era, tu asistente personal de Buildera. En este momento estoy teniendo algunas dificultades técnicas. ¿Podrías intentar tu pregunta de nuevo en unos momentos? Gracias por tu paciencia.`,
-        sender: 'support',
-        timestamp: new Date(),
-      };
-      
-      setMessages(prev => [...prev, fallbackMessage]);
-      setIsLoading(false);
-      
-      toast({
-        title: "Nos reconectaremos pronto",
-        description: "Era está trabajando en modo básico. Algunas funciones pueden estar limitadas temporalmente.",
-        variant: "destructive",
-      });
+      // Fallback to general Era chat
+      try {
+        const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('era-chat', {
+          body: {
+            message: inputMessage,
+            context: pageContext,
+            userInfo: {
+              display_name: user?.display_name || user?.full_name,
+              user_type: user?.user_type
+            }
+          }
+        });
+
+        if (fallbackError) throw fallbackError;
+
+        const eraMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: fallbackData.reply,
+          sender: 'support',
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, eraMessage]);
+        setIsLoading(false);
+
+      } catch (fallbackError) {
+        console.error('Error with fallback chat:', fallbackError);
+        
+        // Final fallback response
+        const fallbackMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: `Hola ${user?.display_name || 'Usuario'}, soy tu copiloto empresarial. En este momento estoy configurando tu perfil personalizado. ¿En qué puedo ayudarte mientras tanto?`,
+          sender: 'support',
+          timestamp: new Date(),
+        };
+        
+        setMessages(prev => [...prev, fallbackMessage]);
+        setIsLoading(false);
+        
+        toast({
+          title: "Configurando tu agente personal",
+          description: "Tu copiloto empresarial se está adaptando a tu negocio. Algunas funciones avanzadas estarán disponibles pronto.",
+          variant: "default",
+        });
+      }
     }
   };
 
@@ -127,16 +158,69 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
     }
   };
 
-  // Mensaje de bienvenida inicial
+  // Mensaje de bienvenida inicial y creación de agente
   useEffect(() => {
-    if (messages.length === 0) {
-      const welcomeMessage: Message = {
-        id: 'welcome',
-        content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy Era, tu asistente personal de Buildera. Estoy aquí para ayudarte a sacar el máximo provecho de la plataforma y acompañarte en el crecimiento de tu negocio. ¿En qué puedo ayudarte hoy?`,
-        sender: 'support',
-        timestamp: new Date(),
+    if (messages.length === 0 && user) {
+      // Crear agente empresarial si no existe
+      const initializeCompanyAgent = async () => {
+        try {
+          // Obtener empresa principal del usuario
+          const { data: userCompany } = await supabase
+            .from('company_members')
+            .select('company_id, companies(name)')
+            .eq('user_id', user.user_id)
+            .eq('is_primary', true)
+            .single();
+
+          if (userCompany) {
+            // Verificar si ya existe un agente
+            const { data: existingAgent } = await supabase
+              .from('company_agents')
+              .select('agent_name')
+              .eq('user_id', user.user_id)
+              .single();
+
+            if (!existingAgent) {
+              // Crear agente en background
+              supabase.functions.invoke('create-company-agent', {
+                body: {
+                  user_id: user.user_id,
+                  company_id: userCompany.company_id
+                }
+              }).catch(console.error);
+            }
+
+            const companyName = userCompany.companies?.name || 'tu empresa';
+            const welcomeMessage: Message = {
+              id: 'welcome',
+              content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy tu copiloto empresarial personalizado para ${companyName}. Tengo acceso a toda la información de tu negocio: objetivos estratégicos, marca, datos de redes sociales y más. Estoy aquí para asesorarte y ayudarte a cumplir tus metas empresariales. ¿En qué puedo ayudarte hoy?`,
+              sender: 'support',
+              timestamp: new Date(),
+            };
+            setMessages([welcomeMessage]);
+          } else {
+            // Usuario sin empresa
+            const welcomeMessage: Message = {
+              id: 'welcome',
+              content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy Era, tu asistente de Buildera. Te ayudo a sacar el máximo provecho de la plataforma. Para obtener un asesoramiento más personalizado, te recomiendo completar la configuración de tu empresa. ¿En qué puedo ayudarte?`,
+              sender: 'support',
+              timestamp: new Date(),
+            };
+            setMessages([welcomeMessage]);
+          }
+        } catch (error) {
+          console.error('Error initializing company agent:', error);
+          const welcomeMessage: Message = {
+            id: 'welcome',
+            content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy tu asistente personal de Buildera. ¿En qué puedo ayudarte hoy?`,
+            sender: 'support',
+            timestamp: new Date(),
+          };
+          setMessages([welcomeMessage]);
+        }
       };
-      setMessages([welcomeMessage]);
+
+      initializeCompanyAgent();
     }
   }, [user]);
 
@@ -163,7 +247,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
             <div className="flex items-center gap-2">
               <Bot className="w-5 h-5" />
               <div>
-                <h3 className="font-semibold text-sm">Era - Asistente IA</h3>
+                <h3 className="font-semibold text-sm">Copiloto Empresarial</h3>
                 <p className="text-xs opacity-90">{getPageContext()}</p>
               </div>
             </div>

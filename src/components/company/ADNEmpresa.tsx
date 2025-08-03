@@ -521,10 +521,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             console.log('🎨 Objeto de branding procesado:', brandingObject);
 
             const newBrandingData = {
-              primary_color: brandingObject.primary_color || brandingObject.color_primario || "",
+              primary_color: brandingObject.primary_color || brandingObject.color_principal || "",
               secondary_color: brandingObject.secondary_color || brandingObject.color_secundario || "",
-              complementary_color_1: brandingObject.complementary_color_1 || brandingObject.color_complementario_1 || "",
-              complementary_color_2: brandingObject.complementary_color_2 || brandingObject.color_complementario_2 || "",
+              complementary_color_1: brandingObject.complementary_color_1 || brandingObject.color_complementario1 || "",
+              complementary_color_2: brandingObject.complementary_color_2 || brandingObject.color_complementario2 || "",
               visual_identity: brandingObject.visual_identity || brandingObject.identidad_visual || ""
             };
 
@@ -648,6 +648,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           complementary_color_1: data.complementary_color_1,
           complementary_color_2: data.complementary_color_2,
           visual_identity: data.visual_identity
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;

@@ -39,7 +39,7 @@ serve(async (req) => {
         const { data: template, error: templateError } = await supabase
           .from('email_templates')
           .select('*')
-          .eq('template_type', 'welcome')
+          .eq('template_type', 'registration')
           .eq('is_active', true)
           .maybeSingle();
 

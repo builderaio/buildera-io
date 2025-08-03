@@ -5,7 +5,7 @@ export const useWelcomeEmail = () => {
     try {
       const { data, error } = await supabase.functions.invoke('send-buildera-email', {
         body: {
-          templateId: 'welcome',
+          templateId: '1fe990fb-c92b-4301-a752-4c2028ddc0ae', // ID del template "Bienvenida - Registro de Usuario"
           to: email,
           toName: name,
           subject: `¡Bienvenido a Buildera${userType === 'company' ? ', Empresa' : userType === 'developer' ? ', Desarrollador' : ', Experto'}!`,
@@ -13,6 +13,7 @@ export const useWelcomeEmail = () => {
           variables: {
             user_name: name,
             user_type: userType,
+            user_email: email,
             login_url: `${window.location.origin}/auth`,
             support_email: 'soporte@buildera.io'
           }

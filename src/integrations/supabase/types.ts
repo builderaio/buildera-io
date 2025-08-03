@@ -4667,6 +4667,45 @@ export type Database = {
           },
         ]
       }
+      user_onboarding_status: {
+        Row: {
+          created_at: string
+          dna_empresarial_completed: boolean | null
+          first_login_completed: boolean | null
+          id: string
+          marketing_hub_visited: boolean | null
+          onboarding_completed_at: string | null
+          onboarding_started_at: string | null
+          registration_method: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dna_empresarial_completed?: boolean | null
+          first_login_completed?: boolean | null
+          id?: string
+          marketing_hub_visited?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_started_at?: string | null
+          registration_method?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dna_empresarial_completed?: boolean | null
+          first_login_completed?: boolean | null
+          id?: string
+          marketing_hub_visited?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_started_at?: string | null
+          registration_method?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -5028,6 +5067,10 @@ export type Database = {
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: string
+      }
+      mark_onboarding_completed: {
+        Args: { _user_id: string; _registration_method?: string }
+        Returns: undefined
       }
       remove_linked_provider: {
         Args: { _user_id: string; _provider: string }

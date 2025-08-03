@@ -51,6 +51,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
+  const [user, setUser] = useState<any>(null);
   
   // Estados para los datos
   const [loading, setLoading] = useState(false);
@@ -108,6 +109,17 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       fetchAllData();
     }
   }, [profile?.user_id]);
+
+  // Obtener usuario actual
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   // Separar useEffect para checkOnboardingStatus para evitar loops
   useEffect(() => {
@@ -2181,7 +2193,19 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   Anterior
                 </Button>
                 <Button 
-                  onClick={() => {
+                  onClick={async () => {
+                    // Marcar onboarding como completado
+                    if (user) {
+                      try {
+                        const registrationMethod = user.app_metadata?.provider || 'email';
+                        await supabase.rpc('mark_onboarding_completed', {
+                          _user_id: user.id,
+                          _registration_method: registrationMethod
+                        });
+                      } catch (error) {
+                        console.error('Error marking onboarding as completed:', error);
+                      }
+                    }
                     // Finalizar onboarding y ir al mando central
                     navigate('/company-dashboard');
                   }}

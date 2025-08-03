@@ -67,9 +67,34 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
         }
 
         if (isSocialRegistration) {
-          // Registro por redes sociales
+          // Registro por redes sociales - crear empresa automáticamente si no existe
+          if (!hasCompany && profile && profile.user_type === 'company' && profile.company_name) {
+            console.log('🏭 Creando empresa para usuario social existente...');
+            try {
+              const { data: newCompany, error: companyError } = await supabase.rpc('create_company_with_owner', {
+                company_name: profile.company_name,
+                company_description: `Empresa de ${profile.full_name}`,
+                website_url: profile.website_url,
+                industry_sector: profile.industry_sector,
+                company_size: profile.company_size,
+                user_id_param: user.id
+              });
+
+              if (companyError) {
+                console.error('Error creando empresa:', companyError);
+              } else {
+                console.log('✅ Empresa creada exitosamente:', newCompany);
+                // Redirigir al dashboard después de crear la empresa
+                navigate('/company-dashboard');
+                return;
+              }
+            } catch (error) {
+              console.error('Error en creación de empresa:', error);
+            }
+          }
+          
+          // Si no tiene perfil completo, necesita completar datos faltantes
           if (!profile || !profile.user_type || !profile.company_name) {
-            // Necesita completar datos faltantes
             navigate('/complete-profile?user_type=company');
             return;
           }

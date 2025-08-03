@@ -29,7 +29,11 @@ import {
   Save,
   Edit3,
   X,
-  Check
+  Check,
+  Download,
+  AlertCircle,
+  Info,
+  Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +75,14 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     linkedin: ""
   });
 
+  // Estados para carga de datos de redes sociales
+  const [loadingData, setLoadingData] = useState(false);
+  const [currentLoading, setCurrentLoading] = useState('');
+  const [dataResults, setDataResults] = useState<any[]>([]);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [currentAnalyzing, setCurrentAnalyzing] = useState('');
+  const [analysisResults, setAnalysisResults] = useState<any[]>([]);
+
   // Estados para edición
   const [editingDescription, setEditingDescription] = useState(false);
   const [tempDescription, setTempDescription] = useState("");
@@ -87,7 +99,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     propuesta_valor: ""
   });
 
-  const totalSteps = 6;
+  const totalSteps = 8;
 
   useEffect(() => {
     if (profile?.user_id) {
@@ -785,6 +797,234 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Funciones para carga de datos de redes sociales
+  const loadSocialData = async () => {
+    setLoadingData(true);
+    setDataResults([]);
+    setCurrentLoading('');
+    
+    // Convertir socialConnections a formato de plataformas
+    const platforms = [
+      { id: 'instagram', name: 'Instagram', url: socialConnections.instagram, connected: !!socialConnections.instagram },
+      { id: 'facebook', name: 'Facebook', url: socialConnections.facebook, connected: !!socialConnections.facebook },
+      { id: 'linkedin', name: 'LinkedIn', url: socialConnections.linkedin, connected: !!socialConnections.linkedin },
+      { id: 'tiktok', name: 'TikTok', url: socialConnections.tiktok, connected: !!socialConnections.tiktok },
+    ];
+    
+    const connectedPlatforms = platforms.filter(p => p.connected);
+    
+    for (const platform of connectedPlatforms) {
+      setCurrentLoading(platform.name);
+      
+      try {
+        console.log(`📥 Loading data from ${platform.name}...`);
+        
+        let result: any;
+        
+        switch (platform.id) {
+          case 'instagram':
+            console.log(`📸 Loading Instagram data: ${platform.url}`);
+            
+            const { data: instagramData, error: instagramError } = await supabase.functions.invoke('instagram-scraper', {
+              body: { 
+                action: 'get_posts', 
+                username_or_url: platform.url
+              }
+            });
+            
+            if (instagramError) {
+              console.error('Instagram scraper error:', instagramError);
+              throw new Error(`Error cargando datos: ${instagramError.message}`);
+            }
+            
+            result = {
+              platform: platform.name,
+              success: true,
+              postsFound: instagramData?.data?.posts?.length || 0,
+              profileData: instagramData?.data?.profile || null
+            };
+            break;
+            
+          case 'facebook':
+            console.log(`📘 Loading Facebook data: ${platform.url}`);
+            
+            const { data: fbPageData, error: fbPageError } = await supabase.functions.invoke('facebook-scraper', {
+              body: { 
+                action: 'get_page_details', 
+                page_url: platform.url
+              }
+            });
+            
+            if (fbPageError) {
+              console.error('Facebook scraper error:', fbPageError);
+              throw new Error(`Error cargando datos: ${fbPageError.message}`);
+            }
+            
+            let fbPostsCount = 0;
+            if (fbPageData?.success && fbPageData?.data?.page_details?.page_id) {
+              const { data: fbPostsData } = await supabase.functions.invoke('facebook-scraper', {
+                body: {
+                  action: 'get_page_posts',
+                  page_id: fbPageData.data.page_details.page_id
+                }
+              });
+              fbPostsCount = fbPostsData?.data?.posts?.length || 0;
+            }
+            
+            result = {
+              platform: platform.name,
+              success: true,
+              postsFound: fbPostsCount,
+              profileData: fbPageData?.data?.page_details || null
+            };
+            break;
+            
+          case 'linkedin':
+            const identifier = platform.url.match(/linkedin\.com\/company\/([a-zA-Z0-9-_]+)/)?.[1];
+            if (identifier) {
+              console.log(`💼 Loading LinkedIn data: ${identifier}`);
+              
+              const { data: linkedinData, error: linkedinError } = await supabase.functions.invoke('linkedin-scraper', {
+                body: { 
+                  action: 'get_company_posts', 
+                  company_identifier: identifier
+                }
+              });
+              
+              if (linkedinError) {
+                console.error('LinkedIn scraper error:', linkedinError);
+                throw new Error(`Error cargando datos: ${linkedinError.message}`);
+              }
+              
+              result = {
+                platform: platform.name,
+                success: true,
+                postsFound: linkedinData?.data?.data?.posts?.length || 0,
+                profileData: linkedinData?.data?.data?.company || null
+              };
+            } else {
+              throw new Error('URL de LinkedIn no válida');
+            }
+            break;
+            
+          case 'tiktok':
+            const tiktokId = platform.url.match(/tiktok\.com\/@([a-zA-Z0-9._-]+)/)?.[1];
+            if (tiktokId) {
+              console.log(`🎵 Loading TikTok data: @${tiktokId}`);
+              
+              const { data: tiktokData, error: tiktokError } = await supabase.functions.invoke('tiktok-scraper', {
+                body: { 
+                  action: 'get_posts', 
+                  unique_id: tiktokId
+                }
+              });
+              
+              if (tiktokError) {
+                console.error('TikTok scraper error:', tiktokError);
+                throw new Error(`Error cargando datos: ${tiktokError.message}`);
+              }
+              
+              result = {
+                platform: platform.name,
+                success: true,
+                postsFound: tiktokData?.data?.videos?.length || 0,
+                profileData: tiktokData?.data?.profile || null
+              };
+            } else {
+              throw new Error('Username de TikTok no válido');
+            }
+            break;
+            
+          default:
+            result = {
+              platform: platform.name,
+              success: false,
+              postsFound: 0,
+              error: 'Plataforma no soportada'
+            };
+        }
+        
+        console.log(`✅ ${platform.name} data loading completed:`, result);
+        setDataResults(prev => [...prev, result]);
+        
+      } catch (error: any) {
+        console.error(`❌ Error loading data from ${platform.name}:`, error);
+        setDataResults(prev => [...prev, {
+          platform: platform.name,
+          success: false,
+          postsFound: 0,
+          error: error.message || 'Error desconocido'
+        }]);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    setCurrentLoading('');
+    setLoadingData(false);
+    
+    console.log('🎉 All social media data loading completed');
+  };
+
+  const runAnalysis = async () => {
+    setAnalyzing(true);
+    setAnalysisResults([]);
+    
+    try {
+      console.log('🚀 Iniciando análisis completo...');
+      
+      // 1. Calcular métricas de analytics para todas las plataformas
+      setCurrentAnalyzing('Calculando métricas de rendimiento...');
+      const { data: analyticsData, error: analyticsError } = await supabase.functions.invoke('calculate-social-analytics', {
+        body: {} // Sin platform = todas las plataformas
+      });
+      
+      if (analyticsError) {
+        console.error('Error calculating analytics:', analyticsError);
+        throw new Error(`Error calculando métricas: ${analyticsError.message}`);
+      }
+      
+      // 2. Ejecutar análisis premium con IA
+      setCurrentAnalyzing('Generando insights premium con IA avanzada...');
+      const { data: premiumAnalysis, error: premiumError } = await supabase.functions.invoke('premium-ai-insights', {
+        body: { platform: null } // Analizar todas las plataformas
+      });
+      
+      if (premiumError) {
+        console.error('Error in premium analysis:', premiumError);
+        throw new Error(`Error en análisis premium: ${premiumError.message}`);
+      }
+      
+      // Consolidar resultados
+      const totalInsights = premiumAnalysis?.analysis?.insights?.length || 0;
+      const totalActionables = premiumAnalysis?.analysis?.actionables?.length || 0;
+      const totalRecommendations = premiumAnalysis?.analysis?.recommendations?.length || 0;
+      
+      console.log(`✅ Análisis completado: ${totalInsights} insights, ${totalActionables} actionables, ${totalRecommendations} recomendaciones`);
+      
+      // Crear resultado consolidado
+      const result = {
+        platform: 'Todas las plataformas',
+        success: true,
+        insightsGenerated: totalInsights,
+        actionablesGenerated: totalActionables
+      };
+      
+      setAnalysisResults([result]);
+      
+    } catch (error: any) {
+      console.error('❌ Error in analysis:', error);
+      setAnalysisResults([{
+        platform: 'Análisis',
+        success: false,
+        error: error.message || 'Error desconocido'
+      }]);
+    } finally {
+      setAnalyzing(false);
+      setCurrentAnalyzing('');
     }
   };
 
@@ -1734,17 +1974,253 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   Anterior
                 </Button>
                 <Button 
+                  onClick={async () => {
+                    await saveSocialConnections();
+                    nextStep();
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <>
+                      Siguiente
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 7:
+        return (
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Download className="w-6 h-6 mr-2 text-primary" />
+                Carga de datos de redes sociales
+              </CardTitle>
+              <p className="text-muted-foreground">
+                Cargando información y publicaciones de tus redes sociales conectadas
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {!loadingData && dataResults.length === 0 ? (
+                <div className="text-center space-y-4">
+                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
+                    <Download className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      Vamos a cargar la información de tus redes sociales para crear una estrategia personalizada
+                    </p>
+                    <Button onClick={loadSocialData} className="w-full">
+                      <Download className="w-4 h-4 mr-2" />
+                      Iniciar carga de datos
+                    </Button>
+                  </div>
+                </div>
+              ) : loadingData ? (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <RefreshCw className="w-12 h-12 text-primary mx-auto mb-4 animate-spin" />
+                    <h3 className="text-lg font-medium mb-2">Cargando datos...</h3>
+                    {currentLoading && (
+                      <p className="text-muted-foreground">
+                        Procesando: {currentLoading}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {dataResults.length > 0 && (
+                    <div className="space-y-3">
+                      {dataResults.map((result, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            {result.success ? (
+                              <CheckCircle className="w-5 h-5 text-green-500" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-red-500" />
+                            )}
+                            <span className="font-medium">{result.platform}</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {result.success ? `${result.postsFound} posts cargados` : result.error}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">¡Datos cargados exitosamente!</h3>
+                    <p className="text-muted-foreground">
+                      Se ha completado la carga de información de tus redes sociales
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {dataResults.map((result, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {result.success ? (
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <AlertCircle className="w-5 h-5 text-red-500" />
+                          )}
+                          <span className="font-medium">{result.platform}</span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {result.success ? `${result.postsFound} posts cargados` : result.error}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-blue-500 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      ¿Qué estamos cargando?
+                    </h3>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      Estamos recopilando tus publicaciones, información del perfil y métricas de engagement 
+                      para crear estrategias personalizadas y recomendaciones específicas para tu negocio.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button onClick={prevStep} variant="outline">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Anterior
+                </Button>
+                <Button 
+                  onClick={nextStep}
+                  disabled={loadingData || dataResults.length === 0}
+                >
+                  Siguiente
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 8:
+        return (
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Brain className="w-6 h-6 mr-2 text-primary" />
+                Análisis inteligente
+              </CardTitle>
+              <p className="text-muted-foreground">
+                ERA está analizando tus datos para generar insights personalizados
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {!analyzing && analysisResults.length === 0 ? (
+                <div className="text-center space-y-4">
+                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
+                    <Brain className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      Ahora analizaremos tus datos para generar insights y recomendaciones personalizadas
+                    </p>
+                    <Button onClick={runAnalysis} className="w-full">
+                      <Brain className="w-4 h-4 mr-2" />
+                      Iniciar análisis inteligente
+                    </Button>
+                  </div>
+                </div>
+              ) : analyzing ? (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <Brain className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
+                    <h3 className="text-lg font-medium mb-2">Analizando datos...</h3>
+                    {currentAnalyzing && (
+                      <p className="text-muted-foreground">
+                        {currentAnalyzing}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">¡Análisis completado!</h3>
+                    <p className="text-muted-foreground">
+                      ERA ha generado insights y recomendaciones para tu estrategia digital
+                    </p>
+                  </div>
+                  
+                  {analysisResults.map((result, index) => (
+                    <div key={index} className="p-4 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">{result.platform}</span>
+                        {result.success ? (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <AlertCircle className="w-5 h-5 text-red-500" />
+                        )}
+                      </div>
+                      {result.success ? (
+                        <div className="text-sm text-muted-foreground">
+                          {result.insightsGenerated} insights generados • {result.actionablesGenerated} acciones recomendadas
+                        </div>
+                      ) : (
+                        <div className="text-sm text-red-600">{result.error}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Lightbulb className="w-5 h-5 text-purple-500 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium text-purple-900 dark:text-purple-100 mb-1">
+                      Análisis con IA avanzada
+                    </h3>
+                    <p className="text-sm text-purple-700 dark:text-purple-300">
+                      ERA utiliza inteligencia artificial para analizar tus patrones de contenido, 
+                      engagement y tendencias para generar recomendaciones estratégicas personalizadas.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
+                <Button onClick={prevStep} variant="outline">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Anterior
+                </Button>
+                <Button 
                   onClick={() => {
                     setIsOnboardingComplete(true);
                     toast({
-                      title: "¡Configuración completada!",
-                      description: "Has configurado exitosamente el ADN de tu negocio.",
+                      title: "¡ADN Empresarial completado!",
+                      description: "Tu configuración está lista. Serás redirigido al Mando Central.",
                     });
+                    // Redirigir al mando central después de un breve delay
+                    setTimeout(() => {
+                      window.location.href = '/company-dashboard?view=mando-central';
+                    }, 2000);
                   }}
+                  disabled={analyzing || analysisResults.length === 0}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
-                  Finalizar
+                  Ir al Mando Central
                 </Button>
               </div>
             </CardContent>

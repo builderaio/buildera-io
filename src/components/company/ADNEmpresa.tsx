@@ -642,6 +642,16 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
       if (deleteError) throw deleteError;
 
+      // Función para convertir prioridad a número
+      const getPriorityNumber = (priority: string) => {
+        switch(priority) {
+          case 'alta': return 1;
+          case 'media': return 2;
+          case 'baja': return 3;
+          default: return 2;
+        }
+      };
+
       // Luego insertar los objetivos actualizados
       const objectivesToSave = objectives
         .filter(obj => obj.title && obj.description) // Solo guardar objetivos completos
@@ -650,7 +660,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           title: obj.title,
           description: obj.description,
           objective_type: obj.type,
-          priority: obj.priority,
+          priority: getPriorityNumber(obj.priority),
           status: 'active'
         }));
 
@@ -687,12 +697,22 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const acceptGeneratedObjectives = async () => {
     setLoading(true);
     try {
+      // Función para convertir prioridad a número
+      const getPriorityNumber = (priority: string) => {
+        switch(priority) {
+          case 'alta': return 1;
+          case 'media': return 2;
+          case 'baja': return 3;
+          default: return 2;
+        }
+      };
+
       const objectivesToSave = generatedObjectives.map(obj => ({
         user_id: profile?.user_id,
         title: obj.title,
         description: obj.description,
         objective_type: obj.type,
-        priority: obj.priority,
+        priority: getPriorityNumber(obj.priority),
         status: 'active'
       }));
 

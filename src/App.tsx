@@ -21,6 +21,7 @@ import CompleteProfile from "./pages/CompleteProfile";
 import Waitlist from "./pages/Waitlist";
 import LinkedInCallback from "./pages/LinkedInCallback";
 import TikTokCallback from "./pages/TikTokCallback";
+import SocialCallback from "./pages/SocialCallback";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import AdminLogin from "./pages/AdminLogin";
@@ -98,6 +99,7 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/waitlist" element={<Waitlist />} />
+              <Route path="/auth/social-callback" element={<SocialCallback />} />
               <Route path="/auth/linkedin/callback" element={<LinkedInCallback />} />
               <Route path="/auth/tiktok/callback" element={<TikTokCallback />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />

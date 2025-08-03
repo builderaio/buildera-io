@@ -31,7 +31,7 @@ import MarketingMetrics from './MarketingMetrics';
 import ContentGenerator from './ContentGenerator';
 import MarketingCalendar from './MarketingCalendar';
 import AdvancedMarketingDashboard from './AdvancedMarketingDashboard';
-import MarketingHubOnboarding from './MarketingHubOnboarding';
+
 
 interface MarketingHubProps {
   profile: any;
@@ -770,15 +770,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
     toast.success('¡Marketing Hub configurado correctamente!');
   };
 
-  // Mostrar onboarding si es necesario
-  if (needsOnboarding === true || showOnboarding) {
-    return (
-      <MarketingHubOnboarding 
-        profile={profile} 
-        onComplete={handleOnboardingComplete}
-      />
-    );
-  }
+  // No onboarding needed anymore - go directly to marketing hub
 
   // Mostrar loading mientras determinamos si necesita onboarding
   if (needsOnboarding === null) {

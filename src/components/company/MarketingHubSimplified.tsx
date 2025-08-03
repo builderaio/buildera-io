@@ -23,7 +23,7 @@ import {
 import SocialMediaHub from "./SocialMediaHub";
 import ContentGenerator from "./ContentGenerator";
 import MarketingCalendar from "./MarketingCalendar";
-import MarketingHubOnboarding from "./MarketingHubOnboarding";
+
 
 interface MarketingHubProps {
   profile: any;
@@ -322,15 +322,7 @@ const MarketingHubSimplified = ({ profile }: MarketingHubProps) => {
     });
   };
 
-  // Show onboarding if needed
-  if (needsOnboarding === true || showOnboarding) {
-    return (
-      <MarketingHubOnboarding 
-        profile={profile} 
-        onComplete={handleOnboardingComplete}
-      />
-    );
-  }
+  // No onboarding needed anymore - go directly to marketing hub
 
   // Show loading
   if (needsOnboarding === null) {

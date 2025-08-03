@@ -81,16 +81,28 @@ const SocialCallback = () => {
           }
         }
 
-        // Mostrar mensaje de éxito y redirigir al dashboard
-        toast({
-          title: "¡Registro exitoso!",
-          description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida. ¡Bienvenido a Buildera!",
-        });
+        // Para usuarios de empresa, redirigir a completar perfil
+        if (userType === 'company') {
+          toast({
+            title: "¡Registro exitoso!",
+            description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida. Completa tu perfil para comenzar.",
+          });
 
-        // Redirigir al dashboard después de un breve delay
-        setTimeout(() => {
-          navigate('/company-dashboard');
-        }, 2000);
+          // Redirigir a completar perfil después de un breve delay
+          setTimeout(() => {
+            navigate('/complete-profile?user_type=company&from=social');
+          }, 2000);
+        } else {
+          // Para otros tipos de usuario, redirigir al dashboard
+          toast({
+            title: "¡Registro exitoso!",
+            description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida.",
+          });
+
+          setTimeout(() => {
+            navigate('/company-dashboard');
+          }, 2000);
+        }
 
       } catch (error: any) {
         console.error("❌ Error en callback social:", error);

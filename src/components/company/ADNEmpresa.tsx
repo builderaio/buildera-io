@@ -301,6 +301,22 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   }, [currentStep, brandingData.visual_identity, brandingData.primary_color, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
 
+  // Auto-cargar datos de redes sociales cuando se entre al paso 7
+  useEffect(() => {
+    console.log('📥 Checking social data auto-loading:', {
+      currentStep,
+      dataResultsLength: dataResults.length,
+      loadingData,
+      hasSocialConnections: Object.values(socialConnections).some(url => url.trim() !== '')
+    });
+    
+    if (currentStep === 7 && !loadingData && dataResults.length === 0 && 
+        Object.values(socialConnections).some(url => url.trim() !== '')) {
+      console.log('🚀 Iniciando carga automática de datos de redes sociales...');
+      loadSocialData();
+    }
+  }, [currentStep, loadingData, dataResults.length, socialConnections]);
+
   const generateStrategyWithAI = async () => {
     setLoading(true);
     try {
@@ -2007,17 +2023,16 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {!loadingData && dataResults.length === 0 ? (
+              {dataResults.length === 0 && !loadingData ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 border-2 border-dashed border-muted rounded-lg">
                     <Download className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground mb-4">
-                      Vamos a cargar la información de tus redes sociales para crear una estrategia personalizada
+                      ERA iniciará automáticamente la carga de datos de tus redes sociales conectadas
                     </p>
-                    <Button onClick={loadSocialData} className="w-full">
-                      <Download className="w-4 h-4 mr-2" />
-                      Iniciar carga de datos
-                    </Button>
+                    <div className="text-sm text-muted-foreground">
+                      Preparando carga de datos...
+                    </div>
                   </div>
                 </div>
               ) : loadingData ? (

@@ -71,8 +71,15 @@ const CompleteProfile = () => {
         .single();
 
       if (profile && profile.user_type) {
+        console.log('🔍 CompleteProfile: perfil existe', {
+          userType: profile.user_type,
+          companyName: profile.company_name,
+          hasCompanyName: !!profile.company_name
+        });
+        
         // Profile exists and has user type, redirect based on type
         if (profile.user_type === 'company') {
+          console.log('➡️ CompleteProfile redirigiendo a company-dashboard');
           navigate('/company-dashboard');
         } else {
           navigate('/');

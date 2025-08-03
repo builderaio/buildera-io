@@ -68,8 +68,16 @@ const CompanyDashboard = () => {
 
       const hasCompany = companies && companies.length > 0;
 
+      console.log('🔍 CompanyDashboard onboarding check:', {
+        hasCompany,
+        companiesLength: companies?.length,
+        registrationMethod,
+        userId: session.user.id
+      });
+
       // Si no tiene empresa, mostrar onboarding redirect
       if (!hasCompany) {
+        console.log('❌ Usuario no tiene empresa, mostrando OnboardingRedirect');
         setShouldShowOnboarding(true);
         setLoading(false);
         return;

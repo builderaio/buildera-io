@@ -54,7 +54,9 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
           hasCompany,
           registrationMethod,
           isEmailRegistration,
-          isSocialRegistration
+          isSocialRegistration,
+          profileCompanyName: profile?.company_name,
+          companiesCount: companies?.length
         });
 
         // 4. Lógica de redirección

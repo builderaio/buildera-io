@@ -11,7 +11,7 @@ import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 import { EmailVerificationInfo } from "./EmailVerificationInfo";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
 import { supabase } from "@/integrations/supabase/client";
-import { Linkedin, Mail, Search } from "lucide-react";
+import { Linkedin, Mail, Eye, EyeOff } from "lucide-react";
 
 interface CompanyAuthProps {
   mode: "signin" | "signup";
@@ -430,7 +430,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 onClick={() => handleSocialAuth('google')}
                 className="w-full"
               >
-                <Search className="mr-2 h-4 w-4" />
+                <Mail className="mr-2 h-4 w-4" />
                 Google
               </Button>
             )}

@@ -37,6 +37,7 @@ import {
   Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFirstTimeSave } from "@/hooks/useFirstTimeSave";
 
 interface ADNEmpresaProps {
   profile: any;
@@ -103,14 +104,23 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     propuesta_valor: ""
   });
 
+  // Hook para manejar webhook de primera vez
+  const { isFirstSave, triggerWebhookOnFirstSave, markAsNotFirstSave } = useFirstTimeSave(user?.id);
+
   const totalSteps = 7;
 
   useEffect(() => {
     if (profile?.user_id) {
       fetchAllData();
-      checkIfFirstTime(); // Verificar si es primera vez
     }
   }, [profile?.user_id]);
+
+  // Separar el checkIfFirstTime para ejecutar después de cargar datos
+  useEffect(() => {
+    if (profile?.user_id && companyData) {
+      checkIfFirstTime(); // Verificar si es primera vez
+    }
+  }, [profile?.user_id, companyData?.id]);
 
   // Obtener usuario actual
   useEffect(() => {
@@ -157,6 +167,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       const isFirstTimeUser = !onboardingStatus || !onboardingStatus.dna_empresarial_completed;
       setIsFirstTime(isFirstTimeUser);
 
+      // Si es primera vez y hay un website_url, intentar cargar información automáticamente
+      if (isFirstTimeUser && (profile?.website_url || companyData?.website_url)) {
+        await loadCompanyInfoFromWebhook();
+      }
+
       // Si no es primera vez, saltar al modo de edición
       if (!isFirstTimeUser) {
         setIsOnboardingComplete(true);
@@ -164,6 +179,59 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       }
     } catch (error) {
       console.error('Error checking first time status:', error);
+    }
+  };
+
+  // Función para cargar información de la empresa desde el webhook
+  const loadCompanyInfoFromWebhook = async () => {
+    if (!user?.id || !companyData?.id) return;
+
+    console.log('🔍 Verificando si hay información de webhook disponible...');
+    try {
+      // Verificar si ya hay datos del webhook
+      if (companyData?.webhook_data && companyData?.descripcion_empresa) {
+        console.log('✅ Información ya disponible desde webhook');
+        return;
+      }
+
+      // Si no hay descripción pero hay webhook_data, procesarla
+      if (companyData?.webhook_data && !companyData?.descripcion_empresa) {
+        console.log('📊 Procesando datos existentes del webhook...');
+        const webhookData = companyData.webhook_data;
+        if (webhookData && Array.isArray(webhookData) && webhookData.length > 0) {
+          const responseArray = webhookData[0]?.response || [];
+          const descripcionItem = responseArray.find((item: any) => item.key === 'descripcion_empresa');
+          
+          if (descripcionItem && descripcionItem.value && descripcionItem.value !== 'No se encontró información') {
+            setTempDescription(descripcionItem.value);
+            // Actualizar la empresa con la descripción encontrada
+            const { error } = await supabase
+              .from('companies')
+              .update({ descripcion_empresa: descripcionItem.value })
+              .eq('id', companyData.id);
+            
+            if (!error) {
+              setCompanyData(prev => ({ ...prev, descripcion_empresa: descripcionItem.value }));
+              console.log('✅ Descripción actualizada desde webhook existente');
+            }
+          }
+        }
+      } else if (!companyData?.webhook_data) {
+        // Si no hay datos de webhook, intentar obtenerlos
+        console.log('🚀 Ejecutando webhook para obtener información de la empresa...');
+        await triggerWebhookOnFirstSave(
+          profile?.company_name || companyData?.name || '',
+          profile?.website_url || companyData?.website_url,
+          profile?.country
+        );
+        
+        // Esperar un momento y refrescar los datos
+        setTimeout(() => {
+          fetchCompanyData();
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error cargando información desde webhook:', error);
     }
   };
 
@@ -666,6 +734,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       
       if (!completedSteps.includes(2)) {
         setCompletedSteps(prev => [...prev, 2]);
+      }
+
+      // Ejecutar webhook de primera vez si aplica
+      if (isFirstSave && user?.id) {
+        await triggerWebhookOnFirstSave(
+          profile?.company_name || companyData?.name || '',
+          profile?.website_url || companyData?.website_url,
+          profile?.country
+        );
       }
 
       toast({

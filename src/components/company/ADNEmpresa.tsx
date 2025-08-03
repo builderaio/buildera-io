@@ -504,6 +504,12 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           const firstResponse = brandingResponse[0];
           const responseArray = firstResponse.response;
           
+          console.log('📊 Procesando respuesta BRAND:', {
+            brandingResponse,
+            firstResponse,
+            responseArray
+          });
+          
           if (responseArray && Array.isArray(responseArray)) {
             const brandingObject: any = {};
             responseArray.forEach((item: any) => {
@@ -512,17 +518,26 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               }
             });
 
+            console.log('🎨 Objeto de branding procesado:', brandingObject);
+
             const newBrandingData = {
-              primary_color: brandingObject.primary_color || "",
-              secondary_color: brandingObject.secondary_color || "",
-              complementary_color_1: brandingObject.complementary_color_1 || "",
-              complementary_color_2: brandingObject.complementary_color_2 || "",
-              visual_identity: brandingObject.visual_identity || ""
+              primary_color: brandingObject.primary_color || brandingObject.color_primario || "",
+              secondary_color: brandingObject.secondary_color || brandingObject.color_secundario || "",
+              complementary_color_1: brandingObject.complementary_color_1 || brandingObject.color_complementario_1 || "",
+              complementary_color_2: brandingObject.complementary_color_2 || brandingObject.color_complementario_2 || "",
+              visual_identity: brandingObject.visual_identity || brandingObject.identidad_visual || ""
             };
 
+            console.log('🎯 Datos finales de branding:', newBrandingData);
             setBrandingData(newBrandingData);
             console.log('✅ Branding data actualizado:', newBrandingData);
-            await saveBranding(newBrandingData);
+            
+            // Solo guardar si hay datos válidos
+            if (newBrandingData.visual_identity || newBrandingData.primary_color) {
+              await saveBranding(newBrandingData);
+            } else {
+              console.warn('⚠️ No se encontraron datos válidos de branding en la respuesta');
+            }
 
             toast({
               title: "Identidad de marca generada",
@@ -532,6 +547,9 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             console.error('❌ Estructura de respuesta inesperada - response array no encontrado');
             throw new Error('Formato de respuesta inesperado - response array no encontrado');
           }
+        } else {
+          console.error('❌ Respuesta de branding vacía o inválida:', brandingResponse);
+          throw new Error('Respuesta de branding vacía o inválida');
         }
       } else {
         throw new Error(data?.message || 'Error en la generación de branding');

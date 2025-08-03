@@ -148,11 +148,14 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
 
         console.log("Iniciando registro con email para:", email);
         
+        // Crear URL de verificación personalizada
+        const confirmationUrl = `${window.location.origin}/auth/verify?token_hash={{.TokenHash}}&type=signup&redirect_to=${encodeURIComponent(window.location.origin + '/company-dashboard')}`;
+        
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/company-dashboard`,
             data: {
               full_name: fullName,
               user_type: 'company',
@@ -173,6 +176,28 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         console.log("Registro exitoso:", data);
         
         if (data.user) {
+          // Enviar email de verificación personalizado usando el sistema de Buildera
+          if (!data.user.email_confirmed_at) {
+            try {
+              const verificationUrl = `${window.location.origin}/auth/verify?type=signup&redirect_to=${encodeURIComponent(window.location.origin + '/company-dashboard')}`;
+              
+              await supabase.functions.invoke('send-verification-email', {
+                body: {
+                  email: email,
+                  fullName: fullName,
+                  confirmationUrl: verificationUrl,
+                  userType: 'empresa'
+                }
+              });
+              
+              console.log("Email de verificación enviado exitosamente");
+            } catch (emailError) {
+              console.error("Error enviando email de verificación:", emailError);
+              // No bloquear el registro si falla el email, usar el sistema por defecto
+              console.log("Fallback al sistema de verificación por defecto de Supabase");
+            }
+          }
+
           // Enviar email de bienvenida usando el sistema de Buildera
           try {
             await sendWelcomeEmail(email, fullName, 'company');
@@ -205,12 +230,12 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             setShowEmailVerification(true);
             toast({
               title: "¡Registro exitoso!",
-              description: "Revisa tu email para verificar tu cuenta antes de iniciar sesión.",
+              description: "Hemos enviado un email de verificación a tu correo. Revisa tu bandeja de entrada y carpeta de spam.",
             });
           } else {
             toast({
               title: "¡Registro exitoso!",
-              description: "Tu cuenta ha sido creada. Ahora puedes iniciar sesión.",
+              description: "Tu cuenta ha sido creada y verificada. Ahora puedes iniciar sesión.",
             });
           }
           
@@ -296,20 +321,43 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const handleResendVerification = async () => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: registeredEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/company-dashboard`
-        }
-      });
+      
+      // Intentar primero con nuestro sistema personalizado
+      try {
+        const verificationUrl = `${window.location.origin}/auth/verify?type=signup&redirect_to=${encodeURIComponent(window.location.origin + '/company-dashboard')}`;
+        
+        await supabase.functions.invoke('send-verification-email', {
+          body: {
+            email: registeredEmail,
+            fullName: fullName || 'Usuario',
+            confirmationUrl: verificationUrl,
+            userType: 'empresa'
+          }
+        });
 
-      if (error) throw error;
+        toast({
+          title: "Email reenviado",
+          description: "Hemos reenviado el enlace de verificación usando nuestro sistema personalizado.",
+        });
+      } catch (customError) {
+        console.error("Error con sistema personalizado, usando fallback:", customError);
+        
+        // Fallback al sistema por defecto de Supabase
+        const { error } = await supabase.auth.resend({
+          type: 'signup',
+          email: registeredEmail,
+          options: {
+            emailRedirectTo: `${window.location.origin}/company-dashboard`
+          }
+        });
 
-      toast({
-        title: "Email reenviado",
-        description: "Hemos reenviado el enlace de verificación a tu email.",
-      });
+        if (error) throw error;
+
+        toast({
+          title: "Email reenviado",
+          description: "Hemos reenviado el enlace de verificación a tu email.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error",

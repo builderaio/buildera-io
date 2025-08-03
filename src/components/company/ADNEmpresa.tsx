@@ -262,6 +262,14 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   }, [currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.descripcion_empresa]);
 
+  // Auto-generar objetivos cuando se entre al paso 4
+  useEffect(() => {
+    if (currentStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives && 
+        strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
+      generateObjectivesWithAI();
+    }
+  }, [currentStep, objectives.length, showGeneratedObjectives, generatingObjectives, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
+
   const generateStrategyWithAI = async () => {
     setLoading(true);
     try {
@@ -1111,25 +1119,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {!showGeneratedObjectives && objectives.length === 0 && !generatingObjectives ? (
-                <div className="text-center space-y-4">
-                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
-                    <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      ERA generará automáticamente 3 objetivos de crecimiento basados en tu estrategia empresarial
-                    </p>
-                    <Button onClick={generateObjectivesWithAI} disabled={generatingObjectives}>
-                      <Bot className="w-4 h-4 mr-2" />
-                      Generar objetivos con ERA
-                    </Button>
-                  </div>
-                </div>
-              ) : generatingObjectives ? (
+              {generatingObjectives ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 border-2 border-dashed border-muted rounded-lg">
                     <RefreshCw className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-spin" />
                     <p className="text-muted-foreground mb-4">
                       ERA está analizando tu estrategia empresarial para generar objetivos específicos de crecimiento...
+                    </p>
+                  </div>
+                </div>
+              ) : !showGeneratedObjectives && objectives.length === 0 ? (
+                <div className="text-center space-y-4">
+                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
+                    <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      ERA generará automáticamente 3 objetivos de crecimiento basados en tu estrategia empresarial
                     </p>
                   </div>
                 </div>

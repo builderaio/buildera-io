@@ -196,18 +196,35 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
               // No bloquear el registro si falla el email, usar el sistema por defecto
               console.log("Fallback al sistema de verificación por defecto de Supabase");
             }
+
+            // Mostrar información de verificación
+            setRegisteredEmail(email);
+            setShowEmailVerification(true);
+            toast({
+              title: "¡Registro exitoso!",
+              description: "Hemos enviado un email de verificación a tu correo. Revisa tu bandeja de entrada y carpeta de spam.",
+            });
+          } else {
+            // Si el email ya está verificado (caso raro), enviar bienvenida y ir a login
+            try {
+              await sendWelcomeEmail(email, fullName, 'company');
+              console.log("Email de bienvenida enviado exitosamente");
+            } catch (emailError) {
+              console.error("Error enviando email de bienvenida:", emailError);
+            }
+            
+            toast({
+              title: "¡Registro exitoso!",
+              description: "Tu cuenta ha sido creada y verificada. Ahora puedes iniciar sesión.",
+            });
+
+            // Cambiar a modo login
+            if (onModeChange) {
+              onModeChange("signin");
+            }
           }
 
-          // Enviar email de bienvenida usando el sistema de Buildera
-          try {
-            await sendWelcomeEmail(email, fullName, 'company');
-            console.log("Email de bienvenida enviado exitosamente");
-          } catch (emailError) {
-            console.error("Error enviando email de bienvenida:", emailError);
-            // No bloquear el registro si falla el email
-          }
-
-          // Llamar manualmente al webhook después del registro exitoso
+          // Llamar webhook de registro (sin bloquear el flujo)
           try {
             await supabase.functions.invoke('process-company-webhooks', {
               body: {
@@ -224,28 +241,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             // No bloquear el registro si falla el webhook
           }
           
-          // Mostrar información de verificación si el email no está confirmado
-          if (!data.user.email_confirmed_at) {
-            setRegisteredEmail(email);
-            setShowEmailVerification(true);
-            toast({
-              title: "¡Registro exitoso!",
-              description: "Hemos enviado un email de verificación a tu correo. Revisa tu bandeja de entrada y carpeta de spam.",
-            });
-          } else {
-            toast({
-              title: "¡Registro exitoso!",
-              description: "Tu cuenta ha sido creada y verificada. Ahora puedes iniciar sesión.",
-            });
-          }
-          
           console.log("Usuario de empresa registrado exitosamente");
           
-          // Cambiar a modo login después del registro exitoso
-          if (onModeChange) {
-            onModeChange("signin");
-          }
-          // Limpiar campos de registro pero mantener email y password
+          // Limpiar campos de registro
           setFullName("");
           setCompanyName("");
           setCompanySize("");
@@ -376,7 +374,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/complete-profile?user_type=company`,
+          redirectTo: `${window.location.origin}/auth/social-callback?user_type=company`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'

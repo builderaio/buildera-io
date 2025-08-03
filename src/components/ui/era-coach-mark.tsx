@@ -136,8 +136,8 @@ const EraCoachMark: React.FC<EraCoachMarkProps> = ({ isOpen, onClose, userId }) 
                 <span className="text-xs font-bold text-blue-600">📋</span>
               </div>
               <div>
-                <h4 className="font-semibold text-xs">ADN Empresa</h4>
-                <p className="text-xs text-muted-foreground">Define misión, visión e identidad visual</p>
+                <h4 className="font-semibold text-xs">Configuración Empresarial</h4>
+                <p className="text-xs text-muted-foreground">Define misión, visión e identidad de tu empresa</p>
                 <span className="text-xs text-blue-600 font-medium">👈 Panel lateral - Primera opción</span>
               </div>
             </div>

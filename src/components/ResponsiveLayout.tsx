@@ -324,7 +324,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       items: [
         { 
           id: "adn-empresa", 
-          label: "Información Empresarial", 
+          label: "Configuración Empresarial",
           icon: Building, 
           description: "Datos y configuración",
           priority: "high"

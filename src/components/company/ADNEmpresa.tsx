@@ -2319,8 +2319,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   onClick={() => {
                     setIsOnboardingComplete(true);
                     toast({
-                      title: "¡ADN Empresarial completado!",
-                      description: "Tu configuración está lista. Serás redirigido al Mando Central.",
+                      title: "¡Configuración Empresarial completada!",
+                      description: "Tu empresa está configurada. Serás redirigido al Mando Central.",
                     });
                     // Redirigir al mando central después de un breve delay
                     setTimeout(() => {

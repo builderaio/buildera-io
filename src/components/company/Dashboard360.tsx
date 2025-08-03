@@ -450,8 +450,8 @@ const Dashboard360: React.FC<Dashboard360Props> = ({ profile, onNavigate }) => {
               action: () => onNavigate?.('mis-agentes')
             },
             {
-              title: "ADN Empresa",
-              description: "Configura tu negocio",
+              title: "Configuración Empresarial",
+              description: "Define tu negocio",
               icon: Target,
               color: "bg-gradient-to-br from-green-500 to-emerald-500",
               action: () => onNavigate?.('adn-empresa')

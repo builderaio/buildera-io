@@ -1566,12 +1566,6 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       </div>
                     </div>
 
-                    <div className="flex justify-center">
-                      <Button onClick={generateBrandingWithAI} variant="outline" size="sm">
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Regenerar con ERA
-                      </Button>
-                    </div>
                   </div>
                 </div>
               )}

@@ -272,8 +272,19 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
   // Auto-generar branding cuando se entre al paso 5
   useEffect(() => {
+    console.log('🎨 Checking branding auto-generation:', {
+      currentStep,
+      hasVisualIdentity: !!brandingData.visual_identity,
+      hasPrimaryColor: !!brandingData.primary_color,
+      hasVision: !!strategyData.vision,
+      hasMission: !!strategyData.mission,
+      hasValueProp: !!strategyData.propuesta_valor,
+      isLoading: loading
+    });
+    
     if (currentStep === 5 && !brandingData.visual_identity && !brandingData.primary_color && 
         strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
+      console.log('🚀 Iniciando generación automática de branding...');
       generateBrandingWithAI();
     }
   }, [currentStep, brandingData.visual_identity, brandingData.primary_color, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
@@ -510,12 +521,16 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             };
 
             setBrandingData(newBrandingData);
+            console.log('✅ Branding data actualizado:', newBrandingData);
             await saveBranding(newBrandingData);
 
             toast({
               title: "Identidad de marca generada",
               description: "ERA ha definido automáticamente tu identidad visual.",
             });
+          } else {
+            console.error('❌ Estructura de respuesta inesperada - response array no encontrado');
+            throw new Error('Formato de respuesta inesperado - response array no encontrado');
           }
         }
       } else {
@@ -1384,7 +1399,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 Definamos la identidad visual que representará tu negocio
               </p>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6">              
               {loading ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 border-2 border-dashed border-muted rounded-lg">

@@ -103,9 +103,13 @@ async function sendSMTPEmail(
     const ccList = emailData.cc?.map(email => email) || [];
     const bccList = emailData.bcc?.map(email => email) || [];
 
-    // Normalize line endings to CRLF for email standards
-    const normalizeContent = (content: string) => 
-      content.replace(/\r?\n/g, '\r\n');
+    // Clean and properly format content to avoid quoted-printable issues
+    const cleanHtml = (content: string) => {
+      return content
+        .replace(/\r?\n/g, '') // Remove line breaks that cause =20
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+    };
 
     // Send email
     await client.send({
@@ -114,8 +118,8 @@ async function sendSMTPEmail(
       cc: ccList.length > 0 ? ccList : undefined,
       bcc: bccList.length > 0 ? bccList : undefined,
       subject: emailData.subject,
-      content: emailData.textContent ? normalizeContent(emailData.textContent) : normalizeContent(emailData.htmlContent),
-      html: normalizeContent(emailData.htmlContent),
+      content: emailData.textContent || emailData.htmlContent.replace(/<[^>]*>/g, ''), // Strip HTML for text version
+      html: cleanHtml(emailData.htmlContent),
     });
 
     await client.close();
@@ -205,8 +209,8 @@ const handler = async (req: Request): Promise<Response> => {
     // Prepare email data
     const variables = requestData.variables || {};
     
-    // Add Buildera branding variables
-    variables.buildera_logo = "https://buildera.io/logo.png";
+    // Add Buildera branding variables with correct paths
+    variables.buildera_logo = "https://buildera.io/lovable-uploads/9bbad23a-3f28-47fd-bf57-1a43f0129bff.png";
     variables.buildera_name = "Buildera";
     variables.buildera_website = "https://buildera.io";
     variables.current_year = new Date().getFullYear().toString();

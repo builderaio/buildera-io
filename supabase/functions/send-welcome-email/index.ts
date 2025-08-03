@@ -123,33 +123,7 @@ serve(async (req: Request): Promise<Response> => {
       from: "Buildera <onboarding@resend.dev>",
       to: [email],
       subject: welcomeMessage.title,
-      html: `
-        <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://buildera.io/lovable-uploads/9bbad23a-3f28-47fd-bf57-1a43f0129bff.png" alt="Buildera" style="height: 60px;">
-          </div>
-          
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; color: white; text-align: center; margin-bottom: 30px;">
-            <h1 style="margin: 0; font-size: 24px;">${welcomeMessage.title}</h1>
-          </div>
-          
-          <div style="padding: 20px; line-height: 1.6; color: #333;">
-            ${welcomeMessage.content}
-          </div>
-          
-          <div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 10px;">
-            <a href="https://buildera.io/" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-              Acceder a Buildera
-            </a>
-          </div>
-          
-          <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px;">
-            <p>¿Tienes preguntas? Contáctanos en <a href="mailto:soporte@buildera.io" style="color: #667eea;">soporte@buildera.io</a></p>
-            <p style="margin-top: 10px;">Building the New Era</p>
-            <p style="margin: 5px 0; font-size: 12px;">© 2025 Buildera. Todos los derechos reservados.</p>
-          </div>
-        </div>
-      `,
+      html: `<div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;"><div style="text-align: center; margin-bottom: 30px;"><img src="https://buildera.io/lovable-uploads/9bbad23a-3f28-47fd-bf57-1a43f0129bff.png" alt="Buildera" style="height: 60px; max-width: 100%;"></div><div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; color: white; text-align: center; margin-bottom: 30px;"><h1 style="margin: 0; font-size: 24px;">${welcomeMessage.title}</h1></div><div style="padding: 20px; line-height: 1.6; color: #333;">${welcomeMessage.content}</div><div style="text-align: center; margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 10px;"><a href="https://buildera.io/" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">Acceder a Buildera</a></div><div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px;"><p>¿Tienes preguntas? Contáctanos en <a href="mailto:soporte@buildera.io" style="color: #667eea;">soporte@buildera.io</a></p><p style="margin-top: 10px;">Building the New Era</p><p style="margin: 5px 0; font-size: 12px;">© 2025 Buildera. Todos los derechos reservados.</p></div></div>`,
     });
 
     console.log("Email sent successfully:", emailResponse);

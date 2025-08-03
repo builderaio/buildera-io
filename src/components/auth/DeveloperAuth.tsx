@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Linkedin, Chrome } from "lucide-react";
+import { Linkedin, Search } from "lucide-react";
 
 interface DeveloperAuthProps {
   mode: "signin" | "signup";
@@ -93,7 +93,7 @@ const DeveloperAuth = ({ mode, onModeChange }: DeveloperAuthProps) => {
           onClick={() => handleSocialAuth('google')}
           className="w-full"
         >
-          <Chrome className="mr-2 h-4 w-4" />
+          <Search className="mr-2 h-4 w-4" />
           Google
         </Button>
         <Button

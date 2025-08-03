@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Linkedin, Chrome } from "lucide-react";
+import { Linkedin, Search } from "lucide-react";
 
 interface ExpertAuthProps {
   mode: "signin" | "signup";
@@ -107,7 +107,7 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
           onClick={() => handleSocialAuth('google')}
           className="w-full"
         >
-          <Chrome className="mr-2 h-4 w-4" />
+          <Search className="mr-2 h-4 w-4" />
           Google
         </Button>
         <Button

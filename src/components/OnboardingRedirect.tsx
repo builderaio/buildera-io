@@ -73,9 +73,9 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
           }
         }
 
-        // Si el perfil está completo pero no tiene empresa, ir al ADN
+        // Si el perfil está completo pero no tiene empresa, ir a completar perfil
         if (profile?.user_type === 'company' && profile.company_name) {
-          navigate('/company-dashboard?view=adn-empresa');
+          navigate('/complete-profile?user_type=company');
           return;
         }
 

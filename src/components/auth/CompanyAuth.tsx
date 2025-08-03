@@ -152,7 +152,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/company-dashboard`,
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: fullName,
               user_type: 'company',
@@ -264,6 +264,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         }
         
         console.log("Login exitoso:", data);
+        // Usar el componente de redirección para manejar el flujo post-login
         window.location.href = '/company-dashboard';
       }
     } catch (error: any) {

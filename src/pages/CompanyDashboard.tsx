@@ -18,6 +18,7 @@ import Expertos from "@/components/company/Expertos";
 import Configuracion from "@/components/company/Configuracion";
 import UserProfile from "./UserProfile";
 import CompanyAgents from "./CompanyAgents";
+import OnboardingRedirect from "@/components/OnboardingRedirect";
 import { User } from "@supabase/supabase-js";
 
 const CompanyDashboard = () => {
@@ -25,25 +26,15 @@ const CompanyDashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [activeView, setActiveView] = useState("mando-central");
   const [loading, setLoading] = useState(true);
+  const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  
   
   // Hook para detectar primera vez guardando cambios (registro social)
   const { triggerWebhookOnFirstSave } = useFirstTimeSave(user?.id);
 
   useEffect(() => {
-    // Check for view parameter in URL and update activeView
-    const viewParam = searchParams.get('view');
-    if (viewParam) {
-      console.log('Setting activeView from URL param:', viewParam);
-      setActiveView(viewParam);
-    } else {
-      console.log('No view param, defaulting to mando-central');
-      setActiveView('mando-central');
-    }
-
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -53,6 +44,35 @@ const CompanyDashboard = () => {
       }
 
       setUser(session.user);
+
+      // Check for view parameter in URL - si viene adn-empresa forzar mostrar
+      const viewParam = searchParams.get('view');
+      if (viewParam === 'adn-empresa') {
+        setActiveView('adn-empresa');
+        setShouldShowOnboarding(false);
+        setLoading(false);
+        return;
+      } else if (viewParam) {
+        setActiveView(viewParam);
+      }
+
+      // Verificar si es primera vez y necesita onboarding
+      const registrationMethod = session.user.app_metadata?.provider || 'email';
+      
+      // Verificar empresas existentes
+      const { data: companies } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('created_by', session.user.id);
+
+      const hasCompany = companies && companies.length > 0;
+
+      // Si no tiene empresa, mostrar onboarding redirect
+      if (!hasCompany) {
+        setShouldShowOnboarding(true);
+        setLoading(false);
+        return;
+      }
       
       // Buscar perfil de empresa existente
       let { data: profileData, error } = await supabase
@@ -236,13 +256,18 @@ const CompanyDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando dashboard...</p>
+          <p className="text-muted-foreground">Cargando dashboard...</p>
         </div>
       </div>
     );
+  }
+
+  // Si debe mostrar onboarding, usar el componente de redirección
+  if (shouldShowOnboarding && user) {
+    return <OnboardingRedirect user={user} />;
   }
 
   return (

@@ -72,18 +72,15 @@ const SocialCallback = () => {
           }
         }
 
-        // Cerrar sesión para forzar el login
-        await supabase.auth.signOut();
-
-        // Mostrar mensaje de éxito y redirigir al login
+        // Mostrar mensaje de éxito y redirigir al dashboard
         toast({
           title: "¡Registro exitoso!",
-          description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida. Ahora puedes iniciar sesión.",
+          description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida. ¡Bienvenido a Buildera!",
         });
 
-        // Redirigir al login después de un breve delay
+        // Redirigir al dashboard después de un breve delay
         setTimeout(() => {
-          navigate('/auth?mode=signin');
+          navigate('/company-dashboard');
         }, 2000);
 
       } catch (error: any) {

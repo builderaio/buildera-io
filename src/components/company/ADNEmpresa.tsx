@@ -270,6 +270,14 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   }, [currentStep, objectives.length, showGeneratedObjectives, generatingObjectives, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
 
+  // Auto-generar branding cuando se entre al paso 5
+  useEffect(() => {
+    if (currentStep === 5 && !brandingData.visual_identity && !brandingData.primary_color && 
+        strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
+      generateBrandingWithAI();
+    }
+  }, [currentStep, brandingData.visual_identity, brandingData.primary_color, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
+
   const generateStrategyWithAI = async () => {
     setLoading(true);
     try {
@@ -1377,93 +1385,158 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {!brandingData.visual_identity && !brandingData.primary_color ? (
+              {loading ? (
+                <div className="text-center space-y-4">
+                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
+                    <RefreshCw className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+                    <p className="text-muted-foreground mb-4">
+                      ERA está generando automáticamente tu identidad de marca basada en tu estrategia empresarial...
+                    </p>
+                  </div>
+                </div>
+              ) : !brandingData.visual_identity && !brandingData.primary_color ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 border-2 border-dashed border-muted rounded-lg">
                     <Palette className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground mb-4">
-                      ERA puede crear automáticamente tu identidad de marca basada en tu industria y valores
+                      ERA generará automáticamente tu identidad de marca basada en tu estrategia empresarial
                     </p>
-                    <Button onClick={generateBrandingWithAI} disabled={loading}>
-                      {loading ? (
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Bot className="w-4 h-4 mr-2" />
-                      )}
-                      Generar identidad de marca con ERA
-                    </Button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {brandingData.visual_identity && (
-                    <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-5 h-5 text-purple-500" />
-                        <h3 className="font-medium text-purple-900 dark:text-purple-100">
-                          Identidad Visual
-                        </h3>
-                      </div>
-                      <p className="text-sm text-purple-700 dark:text-purple-300">
-                        {brandingData.visual_identity}
-                      </p>
-                    </div>
-                  )}
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                    <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                      Identidad de marca
+                    </h3>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                      Ajusta la identidad visual y paleta de colores de tu marca.
+                    </p>
+                  </div>
 
-                  {(brandingData.primary_color || brandingData.secondary_color) && (
-                    <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                      <div className="flex items-center gap-2 mb-3">
-                        <CheckCircle className="w-5 h-5 text-blue-500" />
-                        <h3 className="font-medium text-blue-900 dark:text-blue-100">
-                          Paleta de Colores
-                        </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Identidad Visual</label>
+                      <textarea
+                        value={brandingData.visual_identity}
+                        onChange={(e) => setBrandingData(prev => ({
+                          ...prev,
+                          visual_identity: e.target.value
+                        }))}
+                        className="w-full mt-1 px-3 py-2 border rounded-md text-sm"
+                        rows={4}
+                        placeholder="Describe la identidad visual de tu marca..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Color Primario</label>
+                        <div className="flex gap-2 mt-1">
+                          <input
+                            type="color"
+                            value={brandingData.primary_color || "#000000"}
+                            onChange={(e) => setBrandingData(prev => ({
+                              ...prev,
+                              primary_color: e.target.value
+                            }))}
+                            className="w-12 h-10 border rounded"
+                          />
+                          <input
+                            type="text"
+                            value={brandingData.primary_color}
+                            onChange={(e) => setBrandingData(prev => ({
+                              ...prev,
+                              primary_color: e.target.value
+                            }))}
+                            className="flex-1 px-3 py-2 border rounded-md text-sm"
+                            placeholder="#000000"
+                          />
+                        </div>
                       </div>
-                      <div className="flex gap-3">
-                        {brandingData.primary_color && (
-                          <div className="text-center">
-                            <div 
-                              className="w-12 h-12 rounded-lg border mb-2"
-                              style={{ backgroundColor: brandingData.primary_color }}
-                            />
-                            <p className="text-xs text-blue-700 dark:text-blue-300">Primario</p>
-                          </div>
-                        )}
-                        {brandingData.secondary_color && (
-                          <div className="text-center">
-                            <div 
-                              className="w-12 h-12 rounded-lg border mb-2"
-                              style={{ backgroundColor: brandingData.secondary_color }}
-                            />
-                            <p className="text-xs text-blue-700 dark:text-blue-300">Secundario</p>
-                          </div>
-                        )}
-                        {brandingData.complementary_color_1 && (
-                          <div className="text-center">
-                            <div 
-                              className="w-12 h-12 rounded-lg border mb-2"
-                              style={{ backgroundColor: brandingData.complementary_color_1 }}
-                            />
-                            <p className="text-xs text-blue-700 dark:text-blue-300">Comp. 1</p>
-                          </div>
-                        )}
-                        {brandingData.complementary_color_2 && (
-                          <div className="text-center">
-                            <div 
-                              className="w-12 h-12 rounded-lg border mb-2"
-                              style={{ backgroundColor: brandingData.complementary_color_2 }}
-                            />
-                            <p className="text-xs text-blue-700 dark:text-blue-300">Comp. 2</p>
-                          </div>
-                        )}
+
+                      <div>
+                        <label className="text-sm font-medium">Color Secundario</label>
+                        <div className="flex gap-2 mt-1">
+                          <input
+                            type="color"
+                            value={brandingData.secondary_color || "#000000"}
+                            onChange={(e) => setBrandingData(prev => ({
+                              ...prev,
+                              secondary_color: e.target.value
+                            }))}
+                            className="w-12 h-10 border rounded"
+                          />
+                          <input
+                            type="text"
+                            value={brandingData.secondary_color}
+                            onChange={(e) => setBrandingData(prev => ({
+                              ...prev,
+                              secondary_color: e.target.value
+                            }))}
+                            className="flex-1 px-3 py-2 border rounded-md text-sm"
+                            placeholder="#000000"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium">Color Complementario 1</label>
+                        <div className="flex gap-2 mt-1">
+                          <input
+                            type="color"
+                            value={brandingData.complementary_color_1 || "#000000"}
+                            onChange={(e) => setBrandingData(prev => ({
+                              ...prev,
+                              complementary_color_1: e.target.value
+                            }))}
+                            className="w-12 h-10 border rounded"
+                          />
+                          <input
+                            type="text"
+                            value={brandingData.complementary_color_1}
+                            onChange={(e) => setBrandingData(prev => ({
+                              ...prev,
+                              complementary_color_1: e.target.value
+                            }))}
+                            className="flex-1 px-3 py-2 border rounded-md text-sm"
+                            placeholder="#000000"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium">Color Complementario 2</label>
+                        <div className="flex gap-2 mt-1">
+                          <input
+                            type="color"
+                            value={brandingData.complementary_color_2 || "#000000"}
+                            onChange={(e) => setBrandingData(prev => ({
+                              ...prev,
+                              complementary_color_2: e.target.value
+                            }))}
+                            className="w-12 h-10 border rounded"
+                          />
+                          <input
+                            type="text"
+                            value={brandingData.complementary_color_2}
+                            onChange={(e) => setBrandingData(prev => ({
+                              ...prev,
+                              complementary_color_2: e.target.value
+                            }))}
+                            className="flex-1 px-3 py-2 border rounded-md text-sm"
+                            placeholder="#000000"
+                          />
+                        </div>
                       </div>
                     </div>
-                  )}
 
-                  <div className="flex justify-center">
-                    <Button onClick={generateBrandingWithAI} variant="outline" size="sm">
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Regenerar identidad
-                    </Button>
+                    <div className="flex justify-center">
+                      <Button onClick={generateBrandingWithAI} variant="outline" size="sm">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Regenerar con ERA
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1489,7 +1562,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   Anterior
                 </Button>
                 <Button 
-                  onClick={nextStep} 
+                  onClick={async () => {
+                    await saveBranding(brandingData);
+                    nextStep();
+                  }} 
                   disabled={!brandingData.visual_identity && !brandingData.primary_color}
                 >
                   Siguiente

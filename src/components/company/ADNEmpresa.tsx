@@ -51,6 +51,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
+  const [isFirstTime, setIsFirstTime] = useState(true); // Nueva variable para controlar primera vez
   const [user, setUser] = useState<any>(null);
   
   // Estados para los datos
@@ -107,6 +108,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   useEffect(() => {
     if (profile?.user_id) {
       fetchAllData();
+      checkIfFirstTime(); // Verificar si es primera vez
     }
   }, [profile?.user_id]);
 
@@ -134,6 +136,35 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       fetchObjectives(),
       fetchSocialConnections()
     ]);
+  };
+
+  // Función para verificar si es primera vez del usuario
+  const checkIfFirstTime = async () => {
+    try {
+      // Verificar el estado del onboarding del usuario
+      const { data: onboardingStatus, error } = await supabase
+        .from('user_onboarding_status')
+        .select('dna_empresarial_completed')
+        .eq('user_id', profile?.user_id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking onboarding status:', error);
+        return;
+      }
+
+      // Si no existe registro o no ha completado el DNA empresarial, es primera vez
+      const isFirstTimeUser = !onboardingStatus || !onboardingStatus.dna_empresarial_completed;
+      setIsFirstTime(isFirstTimeUser);
+
+      // Si no es primera vez, saltar al modo de edición
+      if (!isFirstTimeUser) {
+        setIsOnboardingComplete(true);
+        setCurrentStep(totalSteps); // Ir al último paso para mostrar resumen
+      }
+    } catch (error) {
+      console.error('Error checking first time status:', error);
+    }
   };
 
   const fetchCompanyData = async () => {
@@ -2316,16 +2347,46 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   Anterior
                 </Button>
                 <Button 
-                  onClick={() => {
+                  onClick={async () => {
+                    // Solo marcar como completado si es primera vez
+                    if (isFirstTime && user) {
+                      try {
+                        // Marcar DNA empresarial como completado
+                        await supabase
+                          .from('user_onboarding_status')
+                          .upsert({
+                            user_id: user.id,
+                            dna_empresarial_completed: true,
+                            onboarding_completed_at: new Date().toISOString()
+                          }, {
+                            onConflict: 'user_id'
+                          });
+
+                        // Marcar onboarding general como completado
+                        await supabase.rpc('mark_onboarding_completed', {
+                          _user_id: user.id,
+                          _registration_method: user.app_metadata?.provider || 'email'
+                        });
+
+                        console.log('DNA empresarial y onboarding marcados como completados');
+                      } catch (error) {
+                        console.error('Error marking DNA empresarial as completed:', error);
+                      }
+                    }
+
                     setIsOnboardingComplete(true);
                     toast({
                       title: "¡Configuración Empresarial completada!",
-                      description: "Tu empresa está configurada. Serás redirigido al Mando Central.",
+                      description: isFirstTime ? "Tu empresa está configurada. Ahora conoce las funcionalidades clave." : "Cambios guardados exitosamente.",
                     });
-                    // Redirigir al mando central después de un breve delay
-                    setTimeout(() => {
-                      window.location.href = '/company-dashboard?view=mando-central';
-                    }, 2000);
+                    
+                    // Si es primera vez, redirigir para mostrar coachmarks
+                    // Si no es primera vez, quedarse en la misma vista  
+                    if (isFirstTime) {
+                      setTimeout(() => {
+                        window.location.href = '/company-dashboard?view=mando-central';
+                      }, 2000);
+                    }
                   }}
                   disabled={analyzing || analysisResults.length === 0}
                   className="bg-green-600 hover:bg-green-700"
@@ -2346,14 +2407,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header con progreso */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold">ADN de tu Empresa</h1>
-            <Badge variant="outline" className="text-sm">
-              Paso {currentStep} de {totalSteps}
-            </Badge>
-          </div>
+        {/* Header con progreso - solo mostrar para usuarios nuevos en onboarding */}
+        {isFirstTime && !isOnboardingComplete && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-3xl font-bold">Configuración Inicial de tu Empresa</h1>
+              <Badge variant="outline" className="text-sm">
+                Paso {currentStep} de {totalSteps}
+              </Badge>
+            </div>
           
           {/* Barra de progreso */}
           <div className="space-y-2">
@@ -2363,32 +2425,33 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             </p>
           </div>
 
-          {/* Navegación de pasos */}
-          <div className="flex justify-center mt-6">
-            <div className="flex gap-2">
-              {Array.from({length: totalSteps}, (_, i) => i + 1).map((step) => (
-                <button
-                  key={step}
-                  onClick={() => goToStep(step)}
-                  className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
-                    step === currentStep 
-                      ? "bg-primary text-primary-foreground" 
-                      : completedSteps.includes(step)
-                      ? "bg-green-500 text-white"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  {completedSteps.includes(step) && step !== currentStep ? (
-                    <CheckCircle className="w-4 h-4" />
-                  ) : (
-                    step
-                  )}
-                </button>
-              ))}
+            {/* Navegación de pasos - solo para usuarios nuevos */}
+            <div className="flex justify-center mt-6">
+              <div className="flex gap-2">
+                {Array.from({length: totalSteps}, (_, i) => i + 1).map((step) => (
+                  <button
+                    key={step}
+                    onClick={() => goToStep(step)}
+                    className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
+                      step === currentStep 
+                        ? "bg-primary text-primary-foreground" 
+                        : completedSteps.includes(step)
+                        ? "bg-green-500 text-white"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {completedSteps.includes(step) && step !== currentStep ? (
+                      <CheckCircle className="w-4 h-4" />
+                    ) : (
+                      step
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Contenido del paso actual */}
         <div className="animate-fade-in">

@@ -5,6 +5,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useFirstTimeSave } from "@/hooks/useFirstTimeSave";
+import { useEraCoachMark } from "@/hooks/useEraCoachMark";
+import EraCoachMark from "@/components/ui/era-coach-mark";
 
 import MandoCentral from "@/components/company/MandoCentral";
 import Dashboard360 from "@/components/company/Dashboard360";
@@ -30,9 +32,8 @@ const CompanyDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  
-  // Hook para detectar primera vez guardando cambios (registro social)
   const { triggerWebhookOnFirstSave } = useFirstTimeSave(user?.id);
+  const { shouldShowCoachMark, hideCoachMark } = useEraCoachMark(user?.id);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -278,6 +279,15 @@ const CompanyDashboard = () => {
           {renderContent()}
         </div>
       </div>
+      
+      {/* CoachMark solo para usuarios nuevos que completan onboarding */}
+      {shouldShowCoachMark && user && (
+        <EraCoachMark
+          isOpen={shouldShowCoachMark}
+          onClose={hideCoachMark}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 };

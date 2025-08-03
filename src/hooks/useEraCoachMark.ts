@@ -23,6 +23,20 @@ export const useEraCoachMark = (userId: string | undefined): UseEraCoachMarkRetu
       }
 
       try {
+        // Verificar primero si el usuario completó recientemente el onboarding
+        const { data: onboardingStatus, error: onboardingError } = await supabase
+          .from('user_onboarding_status')
+          .select('dna_empresarial_completed, onboarding_completed_at')
+          .eq('user_id', userId)
+          .single();
+
+        // Si no ha completado el DNA empresarial, no mostrar tutorial
+        if (onboardingError || !onboardingStatus?.dna_empresarial_completed) {
+          setIsLoading(false);
+          return;
+        }
+
+        // Verificar si ya vio el tutorial
         const { data, error } = await supabase
           .from('user_tutorials')
           .select('*')
@@ -36,12 +50,20 @@ export const useEraCoachMark = (userId: string | undefined): UseEraCoachMarkRetu
           return;
         }
 
-        // Si no hay registro, mostrar el tutorial
-        if (!data) {
-          // Delay para que no aparezca inmediatamente al cargar
-          setTimeout(() => {
-            setShouldShowCoachMark(true);
-          }, 2000);
+        // Si no hay registro del tutorial Y completó onboarding recientemente, mostrar tutorial
+        if (!data && onboardingStatus?.onboarding_completed_at) {
+          const completedDate = new Date(onboardingStatus.onboarding_completed_at);
+          const now = new Date();
+          const timeDiff = now.getTime() - completedDate.getTime();
+          const hoursDiff = timeDiff / (1000 * 3600);
+
+          // Solo mostrar si completó el onboarding en las últimas 24 horas
+          if (hoursDiff <= 24) {
+            // Delay para que no aparezca inmediatamente al cargar
+            setTimeout(() => {
+              setShouldShowCoachMark(true);
+            }, 3000);
+          }
         }
       } catch (error) {
         console.error('Error checking tutorial status:', error);

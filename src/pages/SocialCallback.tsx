@@ -53,15 +53,24 @@ const SocialCallback = () => {
           // No bloquear el flujo si falla el email
         }
 
-        // Llamar webhook para usuarios de empresa
+        // Llamar webhook para usuarios de empresa (opcional - no bloquear el flujo)
         if (userType === 'company') {
           try {
+            // Extraer datos disponibles del perfil social
+            const fullName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+            const companyName = user.user_metadata?.company_name || 
+                               user.user_metadata?.company || 
+                               fullName.split(' ')[0] + ' Company' || 
+                               'Mi Empresa';
+            
             await supabase.functions.invoke('process-company-webhooks', {
               body: {
                 user_id: user.id,
-                company_name: user.user_metadata?.company_name || '',
-                website_url: user.user_metadata?.website_url || '',
-                country: user.user_metadata?.country || '',
+                company_name: companyName,
+                website_url: user.user_metadata?.website || '',
+                country: user.user_metadata?.country || 'No especificado',
+                full_name: fullName,
+                email: user.email,
                 trigger_type: 'social_registration'
               }
             });

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +45,7 @@ interface ADNEmpresaProps {
 
 const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   // Estados para el onboarding
   const [currentStep, setCurrentStep] = useState(1);
@@ -99,7 +101,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     propuesta_valor: ""
   });
 
-  const totalSteps = 8;
+  const totalSteps = 7;
 
   useEffect(() => {
     if (profile?.user_id) {
@@ -307,15 +309,25 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       currentStep,
       dataResultsLength: dataResults.length,
       loadingData,
+      analyzing,
       hasSocialConnections: Object.values(socialConnections).some(url => url.trim() !== '')
     });
     
-    if (currentStep === 7 && !loadingData && dataResults.length === 0 && 
+    if (currentStep === 7 && !loadingData && !analyzing && dataResults.length === 0 && 
         Object.values(socialConnections).some(url => url.trim() !== '')) {
       console.log('🚀 Iniciando carga automática de datos de redes sociales...');
       loadSocialData();
     }
-  }, [currentStep, loadingData, dataResults.length, socialConnections]);
+  }, [currentStep, loadingData, analyzing, dataResults.length, socialConnections]);
+
+  // Auto-ejecutar análisis inteligente después de cargar datos
+  useEffect(() => {
+    if (currentStep === 7 && !loadingData && !analyzing && 
+        dataResults.length > 0 && analysisResults.length === 0) {
+      console.log('🧠 Iniciando análisis inteligente automático...');
+      runAnalysis();
+    }
+  }, [currentStep, loadingData, analyzing, dataResults.length, analysisResults.length]);
 
   const generateStrategyWithAI = async () => {
     setLoading(true);
@@ -2019,11 +2031,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 Carga de datos de redes sociales
               </CardTitle>
               <p className="text-muted-foreground">
-                Cargando información y publicaciones de tus redes sociales conectadas
+                Cargando información, analytics e insights de tus redes sociales conectadas
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {dataResults.length === 0 && !loadingData ? (
+              {dataResults.length === 0 && !loadingData && !analyzing ? (
                 <div className="text-center space-y-4">
                   <div className="p-6 border-2 border-dashed border-muted rounded-lg">
                     <Download className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -2067,13 +2079,43 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     </div>
                   )}
                 </div>
+              ) : analyzing ? (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <Brain className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
+                    <h3 className="text-lg font-medium mb-2">Generando insights inteligentes...</h3>
+                    <p className="text-muted-foreground">
+                      ERA está analizando tus datos para crear estrategias personalizadas
+                    </p>
+                  </div>
+                  
+                  {analysisResults.length > 0 && (
+                    <div className="space-y-3">
+                      {analysisResults.map((result, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            {result.success ? (
+                              <CheckCircle className="w-5 h-5 text-green-500" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-red-500" />
+                            )}
+                            <span className="font-medium">{result.platform}</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {result.success ? `${result.insights} insights generados` : result.error}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="space-y-4">
                   <div className="text-center">
                     <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">¡Datos cargados exitosamente!</h3>
+                    <h3 className="text-lg font-medium mb-2">¡Proceso completado exitosamente!</h3>
                     <p className="text-muted-foreground">
-                      Se ha completado la carga de información de tus redes sociales
+                      Se ha completado la carga e análisis de tus redes sociales
                     </p>
                   </div>
                   
@@ -2094,6 +2136,27 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                       </div>
                     ))}
                   </div>
+
+                  {analysisResults.length > 0 && (
+                    <>
+                      <div className="border-t pt-4">
+                        <h4 className="font-medium mb-3">Análisis inteligente completado</h4>
+                        <div className="space-y-3">
+                          {analysisResults.map((result, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <Brain className="w-5 h-5 text-blue-500" />
+                                <span className="font-medium">{result.platform}</span>
+                              </div>
+                              <div className="text-sm text-blue-600 dark:text-blue-400">
+                                {result.success ? `${result.insights} insights generados` : result.error}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -2102,10 +2165,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   <Info className="w-5 h-5 text-blue-500 mt-0.5" />
                   <div>
                     <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                      ¿Qué estamos cargando?
+                      ¿Qué estamos procesando?
                     </h3>
                     <p className="text-sm text-blue-700 dark:text-blue-300">
-                      Estamos recopilando tus publicaciones, información del perfil y métricas de engagement 
+                      Cargamos tus publicaciones, calculamos analytics, y generamos insights inteligentes 
                       para crear estrategias personalizadas y recomendaciones específicas para tu negocio.
                     </p>
                   </div>
@@ -2118,11 +2181,20 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   Anterior
                 </Button>
                 <Button 
-                  onClick={nextStep}
-                  disabled={loadingData || dataResults.length === 0}
+                  onClick={() => {
+                    // Finalizar onboarding y ir al mando central
+                    navigate('/company-dashboard');
+                  }}
+                  disabled={loadingData || analyzing || (dataResults.length === 0 && analysisResults.length === 0)}
                 >
-                  Siguiente
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  {loadingData || analyzing ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <>
+                      Finalizar
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>

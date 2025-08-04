@@ -43,9 +43,6 @@ interface UserProfileData {
   linkedin_profile?: string;
   bio?: string;
   location?: string;
-  company_name?: string;
-  website_url?: string;
-  industry?: string;
   linked_providers: string[];
 }
 
@@ -477,22 +474,7 @@ const UserProfile = () => {
                         )}
                       </div>
 
-                      {profile.company_name && (
-                        <div>
-                          <Label>Empresa</Label>
-                          <p className="mt-1 text-sm text-gray-900 flex items-center">
-                            <Building2 className="w-3 h-3 mr-1" />
-                            {profile.company_name}
-                          </p>
-                        </div>
-                      )}
-
-                      {profile.industry && (
-                        <div>
-                          <Label>Industria</Label>
-                          <p className="mt-1 text-sm text-gray-900">{profile.industry}</p>
-                        </div>
-                      )}
+                      {/* Company information is now stored in the companies table */}
                     </div>
 
                     <Separator />

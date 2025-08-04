@@ -1228,6 +1228,35 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       const newStep = currentStep + 1;
       setCurrentStep(newStep);
       
+      // Llamar webhook de n8n automáticamente cuando se avanza al paso 2
+      if (newStep === 2 && user?.id && companyData) {
+        console.log('🔗 Ejecutando webhook n8n automáticamente al avanzar al paso 2');
+        try {
+          const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
+            body: {
+              KEY: 'INFO',
+              COMPANY_INFO: JSON.stringify({
+                company_name: companyData?.name || profile?.company_name || 'Mi Empresa',
+                website_url: companyData?.website_url || profile?.website_url || '',
+                country: profile?.country || 'No especificado'
+              }),
+              ADDITIONAL_INFO: JSON.stringify({
+                industry: companyData?.industry_sector || profile?.industry || '',
+                description: companyData?.descripcion_empresa || ''
+              })
+            }
+          });
+
+          if (error) {
+            console.error('Error ejecutando webhook n8n:', error);
+          } else {
+            console.log('✅ Webhook n8n ejecutado exitosamente:', data);
+          }
+        } catch (error) {
+          console.error('Error en llamada al webhook n8n:', error);
+        }
+      }
+      
       // Auto-generar objetivos cuando se llega al paso 4 y no hay objetivos existentes
       if (newStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives) {
         // Pequeña pausa para que se renderice el nuevo paso
@@ -1244,8 +1273,37 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   };
 
-  const goToStep = (step: number) => {
+  const goToStep = async (step: number) => {
     setCurrentStep(step);
+    
+    // Llamar webhook de n8n automáticamente cuando se navega al paso 2
+    if (step === 2 && user?.id && companyData) {
+      console.log('🔗 Ejecutando webhook n8n automáticamente al navegar al paso 2');
+      try {
+        const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
+          body: {
+            KEY: 'INFO',
+            COMPANY_INFO: JSON.stringify({
+              company_name: companyData?.name || profile?.company_name || 'Mi Empresa',
+              website_url: companyData?.website_url || profile?.website_url || '',
+              country: profile?.country || 'No especificado'
+            }),
+            ADDITIONAL_INFO: JSON.stringify({
+              industry: companyData?.industry_sector || profile?.industry || '',
+              description: companyData?.descripcion_empresa || ''
+            })
+          }
+        });
+
+        if (error) {
+          console.error('Error ejecutando webhook n8n:', error);
+        } else {
+          console.log('✅ Webhook n8n ejecutado exitosamente:', data);
+        }
+      } catch (error) {
+        console.error('Error en llamada al webhook n8n:', error);
+      }
+    }
   };
 
   // Función para obtener el contenido del paso actual

@@ -1352,6 +1352,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               // Actualizar estados específicos
               if (updateData.descripcion_empresa) {
                 setTempDescription(updateData.descripcion_empresa);
+                setEditingDescription(false); // Desactivar modo de edición para mostrar la descripción obtenida
               }
               
               // Actualizar conexiones sociales si se encontraron

@@ -2668,16 +2668,17 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                     // Solo marcar como completado si es primera vez
                     if (isFirstTime && user) {
                       try {
-                        // Marcar DNA empresarial como completado
-                        await supabase
-                          .from('user_onboarding_status')
-                          .upsert({
-                            user_id: user.id,
-                            dna_empresarial_completed: true,
-                            onboarding_completed_at: new Date().toISOString()
-                          }, {
-                            onConflict: 'user_id'
-                          });
+                         // Marcar DNA empresarial como completado
+                         await supabase
+                           .from('user_onboarding_status')
+                           .upsert({
+                             user_id: user.id,
+                             dna_empresarial_completed: true,
+                             first_login_completed: true,
+                             onboarding_completed_at: new Date().toISOString()
+                           }, {
+                             onConflict: 'user_id'
+                           });
 
                         // Marcar onboarding general como completado
                         await supabase.rpc('mark_onboarding_completed', {

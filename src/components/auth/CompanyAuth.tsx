@@ -148,14 +148,12 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
 
         console.log("Iniciando registro con email para:", email);
         
-        // Crear URL de verificación personalizada
-        const confirmationUrl = `${window.location.origin}/auth/verify?token_hash={{.TokenHash}}&type=signup&redirect_to=${encodeURIComponent(window.location.origin + '/company-dashboard')}`;
-        
+        // Crear URL de verificación que maneje correctamente el primer login
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/company-dashboard`,
+            emailRedirectTo: `${window.location.origin}/auth/verify`,
             data: {
               full_name: fullName,
               user_type: 'company',
@@ -179,7 +177,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           // Enviar email de verificación personalizado usando el sistema de Buildera
           if (!data.user.email_confirmed_at) {
             try {
-              const verificationUrl = `${window.location.origin}/auth/verify?type=signup&redirect_to=${encodeURIComponent(window.location.origin + '/company-dashboard')}`;
+              const verificationUrl = `${window.location.origin}/auth/verify?type=signup`;
               
               await supabase.functions.invoke('send-verification-email', {
                 body: {
@@ -287,8 +285,33 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         }
         
         console.log("Login exitoso:", data);
-        // Usar el componente de redirección para manejar el flujo post-login
-        window.location.href = '/company-dashboard';
+        
+        // Verificar si es primer login para redirigir al onboarding
+        if (data.user) {
+          try {
+            // Verificar estado de onboarding
+            const { data: onboardingStatus } = await supabase
+              .from('user_onboarding_status')
+              .select('*')
+              .eq('user_id', data.user.id)
+              .single();
+
+            console.log("🔍 Estado de onboarding:", onboardingStatus);
+
+            // Si no existe registro de onboarding o no está completado, ir al onboarding
+            if (!onboardingStatus || !onboardingStatus.dna_empresarial_completed) {
+              console.log("🎯 Primer login detectado, redirigiendo al onboarding");
+              window.location.href = '/company-dashboard?view=adn-empresa&first_login=true';
+            } else {
+              console.log("✅ Usuario ya completó onboarding, ir al dashboard");
+              window.location.href = '/company-dashboard';
+            }
+          } catch (error) {
+            console.error("Error verificando onboarding:", error);
+            // Si hay error verificando onboarding, ir al onboarding por seguridad
+            window.location.href = '/company-dashboard?view=adn-empresa&first_login=true';
+          }
+        }
       }
     } catch (error: any) {
       console.error("Error en autenticación:", error);
@@ -322,7 +345,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       
       // Intentar primero con nuestro sistema personalizado
       try {
-        const verificationUrl = `${window.location.origin}/auth/verify?type=signup&redirect_to=${encodeURIComponent(window.location.origin + '/company-dashboard')}`;
+        const verificationUrl = `${window.location.origin}/auth/verify?type=signup`;
         
         await supabase.functions.invoke('send-verification-email', {
           body: {
@@ -345,7 +368,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           type: 'signup',
           email: registeredEmail,
           options: {
-            emailRedirectTo: `${window.location.origin}/company-dashboard`
+            emailRedirectTo: `${window.location.origin}/auth/verify`
           }
         });
 

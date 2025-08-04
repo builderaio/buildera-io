@@ -183,19 +183,19 @@ const CompleteProfile = () => {
         description: "Su información ha sido guardada correctamente.",
       });
 
-      // Redirect based on user type
+      // Redirect based on user type - TODOS VAN AL ONBOARDING DESPUÉS DE COMPLETAR PERFIL
       if (userType === 'company') {
-        // Para empresas, ir al dashboard de empresa después de completar perfil
-        navigate('/company-dashboard?view=adn-empresa');
+        // Para empresas, ir al primer paso del onboarding (ADN empresa)
+        navigate('/company-dashboard?view=adn-empresa&first_login=true');
       } else if (userType === 'developer') {
-        // Para developers, ir al dashboard principal
-        navigate('/');
+        // Para developers, ir al onboarding específico o dashboard con primer login
+        navigate('/company-dashboard?view=adn-empresa&first_login=true&user_type=developer');
       } else if (userType === 'expert') {
-        // Para experts, ir al dashboard principal
-        navigate('/');
+        // Para experts, ir al onboarding específico o dashboard con primer login
+        navigate('/company-dashboard?view=adn-empresa&first_login=true&user_type=expert');
       } else {
-        // Fallback
-        navigate('/');
+        // Fallback - ir al onboarding
+        navigate('/company-dashboard?view=adn-empresa&first_login=true');
       }
       
     } catch (error: any) {

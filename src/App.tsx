@@ -49,6 +49,7 @@ import AgentConfigWizard from "./pages/AgentConfigWizard";
 import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
+import EmailVerificationHandler from "./pages/EmailVerificationHandler";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +97,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/home" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/verify" element={<EmailVerificationHandler />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/waitlist" element={<Waitlist />} />

@@ -138,7 +138,34 @@ const SocialCallback = () => {
           }
         }
 
-        // Redirigir a completar perfil para TODOS los tipos de usuario social
+        // Verificar si el usuario ya tiene un perfil completo
+        try {
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('user_type, full_name')
+            .eq('user_id', user.id)
+            .single();
+
+          console.log("🔍 Perfil existente encontrado:", existingProfile);
+
+          // Si ya tiene user_type definido, ir directo al onboarding
+          if (existingProfile && existingProfile.user_type) {
+            console.log("✅ Usuario ya tiene perfil, ir al onboarding");
+            
+            toast({
+              title: "¡Bienvenido de nuevo!",
+              description: "Te hemos enviado un email de bienvenida. Te llevamos al primer paso de tu configuración.",
+            });
+
+            // Ir directo al onboarding paso 1
+            navigate(`/company-dashboard?view=adn-empresa&first_login=true&provider=${searchParams.get('provider') || 'unknown'}`);
+            return;
+          }
+        } catch (profileError) {
+          console.log("ℹ️ No se encontró perfil existente, proceder a completar:", profileError);
+        }
+
+        // Si no tiene perfil completo, ir a completar información
         console.log(`🔄 Redirigiendo a completar perfil para tipo: ${userType}`);
         
         toast({
@@ -146,7 +173,7 @@ const SocialCallback = () => {
           description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida. Completa tu perfil para comenzar.",
         });
 
-        // Redirigir inmediatamente a completar perfil con el tipo de usuario
+        // Redirigir a completar perfil con el tipo de usuario
         navigate(`/complete-profile?user_type=${userType}&from=social&provider=${searchParams.get('provider') || 'unknown'}`);
 
       } catch (error: any) {

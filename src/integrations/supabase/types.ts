@@ -3805,7 +3805,7 @@ export type Database = {
           skills: string[] | null
           updated_at: string
           user_id: string
-          user_type: Database["public"]["Enums"]["user_type"]
+          user_type: Database["public"]["Enums"]["user_type"] | null
           years_experience: number | null
         }
         Insert: {
@@ -3838,7 +3838,7 @@ export type Database = {
           skills?: string[] | null
           updated_at?: string
           user_id: string
-          user_type: Database["public"]["Enums"]["user_type"]
+          user_type?: Database["public"]["Enums"]["user_type"] | null
           years_experience?: number | null
         }
         Update: {
@@ -3871,7 +3871,7 @@ export type Database = {
           skills?: string[] | null
           updated_at?: string
           user_id?: string
-          user_type?: Database["public"]["Enums"]["user_type"]
+          user_type?: Database["public"]["Enums"]["user_type"] | null
           years_experience?: number | null
         }
         Relationships: [

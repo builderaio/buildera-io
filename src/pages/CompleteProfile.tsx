@@ -70,9 +70,10 @@ const CompleteProfile = () => {
         .eq('user_id', session.user.id)
         .single();
 
-      if (profile && profile.user_type) {
-        console.log('🔍 CompleteProfile: perfil existe', {
+      if (profile && profile.user_type !== null) {
+        console.log('🔍 CompleteProfile: perfil existe y completo', {
           userType: profile.user_type,
+          authProvider: profile.auth_provider,
           hasFullName: !!profile.full_name
         });
         
@@ -84,6 +85,12 @@ const CompleteProfile = () => {
           navigate('/');
         }
         return;
+      }
+
+      // Para registros sociales (auth_provider != 'email'), verificar si necesita complete-profile
+      if (profile && profile.auth_provider !== 'email' && profile.user_type === null) {
+        console.log('🔍 CompleteProfile: usuario social sin user_type, proceder a completar perfil');
+        // Continuar con el flujo de completar perfil
       }
 
       // Check URL params for user type from OAuth

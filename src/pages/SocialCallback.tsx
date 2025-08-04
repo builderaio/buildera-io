@@ -142,25 +142,37 @@ const SocialCallback = () => {
         try {
           const { data: existingProfile } = await supabase
             .from('profiles')
-            .select('user_type, full_name')
+            .select('user_type, full_name, auth_provider')
             .eq('user_id', user.id)
             .single();
 
           console.log("🔍 Perfil existente encontrado:", existingProfile);
 
-          // IMPORTANTE: Solo ir directo al onboarding si tiene user_type definido Y diferente de NULL
-          // Para registros sociales, user_type debería ser NULL inicialmente
-          if (existingProfile && existingProfile.user_type !== null) {
-            console.log("✅ Usuario ya tiene perfil completo, ir al onboarding");
+          // LÓGICA ACTUALIZADA: Para registros sociales, verificar auth_provider
+          // Si auth_provider != 'email' Y user_type es NULL, forzar complete-profile
+          if (existingProfile) {
+            const isSocialUser = existingProfile.auth_provider && existingProfile.auth_provider !== 'email';
+            const needsCompleteProfile = existingProfile.user_type === null;
             
-            toast({
-              title: "¡Bienvenido de nuevo!",
-              description: "Te hemos enviado un email de bienvenida. Te llevamos al primer paso de tu configuración.",
+            console.log("🔍 Verificando perfil social:", {
+              authProvider: existingProfile.auth_provider,
+              userType: existingProfile.user_type,
+              isSocialUser,
+              needsCompleteProfile
             });
 
-            // Ir directo al onboarding paso 1
-            navigate(`/company-dashboard?view=adn-empresa&first_login=true&provider=${searchParams.get('provider') || 'unknown'}`);
-            return;
+            if (isSocialUser && !needsCompleteProfile) {
+              console.log("✅ Usuario social con perfil completo, ir al onboarding");
+              
+              toast({
+                title: "¡Bienvenido de nuevo!",
+                description: "Te hemos enviado un email de bienvenida. Te llevamos al primer paso de tu configuración.",
+              });
+
+              // Ir directo al onboarding paso 1
+              navigate(`/company-dashboard?view=adn-empresa&first_login=true&provider=${searchParams.get('provider') || 'unknown'}`);
+              return;
+            }
           }
         } catch (profileError) {
           console.log("ℹ️ No se encontró perfil existente, proceder a completar:", profileError);

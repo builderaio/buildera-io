@@ -43,25 +43,33 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
 
         const hasCompany = companies && companies.length > 0;
 
-        // 3. Determinar el método de registro
-        const registrationMethod = user.app_metadata?.provider || 'email';
-        const isEmailRegistration = registrationMethod === 'email';
+        // 3. Determinar el método de registro basado en auth_provider
+        const authProvider = profile?.auth_provider || 'email';
+        const isEmailRegistration = authProvider === 'email';
         const isSocialRegistration = !isEmailRegistration;
 
         console.log('🔍 Onboarding check:', {
           hasProfile: !!profile,
-          profileComplete: profile?.user_type === 'company',
+          profileComplete: profile?.user_type !== null,
           hasCompany,
-          registrationMethod,
+          authProvider,
           isEmailRegistration,
           isSocialRegistration,
-          companiesCount: companies?.length
+          companiesCount: companies?.length,
+          needsCompleteProfile: profile?.user_type === null
         });
 
         // 4. Lógica de redirección
         if (hasCompany) {
           // Ya tiene empresa configurada, ir al dashboard
           navigate('/company-dashboard');
+          return;
+        }
+
+        // Para registros sociales SIN user_type definido, forzar complete-profile
+        if (isSocialRegistration && profile?.user_type === null) {
+          console.log('🔄 Usuario social sin user_type, ir a complete-profile');
+          navigate('/complete-profile?user_type=company');
           return;
         }
 

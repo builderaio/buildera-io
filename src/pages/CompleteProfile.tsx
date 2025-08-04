@@ -140,14 +140,12 @@ const CompleteProfile = () => {
         profileData.github_url = githubUrl;
         profileData.skills = skills ? skills.split(',').map(s => s.trim()) : [];
         profileData.experience_years = experienceYears ? parseInt(experienceYears) : null;
-  } else if (userType === 'expert') {
-    profileData.expertise_areas = expertiseAreas ? expertiseAreas.split(',').map(s => s.trim()) : [];
-    profileData.years_experience = yearsExperience ? parseInt(yearsExperience) : null;
+      } else if (userType === 'expert') {
+        profileData.expertise_areas = expertiseAreas ? expertiseAreas.split(',').map(s => s.trim()) : [];
+        profileData.years_experience = yearsExperience ? parseInt(yearsExperience) : null;
       } else if (userType === 'company') {
-        profileData.company_name = companyName;
-        profileData.company_size = companySize;
+        // Para companies, los datos específicos van a la tabla companies, no profiles
         profileData.industry_sector = industrySector;
-        profileData.website_url = websiteUrl;
       }
 
       const { error } = await supabase
@@ -155,6 +153,30 @@ const CompleteProfile = () => {
         .upsert(profileData);
 
       if (error) throw error;
+
+      // Para usuarios tipo 'company', crear la empresa automáticamente
+      if (userType === 'company') {
+        try {
+          const { data: companyData, error: companyError } = await supabase.rpc('create_company_with_owner', {
+            company_name: companyName || 'Mi Empresa',
+            company_description: 'Empresa creada durante el completado del perfil',
+            website_url: websiteUrl || null,
+            industry_sector: industrySector || null,
+            company_size: companySize || null,
+            user_id_param: user.id
+          });
+
+          if (companyError) {
+            console.error('Error creando empresa:', companyError);
+            throw companyError;
+          }
+
+          console.log('✅ Empresa creada exitosamente:', companyData);
+        } catch (companyError) {
+          console.error('❌ Error en creación de empresa:', companyError);
+          // No bloquear el flujo si falla la creación de empresa
+        }
+      }
 
       toast({
         title: "¡Perfil completado!",

@@ -140,10 +140,9 @@ const CompleteProfile = () => {
         profileData.github_url = githubUrl;
         profileData.skills = skills ? skills.split(',').map(s => s.trim()) : [];
         profileData.experience_years = experienceYears ? parseInt(experienceYears) : null;
-      } else if (userType === 'expert') {
-        profileData.industry = industry;
-        profileData.expertise_areas = expertiseAreas ? expertiseAreas.split(',').map(s => s.trim()) : [];
-        profileData.years_experience = yearsExperience ? parseInt(yearsExperience) : null;
+  } else if (userType === 'expert') {
+    profileData.expertise_areas = expertiseAreas ? expertiseAreas.split(',').map(s => s.trim()) : [];
+    profileData.years_experience = yearsExperience ? parseInt(yearsExperience) : null;
       } else if (userType === 'company') {
         profileData.company_name = companyName;
         profileData.company_size = companySize;

@@ -1245,13 +1245,32 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const startConfiguration = async () => {
     console.log('🔗 Iniciando configuración...', { 
       user: user?.id, 
-      companyData: !!companyData,
-      profile: !!profile 
+      companyData: companyData,
+      profile: profile 
     });
+    
+    // Validar que tenemos información mínima requerida antes de enviar al webhook
+    const companyName = companyData?.name || profile?.company_name;
+    const websiteUrl = companyData?.website_url || profile?.website_url;
+    
+    if (!websiteUrl || !companyName || companyName === 'Mi Empresa') {
+      console.log('⚠️ Información insuficiente para webhook. Saltando al siguiente paso.');
+      toast({
+        title: "Información insuficiente",
+        description: "Se necesita el nombre real de la empresa y sitio web para obtener información automática.",
+        variant: "default",
+      });
+      nextStep();
+      return;
+    }
     
     // Llamar webhook de n8n cuando se hace clic en "Comenzar configuración"
     if (user?.id) {
-      console.log('🔗 Ejecutando webhook n8n al comenzar configuración');
+      console.log('🔗 Ejecutando webhook n8n al comenzar configuración con datos:', {
+        companyName,
+        websiteUrl,
+        industry: companyData?.industry_sector || profile?.industry
+      });
       setLoading(true);
       
       try {
@@ -1259,8 +1278,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           body: {
             KEY: 'INFO',
             COMPANY_INFO: JSON.stringify({
-              company_name: companyData?.name || profile?.company_name || 'Mi Empresa',
-              website_url: companyData?.website_url || profile?.website_url || '',
+              company_name: companyName,
+              website_url: websiteUrl,
               country: profile?.country || 'No especificado'
             }),
             ADDITIONAL_INFO: JSON.stringify({

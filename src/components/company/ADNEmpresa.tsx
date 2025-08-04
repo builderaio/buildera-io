@@ -1243,8 +1243,14 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   };
 
   const startConfiguration = async () => {
+    console.log('🔗 Iniciando configuración...', { 
+      user: user?.id, 
+      companyData: !!companyData,
+      profile: !!profile 
+    });
+    
     // Llamar webhook de n8n cuando se hace clic en "Comenzar configuración"
-    if (user?.id && companyData) {
+    if (user?.id) {
       console.log('🔗 Ejecutando webhook n8n al comenzar configuración');
       setLoading(true);
       
@@ -1401,7 +1407,17 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       } finally {
         setLoading(false);
       }
+    } else {
+      console.error('❌ No se puede ejecutar webhook: usuario no encontrado', { user: user?.id });
+      toast({
+        title: "Error",
+        description: "No se puede obtener información. Usuario no autenticado.",
+        variant: "destructive",
+      });
     }
+    
+    // Avanzar al siguiente paso independientemente del resultado del webhook
+    nextStep();
     
     // Avanzar al siguiente paso
     nextStep();

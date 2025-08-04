@@ -68,12 +68,13 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
 
         if (isSocialRegistration) {
           // Registro por redes sociales - crear empresa automáticamente si no existe
-          if (!hasCompany && profile && profile.user_type === 'company' && profile.company_name) {
+          if (!hasCompany && profile && profile.user_type === 'company') {
             console.log('🏭 Creando empresa para usuario social existente...');
             try {
+              // Para registro social, crear empresa sin nombre específico - el usuario lo completará después
               const { data: newCompany, error: companyError } = await supabase.rpc('create_company_with_owner', {
-                company_name: profile.company_name,
-                company_description: `Empresa de ${profile.full_name}`,
+                company_name: 'Mi Empresa', // Nombre temporal que será actualizado por el usuario
+                company_description: null,
                 website_url: profile.website_url,
                 industry_sector: profile.industry_sector,
                 company_size: profile.company_size,

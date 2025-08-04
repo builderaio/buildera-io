@@ -1242,6 +1242,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     // Llamar webhook de n8n cuando se hace clic en "Comenzar configuración"
     if (user?.id && companyData) {
       console.log('🔗 Ejecutando webhook n8n al comenzar configuración');
+      setLoading(true);
+      
       try {
         const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
           body: {
@@ -1260,11 +1262,61 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
         if (error) {
           console.error('Error ejecutando webhook n8n:', error);
+          toast({
+            title: "Error",
+            description: "No se pudo obtener información adicional de la empresa",
+            variant: "destructive",
+          });
         } else {
           console.log('✅ Webhook n8n ejecutado exitosamente:', data);
+          
+          // Procesar la respuesta y actualizar la empresa si hay datos útiles
+          if (data?.success && data?.data && Array.isArray(data.data) && data.data.length > 0) {
+            console.log('📊 Procesando respuesta del webhook...');
+            const responseArray = data.data[0]?.response || [];
+            const descripcionItem = responseArray.find((item: any) => item.key === 'descripcion_empresa');
+            
+            if (descripcionItem && descripcionItem.value && 
+                descripcionItem.value !== 'No se encontró información' &&
+                !descripcionItem.value.includes('No se encontró información específica') &&
+                !descripcionItem.value.includes('No se pudo determinar')) {
+              
+              // Actualizar la empresa con los datos del webhook
+              const { error: updateError } = await supabase
+                .from('companies')
+                .update({ 
+                  descripcion_empresa: descripcionItem.value,
+                  webhook_data: data.data,
+                  webhook_processed_at: new Date().toISOString()
+                })
+                .eq('id', companyData.id);
+              
+              if (!updateError) {
+                setCompanyData(prev => ({ 
+                  ...prev, 
+                  descripcion_empresa: descripcionItem.value,
+                  webhook_data: data.data
+                }));
+                setTempDescription(descripcionItem.value);
+                console.log('✅ Información de empresa actualizada con datos del webhook');
+                
+                toast({
+                  title: "Información obtenida",
+                  description: "Se ha cargado información adicional de tu empresa",
+                });
+              }
+            }
+          }
         }
       } catch (error) {
         console.error('Error en llamada al webhook n8n:', error);
+        toast({
+          title: "Error",
+          description: "Error al procesar información de la empresa",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
       }
     }
     
@@ -1308,9 +1360,18 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                   estrategias personalizadas y recomendaciones precisas para hacer crecer tu negocio.
                 </p>
               </div>
-              <Button onClick={startConfiguration} className="w-full" size="lg">
-                Comenzar configuración
-                <ArrowRight className="w-4 h-4 ml-2" />
+              <Button onClick={startConfiguration} className="w-full" size="lg" disabled={loading}>
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Obteniendo información...
+                  </>
+                ) : (
+                  <>
+                    Comenzar configuración
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
             </CardContent>
           </Card>

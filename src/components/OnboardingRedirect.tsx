@@ -29,19 +29,20 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
           return;
         }
 
-        // 2. Verificar si existe configuración de empresa
-        const { data: companies, error: companyError } = await supabase
-          .from('companies')
-          .select('*')
-          .eq('created_by', user.id);
+        // 2. Verificar si el usuario es miembro de alguna empresa (especialmente como owner)
+        const { data: companyMemberships, error: companyError } = await supabase
+          .from('company_members')
+          .select('*, companies(*)')
+          .eq('user_id', user.id)
+          .eq('is_primary', true); // Verificar empresa principal
 
         if (companyError) {
-          console.error('Error checking companies:', companyError);
+          console.error('Error checking company memberships:', companyError);
           setChecking(false);
           return;
         }
 
-        const hasCompany = companies && companies.length > 0;
+        const hasCompany = companyMemberships && companyMemberships.length > 0;
 
         // 3. Determinar el flujo basado en auth_provider
         const authProvider = profile?.auth_provider || 'email';
@@ -52,7 +53,8 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
           hasCompany,
           authProvider,
           isSocialRegistration,
-          companiesCount: companies?.length
+          companiesCount: companyMemberships?.length,
+          primaryCompany: companyMemberships?.[0]?.companies?.name
         });
 
         // 4. Lógica de redirección

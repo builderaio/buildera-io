@@ -1,189 +1,52 @@
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 import { supabase } from "@/integrations/supabase/client";
 
 const SocialCallback = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const { sendWelcomeEmail } = useWelcomeEmail();
 
   useEffect(() => {
     const handleSocialAuthCallback = async () => {
       try {
         console.log("🔄 Procesando callback de autenticación social...");
-        console.log("📍 URL actual:", window.location.href);
-        console.log("📍 Search params:", window.location.search);
         
-        // Verificar si hay hash fragments que Supabase necesita procesar
-        const hashFragment = window.location.hash;
-        console.log("📍 Hash fragment:", hashFragment);
+        // Esperar que Supabase procese el hash y establezca la sesión
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Intentar procesar parámetros de hash para sesión OAuth
-        if (hashFragment && hashFragment.includes('access_token')) {
-          console.log("🔍 Detectado access_token en hash, procesando...");
-          try {
-            // Supabase maneja automáticamente los hash fragments OAuth
-            console.log("📦 Hash contiene tokens OAuth");
-          } catch (urlError) {
-            console.error("❌ Error parseando URL:", urlError);
-          }
-        }
-        
-        // Esperar un momento para que la sesión se establezca
-        console.log("⏳ Esperando que la sesión se establezca...");
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Verificar el estado del cliente de Supabase
-        console.log("🔍 Verificando estado del cliente Supabase...");
-        const authClient = supabase.auth;
-        console.log("📊 Cliente auth:", authClient);
-        
-        // Intentar obtener la sesión actual
-        console.log("🔄 Obteniendo sesión actual...");
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        console.log("📦 Datos de sesión:", sessionData);
-        console.log("❌ Error de sesión:", sessionError);
+        // Verificar la sesión
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error("❌ Error obteniendo sesión:", sessionError);
           throw sessionError;
         }
 
-        let user = null;
-
-        if (!sessionData || !sessionData.session || !sessionData.session.user) {
-          console.error("❌ No se encontró sesión válida en sessionData");
-          console.log("🔄 Intentando método alternativo - getUser()...");
-          
-          // Intentar obtener el usuario directamente como fallback
-          const { data: userData, error: userError } = await supabase.auth.getUser();
-          console.log("👤 Datos de usuario:", userData);
-          console.log("❌ Error de usuario:", userError);
-          
-          if (userError || !userData || !userData.user) {
-            console.error("❌ Fallback también falló:", userError);
-            console.log("🔍 Verificando localStorage para tokens...");
-            
-            // Verificar qué hay en localStorage
-            const keys = Object.keys(localStorage);
-            const supabaseKeys = keys.filter(key => key.includes('supabase') || key.includes('sb-'));
-            console.log("🗄️ Claves de Supabase en localStorage:", supabaseKeys);
-            
-            supabaseKeys.forEach(key => {
-              console.log(`🔑 ${key}:`, localStorage.getItem(key));
-            });
-            
-            toast({
-              title: "Error de Sesión",
-              description: "No se pudo completar la autenticación. La sesión no se estableció correctamente. Revisa la consola para más detalles.",
-              variant: "destructive",
-            });
-            
-            // Redirigir después de un momento para que el usuario pueda ver los logs
-            setTimeout(() => {
-              navigate('/auth');
-            }, 5000);
-            return;
-          }
-          
-          console.log("✅ Usuario encontrado en fallback:", userData.user.email);
-          user = userData.user;
-        } else {
-          console.log("✅ Sesión establecida para usuario:", sessionData.session.user.email);
-          user = sessionData.session.user;
+        if (!session || !session.user) {
+          throw new Error("No se pudo establecer la sesión de usuario");
         }
 
-        // Obtener tipo de usuario de los parámetros
-        const userType = searchParams.get('user_type') || 'company';
-        
-        // Enviar email de bienvenida
-        try {
-          const validUserType = userType === 'company' || userType === 'developer' || userType === 'expert' ? userType : 'company';
-          await sendWelcomeEmail(
-            user.email || '', 
-            user.user_metadata?.full_name || user.user_metadata?.name || 'Usuario',
-            validUserType
-          );
-          console.log("✅ Email de bienvenida enviado");
-        } catch (emailError) {
-          console.error("❌ Error enviando email de bienvenida:", emailError);
-          // No bloquear el flujo si falla el email
-        }
+        console.log("✅ Sesión establecida para usuario:", session.user.email);
 
-        // Llamar webhook para usuarios de empresa (opcional - no bloquear el flujo)
-        if (userType === 'company') {
-          try {
-            // Extraer datos disponibles del perfil social
-            const fullName = user.user_metadata?.full_name || user.user_metadata?.name || '';
-            
-            await supabase.functions.invoke('process-company-webhooks', {
-              body: {
-                user_id: user.id,
-                company_name: 'Mi Empresa', // Nombre temporal para registro social
-                website_url: user.user_metadata?.website || '',
-                country: user.user_metadata?.country || 'No especificado',
-                full_name: fullName,
-                email: user.email,
-                trigger_type: 'social_registration'
-              }
-            });
-            console.log("✅ Webhook de registro enviado");
-          } catch (webhookError) {
-            console.error("❌ Error enviando webhook:", webhookError);
-            // No bloquear el flujo si falla el webhook
-          }
-        }
-
-        // Verificar si el usuario ya tiene un perfil completo
-        try {
-          const { data: existingProfile } = await supabase
-            .from('profiles')
-            .select('auth_provider, user_type, full_name')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          console.log("🔍 Perfil existente encontrado:", existingProfile);
-
-          // Para usuarios sociales: siempre ir a complete-profile la primera vez
-          // Para usuarios de email: no deberían estar aquí (se registran directo)
-          if (existingProfile && existingProfile.auth_provider !== 'email') {
-            // Si ya completó su perfil social, ir al dashboard
-            if (existingProfile.user_type) {
-              console.log("✅ Usuario social con perfil completo, ir al dashboard");
-              
-              toast({
-                title: "¡Bienvenido de nuevo!",
-                description: "Te llevamos al dashboard.",
-              });
-
-              navigate('/company-dashboard');
-              return;
-            }
-          }
-        } catch (profileError) {
-          console.log("ℹ️ No se encontró perfil existente, proceder a completar:", profileError);
-        }
-
-        // Si llegamos aquí, es un usuario social que necesita completar su perfil
-        console.log(`🔄 Redirigiendo a completar perfil para usuario social`);
-        
+        // Usar OnboardingRedirect para manejar la lógica de redirección
+        // Este componente ya maneja toda la lógica de perfiles y empresas
         toast({
-          title: "¡Registro exitoso!",
-          description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida. Completa tu perfil para comenzar.",
+          title: "¡Autenticación exitosa!",
+          description: "Verificando tu estado de registro...",
         });
 
-        // Redirigir a completar perfil
-        navigate(`/complete-profile?user_type=${userType}&from=social&provider=${searchParams.get('provider') || 'unknown'}`);
+        // Pequeña pausa para mostrar el toast
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Redirigir a la página principal - OnboardingRedirect se encargará del resto
+        navigate('/');
 
       } catch (error: any) {
         console.error("❌ Error en callback social:", error);
         toast({
-          title: "Error",
-          description: error.message || "Ocurrió un error durante el registro. Por favor, intenta de nuevo.",
+          title: "Error de Sesión",
+          description: "No se pudo completar la autenticación. Por favor, intenta de nuevo.",
           variant: "destructive",
         });
         navigate('/auth');
@@ -191,7 +54,7 @@ const SocialCallback = () => {
     };
 
     handleSocialAuthCallback();
-  }, [navigate, searchParams, toast, sendWelcomeEmail]);
+  }, [navigate, toast]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">

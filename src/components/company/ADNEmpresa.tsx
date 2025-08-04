@@ -176,6 +176,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       if (!isFirstTimeUser) {
         setIsOnboardingComplete(true);
         setCurrentStep(totalSteps); // Ir al último paso para mostrar resumen
+      } else {
+        // Si es primera vez y no hay descripción, activar modo de edición automáticamente
+        if (!companyData?.descripcion_empresa) {
+          setEditingDescription(true);
+        }
       }
     } catch (error) {
       console.error('Error checking first time status:', error);
@@ -202,7 +207,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           const responseArray = webhookData[0]?.response || [];
           const descripcionItem = responseArray.find((item: any) => item.key === 'descripcion_empresa');
           
-          if (descripcionItem && descripcionItem.value && descripcionItem.value !== 'No se encontró información') {
+          if (descripcionItem && descripcionItem.value && 
+              descripcionItem.value !== 'No se encontró información' &&
+              !descripcionItem.value.includes('No se encontró información específica') &&
+              !descripcionItem.value.includes('No se pudo determinar')) {
             setTempDescription(descripcionItem.value);
             // Actualizar la empresa con la descripción encontrada
             const { error } = await supabase
@@ -1290,20 +1298,23 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {!editingDescription ? (
+              {!editingDescription && companyData?.descripcion_empresa ? (
                 <div className="space-y-4">
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-sm">
-                      {companyData?.descripcion_empresa || "No hay descripción disponible"}
+                      {companyData?.descripcion_empresa}
                     </p>
                   </div>
                   <Button 
-                    onClick={() => setEditingDescription(true)}
+                    onClick={() => {
+                      setEditingDescription(true);
+                      setTempDescription(companyData?.descripcion_empresa || "");
+                    }}
                     variant="outline"
                     className="w-full"
                   >
                     <Edit3 className="w-4 h-4 mr-2" />
-                    {companyData?.descripcion_empresa ? "Editar descripción" : "Agregar descripción"}
+                    Editar descripción
                   </Button>
                 </div>
               ) : (

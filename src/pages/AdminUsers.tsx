@@ -27,11 +27,12 @@ interface UserProfile {
   email: string;
   full_name: string;
   user_type: 'company' | 'developer' | 'expert';
-  company_name?: string;
-  website_url?: string;
-  industry?: string;
   created_at: string;
   linked_providers: string[];
+  avatar_url?: string;
+  position?: string;
+  country?: string;
+  location?: string;
 }
 
 const AdminUsers = () => {
@@ -65,7 +66,7 @@ const AdminUsers = () => {
 
       if (error) {
         console.error('Error con función admin, intentando consulta directa:', error);
-        // Fallback: intentar consulta directa
+        // Fallback: intentar consulta directa (sin campos de empresa eliminados)
         const fallbackResult = await supabase
           .from('profiles')
           .select(`
@@ -74,9 +75,6 @@ const AdminUsers = () => {
             email,
             full_name,
             user_type,
-            company_name,
-            website_url,
-            industry,
             created_at,
             linked_providers,
             avatar_url,
@@ -109,8 +107,7 @@ const AdminUsers = () => {
     if (searchTerm) {
       filtered = filtered.filter(user => 
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (user.company_name && user.company_name.toLowerCase().includes(searchTerm.toLowerCase()))
+        user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -271,31 +268,17 @@ const AdminUsers = () => {
                               <span className="truncate">{user.email}</span>
                             </div>
                             
-                            {user.company_name && (
-                              <div className="flex items-center min-w-0">
-                                <Building2 className="w-3 h-3 mr-1 flex-shrink-0" />
-                                <span className="truncate">{user.company_name}</span>
-                              </div>
-                            )}
-                            
-                            {user.website_url && (
+                            {user.country && (
                               <div className="flex items-center min-w-0">
                                 <Globe className="w-3 h-3 mr-1 flex-shrink-0" />
-                                <a 
-                                  href={user.website_url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:underline truncate"
-                                >
-                                  Sitio web
-                                </a>
+                                <span className="truncate">{user.country}</span>
                               </div>
                             )}
                             
-                            {user.industry && (
+                            {user.position && (
                               <div className="flex items-center min-w-0">
                                 <Activity className="w-3 h-3 mr-1 flex-shrink-0" />
-                                <span className="truncate">{user.industry}</span>
+                                <span className="truncate">{user.position}</span>
                               </div>
                             )}
                             

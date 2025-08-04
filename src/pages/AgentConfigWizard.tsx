@@ -142,16 +142,15 @@ const AgentConfigWizard = () => {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error('Usuario no autenticado');
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_name, industry')
-        .eq('user_id', user.id)
-        .single();
+      // Obtener datos de empresa usando la nueva función
+      const { data: companyData } = await supabase.rpc('get_user_primary_company_data', {
+        user_id_param: user.id
+      });
 
       // Contextualizar instrucciones
       const contextualizedInstructions = customInstructions
-        .replace(/\{\{company_name\}\}/g, profile?.company_name || 'Tu empresa')
-        .replace(/\{\{industry\}\}/g, profile?.industry || 'tu industria');
+        .replace(/\{\{company_name\}\}/g, companyData?.[0]?.company_name || 'Tu empresa')
+        .replace(/\{\{industry\}\}/g, companyData?.[0]?.industry_sector || 'tu industria');
 
       // Usar edge function para desplegar el agente con integraciones reales
       const { data, error } = await supabase.functions.invoke('deploy-agent-instance', {
@@ -160,8 +159,8 @@ const AgentConfigWizard = () => {
           name: agentName,
           contextualized_instructions: contextualizedInstructions,
           tenant_config: {
-            company_name: profile?.company_name,
-            industry: profile?.industry,
+            company_name: companyData?.[0]?.company_name,
+            industry: companyData?.[0]?.industry_sector,
             interface_configs: interfaceConfigs.filter(c => c.enabled),
             knowledge_base: knowledgeBaseConfig,
           },

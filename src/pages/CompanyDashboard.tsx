@@ -153,23 +153,15 @@ const CompanyDashboard = () => {
 
       setProfile(profileData);
       
-      // Verificar si la información está completa y actualizar campos faltantes
-      const isProfileIncomplete = !profileData?.company_name || 
-                                   !profileData?.company_size ||
-                                   !profileData?.industry_sector ||
-                                   !profileData?.website_url ||
-                                   !profileData?.full_name;
+      // Verificar si la información está completa (solo verificamos info personal ahora)
+      const isProfileIncomplete = !profileData?.full_name;
       
-      // Si faltan datos y están disponibles en user_metadata, actualizarlos
+      // Si faltan datos personales y están disponibles en user_metadata, actualizarlos
       if (isProfileIncomplete && session.user.user_metadata) {
         const updateData: any = {};
         
-        if (!profileData?.company_size && session.user.user_metadata.company_size) {
-          updateData.company_size = session.user.user_metadata.company_size;
-        }
-        
-        if (!profileData?.website_url && session.user.user_metadata.website_url) {
-          updateData.website_url = session.user.user_metadata.website_url;
+        if (!profileData?.full_name && session.user.user_metadata.full_name) {
+          updateData.full_name = session.user.user_metadata.full_name;
         }
         
         if (Object.keys(updateData).length > 0) {
@@ -189,11 +181,7 @@ const CompanyDashboard = () => {
       }
       
       // Verificar de nuevo si la información está completa después de la actualización
-      const stillIncomplete = !profileData?.company_name || 
-                              !profileData?.company_size ||
-                              !profileData?.industry_sector ||
-                              !profileData?.website_url ||
-                              !profileData?.full_name;
+      const stillIncomplete = !profileData?.full_name;
       
       if (stillIncomplete) {
         setActiveView("profile");

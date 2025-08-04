@@ -90,27 +90,26 @@ const AgentMarketplace = () => {
       }
 
       // Obtener el perfil del usuario para personalización
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_name, industry')
-        .eq('user_id', user.id)
-        .single();
+      // Obtener datos de empresa usando la nueva función
+      const { data: companyData } = await supabase.rpc('get_user_primary_company_data', {
+        user_id_param: user.id
+      });
 
       // Contextualizar las instrucciones
       const contextualizedInstructions = template.instructions_template
-        ?.replace(/\{\{company_name\}\}/g, profile?.company_name || 'Tu empresa')
-        .replace(/\{\{industry\}\}/g, profile?.industry || 'tu industria');
+        ?.replace(/\{\{company_name\}\}/g, companyData?.[0]?.company_name || 'Tu empresa')
+        .replace(/\{\{industry\}\}/g, companyData?.[0]?.industry_sector || 'tu industria');
 
       const { error } = await supabase
         .from('agent_instances')
         .insert({
           template_id: template.id,
           user_id: user.id,
-          name: `${template.name} - ${profile?.company_name || 'Mi Empresa'}`,
+          name: `${template.name} - ${companyData?.[0]?.company_name || 'Mi Empresa'}`,
           contextualized_instructions: contextualizedInstructions || template.instructions_template,
           tenant_config: {
-            company_name: profile?.company_name,
-            industry: profile?.industry,
+            company_name: companyData?.[0]?.company_name,
+            industry: companyData?.[0]?.industry_sector,
           },
           tools_permissions: template.tools_config,
         });

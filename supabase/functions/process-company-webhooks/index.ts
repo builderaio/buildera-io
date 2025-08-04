@@ -26,14 +26,14 @@ const processWebhookResponse = async (supabase: any, userId: string, webhookData
       webhook_processed_at: new Date().toISOString()
     };
 
-    // Mapear los campos de la respuesta
+    // Mapear los campos de la respuesta a la nueva estructura
     webhookResponse.forEach((item: any) => {
       switch (item.key) {
         case 'descripcion_empresa':
-          updateData.descripcion_empresa = item.value;
+          updateData.description = item.value;
           break;
         case 'industria_principal':
-          updateData.industria_principal = item.value;
+          updateData.industry_sector = item.value;
           break;
         case 'facebook':
           updateData.facebook_url = item.value !== 'No tiene' ? item.value : null;

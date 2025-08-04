@@ -86,10 +86,8 @@ const SocialCallback = () => {
             description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida. Completa tu perfil para comenzar.",
           });
 
-          // Redirigir a completar perfil después de un breve delay
-          setTimeout(() => {
-            navigate('/complete-profile?user_type=company&from=social');
-          }, 2000);
+          // Redirigir inmediatamente a completar perfil
+          navigate('/complete-profile?user_type=company&from=social');
         } else {
           // Para otros tipos de usuario, redirigir al dashboard
           toast({

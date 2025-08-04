@@ -48,6 +48,8 @@ const CompanyDashboard = () => {
 
       // Check for view parameter in URL - si viene adn-empresa forzar mostrar
       const viewParam = searchParams.get('view');
+      
+      // Si viene con parámetro view, forzar esa vista sin verificaciones adicionales
       if (viewParam === 'adn-empresa') {
         setActiveView('adn-empresa');
         setShouldShowOnboarding(false);
@@ -55,9 +57,12 @@ const CompanyDashboard = () => {
         return;
       } else if (viewParam) {
         setActiveView(viewParam);
+        setShouldShowOnboarding(false);
+        setLoading(false);
+        return;
       }
 
-      // Verificar si es primera vez y necesita onboarding
+      // Solo verificar onboarding si no viene con parámetros específicos
       const registrationMethod = session.user.app_metadata?.provider || 'email';
       
       // Verificar empresas existentes
@@ -72,11 +77,12 @@ const CompanyDashboard = () => {
         hasCompany,
         companiesLength: companies?.length,
         registrationMethod,
-        userId: session.user.id
+        userId: session.user.id,
+        viewParam
       });
 
-      // Si no tiene empresa, mostrar onboarding redirect
-      if (!hasCompany) {
+      // Si no tiene empresa Y no viene con view param, mostrar onboarding redirect
+      if (!hasCompany && !viewParam) {
         console.log('❌ Usuario no tiene empresa, mostrando OnboardingRedirect');
         setShouldShowOnboarding(true);
         setLoading(false);

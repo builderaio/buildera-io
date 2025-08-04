@@ -67,53 +67,48 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
         }
 
         if (isSocialRegistration) {
-          // Registro por redes sociales - crear empresa automáticamente si no existe
-          if (!hasCompany && profile && profile.user_type === 'company') {
-            console.log('🏭 Creando empresa para usuario social existente...');
+          // Para registro social, siempre crear empresa automáticamente si no existe
+          if (!hasCompany) {
+            console.log('🏭 Creando empresa para usuario social...');
             try {
-              // Para registro social, crear empresa sin nombre específico - el usuario lo completará después
               const { data: newCompany, error: companyError } = await supabase.rpc('create_company_with_owner', {
-                company_name: 'Mi Empresa', // Nombre temporal que será actualizado por el usuario
+                company_name: 'Mi Empresa', 
                 company_description: null,
-                website_url: profile.website_url,
-                industry_sector: profile.industry_sector,
-                company_size: profile.company_size,
+                website_url: profile?.website_url,
+                industry_sector: profile?.industry_sector,
+                company_size: profile?.company_size,
                 user_id_param: user.id
               });
 
               if (companyError) {
                 console.error('Error creando empresa:', companyError);
+                navigate('/complete-profile?user_type=company');
+                return;
               } else {
-                console.log('✅ Empresa creada exitosamente:', newCompany);
-                // Redirigir al dashboard después de crear la empresa
-                navigate('/company-dashboard');
+                console.log('✅ Empresa creada exitosamente');
+                // Redirigir al ADN empresa para completar el onboarding
+                navigate('/company-dashboard?view=adn-empresa');
                 return;
               }
             } catch (error) {
               console.error('Error en creación de empresa:', error);
+              navigate('/complete-profile?user_type=company');
+              return;
             }
           }
           
-          // Si no tiene perfil completo, necesita completar datos faltantes
-          if (!profile || !profile.user_type || !profile.company_name) {
-            navigate('/complete-profile?user_type=company');
-            return;
-          }
-        }
-
-        // Si el perfil está completo pero no tiene empresa, ir a completar perfil
-        if (profile?.user_type === 'company' && profile.company_name) {
-          navigate('/complete-profile?user_type=company');
+          // Si ya tiene empresa, ir directo al ADN empresa
+          navigate('/company-dashboard?view=adn-empresa');
           return;
         }
 
-        // Si es registro por email directo al ADN
+        // Para registro por email, ir directo al ADN empresa
         if (isEmailRegistration) {
           navigate('/company-dashboard?view=adn-empresa');
           return;
         }
 
-        // Fallback - necesita completar perfil
+        // Fallback - completar perfil
         navigate('/complete-profile?user_type=company');
 
       } catch (error) {

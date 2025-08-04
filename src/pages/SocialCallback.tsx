@@ -14,41 +14,88 @@ const SocialCallback = () => {
     const handleSocialAuthCallback = async () => {
       try {
         console.log("🔄 Procesando callback de autenticación social...");
+        console.log("📍 URL actual:", window.location.href);
+        console.log("📍 Search params:", window.location.search);
         
-        // Esperar un poco para que la sesión se establezca completamente
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Verificar si hay hash fragments que Supabase necesita procesar
+        const hashFragment = window.location.hash;
+        console.log("📍 Hash fragment:", hashFragment);
         
-        // Obtener la sesión completa en lugar de solo el usuario
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Intentar procesar parámetros de hash para sesión OAuth
+        if (hashFragment && hashFragment.includes('access_token')) {
+          console.log("🔍 Detectado access_token en hash, procesando...");
+          try {
+            // Supabase maneja automáticamente los hash fragments OAuth
+            console.log("📦 Hash contiene tokens OAuth");
+          } catch (urlError) {
+            console.error("❌ Error parseando URL:", urlError);
+          }
+        }
+        
+        // Esperar un momento para que la sesión se establezca
+        console.log("⏳ Esperando que la sesión se establezca...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Verificar el estado del cliente de Supabase
+        console.log("🔍 Verificando estado del cliente Supabase...");
+        const authClient = supabase.auth;
+        console.log("📊 Cliente auth:", authClient);
+        
+        // Intentar obtener la sesión actual
+        console.log("🔄 Obteniendo sesión actual...");
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        console.log("📦 Datos de sesión:", sessionData);
+        console.log("❌ Error de sesión:", sessionError);
         
         if (sessionError) {
           console.error("❌ Error obteniendo sesión:", sessionError);
           throw sessionError;
         }
 
-        if (!session || !session.user) {
-          console.error("❌ No se encontró sesión o usuario autenticado");
+        let user = null;
+
+        if (!sessionData || !sessionData.session || !sessionData.session.user) {
+          console.error("❌ No se encontró sesión válida en sessionData");
+          console.log("🔄 Intentando método alternativo - getUser()...");
           
           // Intentar obtener el usuario directamente como fallback
-          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+          console.log("👤 Datos de usuario:", userData);
+          console.log("❌ Error de usuario:", userError);
           
-          if (userError || !user) {
+          if (userError || !userData || !userData.user) {
             console.error("❌ Fallback también falló:", userError);
+            console.log("🔍 Verificando localStorage para tokens...");
+            
+            // Verificar qué hay en localStorage
+            const keys = Object.keys(localStorage);
+            const supabaseKeys = keys.filter(key => key.includes('supabase') || key.includes('sb-'));
+            console.log("🗄️ Claves de Supabase en localStorage:", supabaseKeys);
+            
+            supabaseKeys.forEach(key => {
+              console.log(`🔑 ${key}:`, localStorage.getItem(key));
+            });
+            
             toast({
               title: "Error de Sesión",
-              description: "No se pudo completar la autenticación. La sesión no se estableció correctamente.",
+              description: "No se pudo completar la autenticación. La sesión no se estableció correctamente. Revisa la consola para más detalles.",
               variant: "destructive",
             });
-            navigate('/auth');
+            
+            // Redirigir después de un momento para que el usuario pueda ver los logs
+            setTimeout(() => {
+              navigate('/auth');
+            }, 5000);
             return;
           }
           
-          console.log("✅ Usuario encontrado en fallback:", user.email);
+          console.log("✅ Usuario encontrado en fallback:", userData.user.email);
+          user = userData.user;
         } else {
-          console.log("✅ Sesión establecida para usuario:", session.user.email);
+          console.log("✅ Sesión establecida para usuario:", sessionData.session.user.email);
+          user = sessionData.session.user;
         }
-
-        const user = session?.user;
 
         // Obtener tipo de usuario de los parámetros
         const userType = searchParams.get('user_type') || 'company';

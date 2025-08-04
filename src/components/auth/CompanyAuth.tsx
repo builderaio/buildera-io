@@ -370,18 +370,30 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const handleSocialAuth = async (provider: 'google' | 'linkedin_oidc') => {
     try {
       console.log(`🔗 Iniciando autenticación con ${provider}...`);
+      console.log("📍 URL actual antes de OAuth:", window.location.href);
+      console.log("📍 Origin:", window.location.origin);
       
-      // Limpiar sesión existente antes de OAuth
+      // Construir URL de redirect con más información
+      const redirectUrl = `${window.location.origin}/social-callback?user_type=company&provider=${provider}&timestamp=${Date.now()}`;
+      console.log("🔄 URL de redirect:", redirectUrl);
+      
+      // Limpiar cualquier sesión existente antes de OAuth
+      console.log("🧹 Limpiando sesión existente...");
       try {
         await supabase.auth.signOut({ scope: 'global' });
+        console.log("✅ Sesión limpiada");
       } catch (cleanupError) {
-        console.log('Limpieza de sesión ignorada:', cleanupError);
+        console.log('⚠️ Limpieza de sesión ignorada:', cleanupError);
       }
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Verificar configuración del cliente Supabase
+      console.log("🔍 Verificando configuración del cliente...");
+      console.log("📊 Cliente Supabase inicializado correctamente");
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/social-callback?user_type=company`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
@@ -390,10 +402,14 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         }
       });
 
+      console.log("📦 Resultado OAuth:", data);
+
       if (error) {
         console.error(`❌ Error OAuth ${provider}:`, error);
         throw error;
       }
+      
+      console.log("✅ OAuth iniciado correctamente");
     } catch (error: any) {
       console.error(`❌ Error en autenticación ${provider}:`, error);
       toast({

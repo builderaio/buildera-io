@@ -185,9 +185,16 @@ const CompleteProfile = () => {
 
       // Redirect based on user type
       if (userType === 'company') {
-        // Para empresas, ir al ADN después de completar perfil por redes sociales
+        // Para empresas, ir al dashboard de empresa después de completar perfil
         navigate('/company-dashboard?view=adn-empresa');
+      } else if (userType === 'developer') {
+        // Para developers, ir al dashboard principal
+        navigate('/');
+      } else if (userType === 'expert') {
+        // Para experts, ir al dashboard principal
+        navigate('/');
       } else {
+        // Fallback
         navigate('/');
       }
       

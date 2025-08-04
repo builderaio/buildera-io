@@ -119,8 +119,6 @@ const SocialCallback = () => {
           try {
             // Extraer datos disponibles del perfil social
             const fullName = user.user_metadata?.full_name || user.user_metadata?.name || '';
-            // Para registro social, crear empresa sin nombre específico - el usuario lo completará después
-            const companyName = '';
             
             await supabase.functions.invoke('process-company-webhooks', {
               body: {
@@ -140,26 +138,16 @@ const SocialCallback = () => {
           }
         }
 
-        // Para usuarios de empresa, redirigir a completar perfil
-        if (userType === 'company') {
-          toast({
-            title: "¡Registro exitoso!",
-            description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida. Completa tu perfil para comenzar.",
-          });
+        // Redirigir a completar perfil para TODOS los tipos de usuario social
+        console.log(`🔄 Redirigiendo a completar perfil para tipo: ${userType}`);
+        
+        toast({
+          title: "¡Registro exitoso!",
+          description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida. Completa tu perfil para comenzar.",
+        });
 
-          // Redirigir inmediatamente a completar perfil
-          navigate('/complete-profile?user_type=company&from=social');
-        } else {
-          // Para otros tipos de usuario, redirigir al dashboard
-          toast({
-            title: "¡Registro exitoso!",
-            description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida.",
-          });
-
-          setTimeout(() => {
-            navigate('/company-dashboard');
-          }, 2000);
-        }
+        // Redirigir inmediatamente a completar perfil con el tipo de usuario
+        navigate(`/complete-profile?user_type=${userType}&from=social&provider=${searchParams.get('provider') || 'unknown'}`);
 
       } catch (error: any) {
         console.error("❌ Error en callback social:", error);

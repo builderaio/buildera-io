@@ -64,10 +64,16 @@ const DeveloperAuth = ({ mode, onModeChange }: DeveloperAuthProps) => {
 
   const handleSocialAuth = async (provider: 'google' | 'linkedin_oidc') => {
     try {
+      console.log(`🔗 Iniciando autenticación con ${provider} para developer...`);
+      
+      // Usar el mismo flujo que CompanyAuth - pasar por SocialCallback
+      const redirectUrl = `${window.location.origin}/auth/social-callback?user_type=developer&provider=${provider}&timestamp=${Date.now()}`;
+      console.log("🔄 URL de redirect:", redirectUrl);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/complete-profile?user_type=developer`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'

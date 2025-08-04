@@ -78,10 +78,16 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
 
   const handleSocialAuth = async (provider: 'google' | 'linkedin_oidc') => {
     try {
+      console.log(`🔗 Iniciando autenticación con ${provider} para expert...`);
+      
+      // Usar el mismo flujo que CompanyAuth - pasar por SocialCallback
+      const redirectUrl = `${window.location.origin}/auth/social-callback?user_type=expert&provider=${provider}&timestamp=${Date.now()}`;
+      console.log("🔄 URL de redirect:", redirectUrl);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/complete-profile?user_type=expert`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'

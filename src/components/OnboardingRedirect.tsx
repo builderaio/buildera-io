@@ -55,7 +55,6 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
           registrationMethod,
           isEmailRegistration,
           isSocialRegistration,
-          profileCompanyName: profile?.company_name,
           companiesCount: companies?.length
         });
 
@@ -74,9 +73,9 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
               const { data: newCompany, error: companyError } = await supabase.rpc('create_company_with_owner', {
                 company_name: 'Mi Empresa', 
                 company_description: null,
-                website_url: profile?.website_url,
-                industry_sector: profile?.industry_sector,
-                company_size: profile?.company_size,
+                website_url: null,
+                industry_sector: null,
+                company_size: null,
                 user_id_param: user.id
               });
 

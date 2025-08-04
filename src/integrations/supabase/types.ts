@@ -1140,16 +1140,16 @@ export type Database = {
       companies: {
         Row: {
           company_size: string | null
+          country: string | null
           created_at: string
           created_by: string
-          descripcion_empresa: string | null
           description: string | null
           facebook_url: string | null
           id: string
-          industria_principal: string | null
           industry_sector: string | null
           instagram_url: string | null
           linkedin_url: string | null
+          location: string | null
           logo_url: string | null
           name: string
           primary_color: string | null
@@ -1164,16 +1164,16 @@ export type Database = {
         }
         Insert: {
           company_size?: string | null
+          country?: string | null
           created_at?: string
           created_by: string
-          descripcion_empresa?: string | null
           description?: string | null
           facebook_url?: string | null
           id?: string
-          industria_principal?: string | null
           industry_sector?: string | null
           instagram_url?: string | null
           linkedin_url?: string | null
+          location?: string | null
           logo_url?: string | null
           name: string
           primary_color?: string | null
@@ -1188,16 +1188,16 @@ export type Database = {
         }
         Update: {
           company_size?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string
-          descripcion_empresa?: string | null
           description?: string | null
           facebook_url?: string | null
           id?: string
-          industria_principal?: string | null
           industry_sector?: string | null
           instagram_url?: string | null
           linkedin_url?: string | null
+          location?: string | null
           logo_url?: string | null
           name?: string
           primary_color?: string | null
@@ -3780,8 +3780,6 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           business_objectives: string | null
-          company_name: string | null
-          company_size: string | null
           country: string | null
           created_at: string
           email: string
@@ -3796,7 +3794,6 @@ export type Database = {
           headquarters_lat: number | null
           headquarters_lng: number | null
           id: string
-          industry: string | null
           industry_sector: string | null
           linked_providers: string[] | null
           linkedin_profile: string | null
@@ -3809,7 +3806,6 @@ export type Database = {
           updated_at: string
           user_id: string
           user_type: Database["public"]["Enums"]["user_type"]
-          website_url: string | null
           years_experience: number | null
         }
         Insert: {
@@ -3817,8 +3813,6 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           business_objectives?: string | null
-          company_name?: string | null
-          company_size?: string | null
           country?: string | null
           created_at?: string
           email: string
@@ -3833,7 +3827,6 @@ export type Database = {
           headquarters_lat?: number | null
           headquarters_lng?: number | null
           id?: string
-          industry?: string | null
           industry_sector?: string | null
           linked_providers?: string[] | null
           linkedin_profile?: string | null
@@ -3846,7 +3839,6 @@ export type Database = {
           updated_at?: string
           user_id: string
           user_type: Database["public"]["Enums"]["user_type"]
-          website_url?: string | null
           years_experience?: number | null
         }
         Update: {
@@ -3854,8 +3846,6 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           business_objectives?: string | null
-          company_name?: string | null
-          company_size?: string | null
           country?: string | null
           created_at?: string
           email?: string
@@ -3870,7 +3860,6 @@ export type Database = {
           headquarters_lat?: number | null
           headquarters_lng?: number | null
           id?: string
-          industry?: string | null
           industry_sector?: string | null
           linked_providers?: string[] | null
           linkedin_profile?: string | null
@@ -3883,7 +3872,6 @@ export type Database = {
           updated_at?: string
           user_id?: string
           user_type?: Database["public"]["Enums"]["user_type"]
-          website_url?: string | null
           years_experience?: number | null
         }
         Relationships: [
@@ -5023,6 +5011,30 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: string
       }
+      get_user_primary_company_data: {
+        Args: { user_id_param: string }
+        Returns: {
+          company_id: string
+          company_name: string
+          description: string
+          website_url: string
+          industry_sector: string
+          company_size: string
+          country: string
+          location: string
+          logo_url: string
+          primary_color: string
+          secondary_color: string
+          facebook_url: string
+          twitter_url: string
+          linkedin_url: string
+          instagram_url: string
+          youtube_url: string
+          tiktok_url: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
       get_user_stats_admin: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -5138,6 +5150,10 @@ export type Database = {
       update_user_gamification: {
         Args: { p_user_id: string; p_points_earned?: number }
         Returns: undefined
+      }
+      update_user_primary_company: {
+        Args: { user_id_param: string; company_data: Json }
+        Returns: string
       }
       vector_avg: {
         Args: { "": number[] }

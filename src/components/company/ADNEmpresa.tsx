@@ -215,11 +215,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             // Actualizar la empresa con la descripción encontrada
             const { error } = await supabase
               .from('companies')
-              .update({ descripcion_empresa: descripcionItem.value })
+              .update({ description: descripcionItem.value })
               .eq('id', companyData.id);
             
             if (!error) {
-              setCompanyData(prev => ({ ...prev, descripcion_empresa: descripcionItem.value }));
+              setCompanyData(prev => ({ ...prev, description: descripcionItem.value }));
               console.log('✅ Descripción actualizada desde webhook existente');
             }
           }
@@ -245,18 +245,34 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
   const fetchCompanyData = async () => {
     try {
-      const { data: companies, error } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('created_by', profile?.user_id)
-        .order('created_at', { ascending: false })
-        .limit(1);
+      // Usar la nueva función para obtener datos de empresa principal
+      const { data, error } = await supabase.rpc('get_user_primary_company_data', {
+        user_id_param: profile?.user_id
+      });
 
       if (error) throw error;
 
-      if (companies && companies.length > 0) {
-        setCompanyData(companies[0]);
-        setTempDescription(companies[0].descripcion_empresa || "");
+      if (data && data.length > 0) {
+        const companyInfo = data[0];
+        setCompanyData({
+          id: companyInfo.company_id,
+          name: companyInfo.company_name,
+          description: companyInfo.description,
+          website_url: companyInfo.website_url,
+          industry_sector: companyInfo.industry_sector,
+          company_size: companyInfo.company_size,
+          country: companyInfo.country,
+          location: companyInfo.location,
+          facebook_url: companyInfo.facebook_url,
+          twitter_url: companyInfo.twitter_url,
+          linkedin_url: companyInfo.linkedin_url,
+          instagram_url: companyInfo.instagram_url,
+          youtube_url: companyInfo.youtube_url,
+          tiktok_url: companyInfo.tiktok_url,
+          created_at: companyInfo.created_at,
+          updated_at: companyInfo.updated_at
+        });
+        setTempDescription(companyInfo.description || "");
       }
     } catch (error: any) {
       console.error('Error fetching company data:', error);
@@ -736,12 +752,12 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     try {
       const { error } = await supabase
         .from('companies')
-        .update({ descripcion_empresa: tempDescription })
+        .update({ description: tempDescription })
         .eq('id', companyData.id);
 
       if (error) throw error;
 
-      setCompanyData(prev => ({ ...prev, descripcion_empresa: tempDescription }));
+      setCompanyData(prev => ({ ...prev, description: tempDescription }));
       setEditingDescription(false);
       
       if (!completedSteps.includes(2)) {

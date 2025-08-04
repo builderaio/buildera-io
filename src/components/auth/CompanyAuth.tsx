@@ -374,7 +374,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       console.log("📍 Origin:", window.location.origin);
       
       // Construir URL de redirect con más información
-      const redirectUrl = `${window.location.origin}/social-callback?user_type=company&provider=${provider}&timestamp=${Date.now()}`;
+      const redirectUrl = `${window.location.origin}/auth/social-callback?user_type=company&provider=${provider}&timestamp=${Date.now()}`;
       console.log("🔄 URL de redirect:", redirectUrl);
       
       // Limpiar cualquier sesión existente antes de OAuth

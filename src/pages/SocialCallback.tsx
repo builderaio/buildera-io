@@ -138,39 +138,29 @@ const SocialCallback = () => {
           }
         }
 
-        // Verificar si el usuario ya tiene un perfil completo con user_type definido
+        // Verificar si el usuario ya tiene un perfil completo
         try {
           const { data: existingProfile } = await supabase
             .from('profiles')
-            .select('user_type, full_name, auth_provider')
+            .select('auth_provider, user_type, full_name')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
           console.log("🔍 Perfil existente encontrado:", existingProfile);
 
-          // LÓGICA ACTUALIZADA: Para registros sociales, verificar auth_provider
-          // Si auth_provider != 'email' Y user_type es NULL, forzar complete-profile
-          if (existingProfile) {
-            const isSocialUser = existingProfile.auth_provider && existingProfile.auth_provider !== 'email';
-            const needsCompleteProfile = existingProfile.user_type === null;
-            
-            console.log("🔍 Verificando perfil social:", {
-              authProvider: existingProfile.auth_provider,
-              userType: existingProfile.user_type,
-              isSocialUser,
-              needsCompleteProfile
-            });
-
-            if (isSocialUser && !needsCompleteProfile) {
-              console.log("✅ Usuario social con perfil completo, ir al onboarding");
+          // Para usuarios sociales: siempre ir a complete-profile la primera vez
+          // Para usuarios de email: no deberían estar aquí (se registran directo)
+          if (existingProfile && existingProfile.auth_provider !== 'email') {
+            // Si ya completó su perfil social, ir al dashboard
+            if (existingProfile.user_type) {
+              console.log("✅ Usuario social con perfil completo, ir al dashboard");
               
               toast({
                 title: "¡Bienvenido de nuevo!",
-                description: "Te hemos enviado un email de bienvenida. Te llevamos al primer paso de tu configuración.",
+                description: "Te llevamos al dashboard.",
               });
 
-              // Ir directo al onboarding paso 1
-              navigate(`/company-dashboard?view=adn-empresa&first_login=true&provider=${searchParams.get('provider') || 'unknown'}`);
+              navigate('/company-dashboard');
               return;
             }
           }
@@ -178,15 +168,15 @@ const SocialCallback = () => {
           console.log("ℹ️ No se encontró perfil existente, proceder a completar:", profileError);
         }
 
-        // Si no tiene perfil completo, ir a completar información
-        console.log(`🔄 Redirigiendo a completar perfil para tipo: ${userType}`);
+        // Si llegamos aquí, es un usuario social que necesita completar su perfil
+        console.log(`🔄 Redirigiendo a completar perfil para usuario social`);
         
         toast({
           title: "¡Registro exitoso!",
           description: "Tu cuenta ha sido creada exitosamente. Te hemos enviado un email de bienvenida. Completa tu perfil para comenzar.",
         });
 
-        // Redirigir a completar perfil con el tipo de usuario
+        // Redirigir a completar perfil
         navigate(`/complete-profile?user_type=${userType}&from=social&provider=${searchParams.get('provider') || 'unknown'}`);
 
       } catch (error: any) {

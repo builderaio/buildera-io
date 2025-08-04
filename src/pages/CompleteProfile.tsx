@@ -63,34 +63,25 @@ const CompleteProfile = () => {
       setUser(session.user);
       setFullName(session.user.user_metadata?.full_name || session.user.user_metadata?.name || "");
       
-      // Check if profile already exists and is complete
+      // Check if profile already exists
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
-      if (profile && profile.user_type !== null) {
-        console.log('🔍 CompleteProfile: perfil existe y completo', {
-          userType: profile.user_type,
-          authProvider: profile.auth_provider,
-          hasFullName: !!profile.full_name
-        });
-        
-        // Profile exists and has user type, redirect based on type
-        if (profile.user_type === 'company') {
-          console.log('➡️ CompleteProfile redirigiendo a company-dashboard');
-          navigate('/company-dashboard');
-        } else {
-          navigate('/');
-        }
+      // Para usuarios de email que ya tienen perfil, redirigir
+      if (profile && profile.auth_provider === 'email') {
+        console.log('🔍 CompleteProfile: usuario de email ya tiene perfil');
+        navigate('/company-dashboard');
         return;
       }
 
-      // Para registros sociales (auth_provider != 'email'), verificar si necesita complete-profile
-      if (profile && profile.auth_provider !== 'email' && profile.user_type === null) {
-        console.log('🔍 CompleteProfile: usuario social sin user_type, proceder a completar perfil');
-        // Continuar con el flujo de completar perfil
+      // Para usuarios sociales que ya completaron el perfil, redirigir
+      if (profile && profile.auth_provider !== 'email' && profile.user_type) {
+        console.log('🔍 CompleteProfile: usuario social ya completó perfil');
+        navigate('/company-dashboard');
+        return;
       }
 
       // Check URL params for user type from OAuth

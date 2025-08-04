@@ -16,14 +16,14 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
       if (!user) return;
 
       try {
-        // 1. Verificar si existe un perfil completo
+        // 1. Verificar si existe un perfil y estado de onboarding
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, user_onboarding_status(*)')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (profileError && profileError.code !== 'PGRST116') {
+        if (profileError) {
           console.error('Error checking profile:', profileError);
           setChecking(false);
           return;
@@ -43,20 +43,16 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
 
         const hasCompany = companies && companies.length > 0;
 
-        // 3. Determinar el método de registro basado en auth_provider
+        // 3. Determinar el flujo basado en auth_provider
         const authProvider = profile?.auth_provider || 'email';
-        const isEmailRegistration = authProvider === 'email';
-        const isSocialRegistration = !isEmailRegistration;
+        const isSocialRegistration = authProvider !== 'email';
 
         console.log('🔍 Onboarding check:', {
           hasProfile: !!profile,
-          profileComplete: profile?.user_type !== null,
           hasCompany,
           authProvider,
-          isEmailRegistration,
           isSocialRegistration,
-          companiesCount: companies?.length,
-          needsCompleteProfile: profile?.user_type === null
+          companiesCount: companies?.length
         });
 
         // 4. Lógica de redirección
@@ -66,57 +62,15 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
           return;
         }
 
-        // Para registros sociales SIN user_type definido, forzar complete-profile
-        if (isSocialRegistration && profile?.user_type === null) {
-          console.log('🔄 Usuario social sin user_type, ir a complete-profile');
+        // Para registros sociales, forzar complete-profile
+        if (isSocialRegistration) {
+          console.log('🔄 Usuario social, ir a complete-profile');
           navigate('/complete-profile?user_type=company');
           return;
         }
 
-        if (isSocialRegistration) {
-          // Para registro social, siempre crear empresa automáticamente si no existe
-          if (!hasCompany) {
-            console.log('🏭 Creando empresa para usuario social...');
-            try {
-              const { data: newCompany, error: companyError } = await supabase.rpc('create_company_with_owner', {
-                company_name: 'Mi Empresa', 
-                company_description: null,
-                website_url: null,
-                industry_sector: null,
-                company_size: null,
-                user_id_param: user.id
-              });
-
-              if (companyError) {
-                console.error('Error creando empresa:', companyError);
-                navigate('/complete-profile?user_type=company');
-                return;
-              } else {
-                console.log('✅ Empresa creada exitosamente');
-                // Redirigir al ADN empresa para completar el onboarding
-                navigate('/company-dashboard?view=adn-empresa');
-                return;
-              }
-            } catch (error) {
-              console.error('Error en creación de empresa:', error);
-              navigate('/complete-profile?user_type=company');
-              return;
-            }
-          }
-          
-          // Si ya tiene empresa, ir directo al ADN empresa
-          navigate('/company-dashboard?view=adn-empresa');
-          return;
-        }
-
-        // Para registro por email, ir directo al ADN empresa
-        if (isEmailRegistration) {
-          navigate('/company-dashboard?view=adn-empresa');
-          return;
-        }
-
-        // Fallback - completar perfil
-        navigate('/complete-profile?user_type=company');
+        // Para registro por email, ir directo al dashboard (ya tiene empresa creada por el trigger)
+        navigate('/company-dashboard?view=adn-empresa');
 
       } catch (error) {
         console.error('Error in onboarding check:', error);

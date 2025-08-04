@@ -371,14 +371,22 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
     try {
       console.log(`🔗 Iniciando autenticación con ${provider}...`);
       
+      // Limpiar sesión existente antes de OAuth
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (cleanupError) {
+        console.log('Limpieza de sesión ignorada:', cleanupError);
+      }
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/social-callback?user_type=company`,
+          redirectTo: `${window.location.origin}/social-callback?user_type=company`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
-          }
+          },
+          skipBrowserRedirect: false
         }
       });
 

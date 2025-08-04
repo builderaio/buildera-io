@@ -15,26 +15,40 @@ const SocialCallback = () => {
       try {
         console.log("🔄 Procesando callback de autenticación social...");
         
-        // Obtener el usuario actual
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        // Esperar un poco para que la sesión se establezca completamente
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        if (userError) {
-          console.error("❌ Error obteniendo usuario:", userError);
-          throw userError;
+        // Obtener la sesión completa en lugar de solo el usuario
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("❌ Error obteniendo sesión:", sessionError);
+          throw sessionError;
         }
 
-        if (!user) {
-          console.error("❌ No se encontró usuario autenticado");
-          toast({
-            title: "Error",
-            description: "No se pudo completar la autenticación. Por favor, intenta de nuevo.",
-            variant: "destructive",
-          });
-          navigate('/auth');
-          return;
+        if (!session || !session.user) {
+          console.error("❌ No se encontró sesión o usuario autenticado");
+          
+          // Intentar obtener el usuario directamente como fallback
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          
+          if (userError || !user) {
+            console.error("❌ Fallback también falló:", userError);
+            toast({
+              title: "Error de Sesión",
+              description: "No se pudo completar la autenticación. La sesión no se estableció correctamente.",
+              variant: "destructive",
+            });
+            navigate('/auth');
+            return;
+          }
+          
+          console.log("✅ Usuario encontrado en fallback:", user.email);
+        } else {
+          console.log("✅ Sesión establecida para usuario:", session.user.email);
         }
 
-        console.log("✅ Usuario autenticado:", user.email);
+        const user = session?.user;
 
         // Obtener tipo de usuario de los parámetros
         const userType = searchParams.get('user_type') || 'company';

@@ -53,15 +53,24 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Prepare the payload for the external API
-    const payload: WebhookRequest = {
-      KEY: body.KEY,
-      COMPANY_INFO: body.COMPANY_INFO,
-    };
-
-    // Add optional parameter if provided
-    if (body.ADDITIONAL_INFO) {
-      payload.ADDITIONAL_INFO = body.ADDITIONAL_INFO;
+    // Parse COMPANY_INFO and ADDITIONAL_INFO if they are JSON strings
+    let companyInfo;
+    let additionalInfo;
+    
+    try {
+      companyInfo = JSON.parse(body.COMPANY_INFO);
+      console.log('📋 COMPANY_INFO parseado:', companyInfo);
+    } catch (e) {
+      companyInfo = body.COMPANY_INFO;
+      console.log('📋 COMPANY_INFO como string:', companyInfo);
+    }
+    
+    try {
+      additionalInfo = body.ADDITIONAL_INFO ? JSON.parse(body.ADDITIONAL_INFO) : null;
+      console.log('📋 ADDITIONAL_INFO parseado:', additionalInfo);
+    } catch (e) {
+      additionalInfo = body.ADDITIONAL_INFO;
+      console.log('📋 ADDITIONAL_INFO como string:', additionalInfo);
     }
 
     console.log('🔐 Preparando autenticación básica');
@@ -74,10 +83,27 @@ const handler = async (req: Request): Promise<Response> => {
     
     // Prepare URL with query parameters for GET request
     const url = new URL('https://buildera.app.n8n.cloud/webhook/my-business');
-    url.searchParams.append('KEY', payload.KEY);
-    url.searchParams.append('COMPANY_INFO', payload.COMPANY_INFO);
-    if (payload.ADDITIONAL_INFO) {
-      url.searchParams.append('ADDITIONAL_INFO', payload.ADDITIONAL_INFO);
+    url.searchParams.append('KEY', body.KEY);
+    
+    // Format COMPANY_INFO correctly based on parsed data
+    if (typeof companyInfo === 'object' && companyInfo !== null) {
+      // Format as expected by n8n
+      const companyInfoStr = `Empresa: ${companyInfo.company_name || 'Sin nombre'}, sitio web: ${companyInfo.website_url || 'Sin sitio web'}, país: ${companyInfo.country || 'No especificado'}`;
+      url.searchParams.append('COMPANY_INFO', companyInfoStr);
+      console.log('📋 COMPANY_INFO formateado:', companyInfoStr);
+    } else {
+      url.searchParams.append('COMPANY_INFO', String(companyInfo));
+    }
+    
+    // Format ADDITIONAL_INFO correctly
+    if (additionalInfo) {
+      if (typeof additionalInfo === 'object' && additionalInfo !== null) {
+        const additionalInfoStr = `Industria: ${additionalInfo.industry || 'No especificada'}, descripción: ${additionalInfo.description || 'Sin descripción'}`;
+        url.searchParams.append('ADDITIONAL_INFO', additionalInfoStr);
+        console.log('📋 ADDITIONAL_INFO formateado:', additionalInfoStr);
+      } else {
+        url.searchParams.append('ADDITIONAL_INFO', String(additionalInfo));
+      }
     }
 
     // Make the API call to the external webhook

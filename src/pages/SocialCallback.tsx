@@ -11,26 +11,65 @@ const SocialCallback = () => {
     const handleSocialAuthCallback = async () => {
       try {
         console.log("🔄 Procesando callback de autenticación social...");
+        console.log("📍 URL actual:", window.location.href);
         
-        // Esperar que Supabase procese el hash y establezca la sesión
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Esperar más tiempo para que Supabase procese completamente el hash y establezca la sesión
+        console.log("⏳ Esperando establecimiento de sesión...");
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Verificar la sesión
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Verificar la sesión con múltiples intentos
+        let session = null;
+        let attempts = 0;
+        const maxAttempts = 5;
         
-        if (sessionError) {
-          console.error("❌ Error obteniendo sesión:", sessionError);
-          throw sessionError;
+        while (!session && attempts < maxAttempts) {
+          console.log(`🔄 Intento ${attempts + 1}/${maxAttempts} de obtener sesión...`);
+          
+          const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError) {
+            console.error(`❌ Error en intento ${attempts + 1}:`, sessionError);
+            throw sessionError;
+          }
+
+          if (currentSession && currentSession.user) {
+            session = currentSession;
+            console.log("✅ Sesión encontrada:", session.user.email);
+            break;
+          }
+          
+          attempts++;
+          if (attempts < maxAttempts) {
+            console.log("⏳ Esperando antes del siguiente intento...");
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
 
         if (!session || !session.user) {
-          throw new Error("No se pudo establecer la sesión de usuario");
+          throw new Error("No se pudo establecer la sesión después de múltiples intentos");
         }
 
-        console.log("✅ Sesión establecida para usuario:", session.user.email);
+        // Verificar si ya existe un perfil (el trigger debería haberlo creado)
+        console.log("🔍 Verificando perfil creado por trigger...");
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('user_id, auth_provider, user_type, full_name')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
 
-        // Usar OnboardingRedirect para manejar la lógica de redirección
-        // Este componente ya maneja toda la lógica de perfiles y empresas
+        if (profileError) {
+          console.error("❌ Error verificando perfil:", profileError);
+          throw profileError;
+        }
+
+        console.log("📊 Estado del perfil:", profile);
+
+        // Si no hay perfil, es un problema con el trigger
+        if (!profile) {
+          console.error("❌ CRÍTICO: El trigger handle_new_user no creó el perfil");
+          throw new Error("El perfil no fue creado automáticamente. Por favor, contacta soporte.");
+        }
+
         toast({
           title: "¡Autenticación exitosa!",
           description: "Verificando tu estado de registro...",
@@ -44,6 +83,15 @@ const SocialCallback = () => {
 
       } catch (error: any) {
         console.error("❌ Error en callback social:", error);
+        
+        // Logs adicionales para debugging
+        console.log("🔍 Estado del localStorage:");
+        const keys = Object.keys(localStorage);
+        const supabaseKeys = keys.filter(key => key.includes('supabase') || key.includes('sb-'));
+        supabaseKeys.forEach(key => {
+          console.log(`🔑 ${key}:`, localStorage.getItem(key));
+        });
+        
         toast({
           title: "Error de Sesión",
           description: "No se pudo completar la autenticación. Por favor, intenta de nuevo.",

@@ -378,13 +378,17 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     setCompletedSteps(completed);
     setIsOnboardingComplete(completed.length === totalSteps);
     
-    // Si no se ha completado el onboarding, ir al primer paso incompleto
-    if (!isOnboardingComplete) {
+    // Si es primera vez, siempre mantener en paso 1
+    // Si no es primera vez y no se ha completado el onboarding, ir al primer paso incompleto
+    if (!isFirstTime && !isOnboardingComplete) {
       const nextIncompleteStep = Array.from({length: totalSteps}, (_, i) => i + 1)
         .find(step => !completed.includes(step));
       if (nextIncompleteStep && nextIncompleteStep !== currentStep) {
         setCurrentStep(nextIncompleteStep);
       }
+    } else if (isFirstTime) {
+      // Para primera vez, siempre iniciar en paso 1
+      setCurrentStep(1);
     }
   };
 

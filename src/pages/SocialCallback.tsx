@@ -138,7 +138,7 @@ const SocialCallback = () => {
           }
         }
 
-        // Verificar si el usuario ya tiene un perfil completo
+        // Verificar si el usuario ya tiene un perfil completo con user_type definido
         try {
           const { data: existingProfile } = await supabase
             .from('profiles')
@@ -148,9 +148,10 @@ const SocialCallback = () => {
 
           console.log("🔍 Perfil existente encontrado:", existingProfile);
 
-          // Si ya tiene user_type definido, ir directo al onboarding
-          if (existingProfile && existingProfile.user_type) {
-            console.log("✅ Usuario ya tiene perfil, ir al onboarding");
+          // IMPORTANTE: Solo ir directo al onboarding si tiene user_type definido Y diferente de NULL
+          // Para registros sociales, user_type debería ser NULL inicialmente
+          if (existingProfile && existingProfile.user_type !== null) {
+            console.log("✅ Usuario ya tiene perfil completo, ir al onboarding");
             
             toast({
               title: "¡Bienvenido de nuevo!",

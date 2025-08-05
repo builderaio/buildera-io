@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, Code, Smartphone } from "lucide-react";
 import { EmailTemplate, useEmailSystem } from "@/hooks/useEmailSystem";
+import { useSafeEmailHtml } from "@/utils/sanitizer";
 
 interface EmailTemplateFormProps {
   template?: EmailTemplate | null;
@@ -829,9 +830,7 @@ export const EmailTemplateForm = ({ template, onClose, onSave }: EmailTemplateFo
                       <div 
                         className="border rounded p-4 bg-white min-h-[400px] overflow-auto"
                         style={{ maxHeight: '500px' }}
-                        dangerouslySetInnerHTML={{ 
-                          __html: previewContent.html || "<p>Sin contenido HTML</p>" 
-                        }}
+                        dangerouslySetInnerHTML={useSafeEmailHtml(previewContent.html || "<p>Sin contenido HTML</p>")}
                       />
                     </CardContent>
                   </Card>
@@ -854,9 +853,7 @@ export const EmailTemplateForm = ({ template, onClose, onSave }: EmailTemplateFo
                           <div 
                             className="bg-white rounded p-2 text-sm overflow-auto"
                             style={{ maxHeight: '400px', fontSize: '12px' }}
-                            dangerouslySetInnerHTML={{ 
-                              __html: previewContent.html || "<p>Sin contenido HTML</p>" 
-                            }}
+                            dangerouslySetInnerHTML={useSafeEmailHtml(previewContent.html || "<p>Sin contenido HTML</p>")}
                           />
                         </div>
                       </div>

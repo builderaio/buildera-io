@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { EmailTemplate, EmailConfiguration, useEmailSystem } from "@/hooks/useEmailSystem";
 import { Send, Eye } from "lucide-react";
+import { useSafeEmailHtml } from "@/utils/sanitizer";
 
 interface EmailTemplateEditorProps {
   templates: EmailTemplate[];
@@ -195,7 +196,7 @@ export const EmailTemplateEditor = ({
             {preview ? (
               <div 
                 className="border rounded-lg p-4 bg-white max-h-96 overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: preview }}
+                dangerouslySetInnerHTML={useSafeEmailHtml(preview)}
               />
             ) : (
               <div className="text-center text-muted-foreground py-8">

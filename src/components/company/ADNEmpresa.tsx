@@ -398,7 +398,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     setCompletedSteps(completed);
     setIsOnboardingComplete(completed.length === totalSteps);
     
-    // Si es primera vez, siempre mantener en paso 1
+    // Si es primera vez, solo inicializar en paso 1 si currentStep es 0 o no está definido
     // Si no es primera vez y no se ha completado el onboarding, ir al primer paso incompleto
     if (!isFirstTime && !isOnboardingComplete) {
       const nextIncompleteStep = Array.from({length: totalSteps}, (_, i) => i + 1)
@@ -406,8 +406,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       if (nextIncompleteStep && nextIncompleteStep !== currentStep) {
         setCurrentStep(nextIncompleteStep);
       }
-    } else if (isFirstTime) {
-      // Para primera vez, siempre iniciar en paso 1
+    } else if (isFirstTime && currentStep === 0) {
+      // Para primera vez, solo iniciar en paso 1 si currentStep no está inicializado
       setCurrentStep(1);
     }
   };

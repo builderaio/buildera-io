@@ -219,7 +219,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
               .eq('id', companyData.id);
             
             if (!error) {
-              setCompanyData(prev => ({ ...prev, description: descripcionItem.value }));
+              setCompanyData(prev => ({ 
+                ...prev, 
+                description: descripcionItem.value,
+                descripcion_empresa: descripcionItem.value  // Mantener ambos campos sincronizados
+              }));
               console.log('✅ Descripción actualizada desde webhook existente');
             }
           }
@@ -757,7 +761,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
       if (error) throw error;
 
-      setCompanyData(prev => ({ ...prev, description: tempDescription }));
+      setCompanyData(prev => ({ 
+        ...prev, 
+        description: tempDescription,
+        descripcion_empresa: tempDescription  // Mantener ambos campos sincronizados
+      }));
       setEditingDescription(false);
       
       if (!completedSteps.includes(2)) {

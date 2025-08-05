@@ -77,12 +77,7 @@ const Index = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       
-      if (session?.user && event === 'SIGNED_IN') {
-        // Para nuevos sign-ins, recargar la página para que checkAuth maneje el flujo
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
-      }
+      // No hacer nada más aquí - dejar que checkAuth maneje todo
     });
 
     return () => subscription.unsubscribe();

@@ -400,14 +400,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       const redirectUrl = `${window.location.origin}/auth/social-callback?user_type=company&provider=${provider}&timestamp=${Date.now()}`;
       console.log("🔄 URL de redirect:", redirectUrl);
       
-      // Limpiar cualquier sesión existente antes de OAuth
-      console.log("🧹 Limpiando sesión existente...");
-      try {
-        await supabase.auth.signOut({ scope: 'global' });
-        console.log("✅ Sesión limpiada");
-      } catch (cleanupError) {
-        console.log('⚠️ Limpieza de sesión ignorada:', cleanupError);
-      }
+      // No limpiar sesión antes de OAuth - puede interferir
+      console.log("⚡ Iniciando OAuth sin limpiar sesión previa...");
       
       // Verificar configuración del cliente Supabase
       console.log("🔍 Verificando configuración del cliente...");

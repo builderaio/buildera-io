@@ -89,13 +89,13 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
             break;
 
           case 'developer':
-            console.log('🔄 Usuario developer, ir a waitlist');
-            navigate('/waitlist?type=developer');
+            console.log('🔄 Usuario developer, ir a developer dashboard');
+            navigate('/developer-dashboard');
             break;
 
           case 'expert':
-            console.log('🔄 Usuario expert, ir a waitlist');
-            navigate('/waitlist?type=expert');
+            console.log('🔄 Usuario expert, ir a expert dashboard');
+            navigate('/expert-dashboard');
             break;
 
           default:

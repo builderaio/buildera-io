@@ -80,10 +80,10 @@ const Index = () => {
 
             case 'developer':
             case 'expert':
-              // Usuarios developer/expert van a waitlist
-              console.log(`✅ Usuario ${userType}, redirigiendo a waitlist`);
+              // Usuarios developer/expert van a sus dashboards específicos
+              console.log(`✅ Usuario ${userType}, redirigiendo a ${userType} dashboard`);
               setTimeout(() => {
-                navigate(`/waitlist?type=${userType}`);
+                navigate(`/${userType}-dashboard`);
               }, 100);
               break;
 

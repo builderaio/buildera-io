@@ -55,7 +55,8 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
           setLoading(false);
           return;
         }
-        // Redirigir a lista de espera para expertos
+        // Para registro, los expertos ahora van directamente a su dashboard después del social auth
+        // El trigger de la base de datos creará su perfil automáticamente
         navigate(`/waitlist?type=expert&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`);
         return;
       } else {

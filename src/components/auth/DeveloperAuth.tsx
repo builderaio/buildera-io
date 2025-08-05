@@ -41,7 +41,8 @@ const DeveloperAuth = ({ mode, onModeChange }: DeveloperAuthProps) => {
           setLoading(false);
           return;
         }
-        // Redirigir a lista de espera para desarrolladores
+        // Para registro, los desarrolladores ahora van directamente a su dashboard después del social auth
+        // El trigger de la base de datos creará su perfil automáticamente
         navigate(`/waitlist?type=developer&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`);
         return;
       } else {

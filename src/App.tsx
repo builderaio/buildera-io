@@ -50,6 +50,8 @@ import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import EmailVerificationHandler from "./pages/EmailVerificationHandler";
+import ExpertDashboard from "./pages/ExpertDashboard";
+import DeveloperDashboard from "./pages/DeveloperDashboard";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +114,8 @@ const App = () => {
               {/* Authenticated Routes with Layout */}
               <Route element={<ResponsiveLayout />}>
                 <Route path="/company-dashboard" element={<CompanyDashboard />} />
+                <Route path="/expert-dashboard" element={<ExpertDashboard />} />
+                <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
                 <Route path="/profile" element={<UserProfile />} />
                 <Route path="/marketplace/agents" element={<AgentMarketplace />} />
                 <Route path="/marketplace/agents/:templateId/configure" element={<AgentConfigWizard />} />

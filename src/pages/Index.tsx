@@ -60,9 +60,11 @@ const Index = () => {
             return;
           }
           
-          // Usuario autenticado con perfil completo - redirigir al dashboard
+          // Usuario autenticado con perfil completo - redirigir al dashboard  
           console.log('✅ Usuario autenticado con perfil completo, redirigiendo al dashboard');
-          navigate('/company-dashboard');
+          setTimeout(() => {
+            navigate('/company-dashboard');
+          }, 100);
           return;
         }
       }
@@ -75,11 +77,11 @@ const Index = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       
-      if (session?.user) {
-        // Para usuarios autenticados, redirigir al dashboard después de un breve delay
+      if (session?.user && event === 'SIGNED_IN') {
+        // Para nuevos sign-ins, recargar la página para que checkAuth maneje el flujo
         setTimeout(() => {
-          navigate('/company-dashboard');
-        }, 100);
+          window.location.reload();
+        }, 500);
       }
     });
 

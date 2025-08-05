@@ -52,19 +52,48 @@ const Index = () => {
             isSocialRegistration
           });
           
-          // If user_type is null (social users) or social user without company, need onboarding
-          if ((userType === null || userType === undefined) || (isSocialRegistration && !hasCompany)) {
-            console.log('🔄 Usuario necesita onboarding, mostrando OnboardingRedirect');
+          // Lógica basada en user_type
+          if (userType === null || userType === undefined) {
+            // Usuario sin tipo definido - necesita onboarding
+            console.log('🔄 Usuario sin user_type, mostrando OnboardingRedirect');
             setShouldShowOnboarding(true);
             setLoading(false);
             return;
           }
-          
-          // Usuario autenticado con perfil completo - redirigir al dashboard  
-          console.log('✅ Usuario autenticado con perfil completo, redirigiendo al dashboard');
-          setTimeout(() => {
-            navigate('/company-dashboard');
-          }, 100);
+
+          // Lógica específica por tipo de usuario
+          switch (userType) {
+            case 'company':
+              if (hasCompany) {
+                // Usuario empresa con empresa configurada - ir al dashboard
+                console.log('✅ Usuario empresa con empresa, redirigiendo al dashboard');
+                setTimeout(() => {
+                  navigate('/company-dashboard');
+                }, 100);
+              } else {
+                // Usuario empresa sin empresa - necesita onboarding
+                console.log('🔄 Usuario empresa sin empresa, mostrando OnboardingRedirect');
+                setShouldShowOnboarding(true);
+                setLoading(false);
+              }
+              break;
+
+            case 'developer':
+            case 'expert':
+              // Usuarios developer/expert van a waitlist
+              console.log(`✅ Usuario ${userType}, redirigiendo a waitlist`);
+              setTimeout(() => {
+                navigate(`/waitlist?type=${userType}`);
+              }, 100);
+              break;
+
+            default:
+              // Tipo desconocido - mostrar onboarding
+              console.log('🔄 Tipo de usuario desconocido, mostrando OnboardingRedirect');
+              setShouldShowOnboarding(true);
+              setLoading(false);
+              break;
+          }
           return;
         }
       }

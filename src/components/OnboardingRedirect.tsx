@@ -59,29 +59,50 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
           primaryCompany: companyMemberships?.[0]?.companies?.name
         });
 
-        // 4. Lógica de redirección simplificada
-        if (hasCompany) {
-          // Ya tiene empresa configurada, ir al dashboard
-          navigate('/company-dashboard');
-          return;
-        }
-
-        // Si user_type es NULL (usuarios sociales según el nuevo trigger), ir a complete-profile
+        // 4. Lógica de redirección basada en user_type
+        
+        // Si user_type es NULL, ir a complete-profile para definirlo
         if (userType === null || userType === undefined) {
-          console.log('🔄 Usuario sin user_type definido (social), ir a complete-profile');
+          console.log('🔄 Usuario sin user_type definido, ir a complete-profile');
           navigate('/complete-profile');
           return;
         }
 
-        // Para usuarios con user_type pero sin empresa (caso edge), también a complete-profile
-        if (isSocialRegistration && !hasCompany) {
-          console.log('🔄 Usuario social sin empresa, ir a complete-profile');
-          navigate('/complete-profile');
-          return;
-        }
+        // Lógica específica por tipo de usuario
+        switch (userType) {
+          case 'company':
+            if (hasCompany) {
+              // Ya tiene empresa configurada, ir al dashboard
+              navigate('/company-dashboard');
+              return;
+            }
+            
+            // Usuario empresa sin empresa configurada
+            if (isSocialRegistration) {
+              console.log('🔄 Usuario empresa social sin empresa, ir a complete-profile');
+              navigate('/complete-profile');
+            } else {
+              // Email registration debería tener empresa por el trigger
+              console.log('🔄 Usuario empresa por email sin empresa, ir a dashboard para configurar');
+              navigate('/company-dashboard?view=adn-empresa');
+            }
+            break;
 
-        // Para registro por email, ir directo al dashboard (ya tiene empresa creada por el trigger)
-        navigate('/company-dashboard?view=adn-empresa');
+          case 'developer':
+            console.log('🔄 Usuario developer, ir a waitlist');
+            navigate('/waitlist?type=developer');
+            break;
+
+          case 'expert':
+            console.log('🔄 Usuario expert, ir a waitlist');
+            navigate('/waitlist?type=expert');
+            break;
+
+          default:
+            console.log('🔄 Tipo de usuario desconocido, ir a complete-profile');
+            navigate('/complete-profile');
+            break;
+        }
 
       } catch (error) {
         console.error('Error in onboarding check:', error);

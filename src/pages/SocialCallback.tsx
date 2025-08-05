@@ -64,10 +64,29 @@ const SocialCallback = () => {
 
         console.log("📊 Estado del perfil:", profile);
 
+        // Obtener el tipo de usuario de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userType = urlParams.get('user_type');
+        
         // Si no hay perfil, es un problema con el trigger
         if (!profile) {
           console.error("❌ CRÍTICO: El trigger handle_new_user no creó el perfil");
           throw new Error("El perfil no fue creado automáticamente. Por favor, contacta soporte.");
+        }
+
+        // Si el perfil no tiene user_type, actualizarlo con el de la URL
+        if (!profile.user_type && userType && ['company', 'developer', 'expert'].includes(userType)) {
+          console.log(`🔄 Actualizando user_type a: ${userType}`);
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ user_type: userType as 'company' | 'developer' | 'expert' })
+            .eq('user_id', session.user.id);
+          
+          if (updateError) {
+            console.error("❌ Error actualizando user_type:", updateError);
+          } else {
+            console.log("✅ user_type actualizado correctamente");
+          }
         }
 
         toast({

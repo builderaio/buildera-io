@@ -85,6 +85,7 @@ async function sendSMTPEmail(
   }
 
   try {
+    console.log("Connecting to SMTP server...");
     // Create SMTP client
     const client = new SMTPClient({
       connection: {
@@ -164,7 +165,9 @@ const handler = async (req: Request): Promise<Response> => {
     if (requestData.configuration && requestData.test) {
       // Use provided configuration for testing
       emailConfig = requestData.configuration;
+      console.log("Using test configuration");
     } else if (requestData.configurationId) {
+      // Use specific configuration ID
       const { data: configData, error: configError } = await supabase
         .from("email_configurations")
         .select("*")
@@ -173,11 +176,14 @@ const handler = async (req: Request): Promise<Response> => {
         .single();
 
       if (configError || !configData) {
-        throw new Error("Email configuration not found or inactive");
+        console.error("Configuration ID error:", configError);
+        throw new Error(`Email configuration not found or inactive: ${configError?.message}`);
       }
       emailConfig = configData;
+      console.log("Using specific configuration:", requestData.configurationId);
     } else {
-      // Get default configuration
+      // Get default configuration - this is the key fix
+      console.log("Attempting to get default email configuration...");
       const { data: configData, error: configError } = await supabase
         .from("email_configurations")
         .select("*")
@@ -185,10 +191,30 @@ const handler = async (req: Request): Promise<Response> => {
         .eq("is_active", true)
         .single();
 
-      if (configError || !configData) {
-        throw new Error("No default email configuration found");
+      if (configError) {
+        console.error("Default configuration error:", configError);
+        console.log("Falling back to any active configuration...");
+        
+        // Fallback: get any active configuration
+        const { data: fallbackConfig, error: fallbackError } = await supabase
+          .from("email_configurations")
+          .select("*")
+          .eq("is_active", true)
+          .limit(1)
+          .single();
+          
+        if (fallbackError || !fallbackConfig) {
+          console.error("No email configuration available:", fallbackError);
+          throw new Error("No email configuration found. Please set up an email configuration first.");
+        }
+        emailConfig = fallbackConfig;
+        console.log("Using fallback configuration:", fallbackConfig.id);
+      } else if (!configData) {
+        throw new Error("No default email configuration found. Please set up a default email configuration.");
+      } else {
+        emailConfig = configData;
+        console.log("Using default configuration:", configData.id);
       }
-      emailConfig = configData;
     }
 
     // Get template if specified

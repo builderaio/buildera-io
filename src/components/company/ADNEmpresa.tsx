@@ -403,7 +403,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     if (!isFirstTime && !isOnboardingComplete) {
       const nextIncompleteStep = Array.from({length: totalSteps}, (_, i) => i + 1)
         .find(step => !completed.includes(step));
-      if (nextIncompleteStep && nextIncompleteStep !== currentStep) {
+      // Solo cambiar de paso si el usuario no está actualmente trabajando en un paso incompleto
+      if (nextIncompleteStep && nextIncompleteStep !== currentStep && nextIncompleteStep < currentStep) {
         setCurrentStep(nextIncompleteStep);
       }
     } else if (isFirstTime && currentStep === 0) {

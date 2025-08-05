@@ -84,9 +84,10 @@ const CompleteProfile = () => {
         return;
       }
 
-      // Check URL params for user type from OAuth
+      // Check URL params for user type from OAuth or social callback
       const typeParam = searchParams.get('user_type');
-      if (typeParam) {
+      if (typeParam && ['company', 'developer', 'expert'].includes(typeParam)) {
+        console.log('🔍 CompleteProfile: user_type desde URL:', typeParam);
         setUserType(typeParam);
       }
 

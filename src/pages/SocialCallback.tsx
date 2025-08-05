@@ -74,19 +74,11 @@ const SocialCallback = () => {
           throw new Error("El perfil no fue creado automáticamente. Por favor, contacta soporte.");
         }
 
-        // Si el perfil no tiene user_type, actualizarlo con el de la URL
-        if (!profile.user_type && userType && ['company', 'developer', 'expert'].includes(userType)) {
-          console.log(`🔄 Actualizando user_type a: ${userType}`);
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ user_type: userType as 'company' | 'developer' | 'expert' })
-            .eq('user_id', session.user.id);
-          
-          if (updateError) {
-            console.error("❌ Error actualizando user_type:", updateError);
-          } else {
-            console.log("✅ user_type actualizado correctamente");
-          }
+        // Si el perfil no tiene user_type, NO actualizarlo aquí
+        // Dejar que el usuario lo defina en /complete-profile
+        if (!profile.user_type && userType) {
+          console.log(`📋 user_type desde URL: ${userType} - se definirá en complete-profile`);
+          // NO actualizar aquí - el usuario debe ir a complete-profile para definirlo
         }
 
         toast({
@@ -97,8 +89,13 @@ const SocialCallback = () => {
         // Pequeña pausa para mostrar el toast
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Redirigir a la página principal - OnboardingRedirect se encargará del resto
-        navigate('/');
+        // Si tenemos user_type de la URL y el perfil no lo tiene, pasarlo en la redirección
+        if (!profile.user_type && userType) {
+          navigate(`/?user_type=${userType}`);
+        } else {
+          // Redirigir a la página principal - OnboardingRedirect se encargará del resto
+          navigate('/');
+        }
 
       } catch (error: any) {
         console.error("❌ Error en callback social:", error);

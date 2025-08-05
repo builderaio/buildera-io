@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AdminAuthProvider } from "@/hooks/useAdminAuth";
+import { SecurityProvider } from "@/components/SecurityProvider";
 import SupportChatWidget from "@/components/SupportChatWidget";
 import VersionUpdateNotification from "@/components/VersionUpdateNotification";
 import CacheManager from "@/components/CacheManager";
@@ -89,7 +90,8 @@ const App = () => {
       >
         <ThemeInitializer />
         <AdminAuthProvider>
-          <TooltipProvider>
+          <SecurityProvider>
+            <TooltipProvider>
             <CacheManager />
             <VersionUpdateNotification />
             <Toaster />
@@ -208,7 +210,8 @@ const App = () => {
             {/* Chat widget de soporte para usuarios autenticados */}
             <SupportChatWidget user={user} />
             </BrowserRouter>
-          </TooltipProvider>
+            </TooltipProvider>
+          </SecurityProvider>
         </AdminAuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

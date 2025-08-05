@@ -5,6 +5,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useRateLimit, logSecurityEvent } from "@/hooks/useSecurity";
 import { supabase } from "@/integrations/supabase/client";
 import { Lock, Check } from "lucide-react";
 
@@ -13,7 +14,15 @@ export const ChangePasswordForm = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<{ score: number; isValid: boolean }>({ score: 0, isValid: false });
   const { toast } = useToast();
+  
+  // Rate limiting para cambios de contraseña
+  const { checkRateLimit, isBlocked } = useRateLimit({
+    maxAttempts: 3,
+    windowMs: 300000, // 5 minutos
+    identifier: `password_change_${Date.now()}`
+  });
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +45,18 @@ export const ChangePasswordForm = () => {
           description: "Las contraseñas no coinciden",
           variant: "destructive",
         });
-        return;
-      }
+      return;
+    }
+    
+    // Validar fortaleza de contraseña
+    if (!passwordStrength.isValid) {
+      toast({
+        title: "Weak password",
+        description: "Please use a stronger password that meets the requirements.",
+        variant: "destructive",
+      });
+      return;
+    }
 
       if (currentPassword === newPassword) {
         toast({

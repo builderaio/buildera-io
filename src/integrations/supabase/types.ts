@@ -5191,6 +5191,10 @@ export type Database = {
         Args: { user_id_param: string; company_data: Json }
         Returns: string
       }
+      validate_password_strength: {
+        Args: { password: string }
+        Returns: Json
+      }
       vector_avg: {
         Args: { "": number[] }
         Returns: string

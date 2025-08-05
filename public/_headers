@@ -1,31 +1,56 @@
-# Cache Control para evitar cache agresivo del navegador
+# Security Headers y Cache Control
 
-# Para archivos HTML - no cache
+# Para archivos HTML - no cache + security headers
 /*.html
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
   Expires: 0
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), gyroscope=(), magnetometer=(), payment=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://js.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
 
 # Para el index.html principal
 /
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
   Expires: 0
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), gyroscope=(), magnetometer=(), payment=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://js.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;
 
 # Para archivos JS y CSS con hash - cache largo
 /assets/*.js
   Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
 
 /assets/*.css
   Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
 
-# Para archivos de imágenes - cache moderado
+# Para archivos de imágenes - cache moderado + security
 /lovable-uploads/*
   Cache-Control: public, max-age=86400
+  X-Content-Type-Options: nosniff
+  Content-Disposition: inline
 
-# Para archivos estáticos sin hash - cache corto
+# Para archivos estáticos sin hash - cache corto + security
 /*.js
   Cache-Control: public, max-age=3600
+  X-Content-Type-Options: nosniff
 
 /*.css
   Cache-Control: public, max-age=3600
+  X-Content-Type-Options: nosniff
+
+# Security headers globales para todas las rutas
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin

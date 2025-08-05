@@ -69,14 +69,14 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
         // Si user_type es NULL (usuarios sociales según el nuevo trigger), ir a complete-profile
         if (userType === null || userType === undefined) {
           console.log('🔄 Usuario sin user_type definido (social), ir a complete-profile');
-          navigate('/complete-profile?user_type=company');
+          navigate('/complete-profile');
           return;
         }
 
         // Para usuarios con user_type pero sin empresa (caso edge), también a complete-profile
         if (isSocialRegistration && !hasCompany) {
           console.log('🔄 Usuario social sin empresa, ir a complete-profile');
-          navigate('/complete-profile?user_type=company');
+          navigate('/complete-profile');
           return;
         }
 

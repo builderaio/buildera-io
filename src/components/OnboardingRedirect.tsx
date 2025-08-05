@@ -71,21 +71,24 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
         // Lógica específica por tipo de usuario
         switch (userType) {
           case 'company':
+            // Para usuarios empresa, verificar si necesitan completar perfil o ya tienen empresa
+            if (isSocialRegistration && !hasCompany) {
+              // Usuario empresa registrado con social SIN empresa - debe ir a complete-profile para crearla
+              console.log('🔄 Usuario empresa social sin empresa, ir a complete-profile para crear empresa');
+              navigate('/complete-profile');
+              return;
+            }
+            
             if (hasCompany) {
               // Ya tiene empresa configurada, ir al dashboard
+              console.log('✅ Usuario empresa con empresa configurada, ir al dashboard');
               navigate('/company-dashboard');
               return;
             }
             
-            // Usuario empresa sin empresa configurada
-            if (isSocialRegistration) {
-              console.log('🔄 Usuario empresa social sin empresa, ir a complete-profile');
-              navigate('/complete-profile');
-            } else {
-              // Email registration debería tener empresa por el trigger
-              console.log('🔄 Usuario empresa por email sin empresa, ir a dashboard para configurar');
-              navigate('/company-dashboard?view=adn-empresa');
-            }
+            // Usuario empresa por email sin empresa (debería tener empresa por el trigger)
+            console.log('🔄 Usuario empresa por email sin empresa, ir a dashboard para configurar');
+            navigate('/company-dashboard?view=adn-empresa');
             break;
 
           case 'developer':

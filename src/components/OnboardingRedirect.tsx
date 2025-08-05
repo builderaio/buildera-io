@@ -44,29 +44,38 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
 
         const hasCompany = companyMemberships && companyMemberships.length > 0;
 
-        // 3. Determinar el flujo basado en auth_provider
+        // 3. Determinar el flujo basado en auth_provider y user_type
         const authProvider = profile?.auth_provider || 'email';
+        const userType = profile?.user_type;
         const isSocialRegistration = authProvider !== 'email';
 
         console.log('🔍 Onboarding check:', {
           hasProfile: !!profile,
           hasCompany,
           authProvider,
+          userType,
           isSocialRegistration,
           companiesCount: companyMemberships?.length,
           primaryCompany: companyMemberships?.[0]?.companies?.name
         });
 
-        // 4. Lógica de redirección
+        // 4. Lógica de redirección simplificada
         if (hasCompany) {
           // Ya tiene empresa configurada, ir al dashboard
           navigate('/company-dashboard');
           return;
         }
 
-        // Para registros sociales, forzar complete-profile
-        if (isSocialRegistration) {
-          console.log('🔄 Usuario social, ir a complete-profile');
+        // Si user_type es NULL (usuarios sociales según el nuevo trigger), ir a complete-profile
+        if (userType === null || userType === undefined) {
+          console.log('🔄 Usuario sin user_type definido (social), ir a complete-profile');
+          navigate('/complete-profile?user_type=company');
+          return;
+        }
+
+        // Para usuarios con user_type pero sin empresa (caso edge), también a complete-profile
+        if (isSocialRegistration && !hasCompany) {
+          console.log('🔄 Usuario social sin empresa, ir a complete-profile');
           navigate('/complete-profile?user_type=company');
           return;
         }

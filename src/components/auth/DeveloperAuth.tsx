@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -14,6 +15,7 @@ interface DeveloperAuthProps {
 }
 
 const DeveloperAuth = ({ mode, onModeChange }: DeveloperAuthProps) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -40,7 +42,7 @@ const DeveloperAuth = ({ mode, onModeChange }: DeveloperAuthProps) => {
           return;
         }
         // Redirigir a lista de espera para desarrolladores
-        window.location.href = `/waitlist?type=developer&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`;
+        navigate(`/waitlist?type=developer&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`);
         return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -49,7 +51,7 @@ const DeveloperAuth = ({ mode, onModeChange }: DeveloperAuthProps) => {
         });
 
         if (error) throw error;
-        window.location.href = '/';
+        navigate('/');
       }
     } catch (error: any) {
       toast({

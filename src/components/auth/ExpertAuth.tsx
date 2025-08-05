@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -15,6 +16,7 @@ interface ExpertAuthProps {
 }
 
 const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -54,7 +56,7 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
           return;
         }
         // Redirigir a lista de espera para expertos
-        window.location.href = `/waitlist?type=expert&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`;
+        navigate(`/waitlist?type=expert&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`);
         return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -63,7 +65,7 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
         });
 
         if (error) throw error;
-        window.location.href = '/';
+        navigate('/');
       }
     } catch (error: any) {
       toast({

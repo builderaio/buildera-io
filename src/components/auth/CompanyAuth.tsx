@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -11,7 +12,8 @@ import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 import { EmailVerificationInfo } from "./EmailVerificationInfo";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
 import { supabase } from "@/integrations/supabase/client";
-import { Linkedin, Mail, Eye, EyeOff } from "lucide-react";
+import { Linkedin, Mail } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CompanyAuthProps {
   mode: "signin" | "signup";
@@ -19,6 +21,7 @@ interface CompanyAuthProps {
 }
 
 const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -301,15 +304,15 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             // Si no existe registro de onboarding o no está completado, ir al onboarding
             if (!onboardingStatus || !onboardingStatus.dna_empresarial_completed) {
               console.log("🎯 Primer login detectado, redirigiendo al onboarding");
-              window.location.href = '/company-dashboard?view=adn-empresa&first_login=true';
+              navigate('/company-dashboard?view=adn-empresa&first_login=true');
             } else {
               console.log("✅ Usuario ya completó onboarding, ir al dashboard");
-              window.location.href = '/company-dashboard';
+              navigate('/company-dashboard');
             }
           } catch (error) {
             console.error("Error verificando onboarding:", error);
             // Si hay error verificando onboarding, ir al onboarding por seguridad
-            window.location.href = '/company-dashboard?view=adn-empresa&first_login=true';
+            navigate('/company-dashboard?view=adn-empresa&first_login=true');
           }
         }
       }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ interface WaitlistFormProps {
 }
 
 const WaitlistForm = ({ userType, email, fullName }: WaitlistFormProps) => {
+  const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -55,7 +57,7 @@ const WaitlistForm = ({ userType, email, fullName }: WaitlistFormProps) => {
             </p>
             <Button 
               variant="outline" 
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/')}
               className="mt-4"
             >
               Volver al inicio

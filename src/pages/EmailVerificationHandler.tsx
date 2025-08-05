@@ -52,12 +52,12 @@ const EmailVerificationHandler = () => {
 
           toast({
             title: "¡Email verificado!",
-            description: "Tu cuenta ha sido verificada exitosamente. Te hemos enviado un email de bienvenida. Ahora puedes iniciar sesión.",
+            description: "Tu cuenta ha sido verificada exitosamente. Te hemos enviado un email de bienvenida.",
           });
 
-          // Redirigir al login con mensaje para que inicie sesión y vaya al onboarding
+          // Redirigir directamente al company dashboard ya que el usuario está autenticado
           setTimeout(() => {
-            navigate('/auth?mode=signin&verified=true');
+            navigate('/company-dashboard?view=adn-empresa&first_login=true');
           }, 2000);
         }
       } catch (error: any) {

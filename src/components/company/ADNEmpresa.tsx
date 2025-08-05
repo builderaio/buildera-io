@@ -1949,11 +1949,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                                   setObjectives(updated);
                                 }
                               }}
-                              variant="outline"
+                              variant="destructive"
                               size="sm"
                               className="w-full"
                             >
-                              <X className="w-4 h-4" />
+                              Eliminar
                             </Button>
                           </div>
                         </div>

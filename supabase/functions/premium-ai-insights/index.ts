@@ -251,36 +251,27 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:`;
   const userPrompt = `DATOS PARA ANÁLISIS:
 
 POSTS (${socialData.posts.length} posts):
-${JSON.stringify(socialData.posts.slice(0, 50), null, 2)}
+${JSON.stringify(socialData.posts.slice(0, 20), null, 2)}
 
 COMENTARIOS (${socialData.comments.length} comentarios):
-${JSON.stringify(socialData.comments.slice(0, 20), null, 2)}
+${JSON.stringify(socialData.comments.slice(0, 10), null, 2)}
 
 FOLLOWERS (${socialData.followers.length} followers):
-${JSON.stringify(socialData.followers.slice(0, 20), null, 2)}
+${JSON.stringify(socialData.followers.slice(0, 10), null, 2)}
 
 CALENDARIO (${socialData.calendar.length} entradas):
-${JSON.stringify(socialData.calendar.slice(0, 30), null, 2)}
+${JSON.stringify(socialData.calendar.slice(0, 15), null, 2)}
 
-COMPETIDORES (${socialData.competitors.length} análisis):
-${JSON.stringify(socialData.competitors, null, 2)}
+RESUMEN DE DATOS ADICIONALES:
+- Competidores analizados: ${socialData.competitors.length}
+- Insights existentes: ${socialData.insights.length}
+- Actionables existentes: ${socialData.actionables.length}
+- Recomendaciones existentes: ${socialData.recommendations.length}
 
-ANÁLISIS DE UBICACIÓN:
-${JSON.stringify(socialData.locationAnalysis, null, 2)}
-
-INSIGHTS EXISTENTES:
-${JSON.stringify(socialData.insights, null, 2)}
-
-ACTIONABLES EXISTENTES:
-${JSON.stringify(socialData.actionables, null, 2)}
-
-RECOMENDACIONES EXISTENTES:
-${JSON.stringify(socialData.recommendations, null, 2)}
-
-Genera un análisis estratégico profundo basado en todos estos datos.`;
+Genera un análisis estratégico profundo basado en estos datos principales.`;
 
   try {
-    console.log('🔄 Calling OpenAI with GPT-4 Turbo (fallback from o3 model)...');
+    console.log('🔄 Calling OpenAI with GPT-4o-mini for premium insights...');
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -289,13 +280,13 @@ Genera un análisis estratégico profundo basado en todos estos datos.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo-preview', // Modelo disponible y potente
+        model: 'gpt-4o-mini', // Modelo moderno y eficiente
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.3, // Menos creatividad, más precisión
-        max_tokens: 4000, // Respuesta extensa
+        max_tokens: 3000, // Respuesta optimizada
         top_p: 0.9
       }),
     });

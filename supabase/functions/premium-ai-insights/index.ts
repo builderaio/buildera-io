@@ -7,26 +7,65 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Obtener la API key de OpenAI desde la base de datos
-async function getOpenAIApiKey(supabase: any): Promise<string> {
-  console.log('🔑 Fetching OpenAI API key from database...');
+// Obtener configuración del modelo de análisis
+async function getAnalysisModelConfig(supabase: any) {
+  console.log('🔧 Getting data analysis model configuration...');
+  
+  const { data: functionConfig, error: functionError } = await supabase
+    .from('business_function_configurations')
+    .select(`
+      default_model_id,
+      default_provider_id,
+      configuration,
+      ai_providers:default_provider_id (
+        name,
+        base_url,
+        env_key,
+        configuration
+      )
+    `)
+    .eq('function_name', 'data_analysis')
+    .eq('is_active', true)
+    .single();
+
+  if (functionError) {
+    console.error('❌ Error getting function config:', functionError);
+    throw new Error('No se pudo obtener la configuración del modelo de análisis');
+  }
+
+  const providerConfig = functionConfig.ai_providers.configuration;
+  const modelName = providerConfig?.model_types?.reasoning || 'o1-mini';
+  
+  console.log(`✅ Analysis model configured: ${modelName} from ${functionConfig.ai_providers.name}`);
+  
+  return {
+    modelName,
+    provider: functionConfig.ai_providers,
+    functionConfig: functionConfig.configuration || {}
+  };
+}
+
+// Obtener la API key del proveedor
+async function getProviderApiKey(supabase: any, provider: any): Promise<string> {
+  console.log(`🔑 Fetching ${provider.name} API key...`);
+  
   const { data, error } = await supabase
     .from('llm_api_keys')
     .select('api_key_hash')
-    .eq('provider', 'openai')
+    .eq('provider', provider.name)
     .eq('status', 'active')
     .single();
   
   if (error || !data?.api_key_hash) {
     console.log('⚠️ No API key found in database, using environment variable');
-    const envKey = Deno.env.get('OPENAI_API_KEY');
+    const envKey = Deno.env.get(provider.env_key);
     if (!envKey) {
-      throw new Error('OpenAI API key not found in database or environment');
+      throw new Error(`${provider.name} API key not found in database or environment`);
     }
     return envKey;
   }
   
-  console.log('✅ OpenAI API key retrieved successfully from database');
+  console.log(`✅ ${provider.name} API key retrieved successfully from database`);
   return data.api_key_hash;
 }
 
@@ -196,9 +235,9 @@ async function gatherSocialMediaData(supabase: any, userId: string, platform?: s
   }
 }
 
-// Generar análisis profundo con OpenAI
-async function generatePremiumInsights(apiKey: string, socialData: any, userContext: any) {
-  console.log('🧠 Generating premium AI insights with reasoning model...');
+// Generar análisis profundo con modelos de razonamiento
+async function generatePremiumInsights(modelConfig: any, apiKey: string, socialData: any, userContext: any) {
+  console.log(`🧠 Generating premium AI insights with reasoning model: ${modelConfig.modelName}...`);
 
   const systemPrompt = `Eres un consultor estratégico senior especializado en marketing digital y redes sociales con más de 15 años de experiencia trabajando con marcas Fortune 500. Tu trabajo es generar análisis estratégicos profundos y accionables para empresas, proporcionando insights de nivel ejecutivo que impulsen el crecimiento y ROI.
 
@@ -271,36 +310,46 @@ RESUMEN DE DATOS ADICIONALES:
 Genera un análisis estratégico profundo basado en estos datos principales.`;
 
   try {
-    console.log('🔄 Calling OpenAI with GPT-4o-mini for premium insights...');
+    console.log(`🔄 Calling ${modelConfig.provider.name} with reasoning model: ${modelConfig.modelName}...`);
     
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Configurar el request para modelos de razonamiento
+    const requestBody: any = {
+      model: modelConfig.modelName,
+      messages: [
+        { role: 'user', content: `${systemPrompt}\n\n${userPrompt}` }
+      ]
+    };
+
+    // Los modelos de razonamiento (o1, o1-mini) no soportan system messages, temperature, etc.
+    if (!modelConfig.modelName.startsWith('o1')) {
+      requestBody.messages = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ];
+      requestBody.temperature = 0.3;
+      requestBody.max_tokens = 3000;
+      requestBody.top_p = 0.9;
+    }
+    
+    const response = await fetch(`${modelConfig.provider.base_url}/chat/completions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', // Modelo moderno y eficiente
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.3, // Menos creatividad, más precisión
-        max_tokens: 3000, // Respuesta optimizada
-        top_p: 0.9
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const error = await response.text();
-      throw new Error(`OpenAI API error: ${error}`);
+      throw new Error(`${modelConfig.provider.name} API error: ${error}`);
     }
 
     const result = await response.json();
-    console.log('✅ OpenAI reasoning analysis completed');
+    console.log(`✅ ${modelConfig.provider.name} reasoning analysis completed`);
     
     if (!result.choices?.[0]?.message?.content) {
-      throw new Error('No content received from OpenAI');
+      throw new Error(`No content received from ${modelConfig.provider.name}`);
     }
 
     // Limpiar y parsear respuesta JSON
@@ -322,13 +371,13 @@ Genera un análisis estratégico profundo basado en estos datos principales.`;
       console.log('📊 Premium analysis generated successfully');
       return analysis;
     } catch (parseError) {
-      console.error('❌ Error parsing OpenAI response:', parseError);
+      console.error('❌ Error parsing AI response:', parseError);
       console.log('Raw content:', content);
       throw new Error('Error parsing AI analysis response');
     }
 
   } catch (error) {
-    console.error('❌ Error in OpenAI analysis:', error);
+    console.error(`❌ Error in ${modelConfig.provider.name} analysis:`, error);
     throw error;
   }
 }
@@ -441,8 +490,11 @@ serve(async (req) => {
       .eq('user_id', userId)
       .single();
 
-    // Obtener API key de OpenAI
-    const openaiApiKey = await getOpenAIApiKey(supabaseClient);
+    // Obtener configuración del modelo de análisis
+    const modelConfig = await getAnalysisModelConfig(supabaseClient);
+    
+    // Obtener API key del proveedor
+    const apiKey = await getProviderApiKey(supabaseClient, modelConfig.provider);
 
     // Recopilar todos los datos de redes sociales
     const socialData = await gatherSocialMediaData(supabaseClient, userId, platform);
@@ -454,7 +506,8 @@ serve(async (req) => {
 
     // Generar análisis con IA avanzada
     const premiumAnalysis = await generatePremiumInsights(
-      openaiApiKey, 
+      modelConfig,
+      apiKey, 
       socialData, 
       userProfile || {}
     );

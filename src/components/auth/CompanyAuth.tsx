@@ -440,10 +440,10 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
     }
   };
 
-  // Determine which auth methods to show
-  const showEmailAuth = mode === "signup" || authMethods.canUseEmail;
-  const showGoogleAuth = mode === "signup" || authMethods.canUseGoogle;
-  const showLinkedInAuth = mode === "signup" || authMethods.canUseLinkedIn;
+  // Determine which auth methods to show - SIEMPRE mostrar todos en signup
+  const showEmailAuth = true; // Siempre mostrar email
+  const showGoogleAuth = true; // Siempre mostrar Google
+  const showLinkedInAuth = true; // Siempre mostrar LinkedIn
   const showSocialAuth = showGoogleAuth || showLinkedInAuth;
 
   if (authMethodsLoading && mode === "signin") {

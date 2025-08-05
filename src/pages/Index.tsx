@@ -11,11 +11,13 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, BarChart3, Users, Zap } from "lucide-react";
+import OnboardingRedirect from "@/components/OnboardingRedirect";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -23,13 +25,46 @@ const Index = () => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Get user profile
+        // Get user profile and check onboarding status
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, user_onboarding_status(*)')
           .eq('user_id', session.user.id)
           .single();
+        
         setProfile(profileData);
+        
+        // Check if user needs onboarding
+        if (profileData) {
+          const userType = profileData.user_type;
+          const authProvider = profileData.auth_provider || 'email';
+          const isSocialRegistration = authProvider !== 'email';
+          
+          // Check if user has company
+          const { data: companyMemberships } = await supabase
+            .from('company_members')
+            .select('*, companies(*)')
+            .eq('user_id', session.user.id)
+            .eq('is_primary', true);
+            
+          const hasCompany = companyMemberships && companyMemberships.length > 0;
+          
+          console.log('🔍 Index onboarding check:', {
+            hasProfile: !!profileData,
+            hasCompany,
+            authProvider,
+            userType,
+            isSocialRegistration
+          });
+          
+          // If user_type is null (social users) or social user without company, need onboarding
+          if ((userType === null || userType === undefined) || (isSocialRegistration && !hasCompany)) {
+            console.log('🔄 Usuario necesita onboarding, mostrando OnboardingRedirect');
+            setShouldShowOnboarding(true);
+            setLoading(false);
+            return;
+          }
+        }
       }
       setLoading(false);
     };
@@ -228,6 +263,11 @@ const Index = () => {
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // Si debe mostrar onboarding, usar el componente de redirección
+  if (shouldShowOnboarding && user) {
+    return <OnboardingRedirect user={user} />;
   }
 
   return user ? renderAuthenticatedContent() : renderPublicContent();

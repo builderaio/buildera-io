@@ -262,6 +262,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           id: companyInfo.company_id,
           name: companyInfo.company_name,
           description: companyInfo.description,
+          descripcion_empresa: companyInfo.description, // Mapear también a descripcion_empresa
           website_url: companyInfo.website_url,
           industry_sector: companyInfo.industry_sector,
           company_size: companyInfo.company_size,
@@ -380,8 +381,8 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     // Paso 1: Siempre completado (bienvenida)
     completed.push(1);
     
-    // Paso 2: Descripción del negocio
-    if (companyData?.descripcion_empresa) completed.push(2);
+    // Paso 2: Descripción del negocio (completado si tiene nombre y website válidos)
+    if (companyData?.name && companyData?.website_url) completed.push(2);
     
     // Paso 3: Estrategia
     if (strategyData.vision && strategyData.mission && strategyData.propuesta_valor) completed.push(3);

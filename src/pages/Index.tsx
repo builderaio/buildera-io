@@ -5,6 +5,7 @@ import { User } from "@supabase/supabase-js";
 
 import Hero from "@/components/Hero";
 import ValueHighlights from "@/components/home/ValueHighlights";
+import ProblemSolution from "@/components/ProblemSolution";
 import UseCases from "@/components/UseCases";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
@@ -131,6 +132,7 @@ const Index = () => {
         <main>
           <Hero />
           <ValueHighlights />
+          <ProblemSolution />
           <UseCases />
           <FinalCTA />
         </main>

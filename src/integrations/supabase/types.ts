@@ -3815,6 +3815,7 @@ export type Database = {
           auth_provider: string | null
           avatar_url: string | null
           bio: string | null
+          company_name: string | null
           country: string | null
           created_at: string
           email: string
@@ -3839,6 +3840,7 @@ export type Database = {
           auth_provider?: string | null
           avatar_url?: string | null
           bio?: string | null
+          company_name?: string | null
           country?: string | null
           created_at?: string
           email: string
@@ -3863,6 +3865,7 @@ export type Database = {
           auth_provider?: string | null
           avatar_url?: string | null
           bio?: string | null
+          company_name?: string | null
           country?: string | null
           created_at?: string
           email?: string

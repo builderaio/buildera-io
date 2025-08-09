@@ -95,6 +95,11 @@ const Index = () => {
               break;
           }
           return;
+        } else {
+          // No hay perfil aún (posible retraso del trigger) -> mostrar onboarding
+          setShouldShowOnboarding(true);
+          setLoading(false);
+          return;
         }
       }
       setLoading(false);

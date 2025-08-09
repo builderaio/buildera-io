@@ -91,10 +91,10 @@ const SocialCallback = () => {
         
         // Si tenemos user_type de la URL y el perfil no lo tiene, pasarlo en la redirección
         if (!profile.user_type && userType) {
-          navigate(`/?user_type=${userType}`);
+          window.location.href = `/?user_type=${encodeURIComponent(userType)}`;
         } else {
           // Redirigir a la página principal - OnboardingRedirect se encargará del resto
-          navigate('/');
+          window.location.href = '/';
         }
 
       } catch (error: any) {

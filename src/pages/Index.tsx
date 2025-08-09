@@ -4,11 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 
 import Hero from "@/components/Hero";
-import ProblemSolution from "@/components/ProblemSolution";
-import Ecosystem from "@/components/Ecosystem";
+import ValueHighlights from "@/components/home/ValueHighlights";
 import UseCases from "@/components/UseCases";
-import ValuePillars from "@/components/home/ValuePillars";
-import ArchitectureOverview from "@/components/home/ArchitectureOverview";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 import OnboardingRedirect from "@/components/OnboardingRedirect";
@@ -133,10 +130,7 @@ const Index = () => {
         <Header />
         <main>
           <Hero />
-          <ValuePillars />
-          <ProblemSolution />
-          <Ecosystem />
-          <ArchitectureOverview />
+          <ValueHighlights />
           <UseCases />
           <FinalCTA />
         </main>

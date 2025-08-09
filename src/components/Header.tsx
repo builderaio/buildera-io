@@ -12,8 +12,8 @@ const Header = () => {
         </a>
 
         <ul className="hidden md:flex items-center gap-6 text-sm">
-          <li><a className="text-foreground/80 hover:text-foreground transition-smooth" href="#pilares">Por qué Buildera</a></li>
-          <li><a className="text-foreground/80 hover:text-foreground transition-smooth" href="#arquitectura">Arquitectura</a></li>
+          <li><a className="text-foreground/80 hover:text-foreground transition-smooth" href="#valores">Por qué Buildera</a></li>
+          <li><a className="text-foreground/80 hover:text-foreground transition-smooth" href="#casos-de-uso">Casos</a></li>
           <li><a className="text-foreground/80 hover:text-foreground transition-smooth" href="#contacto">Contacto</a></li>
         </ul>
 

@@ -29,16 +29,14 @@ const Hero = () => {
             </div>
             
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-bold leading-tight tracking-tight">
-              Automatización segura
+              Automatiza tu negocio
               <span className="gradient-text block">
-                que escala tu negocio
+                simple, seguro y escalable
               </span>
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
-              Operar con <strong className="text-primary">especialistas virtuales de IA</strong> que ejecutan tareas clave
-              con <strong className="text-secondary">seguridad, confianza y flexibilidad</strong>,
-              para crecer sin fricción y con resultados medibles.
+              Especialistas de IA que trabajan por ti: menos operación, más resultados. Tú te enfocas en crecer.
             </p>
           </div>
 

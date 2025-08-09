@@ -70,18 +70,31 @@ const CompleteProfile = () => {
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      // Para usuarios de email que ya tienen perfil, redirigir
+      // Cargar estado de onboarding
+      const { data: onboarding } = await supabase
+        .from('user_onboarding_status')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      const firstLoginCompleted = onboarding?.first_login_completed === true;
+
+      // Para usuarios de email que ya tienen perfil, redirigir directo
       if (profile && profile.auth_provider === 'email') {
         console.log('🔍 CompleteProfile: usuario de email ya tiene perfil');
         navigate('/company-dashboard');
         return;
       }
 
-      // Para usuarios sociales que ya completaron el perfil, redirigir
-      if (profile && profile.auth_provider !== 'email' && profile.user_type) {
-        console.log('🔍 CompleteProfile: usuario social ya completó perfil');
-        navigate('/company-dashboard');
-        return;
+      // Para usuarios sociales: solo redirigir si ya completaron primer login
+      if (profile && profile.auth_provider !== 'email') {
+        // Prefijar tipo si existe
+        if (profile.user_type && !userType) setUserType(profile.user_type);
+        if (firstLoginCompleted) {
+          console.log('🔍 CompleteProfile: usuario social ya completó primer login');
+          navigate('/company-dashboard');
+          return;
+        }
       }
 
       // Check URL params for user type from OAuth or social callback
@@ -175,6 +188,17 @@ const CompleteProfile = () => {
           console.error('❌ Error en creación de empresa:', companyError);
           // No bloquear el flujo si falla la creación de empresa
         }
+      }
+      // Marcar primer login completado en onboarding
+      const provider = (user.app_metadata?.provider as string) || 'email';
+      try {
+        await supabase.from('user_onboarding_status').upsert({
+          user_id: user.id,
+          first_login_completed: true,
+          registration_method: provider === 'email' ? 'email' : 'social'
+        });
+      } catch (e) {
+        console.warn('No se pudo actualizar user_onboarding_status:', e);
       }
 
       toast({

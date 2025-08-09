@@ -79,8 +79,7 @@ const AdminUsers = () => {
             linked_providers,
             avatar_url,
             position,
-            country,
-            location
+            country
           `)
           .order('created_at', { ascending: false });
         

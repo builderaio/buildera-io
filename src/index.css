@@ -15,32 +15,32 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* Growth-focused Brand Colors */
-    --primary: 212 95% 55%; /* Dynamic Growth Blue */
-    --primary-foreground: 210 40% 98%;
-    --primary-glow: 212 95% 65%;
+    /* Buildera Brand Colors */
+    --primary: 235 50% 47%; /* Cerulean Blue #3c46b2 */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 235 50% 57%;
 
-    --secondary: 142 75% 45%; /* Success Green */
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 0%; /* Black */
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 9 87% 58%; /* Orange #f15438 */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 234 66% 47%;
+    --ring: 235 50% 47%;
 
     --radius: 0.5rem;
 
-    /* Growth-focused Design Tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
-    --gradient-hero: linear-gradient(135deg, hsl(212 95% 55%) 0%, hsl(142 75% 45%) 50%, hsl(269 70% 65%) 100%);
+    /* Brand Design Tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--accent) / 0.12));
     --gradient-success: linear-gradient(135deg, hsl(142 75% 45%), hsl(142 85% 55%));
     --shadow-glow: 0 0 40px hsl(var(--primary) / 0.25);
     --shadow-elegant: 0 20px 40px -10px hsl(var(--primary) / 0.15);
@@ -51,12 +51,12 @@
     /* Sidebar mejorado con mejor contraste */
     --sidebar-background: 0 0% 99%; /* Blanco casi puro */
     --sidebar-foreground: 220 13% 18%; /* Texto principal oscuro */
-    --sidebar-primary: 234 66% 47%; /* Buildera blue para elementos principales */
+    --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 234 66% 47%; /* Color de acento activo */
+    --sidebar-accent: var(--accent);
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 13% 91%; /* Bordes sutiles */
-    --sidebar-ring: 234 66% 47%;
+    --sidebar-ring: var(--primary);
     --sidebar-muted-foreground: 220 9% 46%; /* Texto secundario */
 
     /* Status Colors - Semantic tokens */
@@ -93,35 +93,35 @@
     --popover-foreground: 210 20% 98%;
 
     /* Buildera Brand Colors - Dark Mode */
-    --primary: 234 66% 65%; /* Brighter Buildera Blue for dark mode */
+    --primary: 235 60% 60%; /* Cerulean Blue (brighter for dark) */
     --primary-foreground: 224 71.4% 4.1%;
-    --primary-glow: 234 75% 70%;
+    --primary-glow: 235 60% 68%;
 
-    --secondary: 14 91% 65%; /* Brighter Buildera Orange for dark mode */
-    --secondary-foreground: 224 71.4% 4.1%;
+    --secondary: 0 0% 0%; /* Black */
+    --secondary-foreground: 210 20% 98%;
 
     --muted: 215 27.9% 16.9%;
     --muted-foreground: 217.9 10.6% 64.9%;
 
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 9 87% 58%; /* Orange */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 20% 98%;
 
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
-    --ring: 234 66% 65%;
+    --ring: 235 60% 60%;
 
     /* Sidebar Dark Mode mejorado */
     --sidebar-background: 224 71.4% 4.1%; /* Fondo oscuro */
     --sidebar-foreground: 210 20% 98%; /* Texto claro */
-    --sidebar-primary: 234 66% 65%; /* Buildera blue más brillante */
+    --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: 224 71.4% 4.1%;
-    --sidebar-accent: 234 66% 65%; /* Color de acento activo */
+    --sidebar-accent: var(--accent);
     --sidebar-accent-foreground: 224 71.4% 4.1%;
     --sidebar-border: 215 27.9% 16.9%; /* Bordes sutiles */
-    --sidebar-ring: 234 66% 65%;
+    --sidebar-ring: var(--primary);
     --sidebar-muted-foreground: 217.9 10.6% 64.9%; /* Texto secundario */
 
     /* Status Colors - Dark Mode */
@@ -147,8 +147,8 @@
     --category-general-foreground: 210 20% 98%;
 
     /* Dark Mode Design Tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
-    --gradient-hero: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--secondary) / 0.1));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1));
     --shadow-glow: 0 0 40px hsl(var(--primary) / 0.3);
     --shadow-card: 0 10px 30px -10px hsl(var(--primary) / 0.2);
   }

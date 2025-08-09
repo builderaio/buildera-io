@@ -17,11 +17,11 @@ export default {
 				'2xl': '1400px'
 			}
 		},
-		extend: {
-			fontFamily: {
-				sans: ['Inter', 'system-ui', 'sans-serif'],
-				heading: ['Space Grotesk', 'system-ui', 'sans-serif'],
-			},
+			extend: {
+				fontFamily: {
+					sans: ['Akrobat', 'Inter', 'system-ui', 'sans-serif'],
+					heading: ['Docker One', 'Space Grotesk', 'system-ui', 'sans-serif'],
+				},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

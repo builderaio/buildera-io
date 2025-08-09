@@ -71,21 +71,24 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="/auth?mode=signup&userType=company">
               <Button 
+                variant="hero"
                 size="lg" 
-                className="px-12 py-6 text-lg font-semibold shadow-glow hover:shadow-elegant transition-spring group"
+                className="px-12 py-6 text-lg font-semibold group"
+                aria-label="Comenzar con Buildera"
               >
-                Comenzar Transformación
-                <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                Comenzar ahora
+                <ArrowRight className="ml-3 w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </a>
             
-            <a href="/pricing">
+            <a href="#casos-de-uso">
               <Button 
-                variant="outline" 
+                variant="outline-hero" 
                 size="lg"
-                className="px-12 py-6 text-lg font-semibold border-2 hover:bg-primary/5 transition-spring"
+                className="px-12 py-6 text-lg font-semibold"
+                aria-label="Explorar casos de uso"
               >
-                Ver ROI Garantizado
+                Ver casos de uso
               </Button>
             </a>
           </div>

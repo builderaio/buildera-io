@@ -60,10 +60,10 @@ const ValuePillars = () => {
       <div className="container mx-auto px-6">
         <header className="max-w-3xl mx-auto text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-heading font-bold">
-            Construido para empresas que exigen seguridad y crecimiento
+            Operación inteligente con seguridad y crecimiento
           </h2>
           <p className="mt-4 text-muted-foreground text-lg">
-            Una plataforma confiable, escalable y flexible para operar tu negocio con especialistas de IA.
+            Nuestra propuesta de valor: Innovación, Simplicidad y Colaboración para que tu empresa opere con especialistas de IA y resultados medibles.
           </p>
         </header>
 

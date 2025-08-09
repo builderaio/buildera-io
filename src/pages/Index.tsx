@@ -12,6 +12,7 @@ import ArchitectureOverview from "@/components/home/ArchitectureOverview";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 import OnboardingRedirect from "@/components/OnboardingRedirect";
+import Header from "@/components/Header";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -129,6 +130,7 @@ const Index = () => {
   const renderPublicContent = () => {
     return (
       <div className="min-h-screen">
+        <Header />
         <main>
           <Hero />
           <ValuePillars />

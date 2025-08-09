@@ -3815,7 +3815,6 @@ export type Database = {
           auth_provider: string | null
           avatar_url: string | null
           bio: string | null
-          business_objectives: string | null
           country: string | null
           created_at: string
           email: string
@@ -3824,17 +3823,9 @@ export type Database = {
           full_name: string
           functional_area: string | null
           github_url: string | null
-          headquarters_address: string | null
-          headquarters_city: string | null
-          headquarters_country: string | null
-          headquarters_lat: number | null
-          headquarters_lng: number | null
           id: string
-          industry_sector: string | null
           linked_providers: string[] | null
           linkedin_profile: string | null
-          location: string | null
-          nit: string | null
           phone: string | null
           position: string | null
           primary_company_id: string | null
@@ -3848,7 +3839,6 @@ export type Database = {
           auth_provider?: string | null
           avatar_url?: string | null
           bio?: string | null
-          business_objectives?: string | null
           country?: string | null
           created_at?: string
           email: string
@@ -3857,17 +3847,9 @@ export type Database = {
           full_name: string
           functional_area?: string | null
           github_url?: string | null
-          headquarters_address?: string | null
-          headquarters_city?: string | null
-          headquarters_country?: string | null
-          headquarters_lat?: number | null
-          headquarters_lng?: number | null
           id?: string
-          industry_sector?: string | null
           linked_providers?: string[] | null
           linkedin_profile?: string | null
-          location?: string | null
-          nit?: string | null
           phone?: string | null
           position?: string | null
           primary_company_id?: string | null
@@ -3881,7 +3863,6 @@ export type Database = {
           auth_provider?: string | null
           avatar_url?: string | null
           bio?: string | null
-          business_objectives?: string | null
           country?: string | null
           created_at?: string
           email?: string
@@ -3890,17 +3871,9 @@ export type Database = {
           full_name?: string
           functional_area?: string | null
           github_url?: string | null
-          headquarters_address?: string | null
-          headquarters_city?: string | null
-          headquarters_country?: string | null
-          headquarters_lat?: number | null
-          headquarters_lng?: number | null
           id?: string
-          industry_sector?: string | null
           linked_providers?: string[] | null
           linkedin_profile?: string | null
-          location?: string | null
-          nit?: string | null
           phone?: string | null
           position?: string | null
           primary_company_id?: string | null

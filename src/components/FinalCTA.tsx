@@ -5,10 +5,10 @@ const FinalCTA = () => {
     <section id="contacto" className="bg-primary text-primary-foreground py-20">
       <div className="container mx-auto px-6 text-center">
         <h2 className="text-3xl md:text-4xl font-heading">
-          ¿Listo para tener tu equipo completo de especialistas?
+          ¿Listo para operar tu negocio con IA segura y escalable?
         </h2>
         <p className="mt-4 text-lg text-primary-foreground/80 max-w-2xl mx-auto">
-          Deja de hacer de todo tú solo. Con Buildera, tienes expertos en cada área trabajando para hacer crecer tu empresa. <strong>Tú produces. Nosotros operamos el resto.</strong>
+          Activa especialistas virtuales para marketing, ventas y servicio con seguridad empresarial, control total y resultados reales.
         </p>
         <div className="mt-8">
           <a href="/auth?mode=register&userType=company">

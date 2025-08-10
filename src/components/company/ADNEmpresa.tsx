@@ -1301,7 +1301,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
     
     // Llamar webhook de n8n cuando se hace clic en "Comenzar configuración"
-    if (user?.id) {
+    {
       console.log('🔗 Ejecutando webhook n8n al comenzar configuración con datos:', {
         companyName,
         websiteUrl,
@@ -1312,7 +1312,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       try {
         const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
           body: {
-            KEY: 'INFO',
+            KEY: 'info',
             COMPANY_INFO: JSON.stringify({
               company_name: companyName,
               website_url: websiteUrl,
@@ -1462,19 +1462,9 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       } finally {
         setLoading(false);
       }
-    } else {
-      console.error('❌ No se puede ejecutar webhook: usuario no encontrado', { user: user?.id });
-      toast({
-        title: "Error",
-        description: "No se puede obtener información. Usuario no autenticado.",
-        variant: "destructive",
-      });
     }
     
     // Avanzar al siguiente paso independientemente del resultado del webhook
-    nextStep();
-    
-    // Avanzar al siguiente paso
     nextStep();
   };
 

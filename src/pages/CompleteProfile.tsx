@@ -79,22 +79,9 @@ const CompleteProfile = () => {
 
       const firstLoginCompleted = onboarding?.first_login_completed === true;
 
-      // Para usuarios de email que ya tienen perfil, redirigir directo
-      if (profile && profile.auth_provider === 'email') {
-        console.log('🔍 CompleteProfile: usuario de email ya tiene perfil');
-        navigate('/company-dashboard');
-        return;
-      }
-
-      // Para usuarios sociales: solo redirigir si ya completaron primer login
-      if (profile && profile.auth_provider !== 'email') {
-        // Prefijar tipo si existe
-        if (profile.user_type && !userType) setUserType(profile.user_type);
-        if (firstLoginCompleted) {
-          console.log('🔍 CompleteProfile: usuario social ya completó primer login');
-          navigate('/company-dashboard');
-          return;
-        }
+      // Prefijar tipo si existe desde el perfil
+      if (profile?.user_type && !userType) {
+        setUserType(profile.user_type);
       }
 
       // Check URL params for user type from OAuth or social callback

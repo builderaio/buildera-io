@@ -67,11 +67,24 @@ const Index = () => {
           switch (userType) {
             case 'company':
               if (hasCompany) {
-                // Usuario empresa con empresa configurada - ir al dashboard
-                console.log('✅ Usuario empresa con empresa, redirigiendo al dashboard');
-                setTimeout(() => {
-                  navigate('/company-dashboard');
-                }, 100);
+                // Consultar estado de onboarding para decidir destino
+                const { data: onboardingStatus } = await supabase
+                  .from('user_onboarding_status')
+                  .select('onboarding_completed_at')
+                  .eq('user_id', session.user.id)
+                  .maybeSingle();
+
+                if (!onboardingStatus || !onboardingStatus.onboarding_completed_at) {
+                  console.log('🔄 Onboarding pendiente, ir al paso 1');
+                  setTimeout(() => {
+                    navigate('/company-dashboard?view=adn-empresa');
+                  }, 100);
+                } else {
+                  console.log('✅ Onboarding completado, redirigiendo al dashboard');
+                  setTimeout(() => {
+                    navigate('/company-dashboard');
+                  }, 100);
+                }
               } else {
                 // Usuario empresa sin empresa - necesita onboarding
                 console.log('🔄 Usuario empresa sin empresa, mostrando OnboardingRedirect');

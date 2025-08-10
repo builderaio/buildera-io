@@ -89,12 +89,37 @@ const SocialCallback = () => {
         // Pequeña pausa para mostrar el toast
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Si tenemos user_type de la URL y el perfil no lo tiene, pasarlo en la redirección
-        if (!profile.user_type && userType) {
-          window.location.href = `/?user_type=${encodeURIComponent(userType)}`;
-        } else {
-          // Redirigir a la página principal - OnboardingRedirect se encargará del resto
-          window.location.href = '/';
+        // Determinar si el usuario ya tiene empresa principal
+        const { data: companyMemberships } = await supabase
+          .from('company_members')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .eq('is_primary', true);
+
+        const hasCompany = !!(companyMemberships && companyMemberships.length > 0);
+
+        // Reglas de redirección inmediatas post OAuth
+        // 1) Si no hay user_type en perfil o es company sin empresa -> ir a complete-profile
+        if (!profile.user_type || (profile.user_type === 'company' && !hasCompany)) {
+          const qs = !profile.user_type && userType ? `?user_type=${encodeURIComponent(userType)}` : '';
+          window.location.href = `/complete-profile${qs}`;
+          return;
+        }
+
+        // 2) Si ya está completamente configurado, redirigir al dashboard correspondiente
+        switch (profile.user_type) {
+          case 'company':
+            window.location.href = '/company-dashboard';
+            return;
+          case 'developer':
+            window.location.href = '/developer-dashboard';
+            return;
+          case 'expert':
+            window.location.href = '/expert-dashboard';
+            return;
+          default:
+            window.location.href = '/complete-profile';
+            return;
         }
 
       } catch (error: any) {

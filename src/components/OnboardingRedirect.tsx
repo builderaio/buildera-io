@@ -45,7 +45,7 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
         const hasCompany = companyMemberships && companyMemberships.length > 0;
 
         // 3. Determinar el flujo basado en auth_provider y user_type
-        const authProvider = profile?.auth_provider || 'email';
+        const authProvider = (profile?.auth_provider as string) || (user?.app_metadata?.provider as string) || 'email';
         const userType = profile?.user_type;
         const isSocialRegistration = authProvider !== 'email';
 

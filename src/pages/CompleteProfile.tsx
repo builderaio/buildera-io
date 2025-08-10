@@ -149,7 +149,7 @@ const CompleteProfile = () => {
 
       const { error } = await supabase
         .from('profiles')
-        .upsert(profileData);
+        .upsert(profileData, { onConflict: 'user_id' });
 
       if (error) throw error;
 

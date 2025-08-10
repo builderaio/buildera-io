@@ -156,10 +156,8 @@ const CompleteProfile = () => {
         profileData.expertise_areas = expertiseAreas ? expertiseAreas.split(',').map(s => s.trim()) : [];
         profileData.years_experience = yearsExperience ? parseInt(yearsExperience) : null;
       } else if (userType === 'company') {
-        // Para companies, guardar algunos datos también en profiles para desbloquear el onboarding UI
-        profileData.industry_sector = industrySector;
-        profileData.company_name = companyName;
-        profileData.company_size = companySize;
+        // Para companies NO guardamos datos de empresa en profiles.
+        // La información de empresa se crea/actualiza en la tabla companies en el paso siguiente.
       }
 
       const { error } = await supabase

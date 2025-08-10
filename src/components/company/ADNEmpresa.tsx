@@ -1268,14 +1268,29 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     });
     
     // Validar que tenemos información mínima requerida antes de enviar al webhook
-    const companyName = companyData?.name || profile?.company_name;
-    const websiteUrl = companyData?.website_url || profile?.website_url;
+    let companyName = companyData?.name;
+    let websiteUrl = companyData?.website_url;
+
+    // Asegurar que obtenemos la info directamente desde la tabla companies (sin usar profile)
+    if (!companyName || !websiteUrl) {
+      try {
+        const { data: freshCompany, error: freshError } = await supabase.rpc('get_user_primary_company_data', {
+          user_id_param: profile?.user_id
+        });
+        if (!freshError && freshCompany && freshCompany.length > 0) {
+          companyName = freshCompany[0].company_name;
+          websiteUrl = freshCompany[0].website_url;
+        }
+      } catch (e) {
+        console.warn('No se pudo refrescar datos de companies:', e);
+      }
+    }
     
     if (!websiteUrl || !companyName || companyName === 'Mi Empresa') {
-      console.log('⚠️ Información insuficiente para webhook. Saltando al siguiente paso.');
+      console.log('⚠️ Información insuficiente para webhook (desde companies). Saltando al siguiente paso.', { companyName, websiteUrl });
       toast({
         title: "Información insuficiente",
-        description: "Se necesita el nombre real de la empresa y sitio web para obtener información automática.",
+        description: "Se necesita el nombre real de la empresa y sitio web (tabla companies) para obtener información automática.",
         variant: "default",
       });
       nextStep();

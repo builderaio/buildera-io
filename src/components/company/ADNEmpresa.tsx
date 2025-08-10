@@ -1285,12 +1285,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
         console.warn('No se pudo refrescar datos de companies:', e);
       }
     }
+    // Normalizar valores
+    companyName = companyName?.trim();
+    websiteUrl = websiteUrl?.trim();
     
-    if (!websiteUrl || !companyName || companyName === 'Mi Empresa') {
+    if (!websiteUrl || !companyName) {
       console.log('⚠️ Información insuficiente para webhook (desde companies). Saltando al siguiente paso.', { companyName, websiteUrl });
       toast({
         title: "Información insuficiente",
-        description: "Se necesita el nombre real de la empresa y sitio web (tabla companies) para obtener información automática.",
+        description: "Se necesita el nombre de la empresa y el sitio web desde la tabla companies.",
         variant: "default",
       });
       nextStep();

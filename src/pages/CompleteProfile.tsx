@@ -157,7 +157,7 @@ const CompleteProfile = () => {
       if (userType === 'company') {
         try {
           const { data: companyData, error: companyError } = await supabase.rpc('create_company_with_owner', {
-            company_name: companyName || 'Mi Empresa',
+            company_name: companyName,
             company_description: 'Empresa creada durante el completado del perfil',
             website_url: websiteUrl || null,
             industry_sector: industrySector || null,
@@ -407,6 +407,7 @@ const CompleteProfile = () => {
                       placeholder="tunegocio.com"
                       value={websiteUrl}
                       onChange={(e) => setWebsiteUrl(e.target.value)}
+                      required
                     />
                   </div>
                 </>

@@ -471,10 +471,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     try {
       // Preparar información de la empresa para el webhook
       const companyInfo = {
-        company_name: profile?.company_name || companyData?.name,
-        industry_sector: profile?.industry_sector || companyData?.industry_sector,
-        company_size: profile?.company_size || companyData?.company_size,
-        website_url: profile?.website_url || companyData?.website_url,
+        company_name: companyData?.name,
+        industry_sector: companyData?.industry_sector,
+        company_size: companyData?.company_size,
+        website_url: companyData?.website_url,
         description: companyData?.descripcion_empresa
       };
 
@@ -643,10 +643,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     try {
       // Preparar información de la empresa para el webhook
       const companyInfo = {
-        company_name: profile?.company_name || companyData?.name,
-        industry_sector: profile?.industry_sector || companyData?.industry_sector,
-        company_size: profile?.company_size || companyData?.company_size,
-        website_url: profile?.website_url || companyData?.website_url,
+        company_name: companyData?.name,
+        industry_sector: companyData?.industry_sector,
+        company_size: companyData?.company_size,
+        website_url: companyData?.website_url,
         description: companyData?.descripcion_empresa,
         mission: strategyData.mission,
         vision: strategyData.vision,
@@ -1305,7 +1305,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       console.log('🔗 Ejecutando webhook n8n al comenzar configuración con datos:', {
         companyName,
         websiteUrl,
-        industry: companyData?.industry_sector || profile?.industry
+        industry: companyData?.industry_sector
       });
       setLoading(true);
       
@@ -1316,10 +1316,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             COMPANY_INFO: JSON.stringify({
               company_name: companyName,
               website_url: websiteUrl,
-              country: profile?.country || 'No especificado'
+              country: companyData?.country || 'No especificado'
             }),
             ADDITIONAL_INFO: JSON.stringify({
-              industry: companyData?.industry_sector || profile?.industry || '',
+              industry: companyData?.industry_sector,
               description: companyData?.descripcion_empresa || ''
             })
           }

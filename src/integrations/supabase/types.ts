@@ -4745,6 +4745,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -4878,6 +4905,10 @@ export type Database = {
         Args: { _user_id: string; _provider: string }
         Returns: undefined
       }
+      assign_admin_role: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
@@ -4924,6 +4955,10 @@ export type Database = {
               user_id_param?: string
             }
         Returns: string
+      }
+      current_user_is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       extract_hashtags: {
         Args: { caption: string }
@@ -5111,6 +5146,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      is_admin: {
+        Args: { check_user_id?: string }
+        Returns: boolean
+      }
       ivfflat_bit_support: {
         Args: { "": unknown }
         Returns: unknown
@@ -5203,6 +5242,7 @@ export type Database = {
         | "audio_generation"
         | "video_generation"
         | "reasoning"
+      app_role: "admin" | "moderator" | "user"
       business_function_type:
         | "content_optimization"
         | "content_generation"
@@ -5353,6 +5393,7 @@ export const Constants = {
         "video_generation",
         "reasoning",
       ],
+      app_role: ["admin", "moderator", "user"],
       business_function_type: [
         "content_optimization",
         "content_generation",

@@ -249,35 +249,46 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
   const fetchCompanyData = async () => {
     try {
-      // Usar la nueva función para obtener datos de empresa principal
-      const { data, error } = await supabase.rpc('get_user_primary_company_data', {
-        user_id_param: profile?.user_id
-      });
+      // Obtener la empresa principal (id) y luego hacer SELECT en companies
+      const { data: companyId, error: idError } = await supabase
+        .rpc('get_user_primary_company', { user_id_param: profile?.user_id });
 
-      if (error) throw error;
+      if (idError) throw idError;
+      if (!companyId) {
+        setCompanyData(null);
+        return;
+      }
 
-      if (data && data.length > 0) {
-        const companyInfo = data[0];
+      const { data: company, error: companyError } = await supabase
+        .from('companies')
+        .select('id,name,description,website_url,industry_sector,company_size,country,location,facebook_url,twitter_url,linkedin_url,instagram_url,youtube_url,tiktok_url,created_at,updated_at,webhook_data')
+        .eq('id', companyId)
+        .maybeSingle();
+
+      if (companyError) throw companyError;
+
+      if (company) {
         setCompanyData({
-          id: companyInfo.company_id,
-          name: companyInfo.company_name,
-          description: companyInfo.description,
-          descripcion_empresa: companyInfo.description, // Mapear también a descripcion_empresa
-          website_url: companyInfo.website_url,
-          industry_sector: companyInfo.industry_sector,
-          company_size: companyInfo.company_size,
-          country: companyInfo.country,
-          location: companyInfo.location,
-          facebook_url: companyInfo.facebook_url,
-          twitter_url: companyInfo.twitter_url,
-          linkedin_url: companyInfo.linkedin_url,
-          instagram_url: companyInfo.instagram_url,
-          youtube_url: companyInfo.youtube_url,
-          tiktok_url: companyInfo.tiktok_url,
-          created_at: companyInfo.created_at,
-          updated_at: companyInfo.updated_at
+          id: company.id,
+          name: company.name,
+          description: company.description,
+          descripcion_empresa: company.description || '',
+          website_url: company.website_url,
+          industry_sector: company.industry_sector,
+          company_size: company.company_size,
+          country: company.country,
+          location: company.location,
+          facebook_url: company.facebook_url,
+          twitter_url: company.twitter_url,
+          linkedin_url: company.linkedin_url,
+          instagram_url: company.instagram_url,
+          youtube_url: company.youtube_url,
+          tiktok_url: company.tiktok_url,
+          created_at: company.created_at,
+          updated_at: company.updated_at,
+          webhook_data: company.webhook_data
         });
-        setTempDescription(companyInfo.description || "");
+        setTempDescription(company.description || '');
       }
     } catch (error: any) {
       console.error('Error fetching company data:', error);
@@ -1274,12 +1285,20 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     // Asegurar que obtenemos la info directamente desde la tabla companies (sin usar profile)
     if (!companyName || !websiteUrl) {
       try {
-        const { data: freshCompany, error: freshError } = await supabase.rpc('get_user_primary_company_data', {
-          user_id_param: profile?.user_id
-        });
-        if (!freshError && freshCompany && freshCompany.length > 0) {
-          companyName = freshCompany[0].company_name;
-          websiteUrl = freshCompany[0].website_url;
+        const { data: companyId, error: idError } = await supabase
+          .rpc('get_user_primary_company', { user_id_param: profile?.user_id });
+
+        if (!idError && companyId) {
+          const { data: freshCompany, error: companyError } = await supabase
+            .from('companies')
+            .select('name,website_url')
+            .eq('id', companyId)
+            .maybeSingle();
+
+          if (!companyError && freshCompany) {
+            companyName = freshCompany.name;
+            websiteUrl = freshCompany.website_url;
+          }
         }
       } catch (e) {
         console.warn('No se pudo refrescar datos de companies:', e);

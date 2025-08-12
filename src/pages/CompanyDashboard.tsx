@@ -107,8 +107,8 @@ const CompanyDashboard = () => {
             email: session.user.email || '',
             full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || 'Usuario',
             user_type: 'company',
-            company_name: session.user.user_metadata?.company_name || 'Mi Negocio',
-            industry_sector: session.user.user_metadata?.industry_sector || 'Tecnología'
+            company_name: session.user.user_metadata?.company_name || '',
+            industry_sector: session.user.user_metadata?.industry_sector || ''
           })
           .select()
           .single();

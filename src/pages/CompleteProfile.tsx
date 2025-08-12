@@ -158,7 +158,7 @@ const CompleteProfile = () => {
         try {
           const { data: companyData, error: companyError } = await supabase.rpc('create_company_with_owner', {
             company_name: companyName,
-            company_description: 'Empresa creada durante el completado del perfil',
+            company_description: '',
             website_url: websiteUrl || null,
             industry_sector: industrySector || null,
             company_size: companySize || null,

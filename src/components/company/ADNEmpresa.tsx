@@ -249,11 +249,21 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
   const fetchCompanyData = async () => {
     try {
-      // Obtener la empresa principal (id) y luego hacer SELECT en companies
-      const { data: companyId, error: idError } = await supabase
-        .rpc('get_user_primary_company', { user_id_param: profile?.user_id });
+      // Obtener la empresa principal (id) desde company_members y luego hacer SELECT en companies
+      if (!profile?.user_id) {
+        setCompanyData(null);
+        return;
+      }
 
-      if (idError) throw idError;
+      const { data: membership, error: memberError } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', profile.user_id)
+        .eq('is_primary', true)
+        .maybeSingle();
+
+      if (memberError) throw memberError;
+      const companyId = membership?.company_id;
       if (!companyId) {
         setCompanyData(null);
         return;
@@ -1285,10 +1295,15 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     // Asegurar que obtenemos la info directamente desde la tabla companies (sin usar profile)
     if (!companyName || !websiteUrl) {
       try {
-        const { data: companyId, error: idError } = await supabase
-          .rpc('get_user_primary_company', { user_id_param: profile?.user_id });
+        const { data: membership, error: memberError } = await supabase
+          .from('company_members')
+          .select('company_id')
+          .eq('user_id', profile?.user_id)
+          .eq('is_primary', true)
+          .maybeSingle();
 
-        if (!idError && companyId) {
+        if (!memberError && membership?.company_id) {
+          const companyId = membership.company_id;
           const { data: freshCompany, error: companyError } = await supabase
             .from('companies')
             .select('name,website_url')

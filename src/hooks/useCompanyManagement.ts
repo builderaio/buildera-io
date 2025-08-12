@@ -33,21 +33,30 @@ export const useCompanyManagement = () => {
 
   const fetchUserCompanies = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+
+      if (!userId) {
+        setUserCompanies([]);
+        setPrimaryCompany(null);
+        return;
+      }
+
       const { data: memberData, error: memberError } = await supabase
         .from('company_members')
         .select(`
           *,
           companies (*)
         `)
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('user_id', userId);
 
       if (memberError) {
         console.error('Error fetching user companies:', memberError);
         return;
       }
 
-      const companies = memberData?.map(member => member.companies) || [];
-      const primaryCompanyData = memberData?.find(member => member.is_primary)?.companies;
+      const companies = memberData?.map((member: any) => member.companies) || [];
+      const primaryCompanyData = memberData?.find((member: any) => member.is_primary)?.companies;
 
       setUserCompanies(companies);
       setPrimaryCompany(primaryCompanyData || null);

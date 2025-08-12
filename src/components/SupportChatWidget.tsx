@@ -160,7 +160,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
 
   // Mensaje de bienvenida inicial y creación de agente
   useEffect(() => {
-    if (messages.length === 0 && user) {
+    if (messages.length === 0 && user && user.user_id) {
       // Crear agente empresarial si no existe
       const initializeCompanyAgent = async () => {
         try {
@@ -170,7 +170,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
             .select('company_id, companies(name)')
             .eq('user_id', user.user_id)
             .eq('is_primary', true)
-            .single();
+            .maybeSingle();
 
           if (userCompany) {
             // Verificar si ya existe un agente
@@ -178,7 +178,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
               .from('company_agents')
               .select('agent_name')
               .eq('user_id', user.user_id)
-              .single();
+              .maybeSingle();
 
             if (!existingAgent) {
               // Crear agente en background

@@ -1312,7 +1312,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       try {
         const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
           body: {
-            KEY: 'info',
+            KEY: 'INFO',
             COMPANY_INFO: JSON.stringify({
               company_name: companyName,
               website_url: websiteUrl,

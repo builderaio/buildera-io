@@ -490,82 +490,133 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const generateStrategyWithAI = async () => {
     setLoading(true);
     try {
+      // Verificar datos mínimos requeridos
+      if (!companyData?.name || !companyData?.descripcion_empresa) {
+        throw new Error('Faltan datos de la empresa para generar la estrategia');
+      }
+
       // Preparar información de la empresa para el webhook
       const companyInfo = {
-        company_name: companyData?.name,
-        industry_sector: companyData?.industry_sector,
-        company_size: companyData?.company_size,
-        website_url: companyData?.website_url,
-        description: companyData?.descripcion_empresa
+        company_name: companyData.name,
+        industry_sector: companyData.industry_sector || 'No especificado',
+        company_size: companyData.company_size || 'No especificado',
+        website_url: companyData.website_url || '',
+        description: companyData.descripcion_empresa
       };
 
-      const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
-        body: {
-          KEY: 'STRATEGY',
-          COMPANY_INFO: JSON.stringify(companyInfo)
-        }
-      });
+      console.log('🤖 Generando estrategia con datos:', companyInfo);
 
-      if (error) throw error;
-
-      if (data?.success && data?.data) {
-        console.log('Respuesta del webhook STRATEGY:', data.data);
-        
-        // Procesar la respuesta dependiendo del formato
-        let strategyResponse = data.data;
-        
-        // Si la respuesta es un string, intentar parsearlo
-        if (typeof strategyResponse === 'string') {
-          try {
-            strategyResponse = JSON.parse(strategyResponse);
-          } catch (parseError) {
-            console.error('Error parsing strategy response:', parseError);
-            throw new Error('Error procesando la respuesta de estrategia');
+      // Intentar usar el webhook primero
+      try {
+        const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
+          body: {
+            KEY: 'STRATEGY',
+            COMPANY_INFO: JSON.stringify(companyInfo)
           }
-        }
+        });
 
-        // Actualizar el estado con la estrategia generada para revisión
-        if (strategyResponse && Array.isArray(strategyResponse) && strategyResponse.length > 0) {
-          const firstResponse = strategyResponse[0];
-          const responseArray = firstResponse.response;
+        if (error) throw error;
+
+        if (data?.success && data?.data) {
+          console.log('✅ Respuesta del webhook STRATEGY:', data.data);
           
-          if (responseArray && Array.isArray(responseArray)) {
-            // Convertir el array de objetos {key, value} a un objeto plano
-            const strategyObject: any = {};
-            responseArray.forEach((item: any) => {
-              if (item.key && item.value) {
-                strategyObject[item.key] = item.value;
+          // Procesar la respuesta dependiendo del formato
+          let strategyResponse = data.data;
+          
+          // Si la respuesta es un string, intentar parsearlo
+          if (typeof strategyResponse === 'string') {
+            try {
+              strategyResponse = JSON.parse(strategyResponse);
+            } catch (parseError) {
+              console.error('❌ Error parsing strategy response:', parseError);
+              throw new Error('Error procesando la respuesta de estrategia');
+            }
+          }
+
+          // Actualizar el estado con la estrategia generada para revisión
+          if (strategyResponse && Array.isArray(strategyResponse) && strategyResponse.length > 0) {
+            const firstResponse = strategyResponse[0];
+            const responseArray = firstResponse.response;
+            
+            if (responseArray && Array.isArray(responseArray)) {
+              // Convertir el array de objetos {key, value} a un objeto plano
+              const strategyObject: any = {};
+              responseArray.forEach((item: any) => {
+                if (item.key && item.value) {
+                  strategyObject[item.key] = item.value;
+                }
+              });
+
+              const newGeneratedStrategy = {
+                vision: strategyObject.vision || "",
+                mission: strategyObject.mision || strategyObject.mission || "",
+                propuesta_valor: strategyObject.propuesta_valor || strategyObject.value_proposition || ""
+              };
+
+              // Validar que se generó contenido útil
+              if (newGeneratedStrategy.vision || newGeneratedStrategy.mission || newGeneratedStrategy.propuesta_valor) {
+                setGeneratedStrategy(newGeneratedStrategy);
+                setTempStrategyData(newGeneratedStrategy);
+                setShowGeneratedStrategy(true);
+
+                toast({
+                  title: "Estrategia generada",
+                  description: "ERA ha generado tu estrategia empresarial. Revísala y ajústala si es necesario.",
+                });
+                return;
+              } else {
+                console.warn('⚠️ Webhook respondió pero sin contenido útil');
+                throw new Error('Respuesta sin contenido útil');
               }
-            });
-
-            const newGeneratedStrategy = {
-              vision: strategyObject.vision || "",
-              mission: strategyObject.mision || strategyObject.mission || "",
-              propuesta_valor: strategyObject.propuesta_valor || strategyObject.value_proposition || ""
-            };
-
-            setGeneratedStrategy(newGeneratedStrategy);
-            setTempStrategyData(newGeneratedStrategy);
-            setShowGeneratedStrategy(true);
-
-            toast({
-              title: "Estrategia generada",
-              description: "ERA ha generado tu estrategia empresarial. Revísala y ajústala si es necesario.",
-            });
+            } else {
+              throw new Error('Formato de respuesta inesperado - response array no encontrado');
+            }
           } else {
-            throw new Error('Formato de respuesta inesperado - response array no encontrado');
+            throw new Error('Respuesta de estrategia vacía o inválida');
           }
         } else {
-          throw new Error('Respuesta de estrategia vacía o inválida');
+          throw new Error(data?.message || 'Error en la generación de estrategia');
         }
-      } else {
-        throw new Error(data?.message || 'Error en la generación de estrategia');
+      } catch (webhookError) {
+        console.warn('⚠️ Webhook falló, usando generación directa con OpenAI:', webhookError);
+        
+        // Fallback: usar generate-company-content directamente
+        const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('generate-company-content', {
+          body: {
+            companyName: companyInfo.company_name,
+            industryType: companyInfo.industry_sector,
+            companySize: companyInfo.company_size,
+            websiteUrl: companyInfo.website_url,
+            description: companyInfo.description
+          }
+        });
+
+        if (fallbackError) throw fallbackError;
+
+        if (fallbackData?.success && fallbackData?.strategy) {
+          const newGeneratedStrategy = {
+            vision: fallbackData.strategy.vision || "",
+            mission: fallbackData.strategy.mission || "",
+            propuesta_valor: fallbackData.strategy.value_proposition || ""
+          };
+
+          setGeneratedStrategy(newGeneratedStrategy);
+          setTempStrategyData(newGeneratedStrategy);
+          setShowGeneratedStrategy(true);
+
+          toast({
+            title: "Estrategia generada",
+            description: "ERA ha generado tu estrategia empresarial. Revísala y ajústala si es necesario.",
+          });
+        } else {
+          throw new Error('Error en ambos métodos de generación');
+        }
       }
     } catch (error: any) {
-      console.error('Error generating strategy:', error);
+      console.error('❌ Error generating strategy:', error);
       toast({
         title: "Error",
-        description: "No se pudo generar la estrategia automáticamente.",
+        description: `No se pudo generar la estrategia automáticamente: ${error.message}`,
         variant: "destructive",
       });
     } finally {

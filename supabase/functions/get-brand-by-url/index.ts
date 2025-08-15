@@ -20,9 +20,24 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log('🚀 Iniciando getBrandByURL');
     
-    if (req.method !== 'POST') {
+    let url: string;
+    let user_id: string;
+
+    if (req.method === 'GET') {
+      // Handle GET request with query parameters
+      const urlObj = new URL(req.url);
+      url = urlObj.searchParams.get('url') || '';
+      user_id = urlObj.searchParams.get('user_id') || '';
+      console.log('📋 GET - URL recibida:', url);
+    } else if (req.method === 'POST') {
+      // Handle POST request with JSON body
+      const body: GetBrandRequest = await req.json();
+      url = body.url;
+      user_id = body.user_id;
+      console.log('📋 POST - URL recibida:', url);
+    } else {
       return new Response(
-        JSON.stringify({ error: 'Only POST method is allowed' }),
+        JSON.stringify({ error: 'Only GET and POST methods are allowed' }),
         {
           status: 405,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -30,10 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const body: GetBrandRequest = await req.json();
-    console.log('📋 URL recibida:', body.url);
-
-    if (!body.url || !body.user_id) {
+    if (!url || !user_id) {
       return new Response(
         JSON.stringify({ error: 'URL and user_id are required' }),
         {
@@ -48,21 +60,20 @@ const handler = async (req: Request): Promise<Response> => {
     const authHeader = `Basic ${credentials}`;
 
     // Asegurar que la URL tenga protocolo
-    let formattedUrl = body.url;
+    let formattedUrl = url;
     if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
       formattedUrl = `https://${formattedUrl}`;
     }
 
     console.log('📤 Llamando a getBrandByURL webhook con URL:', formattedUrl);
     
-    // Call the external webhook
-    const webhookResponse = await fetch('https://buildera.app.n8n.cloud/webhook/getBrandByURL', {
-      method: 'POST',
+    // Call the external webhook using GET method with URL as query parameter
+    const webhookUrl = `https://buildera.app.n8n.cloud/webhook/getBrandByURL?url=${encodeURIComponent(formattedUrl)}`;
+    const webhookResponse = await fetch(webhookUrl, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': authHeader,
       },
-      body: JSON.stringify({ url: formattedUrl }),
     });
 
     console.log('📥 Respuesta webhook status:', webhookResponse.status);
@@ -93,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data, error } = await supabase
       .from('company_external_data')
       .upsert({
-        user_id: body.user_id,
+        user_id: user_id,
         company_url: formattedUrl,
         brand_data: webhookData,
       })

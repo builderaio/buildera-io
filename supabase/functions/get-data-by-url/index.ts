@@ -55,14 +55,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('📤 Llamando a getDataByURL webhook con URL:', formattedUrl);
     
-    // Call the external webhook
-    const webhookResponse = await fetch('https://buildera.app.n8n.cloud/webhook/getDataByURL', {
-      method: 'POST',
+    // Call the external webhook using GET method with URL as query parameter
+    const webhookUrl = `https://buildera.app.n8n.cloud/webhook/getDataByURL?url=${encodeURIComponent(formattedUrl)}`;
+    const webhookResponse = await fetch(webhookUrl, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': authHeader,
       },
-      body: JSON.stringify({ url: formattedUrl }),
     });
 
     console.log('📥 Respuesta webhook status:', webhookResponse.status);

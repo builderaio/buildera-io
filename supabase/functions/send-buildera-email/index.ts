@@ -104,11 +104,12 @@ async function sendSMTPEmail(
     const ccList = emailData.cc?.map(email => email) || [];
     const bccList = emailData.bcc?.map(email => email) || [];
 
-    // Clean and properly format content to avoid quoted-printable issues
+    // Clean and properly format content for SMTP compliance
     const cleanHtml = (content: string) => {
       return content
-        .replace(/\r?\n/g, '') // Remove line breaks that cause =20
-        .replace(/\s+/g, ' ') // Normalize whitespace
+        .replace(/\r?\n/g, '\r\n') // Ensure proper CRLF line endings for SMTP compliance
+        .replace(/\r\n\s+/g, '\r\n') // Clean up extra whitespace after line breaks
+        .replace(/\s{2,}/g, ' ') // Normalize multiple spaces to single space
         .trim();
     };
 

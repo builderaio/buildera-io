@@ -55,8 +55,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create basic auth header
-    const credentials = btoa('buildera:Buildera2025*');
+    // Create basic auth header (using correct credentials)
+    const credentials = btoa('innoventum:Innoventum2025*');
     const authHeader = `Basic ${credentials}`;
 
     // Asegurar que la URL tenga protocolo
@@ -83,7 +83,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!webhookResponse.ok) {
       console.error('❌ Error en webhook. Status:', webhookResponse.status, 'Body:', responseText);
-      throw new Error(`Webhook failed with status: ${webhookResponse.status} - ${responseText}`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'External webhook failed',
+          status: webhookResponse.status,
+          message: responseText
+        }),
+        {
+          status: webhookResponse.status,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
     }
 
     let webhookData;

@@ -1375,10 +1375,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     websiteUrl = websiteUrl?.trim();
     
     if (!websiteUrl || !companyName) {
-      console.log('⚠️ Información insuficiente para webhook (desde companies). Saltando al siguiente paso.', { companyName, websiteUrl });
+      console.log('⚠️ Información insuficiente para webhook (desde companies). Continuando sin webhook.', { companyName, websiteUrl });
       toast({
-        title: "Información insuficiente",
-        description: "Se necesita el nombre de la empresa y el sitio web desde la tabla companies.",
+        title: "Configuración guardada",
+        description: "La información ha sido guardada. Puedes completar el nombre y sitio web más adelante.",
         variant: "default",
       });
       nextStep();
@@ -1702,7 +1702,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
                 </Button>
                 <Button 
                   onClick={nextStep} 
-                  disabled={!companyData?.descripcion_empresa}
+                  disabled={!companyData?.descripcion_empresa && !tempDescription.trim()}
                 >
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />

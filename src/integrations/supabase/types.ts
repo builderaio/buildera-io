@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -4902,7 +4902,7 @@ export type Database = {
     }
     Functions: {
       add_linked_provider: {
-        Args: { _user_id: string; _provider: string }
+        Args: { _provider: string; _user_id: string }
         Returns: undefined
       }
       assign_admin_role: {
@@ -4918,11 +4918,11 @@ export type Database = {
         Returns: number
       }
       calculate_engagement_rate: {
-        Args: { likes: number; comments: number; followers: number }
+        Args: { comments: number; followers: number; likes: number }
         Returns: number
       }
       calculate_posting_optimal_times: {
-        Args: { user_id_param: string; platform_param: string }
+        Args: { platform_param: string; user_id_param: string }
         Returns: Json
       }
       calculate_user_level: {
@@ -4931,28 +4931,28 @@ export type Database = {
       }
       check_usage_limit: {
         Args: {
-          user_id_param: string
-          usage_type_param: string
           limit_key_param: string
+          usage_type_param: string
+          user_id_param: string
         }
         Returns: boolean
       }
       create_company_with_owner: {
         Args:
           | {
-              company_name: string
               company_description?: string
-              website_url?: string
-              industry_sector?: string
+              company_name: string
               company_size?: string
+              industry_sector?: string
+              user_id_param?: string
+              website_url?: string
             }
           | {
-              company_name: string
               company_description?: string
-              website_url?: string
-              industry_sector?: string
+              company_name: string
               company_size?: string
-              user_id_param?: string
+              industry_sector?: string
+              website_url?: string
             }
         Returns: string
       }
@@ -4969,89 +4969,89 @@ export type Database = {
         Returns: string[]
       }
       get_admin_analytics_data: {
-        Args: { start_date: string; end_date: string }
+        Args: { end_date: string; start_date: string }
         Returns: {
+          metadata: Json
           metric_name: string
           metric_value: number
-          period_start: string
           period_end: string
+          period_start: string
           platform: string
-          metadata: Json
         }[]
       }
       get_admin_analytics_summary: {
-        Args: { start_date: string; end_date: string }
+        Args: { end_date: string; start_date: string }
         Returns: {
-          total_users: number
+          active_models: number
+          total_ai_logs: number
           total_companies: number
           total_developers: number
           total_experts: number
-          total_linkedin_connections: number
           total_facebook_connections: number
+          total_linkedin_connections: number
           total_tiktok_connections: number
-          total_ai_logs: number
-          active_models: number
+          total_users: number
         }[]
       }
       get_admin_recent_activity: {
         Args: Record<PropertyKey, never>
         Returns: {
-          recent_profiles: Json
           recent_connections: Json
+          recent_profiles: Json
         }[]
       }
       get_admin_social_connections: {
         Args: Record<PropertyKey, never>
         Returns: {
-          linkedin_connections: number
           facebook_connections: number
-          tiktok_connections: number
-          recent_linkedin: number
+          linkedin_connections: number
           recent_facebook: number
+          recent_linkedin: number
           recent_tiktok: number
+          tiktok_connections: number
         }[]
       }
       get_admin_user_analytics: {
         Args: Record<PropertyKey, never>
         Returns: {
-          total_users: number
-          recent_users: number
           companies: number
           developers: number
           experts: number
-          users_with_linkedin: number
+          recent_users: number
+          total_users: number
           users_with_facebook: number
+          users_with_linkedin: number
           users_with_tiktok: number
         }[]
       }
       get_ai_model_config: {
         Args: { function_name_param: string }
         Returns: {
-          model_name: string
-          temperature: number
-          max_tokens: number
-          top_p: number
           frequency_penalty: number
+          max_tokens: number
+          model_name: string
           presence_penalty: number
+          temperature: number
+          top_p: number
         }[]
       }
       get_all_profiles_admin: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          user_id: string
+          avatar_url: string
+          company_name: string
+          country: string
+          created_at: string
           email: string
           full_name: string
-          user_type: Database["public"]["Enums"]["user_type"]
-          company_name: string
-          website_url: string
+          id: string
           industry: string
-          created_at: string
           linked_providers: string[]
-          avatar_url: string
-          user_position: string
-          country: string
           location: string
+          user_id: string
+          user_position: string
+          user_type: Database["public"]["Enums"]["user_type"]
+          website_url: string
         }[]
       }
       get_user_primary_company: {
@@ -5063,43 +5063,43 @@ export type Database = {
         Returns: {
           company_id: string
           company_name: string
-          description: string
-          website_url: string
-          industry_sector: string
           company_size: string
           country: string
+          created_at: string
+          description: string
+          facebook_url: string
+          industry_sector: string
+          instagram_url: string
+          linkedin_url: string
           location: string
           logo_url: string
           primary_color: string
           secondary_color: string
-          facebook_url: string
-          twitter_url: string
-          linkedin_url: string
-          instagram_url: string
-          youtube_url: string
           tiktok_url: string
-          created_at: string
+          twitter_url: string
           updated_at: string
+          website_url: string
+          youtube_url: string
         }[]
       }
       get_user_stats_admin: {
         Args: Record<PropertyKey, never>
         Returns: {
-          total_users: number
+          active_last_30_days: number
           companies: number
           developers: number
           experts: number
-          active_last_30_days: number
+          total_users: number
         }[]
       }
       get_user_subscription: {
         Args: { user_id_param: string }
         Returns: {
+          current_period_end: string
+          limits: Json
           plan_name: string
           plan_slug: string
-          limits: Json
           status: string
-          current_period_end: string
         }[]
       }
       halfvec_avg: {
@@ -5140,9 +5140,9 @@ export type Database = {
       }
       increment_usage: {
         Args: {
-          user_id_param: string
-          usage_type_param: string
           increment_by?: number
+          usage_type_param: string
+          user_id_param: string
         }
         Returns: undefined
       }
@@ -5171,18 +5171,18 @@ export type Database = {
         Returns: string
       }
       mark_onboarding_completed: {
-        Args: { _user_id: string; _registration_method?: string }
+        Args: { _registration_method?: string; _user_id: string }
         Returns: undefined
       }
       remove_linked_provider: {
-        Args: { _user_id: string; _provider: string }
+        Args: { _provider: string; _user_id: string }
         Returns: undefined
       }
       restore_agent_template_version: {
         Args: {
+          new_version_param: string
           template_id_param: string
           version_number_param: string
-          new_version_param: string
         }
         Returns: boolean
       }
@@ -5199,11 +5199,11 @@ export type Database = {
         Returns: number
       }
       update_user_gamification: {
-        Args: { p_user_id: string; p_points_earned?: number }
+        Args: { p_points_earned?: number; p_user_id: string }
         Returns: undefined
       }
       update_user_primary_company: {
-        Args: { user_id_param: string; company_data: Json }
+        Args: { company_data: Json; user_id_param: string }
         Returns: string
       }
       validate_password_strength: {

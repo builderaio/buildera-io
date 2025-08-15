@@ -126,12 +126,21 @@ const handler = async (req: Request): Promise<Response> => {
     
     let responseData;
     
-    try {
-      responseData = JSON.parse(responseText);
-      console.log('📋 Datos parseados de JSON:', JSON.stringify(responseData, null, 2));
-    } catch (e) {
-      console.log('❌ Error parseando JSON, usando texto crudo:', e);
-      responseData = responseText;
+    // Check if response is JSON by looking at content-type or trying to parse
+    const contentType = webhookResponse.headers.get('content-type') || '';
+    const isJsonResponse = contentType.includes('application/json') || responseText.trim().startsWith('[') || responseText.trim().startsWith('{');
+    
+    if (isJsonResponse) {
+      try {
+        responseData = JSON.parse(responseText);
+        console.log('📋 Datos parseados de JSON:', JSON.stringify(responseData, null, 2));
+      } catch (e) {
+        console.log('❌ Error parseando JSON, usando texto crudo:', e);
+        responseData = { error: 'Invalid JSON response', raw: responseText };
+      }
+    } else {
+      console.log('📄 Respuesta no es JSON, probablemente error HTML');
+      responseData = { error: 'Non-JSON response received', raw: responseText };
     }
 
     // Log específico para STRATEGY

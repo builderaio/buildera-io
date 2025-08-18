@@ -4916,7 +4916,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      company_members_with_profiles: {
+        Row: {
+          company_id: string | null
+          email: string | null
+          full_name: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       add_linked_provider: {

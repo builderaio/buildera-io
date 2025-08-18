@@ -66,7 +66,7 @@ const AdminCompanies = () => {
 
   const loadCompanies = async () => {
     try {
-      // Primero obtener las empresas
+      // Obtener empresas
       const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*')
@@ -74,18 +74,10 @@ const AdminCompanies = () => {
 
       if (companiesError) throw companiesError;
 
-      // Luego obtener los miembros con perfiles
+      // Usar la vista para evitar problemas de cache de PostgREST
       const { data: membersData, error: membersError } = await supabase
-        .from('company_members')
-        .select(`
-          company_id,
-          role,
-          user_id,
-          profiles (
-            full_name,
-            email
-          )
-        `);
+        .from('company_members_with_profiles')
+        .select('*');
 
       if (membersError) throw membersError;
 
@@ -96,8 +88,8 @@ const AdminCompanies = () => {
         return {
           ...company,
           member_count: companyMembers.length,
-          owner_name: (ownerMember?.profiles as any)?.full_name || 'Sin propietario',
-          owner_email: (ownerMember?.profiles as any)?.email || '',
+          owner_name: ownerMember?.full_name || 'Sin propietario',
+          owner_email: ownerMember?.email || '',
         };
       }) || [];
 

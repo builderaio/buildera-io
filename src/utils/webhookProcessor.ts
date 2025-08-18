@@ -88,20 +88,22 @@ export const executeCompanyWebhooks = async (
   companyName: string, 
   websiteUrl?: string, 
   country?: string, 
-  triggerType: 'registration' | 'update' | 'first_save_social' = 'update'
+  triggerType: 'registration' | 'update' | 'first_save_social' | 'first_visit' = 'update'
 ) => {
   console.log('🚀 Ejecutando webhook INFO para empresa:', {
     companyName,
     triggerType,
     context: triggerType === 'registration' ? 'Registro de usuario' : 
-             triggerType === 'first_save_social' ? 'Primera configuración social' : 'Actualización'
+             triggerType === 'first_save_social' ? 'Primera configuración social' : 
+             triggerType === 'first_visit' ? 'Primera visita al ADN' : 'Actualización'
   });
 
   try {
     // Solo ejecutar webhook INFO - los webhooks STRATEGY y BRAND se ejecutan en sus contextos específicos
     const companyInfo = `Empresa: ${companyName}${websiteUrl ? `, sitio web: ${websiteUrl}` : ''}${country ? `, país: ${country}` : ''}`;
     const additionalInfo = triggerType === 'registration' ? 'Nuevo registro' : 
-                          triggerType === 'first_save_social' ? 'Primer guardado social' : 'Actualización';
+                          triggerType === 'first_save_social' ? 'Primer guardado social' : 
+                          triggerType === 'first_visit' ? 'Primera visita ADN' : 'Actualización';
 
     const response = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
       body: {

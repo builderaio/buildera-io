@@ -246,14 +246,25 @@ const ADNEmpresa = ({
           }
         }
       } else if (!companyData?.webhook_data) {
-        // Si no hay datos de webhook, intentar obtenerlos
-        console.log('🚀 Ejecutando webhook para obtener información de la empresa...');
-        await triggerWebhookOnFirstSave(profile?.company_name || companyData?.name || '', profile?.website_url || companyData?.website_url, profile?.country);
-
-        // Esperar un momento y refrescar los datos
-        setTimeout(() => {
-          fetchCompanyData();
-        }, 3000);
+        // Si no hay datos de webhook, ejecutarlos inmediatamente
+        console.log('🚀 Primera vez en ADN - ejecutando webhook INFO automáticamente...');
+        
+        try {
+          await executeCompanyWebhooks(
+            user?.id || profile?.user_id,
+            profile?.company_name || companyData?.name || 'Empresa',
+            profile?.website_url || companyData?.website_url,
+            profile?.country || companyData?.country,
+            'first_visit'
+          );
+          
+          // Esperar un momento y refrescar los datos
+          setTimeout(() => {
+            fetchCompanyData();
+          }, 3000);
+        } catch (error) {
+          console.error('Error ejecutando webhook de primera visita:', error);
+        }
       }
     } catch (error) {
       console.error('Error cargando información desde webhook:', error);
@@ -499,25 +510,48 @@ const ADNEmpresa = ({
     }
   };
 
-  // AJUSTE 2 y 3: Auto-generar estrategia cuando se entre al paso 3 SOLO si no hay datos Y después de cargar datos
+  // Auto-generar estrategia cuando se entre al paso 3 SOLO si no hay datos Y después de cargar datos
   useEffect(() => {
+    console.log('🤖 Checking strategy auto-generation:', {
+      dataLoaded,
+      currentStep,
+      hasVision: !!strategyData.vision,
+      hasMission: !!strategyData.mission,
+      hasValueProp: !!strategyData.propuesta_valor,
+      hasDescription: !!companyData?.descripcion_empresa,
+      isLoading: loading
+    });
+    
     if (dataLoaded && currentStep === 3 && !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.descripcion_empresa && !loading) {
       console.log('🤖 Generando estrategia automáticamente (sin datos previos)');
       generateStrategyWithAI();
     }
   }, [dataLoaded, currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.descripcion_empresa, loading]);
 
-  // AJUSTE 2 y 3: Auto-generar objetivos cuando se entre al paso 4 SOLO si no hay datos Y después de cargar datos
+  // Auto-generar objetivos cuando se entre al paso 4 SOLO si no hay datos Y después de cargar datos  
   useEffect(() => {
+    console.log('🎯 Checking objectives auto-generation:', {
+      dataLoaded,
+      currentStep,
+      objectivesLength: objectives.length,
+      showGeneratedObjectives,
+      generatingObjectives,
+      hasVision: !!strategyData.vision,
+      hasMission: !!strategyData.mission,
+      hasValueProp: !!strategyData.propuesta_valor,
+      isLoading: loading
+    });
+    
     if (dataLoaded && currentStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
       console.log('🎯 Generando objetivos automáticamente (sin datos previos)');
       generateObjectivesWithAI();
     }
   }, [dataLoaded, currentStep, objectives.length, showGeneratedObjectives, generatingObjectives, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, loading]);
 
-  // AJUSTE 2 y 3: Auto-generar branding cuando se entre al paso 5 SOLO si no hay datos
+  // Auto-generar branding cuando se entre al paso 5 SOLO si no hay datos
   useEffect(() => {
     console.log('🎨 Checking branding auto-generation:', {
+      dataLoaded,
       currentStep,
       hasVisualIdentity: !!brandingData.visual_identity,
       hasPrimaryColor: !!brandingData.primary_color,
@@ -526,11 +560,12 @@ const ADNEmpresa = ({
       hasValueProp: !!strategyData.propuesta_valor,
       isLoading: loading
     });
+    
     if (dataLoaded && currentStep === 5 && !brandingData.visual_identity && !brandingData.primary_color && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
       console.log('🚀 Generando branding automáticamente (sin datos previos)');
       generateBrandingWithAI();
     }
-  }, [currentStep, brandingData.visual_identity, brandingData.primary_color, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
+  }, [dataLoaded, currentStep, brandingData.visual_identity, brandingData.primary_color, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, loading]);
 
   // AJUSTE 2 y 3: Auto-cargar datos de redes sociales cuando se entre al paso 7 SOLO si no hay datos
   useEffect(() => {

@@ -30,9 +30,16 @@ interface UserProfile {
   created_at: string;
   linked_providers: string[];
   avatar_url?: string;
-  position?: string;
+  user_position?: string;
   country?: string;
   location?: string;
+  company_name?: string;
+  company_role?: string;
+  is_primary_company?: boolean;
+  company_id?: string;
+  onboarding_completed?: boolean;
+  onboarding_completed_at?: string;
+  registration_method?: string;
 }
 
 const AdminUsers = () => {
@@ -106,7 +113,8 @@ const AdminUsers = () => {
     if (searchTerm) {
       filtered = filtered.filter(user => 
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+        user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.company_name && user.company_name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -274,10 +282,22 @@ const AdminUsers = () => {
                               </div>
                             )}
                             
-                            {user.position && (
+                            {user.user_position && (
                               <div className="flex items-center min-w-0">
                                 <Activity className="w-3 h-3 mr-1 flex-shrink-0" />
-                                <span className="truncate">{user.position}</span>
+                                <span className="truncate">{user.user_position}</span>
+                              </div>
+                            )}
+                            
+                            {user.company_name && (
+                              <div className="flex items-center min-w-0">
+                                <Building2 className="w-3 h-3 mr-1 flex-shrink-0" />
+                                <span className="truncate">{user.company_name}</span>
+                                {user.company_role && (
+                                  <Badge variant="outline" className="ml-1 text-xs">
+                                    {user.company_role}
+                                  </Badge>
+                                )}
                               </div>
                             )}
                             
@@ -287,18 +307,32 @@ const AdminUsers = () => {
                             </div>
                           </div>
 
-                          {user.linked_providers.length > 0 && (
-                            <div className="mt-2 sm:mt-3">
-                              <p className="text-xs text-gray-500 mb-1">Conexiones activas:</p>
-                              <div className="flex gap-1 flex-wrap">
-                                {user.linked_providers.map((provider, index) => (
-                                  <Badge key={index} variant="secondary" className="text-xs">
-                                    {provider}
-                                  </Badge>
-                                ))}
+                          <div className="mt-2 sm:mt-3 space-y-2">
+                            {user.linked_providers.length > 0 && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Conexiones activas:</p>
+                                <div className="flex gap-1 flex-wrap">
+                                  {user.linked_providers.map((provider, index) => (
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                      {provider}
+                                    </Badge>
+                                  ))}
+                                </div>
                               </div>
+                            )}
+                            
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center">
+                                <span className={`w-2 h-2 rounded-full mr-1 ${user.onboarding_completed ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                Onboarding: {user.onboarding_completed ? 'Completado' : 'Pendiente'}
+                              </div>
+                              {user.registration_method && (
+                                <div>
+                                  Registro: {user.registration_method}
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
                       </div>
                     </div>

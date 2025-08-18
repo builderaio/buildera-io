@@ -5039,15 +5039,21 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: {
           avatar_url: string
+          company_id: string
           company_name: string
+          company_role: string
           country: string
           created_at: string
           email: string
           full_name: string
           id: string
           industry: string
+          is_primary_company: boolean
           linked_providers: string[]
           location: string
+          onboarding_completed: boolean
+          onboarding_completed_at: string
+          registration_method: string
           user_id: string
           user_position: string
           user_type: Database["public"]["Enums"]["user_type"]

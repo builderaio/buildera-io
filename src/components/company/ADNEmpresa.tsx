@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Building2, Target, Palette, Globe, CheckCircle, ArrowRight, ArrowLeft, Bot, Lightbulb, Facebook, Instagram, Twitter, Youtube, Music, Linkedin, RefreshCw, Save, Edit3, X, Check, Download, AlertCircle, Info, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFirstTimeSave } from "@/hooks/useFirstTimeSave";
+import { useOnboardingStep } from "@/hooks/useOnboardingStep";
 interface ADNEmpresaProps {
   profile: any;
   onProfileUpdate: (profile: any) => void;
@@ -27,11 +28,13 @@ const ADNEmpresa = ({
   const navigate = useNavigate();
 
   // Estados para el onboarding
-  const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(true); // Nueva variable para controlar primera vez
   const [user, setUser] = useState<any>(null);
+
+  // Hook para manejar el tracking de pasos
+  const { currentStep, updateCurrentStep, nextStep, goToStep } = useOnboardingStep(user?.id);
 
   // Estados para los datos
   const [loading, setLoading] = useState(false);
@@ -142,10 +145,10 @@ const ADNEmpresa = ({
       const isFirstTimeUser = !onboardingStatus || !onboardingStatus.dna_empresarial_completed;
       setIsFirstTime(isFirstTimeUser);
 
-      // AJUSTE 1: Restaurar el paso donde se quedó el usuario
+      // AJUSTE 1: El paso se restaura automáticamente por el hook useOnboardingStep
       if (onboardingStatus?.current_step && isFirstTimeUser) {
         console.log(`📍 Restaurando progreso: paso ${onboardingStatus.current_step}`);
-        setCurrentStep(onboardingStatus.current_step);
+        // El currentStep ya se maneja en el hook
       }
 
       // Si es primera vez y hay un website_url, intentar cargar información automáticamente
@@ -156,7 +159,7 @@ const ADNEmpresa = ({
       // Si no es primera vez, saltar al modo de edición
       if (!isFirstTimeUser) {
         setIsOnboardingComplete(true);
-        setCurrentStep(totalSteps); // Ir al último paso para mostrar resumen
+        goToStepLocal(totalSteps); // Ir al último paso para mostrar resumen
       } else {
         // Si es primera vez y no hay descripción, activar modo de edición automáticamente
         if (!companyData?.descripcion_empresa) {
@@ -382,7 +385,7 @@ const ADNEmpresa = ({
     // Solo inicializar en paso 1 si currentStep no está definido (primera carga)
     // NO hacer redirecciones automáticas para evitar interrumpir al usuario
     if (currentStep === 0) {
-      setCurrentStep(1);
+      updateCurrentStep(1);
     }
   };
 
@@ -1261,13 +1264,12 @@ const ADNEmpresa = ({
     }
   };
 
-  const nextStep = async () => {
+  const nextStepLocal = async () => {
     if (currentStep < totalSteps) {
       const newStep = currentStep + 1;
-      setCurrentStep(newStep);
       
-      // AJUSTE 1: Persistir el nuevo paso
-      await persistCurrentStep(newStep);
+      // Usar el hook para actualizar el paso
+      await updateCurrentStep(newStep);
 
       // Auto-generar objetivos cuando se llega al paso 4 y no hay objetivos existentes
       if (newStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives) {
@@ -1333,7 +1335,7 @@ const ADNEmpresa = ({
         description: "La información ha sido guardada. Puedes completar el nombre y sitio web más adelante.",
         variant: "default"
       });
-      nextStep();
+      nextStepLocal();
       return;
     }
 
@@ -1421,23 +1423,20 @@ const ADNEmpresa = ({
     }
 
     // Avanzar al siguiente paso independientemente del resultado del webhook
-    nextStep();
+    nextStepLocal();
   };
   const prevStep = async () => {
     if (currentStep > 1) {
       const newStep = currentStep - 1;
-      setCurrentStep(newStep);
       
-      // AJUSTE 1: Persistir el nuevo paso
-      await persistCurrentStep(newStep);
+      // Usar el hook para actualizar el paso
+      await updateCurrentStep(newStep);
     }
   };
   
-  const goToStep = async (step: number) => {
-    setCurrentStep(step);
-    
-    // AJUSTE 1: Persistir el nuevo paso
-    await persistCurrentStep(step);
+  const goToStepLocal = async (step: number) => {
+    // Usar el hook para actualizar el paso
+    await updateCurrentStep(step);
   };
 
   // Función para obtener el contenido del paso actual
@@ -1682,7 +1681,7 @@ const ADNEmpresa = ({
                 if (showGeneratedStrategy && tempStrategyData) {
                   await acceptGeneratedStrategy();
                 }
-                nextStep();
+                nextStepLocal();
               }} disabled={!showGeneratedStrategy && (!strategyData.vision || !strategyData.mission || !strategyData.propuesta_valor)}>
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -1871,7 +1870,7 @@ const ADNEmpresa = ({
                 } else {
                   await saveObjectives();
                 }
-                nextStep();
+                nextStepLocal();
               }} disabled={(showGeneratedObjectives ? generatedObjectives.length : objectives.length) === 0}>
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -2007,7 +2006,7 @@ const ADNEmpresa = ({
                 </Button>
                 <Button onClick={async () => {
                 await saveBranding(brandingData);
-                nextStep();
+                nextStepLocal();
               }} disabled={!brandingData.visual_identity && !brandingData.primary_color}>
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -2122,7 +2121,7 @@ const ADNEmpresa = ({
                 </Button>
                 <Button onClick={async () => {
                 await saveSocialConnections();
-                nextStep();
+                nextStepLocal();
               }} disabled={loading}>
                   {loading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <>
                       Siguiente
@@ -2418,7 +2417,7 @@ const ADNEmpresa = ({
               <div className="flex gap-2">
                 {Array.from({
               length: totalSteps
-            }, (_, i) => i + 1).map(step => <button key={step} onClick={() => goToStep(step)} className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors", step === currentStep ? "bg-primary text-primary-foreground" : completedSteps.includes(step) ? "bg-green-500 text-white" : "bg-muted text-muted-foreground hover:bg-muted/80")}>
+            }, (_, i) => i + 1).map(step => <button key={step} onClick={() => goToStepLocal(step)} className={cn("w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors", step === currentStep ? "bg-primary text-primary-foreground" : completedSteps.includes(step) ? "bg-green-500 text-white" : "bg-muted text-muted-foreground hover:bg-muted/80")}>
                     {completedSteps.includes(step) && step !== currentStep ? <CheckCircle className="w-4 h-4" /> : step}
                   </button>)}
               </div>

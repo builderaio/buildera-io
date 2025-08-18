@@ -47,9 +47,23 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
         // 2b. Obtener estado de onboarding del usuario
         const { data: onboardingStatus } = await supabase
           .from('user_onboarding_status')
-          .select('first_login_completed, dna_empresarial_completed, onboarding_completed_at')
+          .select('first_login_completed, dna_empresarial_completed, onboarding_completed_at, current_step')
           .eq('user_id', user.id)
           .maybeSingle();
+
+        // 2c. Inicializar o actualizar el paso de onboarding si no existe
+        if (!onboardingStatus) {
+          await supabase
+            .from('user_onboarding_status')
+            .upsert({
+              user_id: user.id,
+              current_step: 1,
+              first_login_completed: false,
+              dna_empresarial_completed: false
+            }, {
+              onConflict: 'user_id'
+            });
+        }
 
         // 3. Determinar el flujo basado en auth_provider y user_type
         const authProvider = (profile?.auth_provider as string) || (user?.app_metadata?.provider as string) || 'email';
@@ -90,7 +104,8 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
             if (hasCompany) {
               // Revisar estado de onboarding
               if (!onboardingStatus || !onboardingStatus.onboarding_completed_at) {
-                console.log('🔄 Onboarding de empresa pendiente, ir al paso 1');
+                const currentStep = onboardingStatus?.current_step || 1;
+                console.log(`🔄 Onboarding de empresa pendiente, ir al paso ${currentStep}`);
                 navigate('/company-dashboard?view=adn-empresa');
                 return;
               }

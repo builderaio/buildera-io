@@ -348,7 +348,7 @@ const CompanyLayout = ({
   console.log('Current activeView:', activeView);
   console.log('Current URL:', location.pathname + location.search);
   return <div className="min-h-screen flex w-full bg-background">
-    <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar shadow-xl z-40">  
+      <Sidebar variant="sidebar" collapsible="icon" className="w-80 data-[state=collapsed]:w-16 border-r border-sidebar-border bg-sidebar shadow-xl z-40">
         {/* Header mejorado - oculto cuando está colapsado */}
         <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95 data-[state=collapsed]:hidden">
           <div className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all duration-300 group" onClick={() => setActiveView('mando-central')}>
@@ -382,7 +382,7 @@ const CompanyLayout = ({
               </SidebarGroupLabel>
               
               <SidebarGroupContent>
-                <SidebarMenu className="space-y-2 data-[state=collapsed]:space-y-1">
+                <SidebarMenu className="space-y-2 data-[state=collapsed]:space-y-2">
                   {category.items.map(item => {
                 const Icon = item.icon;
                 const isActive = activeView === item.id;
@@ -394,7 +394,7 @@ const CompanyLayout = ({
                 };
                 return <SidebarMenuItem key={item.id}>
                         <SidebarMenuButton isActive={isActive} disabled={isDisabled} className={`
-                            relative group transition-all duration-300 rounded-xl p-4 font-medium text-sm data-[state=collapsed]:p-3
+                            relative group transition-all duration-300 rounded-full p-4 font-medium text-sm data-[state=collapsed]:p-3
                             ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg border border-sidebar-accent/20 scale-[1.02]" : isDisabled ? "opacity-40 cursor-not-allowed text-sidebar-muted-foreground" : `text-sidebar-foreground ${priorityColors[item.priority]} hover:scale-[1.01] hover:shadow-md`}
                             ${!isDisabled && !isActive ? 'hover:border hover:border-sidebar-border/40' : ''}
                           `} onClick={isDisabled ? undefined : () => setActiveView(item.id)} tooltip={item.label}>
@@ -441,74 +441,73 @@ const CompanyLayout = ({
       </Sidebar>
       
       <SidebarInset className="flex-1 overflow-hidden bg-background">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border/50 px-4 bg-background/95 backdrop-blur-sm sticky top-0 z-40 shadow-sm">
-          <SidebarTrigger className="-ml-1 text-sidebar-foreground hover:bg-accent" />
-          <Separator orientation="vertical" className="mr-2 h-4 bg-border" />
-          
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold text-foreground">
-                {profile?.company_name || 'Mi Empresa'}
-              </h1>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <ThemeSelector />
-              <SmartNotifications />
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-auto px-2 rounded-full hover:bg-accent border border-transparent hover:border-border/50">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="size-7 ring-1 ring-border/20">
-                        <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
-                        <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
-                          {profile?.full_name?.charAt(0) || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col items-start text-left hidden md:block">
-                        <span className="text-sm font-medium truncate max-w-[120px] text-foreground">
-                          {profile?.full_name || "Usuario"}
-                        </span>
-                      </div>
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-background border border-border shadow-lg z-[60] backdrop-blur-sm">
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <Avatar className="size-8 ring-1 ring-border/20">
-                      <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
-                        {profile?.full_name?.charAt(0) || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium text-foreground">{profile?.full_name || "Usuario"}</p>
-                      <p className="w-[200px] truncate text-sm text-muted-foreground">
-                        {profile?.email}
-                      </p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem onClick={() => setActiveView('profile')} className="cursor-pointer hover:bg-accent focus:bg-accent">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Mi Perfil</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={isProfileIncomplete} className={`cursor-pointer ${isProfileIncomplete ? "opacity-50 cursor-not-allowed" : "hover:bg-accent focus:bg-accent"}`}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Administración</span>
-                    {isProfileIncomplete && <span className="ml-auto text-xs">🔒</span>}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10 text-destructive">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Cerrar sesión</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+<header className="flex h-16 shrink-0 items-center justify-between border-b border-border/50 px-4 sm:px-6 bg-background/95 backdrop-blur-sm sticky top-0 z-30 shadow-sm">
+  {/* Sección Izquierda: Trigger del Sidebar y Título */}
+  <div className="flex items-center gap-2">
+    <SidebarTrigger className="-ml-1 text-foreground/70 hover:text-foreground hover:bg-accent" />
+    <Separator orientation="vertical" className="h-6" />
+    <h1 className="text-lg font-semibold text-foreground tracking-tight">
+      {profile?.company_name || 'Mi Empresa'}
+    </h1>
+  </div>
+
+  {/* Sección Derecha: Iconos de Acción y Menú de Usuario */}
+  <div className="flex items-center gap-2">
+    <ThemeSelector />
+    <SmartNotifications />
+
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-10 w-auto px-3 rounded-full hover:bg-accent border border-transparent hover:border-border/50 transition-colors">
+          <div className="flex items-center gap-3">
+            <Avatar className="size-8 ring-1 ring-border/50">
+              <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+              <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
+                {profile?.full_name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="hidden sm:flex flex-col items-start text-left">
+              <span className="text-sm font-semibold truncate max-w-[150px] text-foreground">
+                {profile?.full_name || "Usuario"}
+              </span>
             </div>
           </div>
-        </header>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64 bg-background border border-border shadow-lg z-[60] backdrop-blur-sm">
+        <div className="flex items-center justify-start gap-3 p-3">
+          <Avatar className="size-10 ring-1 ring-border/50">
+            <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+            <AvatarFallback className="text-sm bg-primary/10 text-primary font-medium">
+              {profile?.full_name?.charAt(0) || "U"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col space-y-0.5 leading-none">
+            <p className="font-semibold text-foreground">{profile?.full_name || "Usuario"}</p>
+            <p className="w-[180px] truncate text-sm text-muted-foreground">
+              {profile?.email}
+            </p>
+          </div>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setActiveView('profile')} className="cursor-pointer h-10">
+          <User className="mr-2 h-4 w-4" />
+          <span>Mi Perfil</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={isProfileIncomplete} className={`cursor-pointer h-10 ${isProfileIncomplete ? "opacity-50 cursor-not-allowed" : ""}`}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Administración</span>
+          {isProfileIncomplete && <span className="ml-auto text-xs">🔒</span>}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer h-10 text-destructive focus:bg-destructive/10 focus:text-destructive">
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Cerrar sesión</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  </div>
+</header>
           
         <main className="flex-1 w-full h-full overflow-auto bg-background">
           <div className="w-full h-full p-4 md:p-6">

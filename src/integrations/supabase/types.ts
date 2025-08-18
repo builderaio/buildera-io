@@ -4916,24 +4916,7 @@ export type Database = {
       }
     }
     Views: {
-      company_members_with_profiles: {
-        Row: {
-          company_id: string | null
-          email: string | null
-          full_name: string | null
-          role: string | null
-          user_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_members_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       add_linked_provider: {
@@ -5100,6 +5083,16 @@ export type Database = {
           user_position: string
           user_type: Database["public"]["Enums"]["user_type"]
           website_url: string
+        }[]
+      }
+      get_company_members_with_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          company_id: string
+          email: string
+          full_name: string
+          role: string
+          user_id: string
         }[]
       }
       get_user_primary_company: {

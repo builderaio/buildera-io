@@ -74,10 +74,9 @@ const AdminCompanies = () => {
 
       if (companiesError) throw companiesError;
 
-      // Usar la vista para evitar problemas de cache de PostgREST
+      // Usar función RPC para obtener miembros con perfiles
       const { data: membersData, error: membersError } = await supabase
-        .from('company_members_with_profiles')
-        .select('*');
+        .rpc('get_company_members_with_profiles');
 
       if (membersError) throw membersError;
 

@@ -441,7 +441,8 @@ const ADNEmpresa = ({
         industry_sector: companyData.industry_sector || 'No especificado',
         company_size: companyData.company_size || 'No especificado',
         website_url: companyData.website_url || '',
-        description: companyData.descripcion_empresa
+        country: companyData?.country || user?.user_metadata?.country || 'No especificado',
+        description: companyData.descripcion_empresa || companyData.description || ''
       };
       console.log('🤖 Generando estrategia con datos:', companyInfo);
 
@@ -453,7 +454,11 @@ const ADNEmpresa = ({
         } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
           body: {
             KEY: 'STRATEGY',
-            COMPANY_INFO: JSON.stringify(companyInfo)
+            COMPANY_INFO: JSON.stringify(companyInfo),
+            ADDITIONAL_INFO: JSON.stringify({
+              industry: companyData?.industry_sector || 'No especificada',
+              description: companyData?.descripcion_empresa || companyData?.description || ''
+            })
           }
         });
         if (error) throw error;

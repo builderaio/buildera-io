@@ -74,11 +74,23 @@ const AdminCompanies = () => {
 
       if (companiesError) throw companiesError;
 
-      // Usar función RPC para obtener miembros con perfiles
-      const { data: membersData, error: membersError } = await supabase
-        .rpc('get_company_members_with_profiles');
-
-      if (membersError) throw membersError;
+      // Intentar obtener miembros con perfiles solo si hay sesión de Supabase (admin)
+      let membersData: any[] = [];
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.user) {
+          const { data, error } = await supabase.rpc('get_company_members_with_profiles');
+          if (error) {
+            console.warn('RPC get_company_members_with_profiles blocked:', error.message);
+          } else {
+            membersData = data || [];
+          }
+        } else {
+          console.info('Sin sesión de Supabase: omitiendo RPC admin');
+        }
+      } catch (rpcCheckErr) {
+        console.warn('Omitiendo RPC admin por error de sesión:', rpcCheckErr);
+      }
 
       const companiesWithMembers = companiesData?.map(company => {
         const companyMembers = membersData?.filter(m => m.company_id === company.id) || [];

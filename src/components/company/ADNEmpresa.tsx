@@ -267,14 +267,26 @@ const ADNEmpresa = ({
         return;
       }
       const userId = profile?.user_id || user?.id;
-      const {
-        data: membership,
-        error: memberError
-      } = await supabase.from('company_members').select('company_id').eq('user_id', userId).eq('is_primary', true).maybeSingle();
-      if (memberError) throw memberError;
-      const companyId = membership?.company_id;
+      let companyId: string | null = null;
+      try {
+        const { data: membership } = await supabase
+          .from('company_members')
+          .select('company_id')
+          .eq('user_id', userId)
+          .eq('is_primary', true)
+          .maybeSingle();
+        companyId = membership?.company_id || null;
+      } catch (memberError) {
+        console.warn('No se pudo leer company_members (RLS o sin registro). Intentando con profile.primary_company_id...', memberError);
+      }
+
+      // Fallback: usar primary_company_id del perfil si existe
+      if (!companyId && (profile as any)?.primary_company_id) {
+        companyId = (profile as any).primary_company_id;
+      }
+
       if (!companyId) {
-        console.warn('No se encontró empresa principal para el usuario');
+        console.warn('No se encontró empresa principal para el usuario (ni en company_members ni en profile.primary_company_id)');
         setCompanyData(null);
         return;
       }

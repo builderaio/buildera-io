@@ -296,8 +296,19 @@ const ADNEmpresa = ({
         };
         console.log('✅ fetchStrategy: Cargando estrategia existente:', strategyToSet);
         setStrategyData(strategyToSet);
+        
+        // Si estamos en el paso 3 y se cargaron datos existentes, mostrarlos
+        if (currentStep === 3) {
+          console.log('📊 Mostrando estrategia existente en paso 3');
+        }
       } else {
         console.log('🔍 fetchStrategy: No se encontró estrategia existente para la empresa');
+        // Limpiar strategyData para asegurar que el useEffect detecte la falta de datos
+        setStrategyData({
+          vision: "",
+          mission: "",
+          propuesta_valor: ""
+        });
       }
     } catch (error: any) {
       console.error('❌ fetchStrategy: Error fetching strategy:', error);
@@ -420,9 +431,22 @@ const ADNEmpresa = ({
 
   // AJUSTE 2 y 3: Auto-generar estrategia cuando se entre al paso 3 SOLO si no hay datos Y después de cargar datos
   useEffect(() => {
+    console.log('🔍 Evaluando auto-generación de estrategia:', {
+      dataLoaded,
+      currentStep,
+      hasVision: !!strategyData.vision,
+      hasMission: !!strategyData.mission,
+      hasValueProp: !!strategyData.propuesta_valor,
+      hasDescription: !!companyData?.description,
+      loading,
+      strategyData: strategyData
+    });
+    
     if (dataLoaded && currentStep === 3 && !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.description && !loading) {
       console.log('🤖 Generando estrategia automáticamente (sin datos previos)');
       generateStrategyWithAI();
+    } else if (dataLoaded && currentStep === 3 && (strategyData.vision || strategyData.mission || strategyData.propuesta_valor)) {
+      console.log('✅ Estrategia existente encontrada, no se genera automáticamente');
     }
   }, [dataLoaded, currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.description, loading]);
 
@@ -1469,6 +1493,20 @@ const ADNEmpresa = ({
   const goToStepLocal = async (step: number) => {
     // Usar el hook para actualizar el paso
     await updateCurrentStep(step);
+    
+    // Si se va al paso 3, verificar si necesita generar estrategia
+    if (step === 3 && dataLoaded) {
+      console.log('🔄 Navegando al paso 3, verificando estrategia...');
+      // Refrescar datos de estrategia antes de verificar auto-generación
+      setTimeout(async () => {
+        await fetchStrategy();
+        // Después de fetchStrategy, evaluar si necesita auto-generar
+        if (!strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.description && !loading) {
+          console.log('🤖 Auto-generando estrategia después de navegar al paso 3');
+          generateStrategyWithAI();
+        }
+      }, 100);
+    }
   };
 
   // Función para obtener el contenido del paso actual

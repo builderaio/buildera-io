@@ -32,7 +32,6 @@ interface UserProfile {
   avatar_url?: string;
   user_position?: string;
   country?: string;
-  location?: string;
   company_name?: string;
   company_role?: string;
   is_primary_company?: boolean;
@@ -73,7 +72,7 @@ const AdminUsers = () => {
 
       if (error) {
         console.error('Error con función admin, intentando consulta directa:', error);
-        // Fallback: intentar consulta directa (sin campos de empresa eliminados)
+        // Fallback: intentar consulta directa
         const fallbackResult = await supabase
           .from('profiles')
           .select(`
@@ -257,21 +256,21 @@ const AdminUsers = () => {
                           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                             <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{user.full_name || 'Sin nombre'}</h3>
                             <div className="flex items-center gap-2 flex-wrap">
-                               <Badge className={`${getUserTypeBadge(user.user_type)} text-xs`}>
-                                 {user.user_type}
-                               </Badge>
-                               {user.onboarding_completed && (
-                                 <Badge variant="secondary" className="text-xs">
-                                   <User className="w-3 h-3 mr-1" />
-                                   Onboarding completado
-                                 </Badge>
-                               )}
-                               {user.linked_providers.length > 0 && (
-                                 <Badge variant="outline" className="text-xs">
-                                   <Activity className="w-3 h-3 mr-1" />
-                                   {user.linked_providers.length} conexión(es)
-                                 </Badge>
-                               )}
+                              <Badge className={`${getUserTypeBadge(user.user_type)} text-xs`}>
+                                {user.user_type}
+                              </Badge>
+                              {user.onboarding_completed && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <User className="w-3 h-3 mr-1" />
+                                  Onboarding OK
+                                </Badge>
+                              )}
+                              {user.linked_providers && user.linked_providers.length > 0 && (
+                                <Badge variant="outline" className="text-xs">
+                                  <Activity className="w-3 h-3 mr-1" />
+                                  {user.linked_providers.length} conexión(es)
+                                </Badge>
+                              )}
                             </div>
                           </div>
                           
@@ -294,7 +293,7 @@ const AdminUsers = () => {
                                 <span className="truncate">{user.user_position}</span>
                               </div>
                             )}
-                            
+
                             {user.company_name && (
                               <div className="flex items-center min-w-0">
                                 <Building2 className="w-3 h-3 mr-1 flex-shrink-0" />
@@ -314,9 +313,9 @@ const AdminUsers = () => {
                           </div>
 
                           <div className="mt-2 sm:mt-3 space-y-2">
-                            {user.linked_providers.length > 0 && (
+                            {user.linked_providers && user.linked_providers.length > 0 && (
                               <div>
-                                <p className="text-xs text-muted-foreground mb-1">Conexiones activas:</p>
+                                <p className="text-xs text-gray-500 mb-1">Conexiones activas:</p>
                                 <div className="flex gap-1 flex-wrap">
                                   {user.linked_providers.map((provider, index) => (
                                     <Badge key={index} variant="secondary" className="text-xs">
@@ -327,17 +326,23 @@ const AdminUsers = () => {
                               </div>
                             )}
                             
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <div className="flex items-center">
-                                <span className={`w-2 h-2 rounded-full mr-1 ${user.onboarding_completed ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                Onboarding: {user.onboarding_completed ? 'Completado' : 'Pendiente'}
+                            {user.registration_method && (
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">Método de registro:</p>
+                                <Badge variant="outline" className="text-xs">
+                                  {user.registration_method}
+                                </Badge>
                               </div>
-                              {user.registration_method && (
-                                <div>
-                                  Registro: {user.registration_method}
-                                </div>
-                              )}
-                            </div>
+                            )}
+                            
+                            {user.onboarding_completed_at && (
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">Onboarding completado:</p>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(user.onboarding_completed_at).toLocaleDateString('es-ES')}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

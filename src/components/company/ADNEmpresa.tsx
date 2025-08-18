@@ -1898,6 +1898,15 @@ const ADNEmpresa = ({
               }} variant="outline" className="w-full">
                       Agregar objetivo
                     </Button>}
+                  
+                  {!showGeneratedObjectives && objectives.length > 0 && (
+                    <div className="flex justify-center">
+                      <Button onClick={generateObjectivesWithAI} variant="outline" size="sm">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Regenerar con ERA
+                      </Button>
+                    </div>
+                  )}
                 </div>}
 
               <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
@@ -1969,6 +1978,15 @@ const ADNEmpresa = ({
                       Ajusta la identidad visual y paleta de colores de tu marca.
                     </p>
                   </div>
+
+                  {brandingData.visual_identity && (
+                    <div className="flex justify-center mb-4">
+                      <Button onClick={generateBrandingWithAI} variant="outline" size="sm">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Regenerar con ERA
+                      </Button>
+                    </div>
+                  )}
 
                   <div className="space-y-4">
                     <div>

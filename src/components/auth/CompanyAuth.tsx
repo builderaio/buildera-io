@@ -225,6 +225,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             }
           }
 
+          /*
           // Llamar webhook de registro (sin bloquear el flujo)
           try {
             await supabase.functions.invoke('process-company-webhooks', {
@@ -241,7 +242,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             console.error("Error enviando webhook de registro:", webhookError);
             // No bloquear el registro si falla el webhook
           }
-          
+          */
           console.log("Usuario de empresa registrado exitosamente");
           
           // Limpiar campos de registro
@@ -250,7 +251,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           setCompanySize("");
           setIndustrySector("");
           setWebsiteUrl("");
-          setCountry("Colombia");
+          setCountry("");
           setConfirmPassword("");
         }
       } else {

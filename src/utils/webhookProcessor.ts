@@ -101,40 +101,8 @@ export const executeCompanyWebhooks = async (
   try {
     const promises = [];
 
-    // Si hay website_url, ejecutar todos los webhooks
-    if (websiteUrl && websiteUrl.trim() !== '') {
-      console.log('🌐 Ejecutando webhooks con URL:', websiteUrl);
-      
-      // get-data-by-url
-      promises.push(
-        supabase.functions.invoke('get-data-by-url', {
-          body: { 
-            url: websiteUrl,
-            user_id: userId 
-          }
-        }).then(response => ({
-          name: 'get-data-by-url',
-          success: !response.error,
-          error: response.error,
-          data: response.data
-        }))
-      );
-      
-      // get-brand-by-url
-      promises.push(
-        supabase.functions.invoke('get-brand-by-url', {
-          body: { 
-            url: websiteUrl,
-            user_id: userId 
-          }
-        }).then(response => ({
-          name: 'get-brand-by-url',
-          success: !response.error,
-          error: response.error,
-          data: response.data
-        }))
-      );
-    }
+    // Ejecutar webhooks solo si es necesario
+    console.log('🌐 Preparando webhooks para empresa:', companyName);
 
     // call-n8n-mybusiness-webhook (siempre se ejecuta)
     const companyInfo = `Empresa: ${companyName}${websiteUrl ? `, sitio web: ${websiteUrl}` : ''}${country ? `, país: ${country}` : ''}`;

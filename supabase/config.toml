@@ -18,11 +18,6 @@ verify_jwt = false
 [functions.call-buildera-webhook]
 verify_jwt = false
 
-[functions.get-data-by-url]
-verify_jwt = false
-
-[functions.get-brand-by-url]
-verify_jwt = false
 
 [functions.generate-company-content]
 verify_jwt = false

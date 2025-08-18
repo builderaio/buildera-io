@@ -216,6 +216,7 @@ const ADNEmpresa = ({
     try {
       // Obtener la empresa principal (id) desde company_members y luego hacer SELECT en companies
       if (!profile?.user_id) {
+        console.warn('No se puede obtener empresa: user_id no disponible en profile');
         setCompanyData(null);
         return;
       }
@@ -226,6 +227,7 @@ const ADNEmpresa = ({
       if (memberError) throw memberError;
       const companyId = membership?.company_id;
       if (!companyId) {
+        console.warn('No se encontró empresa principal para el usuario');
         setCompanyData(null);
         return;
       }
@@ -1235,10 +1237,16 @@ const ADNEmpresa = ({
     // Asegurar que obtenemos la info directamente desde la tabla companies (sin usar profile)
     if (!companyName || !websiteUrl) {
       try {
+        // Validar que tenemos user_id antes de hacer la consulta
+        if (!profile?.user_id) {
+          console.warn('No se puede obtener empresa: user_id no disponible en profile');
+          return;
+        }
+
         const {
           data: membership,
           error: memberError
-        } = await supabase.from('company_members').select('company_id').eq('user_id', profile?.user_id).eq('is_primary', true).maybeSingle();
+        } = await supabase.from('company_members').select('company_id').eq('user_id', profile.user_id).eq('is_primary', true).maybeSingle();
         if (!memberError && membership?.company_id) {
           const companyId = membership.company_id;
           const {

@@ -374,7 +374,7 @@ const CompanyLayout = ({
         </div>
           
         {/* Contenido del sidebar mejorado */}
-        <SidebarContent className="px-4 py-6 space-y-6 data-[state=collapsed]:px-2 data-[state=collapsed]:space-y-3 data-[state=collapsed]:hidden">
+        <SidebarContent className="px-4 py-6 space-y-6 data-[state=collapsed]:px-2 data-[state=collapsed]:space-y-3">
           {sidebarMenuItems.map((category, categoryIndex) => <SidebarGroup key={category.category} className="space-y-3 data-[state=collapsed]:space-y-2">
               <SidebarGroupLabel className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted-foreground tracking-wider flex items-center gap-2 border-b border-sidebar-border/30 pb-2 data-[state=collapsed]:hidden">
                 <span className="text-sm">{category.icon}</span>
@@ -511,7 +511,7 @@ const CompanyLayout = ({
         </header>
           
         <main className="flex-1 w-full h-full overflow-auto bg-background">
-          <div className="w-full h-full p-4 md:p-6 mx-[60px] my-0">
+          <div className="w-full h-full p-4 md:p-6">
             <Outlet />
           </div>
         </main>

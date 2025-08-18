@@ -94,8 +94,11 @@ const ADNEmpresa = ({
   const totalSteps = 7;
   useEffect(() => {
     if (profile?.user_id) {
-      console.log('🚀 Usuario detectado, iniciando carga de datos para:', profile.user_id);
-      fetchAllData();
+      console.log('🚀 Usuario detectado, iniciando carga básica de datos para:', profile.user_id);
+      // Solo cargar datos de empresa inicialmente
+      fetchCompanyData().then(() => {
+        setDataLoaded(true);
+      });
     }
   }, [profile?.user_id]);
 
@@ -125,18 +128,6 @@ const ADNEmpresa = ({
   useEffect(() => {
     checkOnboardingStatus();
   }, [companyData, strategyData, objectives, brandingData, socialConnections]);
-  const fetchAllData = async () => {
-    setDataLoaded(false);
-    console.log('📊 Iniciando carga de todos los datos...');
-
-    // Primero cargar datos de la empresa para obtener el ID
-    await fetchCompanyData();
-
-    // Luego cargar el resto de datos que dependen del company_id
-    await Promise.all([fetchStrategy(), fetchBranding(), fetchObjectives(), fetchSocialConnections()]);
-    console.log('✅ Carga de datos completada');
-    setDataLoaded(true);
-  };
 
   // Función para verificar si es primera vez del usuario
   const checkIfFirstTime = async () => {

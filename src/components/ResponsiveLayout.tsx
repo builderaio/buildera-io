@@ -393,33 +393,69 @@ const CompanyLayout = ({
                   low: isActive ? '' : 'hover:bg-sidebar/80'
                 };
                 return <SidebarMenuItem key={item.id}>
-                        <SidebarMenuButton isActive={isActive} disabled={isDisabled} className={`
-                            relative group transition-all duration-300 rounded-xl p-4 font-medium text-sm data-[state=collapsed]:p-3
-                            ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg border border-sidebar-accent/20 scale-[1.02]" : isDisabled ? "opacity-40 cursor-not-allowed text-sidebar-muted-foreground" : `text-sidebar-foreground ${priorityColors[item.priority]} hover:scale-[1.01] hover:shadow-md`}
-                            ${!isDisabled && !isActive ? 'hover:border hover:border-sidebar-border/40' : ''}
-                          `} onClick={isDisabled ? undefined : () => setActiveView(item.id)} tooltip={item.label}>
-                          <div className="flex items-center gap-4 w-full group-data-[state=collapsed]:justify-center">
-                            <div className={`p-2 rounded-lg transition-all duration-300 group-data-[state=collapsed]:p-1.5 ${isActive ? 'bg-sidebar-accent-foreground/10' : 'bg-sidebar-border/30 group-hover:bg-sidebar-border/50'}`}>
-                              <Icon className={`size-5 transition-all duration-300 group-data-[state=collapsed]:size-6 ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'}`} />
-                            </div>
-                            
-                            <div className="flex flex-col items-start flex-1 min-w-0 group-data-[state=collapsed]:hidden">
-                              <span className={`font-medium truncate transition-colors duration-300 ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'}`}>
-                                {item.label}
-                              </span>
-                              <span className={`text-xs truncate transition-colors duration-300 ${isActive ? 'text-sidebar-accent-foreground/70' : 'text-sidebar-muted-foreground'}`}>
-                                {item.description}
-                              </span>
-                            </div>
-                            
-                            {isDisabled && <div className="flex items-center justify-center w-6 h-6 bg-sidebar-border/40 rounded-md group-data-[state=collapsed]:hidden">
-                                <span className="text-xs">🔒</span>
-                              </div>}
-                            
-                            {isActive && <div className="w-1 h-8 bg-sidebar-accent-foreground rounded-full opacity-60 group-data-[state=collapsed]:hidden"></div>}
-                          </div>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>;
+  <SidebarMenuButton
+    isActive={isActive}
+    disabled={isDisabled}
+    className={`
+      relative group transition-all duration-300 rounded-xl p-4 font-medium text-sm
+      data-[state=collapsed]:h-10 data-[state=collapsed]:w-10 data-[state=collapsed]:!p-2 data-[state=collapsed]:mx-auto
+      ${
+        isActive
+          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg border border-sidebar-accent/20 scale-[1.02]"
+          : isDisabled
+          ? "opacity-40 cursor-not-allowed text-sidebar-muted-foreground"
+          : `text-sidebar-foreground ${priorityColors[item.priority]} hover:scale-[1.01] hover:shadow-md`
+      }
+      ${!isDisabled && !isActive ? "hover:border hover:border-sidebar-border/40" : ""}
+    `}
+    onClick={isDisabled ? undefined : () => setActiveView(item.id)}
+    tooltip={item.label}
+  >
+    <div className="flex items-center gap-4 w-full group-data-[state=collapsed]:justify-center">
+      {/* CORRECCIÓN 1: Se elimina el padding del contenedor del ícono cuando está colapsado */}
+      <div
+        className={`p-2 rounded-lg transition-all duration-300 group-data-[state=collapsed]:p-0 ${
+          isActive
+            ? "bg-sidebar-accent-foreground/10"
+            : "bg-sidebar-border/30 group-hover:bg-sidebar-border/50"
+        }`}
+      >
+        <Icon
+          className={`size-5 transition-all duration-300 group-data-[state=collapsed]:size-6 ${
+            isActive ? "text-sidebar-accent-foreground" : "text-sidebar-foreground"
+          }`}
+        />
+      </div>
+
+      <div className="flex flex-col items-start flex-1 min-w-0 group-data-[state=collapsed]:hidden">
+        <span
+          className={`font-medium truncate transition-colors duration-300 ${
+            isActive ? "text-sidebar-accent-foreground" : "text-sidebar-foreground"
+          }`}
+        >
+          {item.label}
+        </span>
+        <span
+          className={`text-xs truncate transition-colors duration-300 ${
+            isActive ? "text-sidebar-accent-foreground/70" : "text-sidebar-muted-foreground"
+          }`}
+        >
+          {item.description}
+        </span>
+      </div>
+
+      {isDisabled && (
+        <div className="flex items-center justify-center w-6 h-6 bg-sidebar-border/40 rounded-md group-data-[state=collapsed]:hidden">
+          <span className="text-xs">🔒</span>
+        </div>
+      )}
+
+      {isActive && (
+        <div className="w-1 h-8 bg-sidebar-accent-foreground rounded-full opacity-60 group-data-[state=collapsed]:hidden"></div>
+      )}
+    </div>
+  </SidebarMenuButton>
+</SidebarMenuItem>;
               })}
                 </SidebarMenu>
               </SidebarGroupContent>

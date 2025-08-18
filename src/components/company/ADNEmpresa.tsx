@@ -1449,83 +1449,9 @@ const ADNEmpresa = ({
       return;
     }
 
-    // Llamar webhook de n8n cuando se hace clic en "Comenzar configuración"
-    {
-      console.log('🔗 Ejecutando webhook n8n al comenzar configuración con datos:', {
-        companyName,
-        websiteUrl,
-        industry: companyData?.industry_sector
-      });
-      setLoading(true);
-      try {
-        const {
-          data,
-          error
-        } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
-          body: {
-            KEY: 'INFO',
-            COMPANY_INFO: JSON.stringify({
-              company_name: companyName,
-              website_url: websiteUrl,
-              country: companyData?.country || user?.user_metadata?.country || 'No especificado'
-            }),
-            ADDITIONAL_INFO: JSON.stringify({
-              industry: companyData?.industry_sector,
-              description: companyData?.descripcion_empresa || ''
-            })
-          }
-        });
-        if (error) {
-          console.error('Error ejecutando webhook n8n:', error);
-          toast({
-            title: "Error",
-            description: "No se pudo obtener información adicional de la empresa",
-            variant: "destructive"
-          });
-        } else {
-          console.log('✅ Webhook n8n ejecutado exitosamente:', data);
-
-          // Procesar directamente la respuesta del webhook sin función intermediaria
-          if (data?.success && data?.data && Array.isArray(data.data) && data.data.length > 0) {
-            console.log('📊 Procesando respuesta del webhook directamente...');
-            
-            try {
-              const success = await processWebhookResponse(
-                user?.id || profile?.user_id, 
-                data.data, 
-                companyData?.id
-              );
-
-              if (success) {
-                console.log('✅ Datos del webhook procesados y guardados correctamente');
-                
-                // Refrescar los datos de la empresa desde la base de datos
-                await fetchCompanyData();
-                
-                toast({
-                  title: "Información obtenida",
-                  description: "Se ha cargado información adicional de tu empresa"
-                });
-              } else {
-                console.error('Error procesando datos del webhook');
-              }
-            } catch (processError) {
-              console.error('Error procesando webhook:', processError);
-            }
-          }
-
-        }
-      } catch (error) {
-        console.error('Error en llamada al webhook n8n:', error);
-        toast({
-          title: "Error",
-          description: "Error al procesar información de la empresa",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
+    // Los webhooks de INFO ya se ejecutaron en el registro/primera vez
+    // Solo procedemos al siguiente paso
+    console.log('🔗 Comenzando configuración - webhooks INFO ya ejecutados previamente');
 
     // Avanzar al siguiente paso independientemente del resultado del webhook
     nextStepLocal();

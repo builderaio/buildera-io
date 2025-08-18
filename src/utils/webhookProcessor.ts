@@ -82,7 +82,7 @@ export const processWebhookResponse = async (userId: string, webhookData: any[],
   }
 };
 
-// Función para ejecutar múltiples webhooks de empresa
+// Función para ejecutar webhooks de empresa según el contexto
 export const executeCompanyWebhooks = async (
   userId: string, 
   companyName: string, 
@@ -90,72 +90,51 @@ export const executeCompanyWebhooks = async (
   country?: string, 
   triggerType: 'registration' | 'update' | 'first_save_social' = 'update'
 ) => {
-  console.log('🚀 Ejecutando webhooks de empresa directamente:', {
-    userId,
+  console.log('🚀 Ejecutando webhook INFO para empresa:', {
     companyName,
-    websiteUrl: websiteUrl ? 'present' : 'missing',
-    country,
-    triggerType
+    triggerType,
+    context: triggerType === 'registration' ? 'Registro de usuario' : 
+             triggerType === 'first_save_social' ? 'Primera configuración social' : 'Actualización'
   });
 
   try {
-    const promises = [];
-
-    // Ejecutar webhooks solo si es necesario
-    console.log('🌐 Preparando webhooks para empresa:', companyName);
-
-    // call-n8n-mybusiness-webhook (siempre se ejecuta)
+    // Solo ejecutar webhook INFO - los webhooks STRATEGY y BRAND se ejecutan en sus contextos específicos
     const companyInfo = `Empresa: ${companyName}${websiteUrl ? `, sitio web: ${websiteUrl}` : ''}${country ? `, país: ${country}` : ''}`;
     const additionalInfo = triggerType === 'registration' ? 'Nuevo registro' : 
                           triggerType === 'first_save_social' ? 'Primer guardado social' : 'Actualización';
 
-    promises.push(
-      supabase.functions.invoke('call-n8n-mybusiness-webhook', {
-        body: {
-          KEY: "INFO",
-          COMPANY_INFO: companyInfo,
-          ADDITIONAL_INFO: additionalInfo
-        }
-      }).then(response => ({
-        name: 'call-n8n-mybusiness-webhook',
-        success: !response.error,
-        error: response.error,
-        data: response.data
-      }))
-    );
-
-    // Ejecutar todos los webhooks en paralelo
-    const results = await Promise.allSettled(promises);
-    
-    // Procesar resultados
-    const webhookResults = results.map((result, index) => {
-      if (result.status === 'fulfilled') {
-        console.log(`✅ ${result.value.name} completado exitosamente`);
-        return result.value;
-      } else {
-        console.error(`❌ Error en webhook ${index}:`, result.reason);
-        return { name: `webhook-${index}`, success: false, error: result.reason };
+    const response = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
+      body: {
+        KEY: "INFO",
+        COMPANY_INFO: companyInfo,
+        ADDITIONAL_INFO: additionalInfo
       }
     });
 
-    // Buscar y procesar respuesta del webhook n8n
-    const n8nResult = webhookResults.find(r => r.name === 'call-n8n-mybusiness-webhook');
-    if (n8nResult?.success && n8nResult.data?.data) {
-      console.log('📊 Procesando respuesta del webhook n8n...');
-      const webhookData = Array.isArray(n8nResult.data.data) ? n8nResult.data.data : [n8nResult.data.data];
+    const webhookResult = {
+      name: 'call-n8n-mybusiness-webhook-INFO',
+      success: !response.error,
+      error: response.error,
+      data: response.data
+    };
+
+    // Procesar respuesta del webhook INFO si fue exitoso
+    if (webhookResult.success && webhookResult.data?.data) {
+      console.log('📊 Procesando respuesta del webhook INFO...');
+      const webhookData = Array.isArray(webhookResult.data.data) ? webhookResult.data.data : [webhookResult.data.data];
       
       if (webhookData.length > 0) {
         const processed = await processWebhookResponse(userId, webhookData);
         if (processed) {
-          console.log('✅ Datos del webhook procesados correctamente');
+          console.log('✅ Datos del webhook INFO procesados correctamente');
         }
       }
     }
 
-    console.log('🏁 Webhooks de empresa completados');
+    console.log('🏁 Webhook INFO completado');
     return {
-      success: true,
-      results: webhookResults
+      success: webhookResult.success,
+      results: [webhookResult]
     };
 
   } catch (error) {

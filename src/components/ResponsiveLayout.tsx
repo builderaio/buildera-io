@@ -397,8 +397,9 @@ const CompanyLayout = ({
     isActive={isActive}
     disabled={isDisabled}
     className={`
-      relative group transition-all duration-300 rounded-xl p-4 font-medium text-sm
-      data-[state=collapsed]:h-10 data-[state=collapsed]:w-10 data-[state=collapsed]:!p-2 data-[state=collapsed]:mx-auto
+      relative group transition-all duration-300 rounded-xl font-medium text-sm
+      data-[state=expanded]:p-4
+      data-[state=collapsed]:h-12 data-[state=collapsed]:w-12 data-[state=collapsed]:p-0 data-[state=collapsed]:mx-auto data-[state=collapsed]:flex data-[state=collapsed]:items-center data-[state=collapsed]:justify-center
       ${
         isActive
           ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg border border-sidebar-accent/20 scale-[1.02]"
@@ -409,24 +410,34 @@ const CompanyLayout = ({
       ${!isDisabled && !isActive ? "hover:border hover:border-sidebar-border/40" : ""}
     `}
     onClick={isDisabled ? undefined : () => setActiveView(item.id)}
-    tooltip={item.label}
+    tooltip={{
+      children: item.label,
+      className: "font-semibold"
+    }}
   >
+    {/* Contenedor del ícono y texto */}
     <div className="flex items-center gap-4 w-full group-data-[state=collapsed]:justify-center">
-      {/* CORRECCIÓN 1: Se elimina el padding del contenedor del ícono cuando está colapsado */}
+      
+      {/* Contenedor del ícono para controlar el fondo y padding */}
       <div
-        className={`p-2 rounded-lg transition-all duration-300 group-data-[state=collapsed]:p-0 ${
-          isActive
-            ? "bg-sidebar-accent-foreground/10"
-            : "bg-sidebar-border/30 group-hover:bg-sidebar-border/50"
-        }`}
+        className={`rounded-lg transition-all duration-300
+          group-data-[state=expanded]:p-2
+          group-data-[state=collapsed]:p-0
+          ${
+            isActive
+              ? "group-data-[state=expanded]:bg-sidebar-accent-foreground/10"
+              : "group-data-[state=expanded]:bg-sidebar-border/30 group-hover:bg-sidebar-border/50"
+          }`}
       >
         <Icon
-          className={`size-5 transition-all duration-300 group-data-[state=collapsed]:size-6 ${
-            isActive ? "text-sidebar-accent-foreground" : "text-sidebar-foreground"
-          }`}
+          className={`transition-all duration-300
+            group-data-[state=expanded]:size-5
+            group-data-[state=collapsed]:size-6
+            ${isActive ? "text-sidebar-accent-foreground" : "text-sidebar-foreground"}`}
         />
       </div>
 
+      {/* Contenedor del texto (oculto cuando está colapsado) */}
       <div className="flex flex-col items-start flex-1 min-w-0 group-data-[state=collapsed]:hidden">
         <span
           className={`font-medium truncate transition-colors duration-300 ${
@@ -445,13 +456,13 @@ const CompanyLayout = ({
       </div>
 
       {isDisabled && (
-        <div className="flex items-center justify-center w-6 h-6 bg-sidebar-border/40 rounded-md group-data-[state=collapsed]:hidden">
+        <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 bg-sidebar-border/40 rounded-full group-data-[state=collapsed]:hidden">
           <span className="text-xs">🔒</span>
         </div>
       )}
 
       {isActive && (
-        <div className="w-1 h-8 bg-sidebar-accent-foreground rounded-full opacity-60 group-data-[state=collapsed]:hidden"></div>
+        <div className="absolute right-2 w-1 h-8 bg-sidebar-accent-foreground rounded-full opacity-60 group-data-[state=collapsed]:hidden"></div>
       )}
     </div>
   </SidebarMenuButton>

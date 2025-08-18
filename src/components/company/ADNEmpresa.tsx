@@ -1329,16 +1329,34 @@ const ADNEmpresa = ({
           const {
             data: freshCompany,
             error: companyError
-          } = await supabase.from('companies').select('name,website_url').eq('id', companyId).maybeSingle();
+          } = await supabase.from('companies').select('name,website_url,description').eq('id', companyId).maybeSingle();
           if (!companyError && freshCompany) {
             companyName = freshCompany.name;
             websiteUrl = freshCompany.website_url;
+            const existingDesc = (freshCompany.description || '').trim();
+            if (existingDesc) {
+              // Ya existe descripción, saltar webhook
+              setCompanyData(prev => prev ? { ...prev, description: freshCompany.description } : prev);
+              setTempDescription(freshCompany.description);
+              toast({ title: 'Información encontrada', description: 'Ya existe una descripción, omitimos la llamada al webhook.' });
+              nextStepLocal();
+              return;
+            }
           }
         }
       } catch (e) {
         console.warn('No se pudo refrescar datos de companies:', e);
       }
     }
+
+    // Si en estado ya hay descripción, también omitir webhook
+    if ((companyData?.description || '').trim()) {
+      toast({ title: 'Información encontrada', description: 'Ya existe una descripción, omitimos la llamada al webhook.' });
+      setTempDescription(companyData!.description);
+      nextStepLocal();
+      return;
+    }
+
     // Normalizar valores
     companyName = companyName?.trim();
     websiteUrl = websiteUrl?.trim();

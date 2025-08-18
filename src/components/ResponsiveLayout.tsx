@@ -5,29 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  useSidebar,
-} from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
 import ThemeSelector from '@/components/ThemeSelector';
 import { SmartNotifications } from '@/components/ui/smart-notifications';
 import { useIsMobile } from '@/hooks/use-mobile';
-
 interface Profile {
   id: string;
   user_id: string;
@@ -39,47 +23,46 @@ interface Profile {
   company_size?: string;
   industry_sector?: string;
 }
-
 const ResponsiveLayout = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  
   useAutoLogout();
-
   useEffect(() => {
     checkAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         navigate('/auth');
       }
     });
-
     return () => subscription.unsubscribe();
   }, [navigate]);
-
   const checkAuth = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) {
         navigate('/auth');
         return;
       }
-
-      const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
+      const {
+        data: profileData,
+        error
+      } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
       if (error) {
         throw error;
       }
-
       setProfile(profileData);
     } catch (error) {
       console.error('Error checking auth:', error);
@@ -88,29 +71,26 @@ const ResponsiveLayout = () => {
       setLoading(false);
     }
   };
-
   const handleSignOut = async () => {
     try {
-      Object.keys(localStorage).forEach((key) => {
+      Object.keys(localStorage).forEach(key => {
         if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
           localStorage.removeItem(key);
         }
       });
-
-      await supabase.auth.signOut({ scope: 'global' });
-      
+      await supabase.auth.signOut({
+        scope: 'global'
+      });
       toast({
         title: "Sesión cerrada",
-        description: "Has cerrado sesión correctamente",
+        description: "Has cerrado sesión correctamente"
       });
-
       window.location.href = '/auth';
     } catch (error) {
       console.error('Error signing out:', error);
       window.location.href = '/auth';
     }
   };
-
   const getActiveView = () => {
     const path = location.pathname;
     if (path.includes('/agents')) return 'mis-agentes';
@@ -125,7 +105,6 @@ const ResponsiveLayout = () => {
     if (path.includes('/configuracion')) return 'configuracion';
     return 'mando-central';
   };
-
   const setActiveView = (view: string) => {
     const routes: Record<string, string> = {
       'mando-central': '/company-dashboard',
@@ -138,33 +117,27 @@ const ResponsiveLayout = () => {
       'academia-buildera': '/company-dashboard/academia-buildera',
       'expertos': '/company-dashboard/expertos',
       'configuracion': '/company-dashboard/configuracion',
-      'perfil': '/profile',
+      'perfil': '/profile'
     };
-    
     if (routes[view]) {
       navigate(routes[view]);
     }
   };
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+    return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Cargando...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!profile) {
     return null;
   }
 
   // Layout simplificado para desarrolladores y expertos
   if (profile.user_type !== 'company') {
-    return (
-      <div className="min-h-screen bg-background">
+    return <div className="min-h-screen bg-background">
         <header className="bg-background border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
@@ -215,66 +188,60 @@ const ResponsiveLayout = () => {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Outlet />
         </main>
-      </div>
-    );
+      </div>;
   }
 
   // Layout con sidebar para empresas
-  return (
-    <SidebarProvider>
+  return <SidebarProvider>
       <CompanyLayout profile={profile} handleSignOut={handleSignOut} />
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 };
-
-const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSignOut: () => void }) => {
+const CompanyLayout = ({
+  profile,
+  handleSignOut
+}: {
+  profile: Profile;
+  handleSignOut: () => void;
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { setOpenMobile } = useSidebar();
-  
-  const isProfileIncomplete = !profile?.company_name || 
-                               profile.company_name === 'Mi Negocio' ||
-                               !profile?.company_size ||
-                               !profile?.industry_sector ||
-                               !profile?.full_name;
-
+  const {
+    setOpenMobile
+  } = useSidebar();
+  const isProfileIncomplete = !profile?.company_name || profile.company_name === 'Mi Negocio' || !profile?.company_size || !profile?.industry_sector || !profile?.full_name;
   const getActiveView = () => {
     const path = location.pathname;
     const searchParams = new URLSearchParams(location.search);
     const viewParam = searchParams.get('view');
-    
+
     // Prioridad al parámetro view en la URL
     if (viewParam) {
       console.log('Active view from URL param:', viewParam);
       return viewParam;
     }
-    
+
     // Rutas específicas que no usan query params
     if (path.includes('/company/agents')) return 'mis-agentes';
     if (path.includes('/marketplace/agents')) return 'marketplace';
     if (path.includes('/profile')) return 'profile';
-    
+
     // Por defecto mando central si estamos en company-dashboard
     if (path.includes('/company-dashboard')) {
       console.log('Default view: mando-central');
       return 'mando-central';
     }
-    
     return 'mando-central';
   };
-
   const setActiveView = (view: string) => {
     console.log('setActiveView called with:', view);
-    
     if (isProfileIncomplete && view !== "adn-empresa") {
       console.log('Profile incomplete, redirecting to adn-empresa');
       return;
     }
-    
     const routes: Record<string, string> = {
       'mando-central': '/company-dashboard',
-      'adn-empresa': '/company-dashboard?view=adn-empresa', 
+      'adn-empresa': '/company-dashboard?view=adn-empresa',
       'base-conocimiento': '/company-dashboard?view=base-conocimiento',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
       'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
@@ -283,15 +250,13 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       'configuracion': '/company-dashboard?view=configuracion',
       'mis-agentes': '/company/agents',
       'marketplace': '/marketplace/agents',
-      'profile': '/profile',
+      'profile': '/profile'
     };
-    
     const targetRoute = routes[view];
     console.log('Navigating to:', targetRoute);
-    
     if (targetRoute) {
       navigate(targetRoute);
-      
+
       // Cerrar sidebar en móvil después de navegar
       if (isMobile) {
         setTimeout(() => {
@@ -304,122 +269,91 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   };
 
   // Arquitectura de información reorganizada con mejor jerarquía
-  const sidebarMenuItems = [
-    {
-      category: "Central", 
-      icon: "🎯",
-      items: [
-        { 
-          id: "mando-central", 
-          label: "Dashboard", 
-          icon: Activity, 
-          description: "Vista general y KPIs",
-          priority: "high"
-        },
-      ]
-    },
-    {
-      category: "Mi Empresa",
-      icon: "🏢", 
-      items: [
-        { 
-          id: "adn-empresa", 
-          label: "Configuración Empresarial",
-          icon: Building, 
-          description: "Datos y configuración",
-          priority: "high"
-        },
-        { 
-          id: "base-conocimiento", 
-          label: "Base de Conocimiento", 
-          icon: User, 
-          description: "Gestión de información",
-          priority: "medium"
-        },
-      ]
-    },
-    {
-      category: "Marketing & Ventas",
-      icon: "📈", 
-      items: [
-        { 
-          id: "marketing-hub", 
-          label: "Marketing Hub", 
-          icon: Bell, 
-          description: "Campañas y automatización",
-          priority: "high"
-        },
-        { 
-          id: "inteligencia-competitiva", 
-          label: "Análisis Competitivo", 
-          icon: Search, 
-          description: "Inteligencia de mercado",
-          priority: "medium"
-        },
-      ]
-    },
-    {
-      category: "Agentes IA",
-      icon: "🤖", 
-      items: [
-        { 
-          id: "mis-agentes", 
-          label: "Mis Agentes", 
-          icon: Bot, 
-          description: "Gestionar agentes creados",
-          priority: "medium"
-        },
-        { 
-          id: "marketplace", 
-          label: "Marketplace", 
-          icon: Store, 
-          description: "Descubrir nuevos agentes",
-          priority: "medium"
-        },
-      ]
-    },
-    {
-      category: "Aprendizaje",
-      icon: "🎓",
-      items: [
-        { 
-          id: "academia-buildera", 
-          label: "Academia Buildera", 
-          icon: GraduationCap, 
-          description: "Cursos y certificaciones",
-          priority: "low"
-        },
-        { 
-          id: "expertos", 
-          label: "Red de Expertos", 
-          icon: Users, 
-          description: "Conectar con especialistas",
-          priority: "low"
-        },
-      ]
-    }
-  ];
-
+  const sidebarMenuItems = [{
+    category: "Central",
+    icon: "🎯",
+    items: [{
+      id: "mando-central",
+      label: "Dashboard",
+      icon: Activity,
+      description: "Vista general y KPIs",
+      priority: "high"
+    }]
+  }, {
+    category: "Mi Empresa",
+    icon: "🏢",
+    items: [{
+      id: "adn-empresa",
+      label: "Configuración Empresarial",
+      icon: Building,
+      description: "Datos y configuración",
+      priority: "high"
+    }, {
+      id: "base-conocimiento",
+      label: "Base de Conocimiento",
+      icon: User,
+      description: "Gestión de información",
+      priority: "medium"
+    }]
+  }, {
+    category: "Marketing & Ventas",
+    icon: "📈",
+    items: [{
+      id: "marketing-hub",
+      label: "Marketing Hub",
+      icon: Bell,
+      description: "Campañas y automatización",
+      priority: "high"
+    }, {
+      id: "inteligencia-competitiva",
+      label: "Análisis Competitivo",
+      icon: Search,
+      description: "Inteligencia de mercado",
+      priority: "medium"
+    }]
+  }, {
+    category: "Agentes IA",
+    icon: "🤖",
+    items: [{
+      id: "mis-agentes",
+      label: "Mis Agentes",
+      icon: Bot,
+      description: "Gestionar agentes creados",
+      priority: "medium"
+    }, {
+      id: "marketplace",
+      label: "Marketplace",
+      icon: Store,
+      description: "Descubrir nuevos agentes",
+      priority: "medium"
+    }]
+  }, {
+    category: "Aprendizaje",
+    icon: "🎓",
+    items: [{
+      id: "academia-buildera",
+      label: "Academia Buildera",
+      icon: GraduationCap,
+      description: "Cursos y certificaciones",
+      priority: "low"
+    }, {
+      id: "expertos",
+      label: "Red de Expertos",
+      icon: Users,
+      description: "Conectar con especialistas",
+      priority: "low"
+    }]
+  }];
   const activeView = getActiveView();
-  
   console.log('Current activeView:', activeView);
   console.log('Current URL:', location.pathname + location.search);
-
-  return (
-    <div className="min-h-screen flex w-full bg-background">
+  return <div className="min-h-screen flex w-full bg-background">
       <Sidebar variant="sidebar" collapsible="icon" className="w-80 data-[state=collapsed]:w-16 border-r border-sidebar-border bg-sidebar shadow-xl z-40">
         {/* Header mejorado - oculto cuando está colapsado */}
         <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95 data-[state=collapsed]:hidden">
-          <div 
-            className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all duration-300 group"
-            onClick={() => setActiveView('mando-central')}
-          >
+          <div className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all duration-300 group" onClick={() => setActiveView('mando-central')}>
             <div className="flex aspect-square size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105">
-              <img 
-                src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
-                alt="Buildera Logo" 
-                className="size-7 object-contain filter brightness-0 invert"
-              />
+              <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-7 object-contain filter brightness-0 invert" />
             </div>
             <div className="grid flex-1 text-left leading-tight">
               <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">
@@ -435,18 +369,13 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
         {/* Logo colapsado - solo visible cuando está colapsado */}
         <div className="hidden data-[state=collapsed]:flex items-center justify-center p-4 border-b border-sidebar-border/30">
           <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-lg">
-            <img 
-              src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
-              alt="Buildera Logo" 
-              className="size-5 object-contain filter brightness-0 invert"
-            />
+            <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-5 object-contain filter brightness-0 invert" />
           </div>
         </div>
           
         {/* Contenido del sidebar mejorado */}
         <SidebarContent className="px-4 py-6 space-y-6 data-[state=collapsed]:px-2 data-[state=collapsed]:space-y-3">
-          {sidebarMenuItems.map((category, categoryIndex) => (
-            <SidebarGroup key={category.category} className="space-y-3 data-[state=collapsed]:space-y-2">
+          {sidebarMenuItems.map((category, categoryIndex) => <SidebarGroup key={category.category} className="space-y-3 data-[state=collapsed]:space-y-2">
               <SidebarGroupLabel className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted-foreground tracking-wider flex items-center gap-2 border-b border-sidebar-border/30 pb-2 data-[state=collapsed]:hidden">
                 <span className="text-sm">{category.icon}</span>
                 {category.category}
@@ -454,85 +383,52 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
               
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-2 data-[state=collapsed]:space-y-1">
-                  {category.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeView === item.id;
-                    const isDisabled = isProfileIncomplete && item.id !== "adn-empresa";
-                    const priorityColors = {
-                      high: isActive ? '' : 'hover:bg-primary/5',
-                      medium: isActive ? '' : 'hover:bg-sidebar-accent/30',
-                      low: isActive ? '' : 'hover:bg-sidebar/80'
-                    };
-                    
-                    return (
-                      <SidebarMenuItem key={item.id}>
-                        <SidebarMenuButton
-                          isActive={isActive}
-                          disabled={isDisabled}
-                          className={`
+                  {category.items.map(item => {
+                const Icon = item.icon;
+                const isActive = activeView === item.id;
+                const isDisabled = isProfileIncomplete && item.id !== "adn-empresa";
+                const priorityColors = {
+                  high: isActive ? '' : 'hover:bg-primary/5',
+                  medium: isActive ? '' : 'hover:bg-sidebar-accent/30',
+                  low: isActive ? '' : 'hover:bg-sidebar/80'
+                };
+                return <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton isActive={isActive} disabled={isDisabled} className={`
                             relative group transition-all duration-300 rounded-xl p-4 font-medium text-sm data-[state=collapsed]:p-3
-                            ${isActive 
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg border border-sidebar-accent/20 scale-[1.02]" 
-                              : isDisabled
-                              ? "opacity-40 cursor-not-allowed text-sidebar-muted-foreground"
-                              : `text-sidebar-foreground ${priorityColors[item.priority]} hover:scale-[1.01] hover:shadow-md`
-                            }
+                            ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg border border-sidebar-accent/20 scale-[1.02]" : isDisabled ? "opacity-40 cursor-not-allowed text-sidebar-muted-foreground" : `text-sidebar-foreground ${priorityColors[item.priority]} hover:scale-[1.01] hover:shadow-md`}
                             ${!isDisabled && !isActive ? 'hover:border hover:border-sidebar-border/40' : ''}
-                          `}
-                          onClick={isDisabled ? undefined : () => setActiveView(item.id)}
-                          tooltip={item.label}
-                        >
+                          `} onClick={isDisabled ? undefined : () => setActiveView(item.id)} tooltip={item.label}>
                           <div className="flex items-center gap-4 w-full group-data-[state=collapsed]:justify-center">
-                            <div className={`p-2 rounded-lg transition-all duration-300 group-data-[state=collapsed]:p-1.5 ${
-                              isActive 
-                                ? 'bg-sidebar-accent-foreground/10' 
-                                : 'bg-sidebar-border/30 group-hover:bg-sidebar-border/50'
-                            }`}>
-                              <Icon className={`size-5 transition-all duration-300 group-data-[state=collapsed]:size-6 ${
-                                isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'
-                              }`} />
+                            <div className={`p-2 rounded-lg transition-all duration-300 group-data-[state=collapsed]:p-1.5 ${isActive ? 'bg-sidebar-accent-foreground/10' : 'bg-sidebar-border/30 group-hover:bg-sidebar-border/50'}`}>
+                              <Icon className={`size-5 transition-all duration-300 group-data-[state=collapsed]:size-6 ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'}`} />
                             </div>
                             
                             <div className="flex flex-col items-start flex-1 min-w-0 group-data-[state=collapsed]:hidden">
-                              <span className={`font-medium truncate transition-colors duration-300 ${
-                                isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'
-                              }`}>
+                              <span className={`font-medium truncate transition-colors duration-300 ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'}`}>
                                 {item.label}
                               </span>
-                              <span className={`text-xs truncate transition-colors duration-300 ${
-                                isActive ? 'text-sidebar-accent-foreground/70' : 'text-sidebar-muted-foreground'
-                              }`}>
+                              <span className={`text-xs truncate transition-colors duration-300 ${isActive ? 'text-sidebar-accent-foreground/70' : 'text-sidebar-muted-foreground'}`}>
                                 {item.description}
                               </span>
                             </div>
                             
-                            {isDisabled && (
-                              <div className="flex items-center justify-center w-6 h-6 bg-sidebar-border/40 rounded-md group-data-[state=collapsed]:hidden">
+                            {isDisabled && <div className="flex items-center justify-center w-6 h-6 bg-sidebar-border/40 rounded-md group-data-[state=collapsed]:hidden">
                                 <span className="text-xs">🔒</span>
-                              </div>
-                            )}
+                              </div>}
                             
-                            {isActive && (
-                              <div className="w-1 h-8 bg-sidebar-accent-foreground rounded-full opacity-60 group-data-[state=collapsed]:hidden"></div>
-                            )}
+                            {isActive && <div className="w-1 h-8 bg-sidebar-accent-foreground rounded-full opacity-60 group-data-[state=collapsed]:hidden"></div>}
                           </div>
                         </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
+                      </SidebarMenuItem>;
+              })}
                 </SidebarMenu>
               </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
+            </SidebarGroup>)}
         </SidebarContent>
         
         {/* Footer del sidebar con configuración */}
         <SidebarFooter className="p-4 border-t border-sidebar-border/30 bg-sidebar/50 data-[state=collapsed]:p-2">
-          <SidebarMenuButton
-            onClick={() => setActiveView('configuracion')}
-            className="flex items-center gap-3 p-3 rounded-xl bg-sidebar-border/20 hover:bg-sidebar-border/40 transition-all duration-300 text-sidebar-foreground hover:text-sidebar-accent hover:scale-[1.02] group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:p-2"
-            tooltip="Configuración"
-          >
+          <SidebarMenuButton onClick={() => setActiveView('configuracion')} className="flex items-center gap-3 p-3 rounded-xl bg-sidebar-border/20 hover:bg-sidebar-border/40 transition-all duration-300 text-sidebar-foreground hover:text-sidebar-accent hover:scale-[1.02] group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:p-2" tooltip="Configuración">
             <div className="p-2 rounded-lg bg-sidebar-border/30 group-data-[state=collapsed]:p-1.5">
               <Settings className="size-4 text-sidebar-muted-foreground group-data-[state=collapsed]:size-5" />
             </div>
@@ -594,27 +490,17 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                     </div>
                   </div>
                   <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem 
-                    onClick={() => setActiveView('profile')}
-                    className="cursor-pointer hover:bg-accent focus:bg-accent"
-                  >
+                  <DropdownMenuItem onClick={() => setActiveView('profile')} className="cursor-pointer hover:bg-accent focus:bg-accent">
                     <User className="mr-2 h-4 w-4" />
                     <span>Mi Perfil</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setActiveView('configuracion')}
-                    disabled={isProfileIncomplete}
-                    className={`cursor-pointer ${isProfileIncomplete ? "opacity-50 cursor-not-allowed" : "hover:bg-accent focus:bg-accent"}`}
-                  >
+                  <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={isProfileIncomplete} className={`cursor-pointer ${isProfileIncomplete ? "opacity-50 cursor-not-allowed" : "hover:bg-accent focus:bg-accent"}`}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Administración</span>
                     {isProfileIncomplete && <span className="ml-auto text-xs">🔒</span>}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem 
-                    onClick={handleSignOut}
-                    className="cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10 text-destructive"
-                  >
+                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10 text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Cerrar sesión</span>
                   </DropdownMenuItem>
@@ -625,13 +511,11 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
         </header>
           
         <main className="flex-1 w-full h-full overflow-auto bg-background">
-          <div className="w-full h-full p-4 md:p-6">
+          <div className="w-full h-full p-4 md:p-6 mx-[60px] my-0">
             <Outlet />
           </div>
         </main>
       </SidebarInset>
-      </div>
-  );
+      </div>;
 };
-
 export default ResponsiveLayout;

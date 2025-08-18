@@ -74,33 +74,34 @@ const AdminCompanies = () => {
 
       if (companiesError) throw companiesError;
 
-      // Intentar obtener miembros con perfiles solo si hay sesión de Supabase (admin)
-      let membersData: any[] = [];
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData?.session?.user) {
-          const { data, error } = await supabase.rpc('get_company_members_with_profiles');
-          if (error) {
-            console.warn('RPC get_company_members_with_profiles blocked:', error.message);
-          } else {
-            membersData = data || [];
-          }
-        } else {
-          console.info('Sin sesión de Supabase: omitiendo RPC admin');
-        }
-      } catch (rpcCheckErr) {
-        console.warn('Omitiendo RPC admin por error de sesión:', rpcCheckErr);
+      // Obtener miembros de empresas
+      const { data: membersData, error: membersError } = await supabase
+        .from('company_members')
+        .select('company_id, user_id, role');
+
+      // Obtener perfiles de usuarios
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email');
+
+      if (membersError) {
+        console.warn('Error obteniendo miembros:', membersError);
+      }
+
+      if (profilesError) {
+        console.warn('Error obteniendo perfiles:', profilesError);
       }
 
       const companiesWithMembers = companiesData?.map(company => {
         const companyMembers = membersData?.filter(m => m.company_id === company.id) || [];
         const ownerMember = companyMembers.find(m => m.role === 'owner');
+        const ownerProfile = profilesData?.find(p => p.user_id === ownerMember?.user_id);
         
         return {
           ...company,
           member_count: companyMembers.length,
-          owner_name: ownerMember?.full_name || 'Sin propietario',
-          owner_email: ownerMember?.email || '',
+          owner_name: ownerProfile?.full_name || 'Sin propietario',
+          owner_email: ownerProfile?.email || '',
         };
       }) || [];
 

@@ -107,6 +107,23 @@ const ADNEmpresa = ({
     }
   }, [profile?.user_id, companyData?.id]);
 
+  // CRÍTICO: Recargar datos si no están disponibles y tenemos el perfil
+  useEffect(() => {
+    console.log('🔄 Verificando si necesitamos recargar datos...', {
+      hasProfile: !!profile?.user_id,
+      hasCompanyData: !!companyData?.id,
+      dataLoaded,
+      hasStrategy: !!strategyData.vision,
+      hasObjectives: objectives.length > 0,
+      hasBranding: !!brandingData.visual_identity
+    });
+    
+    if (profile?.user_id && !dataLoaded && (!companyData?.id || (!strategyData.vision && !objectives.length && !brandingData.visual_identity))) {
+      console.log('🔄 Recargando datos debido a estado incompleto...');
+      fetchAllData();
+    }
+  }, [profile?.user_id, companyData?.id, dataLoaded, strategyData.vision, objectives.length, brandingData.visual_identity]);
+
   // Obtener usuario actual
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -130,14 +147,22 @@ const ADNEmpresa = ({
     setDataLoaded(false);
     console.log('📊 Iniciando carga de todos los datos...');
     
-    // Primero cargar datos de la empresa para obtener el ID
-    await fetchCompanyData();
-    
-    // Luego cargar el resto de datos que dependen del company_id
-    await Promise.all([fetchStrategy(), fetchBranding(), fetchObjectives(), fetchSocialConnections()]);
-    
-    console.log('✅ Carga de datos completada');
-    setDataLoaded(true);
+    try {
+      // Primero cargar datos de la empresa para obtener el ID
+      await fetchCompanyData();
+      
+      // Esperar a que se actualice el estado antes de continuar
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Luego cargar el resto de datos que dependen del company_id
+      await Promise.all([fetchStrategy(), fetchBranding(), fetchObjectives(), fetchSocialConnections()]);
+      
+      console.log('✅ Carga de datos completada');
+    } catch (error) {
+      console.error('❌ Error en fetchAllData:', error);
+    } finally {
+      setDataLoaded(true);
+    }
   };
 
   // Función para verificar si es primera vez del usuario
@@ -287,17 +312,19 @@ const ADNEmpresa = ({
   };
   const fetchStrategy = async () => {
     try {
-      if (!companyData?.id) {
+      // Buscar usando el company_id del estado actual o del perfil
+      const companyId = companyData?.id;
+      if (!companyId) {
         console.log('🔍 fetchStrategy: No company ID available');
         return;
       }
       
-      console.log('🔍 fetchStrategy: Buscando estrategia para company_id:', companyData.id);
+      console.log('🔍 fetchStrategy: Buscando estrategia para company_id:', companyId);
       
       const {
         data,
         error
-      } = await supabase.from('company_strategy').select('*').eq('company_id', companyData.id).order('created_at', {
+      } = await supabase.from('company_strategy').select('*').eq('company_id', companyId).order('created_at', {
         ascending: false
       }).limit(1);
       if (error) throw error;
@@ -315,6 +342,12 @@ const ADNEmpresa = ({
         setStrategyData(strategyToSet);
       } else {
         console.log('🔍 fetchStrategy: No se encontró estrategia existente para la empresa');
+        // Resetear a valores vacíos si no hay datos
+        setStrategyData({
+          vision: "",
+          mission: "",
+          propuesta_valor: ""
+        });
       }
     } catch (error: any) {
       console.error('❌ fetchStrategy: Error fetching strategy:', error);
@@ -349,6 +382,14 @@ const ADNEmpresa = ({
         setBrandingData(brandingToSet);
       } else {
         console.log('🔍 fetchBranding: No se encontró branding existente para la empresa');
+        // Resetear a valores vacíos si no hay datos
+        setBrandingData({
+          primary_color: "",
+          secondary_color: "",
+          complementary_color_1: "",
+          complementary_color_2: "",
+          visual_identity: ""
+        });
       }
     } catch (error: any) {
       console.error('❌ fetchBranding: Error fetching branding:', error);

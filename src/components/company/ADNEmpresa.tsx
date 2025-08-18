@@ -1319,111 +1319,40 @@ const ADNEmpresa = ({
         } else {
           console.log('✅ Webhook n8n ejecutado exitosamente:', data);
 
-          // Procesar la respuesta y actualizar la empresa si hay datos útiles
+          // Llamar a la función process-company-webhooks para procesar y guardar los datos
           if (data?.success && data?.data && Array.isArray(data.data) && data.data.length > 0) {
             console.log('📊 Procesando respuesta del webhook...');
-            const responseArray = data.data[0]?.response || [];
+            
+            try {
+              const { error: processError } = await supabase.functions.invoke('process-company-webhooks', {
+                body: {
+                  user_id: user?.id || profile?.user_id,
+                  company_name: companyName,
+                  website_url: websiteUrl,
+                  country: companyData?.country || user?.user_metadata?.country || 'No especificado',
+                  trigger_type: 'update',
+                  webhook_data: data.data
+                }
+              });
 
-            // Extraer todos los datos de la respuesta
-            const descripcionItem = responseArray.find((item: any) => item.key === 'descripcion_empresa');
-            const industriaItem = responseArray.find((item: any) => item.key === 'industria_principal');
-            const facebookItem = responseArray.find((item: any) => item.key === 'facebook');
-            const twitterItem = responseArray.find((item: any) => item.key === 'twitter');
-            const linkedinItem = responseArray.find((item: any) => item.key === 'linkedin');
-            const instagramItem = responseArray.find((item: any) => item.key === 'instagram');
-            const youtubeItem = responseArray.find((item: any) => item.key === 'youtube');
-            const tiktokItem = responseArray.find((item: any) => item.key === 'tiktok');
-
-            // Validar si hay información útil
-            const hasUsefulInfo = (value: string) => {
-              return value && value !== 'No se encontró información' && value !== 'No tiene' && !value.includes('No se encontró información específica') && !value.includes('No se pudo determinar') && !value.includes('[URL de') &&
-              // Evitar plantillas sin completar
-              !value.includes('[Nombre del') && !value.includes('[Descripción');
-            };
-
-            // Preparar datos para actualizar
-            const updateData: any = {
-              webhook_data: data.data,
-              webhook_processed_at: new Date().toISOString()
-            };
-
-            // Solo actualizar campos que tienen información válida
-            if (descripcionItem && hasUsefulInfo(descripcionItem.value)) {
-              updateData.descripcion_empresa = descripcionItem.value;
-            }
-            if (industriaItem && hasUsefulInfo(industriaItem.value)) {
-              updateData.industria_principal = industriaItem.value;
-            }
-            if (facebookItem && hasUsefulInfo(facebookItem.value)) {
-              updateData.facebook_url = facebookItem.value;
-            }
-            if (twitterItem && hasUsefulInfo(twitterItem.value)) {
-              updateData.twitter_url = twitterItem.value;
-            }
-            if (linkedinItem && hasUsefulInfo(linkedinItem.value)) {
-              updateData.linkedin_url = linkedinItem.value;
-            }
-            if (instagramItem && hasUsefulInfo(instagramItem.value)) {
-              updateData.instagram_url = instagramItem.value;
-            }
-            if (youtubeItem && hasUsefulInfo(youtubeItem.value)) {
-              updateData.youtube_url = youtubeItem.value;
-            }
-            if (tiktokItem && hasUsefulInfo(tiktokItem.value)) {
-              updateData.tiktok_url = tiktokItem.value;
-            }
-
-            // Actualizar la empresa con todos los datos obtenidos
-            if (companyData?.id) {
-              const {
-                error: updateError
-              } = await supabase.from('companies').update(updateData).eq('id', companyData.id);
-            if (!updateError) {
-              // Actualizar el estado local
-              setCompanyData(prev => ({
-                ...prev,
-                ...updateData
-              }));
-
-              // Actualizar estados específicos
-              if (updateData.descripcion_empresa) {
-                setTempDescription(updateData.descripcion_empresa);
-                setEditingDescription(false); // Desactivar modo de edición para mostrar la descripción obtenida
-              }
-
-              // Actualizar conexiones sociales si se encontraron
-              const newSocialConnections = {
-                ...socialConnections
-              };
-              if (updateData.facebook_url) newSocialConnections.facebook = updateData.facebook_url;
-              if (updateData.twitter_url) newSocialConnections.twitter = updateData.twitter_url;
-              if (updateData.linkedin_url) newSocialConnections.linkedin = updateData.linkedin_url;
-              if (updateData.instagram_url) newSocialConnections.instagram = updateData.instagram_url;
-              if (updateData.youtube_url) newSocialConnections.youtube = updateData.youtube_url;
-              if (updateData.tiktok_url) newSocialConnections.tiktok = updateData.tiktok_url;
-              setSocialConnections(newSocialConnections);
-              console.log('✅ Información completa de empresa actualizada:', updateData);
-
-              // Mostrar mensaje informativo sobre qué se encontró
-              const foundItems = [];
-              if (updateData.descripcion_empresa) foundItems.push('descripción');
-              if (updateData.industria_principal) foundItems.push('industria');
-              if (updateData.facebook_url || updateData.twitter_url || updateData.linkedin_url || updateData.instagram_url || updateData.youtube_url || updateData.tiktok_url) {
-                foundItems.push('redes sociales');
-              }
-              if (foundItems.length > 0) {
+              if (processError) {
+                console.error('Error procesando webhook:', processError);
+              } else {
+                console.log('✅ Datos del webhook procesados y guardados correctamente');
+                
+                // Refrescar los datos de la empresa desde la base de datos
+                await fetchCompanyData();
+                
                 toast({
                   title: "Información obtenida",
-                  description: `Se ha cargado: ${foundItems.join(', ')} de tu empresa`
+                  description: "Se ha cargado información adicional de tu empresa"
                 });
               }
-              } else {
-                console.error('Error actualizando empresa:', updateError);
-              }
-            } else {
-              console.log('No se puede actualizar empresa: companyData no disponible');
+            } catch (processError) {
+              console.error('Error llamando process-company-webhooks:', processError);
             }
           }
+
         }
       } catch (error) {
         console.error('Error en llamada al webhook n8n:', error);

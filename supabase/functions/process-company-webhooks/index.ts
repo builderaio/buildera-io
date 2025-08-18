@@ -47,6 +47,12 @@ const processWebhookResponse = async (supabase: any, userId: string, webhookData
         case 'instagram':
           updateData.instagram_url = item.value !== 'No tiene' ? item.value : null;
           break;
+        case 'youtube':
+          updateData.youtube_url = item.value !== 'No tiene' ? item.value : null;
+          break;
+        case 'tiktok':
+          updateData.tiktok_url = item.value !== 'No tiene' ? item.value : null;
+          break;
       }
     });
 
@@ -78,7 +84,8 @@ interface WebhookProcessRequest {
   company_name: string;
   website_url?: string;
   country?: string;
-  trigger_type: 'registration' | 'update';
+  trigger_type: 'registration' | 'update' | 'first_save_social';
+  webhook_data?: any[];
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -129,6 +136,25 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Si ya se tienen datos del webhook, procesarlos directamente
+    if (body.webhook_data && Array.isArray(body.webhook_data) && body.webhook_data.length > 0) {
+      console.log('📊 Procesando datos del webhook proporcionados directamente');
+      await processWebhookResponse(supabase, body.user_id, body.webhook_data);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          message: 'Webhook data processed successfully',
+          user_id: body.user_id,
+          company_name: body.company_name
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
 
     // Define background task for webhook processing
     const processWebhooks = async () => {

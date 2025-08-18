@@ -1301,7 +1301,7 @@ const ADNEmpresa = ({
             COMPANY_INFO: JSON.stringify({
               company_name: companyName,
               website_url: websiteUrl,
-              country: companyData?.country || 'No especificado'
+              country: companyData?.country || user?.user_metadata?.country || 'No especificado'
             }),
             ADDITIONAL_INFO: JSON.stringify({
               industry: companyData?.industry_sector,

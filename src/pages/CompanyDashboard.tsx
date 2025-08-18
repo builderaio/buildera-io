@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useFirstTimeSave } from "@/hooks/useFirstTimeSave";
+
 import { useEraCoachMark } from "@/hooks/useEraCoachMark";
 import EraCoachMark from "@/components/ui/era-coach-mark";
 
@@ -32,7 +32,7 @@ const CompanyDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const { triggerWebhookOnFirstSave } = useFirstTimeSave(user?.id);
+  
   const { shouldShowCoachMark, hideCoachMark } = useEraCoachMark(user?.id);
 
   useEffect(() => {
@@ -217,13 +217,7 @@ const CompanyDashboard = () => {
     // Detectar si es un usuario registrado por redes sociales (no tiene auth_provider 'email')
     const isRegisteredViaSocial = profile?.auth_provider !== 'email';
     
-    // Si es registro social y es la primera vez guardando, ejecutar webhook
-    if (isRegisteredViaSocial) {
-      await triggerWebhookOnFirstSave(
-        updatedProfile.company_name || 'sin nombre', 
-        updatedProfile.website_url
-      );
-    }
+    // Removed: Webhook logic simplificada - ahora se ejecuta en "Comenzar configuración"
   };
 
   const renderContent = () => {

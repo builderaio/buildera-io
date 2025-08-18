@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { executeCompanyWebhooks } from '@/utils/webhookProcessor';
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -226,17 +225,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             }
           }
 
-          // Ejecutar webhooks de registro en background (sin bloquear)
-          executeCompanyWebhooks(
-            data.user.id,
-            companyName,
-            websiteUrl,
-            country,
-            'registration'
-          ).catch(error => {
-            console.error("Error en webhooks de registro:", error);
-            // No bloquear el registro si fallan los webhooks
-          });
+          // No ejecutar webhooks en el registro - se ejecutarán cuando haga clic en "Comenzar configuración"
 
           console.log("Usuario de empresa registrado exitosamente");
           

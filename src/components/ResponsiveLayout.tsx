@@ -350,18 +350,21 @@ const CompanyLayout = ({
   return <div className="min-h-screen flex w-full bg-background">
       <Sidebar variant="sidebar" collapsible="icon" className="w-80 data-[state=collapsed]:w-16 border-r border-sidebar-border bg-sidebar shadow-xl z-40">
         {/* Header mejorado - oculto cuando está colapsado */}
-<SidebarHeader className="p-6 border-b border-sidebar-border/50">
-  <div className="flex items-center gap-4 cursor-pointer" onClick={() => setActiveView('mando-central')}>
-    <div className="flex aspect-square size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-xl">
-      <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-7 object-contain filter brightness-0 invert" />
-    </div>
-    {/* Estética: Se oculta solo el texto en modo colapsado para que quepa el logo */}
-    <div className="grid flex-1 text-left group-data-[state=collapsed]:hidden">
-      <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">BUILDERA</span>
-      <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide uppercase">AI Business Platform</span>
-    </div>
-  </div>
-</SidebarHeader>
+        <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95 data-[state=collapsed]:hidden">
+          <div className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all duration-300 group" onClick={() => setActiveView('mando-central')}>
+            <div className="flex aspect-square size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105">
+              <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-7 object-contain filter brightness-0 invert" />
+            </div>
+            <div className="grid flex-1 text-left leading-tight">
+              <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">
+                BUILDERA
+              </span>
+              <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide uppercase opacity-80">
+                AI Business Platform
+              </span>
+            </div>
+          </div>
+        </SidebarHeader>
 
         {/* Logo colapsado - solo visible cuando está colapsado */}
         <div className="hidden data-[state=collapsed]:flex items-center justify-center p-4 border-b border-sidebar-border/30">

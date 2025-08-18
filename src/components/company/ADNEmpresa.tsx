@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Target, Palette, Globe, CheckCircle, ArrowRight, ArrowLeft, Bot, Lightbulb, Facebook, Instagram, Twitter, Youtube, Music, Linkedin, RefreshCw, Save, Edit3, X, Check, Download, AlertCircle, Info, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useFirstTimeSave } from "@/hooks/useFirstTimeSave";
+
 import { useOnboardingStep } from "@/hooks/useOnboardingStep";
 interface ADNEmpresaProps {
   profile: any;
@@ -91,12 +91,6 @@ const ADNEmpresa = ({
     propuesta_valor: ""
   });
 
-  // Hook para manejar webhook de primera vez
-  const {
-    isFirstSave,
-    triggerWebhookOnFirstSave,
-    markAsNotFirstSave
-  } = useFirstTimeSave(user?.id);
   const totalSteps = 7;
   useEffect(() => {
     if (profile?.user_id) {
@@ -223,15 +217,6 @@ const ADNEmpresa = ({
             }
           }
         }
-      } else if (!companyData?.webhook_data) {
-        // Si no hay datos de webhook, intentar obtenerlos
-        console.log('🚀 Ejecutando webhook para obtener información de la empresa...');
-        await triggerWebhookOnFirstSave(profile?.company_name || companyData?.name || '', profile?.website_url || companyData?.website_url, profile?.country);
-
-        // Esperar un momento y refrescar los datos
-        setTimeout(() => {
-          fetchCompanyData();
-        }, 3000);
       }
     } catch (error) {
       console.error('Error cargando información desde webhook:', error);
@@ -820,10 +805,6 @@ const ADNEmpresa = ({
         setCompletedSteps(prev => [...prev, 2]);
       }
 
-      // Ejecutar webhook de primera vez si aplica
-      if (isFirstSave && user?.id) {
-        await triggerWebhookOnFirstSave(profile?.company_name || companyData?.name || '', profile?.website_url || companyData?.website_url, profile?.country);
-      }
       toast({
         title: "Descripción guardada",
         description: "La descripción de tu negocio ha sido actualizada."

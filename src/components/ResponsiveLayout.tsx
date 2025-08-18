@@ -374,81 +374,74 @@ const CompanyLayout = ({
         </div>
           
         {/* Contenido del sidebar mejorado */}
-
-<SidebarContent className="px-2 py-6 space-y-3">
-  {sidebarMenuItems.map((category) => (
-    <SidebarGroup key={category.category} className="p-0 space-y-2">
-      <SidebarGroupLabel className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted-foreground tracking-wider flex items-center gap-2 border-b border-sidebar-border/30 pb-2 group-data-[state=collapsed]:hidden">
-        <span className="text-sm">{category.icon}</span>
-        {category.category}
-      </SidebarGroupLabel>
-
-      <SidebarGroupContent>
-        <SidebarMenu className="space-y-1">
-          {category.items.map(item => {
-            const Icon = item.icon;
-            const isActive = activeView === item.id;
-            const isDisabled = isProfileIncomplete && item.id !== "adn-empresa";
-            const priorityColors = {
-              high: isActive ? '' : 'hover:bg-primary/5',
-              medium: isActive ? '' : 'hover:bg-sidebar-accent/30',
-              low: isActive ? '' : 'hover:bg-sidebar/80'
-            };
-
-            return (
-              // AJUSTE 1: Centrar el contenedor del botón
-              <SidebarMenuItem key={item.id} className="group-data-[state=collapsed]:flex group-data-[state=collapsed]:justify-center w-full">
-                <SidebarMenuButton
-                  isActive={isActive}
-                  disabled={isDisabled}
-                  className={`
-                    relative group transition-all duration-300 font-medium text-sm
-                    data-[state=expanded]:p-4 data-[state=expanded]:rounded-xl
-                    data-[state=collapsed]:h-12 data-[state=collapsed]:w-12 data-[state=collapsed]:p-0 data-[state=collapsed]:rounded-full data-[state=collapsed]:flex data-[state=collapsed]:items-center data-[state=collapsed]:justify-center
-                    ${
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg"
-                        : isDisabled
-                        ? "opacity-40 cursor-not-allowed text-sidebar-muted-foreground"
-                        : `text-sidebar-foreground ${priorityColors[item.priority]} hover:shadow-md`
-                    }
-                  `}
-                  onClick={isDisabled ? undefined : () => setActiveView(item.id)}
-                  tooltip={item.label}
-                >
-                  <div className="flex items-center gap-4 w-full group-data-[state=collapsed]:justify-center">
-                    <div
-                      className={`transition-all duration-300 group-data-[state=expanded]:p-2 group-data-[state=expanded]:rounded-lg ${
-                        isActive
-                          ? "group-data-[state=expanded]:bg-sidebar-accent-foreground/10"
-                          : "group-data-[state=expanded]:bg-sidebar-border/30 group-hover:bg-sidebar-border/50"
-                      }`}
-                    >
-                      <Icon
-                        className={`transition-all duration-300 group-data-[state=expanded]:size-5 group-data-[state=collapsed]:size-6 ${
-                          isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'
-                        }`}
-                      />
-                    </div>
-                    
-                    <div className="flex flex-col items-start flex-1 min-w-0 group-data-[state=collapsed]:hidden">
-                      <span className={`font-medium truncate ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'}`}>
-                        {item.label}
-                      </span>
-                      <span className={`text-xs truncate ${isActive ? 'text-sidebar-accent-foreground/70' : 'text-sidebar-muted-foreground'}`}>
-                        {item.description}
-                      </span>
-                    </div>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  ))}
-</SidebarContent>
+        <SidebarContent className="px-4 py-6 space-y-6 data-[state=collapsed]:px-2 data-[state=collapsed]:space-y-3">
+          {sidebarMenuItems.map((category, categoryIndex) => <SidebarGroup key={category.category} className="space-y-3 data-[state=collapsed]:space-y-2">
+              <SidebarGroupLabel className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted-foreground tracking-wider flex items-center gap-2 border-b border-sidebar-border/30 pb-2 data-[state=collapsed]:hidden">
+                <span className="text-sm">{category.icon}</span>
+                {category.category}
+              </SidebarGroupLabel>
+              
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-2 data-[state=collapsed]:space-y-1">
+                  {category.items.map(item => {
+                const Icon = item.icon;
+                const isActive = activeView === item.id;
+                const isDisabled = isProfileIncomplete && item.id !== "adn-empresa";
+                const priorityColors = {
+                  high: isActive ? '' : 'hover:bg-primary/5',
+                  medium: isActive ? '' : 'hover:bg-sidebar-accent/30',
+                  low: isActive ? '' : 'hover:bg-sidebar/80'
+                };
+                return <SidebarMenuItem key={item.id} className="group-data-[state=collapsed]:flex group-data-[state=collapsed]:justify-center w-full">
+  <SidebarMenuButton
+    isActive={isActive}
+    disabled={isDisabled}
+    className={`
+      relative group transition-all duration-300 font-medium text-sm
+      data-[state=expanded]:p-4 data-[state=expanded]:rounded-xl
+      data-[state=collapsed]:h-12 data-[state=collapsed]:w-12 data-[state=collapsed]:p-0 data-[state=collapsed]:rounded-full data-[state=collapsed]:flex data-[state=collapsed]:items-center data-[state=collapsed]:justify-center
+      ${
+        isActive
+          ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg"
+          : isDisabled
+          ? "opacity-40 cursor-not-allowed text-sidebar-muted-foreground"
+          : `text-sidebar-foreground ${priorityColors[item.priority]} hover:shadow-md`
+      }
+    `}
+    onClick={isDisabled ? undefined : () => setActiveView(item.id)}
+    tooltip={item.label}
+  >
+    <div className="flex items-center gap-4 w-full group-data-[state=collapsed]:justify-center">
+      <div
+        className={`transition-all duration-300 group-data-[state=expanded]:p-2 group-data-[state=expanded]:rounded-lg ${
+          isActive
+            ? "group-data-[state=expanded]:bg-sidebar-accent-foreground/10"
+            : "group-data-[state=expanded]:bg-sidebar-border/30 group-hover:bg-sidebar-border/50"
+        }`}
+      >
+        <Icon
+          className={`transition-all duration-300 group-data-[state=expanded]:size-5 group-data-[state=collapsed]:size-6 ${
+            isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'
+          }`}
+        />
+      </div>
+      
+      <div className="flex flex-col items-start flex-1 min-w-0 group-data-[state=collapsed]:hidden">
+        <span className={`font-medium truncate ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'}`}>
+          {item.label}
+        </span>
+        <span className={`text-xs truncate ${isActive ? 'text-sidebar-accent-foreground/70' : 'text-sidebar-muted-foreground'}`}>
+          {item.description}
+        </span>
+      </div>
+    </div>
+  </SidebarMenuButton>
+</SidebarMenuItem>;
+              })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>)}
+        </SidebarContent>
         
         {/* Footer del sidebar con configuración */}
         <SidebarFooter className="p-4 border-t border-sidebar-border/30 bg-sidebar/50 data-[state=collapsed]:p-2">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { executeCompanyWebhooks } from '@/utils/webhookProcessor';
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -225,24 +226,18 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             }
           }
 
-          /*
-          // Llamar webhook de registro (sin bloquear el flujo)
-          try {
-            await supabase.functions.invoke('process-company-webhooks', {
-              body: {
-                user_id: data.user.id,
-                company_name: companyName,
-                website_url: websiteUrl,
-                country: country,
-                trigger_type: 'registration'
-              }
-            });
-            console.log("Webhook de registro enviado exitosamente");
-          } catch (webhookError) {
-            console.error("Error enviando webhook de registro:", webhookError);
-            // No bloquear el registro si falla el webhook
-          }
-          */
+          // Ejecutar webhooks de registro en background (sin bloquear)
+          executeCompanyWebhooks(
+            data.user.id,
+            companyName,
+            websiteUrl,
+            country,
+            'registration'
+          ).catch(error => {
+            console.error("Error en webhooks de registro:", error);
+            // No bloquear el registro si fallan los webhooks
+          });
+
           console.log("Usuario de empresa registrado exitosamente");
           
           // Limpiar campos de registro

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { executeCompanyWebhooks } from '@/utils/webhookProcessor';
 
 export const useFirstTimeSave = (userId: string | undefined) => {
   const [isFirstSave, setIsFirstSave] = useState(true);
@@ -11,19 +11,21 @@ export const useFirstTimeSave = (userId: string | undefined) => {
     }
 
     try {
-      console.log("🔗 Ejecutando webhook para primera vez guardando cambios (registro social)");
+      console.log("🔗 Ejecutando webhooks para primera vez guardando cambios (registro social)");
       
-      await supabase.functions.invoke('process-company-webhooks', {
-        body: {
-          user_id: userId,
-          company_name: companyName,
-          website_url: websiteUrl || '',
-          country: country,
-          trigger_type: 'first_save_social'
-        }
-      });
+      const result = await executeCompanyWebhooks(
+        userId,
+        companyName,
+        websiteUrl || '',
+        country,
+        'first_save_social'
+      );
       
-      console.log("✅ Webhook de primer guardado enviado exitosamente");
+      if (result.success) {
+        console.log("✅ Webhooks de primer guardado ejecutados exitosamente");
+      } else {
+        console.error("❌ Error en webhooks de primer guardado:", result.error);
+      }
       setHasTriggeredWebhook(true);
       setIsFirstSave(false);
     } catch (error) {

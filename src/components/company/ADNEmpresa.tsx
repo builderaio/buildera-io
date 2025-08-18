@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { executeCompanyWebhooks, processWebhookResponse } from '@/utils/webhookProcessor';
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1484,25 +1485,18 @@ const ADNEmpresa = ({
         } else {
           console.log('✅ Webhook n8n ejecutado exitosamente:', data);
 
-          // Llamar a la función process-company-webhooks para procesar y guardar los datos
+          // Procesar directamente la respuesta del webhook sin función intermediaria
           if (data?.success && data?.data && Array.isArray(data.data) && data.data.length > 0) {
-            console.log('📊 Procesando respuesta del webhook...');
+            console.log('📊 Procesando respuesta del webhook directamente...');
             
             try {
-              const { error: processError } = await supabase.functions.invoke('process-company-webhooks', {
-                body: {
-                  user_id: user?.id || profile?.user_id,
-                  company_name: companyName,
-                  website_url: websiteUrl,
-                  country: companyData?.country || user?.user_metadata?.country || 'No especificado',
-                  trigger_type: 'update',
-                  webhook_data: data.data
-                }
-              });
+              const success = await processWebhookResponse(
+                user?.id || profile?.user_id, 
+                data.data, 
+                companyData?.id
+              );
 
-              if (processError) {
-                console.error('Error procesando webhook:', processError);
-              } else {
+              if (success) {
                 console.log('✅ Datos del webhook procesados y guardados correctamente');
                 
                 // Refrescar los datos de la empresa desde la base de datos
@@ -1512,9 +1506,11 @@ const ADNEmpresa = ({
                   title: "Información obtenida",
                   description: "Se ha cargado información adicional de tu empresa"
                 });
+              } else {
+                console.error('Error procesando datos del webhook');
               }
             } catch (processError) {
-              console.error('Error llamando process-company-webhooks:', processError);
+              console.error('Error procesando webhook:', processError);
             }
           }
 

@@ -29,9 +29,11 @@ export const useCompanyAgent = ({ user, enabled = true }: UseCompanyAgentProps) 
         });
         
         console.log('Company agent updated successfully');
+        return userCompany; // Retornar para uso en realtime listeners
       }
     } catch (error) {
       console.error('Error updating company agent:', error);
+      return null;
     }
   }, [user?.user_id, enabled]);
 
@@ -43,7 +45,13 @@ export const useCompanyAgent = ({ user, enabled = true }: UseCompanyAgentProps) 
   useEffect(() => {
     if (!user?.user_id || !enabled) return;
 
-    const channels: any[] = [];
+    let userCompany: any = null;
+
+    const initializeListeners = async () => {
+      userCompany = await updateCompanyAgent();
+      if (!userCompany) return;
+
+      const channels: any[] = [];
 
     // Escuchar cambios en la estrategia empresarial
     const strategyChannel = supabase
@@ -54,7 +62,7 @@ export const useCompanyAgent = ({ user, enabled = true }: UseCompanyAgentProps) 
           event: '*',
           schema: 'public',
           table: 'company_strategy',
-          filter: `user_id=eq.${user.user_id}`
+          filter: `company_id=eq.${userCompany.company_id}`
         },
         () => {
           console.log('Company strategy changed, updating agent...');
@@ -74,7 +82,7 @@ export const useCompanyAgent = ({ user, enabled = true }: UseCompanyAgentProps) 
           event: '*',
           schema: 'public',
           table: 'company_branding',
-          filter: `user_id=eq.${user.user_id}`
+          filter: `company_id=eq.${userCompany.company_id}`
         },
         () => {
           console.log('Company branding changed, updating agent...');
@@ -94,7 +102,7 @@ export const useCompanyAgent = ({ user, enabled = true }: UseCompanyAgentProps) 
           event: '*',
           schema: 'public',
           table: 'company_objectives',
-          filter: `user_id=eq.${user.user_id}`
+          filter: `company_id=eq.${userCompany.company_id}`
         },
         () => {
           console.log('Company objectives changed, updating agent...');
@@ -128,11 +136,14 @@ export const useCompanyAgent = ({ user, enabled = true }: UseCompanyAgentProps) 
     channels.push(companyChannel);
 
     // Limpiar suscripciones al desmontar
-    return () => {
-      channels.forEach(channel => {
-        supabase.removeChannel(channel);
-      });
+      return () => {
+        channels.forEach(channel => {
+          supabase.removeChannel(channel);
+        });
+      };
     };
+
+    initializeListeners();
   }, [user?.user_id, enabled, updateCompanyAgent]);
 
   return {

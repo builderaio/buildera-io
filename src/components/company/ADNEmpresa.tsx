@@ -295,10 +295,12 @@ const ADNEmpresa = ({
   };
   const fetchBranding = async () => {
     try {
+      if (!companyData?.id) return;
+      
       const {
         data,
         error
-      } = await supabase.from('company_branding').select('*').eq('user_id', profile?.user_id).maybeSingle();
+      } = await supabase.from('company_branding').select('*').eq('company_id', companyData.id).maybeSingle();
       if (error && error.code !== 'PGRST116') throw error;
       if (data) {
         setBrandingData({
@@ -315,10 +317,12 @@ const ADNEmpresa = ({
   };
   const fetchObjectives = async () => {
     try {
+      if (!companyData?.id) return;
+      
       const {
         data,
         error
-      } = await supabase.from('company_objectives').select('*').eq('user_id', profile?.user_id).order('priority', {
+      } = await supabase.from('company_objectives').select('*').eq('company_id', companyData.id).order('priority', {
         ascending: true
       });
       if (error) throw error;
@@ -824,17 +828,21 @@ const ADNEmpresa = ({
   const saveBranding = async (data = brandingData) => {
     setLoading(true);
     try {
+      if (!companyData?.id) {
+        throw new Error('No se encontró la empresa asociada');
+      }
+      
       const {
         error
       } = await supabase.from('company_branding').upsert({
-        user_id: profile?.user_id,
+        company_id: companyData.id,
         primary_color: data.primary_color,
         secondary_color: data.secondary_color,
         complementary_color_1: data.complementary_color_1,
         complementary_color_2: data.complementary_color_2,
         visual_identity: data.visual_identity
       }, {
-        onConflict: 'user_id'
+        onConflict: 'company_id'
       });
       if (error) throw error;
       if (!completedSteps.includes(5)) {
@@ -858,10 +866,14 @@ const ADNEmpresa = ({
   const saveObjectives = async () => {
     setLoading(true);
     try {
+      if (!companyData?.id) {
+        throw new Error('No se encontró la empresa asociada');
+      }
+      
       // Primero eliminar objetivos existentes
       const {
         error: deleteError
-      } = await supabase.from('company_objectives').delete().eq('user_id', profile?.user_id);
+      } = await supabase.from('company_objectives').delete().eq('company_id', companyData.id);
       if (deleteError) throw deleteError;
 
       // Función para convertir prioridad a número
@@ -881,7 +893,7 @@ const ADNEmpresa = ({
       // Luego insertar los objetivos actualizados
       const objectivesToSave = objectives.filter(obj => obj.title && obj.description) // Solo guardar objetivos completos
       .map(obj => ({
-        user_id: profile?.user_id,
+        company_id: companyData.id,
         title: obj.title,
         description: obj.description,
         objective_type: obj.type,
@@ -916,6 +928,10 @@ const ADNEmpresa = ({
   const acceptGeneratedObjectives = async () => {
     setLoading(true);
     try {
+      if (!companyData?.id) {
+        throw new Error('No se encontró la empresa asociada');
+      }
+      
       // Función para convertir prioridad a número
       const getPriorityNumber = (priority: string) => {
         switch (priority) {
@@ -930,7 +946,7 @@ const ADNEmpresa = ({
         }
       };
       const objectivesToSave = generatedObjectives.map(obj => ({
-        user_id: profile?.user_id,
+        company_id: companyData.id,
         title: obj.title,
         description: obj.description,
         objective_type: obj.type,

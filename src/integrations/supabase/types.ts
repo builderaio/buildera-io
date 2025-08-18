@@ -5050,7 +5050,6 @@ export type Database = {
           industry: string
           is_primary_company: boolean
           linked_providers: string[]
-          location: string
           onboarding_completed: boolean
           onboarding_completed_at: string
           registration_method: string

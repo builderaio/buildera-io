@@ -374,7 +374,7 @@ const CompanyLayout = ({
         </div>
           
         {/* Contenido del sidebar mejorado */}
-        <SidebarContent className="px-4 py-6 space-y-6 data-[state=collapsed]:px-2 data-[state=collapsed]:space-y-3">
+        <SidebarContent className="px-4 py-6 space-y-6 data-[state=collapsed]:px-2 data-[state=collapsed]:space-y-3 data-[state=collapsed]:hidden">
           {sidebarMenuItems.map((category, categoryIndex) => <SidebarGroup key={category.category} className="space-y-3 data-[state=collapsed]:space-y-2">
               <SidebarGroupLabel className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted-foreground tracking-wider flex items-center gap-2 border-b border-sidebar-border/30 pb-2 data-[state=collapsed]:hidden">
                 <span className="text-sm">{category.icon}</span>

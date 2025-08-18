@@ -172,7 +172,7 @@ const ADNEmpresa = ({
         goToStepLocal(totalSteps); // Ir al último paso para mostrar resumen
       } else {
         // Si es primera vez y no hay descripción, activar modo de edición automáticamente
-        if (!companyData?.descripcion_empresa) {
+        if (!companyData?.description) {
           setEditingDescription(true);
         }
       }
@@ -187,13 +187,13 @@ const ADNEmpresa = ({
     console.log('🔍 Verificando si hay información de webhook disponible...');
     try {
       // Verificar si ya hay datos del webhook
-      if (companyData?.webhook_data && companyData?.descripcion_empresa) {
+      if (companyData?.webhook_data && companyData?.description) {
         console.log('✅ Información ya disponible desde webhook');
         return;
       }
 
       // Si no hay descripción pero hay webhook_data, procesarla
-      if (companyData?.webhook_data && !companyData?.descripcion_empresa) {
+      if (companyData?.webhook_data && !companyData?.description) {
         console.log('📊 Procesando datos existentes del webhook...');
         const webhookData = companyData.webhook_data;
         if (webhookData && Array.isArray(webhookData) && webhookData.length > 0) {
@@ -210,8 +210,7 @@ const ADNEmpresa = ({
             if (!error) {
               setCompanyData(prev => ({
                 ...prev,
-                description: descripcionItem.value,
-                descripcion_empresa: descripcionItem.value // Mantener ambos campos sincronizados
+                description: descripcionItem.value
               }));
               console.log('✅ Descripción actualizada desde webhook existente');
             }
@@ -252,7 +251,6 @@ const ADNEmpresa = ({
           id: company.id,
           name: company.name,
           description: company.description,
-          descripcion_empresa: company.description || '',
           website_url: company.website_url,
           industry_sector: company.industry_sector,
           company_size: company.company_size,
@@ -422,11 +420,11 @@ const ADNEmpresa = ({
 
   // AJUSTE 2 y 3: Auto-generar estrategia cuando se entre al paso 3 SOLO si no hay datos Y después de cargar datos
   useEffect(() => {
-    if (dataLoaded && currentStep === 3 && !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.descripcion_empresa && !loading) {
+    if (dataLoaded && currentStep === 3 && !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.description && !loading) {
       console.log('🤖 Generando estrategia automáticamente (sin datos previos)');
       generateStrategyWithAI();
     }
-  }, [dataLoaded, currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.descripcion_empresa, loading]);
+  }, [dataLoaded, currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.description, loading]);
 
   // AJUSTE 2 y 3: Auto-generar objetivos cuando se entre al paso 4 SOLO si no hay datos Y después de cargar datos
   useEffect(() => {
@@ -479,7 +477,7 @@ const ADNEmpresa = ({
     setLoading(true);
     try {
       // Verificar datos mínimos requeridos
-      if (!companyData?.name || !companyData?.descripcion_empresa) {
+      if (!companyData?.name || !companyData?.description) {
         throw new Error('Faltan datos de la empresa para generar la estrategia');
       }
 
@@ -490,7 +488,7 @@ const ADNEmpresa = ({
         company_size: companyData.company_size || 'No especificado',
         website_url: companyData.website_url || '',
         country: companyData?.country || user?.user_metadata?.country || 'No especificado',
-        description: companyData.descripcion_empresa || companyData.description || ''
+        description: companyData.description || ''
       };
       console.log('🤖 Generando estrategia con datos:', companyInfo);
 
@@ -658,7 +656,7 @@ const ADNEmpresa = ({
         industry_sector: companyData?.industry_sector || companyData?.industria_principal || profile?.industry_sector,
         company_size: companyData?.company_size || profile?.company_size || 'No especificado',
         website_url: companyData?.website_url || profile?.website_url || '',
-        description: companyData?.descripcion_empresa || companyData?.description || ''
+        description: companyData?.description || ''
       };
       const {
         data,
@@ -697,8 +695,7 @@ const ADNEmpresa = ({
         company_name: companyData?.name,
         industry_sector: companyData?.industry_sector,
         company_size: companyData?.company_size,
-        website_url: companyData?.website_url,
-        description: companyData?.descripcion_empresa,
+        description: companyData?.description,
         mission: strategyData.mission,
         vision: strategyData.vision,
         value_proposition: strategyData.propuesta_valor
@@ -797,8 +794,7 @@ const ADNEmpresa = ({
       if (error) throw error;
       setCompanyData(prev => ({
         ...prev,
-        description: tempDescription,
-        descripcion_empresa: tempDescription // Mantener ambos campos sincronizados
+        description: tempDescription
       }));
       setEditingDescription(false);
       if (!completedSteps.includes(2)) {
@@ -1382,7 +1378,7 @@ const ADNEmpresa = ({
             }),
             ADDITIONAL_INFO: JSON.stringify({
               industry: companyData?.industry_sector,
-              description: companyData?.descripcion_empresa || ''
+              description: companyData?.description || ''
             })
           }
         });
@@ -1501,19 +1497,19 @@ const ADNEmpresa = ({
                 Descripción de tu negocio
               </CardTitle>
               <p className="text-muted-foreground">
-                {companyData?.descripcion_empresa ? "Encontramos esta descripción de tu negocio. Revísala y ajústala si es necesario." : "Cuéntanos sobre tu negocio para que ERA pueda entender mejor tu industria y objetivos."}
+                {companyData?.description ? "Encontramos esta descripción de tu negocio. Revísala y ajústala si es necesario." : "Cuéntanos sobre tu negocio para que ERA pueda entender mejor tu industria y objetivos."}
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {!editingDescription && companyData?.descripcion_empresa ? <div className="space-y-4">
+              {!editingDescription && companyData?.description ? <div className="space-y-4">
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <p className="text-sm">
-                      {companyData?.descripcion_empresa}
+                      {companyData?.description}
                     </p>
                   </div>
                   <Button onClick={() => {
                 setEditingDescription(true);
-                setTempDescription(companyData?.descripcion_empresa || "");
+                setTempDescription(companyData?.description || "");
               }} variant="outline" className="w-full">
                     <Edit3 className="w-4 h-4 mr-2" />
                     Editar descripción
@@ -1546,7 +1542,7 @@ const ADNEmpresa = ({
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Anterior
                 </Button>
-                <Button onClick={nextStep} disabled={!companyData?.descripcion_empresa && !tempDescription.trim()}>
+                <Button onClick={nextStep} disabled={!companyData?.description && !tempDescription.trim()}>
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

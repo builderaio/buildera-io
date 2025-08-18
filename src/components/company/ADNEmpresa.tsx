@@ -1374,9 +1374,10 @@ const ADNEmpresa = ({
             }
 
             // Actualizar la empresa con todos los datos obtenidos
-            const {
-              error: updateError
-            } = await supabase.from('companies').update(updateData).eq('id', companyData.id);
+            if (companyData?.id) {
+              const {
+                error: updateError
+              } = await supabase.from('companies').update(updateData).eq('id', companyData.id);
             if (!updateError) {
               // Actualizar el estado local
               setCompanyData(prev => ({
@@ -1416,8 +1417,11 @@ const ADNEmpresa = ({
                   description: `Se ha cargado: ${foundItems.join(', ')} de tu empresa`
                 });
               }
+              } else {
+                console.error('Error actualizando empresa:', updateError);
+              }
             } else {
-              console.error('Error actualizando empresa:', updateError);
+              console.log('No se puede actualizar empresa: companyData no disponible');
             }
           }
         }

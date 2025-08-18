@@ -1346,8 +1346,19 @@ const ADNEmpresa = ({
   const startConfiguration = async () => {
     console.log('🔗 Iniciando configuración...');
     
+    // Debug: Mostrar todos los campos de companyData
+    console.log('🔍 Datos de empresa para validación:', {
+      'companyData?.description': companyData?.description,
+      'companyData?.descripcion_empresa': companyData?.descripcion_empresa,
+      'companyData (keys)': companyData ? Object.keys(companyData) : 'null',
+      'companyData (full)': companyData
+    });
+    
     // 1. Verificar si ya tenemos descripción en la company
-    if (companyData?.description || companyData?.descripcion_empresa) {
+    const hasDescription = companyData?.description || companyData?.descripcion_empresa;
+    console.log('🔍 ¿Tiene descripción?', hasDescription);
+    
+    if (hasDescription) {
       console.log('✅ Ya tenemos descripción de la empresa, continuando...');
       nextStepLocal();
       return;

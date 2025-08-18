@@ -790,7 +790,7 @@ const ADNEmpresa = ({
       const {
         error
       } = await supabase.from('company_strategy').upsert({
-        user_id: profile?.user_id,
+        user_id: user?.id,
         vision: data.vision,
         mision: data.mission,
         propuesta_valor: data.propuesta_valor,

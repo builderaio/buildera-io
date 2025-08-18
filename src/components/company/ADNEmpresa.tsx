@@ -428,30 +428,21 @@ const ADNEmpresa = ({
     }
   }, [dataLoaded, currentStep]);
 
-  // AJUSTE 2 y 3: Auto-generar objetivos cuando se entre al paso 4 SOLO si no hay datos Y después de cargar datos
+  // Cargar datos de objetivos cuando se entre al paso 4
   useEffect(() => {
-    if (dataLoaded && currentStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
-      console.log('🎯 Generando objetivos automáticamente (sin datos previos)');
-      generateObjectivesWithAI();
+    if (dataLoaded && currentStep === 4) {
+      console.log('🎯 Cargando datos de objetivos para el paso 4');
+      fetchObjectives();
     }
-  }, [dataLoaded, currentStep, objectives.length, showGeneratedObjectives, generatingObjectives, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, loading]);
+  }, [dataLoaded, currentStep]);
 
-  // AJUSTE 2 y 3: Auto-generar branding cuando se entre al paso 5 SOLO si no hay datos
+  // Cargar datos de branding cuando se entre al paso 5
   useEffect(() => {
-    console.log('🎨 Checking branding auto-generation:', {
-      currentStep,
-      hasVisualIdentity: !!brandingData.visual_identity,
-      hasPrimaryColor: !!brandingData.primary_color,
-      hasVision: !!strategyData.vision,
-      hasMission: !!strategyData.mission,
-      hasValueProp: !!strategyData.propuesta_valor,
-      isLoading: loading
-    });
-    if (dataLoaded && currentStep === 5 && !brandingData.visual_identity && !brandingData.primary_color && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
-      console.log('🚀 Generando branding automáticamente (sin datos previos)');
-      generateBrandingWithAI();
+    if (dataLoaded && currentStep === 5) {
+      console.log('🎨 Cargando datos de branding para el paso 5');
+      fetchBranding();
     }
-  }, [currentStep, brandingData.visual_identity, brandingData.primary_color, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
+  }, [dataLoaded, currentStep]);
 
   // AJUSTE 2 y 3: Auto-cargar datos de redes sociales cuando se entre al paso 7 SOLO si no hay datos
   useEffect(() => {
@@ -1740,6 +1731,16 @@ const ADNEmpresa = ({
                       // Guardar los datos del formulario
                       await saveStrategy();
                     }
+                    
+                    // Cargar objetivos existentes
+                    await fetchObjectives();
+                    
+                    // Si no hay objetivos, generar automáticamente
+                    if (objectives.length === 0 && strategyData.vision && strategyData.mission && strategyData.propuesta_valor) {
+                      console.log('🎯 Generando objetivos automáticamente antes de ir al paso 4');
+                      await generateObjectivesWithAI();
+                    }
+                    
                     nextStep();
                   }} 
                   disabled={!showGeneratedStrategy && (!strategyData.vision || !strategyData.mission || !strategyData.propuesta_valor)}
@@ -1925,14 +1926,27 @@ const ADNEmpresa = ({
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Anterior
                 </Button>
-                <Button onClick={async () => {
-                if (showGeneratedObjectives) {
-                  await acceptGeneratedObjectives();
-                } else {
-                  await saveObjectives();
-                }
-                nextStepLocal();
-              }} disabled={(showGeneratedObjectives ? generatedObjectives.length : objectives.length) === 0}>
+                <Button 
+                  onClick={async () => {
+                    if (showGeneratedObjectives) {
+                      await acceptGeneratedObjectives();
+                    } else {
+                      await saveObjectives();
+                    }
+                    
+                    // Cargar branding existente
+                    await fetchBranding();
+                    
+                    // Si no hay branding, generar automáticamente
+                    if (!brandingData.visual_identity && !brandingData.primary_color && strategyData.vision && strategyData.mission && strategyData.propuesta_valor) {
+                      console.log('🎨 Generando branding automáticamente antes de ir al paso 5');
+                      await generateBrandingWithAI();
+                    }
+                    
+                    nextStep();
+                  }} 
+                  disabled={(showGeneratedObjectives ? generatedObjectives.length : objectives.length) === 0}
+                >
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -1951,99 +1965,130 @@ const ADNEmpresa = ({
               </p>
             </CardHeader>
             <CardContent className="space-y-6">              
-              {loading ? <div className="text-center space-y-4">
-                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
-                    <RefreshCw className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-spin" />
-                    <p className="text-muted-foreground mb-4">
-                      ERA está generando automáticamente tu identidad de marca basada en tu estrategia empresarial...
-                    </p>
-                  </div>
-                </div> : !brandingData.visual_identity && !brandingData.primary_color ? <div className="text-center space-y-4">
-                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
-                    <Palette className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      ERA generará automáticamente tu identidad de marca basada en tu estrategia empresarial
-                    </p>
-                  </div>
-                </div> : <div className="space-y-6">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                    <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                      Identidad de marca
-                    </h3>
-                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
-                      Ajusta la identidad visual y paleta de colores de tu marca.
-                    </p>
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="visual-identity">Identidad Visual</Label>
+                    <Textarea
+                      id="visual-identity"
+                      value={brandingData.visual_identity}
+                      onChange={(e) => setBrandingData(prev => ({
+                        ...prev,
+                        visual_identity: e.target.value
+                      }))}
+                      placeholder="Describe la identidad visual de tu marca..."
+                      className="min-h-[100px]"
+                    />
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium">Identidad Visual</label>
-                      <textarea value={brandingData.visual_identity} onChange={e => setBrandingData(prev => ({
-                    ...prev,
-                    visual_identity: e.target.value
-                  }))} className="w-full mt-1 px-3 py-2 border rounded-md text-sm" rows={4} placeholder="Describe la identidad visual de tu marca..." />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium">Color Primario</label>
-                        <div className="flex gap-2 mt-1">
-                          <input type="color" value={brandingData.primary_color || "#000000"} onChange={e => setBrandingData(prev => ({
-                        ...prev,
-                        primary_color: e.target.value
-                      }))} className="w-12 h-10 border rounded" />
-                          <input type="text" value={brandingData.primary_color} onChange={e => setBrandingData(prev => ({
-                        ...prev,
-                        primary_color: e.target.value
-                      }))} className="flex-1 px-3 py-2 border rounded-md text-sm" placeholder="#000000" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium">Color Secundario</label>
-                        <div className="flex gap-2 mt-1">
-                          <input type="color" value={brandingData.secondary_color || "#000000"} onChange={e => setBrandingData(prev => ({
-                        ...prev,
-                        secondary_color: e.target.value
-                      }))} className="w-12 h-10 border rounded" />
-                          <input type="text" value={brandingData.secondary_color} onChange={e => setBrandingData(prev => ({
-                        ...prev,
-                        secondary_color: e.target.value
-                      }))} className="flex-1 px-3 py-2 border rounded-md text-sm" placeholder="#000000" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium">Color Complementario 1</label>
-                        <div className="flex gap-2 mt-1">
-                          <input type="color" value={brandingData.complementary_color_1 || "#000000"} onChange={e => setBrandingData(prev => ({
-                        ...prev,
-                        complementary_color_1: e.target.value
-                      }))} className="w-12 h-10 border rounded" />
-                          <input type="text" value={brandingData.complementary_color_1} onChange={e => setBrandingData(prev => ({
-                        ...prev,
-                        complementary_color_1: e.target.value
-                      }))} className="flex-1 px-3 py-2 border rounded-md text-sm" placeholder="#000000" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium">Color Complementario 2</label>
-                        <div className="flex gap-2 mt-1">
-                          <input type="color" value={brandingData.complementary_color_2 || "#000000"} onChange={e => setBrandingData(prev => ({
-                        ...prev,
-                        complementary_color_2: e.target.value
-                      }))} className="w-12 h-10 border rounded" />
-                          <input type="text" value={brandingData.complementary_color_2} onChange={e => setBrandingData(prev => ({
-                        ...prev,
-                        complementary_color_2: e.target.value
-                      }))} className="flex-1 px-3 py-2 border rounded-md text-sm" placeholder="#000000" />
-                        </div>
+                      <Label htmlFor="primary-color">Color Primario</Label>
+                      <div className="flex gap-2 mt-1">
+                        <input 
+                          type="color" 
+                          value={brandingData.primary_color || "#000000"} 
+                          onChange={e => setBrandingData(prev => ({
+                            ...prev,
+                            primary_color: e.target.value
+                          }))} 
+                          className="w-12 h-10 border rounded" 
+                        />
+                        <Input
+                          type="text"
+                          value={brandingData.primary_color}
+                          onChange={e => setBrandingData(prev => ({
+                            ...prev,
+                            primary_color: e.target.value
+                          }))}
+                          placeholder="#000000"
+                        />
                       </div>
                     </div>
 
+                    <div>
+                      <Label htmlFor="secondary-color">Color Secundario</Label>
+                      <div className="flex gap-2 mt-1">
+                        <input 
+                          type="color" 
+                          value={brandingData.secondary_color || "#000000"} 
+                          onChange={e => setBrandingData(prev => ({
+                            ...prev,
+                            secondary_color: e.target.value
+                          }))} 
+                          className="w-12 h-10 border rounded" 
+                        />
+                        <Input
+                          type="text"
+                          value={brandingData.secondary_color}
+                          onChange={e => setBrandingData(prev => ({
+                            ...prev,
+                            secondary_color: e.target.value
+                          }))}
+                          placeholder="#000000"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="complementary-color-1">Color Complementario 1</Label>
+                      <div className="flex gap-2 mt-1">
+                        <input 
+                          type="color" 
+                          value={brandingData.complementary_color_1 || "#000000"} 
+                          onChange={e => setBrandingData(prev => ({
+                            ...prev,
+                            complementary_color_1: e.target.value
+                          }))} 
+                          className="w-12 h-10 border rounded" 
+                        />
+                        <Input
+                          type="text"
+                          value={brandingData.complementary_color_1}
+                          onChange={e => setBrandingData(prev => ({
+                            ...prev,
+                            complementary_color_1: e.target.value
+                          }))}
+                          placeholder="#000000"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="complementary-color-2">Color Complementario 2</Label>
+                      <div className="flex gap-2 mt-1">
+                        <input 
+                          type="color" 
+                          value={brandingData.complementary_color_2 || "#000000"} 
+                          onChange={e => setBrandingData(prev => ({
+                            ...prev,
+                            complementary_color_2: e.target.value
+                          }))} 
+                          className="w-12 h-10 border rounded" 
+                        />
+                        <Input
+                          type="text"
+                          value={brandingData.complementary_color_2}
+                          onChange={e => setBrandingData(prev => ({
+                            ...prev,
+                            complementary_color_2: e.target.value
+                          }))}
+                          placeholder="#000000"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>}
+                  
+                  {(brandingData.visual_identity || brandingData.primary_color) && (
+                    <div className="flex justify-center">
+                      <Button onClick={generateBrandingWithAI} variant="outline" size="sm">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Regenerar con ERA
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg">
                 <div className="flex items-start gap-3">
@@ -2065,10 +2110,13 @@ const ADNEmpresa = ({
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Anterior
                 </Button>
-                <Button onClick={async () => {
-                await saveBranding(brandingData);
-                nextStepLocal();
-              }} disabled={!brandingData.visual_identity && !brandingData.primary_color}>
+                <Button 
+                  onClick={async () => {
+                    await saveBranding(brandingData);
+                    nextStep();
+                  }} 
+                  disabled={!brandingData.visual_identity && !brandingData.primary_color}
+                >
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

@@ -348,31 +348,30 @@ const CompanyLayout = ({
   console.log('Current activeView:', activeView);
   console.log('Current URL:', location.pathname + location.search);
   return <div className="min-h-screen flex w-full bg-background">
-<Sidebar variant="sidebar" collapsible="icon" className="w-80 border-r border-sidebar-border bg-sidebar shadow-xl z-40">
-   
-    {/* AJUSTE 2: Usamos "group-data-" para que el header reaccione al estado del Sidebar padre. */}
-    <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95 group-data-[state=collapsed]:hidden">
-      <div className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all duration-300 group" onClick={() => setActiveView('mando-central')}>
-        <div className="flex aspect-square size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105">
-          <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-7 object-contain filter brightness-0 invert" />
-        </div>
-        <div className="grid flex-1 text-left leading-tight">
-          <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">
-            BUILDERA
-          </span>
-          <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide uppercase opacity-80">
-            AI Business Platform
-          </span>
-        </div>
-      </div>
-    </SidebarHeader>
+    <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border bg-sidebar shadow-xl z-40">  
+        {/* Header mejorado - oculto cuando está colapsado */}
+        <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95 data-[state=collapsed]:hidden">
+          <div className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all duration-300 group" onClick={() => setActiveView('mando-central')}>
+            <div className="flex aspect-square size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105">
+              <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-7 object-contain filter brightness-0 invert" />
+            </div>
+            <div className="grid flex-1 text-left leading-tight">
+              <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">
+                BUILDERA
+              </span>
+              <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide uppercase opacity-80">
+                AI Business Platform
+              </span>
+            </div>
+          </div>
+        </SidebarHeader>
 
-    {/* AJUSTE 3: Usamos "group-data-" también aquí para que el logo pequeño aparezca. */}
-    <div className="hidden group-data-[state=collapsed]:flex items-center justify-center p-4 border-b border-sidebar-border/30">
-      <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-lg">
-        <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-5 object-contain filter brightness-0 invert" />
-      </div>
-    </div>
+        {/* Logo colapsado - solo visible cuando está colapsado */}
+        <div className="hidden data-[state=collapsed]:flex items-center justify-center p-4 border-b border-sidebar-border/30">
+          <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-lg">
+            <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-5 object-contain filter brightness-0 invert" />
+          </div>
+        </div>
           
         {/* Contenido del sidebar mejorado */}
         <SidebarContent className="px-4 py-6 space-y-6 data-[state=collapsed]:px-2 data-[state=collapsed]:space-y-3">

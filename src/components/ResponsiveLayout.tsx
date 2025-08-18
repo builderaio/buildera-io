@@ -348,83 +348,107 @@ const CompanyLayout = ({
   console.log('Current activeView:', activeView);
   console.log('Current URL:', location.pathname + location.search);
   return <div className="min-h-screen flex w-full bg-background">
-<Sidebar variant="sidebar" collapsible="icon" className="w-80 border-r border-sidebar-border bg-sidebar shadow-xl z-40">
-    {/* Header mejorado - se oculta automáticamente al colapsar */}
-    <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95 group-data-[state=collapsed]:hidden">
-      <div className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all duration-300 group" onClick={() => setActiveView('mando-central')}>
-        <div className="flex aspect-square size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105">
-          <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-7 object-contain filter brightness-0 invert" />
-        </div>
-        <div className="grid flex-1 text-left leading-tight">
-          <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">
-            BUILDERA
-          </span>
-          <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide uppercase opacity-80">
-            AI Business Platform
-          </span>
-        </div>
-      </div>
-    </SidebarHeader>
+      <Sidebar variant="sidebar" collapsible="icon" className="w-80 data-[state=collapsed]:w-16 border-r border-sidebar-border bg-sidebar shadow-xl z-40">
+        {/* Header mejorado - oculto cuando está colapsado */}
+        <SidebarHeader className="p-6 border-b border-sidebar-border/50 bg-gradient-to-r from-sidebar to-sidebar/95 data-[state=collapsed]:hidden">
+          <div className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all duration-300 group" onClick={() => setActiveView('mando-central')}>
+            <div className="flex aspect-square size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-xl group-hover:shadow-2xl transition-all duration-300 group-hover:scale-105">
+              <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-7 object-contain filter brightness-0 invert" />
+            </div>
+            <div className="grid flex-1 text-left leading-tight">
+              <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">
+                BUILDERA
+              </span>
+              <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide uppercase opacity-80">
+                AI Business Platform
+              </span>
+            </div>
+          </div>
+        </SidebarHeader>
 
-    {/* Logo colapsado - solo visible cuando está colapsado */}
-    <div className="hidden group-data-[state=collapsed]:flex items-center justify-center p-4 border-b border-sidebar-border/30">
-      <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-lg">
-        <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-5 object-contain filter brightness-0 invert" />
-      </div>
-    </div>
+        {/* Logo colapsado - solo visible cuando está colapsado */}
+        <div className="hidden data-[state=collapsed]:flex items-center justify-center p-4 border-b border-sidebar-border/30">
+          <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-primary/90 to-secondary text-primary-foreground shadow-lg">
+            <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-5 object-contain filter brightness-0 invert" />
+          </div>
+        </div>
           
         {/* Contenido del sidebar mejorado */}
-        <SidebarContent className="px-4 py-6 space-y-6 data-[state=collapsed]:px-2 data-[state=collapsed]:space-y-3">
-          {sidebarMenuItems.map((category, categoryIndex) => <SidebarGroup key={category.category} className="space-y-3 data-[state=collapsed]:space-y-2">
-              <SidebarGroupLabel className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted-foreground tracking-wider flex items-center gap-2 border-b border-sidebar-border/30 pb-2 data-[state=collapsed]:hidden">
-                <span className="text-sm">{category.icon}</span>
-                {category.category}
-              </SidebarGroupLabel>
-              
-              <SidebarGroupContent>
-                <SidebarMenu className="space-y-2 data-[state=collapsed]:space-y-1">
-                  {category.items.map(item => {
-                const Icon = item.icon;
-                const isActive = activeView === item.id;
-                const isDisabled = isProfileIncomplete && item.id !== "adn-empresa";
-                const priorityColors = {
-                  high: isActive ? '' : 'hover:bg-primary/5',
-                  medium: isActive ? '' : 'hover:bg-sidebar-accent/30',
-                  low: isActive ? '' : 'hover:bg-sidebar/80'
-                };
-                return <SidebarMenuItem key={item.id}>
-                        <SidebarMenuButton isActive={isActive} disabled={isDisabled} className={`
-                            relative group transition-all duration-300 rounded-xl p-4 font-medium text-sm data-[state=collapsed]:p-3
-                            ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg border border-sidebar-accent/20 scale-[1.02]" : isDisabled ? "opacity-40 cursor-not-allowed text-sidebar-muted-foreground" : `text-sidebar-foreground ${priorityColors[item.priority]} hover:scale-[1.01] hover:shadow-md`}
-                            ${!isDisabled && !isActive ? 'hover:border hover:border-sidebar-border/40' : ''}
-                          `} onClick={isDisabled ? undefined : () => setActiveView(item.id)} tooltip={item.label}>
-                          <div className="flex items-center gap-4 w-full group-data-[state=collapsed]:justify-center">
-                            <div className={`p-2 rounded-lg transition-all duration-300 group-data-[state=collapsed]:p-1.5 ${isActive ? 'bg-sidebar-accent-foreground/10' : 'bg-sidebar-border/30 group-hover:bg-sidebar-border/50'}`}>
-                              <Icon className={`size-5 transition-all duration-300 group-data-[state=collapsed]:size-6 ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'}`} />
-                            </div>
-                            
-                            <div className="flex flex-col items-start flex-1 min-w-0 group-data-[state=collapsed]:hidden">
-                              <span className={`font-medium truncate transition-colors duration-300 ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'}`}>
-                                {item.label}
-                              </span>
-                              <span className={`text-xs truncate transition-colors duration-300 ${isActive ? 'text-sidebar-accent-foreground/70' : 'text-sidebar-muted-foreground'}`}>
-                                {item.description}
-                              </span>
-                            </div>
-                            
-                            {isDisabled && <div className="flex items-center justify-center w-6 h-6 bg-sidebar-border/40 rounded-md group-data-[state=collapsed]:hidden">
-                                <span className="text-xs">🔒</span>
-                              </div>}
-                            
-                            {isActive && <div className="w-1 h-8 bg-sidebar-accent-foreground rounded-full opacity-60 group-data-[state=collapsed]:hidden"></div>}
-                          </div>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>;
-              })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>)}
-        </SidebarContent>
+
+<SidebarContent className="px-2 py-6 space-y-3">
+  {sidebarMenuItems.map((category) => (
+    <SidebarGroup key={category.category} className="p-0 space-y-2">
+      <SidebarGroupLabel className="px-3 py-2 text-xs font-semibold uppercase text-sidebar-muted-foreground tracking-wider flex items-center gap-2 border-b border-sidebar-border/30 pb-2 group-data-[state=collapsed]:hidden">
+        <span className="text-sm">{category.icon}</span>
+        {category.category}
+      </SidebarGroupLabel>
+
+      <SidebarGroupContent>
+        <SidebarMenu className="space-y-1">
+          {category.items.map(item => {
+            const Icon = item.icon;
+            const isActive = activeView === item.id;
+            const isDisabled = isProfileIncomplete && item.id !== "adn-empresa";
+            const priorityColors = {
+              high: isActive ? '' : 'hover:bg-primary/5',
+              medium: isActive ? '' : 'hover:bg-sidebar-accent/30',
+              low: isActive ? '' : 'hover:bg-sidebar/80'
+            };
+
+            return (
+              // AJUSTE 1: Centrar el contenedor del botón
+              <SidebarMenuItem key={item.id} className="group-data-[state=collapsed]:flex group-data-[state=collapsed]:justify-center w-full">
+                <SidebarMenuButton
+                  isActive={isActive}
+                  disabled={isDisabled}
+                  className={`
+                    relative group transition-all duration-300 font-medium text-sm
+                    data-[state=expanded]:p-4 data-[state=expanded]:rounded-xl
+                    data-[state=collapsed]:h-12 data-[state=collapsed]:w-12 data-[state=collapsed]:p-0 data-[state=collapsed]:rounded-full data-[state=collapsed]:flex data-[state=collapsed]:items-center data-[state=collapsed]:justify-center
+                    ${
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-lg"
+                        : isDisabled
+                        ? "opacity-40 cursor-not-allowed text-sidebar-muted-foreground"
+                        : `text-sidebar-foreground ${priorityColors[item.priority]} hover:shadow-md`
+                    }
+                  `}
+                  onClick={isDisabled ? undefined : () => setActiveView(item.id)}
+                  tooltip={item.label}
+                >
+                  <div className="flex items-center gap-4 w-full group-data-[state=collapsed]:justify-center">
+                    <div
+                      className={`transition-all duration-300 group-data-[state=expanded]:p-2 group-data-[state=expanded]:rounded-lg ${
+                        isActive
+                          ? "group-data-[state=expanded]:bg-sidebar-accent-foreground/10"
+                          : "group-data-[state=expanded]:bg-sidebar-border/30 group-hover:bg-sidebar-border/50"
+                      }`}
+                    >
+                      <Icon
+                        className={`transition-all duration-300 group-data-[state=expanded]:size-5 group-data-[state=collapsed]:size-6 ${
+                          isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'
+                        }`}
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col items-start flex-1 min-w-0 group-data-[state=collapsed]:hidden">
+                      <span className={`font-medium truncate ${isActive ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground'}`}>
+                        {item.label}
+                      </span>
+                      <span className={`text-xs truncate ${isActive ? 'text-sidebar-accent-foreground/70' : 'text-sidebar-muted-foreground'}`}>
+                        {item.description}
+                      </span>
+                    </div>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  ))}
+</SidebarContent>
         
         {/* Footer del sidebar con configuración */}
         <SidebarFooter className="p-4 border-t border-sidebar-border/30 bg-sidebar/50 data-[state=collapsed]:p-2">

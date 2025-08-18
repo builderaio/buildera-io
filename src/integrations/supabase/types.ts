@@ -1300,6 +1300,7 @@ export type Database = {
         Row: {
           brand_manual_file_path: string | null
           brand_manual_url: string | null
+          company_id: string
           complementary_color_1: string | null
           complementary_color_2: string | null
           created_at: string
@@ -1309,12 +1310,12 @@ export type Database = {
           primary_color: string | null
           secondary_color: string | null
           updated_at: string
-          user_id: string
           visual_identity: string | null
         }
         Insert: {
           brand_manual_file_path?: string | null
           brand_manual_url?: string | null
+          company_id: string
           complementary_color_1?: string | null
           complementary_color_2?: string | null
           created_at?: string
@@ -1324,12 +1325,12 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           updated_at?: string
-          user_id: string
           visual_identity?: string | null
         }
         Update: {
           brand_manual_file_path?: string | null
           brand_manual_url?: string | null
+          company_id?: string
           complementary_color_1?: string | null
           complementary_color_2?: string | null
           created_at?: string
@@ -1339,10 +1340,17 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           updated_at?: string
-          user_id?: string
           visual_identity?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "company_branding_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_dashboard_metrics: {
         Row: {

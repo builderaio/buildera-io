@@ -1555,17 +1555,39 @@ const ADNEmpresa = ({
                 </Button>
                 <Button 
                   onClick={async () => {
-                    // Primero verificar si hay estrategia existente
-                    await fetchStrategy();
-                    
-                    // Si no hay estrategia y hay descripción, generar automáticamente
-                    if (!strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.description) {
-                      console.log('🤖 Generando estrategia automáticamente antes de ir al paso 3');
-                      await generateStrategyWithAI();
+                    try {
+                      // Asegurar que la descripción esté guardada si el usuario la editó
+                      if ((!companyData?.description || editingDescription) && tempDescription.trim()) {
+                        await saveDescription();
+                      }
+
+                      // Verificar directamente en BD si existe estrategia para evitar race conditions con el estado
+                      if (companyData?.id) {
+                        const { data, error } = await supabase
+                          .from('company_strategy')
+                          .select('id')
+                          .eq('company_id', companyData.id)
+                          .limit(1);
+
+                        if (error) {
+                          console.warn('⚠️ Error comprobando estrategia existente, se intentará generar de todos modos:', error);
+                        }
+
+                        const hasStrategy = !!(data && data.length > 0);
+
+                        // Si no hay estrategia y hay descripción, generar automáticamente
+                        const hasDescription = !!(companyData?.description || tempDescription.trim());
+                        if (!hasStrategy && hasDescription) {
+                          console.log('🤖 Generando estrategia automáticamente antes de ir al paso 3');
+                          await generateStrategyWithAI();
+                        }
+                      }
+                    } catch (err) {
+                      console.error('❌ Error al preparar/generar estrategia antes del paso 3:', err);
+                      // Continuar al paso 3 para permitir edición manual
+                    } finally {
+                      nextStep();
                     }
-                    
-                    // Avanzar al siguiente paso
-                    nextStep();
                   }} 
                   disabled={!companyData?.description && !tempDescription.trim()}
                 >

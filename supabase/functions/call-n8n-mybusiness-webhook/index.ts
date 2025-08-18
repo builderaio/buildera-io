@@ -87,8 +87,8 @@ const handler = async (req: Request): Promise<Response> => {
     
     // Format COMPANY_INFO correctly based on parsed data
     if (typeof companyInfo === 'object' && companyInfo !== null) {
-      // Format as expected by n8n
-      const companyInfoStr = `Empresa: ${companyInfo.company_name || 'Sin nombre'}, sitio web: ${companyInfo.website_url || 'Sin sitio web'}, país: ${companyInfo.country || 'No especificado'}`;
+      // Format as expected by n8n - include description for STRATEGY
+      const companyInfoStr = `Empresa: ${companyInfo.company_name || 'Sin nombre'}, sitio web: ${companyInfo.website_url || 'Sin sitio web'}, país: ${companyInfo.country || 'No especificado'}, descripción: ${companyInfo.description || 'Sin descripción'}`;
       url.searchParams.append('COMPANY_INFO', companyInfoStr);
       console.log('📋 COMPANY_INFO formateado:', companyInfoStr);
     } else {

@@ -215,15 +215,16 @@ const ADNEmpresa = ({
   const fetchCompanyData = async () => {
     try {
       // Obtener la empresa principal (id) desde company_members y luego hacer SELECT en companies
-      if (!profile?.user_id) {
-        console.warn('No se puede obtener empresa: user_id no disponible en profile');
+      if (!profile?.user_id && !user?.id) {
+        console.warn('No se puede obtener empresa: user_id no disponible en profile ni user');
         setCompanyData(null);
         return;
       }
+      const userId = profile?.user_id || user?.id;
       const {
         data: membership,
         error: memberError
-      } = await supabase.from('company_members').select('company_id').eq('user_id', profile.user_id).eq('is_primary', true).maybeSingle();
+      } = await supabase.from('company_members').select('company_id').eq('user_id', userId).eq('is_primary', true).maybeSingle();
       if (memberError) throw memberError;
       const companyId = membership?.company_id;
       if (!companyId) {
@@ -1227,7 +1228,10 @@ const ADNEmpresa = ({
     console.log('🔗 Iniciando configuración...', {
       user: user?.id,
       companyData: companyData,
-      profile: profile
+      profile: profile,
+      'profile.user_id': profile?.user_id,
+      'typeof profile': typeof profile,
+      'profile keys': profile ? Object.keys(profile) : 'profile is null/undefined'
     });
 
     // Validar que tenemos información mínima requerida antes de enviar al webhook
@@ -1238,15 +1242,15 @@ const ADNEmpresa = ({
     if (!companyName || !websiteUrl) {
       try {
         // Validar que tenemos user_id antes de hacer la consulta
-        if (!profile?.user_id) {
-          console.warn('No se puede obtener empresa: user_id no disponible en profile');
+        const userId = profile?.user_id || user?.id;
+        if (!userId) {
+          console.warn('No se puede obtener empresa: user_id no disponible en profile ni user');
           return;
         }
-
         const {
           data: membership,
           error: memberError
-        } = await supabase.from('company_members').select('company_id').eq('user_id', profile.user_id).eq('is_primary', true).maybeSingle();
+        } = await supabase.from('company_members').select('company_id').eq('user_id', userId).eq('is_primary', true).maybeSingle();
         if (!memberError && membership?.company_id) {
           const companyId = membership.company_id;
           const {

@@ -132,7 +132,7 @@ const ADNEmpresa = ({
       const {
         data: onboardingStatus,
         error
-      } = await supabase.from('user_onboarding_status').select('dna_empresarial_completed').eq('user_id', profile?.user_id).single();
+      } = await supabase.from('user_onboarding_status').select('dna_empresarial_completed').eq('user_id', profile?.user_id).maybeSingle();
       if (error && error.code !== 'PGRST116') {
         console.error('Error checking onboarding status:', error);
         return;

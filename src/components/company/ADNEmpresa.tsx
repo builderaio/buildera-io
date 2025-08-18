@@ -1763,148 +1763,311 @@ const ADNEmpresa = ({
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {generatingObjectives ? <div className="text-center space-y-4">
-                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
-                    <RefreshCw className="w-12 h-12 text-muted-foreground mx-auto mb-4 animate-spin" />
-                    <p className="text-muted-foreground mb-4">
-                      ERA está analizando tu estrategia empresarial para generar objetivos específicos de crecimiento...
-                    </p>
-                  </div>
-                </div> : !showGeneratedObjectives && objectives.length === 0 ? <div className="text-center space-y-4">
-                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
-                    <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      ERA generará automáticamente 3 objetivos de crecimiento basados en tu estrategia empresarial
-                    </p>
-                  </div>
-                </div> : <div className="space-y-4">
+              {showGeneratedObjectives ? (
+                <div className="space-y-6">
                   <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                    <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                      Objetivos de crecimiento
-                    </h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Bot className="w-5 h-5 text-blue-500" />
+                      <h3 className="font-medium text-blue-900 dark:text-blue-100">
+                        Objetivos generados por ERA
+                      </h3>
+                    </div>
                     <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
-                      Ajusta los objetivos existentes o agrega nuevos. Recomendación: máximo 3 objetivos.
+                      Revisa los objetivos generados y ajústalos si es necesario antes de continuar.
                     </p>
                   </div>
                   
                   <div className="space-y-3">
-                    {(showGeneratedObjectives ? generatedObjectives : objectives).map((objective, index) => <div key={index} className="p-4 border rounded-lg space-y-3">
+                    {generatedObjectives.map((objective, index) => (
+                      <div key={index} className="p-4 border rounded-lg space-y-3">
                         <div>
-                          <label className="text-sm font-medium">Título del objetivo</label>
-                          <input type="text" value={objective.title} onChange={e => {
-                      if (showGeneratedObjectives) {
-                        const updated = [...generatedObjectives];
-                        updated[index].title = e.target.value;
-                        setGeneratedObjectives(updated);
-                      } else {
-                        const updated = [...objectives];
-                        updated[index].title = e.target.value;
-                        setObjectives(updated);
-                      }
-                    }} className="w-full mt-1 px-3 py-2 border rounded-md text-sm" placeholder="Título del objetivo..." />
+                          <Label htmlFor={`gen-objective-title-${index}`}>Título del objetivo</Label>
+                          <Input
+                            id={`gen-objective-title-${index}`}
+                            value={objective.title} 
+                            onChange={e => {
+                              const updated = [...generatedObjectives];
+                              updated[index].title = e.target.value;
+                              setGeneratedObjectives(updated);
+                            }} 
+                            placeholder="Título del objetivo..." 
+                          />
                         </div>
                         
                         <div>
-                          <label className="text-sm font-medium">Descripción</label>
-                          <textarea value={objective.description} onChange={e => {
-                      if (showGeneratedObjectives) {
-                        const updated = [...generatedObjectives];
-                        updated[index].description = e.target.value;
-                        setGeneratedObjectives(updated);
-                      } else {
-                        const updated = [...objectives];
-                        updated[index].description = e.target.value;
-                        setObjectives(updated);
-                      }
-                    }} className="w-full mt-1 px-3 py-2 border rounded-md text-sm" rows={3} placeholder="Descripción detallada del objetivo..." />
+                          <Label htmlFor={`gen-objective-description-${index}`}>Descripción</Label>
+                          <Textarea
+                            id={`gen-objective-description-${index}`}
+                            value={objective.description} 
+                            onChange={e => {
+                              const updated = [...generatedObjectives];
+                              updated[index].description = e.target.value;
+                              setGeneratedObjectives(updated);
+                            }} 
+                            placeholder="Descripción detallada del objetivo..."
+                            className="min-h-[80px]" 
+                          />
                         </div>
                         
                         <div className="grid grid-cols-3 gap-3">
                           <div>
-                            <label className="text-sm font-medium">Plazo</label>
-                            <select value={objective.type} onChange={e => {
-                        if (showGeneratedObjectives) {
-                          const updated = [...generatedObjectives];
-                          updated[index].type = e.target.value;
-                          setGeneratedObjectives(updated);
-                        } else {
-                          const updated = [...objectives];
-                          updated[index].type = e.target.value;
-                          setObjectives(updated);
-                        }
-                      }} className="w-full mt-1 px-3 py-2 border rounded-md text-sm">
-                              <option value="short_term">Corto plazo</option>
-                              <option value="medium_term">Mediano plazo</option>
-                              <option value="long_term">Largo plazo</option>
-                            </select>
+                            <Label htmlFor={`gen-objective-type-${index}`}>Plazo</Label>
+                            <Select 
+                              value={objective.type} 
+                              onValueChange={value => {
+                                const updated = [...generatedObjectives];
+                                updated[index].type = value;
+                                setGeneratedObjectives(updated);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar plazo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="short_term">Corto plazo</SelectItem>
+                                <SelectItem value="medium_term">Mediano plazo</SelectItem>
+                                <SelectItem value="long_term">Largo plazo</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                           
                           <div>
-                            <label className="text-sm font-medium">Prioridad</label>
-                            <select value={objective.priority} onChange={e => {
-                        if (showGeneratedObjectives) {
-                          const updated = [...generatedObjectives];
-                          updated[index].priority = e.target.value;
-                          setGeneratedObjectives(updated);
-                        } else {
-                          const updated = [...objectives];
-                          updated[index].priority = e.target.value;
-                          setObjectives(updated);
-                        }
-                      }} className="w-full mt-1 px-3 py-2 border rounded-md text-sm">
-                              <option value="alta">Alta</option>
-                              <option value="media">Media</option>
-                            </select>
+                            <Label htmlFor={`gen-objective-priority-${index}`}>Prioridad</Label>
+                            <Select 
+                              value={objective.priority} 
+                              onValueChange={value => {
+                                const updated = [...generatedObjectives];
+                                updated[index].priority = value;
+                                setGeneratedObjectives(updated);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar prioridad" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="high">Alta</SelectItem>
+                                <SelectItem value="medium">Media</SelectItem>
+                                <SelectItem value="low">Baja</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
-
-                          <div className="flex items-end">
-                            <Button onClick={() => {
-                        if (showGeneratedObjectives) {
-                          const updated = generatedObjectives.filter((_, i) => i !== index);
-                          setGeneratedObjectives(updated);
-                        } else {
-                          const updated = objectives.filter((_, i) => i !== index);
-                          setObjectives(updated);
-                        }
-                      }} variant="destructive" size="sm" className="w-full">
-                              Eliminar
-                            </Button>
+                          
+                          <div>
+                            <Label htmlFor={`gen-objective-area-${index}`}>Área</Label>
+                            <Select 
+                              value={objective.area} 
+                              onValueChange={value => {
+                                const updated = [...generatedObjectives];
+                                updated[index].area = value;
+                                setGeneratedObjectives(updated);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar área" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ventas">Ventas</SelectItem>
+                                <SelectItem value="marketing">Marketing</SelectItem>
+                                <SelectItem value="operaciones">Operaciones</SelectItem>
+                                <SelectItem value="financiero">Financiero</SelectItem>
+                                <SelectItem value="tecnologia">Tecnología</SelectItem>
+                                <SelectItem value="recursos_humanos">Recursos Humanos</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline" className="text-xs">
-                            {objective.type === 'short_term' ? 'Corto plazo' : objective.type === 'medium_term' ? 'Mediano plazo' : 'Largo plazo'}
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            Prioridad {objective.priority}
-                          </Badge>
-                          {objective.timeframe && <Badge variant="default" className="text-xs">
-                              {objective.timeframe}
-                            </Badge>}
-                        </div>
-                      </div>)}
+                        <Button 
+                          onClick={() => {
+                            const updated = generatedObjectives.filter((_, i) => i !== index);
+                            setGeneratedObjectives(updated);
+                          }} 
+                          variant="outline" 
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Eliminar objetivo
+                        </Button>
+                      </div>
+                    ))}
                   </div>
-
-                  {(showGeneratedObjectives ? generatedObjectives.length : objectives.length) < 3 && <Button onClick={() => {
-                const newObjective = {
-                  title: "",
-                  description: "",
-                  type: "short_term",
-                  priority: "media",
-                  metric: "",
-                  target: "",
-                  timeframe: ""
-                };
-                if (showGeneratedObjectives) {
-                  setGeneratedObjectives([...generatedObjectives, newObjective]);
-                } else {
-                  setObjectives([...objectives, newObjective]);
-                }
-              }} variant="outline" className="w-full">
+                  
+                  {generatedObjectives.length < 5 && (
+                    <Button 
+                      onClick={() => {
+                        const newObjective = {
+                          title: "",
+                          description: "",
+                          type: "medium_term",
+                          priority: "medium",
+                          area: "marketing"
+                        };
+                        setGeneratedObjectives([...generatedObjectives, newObjective]);
+                      }} 
+                      variant="outline" 
+                      className="w-full"
+                    >
                       Agregar objetivo
-                    </Button>}
-                </div>}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    {objectives.map((objective, index) => (
+                      <div key={index} className="p-4 border rounded-lg space-y-3">
+                        <div>
+                          <Label htmlFor={`objective-title-${index}`}>Título del objetivo</Label>
+                          <Input
+                            id={`objective-title-${index}`}
+                            value={objective.title}
+                            onChange={e => {
+                              const updated = [...objectives];
+                              updated[index].title = e.target.value;
+                              setObjectives(updated);
+                            }}
+                            placeholder="Título del objetivo..."
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor={`objective-description-${index}`}>Descripción</Label>
+                          <Textarea
+                            id={`objective-description-${index}`}
+                            value={objective.description}
+                            onChange={e => {
+                              const updated = [...objectives];
+                              updated[index].description = e.target.value;
+                              setObjectives(updated);
+                            }}
+                            placeholder="Descripción detallada del objetivo..."
+                            className="min-h-[80px]"
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <Label htmlFor={`objective-type-${index}`}>Plazo</Label>
+                            <Select 
+                              value={objective.type} 
+                              onValueChange={value => {
+                                const updated = [...objectives];
+                                updated[index].type = value;
+                                setObjectives(updated);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar plazo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="short_term">Corto plazo</SelectItem>
+                                <SelectItem value="medium_term">Mediano plazo</SelectItem>
+                                <SelectItem value="long_term">Largo plazo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor={`objective-priority-${index}`}>Prioridad</Label>
+                            <Select 
+                              value={objective.priority} 
+                              onValueChange={value => {
+                                const updated = [...objectives];
+                                updated[index].priority = value;
+                                setObjectives(updated);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar prioridad" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="high">Alta</SelectItem>
+                                <SelectItem value="medium">Media</SelectItem>
+                                <SelectItem value="low">Baja</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor={`objective-area-${index}`}>Área</Label>
+                            <Select 
+                              value={objective.area} 
+                              onValueChange={value => {
+                                const updated = [...objectives];
+                                updated[index].area = value;
+                                setObjectives(updated);
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar área" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ventas">Ventas</SelectItem>
+                                <SelectItem value="marketing">Marketing</SelectItem>
+                                <SelectItem value="operaciones">Operaciones</SelectItem>
+                                <SelectItem value="financiero">Financiero</SelectItem>
+                                <SelectItem value="tecnologia">Tecnología</SelectItem>
+                                <SelectItem value="recursos_humanos">Recursos Humanos</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        <Button 
+                          onClick={() => {
+                            const updated = objectives.filter((_, i) => i !== index);
+                            setObjectives(updated);
+                          }} 
+                          variant="outline" 
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Eliminar objetivo
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {objectives.length === 0 && (
+                    <div className="text-center p-6 border-2 border-dashed border-muted rounded-lg">
+                      <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">
+                        No hay objetivos definidos. Agrega al menos un objetivo para continuar.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {objectives.length < 5 && (
+                    <Button 
+                      onClick={() => {
+                        const newObjective = {
+                          title: "",
+                          description: "",
+                          type: "medium_term",
+                          priority: "medium",
+                          area: "marketing"
+                        };
+                        setObjectives([...objectives, newObjective]);
+                      }} 
+                      variant="outline" 
+                      className="w-full"
+                    >
+                      Agregar objetivo
+                    </Button>
+                  )}
+                  
+                  {(objectives.length > 0) && (
+                    <div className="flex justify-center">
+                      <Button onClick={generateObjectivesWithAI} variant="outline" size="sm">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Regenerar con ERA
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
                 <div className="flex items-start gap-3">

@@ -38,6 +38,7 @@ const ADNEmpresa = ({
 
   // Estados para los datos
   const [loading, setLoading] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false); // Nuevo estado para tracking de carga inicial
   const [companyData, setCompanyData] = useState<any>(null);
   const [strategyData, setStrategyData] = useState({
     vision: "",
@@ -125,7 +126,9 @@ const ADNEmpresa = ({
     checkOnboardingStatus();
   }, [companyData, strategyData, objectives, brandingData, socialConnections]);
   const fetchAllData = async () => {
+    setDataLoaded(false);
     await Promise.all([fetchCompanyData(), fetchStrategy(), fetchBranding(), fetchObjectives(), fetchSocialConnections()]);
+    setDataLoaded(true);
   };
 
   // Función para verificar si es primera vez del usuario
@@ -275,7 +278,12 @@ const ADNEmpresa = ({
   };
   const fetchStrategy = async () => {
     try {
-      if (!companyData?.id) return;
+      if (!companyData?.id) {
+        console.log('🔍 fetchStrategy: No company ID available');
+        return;
+      }
+      
+      console.log('🔍 fetchStrategy: Buscando estrategia para company_id:', companyData.id);
       
       const {
         data,
@@ -284,16 +292,23 @@ const ADNEmpresa = ({
         ascending: false
       }).limit(1);
       if (error) throw error;
+      
+      console.log('🔍 fetchStrategy: Resultado de búsqueda:', data);
+      
       if (data && data.length > 0) {
         const strategy = data[0];
-        setStrategyData({
+        const strategyToSet = {
           vision: strategy.vision || "",
           mission: strategy.mision || "",
           propuesta_valor: strategy.propuesta_valor || ""
-        });
+        };
+        console.log('✅ fetchStrategy: Cargando estrategia existente:', strategyToSet);
+        setStrategyData(strategyToSet);
+      } else {
+        console.log('🔍 fetchStrategy: No se encontró estrategia existente para la empresa');
       }
     } catch (error: any) {
-      console.error('Error fetching strategy:', error);
+      console.error('❌ fetchStrategy: Error fetching strategy:', error);
     }
   };
   const fetchBranding = async () => {
@@ -389,21 +404,21 @@ const ADNEmpresa = ({
     }
   };
 
-  // AJUSTE 2 y 3: Auto-generar estrategia cuando se entre al paso 3 SOLO si no hay datos
+  // AJUSTE 2 y 3: Auto-generar estrategia cuando se entre al paso 3 SOLO si no hay datos Y después de cargar datos
   useEffect(() => {
-    if (currentStep === 3 && !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.descripcion_empresa && !loading) {
+    if (dataLoaded && currentStep === 3 && !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.descripcion_empresa && !loading) {
       console.log('🤖 Generando estrategia automáticamente (sin datos previos)');
       generateStrategyWithAI();
     }
-  }, [currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.descripcion_empresa]);
+  }, [dataLoaded, currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.descripcion_empresa, loading]);
 
-  // AJUSTE 2 y 3: Auto-generar objetivos cuando se entre al paso 4 SOLO si no hay datos
+  // AJUSTE 2 y 3: Auto-generar objetivos cuando se entre al paso 4 SOLO si no hay datos Y después de cargar datos
   useEffect(() => {
-    if (currentStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
+    if (dataLoaded && currentStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
       console.log('🎯 Generando objetivos automáticamente (sin datos previos)');
       generateObjectivesWithAI();
     }
-  }, [currentStep, objectives.length, showGeneratedObjectives, generatingObjectives, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
+  }, [dataLoaded, currentStep, objectives.length, showGeneratedObjectives, generatingObjectives, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, loading]);
 
   // AJUSTE 2 y 3: Auto-generar branding cuando se entre al paso 5 SOLO si no hay datos
   useEffect(() => {
@@ -416,7 +431,7 @@ const ADNEmpresa = ({
       hasValueProp: !!strategyData.propuesta_valor,
       isLoading: loading
     });
-    if (currentStep === 5 && !brandingData.visual_identity && !brandingData.primary_color && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
+    if (dataLoaded && currentStep === 5 && !brandingData.visual_identity && !brandingData.primary_color && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
       console.log('🚀 Generando branding automáticamente (sin datos previos)');
       generateBrandingWithAI();
     }

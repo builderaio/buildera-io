@@ -4727,6 +4727,7 @@ export type Database = {
       user_onboarding_status: {
         Row: {
           created_at: string
+          current_step: number | null
           dna_empresarial_completed: boolean | null
           first_login_completed: boolean | null
           id: string
@@ -4739,6 +4740,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          current_step?: number | null
           dna_empresarial_completed?: boolean | null
           first_login_completed?: boolean | null
           id?: string
@@ -4751,6 +4753,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          current_step?: number | null
           dna_empresarial_completed?: boolean | null
           first_login_completed?: boolean | null
           id?: string

@@ -132,7 +132,7 @@ const ADNEmpresa = ({
       const {
         data: onboardingStatus,
         error
-      } = await supabase.from('user_onboarding_status').select('dna_empresarial_completed').eq('user_id', profile?.user_id).maybeSingle();
+      } = await supabase.from('user_onboarding_status').select('dna_empresarial_completed, current_step').eq('user_id', profile?.user_id).maybeSingle();
       if (error && error.code !== 'PGRST116') {
         console.error('Error checking onboarding status:', error);
         return;
@@ -141,6 +141,12 @@ const ADNEmpresa = ({
       // Si no existe registro o no ha completado el DNA empresarial, es primera vez
       const isFirstTimeUser = !onboardingStatus || !onboardingStatus.dna_empresarial_completed;
       setIsFirstTime(isFirstTimeUser);
+
+      // AJUSTE 1: Restaurar el paso donde se quedó el usuario
+      if (onboardingStatus?.current_step && isFirstTimeUser) {
+        console.log(`📍 Restaurando progreso: paso ${onboardingStatus.current_step}`);
+        setCurrentStep(onboardingStatus.current_step);
+      }
 
       // Si es primera vez y hay un website_url, intentar cargar información automáticamente
       if (isFirstTimeUser && (profile?.website_url || companyData?.website_url)) {
@@ -374,21 +380,23 @@ const ADNEmpresa = ({
     }
   };
 
-  // Auto-generar estrategia cuando se entre al paso 3
+  // AJUSTE 2 y 3: Auto-generar estrategia cuando se entre al paso 3 SOLO si no hay datos
   useEffect(() => {
     if (currentStep === 3 && !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.descripcion_empresa && !loading) {
+      console.log('🤖 Generando estrategia automáticamente (sin datos previos)');
       generateStrategyWithAI();
     }
   }, [currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.descripcion_empresa]);
 
-  // Auto-generar objetivos cuando se entre al paso 4
+  // AJUSTE 2 y 3: Auto-generar objetivos cuando se entre al paso 4 SOLO si no hay datos
   useEffect(() => {
     if (currentStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
+      console.log('🎯 Generando objetivos automáticamente (sin datos previos)');
       generateObjectivesWithAI();
     }
   }, [currentStep, objectives.length, showGeneratedObjectives, generatingObjectives, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
 
-  // Auto-generar branding cuando se entre al paso 5
+  // AJUSTE 2 y 3: Auto-generar branding cuando se entre al paso 5 SOLO si no hay datos
   useEffect(() => {
     console.log('🎨 Checking branding auto-generation:', {
       currentStep,
@@ -400,12 +408,12 @@ const ADNEmpresa = ({
       isLoading: loading
     });
     if (currentStep === 5 && !brandingData.visual_identity && !brandingData.primary_color && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
-      console.log('🚀 Iniciando generación automática de branding...');
+      console.log('🚀 Generando branding automáticamente (sin datos previos)');
       generateBrandingWithAI();
     }
   }, [currentStep, brandingData.visual_identity, brandingData.primary_color, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
 
-  // Auto-cargar datos de redes sociales cuando se entre al paso 7
+  // AJUSTE 2 y 3: Auto-cargar datos de redes sociales cuando se entre al paso 7 SOLO si no hay datos
   useEffect(() => {
     console.log('📥 Checking social data auto-loading:', {
       currentStep,
@@ -415,15 +423,15 @@ const ADNEmpresa = ({
       hasSocialConnections: Object.values(socialConnections).some(url => url.trim() !== '')
     });
     if (currentStep === 7 && !loadingData && !analyzing && dataResults.length === 0 && Object.values(socialConnections).some(url => url.trim() !== '')) {
-      console.log('🚀 Iniciando carga automática de datos de redes sociales...');
+      console.log('🚀 Cargando datos de redes sociales automáticamente (sin datos previos)');
       loadSocialData();
     }
   }, [currentStep, loadingData, analyzing, dataResults.length, socialConnections]);
 
-  // Auto-ejecutar análisis inteligente después de cargar datos
+  // AJUSTE 2 y 3: Auto-ejecutar análisis inteligente después de cargar datos SOLO si no hay análisis previo
   useEffect(() => {
     if (currentStep === 7 && !loadingData && !analyzing && dataResults.length > 0 && analysisResults.length === 0) {
-      console.log('🧠 Iniciando análisis inteligente automático...');
+      console.log('🧠 Ejecutando análisis inteligente automáticamente (sin análisis previo)');
       runAnalysis();
     }
   }, [currentStep, loadingData, analyzing, dataResults.length, analysisResults.length]);
@@ -1211,10 +1219,33 @@ const ADNEmpresa = ({
       setLoading(false);
     }
   };
+  // AJUSTE 1: Función para persistir el paso actual en la base de datos
+  const persistCurrentStep = async (step: number) => {
+    if (!profile?.user_id) return;
+    
+    try {
+      await supabase
+        .from('user_onboarding_status')
+        .upsert({
+          user_id: profile.user_id,
+          current_step: step,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
+      console.log(`💾 Paso ${step} persistido en base de datos`);
+    } catch (error) {
+      console.error('Error persistiendo paso actual:', error);
+    }
+  };
+
   const nextStep = async () => {
     if (currentStep < totalSteps) {
       const newStep = currentStep + 1;
       setCurrentStep(newStep);
+      
+      // AJUSTE 1: Persistir el nuevo paso
+      await persistCurrentStep(newStep);
 
       // Auto-generar objetivos cuando se llega al paso 4 y no hay objetivos existentes
       if (newStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives) {
@@ -1370,13 +1401,21 @@ const ADNEmpresa = ({
     // Avanzar al siguiente paso independientemente del resultado del webhook
     nextStep();
   };
-  const prevStep = () => {
+  const prevStep = async () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      const newStep = currentStep - 1;
+      setCurrentStep(newStep);
+      
+      // AJUSTE 1: Persistir el nuevo paso
+      await persistCurrentStep(newStep);
     }
   };
+  
   const goToStep = async (step: number) => {
     setCurrentStep(step);
+    
+    // AJUSTE 1: Persistir el nuevo paso
+    await persistCurrentStep(step);
   };
 
   // Función para obtener el contenido del paso actual

@@ -1345,102 +1345,139 @@ const ADNEmpresa = ({
   };
   const startConfiguration = async () => {
     console.log('🔗 Iniciando configuración...');
-    
-    // Debug: Mostrar todos los campos de companyData
-    console.log('🔍 Datos de empresa para validación:', {
-      'companyData?.description': companyData?.description,
-      'companyData?.descripcion_empresa': companyData?.descripcion_empresa,
-      'companyData (keys)': companyData ? Object.keys(companyData) : 'null',
-      'companyData (full)': companyData
-    });
-    
-    // 1. Verificar si ya tenemos descripción en la company
-    const hasDescription = companyData?.description || companyData?.descripcion_empresa;
-    console.log('🔍 ¿Tiene descripción?', hasDescription);
-    
-    if (hasDescription) {
-      console.log('✅ Ya tenemos descripción de la empresa, continuando...');
-      nextStepLocal();
-      return;
-    }
-    
-    // 2. Si no hay descripción, ejecutar webhook INFO
-    console.log('🔗 No hay descripción, ejecutando webhook INFO...');
     setLoading(true);
-    
+
     try {
+      // 1) Obtener company_id fresco del usuario actual
+      const userId = profile?.user_id || user?.id;
+      if (!userId) {
+        console.warn('No hay userId disponible; continuando sin webhook');
+        return nextStepLocal();
+      }
+
+      const { data: membership } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', userId)
+        .eq('is_primary', true)
+        .maybeSingle();
+
+      const companyId = membership?.company_id || companyData?.id || (profile as any)?.primary_company_id || null;
+      if (!companyId) {
+        console.warn('No se encontró company_id; continuando sin webhook');
+        return nextStepLocal();
+      }
+
+      // 2) Leer la compañía directamente de la DB (estado fresco)
+      const { data: freshCompany, error: companyError } = await supabase
+        .from('companies')
+        .select('id,name,description,website_url,country,industry_sector')
+        .eq('id', companyId)
+        .maybeSingle();
+      if (companyError) throw companyError;
+
+      const existingDesc = (freshCompany?.description ?? '').trim();
+      console.log('🔍 Validación de descripción en DB:', { existingDescLength: existingDesc.length, freshCompany });
+
+      // 3) Si hay descripción ya almacenada, no llamamos webhook
+      if (existingDesc.length > 0) {
+        console.log('✅ Descripción existente encontrada; saltando webhook');
+        // Sincronizar estado para UI
+        setCompanyData((prev: any) => prev ? {
+          ...prev,
+          id: freshCompany!.id,
+          name: freshCompany!.name,
+          description: freshCompany!.description,
+          descripcion_empresa: freshCompany!.description,
+          website_url: freshCompany!.website_url,
+          industry_sector: freshCompany!.industry_sector,
+          country: freshCompany!.country,
+        } : prev);
+        setTempDescription(freshCompany?.description || '');
+        return nextStepLocal();
+      }
+
+      // 4) No hay descripción → llamar webhook INFO con datos actuales
+      console.log('🔗 No hay descripción; llamando webhook INFO con datos frescos');
       const companyInfo = {
-        company_name: companyData?.name || 'Empresa',
-        website_url: companyData?.website_url || '',
-        country: companyData?.country || user?.user_metadata?.country || 'No especificado'
+        company_name: freshCompany?.name || profile?.company_name || 'Empresa',
+        website_url: freshCompany?.website_url || profile?.website_url || '',
+        country: freshCompany?.country || user?.user_metadata?.country || 'No especificado',
       };
-      
+
       const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
         body: {
           KEY: 'INFO',
           COMPANY_INFO: JSON.stringify(companyInfo),
           ADDITIONAL_INFO: JSON.stringify({
-            industry: companyData?.industry_sector || '',
+            industry: freshCompany?.industry_sector || profile?.industry_sector || '',
             description: ''
           })
         }
       });
-      
+
       if (error) {
         console.error('❌ Error ejecutando webhook INFO:', error);
         toast({
-          title: "Advertencia",
-          description: "No se pudo obtener información adicional, pero puedes continuar",
-          variant: "default"
+          title: 'Advertencia',
+          description: 'No se pudo obtener información adicional, pero puedes continuar',
+          variant: 'default'
         });
       } else if (data?.success && data?.data) {
-        console.log('✅ Webhook INFO ejecutado exitosamente:', data.data);
-        
-        // Procesar respuesta del webhook
+        console.log('✅ Webhook INFO ejecutado exitosamente');
         const webhookData = Array.isArray(data.data) ? data.data : [data.data];
         if (webhookData.length > 0) {
-          // Procesar directamente los datos del webhook
           const webhookResponse = webhookData[0]?.response || [];
-          let updateData: any = {};
-          
+          const updateData: any = {};
+
           webhookResponse.forEach((item: any) => {
-            if (item.key === 'descripcion_empresa') {
-              updateData.description = item.value;
-            }
-            if (item.key === 'industria_principal') {
-              updateData.industry_sector = item.value;
+            switch (item.key) {
+              case 'descripcion_empresa':
+                if (item.value && String(item.value).trim().length > 0) updateData.description = item.value;
+                break;
+              case 'industria_principal':
+                if (item.value && String(item.value).trim().length > 0) updateData.industry_sector = item.value;
+                break;
+              case 'facebook':
+                updateData.facebook_url = item.value !== 'No tiene' ? item.value : null; break;
+              case 'twitter':
+                updateData.twitter_url = item.value !== 'No tiene' ? item.value : null; break;
+              case 'linkedin':
+                updateData.linkedin_url = item.value !== 'No tiene' ? item.value : null; break;
+              case 'instagram':
+                updateData.instagram_url = item.value !== 'No tiene' ? item.value : null; break;
+              case 'youtube':
+                updateData.youtube_url = item.value !== 'No tiene' ? item.value : null; break;
+              case 'tiktok':
+                updateData.tiktok_url = item.value !== 'No tiene' ? item.value : null; break;
+              default:
+                break;
             }
           });
-          
-          if (updateData.description) {
-            const { error } = await supabase
+
+          if (Object.keys(updateData).length > 0) {
+            const { error: upErr } = await supabase
               .from('companies')
               .update(updateData)
-              .eq('id', companyData?.id);
-              
-            if (!error) {
-              console.log('✅ Datos del webhook procesados correctamente');
-              await fetchCompanyData(); // Refrescar datos
-              toast({
-                title: "Información obtenida",
-                description: "Se ha cargado información adicional de tu empresa"
-              });
+              .eq('id', companyId);
+            if (upErr) {
+              console.error('❌ Error actualizando empresa con datos del webhook:', upErr);
+            } else {
+              console.log('✅ Empresa actualizada con datos del webhook');
+              await fetchCompanyData();
+              toast({ title: 'Información obtenida', description: 'Se ha cargado información adicional de tu empresa' });
             }
           }
         }
       }
-    } catch (error) {
-      console.error('❌ Error en webhook INFO:', error);
-      toast({
-        title: "Advertencia", 
-        description: "Error al obtener información adicional, pero puedes continuar",
-        variant: "default"
-      });
+    } catch (err) {
+      console.error('💥 Error en startConfiguration:', err);
+      toast({ title: 'Error', description: 'Ocurrió un error, pero puedes continuar', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-    
-    // Avanzar al siguiente paso
+
+    // Continuar al siguiente paso siempre
     nextStepLocal();
   };
 

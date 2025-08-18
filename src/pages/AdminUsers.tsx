@@ -257,15 +257,21 @@ const AdminUsers = () => {
                           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                             <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{user.full_name || 'Sin nombre'}</h3>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <Badge className={`${getUserTypeBadge(user.user_type)} text-xs`}>
-                                {user.user_type}
-                              </Badge>
-                              {user.linked_providers.length > 0 && (
-                                <Badge variant="outline" className="text-xs">
-                                  <Activity className="w-3 h-3 mr-1" />
-                                  {user.linked_providers.length} conexión(es)
-                                </Badge>
-                              )}
+                               <Badge className={`${getUserTypeBadge(user.user_type)} text-xs`}>
+                                 {user.user_type}
+                               </Badge>
+                               {user.onboarding_completed && (
+                                 <Badge variant="secondary" className="text-xs">
+                                   <User className="w-3 h-3 mr-1" />
+                                   Onboarding completado
+                                 </Badge>
+                               )}
+                               {user.linked_providers.length > 0 && (
+                                 <Badge variant="outline" className="text-xs">
+                                   <Activity className="w-3 h-3 mr-1" />
+                                   {user.linked_providers.length} conexión(es)
+                                 </Badge>
+                               )}
                             </div>
                           </div>
                           

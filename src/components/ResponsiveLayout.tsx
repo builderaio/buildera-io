@@ -59,11 +59,28 @@ const ResponsiveLayout = () => {
       const {
         data: profileData,
         error
-      } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
+      } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          companies!profiles_primary_company_id_fkey(
+            name
+          )
+        `)
+        .eq('user_id', user.id)
+        .single();
+      
       if (error) {
         throw error;
       }
-      setProfile(profileData);
+      
+      // Asignar el nombre de la empresa desde la relación
+      const profileWithCompanyName = {
+        ...profileData,
+        company_name: profileData.companies?.name || profileData.company_name
+      };
+      
+      setProfile(profileWithCompanyName);
     } catch (error) {
       console.error('Error checking auth:', error);
       navigate('/auth');

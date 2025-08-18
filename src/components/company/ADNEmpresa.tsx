@@ -454,11 +454,7 @@ const ADNEmpresa = ({
         } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
           body: {
             KEY: 'STRATEGY',
-            COMPANY_INFO: JSON.stringify(companyInfo),
-            ADDITIONAL_INFO: JSON.stringify({
-              industry: companyData?.industry_sector || 'No especificada',
-              description: companyData?.descripcion_empresa || companyData?.description || ''
-            })
+            COMPANY_INFO: JSON.stringify(companyInfo)
           }
         });
         if (error) throw error;

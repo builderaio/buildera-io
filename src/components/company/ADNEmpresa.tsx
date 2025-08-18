@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Target, Palette, Globe, CheckCircle, ArrowRight, ArrowLeft, Bot, Lightbulb, Facebook, Instagram, Twitter, Youtube, Music, Linkedin, RefreshCw, Save, Edit3, X, Check, Download, AlertCircle, Info, Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFirstTimeSave } from "@/hooks/useFirstTimeSave";
 import { useOnboardingStep } from "@/hooks/useOnboardingStep";
 interface ADNEmpresaProps {
   profile: any;
@@ -33,7 +34,12 @@ const ADNEmpresa = ({
   const [user, setUser] = useState<any>(null);
 
   // Hook para manejar el tracking de pasos
-  const { currentStep, updateCurrentStep, nextStep, goToStep } = useOnboardingStep(user?.id);
+  const {
+    currentStep,
+    updateCurrentStep,
+    nextStep,
+    goToStep
+  } = useOnboardingStep(user?.id);
 
   // Estados para los datos
   const [loading, setLoading] = useState(false);
@@ -85,6 +91,12 @@ const ADNEmpresa = ({
     propuesta_valor: ""
   });
 
+  // Hook para manejar webhook de primera vez
+  const {
+    isFirstSave,
+    triggerWebhookOnFirstSave,
+    markAsNotFirstSave
+  } = useFirstTimeSave(user?.id);
   const totalSteps = 7;
   useEffect(() => {
     if (profile?.user_id) {
@@ -99,23 +111,6 @@ const ADNEmpresa = ({
       checkIfFirstTime(); // Verificar si es primera vez
     }
   }, [profile?.user_id, companyData?.id]);
-
-  // CRÍTICO: Recargar datos si no están disponibles y tenemos el perfil
-  useEffect(() => {
-    console.log('🔄 Verificando si necesitamos recargar datos...', {
-      hasProfile: !!profile?.user_id,
-      hasCompanyData: !!companyData?.id,
-      dataLoaded,
-      hasStrategy: !!strategyData.vision,
-      hasObjectives: objectives.length > 0,
-      hasBranding: !!brandingData.visual_identity
-    });
-    
-    if (profile?.user_id && !dataLoaded && (!companyData?.id || (!strategyData.vision && !objectives.length && !brandingData.visual_identity))) {
-      console.log('🔄 Recargando datos debido a estado incompleto...');
-      fetchAllData();
-    }
-  }, [profile?.user_id, companyData?.id, dataLoaded, strategyData.vision, objectives.length, brandingData.visual_identity]);
 
   // Obtener usuario actual
   useEffect(() => {
@@ -139,23 +134,14 @@ const ADNEmpresa = ({
   const fetchAllData = async () => {
     setDataLoaded(false);
     console.log('📊 Iniciando carga de todos los datos...');
-    
-    try {
-      // Primero cargar datos de la empresa para obtener el ID
-      await fetchCompanyData();
-      
-      // Esperar a que se actualice el estado antes de continuar
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Luego cargar el resto de datos que dependen del company_id
-      await Promise.all([fetchStrategy(), fetchBranding(), fetchObjectives(), fetchSocialConnections()]);
-      
-      console.log('✅ Carga de datos completada');
-    } catch (error) {
-      console.error('❌ Error en fetchAllData:', error);
-    } finally {
-      setDataLoaded(true);
-    }
+
+    // Primero cargar datos de la empresa para obtener el ID
+    await fetchCompanyData();
+
+    // Luego cargar el resto de datos que dependen del company_id
+    await Promise.all([fetchStrategy(), fetchBranding(), fetchObjectives(), fetchSocialConnections()]);
+    console.log('✅ Carga de datos completada');
+    setDataLoaded(true);
   };
 
   // Función para verificar si es primera vez del usuario
@@ -237,9 +223,16 @@ const ADNEmpresa = ({
             }
           }
         }
-      } 
-      // Removed: No ejecutar webhooks automáticamente en el load
-      // El webhook se ejecutará cuando el usuario haga clic en "Comenzar configuración"
+      } else if (!companyData?.webhook_data) {
+        // Si no hay datos de webhook, intentar obtenerlos
+        console.log('🚀 Ejecutando webhook para obtener información de la empresa...');
+        await triggerWebhookOnFirstSave(profile?.company_name || companyData?.name || '', profile?.website_url || companyData?.website_url, profile?.country);
+
+        // Esperar un momento y refrescar los datos
+        setTimeout(() => {
+          fetchCompanyData();
+        }, 3000);
+      }
     } catch (error) {
       console.error('Error cargando información desde webhook:', error);
     }
@@ -253,26 +246,14 @@ const ADNEmpresa = ({
         return;
       }
       const userId = profile?.user_id || user?.id;
-      let companyId: string | null = null;
-      try {
-        const { data: membership } = await supabase
-          .from('company_members')
-          .select('company_id')
-          .eq('user_id', userId)
-          .eq('is_primary', true)
-          .maybeSingle();
-        companyId = membership?.company_id || null;
-      } catch (memberError) {
-        console.warn('No se pudo leer company_members (RLS o sin registro). Intentando con profile.primary_company_id...', memberError);
-      }
-
-      // Fallback: usar primary_company_id del perfil si existe
-      if (!companyId && (profile as any)?.primary_company_id) {
-        companyId = (profile as any).primary_company_id;
-      }
-
+      const {
+        data: membership,
+        error: memberError
+      } = await supabase.from('company_members').select('company_id').eq('user_id', userId).eq('is_primary', true).maybeSingle();
+      if (memberError) throw memberError;
+      const companyId = membership?.company_id;
       if (!companyId) {
-        console.warn('No se encontró empresa principal para el usuario (ni en company_members ni en profile.primary_company_id)');
+        console.warn('No se encontró empresa principal para el usuario');
         setCompanyData(null);
         return;
       }
@@ -310,25 +291,19 @@ const ADNEmpresa = ({
   };
   const fetchStrategy = async () => {
     try {
-      // Buscar usando el company_id del estado actual o del perfil
-      const companyId = companyData?.id;
-      if (!companyId) {
+      if (!companyData?.id) {
         console.log('🔍 fetchStrategy: No company ID available');
         return;
       }
-      
-      console.log('🔍 fetchStrategy: Buscando estrategia para company_id:', companyId);
-      
+      console.log('🔍 fetchStrategy: Buscando estrategia para company_id:', companyData.id);
       const {
         data,
         error
-      } = await supabase.from('company_strategy').select('*').eq('company_id', companyId).order('created_at', {
+      } = await supabase.from('company_strategy').select('*').eq('company_id', companyData.id).order('created_at', {
         ascending: false
       }).limit(1);
       if (error) throw error;
-      
       console.log('🔍 fetchStrategy: Resultado de búsqueda:', data);
-      
       if (data && data.length > 0) {
         const strategy = data[0];
         const strategyToSet = {
@@ -340,12 +315,6 @@ const ADNEmpresa = ({
         setStrategyData(strategyToSet);
       } else {
         console.log('🔍 fetchStrategy: No se encontró estrategia existente para la empresa');
-        // Resetear a valores vacíos si no hay datos
-        setStrategyData({
-          vision: "",
-          mission: "",
-          propuesta_valor: ""
-        });
       }
     } catch (error: any) {
       console.error('❌ fetchStrategy: Error fetching strategy:', error);
@@ -357,17 +326,13 @@ const ADNEmpresa = ({
         console.log('🔍 fetchBranding: No company ID available');
         return;
       }
-      
       console.log('🔍 fetchBranding: Buscando branding para company_id:', companyData.id);
-      
       const {
         data,
         error
       } = await supabase.from('company_branding').select('*').eq('company_id', companyData.id).maybeSingle();
       if (error && error.code !== 'PGRST116') throw error;
-      
       console.log('🔍 fetchBranding: Resultado de búsqueda:', data);
-      
       if (data) {
         const brandingToSet = {
           primary_color: data.primary_color || "",
@@ -380,14 +345,6 @@ const ADNEmpresa = ({
         setBrandingData(brandingToSet);
       } else {
         console.log('🔍 fetchBranding: No se encontró branding existente para la empresa');
-        // Resetear a valores vacíos si no hay datos
-        setBrandingData({
-          primary_color: "",
-          secondary_color: "",
-          complementary_color_1: "",
-          complementary_color_2: "",
-          visual_identity: ""
-        });
       }
     } catch (error: any) {
       console.error('❌ fetchBranding: Error fetching branding:', error);
@@ -399,9 +356,7 @@ const ADNEmpresa = ({
         console.log('🔍 fetchObjectives: No company ID available');
         return;
       }
-      
       console.log('🔍 fetchObjectives: Buscando objetivos para company_id:', companyData.id);
-      
       const {
         data,
         error
@@ -409,7 +364,6 @@ const ADNEmpresa = ({
         ascending: true
       });
       if (error) throw error;
-      
       console.log('🔍 fetchObjectives: Resultado de búsqueda:', data);
       console.log('✅ fetchObjectives: Cargando objetivos existentes:', data || []);
       setObjectives(data || []);
@@ -423,18 +377,15 @@ const ADNEmpresa = ({
         console.log('🔍 fetchSocialConnections: No company ID available');
         return;
       }
-      
       console.log('🔍 fetchSocialConnections: Buscando datos sociales para company_id:', companyData.id);
-      
+
       // Buscar por company_id en lugar de created_by
       const {
         data: company,
         error
       } = await supabase.from('companies').select('*').eq('id', companyData.id).maybeSingle();
       if (error) throw error;
-      
       console.log('🔍 fetchSocialConnections: Resultado de búsqueda:', company);
-      
       if (company) {
         const socialData = {
           facebook: company.facebook_url || "",
@@ -484,9 +435,38 @@ const ADNEmpresa = ({
     }
   };
 
-  // Removed: Auto-generation effects - ahora solo se ejecutan con clics manuales
+  // AJUSTE 2 y 3: Auto-generar estrategia cuando se entre al paso 3 SOLO si no hay datos Y después de cargar datos
+  useEffect(() => {
+    if (dataLoaded && currentStep === 3 && !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.descripcion_empresa && !loading) {
+      console.log('🤖 Generando estrategia automáticamente (sin datos previos)');
+      generateStrategyWithAI();
+    }
+  }, [dataLoaded, currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.descripcion_empresa, loading]);
 
-  // Removed: Auto-generation effects - ahora solo se ejecutan con clics manuales
+  // AJUSTE 2 y 3: Auto-generar objetivos cuando se entre al paso 4 SOLO si no hay datos Y después de cargar datos
+  useEffect(() => {
+    if (dataLoaded && currentStep === 4 && objectives.length === 0 && !showGeneratedObjectives && !generatingObjectives && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
+      console.log('🎯 Generando objetivos automáticamente (sin datos previos)');
+      generateObjectivesWithAI();
+    }
+  }, [dataLoaded, currentStep, objectives.length, showGeneratedObjectives, generatingObjectives, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, loading]);
+
+  // AJUSTE 2 y 3: Auto-generar branding cuando se entre al paso 5 SOLO si no hay datos
+  useEffect(() => {
+    console.log('🎨 Checking branding auto-generation:', {
+      currentStep,
+      hasVisualIdentity: !!brandingData.visual_identity,
+      hasPrimaryColor: !!brandingData.primary_color,
+      hasVision: !!strategyData.vision,
+      hasMission: !!strategyData.mission,
+      hasValueProp: !!strategyData.propuesta_valor,
+      isLoading: loading
+    });
+    if (dataLoaded && currentStep === 5 && !brandingData.visual_identity && !brandingData.primary_color && strategyData.vision && strategyData.mission && strategyData.propuesta_valor && !loading) {
+      console.log('🚀 Generando branding automáticamente (sin datos previos)');
+      generateBrandingWithAI();
+    }
+  }, [currentStep, brandingData.visual_identity, brandingData.primary_color, strategyData.vision, strategyData.mission, strategyData.propuesta_valor]);
 
   // AJUSTE 2 y 3: Auto-cargar datos de redes sociales cuando se entre al paso 7 SOLO si no hay datos
   useEffect(() => {
@@ -840,7 +820,10 @@ const ADNEmpresa = ({
         setCompletedSteps(prev => [...prev, 2]);
       }
 
-      // Removed: Webhook logic simplificada
+      // Ejecutar webhook de primera vez si aplica
+      if (isFirstSave && user?.id) {
+        await triggerWebhookOnFirstSave(profile?.company_name || companyData?.name || '', profile?.website_url || companyData?.website_url, profile?.country);
+      }
       toast({
         title: "Descripción guardada",
         description: "La descripción de tu negocio ha sido actualizada."
@@ -862,7 +845,6 @@ const ADNEmpresa = ({
       if (!companyData?.id) {
         throw new Error('No se encontró la empresa asociada');
       }
-      
       const {
         error
       } = await supabase.from('company_strategy').upsert({
@@ -897,7 +879,6 @@ const ADNEmpresa = ({
       if (!companyData?.id) {
         throw new Error('No se encontró la empresa asociada');
       }
-      
       const {
         error
       } = await supabase.from('company_branding').upsert({
@@ -935,7 +916,7 @@ const ADNEmpresa = ({
       if (!companyData?.id) {
         throw new Error('No se encontró la empresa asociada');
       }
-      
+
       // Primero eliminar objetivos existentes
       const {
         error: deleteError
@@ -997,7 +978,7 @@ const ADNEmpresa = ({
       if (!companyData?.id) {
         throw new Error('No se encontró la empresa asociada');
       }
-      
+
       // Función para convertir prioridad a número
       const getPriorityNumber = (priority: string) => {
         switch (priority) {
@@ -1310,27 +1291,23 @@ const ADNEmpresa = ({
   // AJUSTE 1: Función para persistir el paso actual en la base de datos
   const persistCurrentStep = async (step: number) => {
     if (!profile?.user_id) return;
-    
     try {
-      await supabase
-        .from('user_onboarding_status')
-        .upsert({
-          user_id: profile.user_id,
-          current_step: step,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        });
+      await supabase.from('user_onboarding_status').upsert({
+        user_id: profile.user_id,
+        current_step: step,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
+      });
       console.log(`💾 Paso ${step} persistido en base de datos`);
     } catch (error) {
       console.error('Error persistiendo paso actual:', error);
     }
   };
-
   const nextStepLocal = async () => {
     if (currentStep < totalSteps) {
       const newStep = currentStep + 1;
-      
+
       // Usar el hook para actualizar el paso
       await updateCurrentStep(newStep);
 
@@ -1344,152 +1321,156 @@ const ADNEmpresa = ({
     }
   };
   const startConfiguration = async () => {
-    console.log('🔗 Iniciando configuración...');
-    setLoading(true);
+    console.log('🔗 Iniciando configuración...', {
+      user: user?.id,
+      companyData: companyData,
+      profile: profile,
+      'profile.user_id': profile?.user_id,
+      'typeof profile': typeof profile,
+      'profile keys': profile ? Object.keys(profile) : 'profile is null/undefined'
+    });
 
-    try {
-      // 1) Obtener company_id fresco del usuario actual
-      const userId = profile?.user_id || user?.id;
-      if (!userId) {
-        console.warn('No hay userId disponible; continuando sin webhook');
-        return nextStepLocal();
-      }
+    // Validar que tenemos información mínima requerida antes de enviar al webhook
+    let companyName = companyData?.name;
+    let websiteUrl = companyData?.website_url;
 
-      const { data: membership } = await supabase
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', userId)
-        .eq('is_primary', true)
-        .maybeSingle();
-
-      const companyId = membership?.company_id || companyData?.id || (profile as any)?.primary_company_id || null;
-      if (!companyId) {
-        console.warn('No se encontró company_id; continuando sin webhook');
-        return nextStepLocal();
-      }
-
-      // 2) Leer la compañía directamente de la DB (estado fresco)
-      const { data: freshCompany, error: companyError } = await supabase
-        .from('companies')
-        .select('id,name,description,website_url,country,industry_sector')
-        .eq('id', companyId)
-        .maybeSingle();
-      if (companyError) throw companyError;
-
-      const existingDesc = (freshCompany?.description ?? '').trim();
-      console.log('🔍 Validación de descripción en DB:', { existingDescLength: existingDesc.length, freshCompany });
-
-      // 3) Si hay descripción ya almacenada, no llamamos webhook
-      if (existingDesc.length > 0) {
-        console.log('✅ Descripción existente encontrada; saltando webhook');
-        // Sincronizar estado para UI
-        setCompanyData((prev: any) => prev ? {
-          ...prev,
-          id: freshCompany!.id,
-          name: freshCompany!.name,
-          description: freshCompany!.description,
-          descripcion_empresa: freshCompany!.description,
-          website_url: freshCompany!.website_url,
-          industry_sector: freshCompany!.industry_sector,
-          country: freshCompany!.country,
-        } : prev);
-        setTempDescription(freshCompany?.description || '');
-        return nextStepLocal();
-      }
-
-      // 4) No hay descripción → llamar webhook INFO con datos actuales
-      console.log('🔗 No hay descripción; llamando webhook INFO con datos frescos');
-      const companyInfo = {
-        company_name: freshCompany?.name || profile?.company_name || 'Empresa',
-        website_url: freshCompany?.website_url || profile?.website_url || '',
-        country: freshCompany?.country || user?.user_metadata?.country || 'No especificado',
-      };
-
-      const { data, error } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
-        body: {
-          KEY: 'INFO',
-          COMPANY_INFO: JSON.stringify(companyInfo),
-          ADDITIONAL_INFO: JSON.stringify({
-            industry: freshCompany?.industry_sector || profile?.industry_sector || '',
-            description: ''
-          })
+    // Asegurar que obtenemos la info directamente desde la tabla companies (sin usar profile)
+    if (!companyName || !websiteUrl) {
+      try {
+        // Validar que tenemos user_id antes de hacer la consulta
+        const userId = profile?.user_id || user?.id;
+        if (!userId) {
+          console.warn('No se puede obtener empresa: user_id no disponible en profile ni user');
+          return;
         }
+        const {
+          data: membership,
+          error: memberError
+        } = await supabase.from('company_members').select('company_id').eq('user_id', userId).eq('is_primary', true).maybeSingle();
+        if (!memberError && membership?.company_id) {
+          const companyId = membership.company_id;
+          const {
+            data: freshCompany,
+            error: companyError
+          } = await supabase.from('companies').select('name,website_url').eq('id', companyId).maybeSingle();
+          if (!companyError && freshCompany) {
+            companyName = freshCompany.name;
+            websiteUrl = freshCompany.website_url;
+          }
+        }
+      } catch (e) {
+        console.warn('No se pudo refrescar datos de companies:', e);
+      }
+    }
+    // Normalizar valores
+    companyName = companyName?.trim();
+    websiteUrl = websiteUrl?.trim();
+    if (!websiteUrl || !companyName) {
+      console.log('⚠️ Información insuficiente para webhook (desde companies). Continuando sin webhook.', {
+        companyName,
+        websiteUrl
       });
+      toast({
+        title: "Configuración guardada",
+        description: "La información ha sido guardada. Puedes completar el nombre y sitio web más adelante.",
+        variant: "default"
+      });
+      nextStepLocal();
+      return;
+    }
 
-      if (error) {
-        console.error('❌ Error ejecutando webhook INFO:', error);
-        toast({
-          title: 'Advertencia',
-          description: 'No se pudo obtener información adicional, pero puedes continuar',
-          variant: 'default'
+    // Llamar webhook de n8n cuando se hace clic en "Comenzar configuración"
+    {
+      console.log('🔗 Ejecutando webhook n8n al comenzar configuración con datos:', {
+        companyName,
+        websiteUrl,
+        industry: companyData?.industry_sector
+      });
+      setLoading(true);
+      try {
+        const {
+          data,
+          error
+        } = await supabase.functions.invoke('call-n8n-mybusiness-webhook', {
+          body: {
+            KEY: 'INFO',
+            COMPANY_INFO: JSON.stringify({
+              company_name: companyName,
+              website_url: websiteUrl,
+              country: companyData?.country || user?.user_metadata?.country || 'No especificado'
+            }),
+            ADDITIONAL_INFO: JSON.stringify({
+              industry: companyData?.industry_sector,
+              description: companyData?.descripcion_empresa || ''
+            })
+          }
         });
-      } else if (data?.success && data?.data) {
-        console.log('✅ Webhook INFO ejecutado exitosamente');
-        const webhookData = Array.isArray(data.data) ? data.data : [data.data];
-        if (webhookData.length > 0) {
-          const webhookResponse = webhookData[0]?.response || [];
-          const updateData: any = {};
-
-          webhookResponse.forEach((item: any) => {
-            switch (item.key) {
-              case 'descripcion_empresa':
-                if (item.value && String(item.value).trim().length > 0) updateData.description = item.value;
-                break;
-              case 'industria_principal':
-                if (item.value && String(item.value).trim().length > 0) updateData.industry_sector = item.value;
-                break;
-              case 'facebook':
-                updateData.facebook_url = item.value !== 'No tiene' ? item.value : null; break;
-              case 'twitter':
-                updateData.twitter_url = item.value !== 'No tiene' ? item.value : null; break;
-              case 'linkedin':
-                updateData.linkedin_url = item.value !== 'No tiene' ? item.value : null; break;
-              case 'instagram':
-                updateData.instagram_url = item.value !== 'No tiene' ? item.value : null; break;
-              case 'youtube':
-                updateData.youtube_url = item.value !== 'No tiene' ? item.value : null; break;
-              case 'tiktok':
-                updateData.tiktok_url = item.value !== 'No tiene' ? item.value : null; break;
-              default:
-                break;
-            }
+        if (error) {
+          console.error('Error ejecutando webhook n8n:', error);
+          toast({
+            title: "Error",
+            description: "No se pudo obtener información adicional de la empresa",
+            variant: "destructive"
           });
+        } else {
+          console.log('✅ Webhook n8n ejecutado exitosamente:', data);
 
-          if (Object.keys(updateData).length > 0) {
-            const { error: upErr } = await supabase
-              .from('companies')
-              .update(updateData)
-              .eq('id', companyId);
-            if (upErr) {
-              console.error('❌ Error actualizando empresa con datos del webhook:', upErr);
-            } else {
-              console.log('✅ Empresa actualizada con datos del webhook');
-              await fetchCompanyData();
-              toast({ title: 'Información obtenida', description: 'Se ha cargado información adicional de tu empresa' });
+          // Llamar a la función process-company-webhooks para procesar y guardar los datos
+          if (data?.success && data?.data && Array.isArray(data.data) && data.data.length > 0) {
+            console.log('📊 Procesando respuesta del webhook...');
+            try {
+              const {
+                error: processError
+              } = await supabase.functions.invoke('process-company-webhooks', {
+                body: {
+                  user_id: user?.id || profile?.user_id,
+                  company_name: companyName,
+                  website_url: websiteUrl,
+                  country: companyData?.country || user?.user_metadata?.country || 'No especificado',
+                  trigger_type: 'update',
+                  webhook_data: data.data
+                }
+              });
+              if (processError) {
+                console.error('Error procesando webhook:', processError);
+              } else {
+                console.log('✅ Datos del webhook procesados y guardados correctamente');
+
+                // Refrescar los datos de la empresa desde la base de datos
+                await fetchCompanyData();
+                toast({
+                  title: "Información obtenida",
+                  description: "Se ha cargado información adicional de tu empresa"
+                });
+              }
+            } catch (processError) {
+              console.error('Error llamando process-company-webhooks:', processError);
             }
           }
         }
+      } catch (error) {
+        console.error('Error en llamada al webhook n8n:', error);
+        toast({
+          title: "Error",
+          description: "Error al procesar información de la empresa",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('💥 Error en startConfiguration:', err);
-      toast({ title: 'Error', description: 'Ocurrió un error, pero puedes continuar', variant: 'destructive' });
-    } finally {
-      setLoading(false);
     }
 
-    // Continuar al siguiente paso siempre
+    // Avanzar al siguiente paso independientemente del resultado del webhook
     nextStepLocal();
   };
-
   const prevStep = async () => {
     if (currentStep > 1) {
       const newStep = currentStep - 1;
-      
+
       // Usar el hook para actualizar el paso
       await updateCurrentStep(newStep);
     }
   };
-  
   const goToStepLocal = async (step: number) => {
     // Usar el hook para actualizar el paso
     await updateCurrentStep(step);
@@ -1561,18 +1542,7 @@ const ADNEmpresa = ({
                     <Label htmlFor="description">Descripción del negocio</Label>
                     <Textarea id="description" rows={4} value={tempDescription} onChange={e => setTempDescription(e.target.value)} placeholder="Describe tu negocio, los productos o servicios que ofreces, tu público objetivo y lo que te hace único..." className="resize-none" />
                   </div>
-                  <div className="flex gap-2">
-                    <Button onClick={saveDescription} disabled={loading || !tempDescription.trim()} className="flex-1">
-                      {loading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
-                      Guardar
-                    </Button>
-                    <Button onClick={() => {
-                  setEditingDescription(false);
-                  setTempDescription(companyData?.descripcion_empresa || "");
-                }} variant="outline">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  
                 </div>}
 
               <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
@@ -1898,15 +1868,6 @@ const ADNEmpresa = ({
               }} variant="outline" className="w-full">
                       Agregar objetivo
                     </Button>}
-                  
-                  {!showGeneratedObjectives && objectives.length > 0 && (
-                    <div className="flex justify-center">
-                      <Button onClick={generateObjectivesWithAI} variant="outline" size="sm">
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Regenerar con ERA
-                      </Button>
-                    </div>
-                  )}
                 </div>}
 
               <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
@@ -1978,15 +1939,6 @@ const ADNEmpresa = ({
                       Ajusta la identidad visual y paleta de colores de tu marca.
                     </p>
                   </div>
-
-                  {brandingData.visual_identity && (
-                    <div className="flex justify-center mb-4">
-                      <Button onClick={generateBrandingWithAI} variant="outline" size="sm">
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Regenerar con ERA
-                      </Button>
-                    </div>
-                  )}
 
                   <div className="space-y-4">
                     <div>

@@ -420,26 +420,13 @@ const ADNEmpresa = ({
     }
   };
 
-  // AJUSTE 2 y 3: Auto-generar estrategia cuando se entre al paso 3 SOLO si no hay datos Y después de cargar datos
+  // Cargar datos de estrategia cuando se entre al paso 3
   useEffect(() => {
-    console.log('🔍 Evaluando auto-generación de estrategia:', {
-      dataLoaded,
-      currentStep,
-      hasVision: !!strategyData.vision,
-      hasMission: !!strategyData.mission,
-      hasValueProp: !!strategyData.propuesta_valor,
-      hasDescription: !!companyData?.description,
-      loading,
-      strategyData: strategyData
-    });
-    
-    if (dataLoaded && currentStep === 3 && !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.description && !loading) {
-      console.log('🤖 Generando estrategia automáticamente (sin datos previos)');
-      generateStrategyWithAI();
-    } else if (dataLoaded && currentStep === 3 && (strategyData.vision || strategyData.mission || strategyData.propuesta_valor)) {
-      console.log('✅ Estrategia existente encontrada, no se genera automáticamente');
+    if (dataLoaded && currentStep === 3) {
+      console.log('📊 Cargando datos de estrategia para el paso 3');
+      fetchStrategy();
     }
-  }, [dataLoaded, currentStep, strategyData.vision, strategyData.mission, strategyData.propuesta_valor, companyData?.description, loading]);
+  }, [dataLoaded, currentStep]);
 
   // AJUSTE 2 y 3: Auto-generar objetivos cuando se entre al paso 4 SOLO si no hay datos Y después de cargar datos
   useEffect(() => {
@@ -1484,20 +1471,6 @@ const ADNEmpresa = ({
   const goToStepLocal = async (step: number) => {
     // Usar el hook para actualizar el paso
     await updateCurrentStep(step);
-    
-    // Si se va al paso 3, verificar si necesita generar estrategia
-    if (step === 3 && dataLoaded) {
-      console.log('🔄 Navegando al paso 3, verificando estrategia...');
-      // Refrescar datos de estrategia antes de verificar auto-generación
-      setTimeout(async () => {
-        await fetchStrategy();
-        // Después de fetchStrategy, evaluar si necesita auto-generar
-        if (!strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.description && !loading) {
-          console.log('🤖 Auto-generando estrategia después de navegar al paso 3');
-          generateStrategyWithAI();
-        }
-      }, 100);
-    }
   };
 
   // Función para obtener el contenido del paso actual
@@ -1589,7 +1562,22 @@ const ADNEmpresa = ({
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Anterior
                 </Button>
-                <Button onClick={nextStep} disabled={!companyData?.description && !tempDescription.trim()}>
+                <Button 
+                  onClick={async () => {
+                    // Primero verificar si hay estrategia existente
+                    await fetchStrategy();
+                    
+                    // Si no hay estrategia y hay descripción, generar automáticamente
+                    if (!strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor && companyData?.description) {
+                      console.log('🤖 Generando estrategia automáticamente antes de ir al paso 3');
+                      await generateStrategyWithAI();
+                    }
+                    
+                    // Avanzar al siguiente paso
+                    nextStep();
+                  }} 
+                  disabled={!companyData?.description && !tempDescription.trim()}
+                >
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -1608,7 +1596,8 @@ const ADNEmpresa = ({
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {showGeneratedStrategy ? <div className="space-y-6">
+              {showGeneratedStrategy ? (
+                <div className="space-y-6">
                   <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <Bot className="w-5 h-5 text-blue-500" />
@@ -1624,87 +1613,103 @@ const ADNEmpresa = ({
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Misión</label>
-                      <textarea className="w-full p-3 border rounded-lg resize-none" rows={3} value={tempStrategyData.mission} onChange={e => setTempStrategyData(prev => ({
-                    ...prev,
-                    mission: e.target.value
-                  }))} placeholder="Misión de la empresa..." />
+                      <textarea 
+                        className="w-full p-3 border rounded-lg resize-none" 
+                        rows={3} 
+                        value={tempStrategyData.mission} 
+                        onChange={e => setTempStrategyData(prev => ({
+                          ...prev,
+                          mission: e.target.value
+                        }))} 
+                        placeholder="Misión de la empresa..." 
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Visión</label>
-                      <textarea className="w-full p-3 border rounded-lg resize-none" rows={3} value={tempStrategyData.vision} onChange={e => setTempStrategyData(prev => ({
-                    ...prev,
-                    vision: e.target.value
-                  }))} placeholder="Visión de la empresa..." />
+                      <textarea 
+                        className="w-full p-3 border rounded-lg resize-none" 
+                        rows={3} 
+                        value={tempStrategyData.vision} 
+                        onChange={e => setTempStrategyData(prev => ({
+                          ...prev,
+                          vision: e.target.value
+                        }))} 
+                        placeholder="Visión de la empresa..." 
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Propuesta de Valor</label>
-                      <textarea className="w-full p-3 border rounded-lg resize-none" rows={3} value={tempStrategyData.propuesta_valor} onChange={e => setTempStrategyData(prev => ({
-                    ...prev,
-                    propuesta_valor: e.target.value
-                  }))} placeholder="Propuesta de valor..." />
+                      <textarea 
+                        className="w-full p-3 border rounded-lg resize-none" 
+                        rows={3} 
+                        value={tempStrategyData.propuesta_valor} 
+                        onChange={e => setTempStrategyData(prev => ({
+                          ...prev,
+                          propuesta_valor: e.target.value
+                        }))} 
+                        placeholder="Propuesta de valor..." 
+                      />
                     </div>
                   </div>
-
-                </div> : !strategyData.vision && !strategyData.mission && !strategyData.propuesta_valor ? <div className="text-center space-y-4">
-                  <div className="p-6 border-2 border-dashed border-muted rounded-lg">
-                    <Bot className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    {loading ? <>
-                        <RefreshCw className="w-8 h-8 text-primary mx-auto mb-4 animate-spin" />
-                        <p className="text-muted-foreground">
-                          ERA está generando automáticamente tu estrategia empresarial...
-                        </p>
-                      </> : <p className="text-muted-foreground">
-                        Generando estrategia automáticamente con ERA
-                      </p>}
-                  </div>
-                </div> : <div className="space-y-6">
+                </div>
+              ) : (
+                <div className="space-y-6">
                   <div className="space-y-4">
-                    <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                        <h3 className="font-medium text-green-900 dark:text-green-100">
-                          Misión
-                        </h3>
-                      </div>
-                      <p className="text-sm text-green-700 dark:text-green-300">
-                        {strategyData.mission}
-                      </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="mission">Misión</Label>
+                      <Textarea
+                        id="mission"
+                        value={strategyData.mission}
+                        onChange={(e) => setStrategyData(prev => ({
+                          ...prev,
+                          mission: e.target.value
+                        }))}
+                        placeholder="¿Cuál es el propósito fundamental de tu empresa?"
+                        className="min-h-[100px]"
+                      />
                     </div>
 
-                    <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-5 h-5 text-blue-500" />
-                        <h3 className="font-medium text-blue-900 dark:text-blue-100">
-                          Visión
-                        </h3>
-                      </div>
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        {strategyData.vision}
-                      </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="vision">Visión</Label>
+                      <Textarea
+                        id="vision"
+                        value={strategyData.vision}
+                        onChange={(e) => setStrategyData(prev => ({
+                          ...prev,
+                          vision: e.target.value
+                        }))}
+                        placeholder="¿Hacia dónde quieres llevar tu empresa en el futuro?"
+                        className="min-h-[100px]"
+                      />
                     </div>
 
-                    <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-5 h-5 text-purple-500" />
-                        <h3 className="font-medium text-purple-900 dark:text-purple-100">
-                          Propuesta de Valor
-                        </h3>
-                      </div>
-                      <p className="text-sm text-purple-700 dark:text-purple-300">
-                        {strategyData.propuesta_valor}
-                      </p>
+                    <div className="space-y-2">
+                      <Label htmlFor="value-proposition">Propuesta de Valor</Label>
+                      <Textarea
+                        id="value-proposition"
+                        value={strategyData.propuesta_valor}
+                        onChange={(e) => setStrategyData(prev => ({
+                          ...prev,
+                          propuesta_valor: e.target.value
+                        }))}
+                        placeholder="¿Qué valor único ofreces a tus clientes?"
+                        className="min-h-[100px]"
+                      />
                     </div>
                   </div>
 
-                  <div className="flex justify-center">
-                    <Button onClick={generateStrategyWithAI} variant="outline" size="sm">
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Regenerar con ERA
-                    </Button>
-                  </div>
-                </div>}
+                  {(strategyData.vision || strategyData.mission || strategyData.propuesta_valor) && (
+                    <div className="flex justify-center">
+                      <Button onClick={generateStrategyWithAI} variant="outline" size="sm">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Regenerar con ERA
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg">
                 <div className="flex items-start gap-3">
@@ -1726,13 +1731,19 @@ const ADNEmpresa = ({
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Anterior
                 </Button>
-                <Button onClick={async () => {
-                // Si hay estrategia generada sin guardar, guardarla primero
-                if (showGeneratedStrategy && tempStrategyData) {
-                  await acceptGeneratedStrategy();
-                }
-                nextStepLocal();
-              }} disabled={!showGeneratedStrategy && (!strategyData.vision || !strategyData.mission || !strategyData.propuesta_valor)}>
+                <Button 
+                  onClick={async () => {
+                    // Si hay estrategia generada sin guardar, guardarla primero
+                    if (showGeneratedStrategy && tempStrategyData) {
+                      await acceptGeneratedStrategy();
+                    } else {
+                      // Guardar los datos del formulario
+                      await saveStrategy();
+                    }
+                    nextStep();
+                  }} 
+                  disabled={!showGeneratedStrategy && (!strategyData.vision || !strategyData.mission || !strategyData.propuesta_valor)}
+                >
                   Siguiente
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

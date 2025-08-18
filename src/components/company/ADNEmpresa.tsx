@@ -95,6 +95,7 @@ const ADNEmpresa = ({
   const totalSteps = 7;
   useEffect(() => {
     if (profile?.user_id) {
+      console.log('🚀 Usuario detectado, iniciando carga de datos para:', profile.user_id);
       fetchAllData();
     }
   }, [profile?.user_id]);
@@ -127,7 +128,15 @@ const ADNEmpresa = ({
   }, [companyData, strategyData, objectives, brandingData, socialConnections]);
   const fetchAllData = async () => {
     setDataLoaded(false);
-    await Promise.all([fetchCompanyData(), fetchStrategy(), fetchBranding(), fetchObjectives(), fetchSocialConnections()]);
+    console.log('📊 Iniciando carga de todos los datos...');
+    
+    // Primero cargar datos de la empresa para obtener el ID
+    await fetchCompanyData();
+    
+    // Luego cargar el resto de datos que dependen del company_id
+    await Promise.all([fetchStrategy(), fetchBranding(), fetchObjectives(), fetchSocialConnections()]);
+    
+    console.log('✅ Carga de datos completada');
     setDataLoaded(true);
   };
 
@@ -313,29 +322,46 @@ const ADNEmpresa = ({
   };
   const fetchBranding = async () => {
     try {
-      if (!companyData?.id) return;
+      if (!companyData?.id) {
+        console.log('🔍 fetchBranding: No company ID available');
+        return;
+      }
+      
+      console.log('🔍 fetchBranding: Buscando branding para company_id:', companyData.id);
       
       const {
         data,
         error
       } = await supabase.from('company_branding').select('*').eq('company_id', companyData.id).maybeSingle();
       if (error && error.code !== 'PGRST116') throw error;
+      
+      console.log('🔍 fetchBranding: Resultado de búsqueda:', data);
+      
       if (data) {
-        setBrandingData({
+        const brandingToSet = {
           primary_color: data.primary_color || "",
           secondary_color: data.secondary_color || "",
           complementary_color_1: data.complementary_color_1 || "",
           complementary_color_2: data.complementary_color_2 || "",
           visual_identity: data.visual_identity || ""
-        });
+        };
+        console.log('✅ fetchBranding: Cargando branding existente:', brandingToSet);
+        setBrandingData(brandingToSet);
+      } else {
+        console.log('🔍 fetchBranding: No se encontró branding existente para la empresa');
       }
     } catch (error: any) {
-      console.error('Error fetching branding:', error);
+      console.error('❌ fetchBranding: Error fetching branding:', error);
     }
   };
   const fetchObjectives = async () => {
     try {
-      if (!companyData?.id) return;
+      if (!companyData?.id) {
+        console.log('🔍 fetchObjectives: No company ID available');
+        return;
+      }
+      
+      console.log('🔍 fetchObjectives: Buscando objetivos para company_id:', companyData.id);
       
       const {
         data,
@@ -344,33 +370,48 @@ const ADNEmpresa = ({
         ascending: true
       });
       if (error) throw error;
+      
+      console.log('🔍 fetchObjectives: Resultado de búsqueda:', data);
+      console.log('✅ fetchObjectives: Cargando objetivos existentes:', data || []);
       setObjectives(data || []);
     } catch (error: any) {
-      console.error('Error fetching objectives:', error);
+      console.error('❌ fetchObjectives: Error fetching objectives:', error);
     }
   };
   const fetchSocialConnections = async () => {
     try {
+      if (!companyData?.id) {
+        console.log('🔍 fetchSocialConnections: No company ID available');
+        return;
+      }
+      
+      console.log('🔍 fetchSocialConnections: Buscando datos sociales para company_id:', companyData.id);
+      
+      // Buscar por company_id en lugar de created_by
       const {
-        data: companies,
+        data: company,
         error
-      } = await supabase.from('companies').select('*').eq('created_by', profile?.user_id).order('created_at', {
-        ascending: false
-      }).limit(1);
+      } = await supabase.from('companies').select('*').eq('id', companyData.id).maybeSingle();
       if (error) throw error;
-      if (companies && companies.length > 0) {
-        const company = companies[0];
-        setSocialConnections({
+      
+      console.log('🔍 fetchSocialConnections: Resultado de búsqueda:', company);
+      
+      if (company) {
+        const socialData = {
           facebook: company.facebook_url || "",
           instagram: company.instagram_url || "",
           twitter: company.twitter_url || "",
           youtube: company.youtube_url || "",
           tiktok: company.tiktok_url || "",
           linkedin: company.linkedin_url || ""
-        });
+        };
+        console.log('✅ fetchSocialConnections: Cargando conexiones sociales existentes:', socialData);
+        setSocialConnections(socialData);
+      } else {
+        console.log('🔍 fetchSocialConnections: No se encontraron datos sociales para la empresa');
       }
     } catch (error: any) {
-      console.error('Error fetching social connections:', error);
+      console.error('❌ fetchSocialConnections: Error fetching social connections:', error);
     }
   };
   const checkOnboardingStatus = () => {

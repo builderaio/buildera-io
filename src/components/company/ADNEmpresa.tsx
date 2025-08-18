@@ -32,7 +32,6 @@ const ADNEmpresa = ({
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(true); // Nueva variable para controlar primera vez
   const [user, setUser] = useState<any>(null);
-  const [isStarting, setIsStarting] = useState(false); // Estado para el botón de inicio
 
   // Estados para los datos
   const [loading, setLoading] = useState(false);
@@ -1176,7 +1175,7 @@ const ADNEmpresa = ({
     }
   };
   const saveSocialConnections = async () => {
-    if (!companyData?.id) return;
+    //if (!companyData?.id) return;
     setLoading(true);
     try {
       const {
@@ -1222,7 +1221,6 @@ const ADNEmpresa = ({
       }
     }
   };
-  //Clic del primer bton
   const startConfiguration = async () => {
     console.log('🔗 Iniciando configuración...', {
       user: user?.id,

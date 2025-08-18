@@ -466,11 +466,12 @@ const ADNEmpresa = ({
       runAnalysis();
     }
   }, [currentStep, loadingData, analyzing, dataResults.length, analysisResults.length]);
-  const generateStrategyWithAI = async () => {
+  const generateStrategyWithAI = async (opts?: { description?: string }) => {
     setLoading(true);
     try {
       // Verificar datos mínimos requeridos
-      if (!companyData?.name || !companyData?.description) {
+      const effectiveDescription = (opts?.description ?? companyData?.description ?? '').toString();
+      if (!companyData?.name || !effectiveDescription.trim()) {
         throw new Error('Faltan datos de la empresa para generar la estrategia');
       }
 
@@ -481,7 +482,7 @@ const ADNEmpresa = ({
         company_size: companyData.company_size || 'No especificado',
         website_url: companyData.website_url || '',
         country: companyData?.country || user?.user_metadata?.country || 'No especificado',
-        description: companyData.description || ''
+        description: effectiveDescription
       };
       console.log('🤖 Generando estrategia con datos:', companyInfo);
 
@@ -1561,25 +1562,29 @@ const ADNEmpresa = ({
                         await saveDescription();
                       }
 
-                      // Verificar directamente en BD si existe estrategia para evitar race conditions con el estado
+                      // Verificar directamente en BD si existe estrategia y si tiene contenido
                       if (companyData?.id) {
                         const { data, error } = await supabase
                           .from('company_strategy')
-                          .select('id')
+                          .select('mision, vision, propuesta_valor')
                           .eq('company_id', companyData.id)
+                          .order('created_at', { ascending: false })
                           .limit(1);
 
                         if (error) {
                           console.warn('⚠️ Error comprobando estrategia existente, se intentará generar de todos modos:', error);
                         }
 
-                        const hasStrategy = !!(data && data.length > 0);
+                        const row = data && data.length > 0 ? data[0] : null;
+                        const hasMeaningfulStrategy = !!(row && (row.mision || row.vision || row.propuesta_valor));
 
-                        // Si no hay estrategia y hay descripción, generar automáticamente
-                        const hasDescription = !!(companyData?.description || tempDescription.trim());
-                        if (!hasStrategy && hasDescription) {
+                        const effectiveDescription = (companyData?.description && companyData.description.trim()) || tempDescription.trim();
+                        const hasDescription = !!effectiveDescription;
+
+                        // Si no hay estrategia con contenido y hay descripción, generar automáticamente
+                        if (!hasMeaningfulStrategy && hasDescription) {
                           console.log('🤖 Generando estrategia automáticamente antes de ir al paso 3');
-                          await generateStrategyWithAI();
+                          await generateStrategyWithAI({ description: effectiveDescription });
                         }
                       }
                     } catch (err) {
@@ -1715,7 +1720,7 @@ const ADNEmpresa = ({
 
                   {(strategyData.vision || strategyData.mission || strategyData.propuesta_valor) && (
                     <div className="flex justify-center">
-                      <Button onClick={generateStrategyWithAI} variant="outline" size="sm">
+                      <Button onClick={() => generateStrategyWithAI()} variant="outline" size="sm">
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Regenerar con ERA
                       </Button>

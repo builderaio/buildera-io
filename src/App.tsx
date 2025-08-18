@@ -28,6 +28,7 @@ import TermsOfService from "./pages/TermsOfService";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
+import AdminCompanies from "./pages/AdminCompanies";
 import AdminAIMonitoring from "./pages/AdminAIMonitoring";
 import AdminChampionChallenge from "./pages/AdminChampionChallenge";
 import AdminAIConfig from "./pages/AdminAIConfig";
@@ -140,6 +141,11 @@ const App = () => {
               <Route path="/admin/users" element={
                 <AdminProtectedRoute>
                   <AdminUsers />
+                </AdminProtectedRoute>
+              } />
+              <Route path="/admin/companies" element={
+                <AdminProtectedRoute>
+                  <AdminCompanies />
                 </AdminProtectedRoute>
               } />
               <Route path="/admin/ai-monitoring" element={

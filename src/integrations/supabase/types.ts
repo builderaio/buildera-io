@@ -1179,11 +1179,14 @@ export type Database = {
           country: string | null
           created_at: string
           created_by: string
+          deactivated_at: string | null
+          deactivated_by: string | null
           description: string | null
           facebook_url: string | null
           id: string
           industry_sector: string | null
           instagram_url: string | null
+          is_active: boolean | null
           linkedin_url: string | null
           location: string | null
           logo_url: string | null
@@ -1203,11 +1206,14 @@ export type Database = {
           country?: string | null
           created_at?: string
           created_by: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           description?: string | null
           facebook_url?: string | null
           id?: string
           industry_sector?: string | null
           instagram_url?: string | null
+          is_active?: boolean | null
           linkedin_url?: string | null
           location?: string | null
           logo_url?: string | null
@@ -1227,11 +1233,14 @@ export type Database = {
           country?: string | null
           created_at?: string
           created_by?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           description?: string | null
           facebook_url?: string | null
           id?: string
           industry_sector?: string | null
           instagram_url?: string | null
+          is_active?: boolean | null
           linkedin_url?: string | null
           location?: string | null
           logo_url?: string | null
@@ -3818,6 +3827,8 @@ export type Database = {
           company_name: string | null
           country: string | null
           created_at: string
+          deactivated_at: string | null
+          deactivated_by: string | null
           email: string
           experience_years: number | null
           expertise_areas: string[] | null
@@ -3825,6 +3836,7 @@ export type Database = {
           functional_area: string | null
           github_url: string | null
           id: string
+          is_active: boolean | null
           linked_providers: string[] | null
           linkedin_profile: string | null
           phone: string | null
@@ -3843,6 +3855,8 @@ export type Database = {
           company_name?: string | null
           country?: string | null
           created_at?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           email: string
           experience_years?: number | null
           expertise_areas?: string[] | null
@@ -3850,6 +3864,7 @@ export type Database = {
           functional_area?: string | null
           github_url?: string | null
           id?: string
+          is_active?: boolean | null
           linked_providers?: string[] | null
           linkedin_profile?: string | null
           phone?: string | null
@@ -3868,6 +3883,8 @@ export type Database = {
           company_name?: string | null
           country?: string | null
           created_at?: string
+          deactivated_at?: string | null
+          deactivated_by?: string | null
           email?: string
           experience_years?: number | null
           expertise_areas?: string[] | null
@@ -3875,6 +3892,7 @@ export type Database = {
           functional_area?: string | null
           github_url?: string | null
           id?: string
+          is_active?: boolean | null
           linked_providers?: string[] | null
           linkedin_profile?: string | null
           phone?: string | null
@@ -4960,6 +4978,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      deactivate_company: {
+        Args: { target_company_id: string }
+        Returns: boolean
+      }
+      deactivate_user: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       extract_hashtags: {
         Args: { caption: string }
         Returns: string[]
@@ -5178,6 +5204,14 @@ export type Database = {
       mark_onboarding_completed: {
         Args: { _registration_method?: string; _user_id: string }
         Returns: undefined
+      }
+      reactivate_company: {
+        Args: { target_company_id: string }
+        Returns: boolean
+      }
+      reactivate_user: {
+        Args: { target_user_id: string }
+        Returns: boolean
       }
       remove_linked_provider: {
         Args: { _provider: string; _user_id: string }

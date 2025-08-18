@@ -13,7 +13,11 @@ import {
   Calendar,
   Mail,
   Globe,
-  Activity
+  Activity,
+  Power,
+  PowerOff,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -39,6 +43,8 @@ interface UserProfile {
   onboarding_completed?: boolean;
   onboarding_completed_at?: string;
   registration_method?: string;
+  is_active?: boolean;
+  deactivated_at?: string;
 }
 
 const AdminUsers = () => {
@@ -118,7 +124,13 @@ const AdminUsers = () => {
     }
 
     if (userTypeFilter !== 'all') {
-      filtered = filtered.filter(user => user.user_type === userTypeFilter);
+      if (userTypeFilter === 'active') {
+        filtered = filtered.filter(user => user.is_active !== false);
+      } else if (userTypeFilter === 'inactive') {
+        filtered = filtered.filter(user => user.is_active === false);
+      } else {
+        filtered = filtered.filter(user => user.user_type === userTypeFilter);
+      }
     }
 
     setFilteredUsers(filtered);
@@ -144,6 +156,57 @@ const AdminUsers = () => {
       expert: "bg-purple-100 text-purple-800"
     };
     return colors[userType as keyof typeof colors] || "bg-gray-100 text-gray-800";
+  };
+
+  const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
+    try {
+      const action = currentStatus ? 'deactivate_user' : 'reactivate_user';
+      const { error } = await supabase.rpc(action, { target_user_id: userId });
+
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: `Usuario ${currentStatus ? 'inactivado' : 'reactivado'} exitosamente`,
+      });
+
+      loadUsers();
+    } catch (error) {
+      console.error('Error cambiando estado de usuario:', error);
+      toast({
+        title: "Error",
+        description: `Error al cambiar estado: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    if (!confirm(`¿Está seguro de eliminar permanentemente al usuario ${userEmail}? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.functions.invoke('delete-user', {
+        body: { userId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: "Usuario eliminado exitosamente",
+      });
+
+      loadUsers();
+    } catch (error) {
+      console.error('Error eliminando usuario:', error);
+      toast({
+        title: "Error",
+        description: `Error al eliminar usuario: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
@@ -203,6 +266,22 @@ const AdminUsers = () => {
                   Todos ({users.length})
                 </Button>
                 <Button
+                  variant={userTypeFilter === 'active' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setUserTypeFilter('active')}
+                  className="whitespace-nowrap flex-shrink-0"
+                >
+                  Activos ({users.filter(u => u.is_active !== false).length})
+                </Button>
+                <Button
+                  variant={userTypeFilter === 'inactive' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setUserTypeFilter('inactive')}
+                  className="whitespace-nowrap flex-shrink-0"
+                >
+                  Inactivos ({users.filter(u => u.is_active === false).length})
+                </Button>
+                <Button
                   variant={userTypeFilter === 'company' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setUserTypeFilter('company')}
@@ -258,6 +337,9 @@ const AdminUsers = () => {
                             <div className="flex items-center gap-2 flex-wrap">
                               <Badge className={`${getUserTypeBadge(user.user_type)} text-xs`}>
                                 {user.user_type}
+                              </Badge>
+                              <Badge variant={user.is_active === false ? "destructive" : "default"} className="text-xs">
+                                {user.is_active === false ? 'Inactivo' : 'Activo'}
                               </Badge>
                               {user.onboarding_completed && (
                                 <Badge variant="secondary" className="text-xs">
@@ -341,6 +423,46 @@ const AdminUsers = () => {
                                 <span className="text-xs text-muted-foreground">
                                   {new Date(user.onboarding_completed_at).toLocaleDateString('es-ES')}
                                 </span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-2 mt-3">
+                              <Button
+                                size="sm"
+                                variant={user.is_active === false ? "default" : "destructive"}
+                                onClick={() => handleToggleStatus(user.user_id, user.is_active !== false)}
+                                className="text-xs"
+                              >
+                                {user.is_active === false ? (
+                                  <>
+                                    <Power className="w-3 h-3 mr-1" />
+                                    Reactivar
+                                  </>
+                                ) : (
+                                  <>
+                                    <PowerOff className="w-3 h-3 mr-1" />
+                                    Inactivar
+                                  </>
+                                )}
+                              </Button>
+                              
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteUser(user.user_id, user.email)}
+                                className="text-xs"
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Eliminar
+                              </Button>
+                            </div>
+
+                            {user.is_active === false && user.deactivated_at && (
+                              <div className="mt-2 p-2 bg-destructive/10 rounded-md">
+                                <div className="flex items-center gap-1 text-xs text-destructive">
+                                  <AlertTriangle className="w-3 h-3" />
+                                  Inactivado el {new Date(user.deactivated_at).toLocaleDateString('es-ES')}
+                                </div>
                               </div>
                             )}
                           </div>

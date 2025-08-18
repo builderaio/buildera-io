@@ -31,6 +31,7 @@ import {
   Brain,
   Eye,
   Mail,
+  Building2,
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -61,6 +62,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       items: [
         { icon: Home, label: "Dashboard", path: "/admin/dashboard" },
         { icon: Users, label: "Usuarios", path: "/admin/users" },
+        { icon: Building2, label: "Empresas", path: "/admin/companies" },
         { icon: BarChart3, label: "Analytics", path: "/admin/analytics" },
       ]
     },

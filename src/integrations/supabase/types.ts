@@ -1579,36 +1579,44 @@ export type Database = {
       }
       company_strategy: {
         Row: {
+          company_id: string
           created_at: string
           generated_with_ai: boolean | null
           id: string
           mision: string | null
           propuesta_valor: string | null
           updated_at: string
-          user_id: string
           vision: string | null
         }
         Insert: {
+          company_id: string
           created_at?: string
           generated_with_ai?: boolean | null
           id?: string
           mision?: string | null
           propuesta_valor?: string | null
           updated_at?: string
-          user_id: string
           vision?: string | null
         }
         Update: {
+          company_id?: string
           created_at?: string
           generated_with_ai?: boolean | null
           id?: string
           mision?: string | null
           propuesta_valor?: string | null
           updated_at?: string
-          user_id?: string
           vision?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "company_strategy_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       competitive_analysis_sessions: {
         Row: {

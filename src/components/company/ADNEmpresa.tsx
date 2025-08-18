@@ -272,10 +272,12 @@ const ADNEmpresa = ({
   };
   const fetchStrategy = async () => {
     try {
+      if (!companyData?.id) return;
+      
       const {
         data,
         error
-      } = await supabase.from('company_strategy').select('*').eq('user_id', profile.user_id).order('created_at', {
+      } = await supabase.from('company_strategy').select('*').eq('company_id', companyData.id).order('created_at', {
         ascending: false
       }).limit(1);
       if (error) throw error;
@@ -787,10 +789,14 @@ const ADNEmpresa = ({
   const saveStrategy = async (data = strategyData) => {
     setLoading(true);
     try {
+      if (!companyData?.id) {
+        throw new Error('No se encontró la empresa asociada');
+      }
+      
       const {
         error
       } = await supabase.from('company_strategy').upsert({
-        user_id: user?.id,
+        company_id: companyData.id,
         vision: data.vision,
         mision: data.mission,
         propuesta_valor: data.propuesta_valor,

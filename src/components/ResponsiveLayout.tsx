@@ -440,44 +440,82 @@ const CompanyLayout = ({
         </SidebarFooter>
       </Sidebar>
       
-      // src/components/ResponsiveLayout.tsx
-
-<SidebarInset className="flex-1 overflow-hidden bg-background">
-  
-  {/* ESTE ES EL HEADER AL QUE TE REFIERES */}
-  <header className="flex h-16 shrink-0 items-center gap-2 border-b ... bg-background/95 backdrop-blur-sm sticky top-0 z-40 shadow-sm">
-    
-    {/* 1. Icono para colapsar el menú */}
-    <SidebarTrigger className="-ml-1 text-sidebar-foreground hover:bg-accent" />
-    <Separator orientation="vertical" className="mr-2 h-4 bg-border" />
-    
-    <div className="flex items-center justify-between w-full">
-      {/* 2. Nombre de la empresa */}
-      <div className="flex items-center gap-2">
-        <h1 className="text-lg font-semibold text-foreground">
-          {profile?.company_name || 'Mi Empresa'}
-        </h1>
-      </div>
-      
-      {/* 3. Nombre del usuario autenticado y otros íconos */}
-      <div className="flex items-center gap-3">
-        <ThemeSelector />
-        <SmartNotifications />
-        <DropdownMenu>
-          {/* ...código del menú de usuario... */}
-        </DropdownMenu>
-      </div>
-    </div>
-  </header>
-    
-  <main className="flex-1 w-full h-full overflow-auto bg-background">
-    {/* El contenido principal que SÍ se desplaza (scroll) */}
-    <div className="w-full h-full p-4 md:p-6">
-      <Outlet />
-    </div>
-  </main>
-
-</SidebarInset>
+      <SidebarInset className="flex-1 overflow-hidden bg-background">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border/50 px-4 bg-background/95 backdrop-blur-sm sticky top-0 z-40 shadow-sm">
+          <SidebarTrigger className="-ml-1 text-sidebar-foreground hover:bg-accent" />
+          <Separator orientation="vertical" className="mr-2 h-4 bg-border" />
+          
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold text-foreground">
+                {profile?.company_name || 'Mi Empresa'}
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <ThemeSelector />
+              <SmartNotifications />
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-9 w-auto px-2 rounded-full hover:bg-accent border border-transparent hover:border-border/50">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="size-7 ring-1 ring-border/20">
+                        <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
+                          {profile?.full_name?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col items-start text-left hidden md:block">
+                        <span className="text-sm font-medium truncate max-w-[120px] text-foreground">
+                          {profile?.full_name || "Usuario"}
+                        </span>
+                      </div>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-background border border-border shadow-lg z-[60] backdrop-blur-sm">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <Avatar className="size-8 ring-1 ring-border/20">
+                      <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
+                        {profile?.full_name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col space-y-1 leading-none">
+                      <p className="font-medium text-foreground">{profile?.full_name || "Usuario"}</p>
+                      <p className="w-[200px] truncate text-sm text-muted-foreground">
+                        {profile?.email}
+                      </p>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator className="bg-border" />
+                  <DropdownMenuItem onClick={() => setActiveView('profile')} className="cursor-pointer hover:bg-accent focus:bg-accent">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Mi Perfil</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={isProfileIncomplete} className={`cursor-pointer ${isProfileIncomplete ? "opacity-50 cursor-not-allowed" : "hover:bg-accent focus:bg-accent"}`}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Administración</span>
+                    {isProfileIncomplete && <span className="ml-auto text-xs">🔒</span>}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-border" />
+                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10 text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Cerrar sesión</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </header>
+          
+        <main className="flex-1 w-full h-full overflow-auto bg-background">
+          <div className="w-full h-full p-4 md:p-6">
+            <Outlet />
+          </div>
+        </main>
+      </SidebarInset>
       </div>;
 };
 export default ResponsiveLayout;

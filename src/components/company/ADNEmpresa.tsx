@@ -2552,21 +2552,96 @@ const ADNEmpresa = ({
                   Anterior
                 </Button>
                 <Button onClick={async () => {
-                // Marcar onboarding como completado
-                if (user) {
+                  setLoading(true);
                   try {
-                    const registrationMethod = user.app_metadata?.provider || 'email';
-                    await supabase.rpc('mark_onboarding_completed', {
-                      _user_id: user.id,
-                      _registration_method: registrationMethod
-                    });
+                    // Validar que todos los pasos anteriores estén completados
+                    if (!strategyData.mission || !strategyData.vision || !strategyData.propuesta_valor) {
+                      toast({
+                        title: "Error",
+                        description: "Debes completar la estrategia de negocio antes de finalizar",
+                        variant: "destructive"
+                      });
+                      setLoading(false);
+                      return;
+                    }
+
+                    if (objectives.length === 0 && generatedObjectives.length === 0) {
+                      toast({
+                        title: "Error",
+                        description: "Debes definir al menos un objetivo antes de finalizar",
+                        variant: "destructive"
+                      });
+                      setLoading(false);
+                      return;
+                    }
+
+                    if (!brandingData.visual_identity && !brandingData.primary_color) {
+                      toast({
+                        title: "Error",
+                        description: "Debes completar la identidad de marca antes de finalizar",
+                        variant: "destructive"
+                      });
+                      setLoading(false);
+                      return;
+                    }
+
+                    // Validar que tenga datos de redes sociales O análisis completado
+                    const hasValidSocialData = dataResults.length > 0 || analysisResults.length > 0;
+                    if (!hasValidSocialData) {
+                      toast({
+                        title: "Error",
+                        description: "Debes completar el análisis de redes sociales antes de finalizar",
+                        variant: "destructive"
+                      });
+                      setLoading(false);
+                      return;
+                    }
+
+                    // Marcar onboarding como completado
+                    if (user) {
+                      try {
+                        const registrationMethod = user.app_metadata?.provider || 'email';
+                        await supabase.rpc('mark_onboarding_completed', {
+                          _user_id: user.id,
+                          _registration_method: registrationMethod
+                        });
+                        
+                        // Actualizar estado local de onboarding si existe el hook
+                        if (typeof updateCurrentStep === 'function') {
+                          updateCurrentStep(8); // Marcar como completado
+                        }
+                        
+                        toast({
+                          title: "¡Éxito!",
+                          description: "¡Onboarding completado exitosamente!"
+                        });
+                      } catch (error) {
+                        console.error('Error marking onboarding as completed:', error);
+                        toast({
+                          title: "Error",
+                          description: "Error al completar el onboarding. Inténtalo de nuevo.",
+                          variant: "destructive"
+                        });
+                        setLoading(false);
+                        return;
+                      }
+                    }
+                    
+                    // Pequeña pausa para mostrar el mensaje de éxito
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Finalizar onboarding y ir al mando central
+                    navigate('/company-dashboard');
                   } catch (error) {
-                    console.error('Error marking onboarding as completed:', error);
+                    console.error('Error during onboarding completion:', error);
+                    toast({
+                      title: "Error",
+                      description: "Error inesperado al finalizar. Inténtalo de nuevo.",
+                      variant: "destructive"
+                    });
+                    setLoading(false);
                   }
-                }
-                // Finalizar onboarding y ir al mando central
-                navigate('/company-dashboard');
-              }} disabled={loadingData || analyzing || dataResults.length === 0 && analysisResults.length === 0}>
+                }} disabled={loading || loadingData || analyzing}>
                   {loadingData || analyzing ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <>
                       Finalizar
                       <ArrowRight className="w-4 h-4 ml-2" />

@@ -9,8 +9,10 @@ import DeveloperAuth from "@/components/auth/DeveloperAuth";
 import ExpertAuth from "@/components/auth/ExpertAuth";
 import ThemeSelector from "@/components/ThemeSelector";
 import authBackground from "@/assets/auth-background.jpg";
+import { useGTM } from "@/hooks/useGTM";
 
 const Auth = () => {
+  useGTM();
   const [searchParams] = useSearchParams();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [activeTab, setActiveTab] = useState("company");

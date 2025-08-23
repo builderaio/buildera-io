@@ -8,8 +8,10 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Shield, Eye, Lock, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useGTM } from "@/hooks/useGTM";
 
 const AdminLogin = () => {
+  useGTM();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

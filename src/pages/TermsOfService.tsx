@@ -1,8 +1,10 @@
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useGTM } from "@/hooks/useGTM";
 
 const TermsOfService = () => {
+  useGTM();
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-12">

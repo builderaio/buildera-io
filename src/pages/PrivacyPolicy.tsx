@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Shield, Lock, Eye, Database, FileCheck, UserCheck, Globe, Bell } from "lucide-react";
+import { useGTM } from "@/hooks/useGTM";
 
 const PrivacyPolicy = () => {
+  useGTM();
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}

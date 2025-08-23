@@ -81,19 +81,44 @@ export const useExperts = () => {
     try {
       setLoading(true);
       
+      // First load basic public profiles
       const { data: expertsData, error } = await supabase
-        .from('experts')
+        .from('expert_public_profiles')
         .select(`
           *,
           specializations:expert_specializations(*),
           availability:expert_availability(*)
         `)
-        .eq('is_available', true)
-        .eq('is_verified', true)
         .order('rating', { ascending: false });
 
       if (error) throw error;
-      setExperts(expertsData || []);
+      
+      // For authenticated users, get pricing information separately
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && expertsData) {
+        // Get pricing for each expert
+        const expertsWithPricing = await Promise.all(
+          expertsData.map(async (expert) => {
+            const { data: pricingData } = await supabase
+              .rpc('get_expert_pricing', { expert_id: expert.id });
+            
+            return {
+              ...expert,
+              hourly_rate: pricingData?.[0]?.hourly_rate || 0,
+              email: pricingData?.[0]?.email || ''
+            };
+          })
+        );
+        setExperts(expertsWithPricing || []);
+      } else {
+        // For non-authenticated users, set default pricing values
+        const expertsWithoutPricing = (expertsData || []).map(expert => ({
+          ...expert,
+          hourly_rate: 0,
+          email: ''
+        }));
+        setExperts(expertsWithoutPricing);
+      }
     } catch (error) {
       console.error('Error loading experts:', error);
       toast({

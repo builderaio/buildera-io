@@ -66,10 +66,18 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
           </div>
           
           <div className="text-right">
-            <div className="text-2xl font-bold text-primary">
-              ${expert.hourly_rate}
-            </div>
-            <div className="text-sm text-muted-foreground">por hora</div>
+            {expert.hourly_rate > 0 ? (
+              <>
+                <div className="text-2xl font-bold text-primary">
+                  ${expert.hourly_rate}
+                </div>
+                <div className="text-sm text-muted-foreground">por hora</div>
+              </>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                Inicia sesión para ver precios
+              </div>
+            )}
           </div>
         </div>
 

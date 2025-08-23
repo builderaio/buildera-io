@@ -20,6 +20,22 @@ const Index = () => {
   const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
 
   useEffect(() => {
+    // Load Metricool tracking script
+    const loadMetricoolScript = () => {
+      const head = document.getElementsByTagName("head")[0];
+      const script = document.createElement("script");
+      script.type = "text/javascript";
+      script.src = "https://tracker.metricool.com/resources/be.js";
+      script.onload = function() {
+        if ((window as any).beTracker) {
+          (window as any).beTracker.t({hash: "d763705f07d529b5064557dd6979948e"});
+        }
+      };
+      head.appendChild(script);
+    };
+
+    loadMetricoolScript();
+
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);

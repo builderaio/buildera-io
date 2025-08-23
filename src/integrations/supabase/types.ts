@@ -5067,14 +5067,11 @@ export type Database = {
           is_available: boolean | null
           is_verified: boolean | null
           languages: string[] | null
-          linkedin_url: string | null
           profile_image_url: string | null
           rating: number | null
-          specialization: string | null
-          timezone: string | null
+          specializations: string | null
           total_sessions: number | null
           user_id: string | null
-          website_url: string | null
         }
         Insert: {
           bio?: string | null
@@ -5085,14 +5082,11 @@ export type Database = {
           is_available?: boolean | null
           is_verified?: boolean | null
           languages?: string[] | null
-          linkedin_url?: string | null
           profile_image_url?: string | null
           rating?: number | null
-          specialization?: string | null
-          timezone?: string | null
+          specializations?: string | null
           total_sessions?: number | null
           user_id?: string | null
-          website_url?: string | null
         }
         Update: {
           bio?: string | null
@@ -5103,14 +5097,11 @@ export type Database = {
           is_available?: boolean | null
           is_verified?: boolean | null
           languages?: string[] | null
-          linkedin_url?: string | null
           profile_image_url?: string | null
           rating?: number | null
-          specialization?: string | null
-          timezone?: string | null
+          specializations?: string | null
           total_sessions?: number | null
           user_id?: string | null
-          website_url?: string | null
         }
         Relationships: []
       }

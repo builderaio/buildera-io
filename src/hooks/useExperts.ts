@@ -108,11 +108,13 @@ export const useExperts = () => {
 
         if (error) throw error;
         
-        // Add default values for missing fields
+        // Add default values for missing fields to match Expert interface
         const expertsWithDefaults = (expertsData || []).map(expert => ({
           ...expert,
           email: '***',
           hourly_rate: 0,
+          specialization: expert.specializations || '',
+          timezone: 'UTC',
           specializations: [],
           availability: []
         }));

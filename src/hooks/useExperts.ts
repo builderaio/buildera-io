@@ -81,58 +81,43 @@ export const useExperts = () => {
     try {
       setLoading(true);
       
-      // Load experts with the new RLS policies that protect sensitive information
-      const { data: expertsData, error } = await supabase
-        .from('experts')
-        .select(`
-          *,
-          specializations:expert_specializations(*),
-          availability:expert_availability(*)
-        `)
-        .eq('is_available', true)
-        .eq('is_verified', true)
-        .order('rating', { ascending: false });
-
-      if (error) {
-        console.error('Error loading experts:', error);
-        // If error due to RLS, try to get public data only
-        const { data: publicData, error: publicError } = await supabase
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Authenticated users can see full expert profiles including pricing
+        const { data: expertsData, error } = await supabase
           .from('experts')
           .select(`
-            id,
-            user_id,
-            full_name,
-            specialization,
-            bio,
-            experience_years,
-            rating,
-            total_sessions,
-            languages,
-            timezone,
-            profile_image_url,
-            linkedin_url,
-            website_url,
-            is_available,
-            is_verified,
-            created_at,
+            *,
             specializations:expert_specializations(*),
             availability:expert_availability(*)
           `)
           .eq('is_available', true)
           .eq('is_verified', true)
           .order('rating', { ascending: false });
-          
-        if (publicError) throw publicError;
-        
-        // Set experts without sensitive data
-        const expertsWithoutSensitive = (publicData || []).map(expert => ({
-          ...expert,
-          hourly_rate: 0,
-          email: ''
-        }));
-        setExperts(expertsWithoutSensitive);
-      } else {
+
+        if (error) throw error;
         setExperts(expertsData || []);
+      } else {
+        // Non-authenticated users see public profiles without sensitive data
+        const { data: expertsData, error } = await supabase
+          .from('expert_public_profiles')
+          .select('*')
+          .order('rating', { ascending: false });
+
+        if (error) throw error;
+        
+        // Add default values for missing fields
+        const expertsWithDefaults = (expertsData || []).map(expert => ({
+          ...expert,
+          email: '***',
+          hourly_rate: 0,
+          specializations: [],
+          availability: []
+        }));
+        
+        setExperts(expertsWithDefaults);
       }
     } catch (error) {
       console.error('Error loading experts:', error);
@@ -190,6 +175,15 @@ export const useExperts = () => {
         toast({
           title: "Error",
           description: "Experto no encontrado",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      if (expert.hourly_rate === 0) {
+        toast({
+          title: "Error",
+          description: "No se pudo obtener la información de precios. Inicia sesión nuevamente.",
           variant: "destructive"
         });
         return false;

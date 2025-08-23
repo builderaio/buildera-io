@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, Clock, Globe, Calendar, Award } from "lucide-react";
+import { Star, Clock, Globe, Calendar, Award, Lock } from "lucide-react";
 import { Expert } from "@/hooks/useExperts";
 
 interface ExpertCardProps {
@@ -27,6 +27,9 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
     }
   };
+
+  const isPricingVisible = expert.hourly_rate > 0;
+  const canBookSession = isPricingVisible && expert.availability && expert.availability.length > 0;
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
@@ -66,7 +69,7 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
           </div>
           
           <div className="text-right">
-            {expert.hourly_rate > 0 ? (
+            {isPricingVisible ? (
               <>
                 <div className="text-2xl font-bold text-primary">
                   ${expert.hourly_rate}
@@ -74,8 +77,10 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
                 <div className="text-sm text-muted-foreground">por hora</div>
               </>
             ) : (
-              <div className="text-sm text-muted-foreground">
-                Inicia sesión para ver precios
+              <div className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md text-center">
+                <Lock className="w-4 h-4 mx-auto mb-1" />
+                <div>Inicia sesión</div>
+                <div>para ver precios</div>
               </div>
             )}
           </div>
@@ -121,9 +126,10 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
           onClick={() => onBookSession(expert.id)}
           className="w-full"
           size="lg"
+          disabled={!canBookSession}
         >
           <Calendar className="w-4 h-4 mr-2" />
-          Agendar Sesión
+          {canBookSession ? 'Agendar Sesión' : 'Inicia sesión para agendar'}
         </Button>
       </CardContent>
     </Card>

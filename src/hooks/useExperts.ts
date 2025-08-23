@@ -81,43 +81,58 @@ export const useExperts = () => {
     try {
       setLoading(true);
       
-      // First load basic public profiles
+      // Load experts with the new RLS policies that protect sensitive information
       const { data: expertsData, error } = await supabase
-        .from('expert_public_profiles')
+        .from('experts')
         .select(`
           *,
           specializations:expert_specializations(*),
           availability:expert_availability(*)
         `)
+        .eq('is_available', true)
+        .eq('is_verified', true)
         .order('rating', { ascending: false });
 
-      if (error) throw error;
-      
-      // For authenticated users, get pricing information separately
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && expertsData) {
-        // Get pricing for each expert
-        const expertsWithPricing = await Promise.all(
-          expertsData.map(async (expert) => {
-            const { data: pricingData } = await supabase
-              .rpc('get_expert_pricing', { expert_id: expert.id });
-            
-            return {
-              ...expert,
-              hourly_rate: pricingData?.[0]?.hourly_rate || 0,
-              email: pricingData?.[0]?.email || ''
-            };
-          })
-        );
-        setExperts(expertsWithPricing || []);
-      } else {
-        // For non-authenticated users, set default pricing values
-        const expertsWithoutPricing = (expertsData || []).map(expert => ({
+      if (error) {
+        console.error('Error loading experts:', error);
+        // If error due to RLS, try to get public data only
+        const { data: publicData, error: publicError } = await supabase
+          .from('experts')
+          .select(`
+            id,
+            user_id,
+            full_name,
+            specialization,
+            bio,
+            experience_years,
+            rating,
+            total_sessions,
+            languages,
+            timezone,
+            profile_image_url,
+            linkedin_url,
+            website_url,
+            is_available,
+            is_verified,
+            created_at,
+            specializations:expert_specializations(*),
+            availability:expert_availability(*)
+          `)
+          .eq('is_available', true)
+          .eq('is_verified', true)
+          .order('rating', { ascending: false });
+          
+        if (publicError) throw publicError;
+        
+        // Set experts without sensitive data
+        const expertsWithoutSensitive = (publicData || []).map(expert => ({
           ...expert,
           hourly_rate: 0,
           email: ''
         }));
-        setExperts(expertsWithoutPricing);
+        setExperts(expertsWithoutSensitive);
+      } else {
+        setExperts(expertsData || []);
       }
     } catch (error) {
       console.error('Error loading experts:', error);

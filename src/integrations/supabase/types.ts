@@ -2528,13 +2528,6 @@ export type Database = {
             foreignKeyName: "expert_availability_expert_id_fkey"
             columns: ["expert_id"]
             isOneToOne: false
-            referencedRelation: "expert_public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expert_availability_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
             referencedRelation: "experts"
             referencedColumns: ["id"]
           },
@@ -2603,13 +2596,6 @@ export type Database = {
             foreignKeyName: "expert_sessions_expert_id_fkey"
             columns: ["expert_id"]
             isOneToOne: false
-            referencedRelation: "expert_public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "expert_sessions_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
             referencedRelation: "experts"
             referencedColumns: ["id"]
           },
@@ -2650,13 +2636,6 @@ export type Database = {
           years_experience?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "expert_specializations_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "expert_public_profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "expert_specializations_expert_id_fkey"
             columns: ["expert_id"]
@@ -4964,63 +4943,7 @@ export type Database = {
       }
     }
     Views: {
-      expert_public_profiles: {
-        Row: {
-          bio: string | null
-          created_at: string | null
-          experience_years: number | null
-          full_name: string | null
-          id: string | null
-          is_available: boolean | null
-          is_verified: boolean | null
-          languages: string[] | null
-          linkedin_url: string | null
-          profile_image_url: string | null
-          rating: number | null
-          specialization: string | null
-          timezone: string | null
-          total_sessions: number | null
-          user_id: string | null
-          website_url: string | null
-        }
-        Insert: {
-          bio?: string | null
-          created_at?: string | null
-          experience_years?: number | null
-          full_name?: string | null
-          id?: string | null
-          is_available?: boolean | null
-          is_verified?: boolean | null
-          languages?: string[] | null
-          linkedin_url?: string | null
-          profile_image_url?: string | null
-          rating?: number | null
-          specialization?: string | null
-          timezone?: string | null
-          total_sessions?: number | null
-          user_id?: string | null
-          website_url?: string | null
-        }
-        Update: {
-          bio?: string | null
-          created_at?: string | null
-          experience_years?: number | null
-          full_name?: string | null
-          id?: string | null
-          is_available?: boolean | null
-          is_verified?: boolean | null
-          languages?: string[] | null
-          linkedin_url?: string | null
-          profile_image_url?: string | null
-          rating?: number | null
-          specialization?: string | null
-          timezone?: string | null
-          total_sessions?: number | null
-          user_id?: string | null
-          website_url?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       add_linked_provider: {

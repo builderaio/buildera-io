@@ -1233,6 +1233,41 @@ export type Database = {
           },
         ]
       }
+      buyer_personas: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          details: Json
+          fictional_name: string
+          id: string
+          professional_role: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          details?: Json
+          fictional_name: string
+          id?: string
+          professional_role?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          details?: Json
+          fictional_name?: string
+          id?: string
+          professional_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buyer_personas_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           company_size: string | null
@@ -1987,6 +2022,47 @@ export type Database = {
             columns: ["analysis_id"]
             isOneToOne: false
             referencedRelation: "competitive_intelligence"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_calendar_items: {
+        Row: {
+          content_details: Json
+          created_at: string
+          final_copy: string | null
+          id: string
+          publish_date: string
+          publish_time: string | null
+          social_network: string
+          strategy_id: string
+        }
+        Insert: {
+          content_details?: Json
+          created_at?: string
+          final_copy?: string | null
+          id?: string
+          publish_date: string
+          publish_time?: string | null
+          social_network: string
+          strategy_id: string
+        }
+        Update: {
+          content_details?: Json
+          created_at?: string
+          final_copy?: string | null
+          id?: string
+          publish_date?: string
+          publish_time?: string | null
+          social_network?: string
+          strategy_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_calendar_items_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_strategies"
             referencedColumns: ["id"]
           },
         ]
@@ -3085,6 +3161,44 @@ export type Database = {
           },
         ]
       }
+      generated_assets: {
+        Row: {
+          asset_type: string
+          asset_url: string | null
+          calendar_item_id: string
+          created_at: string
+          creative_assets: Json | null
+          id: string
+          prompt_used: string | null
+        }
+        Insert: {
+          asset_type: string
+          asset_url?: string | null
+          calendar_item_id: string
+          created_at?: string
+          creative_assets?: Json | null
+          id?: string
+          prompt_used?: string | null
+        }
+        Update: {
+          asset_type?: string
+          asset_url?: string | null
+          calendar_item_id?: string
+          created_at?: string
+          creative_assets?: Json | null
+          id?: string
+          prompt_used?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_assets_calendar_item_id_fkey"
+            columns: ["calendar_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_calendar_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instagram_business_connections: {
         Row: {
           account_data: Json | null
@@ -3816,6 +3930,30 @@ export type Database = {
           },
         ]
       }
+      marketing_campaigns: {
+        Row: {
+          business_objective: string
+          company_name: string
+          created_at: string
+          id: string
+          status: string
+        }
+        Insert: {
+          business_objective: string
+          company_name: string
+          created_at?: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          business_objective?: string
+          company_name?: string
+          created_at?: string
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       marketing_insights: {
         Row: {
           confidence_score: number | null
@@ -3896,6 +4034,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      marketing_strategies: {
+        Row: {
+          campaign_id: string
+          competitive_analysis: Json
+          content_plan: Json
+          created_at: string
+          id: string
+          marketing_funnel: Json
+          unified_message: string | null
+        }
+        Insert: {
+          campaign_id: string
+          competitive_analysis?: Json
+          content_plan?: Json
+          created_at?: string
+          id?: string
+          marketing_funnel?: Json
+          unified_message?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          competitive_analysis?: Json
+          content_plan?: Json
+          created_at?: string
+          id?: string
+          marketing_funnel?: Json
+          unified_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_strategies_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {

@@ -31,36 +31,13 @@ export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) =
         return;
       }
 
-      // Usar nuestro sistema personalizado de email
-      const resetUrl = `${window.location.origin}/reset-password`;
-      
-      // Primero, solicitar el reset usando Supabase Auth
+      // Usar el sistema nativo de Supabase para password reset
       const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: resetUrl,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (authError) {
         throw authError;
-      }
-
-      // Luego, enviar nuestro email personalizado
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-password-reset-email', {
-          body: {
-            email: email,
-            resetUrl: resetUrl,
-            userType: 'usuario'
-          }
-        });
-
-        if (emailError) {
-          console.warn('Error enviando email personalizado, pero el reset de Supabase funcionó:', emailError);
-        } else {
-          console.log('Email personalizado de reset enviado exitosamente');
-        }
-      } catch (emailError) {
-        console.warn('Error enviando email personalizado:', emailError);
-        // No lanzamos error aquí porque el reset de Supabase ya funcionó
       }
 
 

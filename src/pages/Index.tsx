@@ -40,99 +40,12 @@ const Index = () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
       
+      // For authenticated users, show onboarding redirect component
+      // which will handle all the complex logic
       if (session?.user) {
-        // Get user profile and check onboarding status
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*, user_onboarding_status(*)')
-          .eq('user_id', session.user.id)
-          .single();
-        
-        if (profileData) {
-          const userType = profileData.user_type;
-          const authProvider = profileData.auth_provider || 'email';
-          const isSocialRegistration = authProvider !== 'email';
-          
-          // Check if user has company
-          const { data: companyMemberships } = await supabase
-            .from('company_members')
-            .select('*, companies(*)')
-            .eq('user_id', session.user.id)
-            .eq('is_primary', true);
-            
-          const hasCompany = companyMemberships && companyMemberships.length > 0;
-          
-          console.log('🔍 Index onboarding check:', {
-            hasProfile: !!profileData,
-            hasCompany,
-            authProvider,
-            userType,
-            isSocialRegistration
-          });
-          
-          // Lógica basada en user_type
-          if (userType === null || userType === undefined) {
-            // Usuario sin tipo definido - necesita onboarding
-            console.log('🔄 Usuario sin user_type, mostrando OnboardingRedirect');
-            setShouldShowOnboarding(true);
-            setLoading(false);
-            return;
-          }
-
-          // Lógica específica por tipo de usuario
-          switch (userType) {
-            case 'company':
-              if (hasCompany) {
-                // Consultar estado de onboarding para decidir destino
-                const { data: onboardingStatus } = await supabase
-                  .from('user_onboarding_status')
-                  .select('onboarding_completed_at')
-                  .eq('user_id', session.user.id)
-                  .maybeSingle();
-
-                if (!onboardingStatus || !onboardingStatus.onboarding_completed_at) {
-                  console.log('🔄 Onboarding pendiente, ir al paso 1');
-                  setTimeout(() => {
-                    navigate('/company-dashboard?view=adn-empresa');
-                  }, 100);
-                } else {
-                  console.log('✅ Onboarding completado, redirigiendo al dashboard');
-                  setTimeout(() => {
-                    navigate('/company-dashboard');
-                  }, 100);
-                }
-              } else {
-                // Usuario empresa sin empresa - necesita onboarding
-                console.log('🔄 Usuario empresa sin empresa, mostrando OnboardingRedirect');
-                setShouldShowOnboarding(true);
-                setLoading(false);
-              }
-              break;
-
-            case 'developer':
-            case 'expert':
-              // Usuarios developer/expert van a sus dashboards específicos
-              console.log(`✅ Usuario ${userType}, redirigiendo a ${userType} dashboard`);
-              setTimeout(() => {
-                navigate(`/${userType}-dashboard`);
-              }, 100);
-              break;
-
-            default:
-              // Tipo desconocido - mostrar onboarding
-              console.log('🔄 Tipo de usuario desconocido, mostrando OnboardingRedirect');
-              setShouldShowOnboarding(true);
-              setLoading(false);
-              break;
-          }
-          return;
-        } else {
-          // No hay perfil aún (posible retraso del trigger) -> mostrar onboarding
-          setShouldShowOnboarding(true);
-          setLoading(false);
-          return;
-        }
+        setShouldShowOnboarding(true);
       }
+      
       setLoading(false);
     };
     
@@ -142,13 +55,13 @@ const Index = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       
-      // Solo recargar en casos específicos para evitar loops
-      if (event === 'SIGNED_IN' && session?.user) {
-        console.log('🔄 Nuevo sign-in detectado, recargando para recheck');
-        setTimeout(() => {
-          checkAuth();
-        }, 100);
+      if (session?.user) {
+        setShouldShowOnboarding(true);
+      } else {
+        setShouldShowOnboarding(false);
       }
+      
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

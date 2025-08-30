@@ -31,6 +31,7 @@ import MarketingMetrics from './MarketingMetrics';
 import ContentGenerator from './ContentGenerator';
 import MarketingCalendar from './MarketingCalendar';
 import AdvancedMarketingDashboard from './AdvancedMarketingDashboard';
+import MarketingHubOrchestrator from './MarketingHubOrchestrator';
 
 
 interface MarketingHubProps {
@@ -811,7 +812,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-        <TabsList className="grid w-full grid-cols-6 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-7 h-auto p-1">
           <TabsTrigger 
             value="overview" 
             className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -853,6 +854,13 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
           >
             <Sparkles className="h-4 w-4" />
             <span className="text-xs">IA Avanzado</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="orchestrator" 
+            className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <Target className="h-4 w-4" />
+            <span className="text-xs">AI Orchestrator</span>
           </TabsTrigger>
         </TabsList>
 
@@ -968,6 +976,10 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
 
         <TabsContent value="advanced" className="space-y-6">
           <AdvancedMarketingDashboard profile={profile} />
+        </TabsContent>
+
+        <TabsContent value="orchestrator" className="space-y-6">
+          <MarketingHubOrchestrator />
         </TabsContent>
       </Tabs>
     </div>

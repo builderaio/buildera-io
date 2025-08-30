@@ -1,5 +1,23 @@
 project_id = "ubhzzppmkhxbuiajfswa"
 
+[functions.marketing-hub-target-audience]
+verify_jwt = false
+
+[functions.marketing-hub-marketing-strategy]
+verify_jwt = false
+
+[functions.marketing-hub-content-calendar]
+verify_jwt = false
+
+[functions.marketing-hub-post-creator]
+verify_jwt = false
+
+[functions.marketing-hub-image-creator]
+verify_jwt = false
+
+[functions.marketing-hub-reel-creator]
+verify_jwt = false
+
 [functions.send-verification-email]
 verify_jwt = false
 

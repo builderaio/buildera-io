@@ -3937,6 +3937,7 @@ export type Database = {
           created_at: string
           id: string
           status: string
+          user_id: string
         }
         Insert: {
           business_objective: string
@@ -3944,6 +3945,7 @@ export type Database = {
           created_at?: string
           id?: string
           status?: string
+          user_id: string
         }
         Update: {
           business_objective?: string
@@ -3951,6 +3953,7 @@ export type Database = {
           created_at?: string
           id?: string
           status?: string
+          user_id?: string
         }
         Relationships: []
       }

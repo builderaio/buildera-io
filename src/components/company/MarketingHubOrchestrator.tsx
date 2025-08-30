@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useMarketingDataPersistence } from '@/hooks/useMarketingDataPersistence';
 import { supabase } from '@/integrations/supabase/client';
 import { Target, TrendingUp, Calendar, PenTool, Image, Video, Play, CheckCircle } from 'lucide-react';
 
@@ -27,6 +28,8 @@ interface WorkflowState {
   targetAudience: boolean;
   marketingStrategy: boolean;
   contentCalendar: boolean;
+  campaignId?: string;
+  strategyId?: string;
 }
 
 export default function MarketingHubOrchestrator() {
@@ -42,12 +45,20 @@ export default function MarketingHubOrchestrator() {
   const [workflow, setWorkflow] = useState<WorkflowState>({
     targetAudience: false,
     marketingStrategy: false,
-    contentCalendar: false
+    contentCalendar: false,
+    campaignId: undefined,
+    strategyId: undefined
   });
 
   const [loading, setLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('setup');
   const { toast } = useToast();
+  const { 
+    storeTargetAudienceData, 
+    storeMarketingStrategyData, 
+    storeContentCalendarData,
+    isProcessing 
+  } = useMarketingDataPersistence();
 
   const callMarketingFunction = async (functionName: string, input: any) => {
     const credentials = btoa(`${process.env.N8N_AUTH_USER || ''}:${process.env.N8N_AUTH_PASS || ''}`);
@@ -83,9 +94,19 @@ export default function MarketingHubOrchestrator() {
         description: response.message,
       });
 
-      setWorkflow(prev => ({ ...prev, targetAudience: true }));
+      // Store the audience data in database
+      const campaignId = await storeTargetAudienceData(response, {
+        nombre_empresa: companyData.nombre_empresa,
+        objetivo_de_negocio: companyData.objetivo_de_negocio
+      });
+
+      setWorkflow(prev => ({ 
+        ...prev, 
+        targetAudience: true,
+        campaignId 
+      }));
       setActiveTab('strategy');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: `Error al procesar audiencia objetivo: ${error.message}`,
@@ -97,7 +118,7 @@ export default function MarketingHubOrchestrator() {
   };
 
   const handleMarketingStrategy = async () => {
-    if (!workflow.targetAudience) {
+    if (!workflow.targetAudience || !workflow.campaignId) {
       toast({
         title: "Flujo incorrecto",
         description: "Primero debes definir la audiencia objetivo.",
@@ -124,9 +145,16 @@ export default function MarketingHubOrchestrator() {
         description: response.message,
       });
 
-      setWorkflow(prev => ({ ...prev, marketingStrategy: true }));
+      // Store the strategy data in database
+      const strategyId = await storeMarketingStrategyData(response, workflow.campaignId);
+
+      setWorkflow(prev => ({ 
+        ...prev, 
+        marketingStrategy: true,
+        strategyId 
+      }));
       setActiveTab('calendar');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: `Error al generar estrategia: ${error.message}`,
@@ -138,7 +166,7 @@ export default function MarketingHubOrchestrator() {
   };
 
   const handleContentCalendar = async () => {
-    if (!workflow.marketingStrategy) {
+    if (!workflow.marketingStrategy || !workflow.strategyId) {
       toast({
         title: "Flujo incorrecto",
         description: "Primero debes generar la estrategia de marketing.",
@@ -167,9 +195,12 @@ export default function MarketingHubOrchestrator() {
         description: response.message,
       });
 
+      // Store the calendar data in database
+      await storeContentCalendarData(response, workflow.strategyId);
+
       setWorkflow(prev => ({ ...prev, contentCalendar: true }));
       setActiveTab('creative');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: `Error al generar calendario: ${error.message}`,
@@ -317,7 +348,7 @@ export default function MarketingHubOrchestrator() {
 
               <Button 
                 onClick={handleTargetAudience}
-                disabled={loading === 'target-audience'}
+                disabled={loading === 'target-audience' || isProcessing}
                 className="w-full"
               >
                 {loading === 'target-audience' ? (
@@ -350,7 +381,7 @@ export default function MarketingHubOrchestrator() {
               </p>
               <Button 
                 onClick={handleMarketingStrategy}
-                disabled={loading === 'marketing-strategy'}
+                disabled={loading === 'marketing-strategy' || isProcessing}
                 className="w-full"
               >
                 {loading === 'marketing-strategy' ? (
@@ -383,7 +414,7 @@ export default function MarketingHubOrchestrator() {
               </p>
               <Button 
                 onClick={handleContentCalendar}
-                disabled={loading === 'content-calendar'}
+                disabled={loading === 'content-calendar' || isProcessing}
                 className="w-full"
               >
                 {loading === 'content-calendar' ? (

@@ -53,26 +53,38 @@ serve(async (req) => {
     let apiData = null;
     
     try {
-      const apiUrl = `https://buildera.app.n8n.cloud/webhook/company-info-extractor?url=${encodeURIComponent(url)}`;
+      const apiUrl = 'https://buildera.app.n8n.cloud/webhook/company-info-extractor';
+      console.log('🔗 API URL:', apiUrl);
+      console.log('📝 Request payload:', { url: url });
+      
       const apiResponse = await fetch(apiUrl, {
-        method: 'GET',
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
-        }
+        },
+        body: JSON.stringify({ url: url })
       });
 
+      console.log('📊 API Response status:', apiResponse.status, apiResponse.statusText);
+      
       if (!apiResponse.ok) {
+        const errorText = await apiResponse.text();
+        console.error('❌ API Error Response:', errorText);
         console.error('API response not ok:', apiResponse.status, apiResponse.statusText);
       } else {
         const apiResult = await apiResponse.json();
-        console.log('📊 API Response received:', JSON.stringify(apiResult, null, 2));
+        console.log('✅ API Response received:', JSON.stringify(apiResult, null, 2));
         
         if (Array.isArray(apiResult) && apiResult.length > 0 && apiResult[0].output?.data) {
           apiData = apiResult[0].output.data;
+          console.log('🎯 Extracted company data:', JSON.stringify(apiData, null, 2));
+        } else {
+          console.log('⚠️ Unexpected API response structure:', JSON.stringify(apiResult, null, 2));
         }
       }
     } catch (error) {
-      console.error('Error calling external API:', error);
+      console.error('💥 Error calling external API:', error);
       // Continue with fallback data if API fails
     }
 

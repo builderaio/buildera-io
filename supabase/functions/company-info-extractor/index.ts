@@ -83,9 +83,6 @@ serve(async (req) => {
         attempt++;
         console.log(`🚀 Attempt ${attempt} to call N8N (elapsed ${Date.now() - startTime}ms)`);
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), perAttemptTimeoutMs);
-
         let apiResponse: Response | null = null;
         try {
           apiResponse = await fetch(apiUrl, {
@@ -94,19 +91,15 @@ serve(async (req) => {
               'Authorization': `Basic ${credentials}`,
               'Accept': 'application/json',
               'Content-Type': 'application/json',
-            },
-            signal: controller.signal
+            }
           });
         } catch (err) {
-          console.warn('⏳ Attempt failed with network/abort error:', (err as Error).message);
-          // Retry on network/abort errors if time remains
+          console.warn('⏳ Attempt failed with network error:', (err as Error).message);
+          // Retry on network errors if time remains
           const backoff = Math.min(5000 * attempt, 30000);
           console.log(`🔁 Retrying in ${backoff}ms due to network error...`);
-          clearTimeout(timeoutId);
           await new Promise((r) => setTimeout(r, backoff));
           continue;
-        } finally {
-          clearTimeout(timeoutId);
         }
 
         lastStatus = apiResponse.status;

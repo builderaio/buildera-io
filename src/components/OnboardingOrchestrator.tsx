@@ -365,14 +365,8 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       // Redirect to company dashboard immediately and add fallback
       console.log('🚀 Iniciando redirección al dashboard...');
       
-      // Immediate redirect
-      navigate('/company-dashboard', { replace: true });
-      
-      // Fallback redirect in case the first one fails
-      setTimeout(() => {
-        console.log('🔄 Redirección de respaldo ejecutándose...');
-        window.location.href = '/company-dashboard';
-      }, 1000);
+      // Force navigation by removing query params
+      window.location.href = '/company-dashboard';
 
     } catch (error) {
       console.error('Error completing onboarding:', error);
@@ -384,7 +378,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       
       // Even if there's an error, try to redirect
       console.log('🚀 Redirección de emergencia debido a error...');
-      navigate('/company-dashboard', { replace: true });
+      window.location.href = '/company-dashboard';
     }
   };
 
@@ -553,7 +547,10 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
                     Tu empresa y asistente ERA están listos. Serás redirigido al dashboard automáticamente.
                   </p>
                   <Button
-                    onClick={() => navigate('/company-dashboard')}
+                    onClick={() => {
+                      // Forzar navegación removiendo query params y refrescando
+                      window.location.href = '/company-dashboard';
+                    }}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     Ir al Dashboard

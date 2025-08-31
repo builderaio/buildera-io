@@ -105,13 +105,18 @@ async function sendSMTPEmail(
     const bccList = emailData.bcc?.map(email => email) || [];
 
     // Clean and properly format content for SMTP compliance
-    const cleanHtml = (content: string) => {
+    const cleanCRLF = (content: string) => {
       return content
-        .replace(/\r?\n/g, '\r\n') // Ensure proper CRLF line endings for SMTP compliance
-        .replace(/\r\n\s+/g, '\r\n') // Clean up extra whitespace after line breaks
-        .replace(/\s{2,}/g, ' ') // Normalize multiple spaces to single space
+        .replace(/\r?\n/g, '\r\n') // Ensure CRLF
+        .replace(/(?<!\r)\n/g, '\r\n') // Guard against any lone LFs
+        .replace(/\r\n/g, '\r\n') // Normalize
         .trim();
     };
+
+    const htmlBody = cleanCRLF(emailData.htmlContent);
+    const textBody = cleanCRLF(
+      emailData.textContent || emailData.htmlContent.replace(/<[^>]*>/g, ' ')
+    );
 
     // Send email
     await client.send({
@@ -120,8 +125,8 @@ async function sendSMTPEmail(
       cc: ccList.length > 0 ? ccList : undefined,
       bcc: bccList.length > 0 ? bccList : undefined,
       subject: emailData.subject,
-      content: emailData.textContent || emailData.htmlContent.replace(/<[^>]*>/g, ''), // Strip HTML for text version
-      html: cleanHtml(emailData.htmlContent),
+      content: textBody,
+      html: htmlBody,
     });
 
     await client.close();
@@ -282,7 +287,6 @@ const handler = async (req: Request): Promise<Response> => {
         .from("email_send_history")
         .insert({
           template_id: requestData.templateId || null,
-          configuration_id: emailConfig.id,
           to_email: requestData.to,
           to_name: requestData.toName || null,
           cc_emails: requestData.cc || null,
@@ -324,7 +328,6 @@ const handler = async (req: Request): Promise<Response> => {
           .from("email_send_history")
           .insert({
             template_id: requestData.templateId || null,
-            configuration_id: requestData.configurationId || null,
             to_email: requestData.to,
             to_name: requestData.toName || null,
             subject: requestData.subject || "Email send failed",

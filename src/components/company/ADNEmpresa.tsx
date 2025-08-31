@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Target, Palette, Globe, CheckCircle, ArrowRight, ArrowLeft, Bot, Lightbulb, Facebook, Instagram, Twitter, Youtube, Music, Linkedin, RefreshCw, Save, Edit3, X, Check, Download, AlertCircle, Info, Brain } from "lucide-react";
+import { Building2, Target, Palette, Globe, CheckCircle, ArrowRight, ArrowLeft, Bot, Lightbulb, Facebook, Instagram, Twitter, Youtube, Music, Linkedin, RefreshCw, Save, Edit3, X, Check, Download, AlertCircle, Info, Brain, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useOnboardingStep } from "@/hooks/useOnboardingStep";
@@ -2802,44 +2802,223 @@ const ADNEmpresa = ({
           {renderStepContent()}
         </div>
 
-        {/* Resumen al completar */}
-        {isOnboardingComplete && <Card className="max-w-2xl mx-auto mt-8 border-green-200 dark:border-green-800">
+        {/* Resumen completo al completar onboarding */}
+        {isOnboardingComplete && (
+          <Card className="max-w-4xl mx-auto mt-8 border-green-200 dark:border-green-800">
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
                 <CheckCircle className="w-16 h-16 text-green-500" />
               </div>
               <CardTitle className="text-2xl text-green-700 dark:text-green-300">
-                ¡Configuración completada!
+                ¡Configuración Empresarial Completada!
               </CardTitle>
               <p className="text-muted-foreground">
-                Has configurado exitosamente el ADN de tu negocio. ERA ya puede trabajar con esta información.
+                Tu empresa está completamente configurada con toda la información del onboarding. Aquí está el resumen:
               </p>
             </CardHeader>
-            <CardContent className="text-center">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                  <p className="font-medium">Descripción</p>
-                  <p className="text-muted-foreground">Definida</p>
+            <CardContent className="space-y-6">
+              {/* Información básica de la empresa */}
+              {companyData && (
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Building2 className="w-5 h-5 text-blue-600" />
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-100">Información Empresarial</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Nombre:</span> {companyData.name}
+                    </div>
+                    <div>
+                      <span className="font-medium">Sector:</span> {companyData.industry_sector || 'No especificado'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Tamaño:</span> {companyData.company_size || 'No especificado'}
+                    </div>
+                    <div>
+                      <span className="font-medium">País:</span> {companyData.country || 'No especificado'}
+                    </div>
+                    {companyData.website_url && (
+                      <div className="col-span-2">
+                        <span className="font-medium">Sitio web:</span> 
+                        <a href={companyData.website_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
+                          {companyData.website_url}
+                        </a>
+                      </div>
+                    )}
+                    {companyData.description && (
+                      <div className="col-span-2">
+                        <span className="font-medium">Descripción:</span>
+                        <p className="mt-1 text-muted-foreground">{companyData.description}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Estrategia empresarial */}
+              {(strategyData.vision || strategyData.mission || strategyData.propuesta_valor) && (
+                <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Target className="w-5 h-5 text-purple-600" />
+                    <h3 className="font-semibold text-purple-900 dark:text-purple-100">Estrategia Empresarial</h3>
+                  </div>
+                  <div className="space-y-3 text-sm">
+                    {strategyData.mission && (
+                      <div>
+                        <span className="font-medium text-purple-800 dark:text-purple-200">Misión:</span>
+                        <p className="mt-1 text-muted-foreground">{strategyData.mission}</p>
+                      </div>
+                    )}
+                    {strategyData.vision && (
+                      <div>
+                        <span className="font-medium text-purple-800 dark:text-purple-200">Visión:</span>
+                        <p className="mt-1 text-muted-foreground">{strategyData.vision}</p>
+                      </div>
+                    )}
+                    {strategyData.propuesta_valor && (
+                      <div>
+                        <span className="font-medium text-purple-800 dark:text-purple-200">Propuesta de Valor:</span>
+                        <p className="mt-1 text-muted-foreground">{strategyData.propuesta_valor}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Objetivos de crecimiento */}
+              {objectives.length > 0 && (
+                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                    <h3 className="font-semibold text-green-900 dark:text-green-100">Objetivos de Crecimiento</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {objectives.slice(0, 4).map((objective, index) => (
+                      <div key={index} className="p-3 bg-white/60 dark:bg-black/20 rounded border">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-sm">{objective.title}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {objective.priority === 'high' ? 'Alta' : objective.priority === 'medium' ? 'Media' : 'Baja'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{objective.description}</p>
+                        <div className="flex gap-1 mt-2">
+                          <Badge variant="secondary" className="text-xs">
+                            {objective.objective_type === 'short_term' ? 'Corto plazo' : 
+                             objective.objective_type === 'medium_term' ? 'Mediano plazo' : 'Largo plazo'}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {objectives.length > 4 && (
+                    <p className="text-xs text-muted-foreground text-center mt-2">
+                      Y {objectives.length - 4} objetivo(s) más...
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Identidad de marca */}
+              {(brandingData.primary_color || brandingData.visual_identity) && (
+                <div className="p-4 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Palette className="w-5 h-5 text-orange-600" />
+                    <h3 className="font-semibold text-orange-900 dark:text-orange-100">Identidad de Marca</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {(brandingData.primary_color || brandingData.secondary_color) && (
+                      <div>
+                        <span className="font-medium text-orange-800 dark:text-orange-200 text-sm">Paleta de Colores:</span>
+                        <div className="flex gap-2 mt-2">
+                          {brandingData.primary_color && (
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-6 h-6 rounded border border-gray-300" 
+                                style={{ backgroundColor: brandingData.primary_color }}
+                              ></div>
+                              <span className="text-xs text-muted-foreground">Principal</span>
+                            </div>
+                          )}
+                          {brandingData.secondary_color && (
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-6 h-6 rounded border border-gray-300" 
+                                style={{ backgroundColor: brandingData.secondary_color }}
+                              ></div>
+                              <span className="text-xs text-muted-foreground">Secundario</span>
+                            </div>
+                          )}
+                          {brandingData.complementary_color_1 && (
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-6 h-6 rounded border border-gray-300" 
+                                style={{ backgroundColor: brandingData.complementary_color_1 }}
+                              ></div>
+                              <span className="text-xs text-muted-foreground">Complementario 1</span>
+                            </div>
+                          )}
+                          {brandingData.complementary_color_2 && (
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-6 h-6 rounded border border-gray-300" 
+                                style={{ backgroundColor: brandingData.complementary_color_2 }}
+                              ></div>
+                              <span className="text-xs text-muted-foreground">Complementario 2</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {brandingData.visual_identity && (
+                      <div>
+                        <span className="font-medium text-orange-800 dark:text-orange-200 text-sm">Identidad Visual:</span>
+                        <p className="mt-1 text-xs text-muted-foreground">{brandingData.visual_identity}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Estadísticas de configuración */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-blue-500 mx-auto mb-1" />
+                  <p className="font-medium text-sm">Empresa</p>
+                  <p className="text-xs text-muted-foreground">Configurada</p>
+                </div>
+                <div className="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-purple-500 mx-auto mb-1" />
+                  <p className="font-medium text-sm">Estrategia</p>
+                  <p className="text-xs text-muted-foreground">Definida</p>
                 </div>
                 <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
                   <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                  <p className="font-medium">Estrategia</p>
-                  <p className="text-muted-foreground">Configurada</p>
+                  <p className="font-medium text-sm">Objetivos</p>
+                  <p className="text-xs text-muted-foreground">{objectives.length} definidos</p>
                 </div>
-                <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                  <p className="font-medium">Objetivos</p>
-                  <p className="text-muted-foreground">{objectives.length} definidos</p>
-                </div>
-                <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                  <p className="font-medium">Marca</p>
-                  <p className="text-muted-foreground">Establecida</p>
+                <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-orange-500 mx-auto mb-1" />
+                  <p className="font-medium text-sm">Marca</p>
+                  <p className="text-xs text-muted-foreground">Establecida</p>
                 </div>
               </div>
+
+              <div className="text-center pt-4 border-t">
+                <p className="text-sm text-muted-foreground mb-4">
+                  🎉 Tu configuración empresarial está completa. ERA ya puede trabajar con toda esta información para ayudarte a alcanzar tus objetivos.
+                </p>
+                <Button 
+                  onClick={() => navigate('/company-dashboard')}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Ir al Dashboard Principal
+                </Button>
+              </div>
             </CardContent>
-          </Card>}
+          </Card>
+        )}
       </div>
     </div>;
 };

@@ -52,7 +52,7 @@ serve(async (req) => {
     const result = await extractCompanyData(url, user.id, token);
     
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify(result ?? { success: false, message: 'No data generated' }),
       { 
         status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -101,6 +101,7 @@ async function extractCompanyData(url: string, userId: string, token: string) {
 */
     // Call external API to extract company info
     console.log('📡 Calling N8N API for company data extraction...');
+    console.log('⛔ Modo sin reintentos: una sola llamada al webhook.');
     let apiData = null;
     let apiError = null;
     
@@ -136,35 +137,34 @@ async function extractCompanyData(url: string, userId: string, token: string) {
       });
       clearTimeout(timeout);
 
+      const contentType = apiResponse.headers.get('content-type') || '';
+      console.log(`📊 API Response status: ${apiResponse.status} ${apiResponse.statusText}, content-type: ${contentType}`);
+
       if (!apiResponse.ok) {
         const errText = await apiResponse.text().catch(() => '');
         throw new Error(`API ${apiResponse.status} ${apiResponse.statusText}: ${errText.slice(0,300)}`);
       }
 
-      let apiResult: any;
-      const contentType = apiResponse.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        apiResult = await apiResponse.json();
-      } else {
-        const rawText = await apiResponse.text();
-        let parsed: any = null;
-        try {
-          parsed = JSON.parse(rawText);
-        } catch {
-          // Try to extract a JSON object/array from noisy text
-          const arrStart = rawText.indexOf('[');
-          const arrEnd = rawText.lastIndexOf(']');
-          const objStart = rawText.indexOf('{');
-          const objEnd = rawText.lastIndexOf('}');
-          const candidate = arrStart !== -1 && arrEnd > arrStart
-            ? rawText.slice(arrStart, arrEnd + 1)
-            : (objStart !== -1 && objEnd > objStart ? rawText.slice(objStart, objEnd + 1) : null);
-          if (candidate) {
-            try { parsed = JSON.parse(candidate); } catch {}
-          }
+      let apiResult: any = null;
+      const rawBody = await apiResponse.text().catch(() => '');
+      const bodySample = rawBody.slice(0, 2000);
+      console.log('🧪 N8N raw body sample (truncated 2KB):', bodySample);
+      try {
+        apiResult = JSON.parse(rawBody);
+      } catch {
+        // Try to extract a JSON object/array from noisy text
+        const arrStart = rawBody.indexOf('[');
+        const arrEnd = rawBody.lastIndexOf(']');
+        const objStart = rawBody.indexOf('{');
+        const objEnd = rawBody.lastIndexOf('}');
+        const candidate = arrStart !== -1 && arrEnd > arrStart
+          ? rawBody.slice(arrStart, arrEnd + 1)
+          : (objStart !== -1 && objEnd > objStart ? rawBody.slice(objStart, objEnd + 1) : null);
+        if (candidate) {
+          try { apiResult = JSON.parse(candidate); } catch {}
         }
-        apiResult = parsed ?? rawText;
       }
+      console.log('🧩 Parsed shape:', Array.isArray(apiResult) ? `array(len=${apiResult.length})` : typeof apiResult, Array.isArray(apiResult) ? undefined : (apiResult && typeof apiResult === 'object' ? Object.keys(apiResult).slice(0,10) : undefined));
 
       // Normalize different possible response shapes from N8N
       let extracted: any = null;

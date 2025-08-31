@@ -23,14 +23,56 @@ interface OnboardingOrchestratorProps {
 }
 
 const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
-  const [companyUrl, setCompanyUrl] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
   const [companyId, setCompanyId] = useState('');
   const [companyData, setCompanyData] = useState<any>(null);
   const [strategyData, setStrategyData] = useState<any>(null);
-  const [isStarted, setIsStarted] = useState(false);
+  const [companyWebsiteUrl, setCompanyWebsiteUrl] = useState('');
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Obtener la URL del sitio web de la empresa al cargar
+  useEffect(() => {
+    const getCompanyWebsiteUrl = async () => {
+      try {
+        // Obtener la empresa principal del usuario
+        const { data: companyMembers } = await supabase
+          .from('company_members')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .eq('is_primary', true)
+          .limit(1);
+
+        if (companyMembers && companyMembers.length > 0) {
+          const { data: company } = await supabase
+            .from('companies')
+            .select('id, website_url')
+            .eq('id', companyMembers[0].company_id)
+            .single();
+
+          if (company) {
+            setCompanyId(company.id);
+            setCompanyWebsiteUrl(company.website_url || '');
+            console.log('🌐 URL de empresa obtenida:', company.website_url);
+          }
+        }
+      } catch (error) {
+        console.error('Error obteniendo URL de empresa:', error);
+        toast({
+          title: "⚠️ Advertencia",
+          description: "No se pudo obtener la información de tu empresa",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      getCompanyWebsiteUrl();
+    }
+  }, [user?.id, toast]);
 
   const [steps, setSteps] = useState<OnboardingStep[]>([
     {
@@ -98,11 +140,17 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     setCurrentStep(1);
 
     try {
+      if (!companyWebsiteUrl) {
+        throw new Error('No se encontró la URL del sitio web de tu empresa');
+      }
+
       const result = await callOnboardingFunction('company-info-extractor', {
-        url: companyUrl
+        url: companyWebsiteUrl
       });
 
-      setCompanyId(result.companyId);
+      // Si ya tenemos companyId, usarlo, sino usar el resultado
+      const finalCompanyId = result.companyId || companyId;
+      setCompanyId(finalCompanyId);
       setCompanyData(result.data);
       updateStepStatus(1, false, true);
       
@@ -112,7 +160,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       });
 
       // Auto-advance to step 2
-      setTimeout(() => executeStep2(result.companyId, result.data), 1000);
+      setTimeout(() => executeStep2(finalCompanyId, result.data), 1000);
       
     } catch (error) {
       updateStepStatus(1, false);
@@ -269,22 +317,19 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   };
 
   const startOnboarding = async () => {
-    if (!companyUrl.trim()) {
+    if (!companyWebsiteUrl) {
       toast({
-        title: "⚠️ URL requerida",
-        description: "Por favor ingresa la URL de tu empresa",
+        title: "⚠️ URL no encontrada",
+        description: "No se encontró la URL de tu empresa. Contacta soporte.",
         variant: "destructive"
       });
       return;
     }
-
-    setIsStarted(true);
     
     try {
       await executeStep1();
     } catch (error) {
       console.error('Onboarding failed:', error);
-      setIsStarted(false);
     }
   };
 
@@ -329,39 +374,60 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           </p>
         </div>
 
-        {!isStarted ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Cargando información de tu empresa...</p>
+          </div>
+        ) : !companyWebsiteUrl ? (
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-destructive">
                 <Globe className="h-6 w-6" />
-                Información de tu empresa
+                URL de empresa no encontrada
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="companyUrl">URL de tu empresa</Label>
-                <Input
-                  id="companyUrl"
-                  type="url"
-                  placeholder="https://www.tuempresa.com"
-                  value={companyUrl}
-                  onChange={(e) => setCompanyUrl(e.target.value)}
-                  className="mt-1"
-                />
-                <p className="text-sm text-muted-foreground mt-2">
-                  Ingresa la URL de tu sitio web para extraer información básica de tu empresa
-                </p>
-              </div>
-              <Button 
-                onClick={startOnboarding}
-                className="w-full"
-                size="lg"
-              >
-                Comenzar configuración automática
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                No se encontró la URL del sitio web de tu empresa en el registro. 
+                Por favor contacta a soporte para continuar con el onboarding.
+              </p>
+              <Button onClick={() => navigate('/company-dashboard')} variant="outline">
+                Volver al Dashboard
               </Button>
             </CardContent>
           </Card>
         ) : (
+          <>
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-6 w-6" />
+                  Configuración automática
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Detectamos tu sitio web: <strong>{companyWebsiteUrl}</strong>
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Configuraremos automáticamente tu empresa y crearemos tu asistente ERA personalizado.
+                  </p>
+                </div>
+                <Button 
+                  onClick={startOnboarding}
+                  className="w-full"
+                  size="lg"
+                >
+                  Comenzar configuración automática
+                </Button>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {currentStep > 0 && (
           <>
             <div className="grid gap-4 mb-8">
               {steps.map((step, index) => (
@@ -414,12 +480,11 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
               </Card>
             )}
 
-            {!allStepsCompleted && currentStep > 0 && (
+            {currentStep > 0 && (
               <div className="text-center">
                 <Button
                   onClick={retryCurrentStep}
                   variant="outline"
-                  className="mr-4"
                 >
                   Reintentar paso actual
                 </Button>

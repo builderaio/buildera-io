@@ -189,9 +189,37 @@ Responde únicamente con el JSON solicitado.`;
       const objectivesData = JSON.parse(cleanContent);
       console.log('✅ Objetivos parseados:', objectivesData);
       
+      // Store objectives in database
+      if (body.companyId && objectivesData.objectives?.length > 0) {
+        console.log('💾 Almacenando objetivos en la base de datos...');
+        
+        const objectivesToStore = objectivesData.objectives.map((objective: any) => ({
+          company_id: body.companyId,
+          title: objective.title,
+          description: objective.description,
+          objective_type: objective.type || 'growth',
+          priority: objective.priority === 'alta' ? 1 : objective.priority === 'media' ? 2 : 3,
+          status: 'active',
+          target_date: null // Will be calculated based on timeframe if needed
+        }));
+
+        const { data: storedObjectives, error: storeError } = await supabase
+          .from('company_objectives')
+          .insert(objectivesToStore)
+          .select();
+
+        if (storeError) {
+          console.error('❌ Error almacenando objetivos:', storeError);
+          throw new Error('Error almacenando objetivos en la base de datos');
+        }
+
+        console.log('✅ Objetivos almacenados exitosamente:', storedObjectives);
+      }
+      
       return new Response(JSON.stringify({ 
         success: true,
-        objectives: objectivesData.objectives
+        objectives: objectivesData.objectives,
+        stored: body.companyId ? true : false
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

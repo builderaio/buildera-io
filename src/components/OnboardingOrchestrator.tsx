@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Circle, Loader2, Globe, Target, Palette, Bot } from 'lucide-react';
+import { CheckCircle, Circle, Loader2, Globe, Target, Palette, TrendingUp, Bot } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -101,6 +101,14 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     },
     {
       id: 4,
+      title: "Definiendo objetivos de crecimiento",
+      description: "Estableciendo metas estratégicas para tu empresa",
+      icon: <TrendingUp className="h-5 w-5" />,
+      completed: false,
+      loading: false
+    },
+    {
+      id: 5,
       title: "Creando tu asistente ERA",
       description: "Configurando tu copiloto empresarial personalizado",
       icon: <Bot className="h-5 w-5" />,
@@ -233,8 +241,8 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         description: "Tu identidad de marca ha sido creada"
       });
 
-      // Auto-advance to step 4
-      setTimeout(() => executeStep4(companyIdParam || companyId), 1000);
+      // Auto-advance to step 4 (objectives)
+      setTimeout(() => executeStep4(companyIdParam || companyId, strategy), 1000);
       
     } catch (error) {
       updateStepStatus(3, false);
@@ -247,9 +255,50 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     }
   };
 
-  const executeStep4 = async (companyIdParam?: string) => {
+  const executeStep4 = async (companyIdParam?: string, strategyDataParam?: any) => {
     updateStepStatus(4, true);
     setCurrentStep(4);
+
+    try {
+      const strategy = strategyDataParam || strategyData;
+      const company = companyData;
+      
+      const result = await callOnboardingFunction('get-company-objetivos', {
+        companyId: companyIdParam || companyId,
+        companyInfo: {
+          name: company?.name || 'Tu Empresa',
+          industry_sector: company?.industry_sector || 'General',
+          company_size: company?.company_size || 'Pequeña',
+          website_url: company?.website_url || companyWebsiteUrl,
+          description: company?.description || ''
+        },
+        strategyData: strategy
+      });
+
+      updateStepStatus(4, false, true);
+      
+      toast({
+        title: "✅ Objetivos definidos",
+        description: "Tus objetivos de crecimiento han sido establecidos"
+      });
+
+      // Auto-advance to step 5 (agent creation)
+      setTimeout(() => executeStep5(companyIdParam || companyId), 1000);
+      
+    } catch (error) {
+      updateStepStatus(4, false);
+      toast({
+        title: "❌ Error en el paso 4",
+        description: "No pudimos definir tus objetivos. Intenta de nuevo.",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  const executeStep5 = async (companyIdParam?: string) => {
+    updateStepStatus(5, true);
+    setCurrentStep(5);
 
     try {
       const result = await callOnboardingFunction('create-company-agent', {
@@ -257,7 +306,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         company_id: companyIdParam || companyId
       });
 
-      updateStepStatus(4, false, true);
+      updateStepStatus(5, false, true);
       
       toast({
         title: "✅ Asistente ERA creado",
@@ -268,9 +317,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       setTimeout(() => completeOnboarding(), 1000);
       
     } catch (error) {
-      updateStepStatus(4, false);
+      updateStepStatus(5, false);
       toast({
-        title: "❌ Error en el paso 4",
+        title: "❌ Error en el paso 5",
         description: "No pudimos crear tu asistente ERA. Intenta de nuevo.",
         variant: "destructive"
       });
@@ -288,7 +337,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           onboarding_completed_at: new Date().toISOString(),
           dna_empresarial_completed: true,
           first_login_completed: true,
-          current_step: 4
+          current_step: 5
         }, {
           onConflict: 'user_id'
         });
@@ -354,6 +403,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       case 4:
         await executeStep4();
         break;
+      case 5:
+        await executeStep5();
+        break;
     }
   };
 
@@ -377,7 +429,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
             ¡Bienvenido a Buildera! 🚀
           </h1>
           <p className="text-xl text-muted-foreground">
-            Configuremos tu empresa en 4 pasos simples para crear tu asistente ERA
+            Configuremos tu empresa en 5 pasos simples para crear tu asistente ERA
           </p>
         </div>
 

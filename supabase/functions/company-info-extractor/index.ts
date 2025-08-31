@@ -122,7 +122,7 @@ async function extractCompanyData(url: string, userId: string, token: string) {
 
       // Single attempt (no retries). User can retry from UI if needed
       const controller = new AbortController();
-      //const timeout = setTimeout(() => controller.abort(), 110000); // 110s timeout
+      const timeout = setTimeout(() => controller.abort(), 250000); // 110s timeout
       const apiResponse = await fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -130,11 +130,11 @@ async function extractCompanyData(url: string, userId: string, token: string) {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
-        //signal: controller.signal,
+        signal: controller.signal,
       }).catch((err) => {
         throw new Error(`Network error calling N8N: ${(err as Error).message}`);
       });
-      //clearTimeout(timeout);
+      clearTimeout(timeout);
 
       if (!apiResponse.ok) {
         const errText = await apiResponse.text().catch(() => '');

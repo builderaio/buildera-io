@@ -19,20 +19,32 @@ interface CompanyData {
   description?: string;
   industry_sector?: string;
   website_url?: string;
+  country?: string;
+  company_size?: string;
   strategy?: {
     mision?: string;
     vision?: string;
     propuesta_valor?: string;
+    analisis_competitivo?: any;
+    publico_objetivo?: any;
   };
   branding?: {
     primary_color?: string;
     secondary_color?: string;
+    complementary_color_1?: string;
+    complementary_color_2?: string;
     visual_identity?: string;
+    brand_voice?: any;
+    visual_synthesis?: any;
+    color_justifications?: any;
   };
   objectives?: Array<{
     title: string;
     description: string;
-    category: string;
+    objective_type: string;
+    priority: number;
+    status: string;
+    target_date?: string;
   }>;
   socialData?: {
     linkedin_posts?: number;
@@ -123,21 +135,21 @@ async function getCompanyData(company_id: string): Promise<CompanyData> {
   const { data: strategy } = await supabase
     .from('company_strategy')
     .select('*')
-    .eq('user_id', company.created_by)
+    .eq('company_id', company_id)
     .single();
 
-  // Obtener branding
+  // Obtener branding completo
   const { data: branding } = await supabase
     .from('company_branding')
     .select('*')
-    .eq('user_id', company.created_by)
+    .eq('company_id', company_id)
     .single();
 
   // Obtener objetivos
   const { data: objectives } = await supabase
     .from('company_objectives')
     .select('*')
-    .eq('user_id', company.created_by);
+    .eq('company_id', company_id);
 
   // Obtener datos de redes sociales
   const { data: socialStats } = await supabase
@@ -150,18 +162,27 @@ async function getCompanyData(company_id: string): Promise<CompanyData> {
   return {
     id: company.id,
     name: company.name,
-    description: company.description || company.descripcion_empresa,
-    industry_sector: company.industry_sector || company.industria_principal,
+    description: company.description,
+    industry_sector: company.industry_sector,
     website_url: company.website_url,
+    country: company.country,
+    company_size: company.company_size,
     strategy: strategy ? {
       mision: strategy.mision,
       vision: strategy.vision,
-      propuesta_valor: strategy.propuesta_valor
+      propuesta_valor: strategy.propuesta_valor,
+      analisis_competitivo: strategy.analisis_competitivo,
+      publico_objetivo: strategy.publico_objetivo
     } : undefined,
     branding: branding ? {
       primary_color: branding.primary_color,
       secondary_color: branding.secondary_color,
-      visual_identity: branding.visual_identity
+      complementary_color_1: branding.complementary_color_1,
+      complementary_color_2: branding.complementary_color_2,
+      visual_identity: branding.visual_identity,
+      brand_voice: branding.brand_voice,
+      visual_synthesis: branding.visual_synthesis,
+      color_justifications: branding.color_justifications
     } : undefined,
     objectives: objectives || [],
     socialData: {
@@ -280,45 +301,79 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
 }
 
 function generateAgentInstructions(companyData: CompanyData): string {
-  return `Eres el copiloto empresarial personalizado de ${companyData.name}, una empresa ${companyData.industry_sector ? `del sector ${companyData.industry_sector}` : 'en crecimiento'}.
+  const brandVoiceData = companyData.branding?.brand_voice || {};
+  const visualSynthesis = companyData.branding?.visual_synthesis || {};
+  const colorJustifications = companyData.branding?.color_justifications || {};
+  
+  return `Eres ERA, el copiloto empresarial personalizado de ${companyData.name}, una empresa ${companyData.industry_sector ? `del sector ${companyData.industry_sector}` : 'en crecimiento'} ${companyData.country ? `ubicada en ${companyData.country}` : ''}.
 
-INFORMACIÓN DE LA EMPRESA:
-Nombre: ${companyData.name}
-${companyData.description ? `Descripción: ${companyData.description}` : ''}
-${companyData.website_url ? `Sitio web: ${companyData.website_url}` : ''}
+🏢 INFORMACIÓN EMPRESARIAL:
+• Nombre: ${companyData.name}
+${companyData.description ? `• Descripción: ${companyData.description}` : ''}
+${companyData.industry_sector ? `• Sector: ${companyData.industry_sector}` : ''}
+${companyData.company_size ? `• Tamaño: ${companyData.company_size}` : ''}
+${companyData.website_url ? `• Sitio web: ${companyData.website_url}` : ''}
+${companyData.country ? `• País: ${companyData.country}` : ''}
 
-ESTRATEGIA EMPRESARIAL:
-${companyData.strategy?.mision ? `Misión: ${companyData.strategy.mision}` : ''}
-${companyData.strategy?.vision ? `Visión: ${companyData.strategy.vision}` : ''}
-${companyData.strategy?.propuesta_valor ? `Propuesta de Valor: ${companyData.strategy.propuesta_valor}` : ''}
+🎯 ESTRATEGIA EMPRESARIAL:
+${companyData.strategy?.mision ? `• Misión: ${companyData.strategy.mision}` : ''}
+${companyData.strategy?.vision ? `• Visión: ${companyData.strategy.vision}` : ''}
+${companyData.strategy?.propuesta_valor ? `• Propuesta de Valor: ${companyData.strategy.propuesta_valor}` : ''}
+${companyData.strategy?.publico_objetivo ? `• Público Objetivo: ${JSON.stringify(companyData.strategy.publico_objetivo)}` : ''}
 
-OBJETIVOS EMPRESARIALES:
-${companyData.objectives?.map((obj, i) => `${i + 1}. ${obj.title}: ${obj.description} (Categoría: ${obj.category})`).join('\n') || 'No hay objetivos definidos aún'}
+📈 OBJETIVOS DE CRECIMIENTO:
+${companyData.objectives?.length ? companyData.objectives.map((obj, i) => 
+  `${i + 1}. [${obj.objective_type.toUpperCase()}] ${obj.title}
+     Descripción: ${obj.description}
+     Prioridad: ${obj.priority}/5
+     Estado: ${obj.status}
+     ${obj.target_date ? `Fecha objetivo: ${obj.target_date}` : ''}`
+).join('\n\n') : 'No hay objetivos definidos aún'}
 
-IDENTIDAD VISUAL:
-${companyData.branding?.visual_identity ? `Identidad Visual: ${companyData.branding.visual_identity}` : ''}
-${companyData.branding?.primary_color ? `Color Principal: ${companyData.branding.primary_color}` : ''}
+🎨 IDENTIDAD DE MARCA:
+${brandVoiceData.personalidad ? `• Personalidad de Marca: ${brandVoiceData.personalidad}` : ''}
+${brandVoiceData.descripcion ? `• Voz de Marca: ${brandVoiceData.descripcion}` : ''}
+${brandVoiceData.palabras_clave ? `• Palabras Clave: ${brandVoiceData.palabras_clave.join(', ')}` : ''}
 
-ACTIVIDAD EN REDES SOCIALES (últimos 30 días):
-- LinkedIn: ${companyData.socialData?.linkedin_posts || 0} publicaciones
-- Instagram: ${companyData.socialData?.instagram_posts || 0} publicaciones  
-- TikTok: ${companyData.socialData?.tiktok_posts || 0} publicaciones
+🎨 PALETA DE COLORES:
+${companyData.branding?.primary_color ? `• Color Principal: ${companyData.branding.primary_color} ${colorJustifications.principal?.justificacion ? `(${colorJustifications.principal.justificacion})` : ''}` : ''}
+${companyData.branding?.secondary_color ? `• Color Secundario: ${companyData.branding.secondary_color} ${colorJustifications.secundario?.justificacion ? `(${colorJustifications.secundario.justificacion})` : ''}` : ''}
+${companyData.branding?.complementary_color_1 ? `• Color Complementario 1: ${companyData.branding.complementary_color_1} ${colorJustifications.complementario1?.justificacion ? `(${colorJustifications.complementario1.justificacion})` : ''}` : ''}
+${companyData.branding?.complementary_color_2 ? `• Color Complementario 2: ${companyData.branding.complementary_color_2} ${colorJustifications.complementario2?.justificacion ? `(${colorJustifications.complementario2.justificacion})` : ''}` : ''}
 
-TU PAPEL COMO COPILOTO:
-1. Asesoras estratégicamente basándote en la información específica de ${companyData.name}
-2. Ayudas a cumplir los objetivos empresariales establecidos
-3. Proporcionas insights basados en los datos de rendimiento
-4. Sugieres mejoras en marketing, contenido y estrategia
-5. Mantienes coherencia con la misión, visión y propuesta de valor
-6. Utilizas herramientas de búsqueda para obtener información actualizada del mercado
+🎭 ESTILO VISUAL:
+${visualSynthesis.concepto_general ? `• Concepto General: ${visualSynthesis.concepto_general}` : ''}
+${visualSynthesis.tipografia ? `• Tipografía: ${visualSynthesis.tipografia}` : ''}
+${visualSynthesis.estilo_fotografico ? `• Estilo Fotográfico: ${visualSynthesis.estilo_fotografico}` : ''}
+
+📱 ACTIVIDAD EN REDES SOCIALES (últimos 30 días):
+• LinkedIn: ${companyData.socialData?.linkedin_posts || 0} publicaciones
+• Instagram: ${companyData.socialData?.instagram_posts || 0} publicaciones  
+• TikTok: ${companyData.socialData?.tiktok_posts || 0} publicaciones
+
+🚀 TU PAPEL COMO ERA (COPILOTO EMPRESARIAL):
+1. Asesoras estratégicamente basándote en TODA la información específica de ${companyData.name}
+2. Ayudas a cumplir los objetivos de crecimiento establecidos, priorizando según su importancia
+3. Mantienes coherencia absoluta con la identidad de marca, usando su personalidad y palabras clave
+4. Proporcionas insights basados en datos de rendimiento y competencia
+5. Sugieres mejoras en marketing, contenido y estrategia alineadas con la propuesta de valor
+6. Utilizas la información del análisis competitivo y público objetivo para contexto
 7. Generas recomendaciones personalizadas para el sector ${companyData.industry_sector || 'de la empresa'}
+8. Respetas la paleta de colores y estilo visual en todas las sugerencias de contenido
 
-PERSONALIDAD:
-- Estratégico y orientado a resultados
-- Conocedor profundo del negocio de ${companyData.name}
-- Proactivo en identificar oportunidades
-- Enfocado en el crecimiento y cumplimiento de objetivos
-- Comunicación profesional pero cercana
+💡 TU PERSONALIDAD COMO ERA:
+${brandVoiceData.personalidad || 'Estratégico y orientado a resultados'}
+• Conocedor profundo del ADN empresarial de ${companyData.name}
+• Proactivo en identificar oportunidades de crecimiento
+• Enfocado en el cumplimiento de objetivos específicos definidos
+• Comunicación que refleja la voz de marca establecida
+• Siempre alineado con la misión, visión y propuesta de valor
 
-Siempre contextualiza tus respuestas con la información específica de ${companyData.name} y sus objetivos estratégicos.`;
+⚡ INSTRUCCIONES ESPECIALES:
+• SIEMPRE contextualiza tus respuestas con la información específica de ${companyData.name}
+• Prioriza sugerencias que contribuyan directamente a los objetivos de crecimiento
+• Usa la personalidad de marca ${brandVoiceData.personalidad || 'definida'} en tu comunicación
+• Mantén coherencia con los colores y estilo visual en sugerencias de contenido
+• Considera el análisis competitivo al hacer recomendaciones estratégicas
+• Adapta las sugerencias al tamaño de empresa (${companyData.company_size || 'tamaño no especificado'})`;
 }

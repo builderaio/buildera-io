@@ -290,11 +290,16 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
   };
 
   // Buscar si ya existe un agente para esta empresa
-  const { data: existingAgent } = await supabase
+  const { data: existingAgent, error: existingAgentError } = await supabase
     .from('company_agents')
     .select('agent_id')
     .eq('company_id', companyData.id)
-    .single();
+    .maybeSingle();
+
+  if (existingAgentError) {
+    console.warn('Warning fetching existing agent (continuing with create):', existingAgentError);
+  }
+  console.log('Existing agent check:', existingAgent?.agent_id ? 'found' : 'not found');
 
   if (existingAgent?.agent_id) {
     // Actualizar agente existente
@@ -309,7 +314,9 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
     });
 
     if (!response.ok) {
-      throw new Error(`Error updating OpenAI agent: ${response.statusText}`);
+      const errorBody = await response.text().catch(() => '');
+      console.error('OpenAI update error:', response.status, response.statusText, errorBody);
+      throw new Error(`Error updating OpenAI agent: ${response.status} ${response.statusText} ${errorBody}`);
     }
 
     return await response.json();
@@ -326,7 +333,9 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
     });
 
     if (!response.ok) {
-      throw new Error(`Error creating OpenAI agent: ${response.statusText}`);
+      const errorBody = await response.text().catch(() => '');
+      console.error('OpenAI create error:', response.status, response.statusText, errorBody);
+      throw new Error(`Error creating OpenAI agent: ${response.status} ${response.statusText} ${errorBody}`);
     }
 
     return await response.json();

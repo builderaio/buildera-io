@@ -232,7 +232,7 @@ const CompanyLayout = ({
       try {
         const { data, error } = await supabase
           .from('user_onboarding_status')
-          .select('onboarding_completed_at')
+          .select('onboarding_completed_at, dna_empresarial_completed')
           .eq('user_id', profile.id)
           .maybeSingle();
           
@@ -241,14 +241,35 @@ const CompanyLayout = ({
           return;
         }
         
-        setOnboardingComplete(!!data?.onboarding_completed_at);
+        // Usuario completa onboarding si tiene onboarding_completed_at O si tiene dna_empresarial_completed
+        const hasCompletedOnboarding = data?.onboarding_completed_at || data?.dna_empresarial_completed;
+        setOnboardingComplete(!!hasCompletedOnboarding);
       } catch (error) {
         console.error('Error in checkOnboardingStatus:', error);
       }
     };
     
     checkOnboardingStatus();
-  }, [profile?.id]);
+
+    // Listener para detectar cuando se completa el onboarding
+    const handleOnboardingComplete = () => {
+      console.log('🔄 Actualizando estado de onboarding...');
+      checkOnboardingStatus();
+    };
+
+    // Escuchar cuando se complete el onboarding
+    window.addEventListener('onboarding-completed', handleOnboardingComplete);
+    
+    // También verificar cuando cambie la URL
+    const urlParams = new URLSearchParams(location.search);
+    if (urlParams.get('onboarding_completed') === 'true') {
+      setTimeout(checkOnboardingStatus, 1000);
+    }
+
+    return () => {
+      window.removeEventListener('onboarding-completed', handleOnboardingComplete);
+    };
+  }, [profile?.id, location.search]);
   
   const isProfileIncomplete = !profile?.company_name || profile.company_name === 'Mi Negocio' || !profile?.full_name;
   const shouldBlockNavigation = !onboardingComplete && isProfileIncomplete;

@@ -36,6 +36,19 @@ export const useOnboardingStatus = (userId?: string) => {
     };
 
     checkOnboardingStatus();
+
+    // Listener para detectar cuando se completa el onboarding
+    const handleOnboardingComplete = () => {
+      console.log('🔄 Actualizando estado de onboarding en hook...');
+      checkOnboardingStatus();
+    };
+
+    // Escuchar cuando se complete el onboarding
+    window.addEventListener('onboarding-completed', handleOnboardingComplete);
+
+    return () => {
+      window.removeEventListener('onboarding-completed', handleOnboardingComplete);
+    };
   }, [userId]);
 
   return { isOnboardingComplete, loading };

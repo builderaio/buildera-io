@@ -365,6 +365,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       // Redirect to ADN Empresa section with completed onboarding flag
       console.log('🚀 Redirigiendo a ADN Empresa con onboarding completado...');
       
+      // Disparar evento personalizado para notificar que se completó el onboarding
+      window.dispatchEvent(new CustomEvent('onboarding-completed'));
+      
       // Navigate to ADN Empresa with flag to show coachmark
       setTimeout(() => {
         window.location.href = '/company-dashboard?view=adn-empresa&onboarding_completed=true';

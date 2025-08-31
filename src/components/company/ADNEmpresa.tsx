@@ -50,96 +50,89 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       setLoading(true);
       console.log('🔍 Starting loadOnboardingData with profile:', profile);
       
-      let companyId = null;
-      
-      // Priorizar primary_company_id del perfil
-      if (profile.primary_company_id) {
-        console.log('✅ Using primary_company_id from profile:', profile.primary_company_id);
-        companyId = profile.primary_company_id;
-      } else {
-        // Fallback: buscar company_id via company_members
-        console.log('📋 No primary_company_id, querying company_members for user_id:', profile.user_id);
-        const { data: membership, error: membershipError } = await supabase
-          .from('company_members')
-          .select('company_id')
-          .eq('user_id', profile.user_id)
-          .eq('is_primary', true)
-          .maybeSingle();
+      // Buscar TODAS las empresas del usuario para encontrar datos de onboarding
+      console.log('📋 Querying all companies for user_id:', profile.user_id);
+      const { data: memberships, error: membershipError } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', profile.user_id);
 
-        console.log('📋 company_members query result:', { membership, membershipError });
+      console.log('📋 company_members query result:', { memberships, membershipError });
 
-        if (membershipError) {
-          console.error('❌ Error querying company_members:', membershipError);
-          toast({
-            title: "Error",
-            description: `Error consultando membresía: ${membershipError.message}`,
-            variant: "destructive"
-          });
-          return;
-        }
-
-        if (!membership?.company_id) {
-          console.log('❌ No se encontró company_id en membership:', membership);
-          toast({
-            title: "Error",
-            description: "No se encontró información de empresa",
-            variant: "destructive"
-          });
-          return;
-        }
-
-        companyId = membership.company_id;
+      if (membershipError) {
+        console.error('❌ Error querying company_members:', membershipError);
+        toast({
+          title: "Error",
+          description: `Error consultando membresías: ${membershipError.message}`,
+          variant: "destructive"
+        });
+        return;
       }
 
-      console.log('🏢 Using company_id:', companyId);
+      if (!memberships || memberships.length === 0) {
+        console.log('❌ No se encontraron empresas para el usuario');
+        toast({
+          title: "Error",
+          description: "No se encontró información de empresa",
+          variant: "destructive"
+        });
+        return;
+      }
 
-      // Cargar datos en paralelo
+      const companyIds = memberships.map(m => m.company_id);
+      console.log('🏢 Found company_ids:', companyIds);
+
+      // Buscar datos en todas las empresas del usuario
       const [companyResult, strategyResult, brandingResult, objectivesResult] = await Promise.all([
-        // Información básica de la empresa
+        // Información básica de empresas
         supabase
           .from('companies')
           .select('*')
-          .eq('id', companyId)
-          .maybeSingle(),
+          .in('id', companyIds),
         
         // Estrategia empresarial
         supabase
           .from('company_strategy')
           .select('*')
-          .eq('company_id', companyId)
-          .maybeSingle(),
+          .in('company_id', companyIds),
         
         // Branding
         supabase
           .from('company_branding')
           .select('*')
-          .eq('company_id', companyId)
-          .maybeSingle(),
+          .in('company_id', companyIds),
         
         // Objetivos
         supabase
           .from('company_objectives')
           .select('*')
-          .eq('company_id', companyId)
+          .in('company_id', companyIds)
           .order('priority', { ascending: true })
       ]);
 
-      // Establecer datos
-      if (companyResult.data) {
-        setCompanyData(companyResult.data);
-        setLastUpdated(new Date(companyResult.data.updated_at).toLocaleDateString());
+      console.log('📊 Query results:', {
+        companies: companyResult.data?.length || 0,
+        strategies: strategyResult.data?.length || 0,
+        branding: brandingResult.data?.length || 0,
+        objectives: objectivesResult.data?.length || 0
+      });
+
+      // Establecer datos - tomar los primeros resultados encontrados
+      if (companyResult.data && companyResult.data.length > 0) {
+        setCompanyData(companyResult.data[0]); // Tomar la primera empresa
+        setLastUpdated(new Date(companyResult.data[0].updated_at).toLocaleDateString());
       }
       
-      if (strategyResult.data) {
-        setStrategyData(strategyResult.data);
+      if (strategyResult.data && strategyResult.data.length > 0) {
+        setStrategyData(strategyResult.data[0]); // Tomar la primera estrategia encontrada
       }
       
-      if (brandingResult.data) {
-        setBrandingData(brandingResult.data);
+      if (brandingResult.data && brandingResult.data.length > 0) {
+        setBrandingData(brandingResult.data[0]); // Tomar el primer branding encontrado
       }
       
-      if (objectivesResult.data) {
-        setObjectives(objectivesResult.data);
+      if (objectivesResult.data && objectivesResult.data.length > 0) {
+        setObjectives(objectivesResult.data); // Todos los objetivos
       }
 
     } catch (error) {

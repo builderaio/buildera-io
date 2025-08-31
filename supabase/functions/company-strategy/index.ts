@@ -207,9 +207,7 @@ serve(async (req) => {
     const strategy = {
       mision: strategyResponse.mision || 'Misión no definida',
       vision: strategyResponse.vision || 'Visión no definida',
-      propuesta_valor: strategyResponse.propuesta_valor || 'Propuesta de valor no definida',
-      valores: strategyResponse.valores || ['Innovación', 'Calidad', 'Transparencia'],
-      ventajas_competitivas: strategyResponse.ventajas_competitivas || ['Tecnología avanzada', 'Equipo especializado']
+      propuesta_valor: strategyResponse.propuesta_valor || 'Propuesta de valor no definida'
     };
     
     const strategyId = await storeStrategy(companyId, strategy);

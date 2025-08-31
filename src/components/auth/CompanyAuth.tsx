@@ -27,8 +27,6 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [companySize, setCompanySize] = useState("");
-  const [industrySector, setIndustrySector] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [country, setCountry] = useState("Colombia");
   const [loading, setLoading] = useState(false);
@@ -38,29 +36,6 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const { toast } = useToast();
   const { authMethods, loading: authMethodsLoading } = useAuthMethods();
   const { sendWelcomeEmail } = useWelcomeEmail();
-
-  const companySizes = [
-    "1-10 empleados",
-    "11-50 empleados",
-    "51-200 empleados",
-    "201-500 empleados",
-    "501-1000 empleados",
-    "1000+ empleados"
-  ];
-
-  const sectors = [
-    "Tecnología",
-    "Finanzas",
-    "Salud",
-    "Educación",
-    "Retail",
-    "Manufactura",
-    "Servicios",
-    "Construcción",
-    "Agricultura",
-    "Energía",
-    "Otro"
-  ];
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,25 +64,6 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           return;
         }
 
-        if (!companySize) {
-          toast({
-            title: "Error",
-            description: "Selecciona el tamaño del negocio",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-
-        if (!industrySector) {
-          toast({
-            title: "Error",
-            description: "Selecciona el sector de la industria",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
 
         if (!websiteUrl.trim()) {
           toast({
@@ -161,8 +117,6 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
               full_name: fullName,
               user_type: 'company',
               company_name: companyName,
-              company_size: companySize,
-              industry_sector: industrySector,
               website_url: websiteUrl,
               country: country
             }
@@ -232,8 +186,6 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           // Limpiar campos de registro
           setFullName("");
           setCompanyName("");
-          setCompanySize("");
-          setIndustrySector("");
           setWebsiteUrl("");
           setCountry("");
           setConfirmPassword("");
@@ -519,40 +471,6 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                   onChange={(e) => setCompanyName(e.target.value)}
                   required
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="companySize">
-                  Tamaño del negocio <span className="text-destructive">*</span>
-                </Label>
-                <Select value={companySize} onValueChange={setCompanySize} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona el tamaño" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companySizes.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="industrySector">
-                  Sector de la industria <span className="text-destructive">*</span>
-                </Label>
-                <Select value={industrySector} onValueChange={setIndustrySector} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona el sector" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sectors.map((sector) => (
-                      <SelectItem key={sector} value={sector}>
-                        {sector}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="websiteUrl">

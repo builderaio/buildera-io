@@ -20,8 +20,6 @@ interface Profile {
   user_type: 'company' | 'developer' | 'expert';
   avatar_url?: string;
   company_name?: string;
-  company_size?: string;
-  industry_sector?: string;
 }
 const ResponsiveLayout = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -252,7 +250,7 @@ const CompanyLayout = ({
     checkOnboardingStatus();
   }, [profile?.id]);
   
-  const isProfileIncomplete = !profile?.company_name || profile.company_name === 'Mi Negocio' || !profile?.company_size || !profile?.industry_sector || !profile?.full_name;
+  const isProfileIncomplete = !profile?.company_name || profile.company_name === 'Mi Negocio' || !profile?.full_name;
   const shouldBlockNavigation = !onboardingComplete && isProfileIncomplete;
 
   const getActiveView = () => {

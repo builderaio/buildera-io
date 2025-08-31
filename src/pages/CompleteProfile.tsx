@@ -28,8 +28,6 @@ const CompleteProfile = () => {
 
   // Company fields
   const [companyName, setCompanyName] = useState("");
-  const [companySize, setCompanySize] = useState("");
-  const [industrySector, setIndustrySector] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
 
   const navigate = useNavigate();
@@ -41,15 +39,6 @@ const CompleteProfile = () => {
     "Manufactura", "Consultoría", "Marketing", "Recursos Humanos", "Otro"
   ];
 
-  const companySizes = [
-    "1-10 empleados", "11-50 empleados", "51-200 empleados",
-    "201-500 empleados", "501-1000 empleados", "1000+ empleados"
-  ];
-
-  const sectors = [
-    "Tecnología", "Finanzas", "Salud", "Educación", "Retail",
-    "Manufactura", "Servicios", "Construcción", "Agricultura", "Energía", "Otro"
-  ];
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -160,8 +149,6 @@ const CompleteProfile = () => {
             company_name: companyName,
             company_description: '',
             website_url: websiteUrl || null,
-            industry_sector: industrySector || null,
-            company_size: companySize || null,
             user_id_param: user.id
           });
 
@@ -368,36 +355,6 @@ const CompleteProfile = () => {
                       onChange={(e) => setCompanyName(e.target.value)}
                       required
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="companySize">Tamaño del negocio</Label>
-                    <Select value={companySize} onValueChange={setCompanySize} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona el tamaño" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {companySizes.map((size) => (
-                          <SelectItem key={size} value={size}>
-                            {size}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="industrySector">Sector de la industria</Label>
-                    <Select value={industrySector} onValueChange={setIndustrySector} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona el sector" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sectors.map((sector) => (
-                          <SelectItem key={sector} value={sector}>
-                            {sector}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="websiteUrl">Sitio web</Label>

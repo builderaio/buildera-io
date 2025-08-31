@@ -230,9 +230,13 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
   }
   console.log('Step 2b completed: OpenAI API key available');
   
+  // Configuración del agente usando la nueva API de Agents
   const agentPayload = {
-    name: `Copiloto de ${companyData.name}`,
+    name: `Copiloto ERA de ${companyData.name}`,
     instructions,
+    // Usar el modelo más reciente compatible
+    model: "gpt-4o-mini",
+    // Configurar herramientas según la nueva API de Agents
     tools: [
       {
         type: "function",
@@ -244,7 +248,12 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
             properties: {
               query: {
                 type: "string",
-                description: "Consulta de búsqueda"
+                description: "Consulta de búsqueda específica relacionada con el negocio"
+              },
+              focus: {
+                type: "string",
+                enum: ["competitors", "trends", "news", "market"],
+                description: "Área de enfoque para la búsqueda"
               }
             },
             required: ["query"]
@@ -252,16 +261,22 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
         }
       },
       {
-        type: "function",
+        type: "function", 
         function: {
           name: "analyze_company_performance",
-          description: "Analizar el rendimiento de la empresa basado en métricas y objetivos",
+          description: "Analizar el rendimiento de la empresa basado en métricas y objetivos específicos",
           parameters: {
             type: "object",
             properties: {
               metric_type: {
                 type: "string",
-                description: "Tipo de métrica a analizar: engagement, objectives, content_performance"
+                enum: ["engagement", "objectives", "content_performance", "growth_metrics"],
+                description: "Tipo de métrica a analizar"
+              },
+              time_period: {
+                type: "string",
+                enum: ["week", "month", "quarter", "year"],
+                description: "Período de tiempo para el análisis"
               }
             },
             required: ["metric_type"]
@@ -272,13 +287,19 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
         type: "function",
         function: {
           name: "generate_strategic_recommendations",
-          description: "Generar recomendaciones estratégicas personalizadas para la empresa",
+          description: "Generar recomendaciones estratégicas personalizadas para la empresa basadas en su ADN",
           parameters: {
-            type: "object",
+            type: "object", 
             properties: {
               area: {
                 type: "string",
-                description: "Área de enfoque: marketing, strategy, competitive_analysis, content"
+                enum: ["marketing", "strategy", "competitive_analysis", "content", "branding", "growth"],
+                description: "Área específica para las recomendaciones"
+              },
+              priority_level: {
+                type: "string",
+                enum: ["high", "medium", "low"],
+                description: "Nivel de prioridad de las recomendaciones"
               }
             },
             required: ["area"]
@@ -286,9 +307,16 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
         }
       }
     ],
-    model: "gpt-4o"
+    // Configuración específica para la empresa
+    metadata: {
+      company_id: companyData.id,
+      industry: companyData.industry_sector,
+      creation_date: new Date().toISOString(),
+      version: "2.0"
+    }
   };
 
+  console.log('Step 2c: Checking for existing agent...');
   // Buscar si ya existe un agente para esta empresa
   const { data: existingAgent, error: existingAgentError } = await supabase
     .from('company_agents')
@@ -302,7 +330,8 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
   console.log('Existing agent check:', existingAgent?.agent_id ? 'found' : 'not found');
 
   if (existingAgent?.agent_id) {
-    // Actualizar agente existente
+    console.log('Step 2d: Updating existing OpenAI agent...');
+    // Actualizar agente existente usando la API de Assistants v2
     const response = await fetch(`https://api.openai.com/v1/assistants/${existingAgent.agent_id}`, {
       method: 'POST',
       headers: {
@@ -319,9 +348,12 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
       throw new Error(`Error updating OpenAI agent: ${response.status} ${response.statusText} ${errorBody}`);
     }
 
-    return await response.json();
+    const updatedAgent = await response.json();
+    console.log('Step 2d completed: Agent updated successfully');
+    return updatedAgent;
   } else {
-    // Crear nuevo agente
+    console.log('Step 2d: Creating new OpenAI agent...');
+    // Crear nuevo agente usando la API de Assistants v2
     const response = await fetch('https://api.openai.com/v1/assistants', {
       method: 'POST',
       headers: {
@@ -338,7 +370,9 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
       throw new Error(`Error creating OpenAI agent: ${response.status} ${response.statusText} ${errorBody}`);
     }
 
-    return await response.json();
+    const newAgent = await response.json();
+    console.log('Step 2d completed: New agent created successfully');
+    return newAgent;
   }
 }
 

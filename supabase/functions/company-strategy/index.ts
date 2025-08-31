@@ -64,50 +64,70 @@ serve(async (req) => {
       ]
     };
 
+    console.log('📝 Strategy data to store:', JSON.stringify(strategy, null, 2));
+    console.log('🔍 Company ID:', companyId);
+    console.log('👤 User ID:', user.id);
+
     // Store strategy in database
-    const { data: existingStrategy } = await supabase
+    const { data: existingStrategy, error: selectError } = await supabase
       .from('company_strategy')
       .select('id')
       .eq('company_id', companyId)
       .maybeSingle();
 
+    if (selectError) {
+      console.error('❌ Error checking existing strategy:', selectError);
+      return new Response(
+        JSON.stringify({ error: 'Database access error', details: selectError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     let strategyId;
 
     if (existingStrategy) {
+      console.log('♻️ Updating existing strategy:', existingStrategy.id);
       const { error: updateError } = await supabase
         .from('company_strategy')
         .update(strategy)
         .eq('id', existingStrategy.id);
 
       if (updateError) {
-        console.error('Error updating strategy:', updateError);
+        console.error('❌ Error updating strategy:', updateError);
         return new Response(
-          JSON.stringify({ error: 'Failed to update strategy' }),
+          JSON.stringify({ error: 'Failed to update strategy', details: updateError.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       strategyId = existingStrategy.id;
+      console.log('✅ Strategy updated successfully');
     } else {
+      console.log('🆕 Creating new strategy...');
+      const insertData = {
+        company_id: companyId,
+        user_id: user.id,
+        ...strategy
+      };
+      console.log('📤 Insert data:', JSON.stringify(insertData, null, 2));
+      
       const { data: newStrategy, error: strategyError } = await supabase
         .from('company_strategy')
-        .insert({
-          company_id: companyId,
-          user_id: user.id,
-          ...strategy
-        })
+        .insert(insertData)
         .select('id')
         .single();
 
       if (strategyError) {
-        console.error('Error creating strategy:', strategyError);
+        console.error('❌ Error creating strategy:', strategyError);
+        console.error('❌ Strategy error details:', JSON.stringify(strategyError, null, 2));
         return new Response(
-          JSON.stringify({ error: 'Failed to create strategy' }),
+          JSON.stringify({ error: 'Failed to create strategy', details: strategyError.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
       strategyId = newStrategy.id;
+      console.log('✅ Strategy created successfully:', strategyId);
     }
 
     console.log('✅ Company strategy created/updated:', strategyId);

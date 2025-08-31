@@ -104,9 +104,8 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
             if (hasCompany) {
               // Revisar estado de onboarding
               if (!onboardingStatus || !onboardingStatus.onboarding_completed_at) {
-                const currentStep = onboardingStatus?.current_step || 1;
-                console.log(`🔄 Onboarding de empresa pendiente, ir al paso ${currentStep}`);
-                navigate('/company-dashboard?view=adn-empresa');
+                console.log('🔄 Onboarding pendiente, ir al nuevo flujo');
+                navigate('/company-dashboard?view=onboarding');
                 return;
               }
               console.log('✅ Onboarding completado, ir al dashboard');
@@ -115,8 +114,8 @@ const OnboardingRedirect = ({ user }: OnboardingRedirectProps) => {
             }
             
             // Usuario empresa por email sin empresa (debería tener empresa por el trigger)
-            console.log('🔄 Usuario empresa por email sin empresa, ir a dashboard para configurar');
-            navigate('/company-dashboard?view=adn-empresa');
+            console.log('🔄 Usuario empresa por email sin empresa, ir al nuevo onboarding');
+            navigate('/company-dashboard?view=onboarding');
             break;
 
           case 'developer':

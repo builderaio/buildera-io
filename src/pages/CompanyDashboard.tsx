@@ -11,6 +11,7 @@ import EraCoachMark from "@/components/ui/era-coach-mark";
 import MandoCentral from "@/components/company/MandoCentral";
 import Dashboard360 from "@/components/company/Dashboard360";
 import ADNEmpresa from "@/components/company/ADNEmpresa";
+import OnboardingOrchestrator from "@/components/OnboardingOrchestrator";
 import MarketingHub from "@/components/company/MarketingHubSimplified";
 import InteligenciaCompetitiva from "@/components/company/InteligenciaCompetitiva";
 import MisArchivos from "@/components/company/BaseConocimiento";
@@ -46,11 +47,16 @@ const CompanyDashboard = () => {
 
       setUser(session.user);
 
-      // Check for view parameter in URL - si viene adn-empresa forzar mostrar
+      // Check for view parameter in URL - si viene onboarding o adn-empresa forzar mostrar
       const viewParam = searchParams.get('view');
       
       // Si viene con parámetro view, forzar esa vista sin verificaciones adicionales
-      if (viewParam === 'adn-empresa') {
+      if (viewParam === 'onboarding') {
+        setActiveView('onboarding');
+        setShouldShowOnboarding(false);
+        setLoading(false);
+        return;
+      } else if (viewParam === 'adn-empresa') {
         setActiveView('adn-empresa');
         setShouldShowOnboarding(false);
         setLoading(false);
@@ -226,6 +232,8 @@ const CompanyDashboard = () => {
       case "mando-central":
       case "dashboard":
         return <MandoCentral profile={profile} />;
+      case "onboarding":
+        return <OnboardingOrchestrator user={user} />;
       case "adn-empresa":
         return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;
       case "base-conocimiento":

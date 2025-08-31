@@ -286,18 +286,18 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
 
             console.log("🔍 Estado de onboarding:", onboardingStatus);
 
-            // Si no existe registro de onboarding o no está completado, ir al onboarding
-            if (!onboardingStatus || !onboardingStatus.dna_empresarial_completed) {
-              console.log("🎯 Primer login detectado, redirigiendo al onboarding");
-              navigate('/company-dashboard?view=adn-empresa&first_login=true');
+            // Si no existe registro de onboarding o no está completado, ir al nuevo flujo
+            if (!onboardingStatus || !onboardingStatus.onboarding_completed_at) {
+              console.log("🎯 Primer login detectado, redirigiendo al nuevo onboarding");
+              navigate('/company-dashboard?view=onboarding');
             } else {
               console.log("✅ Usuario ya completó onboarding, ir al dashboard");
               navigate('/company-dashboard');
             }
           } catch (error) {
             console.error("Error verificando onboarding:", error);
-            // Si hay error verificando onboarding, ir al onboarding por seguridad
-            navigate('/company-dashboard?view=adn-empresa&first_login=true');
+            // Si hay error verificando onboarding, ir al nuevo flujo por seguridad
+            navigate('/company-dashboard?view=onboarding');
           }
         }
       }

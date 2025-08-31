@@ -1,5 +1,14 @@
 project_id = "ubhzzppmkhxbuiajfswa"
 
+[functions.company-info-extractor]
+verify_jwt = false
+
+[functions.company-strategy]
+verify_jwt = false
+
+[functions.brand-identity]
+verify_jwt = false
+
 [functions.marketing-hub-target-audience]
 verify_jwt = false
 

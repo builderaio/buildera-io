@@ -71,7 +71,7 @@ serve(async (req) => {
 
       // Retry logic to handle slow responses/timeouts from N8N/Cloudflare
       const totalBudgetMs = 300000; // 5 minutes overall budget
-      const perAttemptTimeoutMs = 60000; // 60s per attempt
+      const perAttemptTimeoutMs = 300000; // 5 minutes per attempt to match N8N latency
       const startTime = Date.now();
       let attempt = 0;
       let lastStatus = 0;
@@ -135,8 +135,53 @@ serve(async (req) => {
           );
         }
 
-        // OK response, parse
-        const apiResult = await apiResponse.json();
+        // OK response, parse with resilience
+        let apiResult: any;
+        try {
+          const contentType = apiResponse.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            apiResult = await apiResponse.json();
+          } else {
+            const rawText = await apiResponse.text();
+            try {
+              apiResult = JSON.parse(rawText);
+            } catch (e) {
+              console.warn('⚠️ JSON parse error from text:', (e as Error).message);
+              if ((Date.now() - startTime) < totalBudgetMs) {
+                const backoff = Math.min(5000 * attempt, 30000);
+                console.log(`🔁 Retrying in ${backoff}ms due to JSON parse error (text)...`);
+                await new Promise((r) => setTimeout(r, backoff));
+                continue;
+              } else {
+                return new Response(
+                  JSON.stringify({ 
+                    error: 'Error parseando respuesta del servicio de análisis',
+                    details: 'Respuesta JSON inválida o incompleta (text)',
+                    url: url
+                  }),
+                  { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                );
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('⚠️ JSON parse error:', (e as Error).message);
+          if ((Date.now() - startTime) < totalBudgetMs) {
+            const backoff = Math.min(5000 * attempt, 30000);
+            console.log(`🔁 Retrying in ${backoff}ms due to JSON parse error...`);
+            await new Promise((r) => setTimeout(r, backoff));
+            continue;
+          } else {
+            return new Response(
+              JSON.stringify({ 
+                error: 'Error parseando respuesta del servicio de análisis',
+                details: 'Respuesta JSON inválida o incompleta',
+                url: url
+              }),
+              { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+        }
         console.log('✅ API Response received:', JSON.stringify(apiResult, null, 2));
 
         if (Array.isArray(apiResult) && apiResult.length > 0 && apiResult[0].output?.data) {

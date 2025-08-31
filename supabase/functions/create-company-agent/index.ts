@@ -151,13 +151,23 @@ async function getCompanyData(company_id: string): Promise<CompanyData> {
     .select('*')
     .eq('company_id', company_id);
 
-  // Obtener datos de redes sociales
-  const { data: socialStats } = await supabase
+  // Obtener datos de redes sociales (sin agregaciones complejas por limitaciones de Supabase client)
+  const { data: socialPosts } = await supabase
     .from('social_media_calendar')
-    .select('platform, count(*) as posts_count, avg(engagement_rate) as avg_engagement')
+    .select('platform, engagement_rate')
     .eq('user_id', company.created_by)
-    .gte('published_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Últimos 30 días
-    .group('platform');
+    .gte('published_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()); // Últimos 30 días
+  
+  // Procesar estadísticas manualmente
+  const socialStats = socialPosts ? socialPosts.reduce((acc, post) => {
+    const platform = post.platform;
+    if (!acc[platform]) {
+      acc[platform] = { posts_count: 0, total_engagement: 0 };
+    }
+    acc[platform].posts_count++;
+    acc[platform].total_engagement += post.engagement_rate || 0;
+    return acc;
+  }, {} as Record<string, { posts_count: number; total_engagement: number }>) : {};
 
   return {
     id: company.id,
@@ -186,9 +196,9 @@ async function getCompanyData(company_id: string): Promise<CompanyData> {
     } : undefined,
     objectives: objectives || [],
     socialData: {
-      linkedin_posts: socialStats?.find(s => s.platform === 'linkedin')?.posts_count || 0,
-      instagram_posts: socialStats?.find(s => s.platform === 'instagram')?.posts_count || 0,
-      tiktok_posts: socialStats?.find(s => s.platform === 'tiktok')?.posts_count || 0,
+      linkedin_posts: socialStats?.linkedin?.posts_count || 0,
+      instagram_posts: socialStats?.instagram?.posts_count || 0,
+      tiktok_posts: socialStats?.tiktok?.posts_count || 0,
       sentiment_analysis: 'Análisis en progreso'
     }
   };

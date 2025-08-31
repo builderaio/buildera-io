@@ -144,33 +144,95 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         throw new Error('No se encontró la URL del sitio web de tu empresa');
       }
 
+      // Iniciar extracción en background - obtenemos 202
       const result = await callOnboardingFunction('company-info-extractor', {
         url: companyWebsiteUrl
       });
 
-      // Si ya tenemos companyId, usarlo, sino usar el resultado
-      const finalCompanyId = result.companyId || companyId;
-      setCompanyId(finalCompanyId);
-      setCompanyData(result.data);
-      updateStepStatus(1, false, true);
+      console.log('🔄 Extracción iniciada en background:', result);
       
       toast({
-        title: "✅ Información extraída",
-        description: "Los datos de tu empresa han sido procesados correctamente"
+        title: "🔄 Extracción iniciada",
+        description: "Estamos procesando la información de tu empresa en segundo plano..."
       });
 
-      // Auto-advance to step 2
-      setTimeout(() => executeStep2(finalCompanyId, result.data), 1000);
+      // Iniciar polling para verificar cuando esté completa la extracción
+      pollForCompanyData();
       
     } catch (error) {
       updateStepStatus(1, false);
       toast({
         title: "❌ Error en el paso 1",
-        description: "No pudimos extraer la información de tu empresa. Intenta de nuevo.",
+        description: "No pudimos iniciar la extracción de información. Intenta de nuevo.",
         variant: "destructive"
       });
       throw error;
     }
+  };
+
+  const pollForCompanyData = async () => {
+    const maxAttempts = 60; // 5 minutos máximo (5 segundos * 60)
+    let attempts = 0;
+
+    const checkData = async () => {
+      attempts++;
+      
+      try {
+        // Verificar si ya tenemos datos de la empresa
+        const { data: company, error } = await supabase
+          .from('companies')
+          .select('id, webhook_data, webhook_processed_at')
+          .eq('id', companyId)
+          .single();
+
+        if (error) {
+          console.error('Error polling company data:', error);
+          return;
+        }
+
+        // Si ya tenemos datos procesados del webhook
+        if (company?.webhook_processed_at && company?.webhook_data) {
+          console.log('✅ Datos de empresa procesados:', company.webhook_data);
+          
+          const webhookData = company.webhook_data as any;
+          const apiResponse = webhookData?.raw_api_response;
+          
+          setCompanyData(apiResponse);
+          updateStepStatus(1, false, true);
+          
+          toast({
+            title: "✅ Información extraída",
+            description: "Los datos de tu empresa han sido procesados correctamente"
+          });
+
+          // Auto-advance to step 2
+          setTimeout(() => executeStep2(company.id, apiResponse), 1000);
+          return;
+        }
+
+        // Si no tenemos datos aún y no hemos excedido el límite
+        if (attempts < maxAttempts) {
+          setTimeout(checkData, 5000); // Verificar cada 5 segundos
+        } else {
+          // Timeout alcanzado
+          updateStepStatus(1, false);
+          toast({
+            title: "⏱️ Tiempo agotado",
+            description: "La extracción está tomando más tiempo del esperado. Intenta de nuevo.",
+            variant: "destructive"
+          });
+        }
+        
+      } catch (error) {
+        console.error('Error in polling:', error);
+        if (attempts < maxAttempts) {
+          setTimeout(checkData, 5000);
+        }
+      }
+    };
+
+    // Iniciar el polling
+    setTimeout(checkData, 5000); // Primera verificación en 5 segundos
   };
 
   const executeStep2 = async (companyIdParam?: string, companyDataParam?: any) => {

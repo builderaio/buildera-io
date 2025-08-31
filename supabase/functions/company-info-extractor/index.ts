@@ -80,6 +80,8 @@ async function extractCompanyData(url: string, userId: string, token: string) {
       .select('id, webhook_processed_at, webhook_data')
       .eq('created_by', userId)
       .ilike('website_url', `%${domain}%`)
+      .order('updated_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (processedErr) {
@@ -117,126 +119,59 @@ async function extractCompanyData(url: string, userId: string, token: string) {
       // Create basic auth header
       const credentials = btoa(`${authUser}:${authPass}`);
 
-      // Retry logic to handle slow responses/timeouts from N8N/Cloudflare
-      const totalBudgetMs = 300000; // 5 minutes overall budget
-      const startTime = Date.now();
-      let attempt = 0;
-      let lastStatus = 0;
-      let lastStatusText = '';
-      let lastErrorText = '';
-      const retryableStatus = new Set([524, 522, 502, 503, 504]);
+      // Single attempt (no retries). User can retry from UI if needed
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 110000); // 110s timeout
+      const apiResponse = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${credentials}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+      }).catch((err) => {
+        throw new Error(`Network error calling N8N: ${(err as Error).message}`);
+      });
+      clearTimeout(timeout);
 
-      while ((Date.now() - startTime) < totalBudgetMs) {
-        attempt++;
-        console.log(`🚀 Attempt ${attempt} to call N8N (elapsed ${Date.now() - startTime}ms)`);
+      if (!apiResponse.ok) {
+        const errText = await apiResponse.text().catch(() => '');
+        throw new Error(`API ${apiResponse.status} ${apiResponse.statusText}: ${errText.slice(0,300)}`);
+      }
 
-        let apiResponse: Response | null = null;
+      let apiResult: any;
+      const contentType = apiResponse.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        apiResult = await apiResponse.json();
+      } else {
+        const rawText = await apiResponse.text();
         try {
-          apiResponse = await fetch(apiUrl, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Basic ${credentials}`,
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            }
-          });
-        } catch (err) {
-          console.warn('⏳ Attempt failed with network error:', (err as Error).message);
-          // Retry on network errors if time remains
-          const backoff = Math.min(5000 * attempt, 30000);
-          console.log(`🔁 Retrying in ${backoff}ms due to network error...`);
-          await new Promise((r) => setTimeout(r, backoff));
-          continue;
-        }
-
-        lastStatus = apiResponse.status;
-        lastStatusText = apiResponse.statusText;
-        console.log('📊 API Response status:', apiResponse.status, apiResponse.statusText);
-
-        if (!apiResponse.ok) {
-          try { lastErrorText = await apiResponse.text(); } catch {}
-          console.error('❌ API Error Response:', lastErrorText);
-
-          if (retryableStatus.has(apiResponse.status) && (Date.now() - startTime) < totalBudgetMs) {
-            const backoff = Math.min(5000 * attempt, 30000); // 5s, 10s, 15s..., capped 30s
-            console.log(`🔁 Retryable status ${apiResponse.status}. Waiting ${backoff}ms then retrying...`);
-            await new Promise((r) => setTimeout(r, backoff));
-            continue;
-          }
-
-          apiError = `API returned ${apiResponse.status}: ${apiResponse.statusText}`;
-          console.error('❌ Background task failed - API error:', apiError);
-          return;
-        }
-
-        // OK response, parse with resilience
-        let apiResult: any;
-        try {
-          const contentType = apiResponse.headers.get('content-type') || '';
-          if (contentType.includes('application/json')) {
-            apiResult = await apiResponse.json();
-          } else {
-            const rawText = await apiResponse.text();
-            try {
-              apiResult = JSON.parse(rawText);
-            } catch (e) {
-              console.warn('⚠️ JSON parse error from text:', (e as Error).message);
-              if ((Date.now() - startTime) < totalBudgetMs) {
-                const backoff = Math.min(5000 * attempt, 30000);
-                console.log(`🔁 Retrying in ${backoff}ms due to JSON parse error (text)...`);
-                await new Promise((r) => setTimeout(r, backoff));
-                continue;
-              } else {
-                console.error('❌ Background task failed - JSON parse error (text)');
-                return;
-              }
-            }
-          }
-        } catch (e) {
-          console.warn('⚠️ JSON parse error:', (e as Error).message);
-          if ((Date.now() - startTime) < totalBudgetMs) {
-            const backoff = Math.min(5000 * attempt, 30000);
-            console.log(`🔁 Retrying in ${backoff}ms due to JSON parse error...`);
-            await new Promise((r) => setTimeout(r, backoff));
-            continue;
-          } else {
-            console.error('❌ Background task failed - JSON parse error');
-            return;
-          }
-        }
-        console.log('✅ API Response received:', JSON.stringify(apiResult, null, 2));
-
-        // Normalize different possible response shapes from N8N
-        let extracted: any = null;
-        if (Array.isArray(apiResult) && apiResult.length > 0) {
-          const item = apiResult[0];
-          extracted = item?.output?.data ?? item?.data ?? item?.output ?? null;
-        } else if (apiResult && typeof apiResult === 'object') {
-          extracted = (apiResult as any).data ?? apiResult;
-        }
-
-        if (extracted) {
-          apiData = extracted;
-          console.log('🎯 Extracted company data:', JSON.stringify(apiData, null, 2));
-
-          // Validate that we got meaningful data
-          if (!apiData.company_name && !apiData.legal_name && !apiData.business_description) {
-            console.log('⚠️ API returned empty or insufficient company data');
-            return;
-          }
-
-          // We have valid data, exit retry loop
-          break;
-        } else {
-          console.log('⚠️ Unexpected API response structure:', JSON.stringify(apiResult, null, 2));
-          return;
+          apiResult = JSON.parse(rawText);
+        } catch {
+          console.warn('Non-JSON response from API, returning raw text');
+          apiResult = rawText;
         }
       }
 
-      if (!apiData) {
-        // Exhausted time budget without valid data
-        console.error('❌ Background task failed - timeout without valid data');
-        return;
+      // Normalize different possible response shapes from N8N
+      let extracted: any = null;
+      if (Array.isArray(apiResult) && apiResult.length > 0) {
+        const item = apiResult[0];
+        extracted = item?.output?.data ?? item?.data ?? item?.output ?? null;
+      } else if (apiResult && typeof apiResult === 'object') {
+        extracted = (apiResult as any).data ?? apiResult;
+      }
+
+      if (!extracted) {
+        throw new Error('Estructura de respuesta inválida del API (sin datos).');
+      }
+
+      apiData = extracted;
+
+      // Validate minimal content
+      if (!apiData.company_name && !apiData.legal_name && !apiData.business_description) {
+        throw new Error('La API retornó datos insuficientes de la empresa.');
       }
     } catch (error) {
       console.error('💥 Error calling external API:', error);
@@ -295,6 +230,8 @@ async function extractCompanyData(url: string, userId: string, token: string) {
       .select('id')
       .eq('created_by', userId)
       .ilike('website_url', `%${domain}%`)
+      .order('updated_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     let companyId;

@@ -82,8 +82,27 @@ serve(async (req) => {
 
 async function extractCompanyInBackground(url: string, userId: string, token: string) {
   console.log('🔄 Starting background extraction for URL:', url);
-  
   try {
+    // Normalize URL to domain for matching
+    const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+
+    // Idempotency: avoid duplicate work if already processed recently
+    const { data: existingProcessed, error: processedErr } = await supabase
+      .from('companies')
+      .select('id, webhook_processed_at')
+      .eq('created_by', userId)
+      .ilike('website_url', `%${domain}%`)
+      .maybeSingle();
+
+    if (processedErr) {
+      console.warn('⚠️ Error checking existing processed company:', processedErr);
+    }
+
+    if (existingProcessed?.webhook_processed_at) {
+      console.log('🟢 Company already processed recently, skipping new API call for:', url);
+      return;
+    }
+
     // Call external API to extract company info
     console.log('📡 Calling N8N API for company data extraction...');
     let apiData = null;
@@ -194,8 +213,17 @@ async function extractCompanyInBackground(url: string, userId: string, token: st
         }
         console.log('✅ API Response received:', JSON.stringify(apiResult, null, 2));
 
-        if (Array.isArray(apiResult) && apiResult.length > 0 && apiResult[0].output?.data) {
-          apiData = apiResult[0].output.data;
+        // Normalize different possible response shapes from N8N
+        let extracted: any = null;
+        if (Array.isArray(apiResult) && apiResult.length > 0) {
+          const item = apiResult[0];
+          extracted = item?.output?.data ?? item?.data ?? item?.output ?? null;
+        } else if (apiResult && typeof apiResult === 'object') {
+          extracted = (apiResult as any).data ?? apiResult;
+        }
+
+        if (extracted) {
+          apiData = extracted;
           console.log('🎯 Extracted company data:', JSON.stringify(apiData, null, 2));
 
           // Validate that we got meaningful data
@@ -269,12 +297,12 @@ async function extractCompanyInBackground(url: string, userId: string, token: st
       updated_at: new Date().toISOString()
     };
 
-    // Check for existing company
+    // Check for existing company (match by domain to avoid scheme/WWW mismatches)
     const { data: existingCompany } = await supabase
       .from('companies')
       .select('id')
       .eq('created_by', userId)
-      .eq('website_url', url)
+      .ilike('website_url', `%${domain}%`)
       .maybeSingle();
 
     let companyId;

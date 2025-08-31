@@ -44,7 +44,7 @@ async function authenticateUser(req: Request) {
 /**
  * Call N8N API for strategy generation
  */
-async function callN8NStrategy(companyData: any) {
+async function callN8NStrategy(companyId: string, companyData: any) {
   const n8nEndpoint = 'https://buildera.app.n8n.cloud/webhook/company-strategy';
   
   // Get N8N authentication credentials
@@ -62,7 +62,10 @@ async function callN8NStrategy(companyData: any) {
 
   const credentials = btoa(`${authUser}:${authPass}`);
   const requestPayload = {
-    data: companyData
+    input: {
+      companyId,
+      data: companyData
+    }
   };
 
   console.log('🚀 Calling N8N API:', n8nEndpoint);
@@ -212,7 +215,7 @@ serve(async (req) => {
     console.log('👤 User authenticated:', user.id);
     
     // 3. Call N8N API
-    const strategyResponse = await callN8NStrategy(companyData);
+    const strategyResponse = await callN8NStrategy(companyId, companyData);
     
     // 4. Store in database
     const strategy = {

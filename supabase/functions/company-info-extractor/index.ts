@@ -169,25 +169,28 @@ async function extractCompanyData(url: string, userId: string, token: string) {
       // Normalize different possible response shapes from N8N
       let extracted: any = null;
       if (Array.isArray(apiResult) && apiResult.length > 0) {
-        const item = apiResult[0];
-        extracted = item?.output?.data ?? item?.data ?? item?.output ?? null;
+        const item = (apiResult as any[]).find((i: any) => i?.data || i?.output?.data || i?.output) ?? apiResult[0];
+        extracted = item?.data ?? item?.output?.data ?? item?.output ?? null;
       } else if (apiResult && typeof apiResult === 'object') {
-        extracted = (apiResult as any).data ?? apiResult;
+        // Common shapes: { data: {...} } or already the payload itself
+        const asAny = apiResult as any;
+        extracted = asAny.data ?? (asAny.output?.data ?? asAny.output) ?? apiResult;
       }
-
-      if (!extracted) {
-        throw new Error('Estructura de respuesta inválida del API (sin datos).');
+      if (!extracted || (typeof extracted === 'string' && extracted.trim().length === 0)) {
+        console.warn('⚠️ N8N response had no structured data, falling back to URL-derived basics.');
+        extracted = null;
       }
+      apiData = extracted || null;
 
-      apiData = extracted;
-
-      // Validate minimal content
-      if (!apiData.company_name && !apiData.legal_name && !apiData.business_description) {
-        throw new Error('La API retornó datos insuficientes de la empresa.');
+      // Validate minimal content only if we actually got structured data;
+      // otherwise downstream will use fallbacks derived from the domain.
+      if (apiData && !apiData.company_name && !apiData.legal_name && !apiData.business_description) {
+        console.warn('⚠️ N8N returned insufficient fields, will use fallbacks and partial enrichment.');
+        // keep apiData but allow fallbacks below
       }
     } catch (error) {
       console.error('💥 Error calling external API:', error);
-      return;
+      throw error;
     }
 
     // Extract basic info from URL as fallback (reuse computed domain)
@@ -260,7 +263,7 @@ async function extractCompanyData(url: string, userId: string, token: string) {
 
       if (updateError) {
         console.error('Error updating company:', updateError);
-        return;
+        throw updateError;
       }
 
       console.log('✅ Company updated successfully with API data');
@@ -276,7 +279,7 @@ async function extractCompanyData(url: string, userId: string, token: string) {
 
       if (companyError) {
         console.error('Error creating company:', companyError);
-        return;
+        throw companyError;
       }
 
       companyId = newCompany.id;

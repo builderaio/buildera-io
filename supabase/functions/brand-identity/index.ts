@@ -48,14 +48,117 @@ serve(async (req) => {
       );
     }
 
-    // Generate brand identity based on company strategy
-    const brandIdentity = {
-      visual_identity: `La identidad visual de ${nombre_empresa} refleja profesionalismo, innovación y confianza. Utiliza elementos modernos y limpios que comunican claridad y eficiencia en la prestación de servicios.`,
-      primary_color: '#2563eb', // Professional blue
-      secondary_color: '#f8fafc', // Clean white/gray
-      complementary_color_1: '#10b981', // Success green
-      complementary_color_2: '#f59e0b', // Accent orange
+    // Prepare data for N8N API call
+    const requestPayload = {
+      input: {
+        data: {
+          nombre_empresa,
+          mision: mision || '',
+          vision: vision || '',
+          propuesta_valor: propuesta_valor || ''
+        }
+      }
     };
+
+    console.log('🎨 Generating brand identity for:', nombre_empresa);
+    console.log('📤 Request payload:', JSON.stringify(requestPayload, null, 2));
+
+    let brandIdentity: any = null;
+
+    try {
+      // Call N8N API for brand identity generation with robust handling
+      const n8nEndpoint = 'https://buildera.app.n8n.cloud/webhook/brand-identity';
+      
+      console.log('🚀 Calling N8N API:', n8nEndpoint);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
+      const apiResponse = await fetch(n8nEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const contentType = apiResponse.headers.get('content-type') || '';
+      console.log(`📊 N8N API Response status: ${apiResponse.status} ${apiResponse.statusText}, content-type: ${contentType}`);
+
+      if (!apiResponse.ok) {
+        const errorText = await apiResponse.text().catch(() => '');
+        console.error('❌ N8N API error:', apiResponse.status, errorText);
+        throw new Error(`N8N API error: ${apiResponse.status} - ${errorText}`);
+      }
+
+      const rawBody = await apiResponse.text().catch(() => '');
+      const bodySample = rawBody.slice(0, 2000);
+      console.log('🧪 N8N raw body sample (truncated 2KB):', bodySample);
+
+      // Robust JSON parsing with fallbacks
+      const safeParse = (txt: string) => {
+        try { return JSON.parse(txt); } catch { return null; }
+      };
+
+      let apiResult: any = safeParse(rawBody);
+      
+      if (!apiResult && rawBody.trim()) {
+        // Try to extract JSON object from response
+        const firstBrace = rawBody.indexOf('{');
+        if (firstBrace !== -1) {
+          const extractBalanced = (text: string, startIndex: number) => {
+            let depth = 0;
+            let start = -1;
+            for (let i = startIndex; i < text.length; i++) {
+              const ch = text[i];
+              if (ch === '{') { if (start === -1) start = i; depth++; }
+              else if (ch === '}') { depth--; if (depth === 0 && start !== -1) return text.slice(start, i + 1); }
+            }
+            return null;
+          };
+          
+          const objStr = extractBalanced(rawBody, firstBrace);
+          apiResult = objStr ? safeParse(objStr) : null;
+          if (apiResult) console.log('✅ Extracted JSON from response');
+        }
+      }
+
+      if (!apiResult) {
+        console.warn('⚠️ Could not parse N8N response as JSON, using fallback');
+        brandIdentity = {
+          visual_identity: `La identidad visual de ${nombre_empresa} refleja profesionalismo, innovación y confianza. Utiliza elementos modernos y limpios que comunican claridad y eficiencia.`,
+          primary_color: '#2563eb',
+          secondary_color: '#f8fafc',
+          complementary_color_1: '#10b981',
+          complementary_color_2: '#f59e0b',
+        };
+      } else {
+        brandIdentity = {
+          visual_identity: apiResult.visual_identity || `La identidad visual de ${nombre_empresa} refleja profesionalismo, innovación y confianza.`,
+          primary_color: apiResult.primary_color || '#2563eb',
+          secondary_color: apiResult.secondary_color || '#f8fafc',
+          complementary_color_1: apiResult.complementary_color_1 || '#10b981',
+          complementary_color_2: apiResult.complementary_color_2 || '#f59e0b',
+        };
+        console.log('✅ N8N API response processed:', JSON.stringify(brandIdentity, null, 2));
+      }
+
+    } catch (error: any) {
+      console.error('❌ Error calling N8N API:', error);
+      
+      // Fallback brand identity if N8N fails
+      console.log('🔄 Using fallback brand identity generation');
+      brandIdentity = {
+        visual_identity: `La identidad visual de ${nombre_empresa} refleja profesionalismo, innovación y confianza. Utiliza elementos modernos y limpios que comunican claridad y eficiencia en la prestación de servicios.`,
+        primary_color: '#2563eb', // Professional blue
+        secondary_color: '#f8fafc', // Clean white/gray
+        complementary_color_1: '#10b981', // Success green
+        complementary_color_2: '#f59e0b', // Accent orange
+      };
+    }
 
     // Store brand identity in database
     const { data: existingBranding } = await supabase

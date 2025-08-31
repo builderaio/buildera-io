@@ -51,7 +51,7 @@ serve(async (req) => {
     const companyData = input.data;
     console.log('📊 Company data received:', JSON.stringify(companyData, null, 2));
 
-    // Call N8N API for strategy generation
+    // Call N8N API for strategy generation with robust handling
     const n8nEndpoint = 'https://buildera.app.n8n.cloud/webhook/company-strategy';
     const requestPayload = {
       input: {
@@ -62,22 +62,87 @@ serve(async (req) => {
     console.log('🚀 Calling N8N API:', n8nEndpoint);
     console.log('📤 Request payload:', JSON.stringify(requestPayload, null, 2));
 
-    const n8nResponse = await fetch(n8nEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestPayload),
-    });
+    let strategyResponse: any = null;
+    
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
-    if (!n8nResponse.ok) {
-      const errorText = await n8nResponse.text();
-      console.error('❌ N8N API error:', n8nResponse.status, errorText);
-      throw new Error(`N8N API error: ${n8nResponse.status} - ${errorText}`);
+      const apiResponse = await fetch(n8nEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const contentType = apiResponse.headers.get('content-type') || '';
+      console.log(`📊 N8N API Response status: ${apiResponse.status} ${apiResponse.statusText}, content-type: ${contentType}`);
+
+      if (!apiResponse.ok) {
+        const errorText = await apiResponse.text().catch(() => '');
+        console.error('❌ N8N API error:', apiResponse.status, errorText);
+        throw new Error(`N8N API error: ${apiResponse.status} - ${errorText}`);
+      }
+
+      const rawBody = await apiResponse.text().catch(() => '');
+      const bodySample = rawBody.slice(0, 2000);
+      console.log('🧪 N8N raw body sample (truncated 2KB):', bodySample);
+
+      // Robust JSON parsing with fallbacks
+      const safeParse = (txt: string) => {
+        try { return JSON.parse(txt); } catch { return null; }
+      };
+
+      let apiResult: any = safeParse(rawBody);
+      
+      if (!apiResult && rawBody.trim()) {
+        // Try to extract JSON object from response
+        const firstBrace = rawBody.indexOf('{');
+        if (firstBrace !== -1) {
+          const extractBalanced = (text: string, startIndex: number) => {
+            let depth = 0;
+            let start = -1;
+            for (let i = startIndex; i < text.length; i++) {
+              const ch = text[i];
+              if (ch === '{') { if (start === -1) start = i; depth++; }
+              else if (ch === '}') { depth--; if (depth === 0 && start !== -1) return text.slice(start, i + 1); }
+            }
+            return null;
+          };
+          
+          const objStr = extractBalanced(rawBody, firstBrace);
+          apiResult = objStr ? safeParse(objStr) : null;
+          if (apiResult) console.log('✅ Extracted JSON from response');
+        }
+      }
+
+      if (!apiResult) {
+        console.warn('⚠️ Could not parse N8N response as JSON, using fallback');
+        strategyResponse = {
+          mision: 'Misión generada pendiente',
+          vision: 'Visión generada pendiente',
+          propuesta_valor: 'Propuesta de valor generada pendiente'
+        };
+      } else {
+        strategyResponse = apiResult;
+        console.log('✅ N8N API response parsed:', JSON.stringify(strategyResponse, null, 2));
+      }
+
+    } catch (error: any) {
+      console.error('❌ Error calling N8N API:', error);
+      
+      // Fallback strategy if N8N fails
+      console.log('🔄 Using fallback strategy generation');
+      strategyResponse = {
+        mision: `Proporcionar soluciones innovadoras y de calidad en el sector de ${companyData.industries?.[0] || 'servicios'}, creando valor excepcional para nuestros clientes.`,
+        vision: `Ser la empresa líder reconocida por la excelencia en ${companyData.industries?.[0] || 'servicios'}, transformando la industria a través de la innovación.`,
+        propuesta_valor: `Ofrecemos soluciones personalizadas que optimizan los procesos de nuestros clientes, reduciendo costos y maximizando resultados.`
+      };
     }
-
-    const strategyResponse = await n8nResponse.json();
-    console.log('✅ N8N API response:', JSON.stringify(strategyResponse, null, 2));
 
     // Use the strategy data from N8N response
     const strategy = {

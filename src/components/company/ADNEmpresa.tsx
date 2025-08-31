@@ -36,33 +36,62 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
+    console.log('🔍 ADNEmpresa useEffect triggered with profile:', profile);
     if (profile?.user_id) {
+      console.log('✅ profile.user_id found:', profile.user_id);
       loadOnboardingData();
+    } else {
+      console.log('❌ No user_id in profile:', profile);
     }
   }, [profile?.user_id]);
 
   const loadOnboardingData = async () => {
     try {
       setLoading(true);
+      console.log('🔍 Starting loadOnboardingData with profile:', profile);
       
-      // Obtener company_id del usuario
-      const { data: membership } = await supabase
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', profile.user_id)
-        .eq('is_primary', true)
-        .maybeSingle();
+      let companyId = null;
+      
+      // Priorizar primary_company_id del perfil
+      if (profile.primary_company_id) {
+        console.log('✅ Using primary_company_id from profile:', profile.primary_company_id);
+        companyId = profile.primary_company_id;
+      } else {
+        // Fallback: buscar company_id via company_members
+        console.log('📋 No primary_company_id, querying company_members for user_id:', profile.user_id);
+        const { data: membership, error: membershipError } = await supabase
+          .from('company_members')
+          .select('company_id')
+          .eq('user_id', profile.user_id)
+          .eq('is_primary', true)
+          .maybeSingle();
 
-      if (!membership?.company_id) {
-        toast({
-          title: "Error",
-          description: "No se encontró información de empresa",
-          variant: "destructive"
-        });
-        return;
+        console.log('📋 company_members query result:', { membership, membershipError });
+
+        if (membershipError) {
+          console.error('❌ Error querying company_members:', membershipError);
+          toast({
+            title: "Error",
+            description: `Error consultando membresía: ${membershipError.message}`,
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (!membership?.company_id) {
+          console.log('❌ No se encontró company_id en membership:', membership);
+          toast({
+            title: "Error",
+            description: "No se encontró información de empresa",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        companyId = membership.company_id;
       }
 
-      const companyId = membership.company_id;
+      console.log('🏢 Using company_id:', companyId);
 
       // Cargar datos en paralelo
       const [companyResult, strategyResult, brandingResult, objectivesResult] = await Promise.all([

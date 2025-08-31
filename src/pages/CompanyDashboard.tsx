@@ -59,6 +59,18 @@ const CompanyDashboard = () => {
       } else if (viewParam === 'adn-empresa') {
         setActiveView('adn-empresa');
         setShouldShowOnboarding(false);
+        // Cargar el perfil para asegurar que ADNEmpresa pueda obtener datos de la BD
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        if (profileData) {
+          setProfile(profileData);
+        } else {
+          // Fallback mínimo para disparar el cargue por user_id en el hijo
+          setProfile({ user_id: session.user.id, email: session.user.email });
+        }
         setLoading(false);
         return;
       } else if (viewParam) {
@@ -70,8 +82,6 @@ const CompanyDashboard = () => {
 
       // Solo verificar onboarding si no viene con parámetros específicos
       const registrationMethod = session.user.app_metadata?.provider || 'email';
-      
-      // Verificar empresas existentes
       const { data: companies } = await supabase
         .from('companies')
         .select('*')

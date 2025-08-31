@@ -48,6 +48,42 @@ serve(async (req) => {
       );
     }
 
+    // Start background task for company extraction
+    const runtime = (globalThis as any).EdgeRuntime;
+    if (runtime?.waitUntil) {
+      runtime.waitUntil(extractCompanyInBackground(url, user.id, token));
+    } else {
+      // Fallback for environments without EdgeRuntime
+      extractCompanyInBackground(url, user.id, token).catch(error => {
+        console.error('Background task error:', error);
+      });
+    }
+
+    // Return immediate response
+    return new Response(
+      JSON.stringify({ 
+        status: 'processing',
+        message: 'La extracción de información de la empresa ha comenzado y se procesará en segundo plano.'
+      }),
+      { 
+        status: 202, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+
+  } catch (error) {
+    console.error('Error in company-info-extractor:', error);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});
+
+async function extractCompanyInBackground(url: string, userId: string, token: string) {
+  console.log('🔄 Starting background extraction for URL:', url);
+  
+  try {
     // Call external API to extract company info
     console.log('📡 Calling N8N API for company data extraction...');
     let apiData = null;
@@ -71,7 +107,6 @@ serve(async (req) => {
 
       // Retry logic to handle slow responses/timeouts from N8N/Cloudflare
       const totalBudgetMs = 300000; // 5 minutes overall budget
-      const perAttemptTimeoutMs = 300000; // 5 minutes per attempt to match N8N latency
       const startTime = Date.now();
       let attempt = 0;
       let lastStatus = 0;
@@ -118,14 +153,8 @@ serve(async (req) => {
           }
 
           apiError = `API returned ${apiResponse.status}: ${apiResponse.statusText}`;
-          return new Response(
-            JSON.stringify({ 
-              error: 'No se pudo obtener información de la empresa',
-              details: `Error del servicio de análisis: ${apiError}`,
-              url: url
-            }),
-            { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          console.error('❌ Background task failed - API error:', apiError);
+          return;
         }
 
         // OK response, parse with resilience
@@ -146,14 +175,8 @@ serve(async (req) => {
                 await new Promise((r) => setTimeout(r, backoff));
                 continue;
               } else {
-                return new Response(
-                  JSON.stringify({ 
-                    error: 'Error parseando respuesta del servicio de análisis',
-                    details: 'Respuesta JSON inválida o incompleta (text)',
-                    url: url
-                  }),
-                  { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-                );
+                console.error('❌ Background task failed - JSON parse error (text)');
+                return;
               }
             }
           }
@@ -165,14 +188,8 @@ serve(async (req) => {
             await new Promise((r) => setTimeout(r, backoff));
             continue;
           } else {
-            return new Response(
-              JSON.stringify({ 
-                error: 'Error parseando respuesta del servicio de análisis',
-                details: 'Respuesta JSON inválida o incompleta',
-                url: url
-              }),
-              { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+            console.error('❌ Background task failed - JSON parse error');
+            return;
           }
         }
         console.log('✅ API Response received:', JSON.stringify(apiResult, null, 2));
@@ -184,52 +201,25 @@ serve(async (req) => {
           // Validate that we got meaningful data
           if (!apiData.company_name && !apiData.legal_name && !apiData.business_description) {
             console.log('⚠️ API returned empty or insufficient company data');
-            return new Response(
-              JSON.stringify({ 
-                error: 'No se encontró información suficiente de la empresa',
-                details: 'El servicio de análisis no pudo extraer datos útiles de la URL proporcionada',
-                url: url
-              }),
-              { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+            return;
           }
 
           // We have valid data, exit retry loop
           break;
         } else {
           console.log('⚠️ Unexpected API response structure:', JSON.stringify(apiResult, null, 2));
-          return new Response(
-            JSON.stringify({ 
-              error: 'Respuesta inválida del servicio de análisis',
-              details: 'El servicio devolvió una respuesta en formato inesperado',
-              url: url
-            }),
-            { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          return;
         }
       }
 
       if (!apiData) {
         // Exhausted time budget without valid data
-        return new Response(
-          JSON.stringify({ 
-            error: 'Timeout esperando información de la empresa',
-            details: `El servicio tardó demasiado en responder (último estado: ${lastStatus} ${lastStatusText})`,
-            url: url
-          }),
-          { status: 504, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        console.error('❌ Background task failed - timeout without valid data');
+        return;
       }
     } catch (error) {
       console.error('💥 Error calling external API:', error);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Error de conexión con el servicio de análisis',
-          details: error.message,
-          url: url
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return;
     }
 
     // Extract basic info from URL as fallback
@@ -283,7 +273,7 @@ serve(async (req) => {
     const { data: existingCompany } = await supabase
       .from('companies')
       .select('id')
-      .eq('created_by', user.id)
+      .eq('created_by', userId)
       .eq('website_url', url)
       .maybeSingle();
 
@@ -301,10 +291,7 @@ serve(async (req) => {
 
       if (updateError) {
         console.error('Error updating company:', updateError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to update company record' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return;
       }
 
       console.log('✅ Company updated successfully with API data');
@@ -313,39 +300,23 @@ serve(async (req) => {
         .from('companies')
         .insert({
           ...companyData,
-          created_by: user.id
+          created_by: userId
         })
         .select('id')
         .single();
 
       if (companyError) {
         console.error('Error creating company:', companyError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to create company record' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return;
       }
 
       companyId = newCompany.id;
       console.log('✅ Created new company:', companyId);
     }
 
-    return new Response(
-      JSON.stringify({ 
-        companyId,
-        data: companyData
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    console.log('🎉 Background extraction completed successfully for:', url);
 
   } catch (error) {
-    console.error('Error in company-info-extractor:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error('💥 Error in background extraction:', error);
   }
-});
+}

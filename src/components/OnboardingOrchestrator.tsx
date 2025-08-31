@@ -144,111 +144,41 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         throw new Error('No se encontró la URL del sitio web de tu empresa');
       }
 
-      // Iniciar extracción en background - obtenemos 202
+      // Ejecutar extracción síncrona directamente
       const result = await callOnboardingFunction('company-info-extractor', {
         url: companyWebsiteUrl
       });
 
-      console.log('🔄 Extracción iniciada en background:', result);
+      console.log('✅ Extracción completada:', result);
       
-      toast({
-        title: "🔄 Extracción iniciada",
-        description: "Estamos procesando la información de tu empresa en segundo plano..."
-      });
+      if (result.success) {
+        setCompanyData(result.data);
+        if (result.companyId) setCompanyId(result.companyId);
+        
+        updateStepStatus(1, false, true);
+        
+        toast({
+          title: "✅ Información extraída",
+          description: "Los datos de tu empresa han sido procesados correctamente"
+        });
 
-      // Iniciar polling para verificar cuando esté completa la extracción
-      pollForCompanyData();
+        // Auto-advance to step 2
+        setTimeout(() => executeStep2(result.companyId, result.data), 1000);
+      } else {
+        throw new Error('No se pudieron extraer los datos de la empresa');
+      }
       
     } catch (error) {
       updateStepStatus(1, false);
       toast({
         title: "❌ Error en el paso 1",
-        description: "No pudimos iniciar la extracción de información. Intenta de nuevo.",
+        description: "No pudimos extraer la información de tu empresa. Intenta de nuevo.",
         variant: "destructive"
       });
       throw error;
     }
   };
 
-  const pollForCompanyData = async () => {
-    const maxAttempts = 60; // 5 minutos máximo (5 segundos * 60)
-    let attempts = 0;
-
-    const checkData = async () => {
-      attempts++;
-      
-      try {
-        // Verificar si ya tenemos datos de la empresa por ID principal
-        const { data: company, error } = await supabase
-          .from('companies')
-          .select('id, webhook_data, webhook_processed_at')
-          .eq('id', companyId)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error polling company data by id:', error);
-        }
-
-        let effectiveCompany = company;
-
-        // Si ya tenemos datos procesados del webhook por ID
-        if (company?.webhook_processed_at && company?.webhook_data) {
-          console.log('✅ Datos de empresa procesados:', company.webhook_data);
-          const webhookData = company.webhook_data as any;
-          const apiResponse = webhookData?.raw_api_response;
-          setCompanyData(apiResponse);
-          updateStepStatus(1, false, true);
-          toast({ title: "✅ Información extraída", description: "Los datos de tu empresa han sido procesados correctamente" });
-          setTimeout(() => executeStep2(company.id, apiResponse), 1000);
-          return;
-        }
-
-        // Fallback: buscar por dominio y usuario si el ID principal aún no tiene datos
-        const domain = companyWebsiteUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
-        const { data: companyByDomain, error: domainErr } = await supabase
-          .from('companies')
-          .select('id, webhook_data, webhook_processed_at, website_url')
-          .eq('created_by', user.id)
-          .ilike('website_url', `%${domain}%`)
-          .order('updated_at', { ascending: false })
-          .maybeSingle();
-
-        if (domainErr) {
-          console.warn('⚠️ Error polling company by domain:', domainErr);
-        }
-
-        if (companyByDomain?.webhook_processed_at && companyByDomain?.webhook_data) {
-          // Actualizar companyId para pasos siguientes si es diferente
-          if (companyId !== companyByDomain.id) setCompanyId(companyByDomain.id);
-          console.log('✅ Datos de empresa procesados (dominio):', companyByDomain.webhook_data);
-          const webhookData = companyByDomain.webhook_data as any;
-          const apiResponse = webhookData?.raw_api_response;
-          setCompanyData(apiResponse);
-          updateStepStatus(1, false, true);
-          toast({ title: "✅ Información extraída", description: "Los datos de tu empresa han sido procesados correctamente" });
-          setTimeout(() => executeStep2(companyByDomain.id, apiResponse), 1000);
-          return;
-        }
-
-        // Si no tenemos datos aún y no hemos excedido el límite
-        if (attempts < maxAttempts) {
-          setTimeout(checkData, 5000); // Verificar cada 5 segundos
-        } else {
-          updateStepStatus(1, false);
-          toast({ title: "⏱️ Tiempo agotado", description: "La extracción está tomando más tiempo del esperado. Intenta de nuevo.", variant: "destructive" });
-        }
-        
-      } catch (error) {
-        console.error('Error in polling:', error);
-        if (attempts < maxAttempts) {
-          setTimeout(checkData, 5000);
-        }
-      }
-    };
-
-    // Iniciar el polling
-    setTimeout(checkData, 5000); // Primera verificación en 5 segundos
-  };
 
   const executeStep2 = async (companyIdParam?: string, companyDataParam?: any) => {
     updateStepStatus(2, true);
@@ -496,7 +426,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
                   onClick={startOnboarding}
                   className="w-full"
                   size="lg"
-                  disabled={steps[0]?.loading}
+                  disabled={steps[0]?.loading || currentStep > 0}
                 >
                   Comenzar configuración automática
                 </Button>

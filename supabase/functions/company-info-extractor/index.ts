@@ -48,25 +48,13 @@ serve(async (req) => {
       );
     }
 
-    // Start background task for company extraction
-    const runtime = (globalThis as any).EdgeRuntime;
-    if (runtime?.waitUntil) {
-      runtime.waitUntil(extractCompanyInBackground(url, user.id, token));
-    } else {
-      // Fallback for environments without EdgeRuntime
-      extractCompanyInBackground(url, user.id, token).catch(error => {
-        console.error('Background task error:', error);
-      });
-    }
-
-    // Return immediate response
+    // Execute synchronously now
+    const result = await extractCompanyData(url, user.id, token);
+    
     return new Response(
-      JSON.stringify({ 
-        status: 'processing',
-        message: 'La extracción de información de la empresa ha comenzado y se procesará en segundo plano.'
-      }),
+      JSON.stringify(result),
       { 
-        status: 202, 
+        status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
@@ -80,8 +68,8 @@ serve(async (req) => {
   }
 });
 
-async function extractCompanyInBackground(url: string, userId: string, token: string) {
-  console.log('🔄 Starting background extraction for URL:', url);
+async function extractCompanyData(url: string, userId: string, token: string) {
+  console.log('🔄 Starting extraction for URL:', url);
   try {
     // Normalize URL to domain for matching
     const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
@@ -89,7 +77,7 @@ async function extractCompanyInBackground(url: string, userId: string, token: st
     // Idempotency: avoid duplicate work if already processed recently
     const { data: existingProcessed, error: processedErr } = await supabase
       .from('companies')
-      .select('id, webhook_processed_at')
+      .select('id, webhook_processed_at, webhook_data')
       .eq('created_by', userId)
       .ilike('website_url', `%${domain}%`)
       .maybeSingle();
@@ -99,8 +87,13 @@ async function extractCompanyInBackground(url: string, userId: string, token: st
     }
 
     if (existingProcessed?.webhook_processed_at) {
-      console.log('🟢 Company already processed recently, skipping new API call for:', url);
-      return;
+      console.log('🟢 Company already processed recently, returning existing data for:', url);
+      return {
+        success: true,
+        companyId: existingProcessed.id,
+        data: existingProcessed.webhook_data?.raw_api_response,
+        message: 'Datos de empresa ya procesados'
+      };
     }
 
     // Call external API to extract company info
@@ -342,9 +335,17 @@ async function extractCompanyInBackground(url: string, userId: string, token: st
       console.log('✅ Created new company:', companyId);
     }
 
-    console.log('🎉 Background extraction completed successfully for:', url);
+    console.log('🎉 Extraction completed successfully for:', url);
+    
+    return {
+      success: true,
+      companyId,
+      data: apiData,
+      message: 'Información de empresa procesada exitosamente'
+    };
 
   } catch (error) {
-    console.error('💥 Error in background extraction:', error);
+    console.error('💥 Error in extraction:', error);
+    throw error;
   }
 }

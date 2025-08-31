@@ -224,7 +224,36 @@ const CompanyLayout = ({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  
+  // Check onboarding completion status
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (!profile?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_onboarding_status')
+          .select('onboarding_completed_at')
+          .eq('user_id', profile.id)
+          .maybeSingle();
+          
+        if (error) {
+          console.error('Error checking onboarding status:', error);
+          return;
+        }
+        
+        setOnboardingComplete(!!data?.onboarding_completed_at);
+      } catch (error) {
+        console.error('Error in checkOnboardingStatus:', error);
+      }
+    };
+    
+    checkOnboardingStatus();
+  }, [profile?.id]);
+  
   const isProfileIncomplete = !profile?.company_name || profile.company_name === 'Mi Negocio' || !profile?.company_size || !profile?.industry_sector || !profile?.full_name;
+  const shouldBlockNavigation = !onboardingComplete && isProfileIncomplete;
 
   const getActiveView = () => {
     const path = location.pathname;
@@ -239,8 +268,8 @@ const CompanyLayout = ({
   };
 
   const setActiveView = (view: string) => {
-    if (isProfileIncomplete && view !== "adn-empresa") {
-      console.log('Profile incomplete, redirecting to adn-empresa');
+    if (shouldBlockNavigation && view !== "adn-empresa") {
+      console.log('Onboarding not complete, access blocked');
       return;
     }
 
@@ -335,7 +364,7 @@ const CompanyLayout = ({
                   {category.items.map(item => {
                     const Icon = item.icon;
                     const isActive = activeView === item.id;
-                    const isDisabled = isProfileIncomplete && item.id !== "adn-empresa";
+                    const isDisabled = shouldBlockNavigation && item.id !== "adn-empresa";
                     return (
                       <SidebarMenuItem key={item.id}>
                         <SidebarMenuButton
@@ -396,7 +425,7 @@ const CompanyLayout = ({
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setActiveView('profile')}><User className="mr-2 h-4 w-4" /><span>Mi Perfil</span></DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={isProfileIncomplete}><Settings className="mr-2 h-4 w-4" /><span>Administración</span></DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={shouldBlockNavigation}><Settings className="mr-2 h-4 w-4" /><span>Administración</span></DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="text-destructive"><LogOut className="mr-2 h-4 w-4" /><span>Cerrar sesión</span></DropdownMenuItem>
               </DropdownMenuContent>

@@ -51,6 +51,7 @@ serve(async (req) => {
     // Call external API to extract company info
     console.log('📡 Calling N8N API for company data extraction...');
     let apiData = null;
+    let apiError = null;
     
     try {
       const apiUrl = `https://buildera.app.n8n.cloud/webhook/company-info-extractor?URL=${encodeURIComponent(url)}`;
@@ -82,7 +83,17 @@ serve(async (req) => {
       if (!apiResponse.ok) {
         const errorText = await apiResponse.text();
         console.error('❌ API Error Response:', errorText);
-        console.error('API response not ok:', apiResponse.status, apiResponse.statusText);
+        apiError = `API returned ${apiResponse.status}: ${apiResponse.statusText}`;
+        
+        // If API fails, return error instead of fallback
+        return new Response(
+          JSON.stringify({ 
+            error: 'No se pudo obtener información de la empresa',
+            details: `Error al conectar con el servicio de análisis de empresas: ${apiError}`,
+            url: url
+          }),
+          { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       } else {
         const apiResult = await apiResponse.json();
         console.log('✅ API Response received:', JSON.stringify(apiResult, null, 2));
@@ -90,13 +101,41 @@ serve(async (req) => {
         if (Array.isArray(apiResult) && apiResult.length > 0 && apiResult[0].output?.data) {
           apiData = apiResult[0].output.data;
           console.log('🎯 Extracted company data:', JSON.stringify(apiData, null, 2));
+          
+          // Validate that we got meaningful data
+          if (!apiData.company_name && !apiData.legal_name && !apiData.business_description) {
+            console.log('⚠️ API returned empty or insufficient company data');
+            return new Response(
+              JSON.stringify({ 
+                error: 'No se encontró información suficiente de la empresa',
+                details: 'El servicio de análisis no pudo extraer datos útiles de la URL proporcionada',
+                url: url
+              }),
+              { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
         } else {
           console.log('⚠️ Unexpected API response structure:', JSON.stringify(apiResult, null, 2));
+          return new Response(
+            JSON.stringify({ 
+              error: 'Respuesta inválida del servicio de análisis',
+              details: 'El servicio devolvió una respuesta en formato inesperado',
+              url: url
+            }),
+            { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
       }
     } catch (error) {
       console.error('💥 Error calling external API:', error);
-      // Continue with fallback data if API fails
+      return new Response(
+        JSON.stringify({ 
+          error: 'Error de conexión con el servicio de análisis',
+          details: error.message,
+          url: url
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Extract basic info from URL as fallback

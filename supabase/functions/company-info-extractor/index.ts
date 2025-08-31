@@ -80,23 +80,23 @@ serve(async (req) => {
     const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
     const fallbackName = domain.split('.')[0];
 
+    // Helper function to extract country from address
+    function extractCountryFromAddress(address: string): string | null {
+      if (!address) return null;
+      const parts = address.split(',');
+      return parts[parts.length - 1]?.trim() || null;
+    }
+
     // Use API data if available, otherwise use fallback
     const companyData = {
       name: apiData?.company_name || apiData?.legal_name || fallbackName,
+      description: apiData?.business_description || `Empresa líder en el sector de ${fallbackName}`,
       website_url: apiData?.website || url,
       industry_sector: apiData?.industries?.[0] || 'General',
       company_size: apiData?.num_employees ? 
         (parseInt(apiData.num_employees.replace(/,/g, '')) > 250 ? 'large' : 
          parseInt(apiData.num_employees.replace(/,/g, '')) > 50 ? 'medium' : 'small') : 'small',
-      description: apiData?.business_description || `Empresa líder en el sector de ${fallbackName}`,
-      tax_id: apiData?.tax_id,
-      phone: apiData?.phone,
-      email: apiData?.email,
-      founded_date: apiData?.founded_date,
-      annual_revenue: apiData?.annual_revenue,
-      revenue_currency: apiData?.revenue_currency,
-      value_proposition: apiData?.value_proposition,
-      address: apiData?.address,
+      country: apiData?.address ? extractCountryFromAddress(apiData.address) : null,
       logo_url: apiData?.logo_url,
       linkedin_url: apiData?.social_links?.linkedin,
       facebook_url: apiData?.social_links?.facebook,
@@ -104,9 +104,23 @@ serve(async (req) => {
       instagram_url: apiData?.social_links?.instagram,
       youtube_url: apiData?.social_links?.youtube,
       tiktok_url: apiData?.social_links?.tiktok,
-      products_services: apiData?.products_services,
-      key_people: apiData?.key_people,
-      corporate_values: apiData?.corporate_values
+      webhook_data: apiData ? {
+        raw_api_response: apiData,
+        processed_at: new Date().toISOString(),
+        tax_id: apiData.tax_id,
+        phone: apiData.phone,
+        email: apiData.email,
+        founded_date: apiData.founded_date,
+        annual_revenue: apiData.annual_revenue,
+        revenue_currency: apiData.revenue_currency,
+        value_proposition: apiData.value_proposition,
+        address: apiData.address,
+        products_services: apiData.products_services,
+        key_people: apiData.key_people,
+        corporate_values: apiData.corporate_values
+      } : null,
+      webhook_processed_at: apiData ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString()
     };
 
     // Check for existing company
@@ -124,10 +138,20 @@ serve(async (req) => {
       console.log('✅ Updating existing company:', companyId);
       
       // Update existing company with new data
-      await supabase
+      const { error: updateError } = await supabase
         .from('companies')
         .update(companyData)
         .eq('id', companyId);
+
+      if (updateError) {
+        console.error('Error updating company:', updateError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to update company record' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('✅ Company updated successfully with API data');
     } else {
       const { data: newCompany, error: companyError } = await supabase
         .from('companies')

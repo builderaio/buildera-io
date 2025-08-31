@@ -69,14 +69,20 @@ serve(async (req) => {
       // Create basic auth header
       const credentials = btoa(`${authUser}:${authPass}`);
       
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
+      
       const apiResponse = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Basic ${credentials}`,
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-        }
+        },
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       console.log('📊 API Response status:', apiResponse.status, apiResponse.statusText);
       

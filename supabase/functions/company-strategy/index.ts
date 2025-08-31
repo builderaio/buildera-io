@@ -106,7 +106,6 @@ serve(async (req) => {
       console.log('🆕 Creating new strategy...');
       const insertData = {
         company_id: companyId,
-        user_id: user.id,
         ...strategy
       };
       console.log('📤 Insert data:', JSON.stringify(insertData, null, 2));

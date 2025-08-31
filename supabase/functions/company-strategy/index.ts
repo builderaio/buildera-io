@@ -49,19 +49,43 @@ serve(async (req) => {
     }
 
     const companyData = input.data;
+    console.log('📊 Company data received:', JSON.stringify(companyData, null, 2));
 
-    // Generate strategy based on company data
+    // Call N8N API for strategy generation
+    const n8nEndpoint = 'https://buildera.app.n8n.cloud/webhook/company-strategy';
+    const requestPayload = {
+      input: {
+        data: companyData
+      }
+    };
+
+    console.log('🚀 Calling N8N API:', n8nEndpoint);
+    console.log('📤 Request payload:', JSON.stringify(requestPayload, null, 2));
+
+    const n8nResponse = await fetch(n8nEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestPayload),
+    });
+
+    if (!n8nResponse.ok) {
+      const errorText = await n8nResponse.text();
+      console.error('❌ N8N API error:', n8nResponse.status, errorText);
+      throw new Error(`N8N API error: ${n8nResponse.status} - ${errorText}`);
+    }
+
+    const strategyResponse = await n8nResponse.json();
+    console.log('✅ N8N API response:', JSON.stringify(strategyResponse, null, 2));
+
+    // Use the strategy data from N8N response
     const strategy = {
-      mision: `Proporcionar soluciones innovadoras y de calidad en el sector de ${companyData.industry_sector || 'servicios'}, creando valor excepcional para nuestros clientes y contribuyendo al crecimiento sostenible de la comunidad.`,
-      vision: `Ser la empresa líder reconocida por la excelencia en ${companyData.industry_sector || 'servicios'}, transformando la industria a través de la innovación y el compromiso con la satisfacción del cliente.`,
-      propuesta_valor: `Ofrecemos soluciones personalizadas y tecnológicamente avanzadas que optimizan los procesos de nuestros clientes, reduciendo costos y maximizando resultados a través de nuestro enfoque centrado en la calidad y la innovación.`,
-      valores: ['Innovación', 'Calidad', 'Transparencia', 'Compromiso', 'Sostenibilidad'],
-      ventajas_competitivas: [
-        'Tecnología de vanguardia',
-        'Equipo altamente especializado',
-        'Enfoque personalizado',
-        'Procesos optimizados'
-      ]
+      mision: strategyResponse.mision || 'Misión no definida',
+      vision: strategyResponse.vision || 'Visión no definida', 
+      propuesta_valor: strategyResponse.propuesta_valor || 'Propuesta de valor no definida',
+      valores: strategyResponse.valores || ['Innovación', 'Calidad', 'Transparencia'],
+      ventajas_competitivas: strategyResponse.ventajas_competitivas || ['Tecnología avanzada', 'Equipo especializado']
     };
 
     console.log('📝 Strategy data to store:', JSON.stringify(strategy, null, 2));

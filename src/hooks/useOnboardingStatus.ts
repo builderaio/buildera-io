@@ -15,7 +15,7 @@ export const useOnboardingStatus = (userId?: string) => {
       try {
         const { data, error } = await supabase
           .from('user_onboarding_status')
-          .select('dna_empresarial_completed')
+          .select('dna_empresarial_completed, onboarding_completed_at')
           .eq('user_id', userId)
           .maybeSingle();
 
@@ -23,7 +23,9 @@ export const useOnboardingStatus = (userId?: string) => {
           console.error('Error checking onboarding status:', error);
           setIsOnboardingComplete(false);
         } else {
-          setIsOnboardingComplete(data?.dna_empresarial_completed || false);
+          // Usuario completa onboarding si tiene onboarding_completed_at O si tiene dna_empresarial_completed
+          const hasCompletedOnboarding = data?.onboarding_completed_at || data?.dna_empresarial_completed;
+          setIsOnboardingComplete(!!hasCompletedOnboarding);
         }
       } catch (error) {
         console.error('Error in checkOnboardingStatus:', error);

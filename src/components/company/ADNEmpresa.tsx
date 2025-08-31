@@ -150,8 +150,12 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-foreground">ADN Empresarial</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Aquí está toda la información de tu empresa recopilada durante el onboarding inicial.
+            Información de tu empresa recopilada durante el proceso de configuración inicial.
           </p>
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span>Solo lectura - Para editar configuraciones, ve a Administración</span>
+          </div>
           {lastUpdated && (
             <p className="text-sm text-muted-foreground">
               Última actualización: {lastUpdated}
@@ -448,18 +452,27 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
           </Card>
         )}
 
-        {/* Acciones */}
+        {/* Navegación a otras secciones */}
         <Card className="shadow-lg">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
               <div className="text-center sm:text-left">
-                <h3 className="font-semibold text-lg mb-2">¿Necesitas actualizar información?</h3>
+                <h3 className="font-semibold text-lg mb-2">¿Necesitas hacer cambios?</h3>
                 <p className="text-muted-foreground">
-                  Puedes ejecutar el onboarding nuevamente para actualizar cualquier información.
+                  Para editar configuraciones activas del sistema, ve a Administración. 
+                  Para actualizar la información empresarial, ejecuta el onboarding nuevamente.
                 </p>
               </div>
               
               <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.href = '/company-dashboard?view=configuracion'}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Ir a Administración
+                </Button>
+                
                 <Button variant="outline" onClick={loadOnboardingData}>
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Recargar Datos
@@ -467,7 +480,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                 
                 <Button onClick={runOnboardingAgain} className="bg-primary hover:bg-primary/90">
                   <Edit className="w-4 h-4 mr-2" />
-                  Ejecutar Onboarding
+                  Actualizar Información
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>

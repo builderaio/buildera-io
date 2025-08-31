@@ -17,8 +17,12 @@ const Configuracion = ({ profile, resetTutorial }: ConfiguracionProps) => {
       <header className="mb-8">
         <h1 className="text-4xl font-bold text-foreground">Administración</h1>
         <p className="text-lg text-muted-foreground">
-          Gestione el acceso, los roles y la suscripción de su empresa.
+          Gestione usuarios, configuraciones del sistema, autenticación y facturación de su empresa.
         </p>
+        <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+          <span>Configuraciones activas - Para ver información del onboarding, ve a ADN Empresarial</span>
+        </div>
       </header>
 
       <Card>

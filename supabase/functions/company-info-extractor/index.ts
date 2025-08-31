@@ -243,8 +243,7 @@ async function extractCompanyData(url: string, userId: string, token: string) {
       return;
     }
 
-    // Extract basic info from URL as fallback
-    const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    // Extract basic info from URL as fallback (reuse computed domain)
     const fallbackName = domain.split('.')[0];
 
     // Helper function to extract country from address

@@ -1,14 +1,20 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 
 const SocialCallback = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { sendWelcomeEmail } = useWelcomeEmail();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
+    if (isProcessing) return; // Prevenir múltiples ejecuciones
+    
     const handleSocialAuthCallback = async () => {
+      setIsProcessing(true);
       try {
         console.log("🔄 Procesando callback de autenticación social...");
         console.log("📍 URL actual:", window.location.href);
@@ -81,6 +87,36 @@ const SocialCallback = () => {
           // NO actualizar aquí - el usuario debe ir a complete-profile para definirlo
         }
 
+        // Verificar si es un usuario nuevo (creado recientemente) para enviar email de bienvenida
+        const userCreatedAt = new Date(session.user.created_at);
+        const now = new Date();
+        const timeDifference = now.getTime() - userCreatedAt.getTime();
+        const isNewUser = timeDifference < 60000; // Usuario creado hace menos de 1 minuto
+
+        console.log('🕒 Usuario creado:', userCreatedAt.toISOString());
+        console.log('🕒 Ahora:', now.toISOString());
+        console.log('🔍 Es usuario nuevo:', isNewUser);
+
+        // Enviar email de bienvenida para usuarios nuevos
+        if (isNewUser && session.user.email && profile.full_name) {
+          try {
+            console.log('📧 Enviando email de bienvenida a usuario social nuevo...');
+            const emailResult = await sendWelcomeEmail(
+              session.user.email,
+              profile.full_name,
+              userType === 'company' ? 'company' : userType === 'developer' ? 'developer' : 'expert'
+            );
+            
+            if (emailResult.success) {
+              console.log('✅ Email de bienvenida enviado exitosamente');
+            } else {
+              console.error('❌ Error enviando email de bienvenida:', emailResult.error);
+            }
+          } catch (error) {
+            console.error('❌ Error enviando email de bienvenida:', error);
+          }
+        }
+
         toast({
           title: "¡Autenticación exitosa!",
           description: "Verificando tu estado de registro...",
@@ -123,6 +159,7 @@ const SocialCallback = () => {
         }
 
       } catch (error: any) {
+        setIsProcessing(false);
         console.error("❌ Error en callback social:", error);
         
         // Logs adicionales para debugging
@@ -138,12 +175,14 @@ const SocialCallback = () => {
           description: "No se pudo completar la autenticación. Por favor, intenta de nuevo.",
           variant: "destructive",
         });
-        navigate('/auth');
+        window.location.href = '/auth?mode=signin';
+      } finally {
+        setIsProcessing(false);
       }
     };
 
     handleSocialAuthCallback();
-  }, [navigate, toast]);
+  }, [navigate, toast, sendWelcomeEmail, isProcessing]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">

@@ -329,6 +329,8 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
 
   const completeOnboarding = async () => {
     try {
+      console.log('🎯 Completando onboarding para usuario:', user.id);
+      
       // Mark onboarding as complete in database
       const { error } = await supabase
         .from('user_onboarding_status')
@@ -352,15 +354,25 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         return;
       }
 
+      console.log('✅ Onboarding marcado como completado en BD');
+
       toast({
         title: "🎉 ¡Onboarding completado!",
-        description: "Tu cuenta está configurada. Redirigiendo al dashboard..."
+        description: "Tu cuenta está configurada. Redirigiendo al dashboard...",
+        duration: 3000
       });
 
-      // Redirect to company dashboard
+      // Redirect to company dashboard immediately and add fallback
+      console.log('🚀 Iniciando redirección al dashboard...');
+      
+      // Immediate redirect
+      navigate('/company-dashboard', { replace: true });
+      
+      // Fallback redirect in case the first one fails
       setTimeout(() => {
-        navigate('/company-dashboard');
-      }, 2000);
+        console.log('🔄 Redirección de respaldo ejecutándose...');
+        window.location.href = '/company-dashboard';
+      }, 1000);
 
     } catch (error) {
       console.error('Error completing onboarding:', error);
@@ -369,6 +381,10 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         description: "Hubo un problema al finalizar el onboarding",
         variant: "destructive"
       });
+      
+      // Even if there's an error, try to redirect
+      console.log('🚀 Redirección de emergencia debido a error...');
+      navigate('/company-dashboard', { replace: true });
     }
   };
 
@@ -536,11 +552,17 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
                   <p className="text-green-600 mb-4">
                     Tu empresa y asistente ERA están listos. Serás redirigido al dashboard automáticamente.
                   </p>
+                  <Button
+                    onClick={() => navigate('/company-dashboard')}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Ir al Dashboard
+                  </Button>
                 </CardContent>
               </Card>
             )}
 
-            {currentStep > 0 && (
+            {currentStep > 0 && !allStepsCompleted && (
               <div className="text-center">
                 <Button
                   onClick={retryCurrentStep}

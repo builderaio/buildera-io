@@ -8,6 +8,7 @@ import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanyAgent } from "@/hooks/useCompanyAgent";
+import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 
 interface Message {
   id: string;
@@ -30,6 +31,9 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  
+  // Hook para verificar si el onboarding está completo
+  const { isOnboardingComplete, loading: onboardingLoading } = useOnboardingStatus(user?.user_id);
   
   // Hook para manejar el agente empresarial
   const { updateCompanyAgent } = useCompanyAgent({ user, enabled: !!user });
@@ -158,9 +162,9 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
     }
   };
 
-  // Mensaje de bienvenida inicial y creación de agente
+  // Mensaje de bienvenida inicial y creación de agente (solo después del onboarding)
   useEffect(() => {
-    if (messages.length === 0 && user && user.user_id) {
+    if (messages.length === 0 && user && user.user_id && isOnboardingComplete) {
       // Crear agente empresarial si no existe
       const initializeCompanyAgent = async () => {
         try {
@@ -173,14 +177,39 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
             .maybeSingle();
 
           if (userCompany) {
-            // Verificar si ya existe un agente
-            const { data: existingAgent } = await supabase
-              .from('company_agents')
-              .select('agent_name')
-              .eq('user_id', user.user_id)
-              .maybeSingle();
+            // Obtener datos de la empresa para el status
+            const [
+              { data: companyAgent },
+              { data: companyStrategy },
+              { data: companyObjectives },
+              { data: linkedinConnections },
+              { data: facebookConnections }
+            ] = await Promise.all([
+              supabase
+                .from('company_agents')
+                .select('agent_name')
+                .eq('user_id', user.user_id)
+                .maybeSingle(),
+              supabase
+                .from('company_strategy')
+                .select('*')
+                .eq('company_id', userCompany.company_id)
+                .maybeSingle(),
+              supabase
+                .from('company_objectives')
+                .select('*')
+                .eq('company_id', userCompany.company_id),
+              supabase
+                .from('linkedin_connections')
+                .select('id')
+                .eq('user_id', user.user_id),
+              supabase
+                .from('facebook_instagram_connections')
+                .select('id')
+                .eq('user_id', user.user_id)
+            ]);
 
-            if (!existingAgent) {
+            if (!companyAgent) {
               // Crear agente en background
               supabase.functions.invoke('create-company-agent', {
                 body: {
@@ -191,18 +220,26 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
             }
 
             const companyName = userCompany.companies?.name || 'tu empresa';
+            const hasStrategy = !!companyStrategy;
+            const objectivesCount = companyObjectives?.length || 0;
+            const hasConnections = (linkedinConnections?.length || 0) > 0 || (facebookConnections?.length || 0) > 0;
+
+            // Crear mensaje personalizado con status y sugerencias
+            let statusInfo = `📊 **Status de ${companyName}:**\n`;
+            statusInfo += hasStrategy ? '✅ Estrategia empresarial definida\n' : '⚠️ Estrategia empresarial pendiente\n';
+            statusInfo += objectivesCount > 0 ? `✅ ${objectivesCount} objetivos establecidos\n` : '⚠️ No hay objetivos definidos\n';
+            statusInfo += hasConnections ? '✅ Redes sociales conectadas\n' : '⚠️ Redes sociales desconectadas\n';
+            
+            statusInfo += '\n🎯 **Acciones sugeridas:**\n';
+            if (!hasStrategy) statusInfo += '• Completar la estrategia empresarial en ADN Empresa\n';
+            if (objectivesCount === 0) statusInfo += '• Establecer objetivos de crecimiento\n';
+            if (!hasConnections) statusInfo += '• Conectar tus redes sociales en Marketing Hub\n';
+            statusInfo += '• Explorar el Marketplace para encontrar expertos\n';
+            statusInfo += '• Revisar insights en Inteligencia Competitiva';
+
             const welcomeMessage: Message = {
               id: 'welcome',
-              content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy tu copiloto empresarial personalizado para ${companyName}. Tengo acceso a toda la información de tu negocio: objetivos estratégicos, marca, datos de redes sociales y más. Estoy aquí para asesorarte y ayudarte a cumplir tus metas empresariales. ¿En qué puedo ayudarte hoy?`,
-              sender: 'support',
-              timestamp: new Date(),
-            };
-            setMessages([welcomeMessage]);
-          } else {
-            // Usuario sin empresa
-            const welcomeMessage: Message = {
-              id: 'welcome',
-              content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy Era, tu asistente de Buildera. Te ayudo a sacar el máximo provecho de la plataforma. Para obtener un asesoramiento más personalizado, te recomiendo completar la configuración de tu empresa. ¿En qué puedo ayudarte?`,
+              content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy tu copiloto empresarial personalizado para ${companyName}.\n\n${statusInfo}\n\n¿En qué te puedo ayudar hoy?`,
               sender: 'support',
               timestamp: new Date(),
             };
@@ -222,9 +259,10 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
 
       initializeCompanyAgent();
     }
-  }, [user]);
+  }, [user, isOnboardingComplete]);
 
-  if (!user) return null;
+  // No mostrar el widget si el usuario no existe, está cargando el onboarding, o no ha completado el onboarding
+  if (!user || onboardingLoading || !isOnboardingComplete) return null;
 
   return (
     <>

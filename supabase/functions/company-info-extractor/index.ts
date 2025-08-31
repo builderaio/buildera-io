@@ -149,21 +149,50 @@ async function extractCompanyData(url: string, userId: string, token: string) {
       const rawBody = await apiResponse.text().catch(() => '');
       const bodySample = rawBody.slice(0, 2000);
       console.log('🧪 N8N raw body sample (truncated 2KB):', bodySample);
-      try {
-        apiResult = JSON.parse(rawBody);
-      } catch {
-        // Try to extract a JSON object/array from noisy text
-        const arrStart = rawBody.indexOf('[');
-        const arrEnd = rawBody.lastIndexOf(']');
-        const objStart = rawBody.indexOf('{');
-        const objEnd = rawBody.lastIndexOf('}');
-        const candidate = arrStart !== -1 && arrEnd > arrStart
-          ? rawBody.slice(arrStart, arrEnd + 1)
-          : (objStart !== -1 && objEnd > objStart ? rawBody.slice(objStart, objEnd + 1) : null);
-        if (candidate) {
-          try { apiResult = JSON.parse(candidate); } catch {}
+
+      const safeParse = (txt: string) => {
+        try { return JSON.parse(txt); } catch { return null; }
+      };
+      const extractBalanced = (text: string, startIndex: number, openChar: string, closeChar: string) => {
+        let depth = 0;
+        let start = -1;
+        for (let i = startIndex; i < text.length; i++) {
+          const ch = text[i];
+          if (ch === openChar) { if (start === -1) start = i; depth++; }
+          else if (ch === closeChar) { depth--; if (depth === 0 && start !== -1) return text.slice(start, i + 1); }
+        }
+        return null;
+      };
+
+      // 1) Try full parse
+      apiResult = safeParse(rawBody);
+
+      // 2) Try extract array []
+      if (!apiResult) {
+        const firstArr = rawBody.indexOf('[');
+        if (firstArr !== -1) {
+          const arrStr = extractBalanced(rawBody, firstArr, '[', ']');
+          apiResult = arrStr ? safeParse(arrStr) : null;
+          if (apiResult) console.log('🧩 Parsed via balanced array extraction');
         }
       }
+
+      // 3) Try extract object after "data": {...}
+      if (!apiResult) {
+        const dataIdx = rawBody.indexOf('"data"');
+        if (dataIdx !== -1) {
+          const braceIdx = rawBody.indexOf('{', dataIdx);
+          if (braceIdx !== -1) {
+            const objStr = extractBalanced(rawBody, braceIdx, '{', '}');
+            const obj = objStr ? safeParse(objStr) : null;
+            if (obj) {
+              apiResult = [{ data: obj }];
+              console.log('🧩 Parsed via data-object extraction');
+            }
+          }
+        }
+      }
+
       console.log('🧩 Parsed shape:', Array.isArray(apiResult) ? `array(len=${apiResult.length})` : typeof apiResult, Array.isArray(apiResult) ? undefined : (apiResult && typeof apiResult === 'object' ? Object.keys(apiResult).slice(0,10) : undefined));
 
       // Normalize different possible response shapes from N8N

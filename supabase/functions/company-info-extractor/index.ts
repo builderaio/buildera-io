@@ -48,11 +48,68 @@ serve(async (req) => {
       );
     }
 
-    // Extract domain from URL for company name
-    const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
-    const companyName = domain.split('.')[0];
+    // Call external API to extract company info
+    console.log('📡 Calling N8N API for company data extraction...');
+    let apiData = null;
+    
+    try {
+      const apiResponse = await fetch('https://buildera.app.n8n.cloud/webhook/company-info-extractor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: url })
+      });
 
-    // Create basic company record
+      if (!apiResponse.ok) {
+        console.error('API response not ok:', apiResponse.status, apiResponse.statusText);
+      } else {
+        const apiResult = await apiResponse.json();
+        console.log('📊 API Response received:', JSON.stringify(apiResult, null, 2));
+        
+        if (Array.isArray(apiResult) && apiResult.length > 0 && apiResult[0].output?.data) {
+          apiData = apiResult[0].output.data;
+        }
+      }
+    } catch (error) {
+      console.error('Error calling external API:', error);
+      // Continue with fallback data if API fails
+    }
+
+    // Extract basic info from URL as fallback
+    const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    const fallbackName = domain.split('.')[0];
+
+    // Use API data if available, otherwise use fallback
+    const companyData = {
+      name: apiData?.company_name || apiData?.legal_name || fallbackName,
+      website_url: apiData?.website || url,
+      industry_sector: apiData?.industries?.[0] || 'General',
+      company_size: apiData?.num_employees ? 
+        (parseInt(apiData.num_employees.replace(/,/g, '')) > 250 ? 'large' : 
+         parseInt(apiData.num_employees.replace(/,/g, '')) > 50 ? 'medium' : 'small') : 'small',
+      description: apiData?.business_description || `Empresa líder en el sector de ${fallbackName}`,
+      tax_id: apiData?.tax_id,
+      phone: apiData?.phone,
+      email: apiData?.email,
+      founded_date: apiData?.founded_date,
+      annual_revenue: apiData?.annual_revenue,
+      revenue_currency: apiData?.revenue_currency,
+      value_proposition: apiData?.value_proposition,
+      address: apiData?.address,
+      logo_url: apiData?.logo_url,
+      linkedin_url: apiData?.social_links?.linkedin,
+      facebook_url: apiData?.social_links?.facebook,
+      twitter_url: apiData?.social_links?.twitter,
+      instagram_url: apiData?.social_links?.instagram,
+      youtube_url: apiData?.social_links?.youtube,
+      tiktok_url: apiData?.social_links?.tiktok,
+      products_services: apiData?.products_services,
+      key_people: apiData?.key_people,
+      corporate_values: apiData?.corporate_values
+    };
+
+    // Check for existing company
     const { data: existingCompany } = await supabase
       .from('companies')
       .select('id')
@@ -64,16 +121,19 @@ serve(async (req) => {
     
     if (existingCompany) {
       companyId = existingCompany.id;
-      console.log('✅ Using existing company:', companyId);
+      console.log('✅ Updating existing company:', companyId);
+      
+      // Update existing company with new data
+      await supabase
+        .from('companies')
+        .update(companyData)
+        .eq('id', companyId);
     } else {
       const { data: newCompany, error: companyError } = await supabase
         .from('companies')
         .insert({
-          name: companyName,
-          website_url: url,
-          created_by: user.id,
-          industry_sector: 'General',
-          company_size: 'small'
+          ...companyData,
+          created_by: user.id
         })
         .select('id')
         .single();
@@ -107,18 +167,10 @@ serve(async (req) => {
       console.log('✅ Created new company:', companyId);
     }
 
-    const extractedData = {
-      name: companyName,
-      website_url: url,
-      industry_sector: 'General',
-      company_size: 'small',
-      description: `Empresa líder en el sector de ${companyName}`
-    };
-
     return new Response(
       JSON.stringify({ 
         companyId,
-        data: extractedData
+        data: companyData
       }),
       { 
         status: 200, 

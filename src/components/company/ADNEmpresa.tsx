@@ -461,12 +461,77 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               )}
               
               {brandingData.brand_voice && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-orange-800 dark:text-orange-200">Voz de Marca</h3>
-                  <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg">
-                    <pre className="text-sm whitespace-pre-wrap text-muted-foreground">
-                      {JSON.stringify(brandingData.brand_voice, null, 2)}
-                    </pre>
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-orange-800 dark:text-orange-200 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    Voz de Marca
+                  </h3>
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/10 p-6 rounded-xl border border-orange-200 dark:border-orange-800/30">
+                    {(() => {
+                      try {
+                        const brandVoice = typeof brandingData.brand_voice === 'string' 
+                          ? JSON.parse(brandingData.brand_voice) 
+                          : brandingData.brand_voice;
+                        
+                        return (
+                          <div className="space-y-6">
+                            {/* Descripción */}
+                            {brandVoice.descripcion && (
+                              <div className="space-y-2">
+                                <h4 className="font-medium text-orange-900 dark:text-orange-100 text-sm uppercase tracking-wide">
+                                  Descripción
+                                </h4>
+                                <p className="text-base leading-relaxed text-foreground bg-background/60 p-4 rounded-lg border border-orange-200/50 dark:border-orange-700/30">
+                                  {brandVoice.descripcion}
+                                </p>
+                              </div>
+                            )}
+                            
+                            {/* Personalidad */}
+                            {brandVoice.personalidad && (
+                              <div className="space-y-2">
+                                <h4 className="font-medium text-orange-900 dark:text-orange-100 text-sm uppercase tracking-wide">
+                                  Personalidad
+                                </h4>
+                                <div className="inline-flex items-center px-4 py-2 bg-orange-200 dark:bg-orange-800 text-orange-900 dark:text-orange-100 rounded-full font-medium">
+                                  {brandVoice.personalidad}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Palabras Clave */}
+                            {brandVoice.palabras_clave && Array.isArray(brandVoice.palabras_clave) && brandVoice.palabras_clave.length > 0 && (
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-orange-900 dark:text-orange-100 text-sm uppercase tracking-wide">
+                                  Palabras Clave
+                                </h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {brandVoice.palabras_clave.map((palabra, index) => (
+                                    <Badge 
+                                      key={index} 
+                                      variant="outline" 
+                                      className="bg-white/80 dark:bg-background/80 border-orange-300 dark:border-orange-600 text-orange-800 dark:text-orange-200 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors duration-200"
+                                    >
+                                      #{palabra}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      } catch (error) {
+                        console.error('Error parsing brand voice:', error);
+                        return (
+                          <div className="text-sm text-muted-foreground p-4 bg-muted/50 rounded-lg">
+                            <p className="font-medium mb-2">Error al mostrar la voz de marca</p>
+                            <pre className="whitespace-pre-wrap text-xs">
+                              {typeof brandingData.brand_voice === 'string' ? brandingData.brand_voice : JSON.stringify(brandingData.brand_voice, null, 2)}
+                            </pre>
+                          </div>
+                        );
+                      }
+                    })()}
                   </div>
                 </div>
               )}

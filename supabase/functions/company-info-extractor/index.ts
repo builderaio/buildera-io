@@ -195,24 +195,46 @@ async function extractCompanyData(url: string, userId: string, token: string) {
 
       console.log('🧩 Parsed shape:', Array.isArray(apiResult) ? `array(len=${apiResult.length})` : typeof apiResult, Array.isArray(apiResult) ? undefined : (apiResult && typeof apiResult === 'object' ? Object.keys(apiResult).slice(0,10) : undefined));
 
-      // Normalize different possible response shapes from N8N
+      // Normalize the specific N8N response structure: [{ url, fetch_date, data: {...} }]
       let extracted: any = null;
       if (Array.isArray(apiResult) && apiResult.length > 0) {
-        const item = (apiResult as any[]).find((i: any) => i?.data || i?.output?.data || i?.output) ?? apiResult[0];
-        extracted = item?.data ?? item?.output?.data ?? item?.output ?? null;
+        const firstItem = apiResult[0];
+        console.log('🔎 First array item keys:', firstItem && typeof firstItem === 'object' ? Object.keys(firstItem) : typeof firstItem);
+        
+        // N8N specific structure: item has { url, fetch_date, data }
+        if (firstItem && typeof firstItem === 'object' && firstItem.data) {
+          extracted = firstItem.data;
+          console.log('✅ Extracted company data from array[0].data');
+        }
+        // Fallback: try other common structures
+        else if (firstItem?.output?.data) {
+          extracted = firstItem.output.data;
+          console.log('✅ Extracted from array[0].output.data');
+        }
+        else if (firstItem?.output) {
+          extracted = firstItem.output;
+          console.log('✅ Extracted from array[0].output');
+        }
+        else {
+          extracted = firstItem;
+          console.log('✅ Using array[0] directly');
+        }
       } else if (apiResult && typeof apiResult === 'object') {
-        // Common shapes: { data: {...} } or already the payload itself
+        // Single object response
         const asAny = apiResult as any;
         extracted = asAny.data ?? (asAny.output?.data ?? asAny.output) ?? apiResult;
+        console.log('✅ Extracted from single object response');
       }
+
       if (!extracted || (typeof extracted === 'string' && extracted.trim().length === 0)) {
         console.warn('⚠️ N8N response had no structured data, falling back to URL-derived basics.');
         extracted = null;
       }
+      
       apiData = extracted || null;
+      console.log('🎯 Final extracted data keys:', apiData && typeof apiData === 'object' ? Object.keys(apiData) : typeof apiData);
 
-      // Validate minimal content only if we actually got structured data;
-      // otherwise downstream will use fallbacks derived from the domain.
+      // Validate minimal content only if we actually got structured data
       if (apiData && !apiData.company_name && !apiData.legal_name && !apiData.business_description) {
         console.warn('⚠️ N8N returned insufficient fields, will use fallbacks and partial enrichment.');
         // keep apiData but allow fallbacks below

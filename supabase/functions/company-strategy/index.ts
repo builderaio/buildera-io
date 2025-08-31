@@ -51,6 +51,10 @@ async function callN8NStrategy(companyData: any) {
   const authUser = Deno.env.get('N8N_AUTH_USER');
   const authPass = Deno.env.get('N8N_AUTH_PASS');
   
+  console.log('🔑 Checking N8N credentials...');
+  console.log('Auth User exists:', !!authUser);
+  console.log('Auth Pass exists:', !!authPass);
+  
   if (!authUser || !authPass) {
     console.error('❌ N8N authentication credentials not found');
     throw new Error('N8N authentication credentials not configured');
@@ -58,9 +62,7 @@ async function callN8NStrategy(companyData: any) {
 
   const credentials = btoa(`${authUser}:${authPass}`);
   const requestPayload = {
-    input: {
-      data: companyData
-    }
+    data: companyData
   };
 
   console.log('🚀 Calling N8N API:', n8nEndpoint);
@@ -86,19 +88,21 @@ async function callN8NStrategy(companyData: any) {
 
     if (!apiResponse.ok) {
       const errorText = await apiResponse.text().catch(() => '');
+      console.error('❌ N8N API error response:', errorText);
       throw new Error(`N8N API error: ${apiResponse.status} - ${errorText}`);
     }
 
     const rawBody = await apiResponse.text();
-    console.log('🧪 N8N raw response sample:', rawBody.slice(0, 500));
+    console.log('🧪 N8N raw response:', rawBody);
 
     // Parse JSON response
     let strategyResponse;
     try {
       strategyResponse = JSON.parse(rawBody);
-      console.log('✅ N8N API response parsed successfully');
+      console.log('✅ N8N API response parsed successfully:', strategyResponse);
     } catch (parseError) {
-      console.error('❌ Failed to parse N8N response as JSON');
+      console.error('❌ Failed to parse N8N response as JSON:', parseError);
+      console.error('Raw response was:', rawBody);
       throw new Error('Invalid JSON response from N8N API');
     }
 
@@ -108,12 +112,19 @@ async function callN8NStrategy(companyData: any) {
     clearTimeout(timeoutId);
     
     if (error.name === 'AbortError') {
+      console.error('❌ N8N API request timed out');
       throw new Error('N8N API request timed out');
     }
     
     console.error('❌ Error calling N8N API:', error);
+    console.error('Error stack:', error.stack);
     
-    // Return fallback strategy
+    // Return fallback strategy only if it's a network error, not authentication
+    if (error.message.includes('credentials')) {
+      throw error;
+    }
+    
+    console.log('🔄 Using fallback strategy due to API error');
     return {
       mision: `Proporcionar soluciones innovadoras y de calidad en el sector de ${companyData.industries?.[0] || 'servicios'}, creando valor excepcional para nuestros clientes.`,
       vision: `Ser la empresa líder reconocida por la excelencia en ${companyData.industries?.[0] || 'servicios'}, transformando la industria a través de la innovación.`,

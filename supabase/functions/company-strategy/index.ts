@@ -299,11 +299,23 @@ serve(async (req) => {
     // 4. Call N8N API
     const strategyResponse = await callN8NStrategy(companyData);
     
-    // 4. Store in database
+    // 5. Extract strategy data from N8N response structure: [{"": {...}}]
+    let strategyData;
+    if (Array.isArray(strategyResponse) && strategyResponse.length > 0) {
+      const firstItem = strategyResponse[0];
+      // Handle structure with empty string key
+      strategyData = firstItem[""] || firstItem;
+    } else {
+      strategyData = strategyResponse;
+    }
+    
+    console.log('📋 Extracted strategy data:', strategyData);
+    
+    // 6. Store in database
     const strategy = {
-      mision: strategyResponse.mision || 'Misión no definida',
-      vision: strategyResponse.vision || 'Visión no definida',
-      propuesta_valor: strategyResponse.propuesta_valor || 'Propuesta de valor no definida'
+      mision: strategyData?.mision || 'Misión no definida',
+      vision: strategyData?.vision || 'Visión no definida',
+      propuesta_valor: strategyData?.propuesta_valor || 'Propuesta de valor no definida'
     };
     
     const strategyId = await storeStrategy(companyId, strategy);

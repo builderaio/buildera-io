@@ -238,18 +238,18 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
 
             console.log("🔍 Estado de onboarding:", onboardingStatus);
 
-            // Si no existe registro de onboarding o no está completado, ir al nuevo flujo
+            // Si no existe registro de onboarding o no está completado, ir al flujo de 5 pasos
             if (!onboardingStatus || !onboardingStatus.onboarding_completed_at) {
-              console.log("🎯 Primer login detectado, redirigiendo al nuevo onboarding");
-              navigate('/company-dashboard?view=onboarding');
+              console.log("🎯 Primer login detectado, redirigiendo al onboarding de 5 pasos");
+              navigate('/company-dashboard?view=onboarding&first_login=true');
             } else {
               console.log("✅ Usuario ya completó onboarding, ir al dashboard");
               navigate('/company-dashboard');
             }
           } catch (error) {
             console.error("Error verificando onboarding:", error);
-            // Si hay error verificando onboarding, ir al nuevo flujo por seguridad
-            navigate('/company-dashboard?view=onboarding');
+            // Si hay error verificando onboarding, ir al flujo de 5 pasos por seguridad
+            navigate('/company-dashboard?view=onboarding&first_login=true');
           }
         }
       }

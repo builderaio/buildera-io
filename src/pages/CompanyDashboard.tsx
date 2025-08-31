@@ -21,6 +21,7 @@ import Configuracion from "@/components/company/Configuracion";
 import UserProfile from "./UserProfile";
 import CompanyAgents from "./CompanyAgents";
 import OnboardingRedirect from "@/components/OnboardingRedirect";
+import OnboardingOrchestrator from "@/components/OnboardingOrchestrator";
 import { User } from "@supabase/supabase-js";
 
 const CompanyDashboard = () => {
@@ -46,11 +47,16 @@ const CompanyDashboard = () => {
 
       setUser(session.user);
 
-      // Check for view parameter in URL - si viene onboarding o adn-empresa forzar mostrar
+      // Check for view parameter in URL
       const viewParam = searchParams.get('view');
       
-      // Si viene con parámetro view, forzar esa vista sin verificaciones adicionales
-      if (viewParam === 'adn-empresa') {
+      // Si viene con parámetro onboarding, mostrar el flujo de 5 pasos
+      if (viewParam === 'onboarding') {
+        setActiveView('onboarding');
+        setShouldShowOnboarding(false);
+        setLoading(false);
+        return;
+      } else if (viewParam === 'adn-empresa') {
         setActiveView('adn-empresa');
         setShouldShowOnboarding(false);
         // Cargar el perfil para asegurar que ADNEmpresa pueda obtener datos de la BD
@@ -233,6 +239,8 @@ const CompanyDashboard = () => {
   const renderContent = () => {
     console.log('Rendering content for activeView:', activeView);
     switch (activeView) {
+      case "onboarding":
+        return <OnboardingOrchestrator user={user!} />;
       case "mando-central":
       case "dashboard":
         return <MandoCentral profile={profile} />;

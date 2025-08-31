@@ -53,12 +53,12 @@ serve(async (req) => {
     let apiData = null;
     
     try {
-      const apiResponse = await fetch('https://buildera.app.n8n.cloud/webhook/company-info-extractor', {
-        method: 'POST',
+      const apiUrl = `https://buildera.app.n8n.cloud/webhook/company-info-extractor?url=${encodeURIComponent(url)}`;
+      const apiResponse = await fetch(apiUrl, {
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: url })
+          'Accept': 'application/json',
+        }
       });
 
       if (!apiResponse.ok) {
@@ -171,23 +171,6 @@ serve(async (req) => {
       }
 
       companyId = newCompany.id;
-
-      // Create company membership
-      await supabase
-        .from('company_members')
-        .insert({
-          user_id: user.id,
-          company_id: companyId,
-          role: 'owner',
-          is_primary: true
-        });
-
-      // Update user profile with primary company
-      await supabase
-        .from('profiles')
-        .update({ primary_company_id: companyId })
-        .eq('user_id', user.id);
-
       console.log('✅ Created new company:', companyId);
     }
 

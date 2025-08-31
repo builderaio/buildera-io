@@ -12,213 +12,209 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
+/**
+ * Validate input data
+ */
+function validateInput(companyId: string, input: any) {
+  if (!companyId || !input?.data) {
+    throw new Error('CompanyId and input data are required');
+  }
+  return input.data;
+}
+
+/**
+ * Authenticate user from request
+ */
+async function authenticateUser(req: Request) {
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader) {
+    throw new Error('Authorization header required');
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+  
+  if (userError || !user) {
+    throw new Error('Invalid user token');
+  }
+  
+  return user;
+}
+
+/**
+ * Call N8N API for strategy generation
+ */
+async function callN8NStrategy(companyData: any) {
+  const n8nEndpoint = 'https://buildera.app.n8n.cloud/webhook/company-strategy';
+  
+  // Get N8N authentication credentials
+  const authUser = Deno.env.get('N8N_AUTH_USER');
+  const authPass = Deno.env.get('N8N_AUTH_PASS');
+  
+  if (!authUser || !authPass) {
+    console.error('❌ N8N authentication credentials not found');
+    throw new Error('N8N authentication credentials not configured');
+  }
+
+  const credentials = btoa(`${authUser}:${authPass}`);
+  const requestPayload = {
+    input: {
+      data: companyData
+    }
+  };
+
+  console.log('🚀 Calling N8N API:', n8nEndpoint);
+  console.log('📤 Request payload:', JSON.stringify(requestPayload, null, 2));
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const apiResponse = await fetch(n8nEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${credentials}`,
+      },
+      body: JSON.stringify(requestPayload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    console.log(`📊 N8N API Response status: ${apiResponse.status} ${apiResponse.statusText}`);
+
+    if (!apiResponse.ok) {
+      const errorText = await apiResponse.text().catch(() => '');
+      throw new Error(`N8N API error: ${apiResponse.status} - ${errorText}`);
+    }
+
+    const rawBody = await apiResponse.text();
+    console.log('🧪 N8N raw response sample:', rawBody.slice(0, 500));
+
+    // Parse JSON response
+    let strategyResponse;
+    try {
+      strategyResponse = JSON.parse(rawBody);
+      console.log('✅ N8N API response parsed successfully');
+    } catch (parseError) {
+      console.error('❌ Failed to parse N8N response as JSON');
+      throw new Error('Invalid JSON response from N8N API');
+    }
+
+    return strategyResponse;
+
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    
+    if (error.name === 'AbortError') {
+      throw new Error('N8N API request timed out');
+    }
+    
+    console.error('❌ Error calling N8N API:', error);
+    
+    // Return fallback strategy
+    return {
+      mision: `Proporcionar soluciones innovadoras y de calidad en el sector de ${companyData.industries?.[0] || 'servicios'}, creando valor excepcional para nuestros clientes.`,
+      vision: `Ser la empresa líder reconocida por la excelencia en ${companyData.industries?.[0] || 'servicios'}, transformando la industria a través de la innovación.`,
+      propuesta_valor: `Ofrecemos soluciones personalizadas que optimizan los procesos de nuestros clientes, reduciendo costos y maximizando resultados.`
+    };
+  }
+}
+
+/**
+ * Store strategy in database
+ */
+async function storeStrategy(companyId: string, strategy: any) {
+  console.log('💾 Storing strategy in database...');
+  
+  // Check for existing strategy
+  const { data: existingStrategy, error: selectError } = await supabase
+    .from('company_strategy')
+    .select('id')
+    .eq('company_id', companyId)
+    .maybeSingle();
+
+  if (selectError) {
+    console.error('❌ Error checking existing strategy:', selectError);
+    throw new Error('Database access error');
+  }
+
+  let strategyId;
+
+  if (existingStrategy) {
+    console.log('♻️ Updating existing strategy:', existingStrategy.id);
+    
+    const { error: updateError } = await supabase
+      .from('company_strategy')
+      .update(strategy)
+      .eq('id', existingStrategy.id);
+
+    if (updateError) {
+      console.error('❌ Error updating strategy:', updateError);
+      throw new Error('Failed to update strategy');
+    }
+
+    strategyId = existingStrategy.id;
+    console.log('✅ Strategy updated successfully');
+  } else {
+    console.log('🆕 Creating new strategy...');
+    
+    const { data: newStrategy, error: strategyError } = await supabase
+      .from('company_strategy')
+      .insert({
+        company_id: companyId,
+        ...strategy
+      })
+      .select('id')
+      .single();
+
+    if (strategyError) {
+      console.error('❌ Error creating strategy:', strategyError);
+      throw new Error('Failed to create strategy');
+    }
+
+    strategyId = newStrategy.id;
+    console.log('✅ Strategy created successfully:', strategyId);
+  }
+
+  return strategyId;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { companyId, input } = await req.json();
+    console.log('🎯 Starting company strategy generation...');
     
-    if (!companyId || !input?.data) {
-      return new Response(
-        JSON.stringify({ error: 'CompanyId and input data are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('🎯 Generating company strategy for:', companyId);
-
-    // Get user from authorization header
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authorization header required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    const body = await req.json();
+    console.log('📝 Request received:', body);
     
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid user token' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const companyData = input.data;
-    console.log('📊 Company data received:', JSON.stringify(companyData, null, 2));
-
-    // Call N8N API for strategy generation with robust handling
-    const n8nEndpoint = 'https://buildera.app.n8n.cloud/webhook/company-strategy';
-    const requestPayload = {
-      input: {
-        data: companyData
-      }
-    };
-
-    console.log('🚀 Calling N8N API:', n8nEndpoint);
-    console.log('📤 Request payload:', JSON.stringify(requestPayload, null, 2));
-
-    let strategyResponse: any = null;
+    // 1. Validate input
+    const { companyId, input } = body;
+    const companyData = validateInput(companyId, input);
     
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
-
-      const apiResponse = await fetch(n8nEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestPayload),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      const contentType = apiResponse.headers.get('content-type') || '';
-      console.log(`📊 N8N API Response status: ${apiResponse.status} ${apiResponse.statusText}, content-type: ${contentType}`);
-
-      if (!apiResponse.ok) {
-        const errorText = await apiResponse.text().catch(() => '');
-        console.error('❌ N8N API error:', apiResponse.status, errorText);
-        throw new Error(`N8N API error: ${apiResponse.status} - ${errorText}`);
-      }
-
-      const rawBody = await apiResponse.text().catch(() => '');
-      const bodySample = rawBody.slice(0, 2000);
-      console.log('🧪 N8N raw body sample (truncated 2KB):', bodySample);
-
-      // Robust JSON parsing with fallbacks
-      const safeParse = (txt: string) => {
-        try { return JSON.parse(txt); } catch { return null; }
-      };
-
-      let apiResult: any = safeParse(rawBody);
-      
-      if (!apiResult && rawBody.trim()) {
-        // Try to extract JSON object from response
-        const firstBrace = rawBody.indexOf('{');
-        if (firstBrace !== -1) {
-          const extractBalanced = (text: string, startIndex: number) => {
-            let depth = 0;
-            let start = -1;
-            for (let i = startIndex; i < text.length; i++) {
-              const ch = text[i];
-              if (ch === '{') { if (start === -1) start = i; depth++; }
-              else if (ch === '}') { depth--; if (depth === 0 && start !== -1) return text.slice(start, i + 1); }
-            }
-            return null;
-          };
-          
-          const objStr = extractBalanced(rawBody, firstBrace);
-          apiResult = objStr ? safeParse(objStr) : null;
-          if (apiResult) console.log('✅ Extracted JSON from response');
-        }
-      }
-
-      if (!apiResult) {
-        console.warn('⚠️ Could not parse N8N response as JSON, using fallback');
-        strategyResponse = {
-          mision: 'Misión generada pendiente',
-          vision: 'Visión generada pendiente',
-          propuesta_valor: 'Propuesta de valor generada pendiente'
-        };
-      } else {
-        strategyResponse = apiResult;
-        console.log('✅ N8N API response parsed:', JSON.stringify(strategyResponse, null, 2));
-      }
-
-    } catch (error: any) {
-      console.error('❌ Error calling N8N API:', error);
-      
-      // Fallback strategy if N8N fails
-      console.log('🔄 Using fallback strategy generation');
-      strategyResponse = {
-        mision: `Proporcionar soluciones innovadoras y de calidad en el sector de ${companyData.industries?.[0] || 'servicios'}, creando valor excepcional para nuestros clientes.`,
-        vision: `Ser la empresa líder reconocida por la excelencia en ${companyData.industries?.[0] || 'servicios'}, transformando la industria a través de la innovación.`,
-        propuesta_valor: `Ofrecemos soluciones personalizadas que optimizan los procesos de nuestros clientes, reduciendo costos y maximizando resultados.`
-      };
-    }
-
-    // Use the strategy data from N8N response
+    // 2. Authenticate user
+    const user = await authenticateUser(req);
+    console.log('👤 User authenticated:', user.id);
+    
+    // 3. Call N8N API
+    const strategyResponse = await callN8NStrategy(companyData);
+    
+    // 4. Store in database
     const strategy = {
       mision: strategyResponse.mision || 'Misión no definida',
-      vision: strategyResponse.vision || 'Visión no definida', 
+      vision: strategyResponse.vision || 'Visión no definida',
       propuesta_valor: strategyResponse.propuesta_valor || 'Propuesta de valor no definida',
       valores: strategyResponse.valores || ['Innovación', 'Calidad', 'Transparencia'],
       ventajas_competitivas: strategyResponse.ventajas_competitivas || ['Tecnología avanzada', 'Equipo especializado']
     };
+    
+    const strategyId = await storeStrategy(companyId, strategy);
 
-    console.log('📝 Strategy data to store:', JSON.stringify(strategy, null, 2));
-    console.log('🔍 Company ID:', companyId);
-    console.log('👤 User ID:', user.id);
-
-    // Store strategy in database
-    const { data: existingStrategy, error: selectError } = await supabase
-      .from('company_strategy')
-      .select('id')
-      .eq('company_id', companyId)
-      .maybeSingle();
-
-    if (selectError) {
-      console.error('❌ Error checking existing strategy:', selectError);
-      return new Response(
-        JSON.stringify({ error: 'Database access error', details: selectError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    let strategyId;
-
-    if (existingStrategy) {
-      console.log('♻️ Updating existing strategy:', existingStrategy.id);
-      const { error: updateError } = await supabase
-        .from('company_strategy')
-        .update(strategy)
-        .eq('id', existingStrategy.id);
-
-      if (updateError) {
-        console.error('❌ Error updating strategy:', updateError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to update strategy', details: updateError.message }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      strategyId = existingStrategy.id;
-      console.log('✅ Strategy updated successfully');
-    } else {
-      console.log('🆕 Creating new strategy...');
-      const insertData = {
-        company_id: companyId,
-        ...strategy
-      };
-      console.log('📤 Insert data:', JSON.stringify(insertData, null, 2));
-      
-      const { data: newStrategy, error: strategyError } = await supabase
-        .from('company_strategy')
-        .insert(insertData)
-        .select('id')
-        .single();
-
-      if (strategyError) {
-        console.error('❌ Error creating strategy:', strategyError);
-        console.error('❌ Strategy error details:', JSON.stringify(strategyError, null, 2));
-        return new Response(
-          JSON.stringify({ error: 'Failed to create strategy', details: strategyError.message }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      strategyId = newStrategy.id;
-      console.log('✅ Strategy created successfully:', strategyId);
-    }
-
-    console.log('✅ Company strategy created/updated:', strategyId);
+    console.log('✅ Company strategy process completed successfully');
 
     return new Response(
       JSON.stringify({ 
@@ -231,11 +227,20 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
-    console.error('Error in company-strategy:', error);
+  } catch (error: any) {
+    console.error('❌ Error in company-strategy:', error);
+    
+    const status = error.message.includes('required') || error.message.includes('Invalid') ? 400 : 500;
+    
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        error: error.message || 'Internal server error',
+        details: error.stack || 'No additional details available'
+      }),
+      { 
+        status, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
   }
 });

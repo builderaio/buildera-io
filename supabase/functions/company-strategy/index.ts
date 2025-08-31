@@ -13,13 +13,34 @@ const supabase = createClient(
 );
 
 /**
- * Validate input data
+ * Validate input data and get company information
  */
-function validateInput(companyId: string, input: any) {
-  if (!companyId || !input?.data) {
-    throw new Error('CompanyId and input data are required');
+async function getCompanyData(companyId: string) {
+  if (!companyId) {
+    throw new Error('CompanyId is required');
   }
-  return input.data;
+
+  console.log('📋 Getting company data for ID:', companyId);
+  
+  const { data: company, error } = await supabase
+    .from('companies')
+    .select('id, name, webhook_data')
+    .eq('id', companyId)
+    .single();
+
+  if (error) {
+    console.error('❌ Error fetching company:', error);
+    throw new Error('Company not found or database error');
+  }
+
+  if (!company.webhook_data) {
+    throw new Error('Company webhook_data not found - company information extraction must be completed first');
+  }
+
+  console.log('✅ Company data retrieved:', company.name);
+  console.log('📊 Webhook data available:', !!company.webhook_data);
+  
+  return company.webhook_data;
 }
 
 /**
@@ -44,7 +65,7 @@ async function authenticateUser(req: Request) {
 /**
  * Call N8N API for strategy generation
  */
-async function callN8NStrategy(companyId: string, companyData: any) {
+async function callN8NStrategy(companyData: any) {
   const n8nEndpoint = 'https://buildera.app.n8n.cloud/webhook/company-strategy';
   
   // Get N8N authentication credentials
@@ -63,7 +84,6 @@ async function callN8NStrategy(companyId: string, companyData: any) {
   const credentials = btoa(`${authUser}:${authPass}`);
   const requestPayload = {
     input: {
-      companyId,
       data: companyData
     }
   };
@@ -206,16 +226,21 @@ serve(async (req) => {
     const body = await req.json();
     console.log('📝 Request received:', body);
     
-    // 1. Validate input
-    const { companyId, input } = body;
-    const companyData = validateInput(companyId, input);
+    // 1. Extract companyId from request
+    const { companyId } = body;
+    if (!companyId) {
+      throw new Error('CompanyId is required');
+    }
     
     // 2. Authenticate user
     const user = await authenticateUser(req);
     console.log('👤 User authenticated:', user.id);
     
-    // 3. Call N8N API
-    const strategyResponse = await callN8NStrategy(companyId, companyData);
+    // 3. Get company data from database
+    const companyData = await getCompanyData(companyId);
+    
+    // 4. Call N8N API
+    const strategyResponse = await callN8NStrategy(companyData);
     
     // 4. Store in database
     const strategy = {

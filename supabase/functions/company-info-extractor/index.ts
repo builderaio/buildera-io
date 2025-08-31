@@ -53,17 +53,28 @@ serve(async (req) => {
     let apiData = null;
     
     try {
-      const apiUrl = 'https://buildera.app.n8n.cloud/webhook/company-info-extractor';
+      const apiUrl = `https://buildera.app.n8n.cloud/webhook/company-info-extractor?URL=${encodeURIComponent(url)}`;
       console.log('🔗 API URL:', apiUrl);
-      console.log('📝 Request payload:', { url: url });
+      
+      // Get authentication credentials from environment
+      const authUser = Deno.env.get('N8N_AUTH_USER');
+      const authPass = Deno.env.get('N8N_AUTH_PASS');
+      
+      if (!authUser || !authPass) {
+        console.error('❌ N8N authentication credentials not found');
+        throw new Error('N8N authentication credentials not configured');
+      }
+      
+      // Create basic auth header
+      const credentials = btoa(`${authUser}:${authPass}`);
       
       const apiResponse = await fetch(apiUrl, {
-        method: 'POST',
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
+          'Authorization': `Basic ${credentials}`,
           'Accept': 'application/json',
-        },
-        body: JSON.stringify({ url: url })
+          'Content-Type': 'application/json',
+        }
       });
 
       console.log('📊 API Response status:', apiResponse.status, apiResponse.statusText);

@@ -71,8 +71,9 @@ serve(async (req) => {
 async function extractCompanyData(url: string, userId: string, token: string) {
   console.log('🔄 Starting extraction for URL:', url);
   try {
-    // Normalize URL to domain for matching
-    const domain = url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    // Normalize URL (ensure scheme) and get domain for matching
+    const normalizedUrl = /^(https?:)\/\//i.test(url) ? url : `https://${url}`;
+    const domain = normalizedUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
 
     // Idempotency: avoid duplicate work if already processed recently
     const { data: existingProcessed, error: processedErr } = await supabase
@@ -104,7 +105,7 @@ async function extractCompanyData(url: string, userId: string, token: string) {
     let apiError = null;
     
     try {
-      const apiUrl = `https://buildera.app.n8n.cloud/webhook/company-info-extractor?URL=${encodeURIComponent(url)}`;
+      const apiUrl = `https://buildera.app.n8n.cloud/webhook/company-info-extractor?URL=${encodeURIComponent(normalizedUrl)}`;
       console.log('🔗 API URL:', apiUrl);
       
       // Get authentication credentials from environment
@@ -146,12 +147,23 @@ async function extractCompanyData(url: string, userId: string, token: string) {
         apiResult = await apiResponse.json();
       } else {
         const rawText = await apiResponse.text();
+        let parsed: any = null;
         try {
-          apiResult = JSON.parse(rawText);
+          parsed = JSON.parse(rawText);
         } catch {
-          console.warn('Non-JSON response from API, returning raw text');
-          apiResult = rawText;
+          // Try to extract a JSON object/array from noisy text
+          const arrStart = rawText.indexOf('[');
+          const arrEnd = rawText.lastIndexOf(']');
+          const objStart = rawText.indexOf('{');
+          const objEnd = rawText.lastIndexOf('}');
+          const candidate = arrStart !== -1 && arrEnd > arrStart
+            ? rawText.slice(arrStart, arrEnd + 1)
+            : (objStart !== -1 && objEnd > objStart ? rawText.slice(objStart, objEnd + 1) : null);
+          if (candidate) {
+            try { parsed = JSON.parse(candidate); } catch {}
+          }
         }
+        apiResult = parsed ?? rawText;
       }
 
       // Normalize different possible response shapes from N8N

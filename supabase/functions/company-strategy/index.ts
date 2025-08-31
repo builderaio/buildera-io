@@ -13,34 +13,91 @@ const supabase = createClient(
 );
 
 /**
- * Validate input data and get company information
+ * Resolve company data to send to N8N from database sources
  */
-async function getCompanyData(companyId: string) {
-  if (!companyId) {
-    throw new Error('CompanyId is required');
-  }
+async function getCompanyData(companyId: string, userId: string) {
+  if (!companyId) throw new Error('CompanyId is required');
 
   console.log('📋 Getting company data for ID:', companyId);
-  
+
+  // 1) Load company row
   const { data: company, error } = await supabase
     .from('companies')
-    .select('id, name, webhook_data')
+    .select(`
+      id, name, website_url, description, industry_sector,
+      linkedin_url, instagram_url, facebook_url, twitter_url, youtube_url, tiktok_url,
+      webhook_data
+    `)
     .eq('id', companyId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('❌ Error fetching company:', error);
     throw new Error('Company not found or database error');
   }
-
-  if (!company.webhook_data) {
-    throw new Error('Company webhook_data not found - company information extraction must be completed first');
+  if (!company) {
+    throw new Error('Company not found');
   }
 
-  console.log('✅ Company data retrieved:', company.name);
-  console.log('📊 Webhook data available:', !!company.webhook_data);
-  
-  return company.webhook_data;
+  // 2) Try from webhook_data first
+  const webhook = company.webhook_data || {};
+  let data = (webhook?.data && typeof webhook.data === 'object')
+    ? webhook.data
+    : (webhook?.input?.data && typeof webhook.input.data === 'object')
+      ? webhook.input.data
+      : null;
+
+  // 3) If missing, build from company columns
+  if (!data) {
+    const social_links = {
+      linkedin: company.linkedin_url || undefined,
+      instagram: company.instagram_url || undefined,
+      facebook: company.facebook_url || undefined,
+      twitter: company.twitter_url || undefined,
+      youtube: company.youtube_url || undefined,
+      tiktok: company.tiktok_url || undefined,
+    } as Record<string, string | undefined>;
+
+    // Remove undefined socials
+    Object.keys(social_links).forEach((k) => social_links[k] === undefined && delete social_links[k]);
+
+    const built: Record<string, any> = {
+      company_name: company.name || undefined,
+      website: company.website_url || undefined,
+      business_description: company.description || undefined,
+      industries: company.industry_sector ? [company.industry_sector] : undefined,
+      social_links: Object.keys(social_links).length ? social_links : undefined,
+    };
+
+    // Drop undefined keys
+    Object.keys(built).forEach((k) => built[k] === undefined && delete built[k]);
+
+    if (Object.keys(built).length) {
+      data = built;
+    }
+  }
+
+  // 4) As a last resort, try company_external_data for this user
+  if (!data || (!data.company_name && !data.website && !data.business_description)) {
+    const { data: external, error: extErr } = await supabase
+      .from('company_external_data')
+      .select('url_data, brand_data, company_url')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!extErr && external) {
+      data = external.url_data || external.brand_data || data;
+    }
+  }
+
+  if (!data || typeof data !== 'object') {
+    throw new Error('Company data not available. Please run company-info-extractor first.');
+  }
+
+  console.log('✅ Company data resolved for N8N:', JSON.stringify(data).slice(0, 300));
+  return data;
 }
 
 /**
@@ -237,7 +294,7 @@ serve(async (req) => {
     console.log('👤 User authenticated:', user.id);
     
     // 3. Get company data from database
-    const companyData = await getCompanyData(companyId);
+    const companyData = await getCompanyData(companyId, user.id);
     
     // 4. Call N8N API
     const strategyResponse = await callN8NStrategy(companyData);

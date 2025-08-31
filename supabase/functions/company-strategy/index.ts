@@ -71,7 +71,7 @@ async function callN8NStrategy(companyData: any) {
 
   try {
     const apiResponse = await fetch(n8nEndpoint, {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Basic ${credentials}`,

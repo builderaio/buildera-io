@@ -49,7 +49,7 @@ serve(async (req) => {
     // Get company data from database
     const { data: company, error: companyError } = await supabase
       .from('companies')
-      .select('name, website_url, logo_url')
+      .select('name, website_url, logo_url, description')
       .eq('id', companyId)
       .single();
 
@@ -60,15 +60,21 @@ serve(async (req) => {
       );
     }
 
-    // Get company strategy (mission, vision, value proposition)
-    const { data: strategy } = await supabase
+    // Get company strategy (mission, vision, value proposition) - get the latest one
+    const { data: strategy, error: strategyError } = await supabase
       .from('company_strategies')
       .select('mision, vision, propuesta_valor')
       .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
+
+    console.log('📋 Company data:', company);
+    console.log('📋 Strategy data:', strategy);
 
     const companyData = {
       nombre_empresa: company.name,
+      descripcion_empresa: company.description || '',
       sitio_web: company.website_url || '',
       logo: company.logo_url || '',
       mision: strategy?.mision || '',

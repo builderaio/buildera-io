@@ -68,46 +68,81 @@ serve(async (req) => {
       
       // Create basic auth header
       const credentials = btoa(`${authUser}:${authPass}`);
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
-      
-      const apiResponse = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Basic ${credentials}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
 
-      console.log('📊 API Response status:', apiResponse.status, apiResponse.statusText);
-      
-      if (!apiResponse.ok) {
-        const errorText = await apiResponse.text();
-        console.error('❌ API Error Response:', errorText);
-        apiError = `API returned ${apiResponse.status}: ${apiResponse.statusText}`;
-        
-        // If API fails, return error instead of fallback
-        return new Response(
-          JSON.stringify({ 
-            error: 'No se pudo obtener información de la empresa',
-            details: `Error al conectar con el servicio de análisis de empresas: ${apiError}`,
-            url: url
-          }),
-          { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      } else {
+      // Retry logic to handle slow responses/timeouts from N8N/Cloudflare
+      const totalBudgetMs = 300000; // 5 minutes overall budget
+      const perAttemptTimeoutMs = 60000; // 60s per attempt
+      const startTime = Date.now();
+      let attempt = 0;
+      let lastStatus = 0;
+      let lastStatusText = '';
+      let lastErrorText = '';
+      const retryableStatus = new Set([524, 522, 502, 503, 504]);
+
+      while ((Date.now() - startTime) < totalBudgetMs) {
+        attempt++;
+        console.log(`🚀 Attempt ${attempt} to call N8N (elapsed ${Date.now() - startTime}ms)`);
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), perAttemptTimeoutMs);
+
+        let apiResponse: Response | null = null;
+        try {
+          apiResponse = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Basic ${credentials}`,
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            signal: controller.signal
+          });
+        } catch (err) {
+          console.warn('⏳ Attempt failed with network/abort error:', (err as Error).message);
+          // Retry on network/abort errors if time remains
+          const backoff = Math.min(5000 * attempt, 30000);
+          console.log(`🔁 Retrying in ${backoff}ms due to network error...`);
+          clearTimeout(timeoutId);
+          await new Promise((r) => setTimeout(r, backoff));
+          continue;
+        } finally {
+          clearTimeout(timeoutId);
+        }
+
+        lastStatus = apiResponse.status;
+        lastStatusText = apiResponse.statusText;
+        console.log('📊 API Response status:', apiResponse.status, apiResponse.statusText);
+
+        if (!apiResponse.ok) {
+          try { lastErrorText = await apiResponse.text(); } catch {}
+          console.error('❌ API Error Response:', lastErrorText);
+
+          if (retryableStatus.has(apiResponse.status) && (Date.now() - startTime) < totalBudgetMs) {
+            const backoff = Math.min(5000 * attempt, 30000); // 5s, 10s, 15s..., capped 30s
+            console.log(`🔁 Retryable status ${apiResponse.status}. Waiting ${backoff}ms then retrying...`);
+            await new Promise((r) => setTimeout(r, backoff));
+            continue;
+          }
+
+          apiError = `API returned ${apiResponse.status}: ${apiResponse.statusText}`;
+          return new Response(
+            JSON.stringify({ 
+              error: 'No se pudo obtener información de la empresa',
+              details: `Error del servicio de análisis: ${apiError}`,
+              url: url
+            }),
+            { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // OK response, parse
         const apiResult = await apiResponse.json();
         console.log('✅ API Response received:', JSON.stringify(apiResult, null, 2));
-        
+
         if (Array.isArray(apiResult) && apiResult.length > 0 && apiResult[0].output?.data) {
           apiData = apiResult[0].output.data;
           console.log('🎯 Extracted company data:', JSON.stringify(apiData, null, 2));
-          
+
           // Validate that we got meaningful data
           if (!apiData.company_name && !apiData.legal_name && !apiData.business_description) {
             console.log('⚠️ API returned empty or insufficient company data');
@@ -120,6 +155,9 @@ serve(async (req) => {
               { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           }
+
+          // We have valid data, exit retry loop
+          break;
         } else {
           console.log('⚠️ Unexpected API response structure:', JSON.stringify(apiResult, null, 2));
           return new Response(
@@ -131,6 +169,18 @@ serve(async (req) => {
             { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
+      }
+
+      if (!apiData) {
+        // Exhausted time budget without valid data
+        return new Response(
+          JSON.stringify({ 
+            error: 'Timeout esperando información de la empresa',
+            details: `El servicio tardó demasiado en responder (último estado: ${lastStatus} ${lastStatusText})`,
+            url: url
+          }),
+          { status: 504, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
     } catch (error) {
       console.error('💥 Error calling external API:', error);

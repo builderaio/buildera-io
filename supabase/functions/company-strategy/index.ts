@@ -113,23 +113,23 @@ async function callN8NStrategy(companyData: any) {
     
     if (error.name === 'AbortError') {
       console.error('❌ N8N API request timed out');
-      throw new Error('N8N API request timed out');
+      throw new Error('N8N API request timed out - please try again');
     }
     
     console.error('❌ Error calling N8N API:', error);
     console.error('Error stack:', error.stack);
     
-    // Return fallback strategy only if it's a network error, not authentication
+    // Always throw errors instead of using fallback to allow user retry
     if (error.message.includes('credentials')) {
-      throw error;
+      throw new Error('N8N authentication error - please check configuration');
     }
     
-    console.log('🔄 Using fallback strategy due to API error');
-    return {
-      mision: `Proporcionar soluciones innovadoras y de calidad en el sector de ${companyData.industries?.[0] || 'servicios'}, creando valor excepcional para nuestros clientes.`,
-      vision: `Ser la empresa líder reconocida por la excelencia en ${companyData.industries?.[0] || 'servicios'}, transformando la industria a través de la innovación.`,
-      propuesta_valor: `Ofrecemos soluciones personalizadas que optimizan los procesos de nuestros clientes, reduciendo costos y maximizando resultados.`
-    };
+    if (error.message.includes('N8N API error')) {
+      throw new Error(`N8N API error: ${error.message} - please try again`);
+    }
+    
+    // For any other network or API errors, throw to allow retry
+    throw new Error(`Failed to generate strategy: ${error.message} - please try again`);
   }
 }
 

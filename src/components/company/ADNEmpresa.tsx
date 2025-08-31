@@ -235,7 +235,7 @@ const ADNEmpresa = ({
       const {
         data: company,
         error: companyError
-      } = await supabase.from('companies').select('id,name,description,website_url,industry_sector,company_size,country,location,facebook_url,twitter_url,linkedin_url,instagram_url,youtube_url,tiktok_url,created_at,updated_at,webhook_data').eq('id', companyId).maybeSingle();
+      } = await supabase.from('companies').select('id,name,description,website_url,industry_sector,company_size,country,facebook_url,twitter_url,linkedin_url,instagram_url,youtube_url,tiktok_url,created_at,updated_at,webhook_data').eq('id', companyId).maybeSingle();
       if (companyError) throw companyError;
       if (company) {
         setCompanyData({
@@ -246,7 +246,6 @@ const ADNEmpresa = ({
           industry_sector: company.industry_sector,
           company_size: company.company_size,
           country: company.country,
-          location: company.location,
           facebook_url: company.facebook_url,
           twitter_url: company.twitter_url,
           linkedin_url: company.linkedin_url,

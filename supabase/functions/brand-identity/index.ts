@@ -161,13 +161,38 @@ serve(async (req) => {
       );
     }
 
-    // Map the new response structure to database fields
+    // Map the comprehensive response structure to database fields
     const brandIdentity = {
       primary_color: brandData.paleta_de_colores?.principal?.hex || null,
       secondary_color: brandData.paleta_de_colores?.secundario?.hex || null,
       complementary_color_1: brandData.paleta_de_colores?.complementario1?.hex || null,
       complementary_color_2: brandData.paleta_de_colores?.complementario2?.hex || null,
       visual_identity: brandData.identidad_verbal_y_visual?.sintesis_visual?.concepto_general || null,
+      
+      // Store detailed color justifications
+      color_justifications: {
+        principal: brandData.paleta_de_colores?.principal?.justificacion || null,
+        secundario: brandData.paleta_de_colores?.secundario?.justificacion || null,
+        complementario1: brandData.paleta_de_colores?.complementario1?.justificacion || null,
+        complementario2: brandData.paleta_de_colores?.complementario2?.justificacion || null,
+      },
+      
+      // Store brand voice information
+      brand_voice: {
+        personalidad: brandData.identidad_verbal_y_visual?.brand_voice?.personalidad || null,
+        descripcion: brandData.identidad_verbal_y_visual?.brand_voice?.descripcion || null,
+        palabras_clave: brandData.identidad_verbal_y_visual?.brand_voice?.palabras_clave || [],
+      },
+      
+      // Store visual synthesis information
+      visual_synthesis: {
+        concepto_general: brandData.identidad_verbal_y_visual?.sintesis_visual?.concepto_general || null,
+        tipografia: brandData.identidad_verbal_y_visual?.sintesis_visual?.tipografia || null,
+        estilo_fotografico: brandData.identidad_verbal_y_visual?.sintesis_visual?.estilo_fotografico || null,
+      },
+      
+      // Store complete response for future reference
+      full_brand_data: brandData,
     };
 
     console.log('🎨 Mapped brand identity:', JSON.stringify(brandIdentity, null, 2));

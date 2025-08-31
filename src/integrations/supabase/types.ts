@@ -1283,11 +1283,8 @@ export type Database = {
           instagram_url: string | null
           is_active: boolean | null
           linkedin_url: string | null
-          location: string | null
           logo_url: string | null
           name: string
-          primary_color: string | null
-          secondary_color: string | null
           tiktok_url: string | null
           twitter_url: string | null
           updated_at: string
@@ -1310,11 +1307,8 @@ export type Database = {
           instagram_url?: string | null
           is_active?: boolean | null
           linkedin_url?: string | null
-          location?: string | null
           logo_url?: string | null
           name: string
-          primary_color?: string | null
-          secondary_color?: string | null
           tiktok_url?: string | null
           twitter_url?: string | null
           updated_at?: string
@@ -1337,11 +1331,8 @@ export type Database = {
           instagram_url?: string | null
           is_active?: boolean | null
           linkedin_url?: string | null
-          location?: string | null
           logo_url?: string | null
           name?: string
-          primary_color?: string | null
-          secondary_color?: string | null
           tiktok_url?: string | null
           twitter_url?: string | null
           updated_at?: string
@@ -1395,47 +1386,53 @@ export type Database = {
         Row: {
           brand_manual_file_path: string | null
           brand_manual_url: string | null
+          brand_voice: Json | null
+          color_justifications: Json | null
           company_id: string
           complementary_color_1: string | null
           complementary_color_2: string | null
           created_at: string
+          full_brand_data: Json | null
           id: string
-          logo_file_path: string | null
-          logo_url: string | null
           primary_color: string | null
           secondary_color: string | null
           updated_at: string
           visual_identity: string | null
+          visual_synthesis: Json | null
         }
         Insert: {
           brand_manual_file_path?: string | null
           brand_manual_url?: string | null
+          brand_voice?: Json | null
+          color_justifications?: Json | null
           company_id: string
           complementary_color_1?: string | null
           complementary_color_2?: string | null
           created_at?: string
+          full_brand_data?: Json | null
           id?: string
-          logo_file_path?: string | null
-          logo_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           updated_at?: string
           visual_identity?: string | null
+          visual_synthesis?: Json | null
         }
         Update: {
           brand_manual_file_path?: string | null
           brand_manual_url?: string | null
+          brand_voice?: Json | null
+          color_justifications?: Json | null
           company_id?: string
           complementary_color_1?: string | null
           complementary_color_2?: string | null
           created_at?: string
+          full_brand_data?: Json | null
           id?: string
-          logo_file_path?: string | null
-          logo_url?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           updated_at?: string
           visual_identity?: string | null
+          visual_synthesis?: Json | null
         }
         Relationships: [
           {

@@ -74,10 +74,14 @@ serve(async (req) => {
     console.log('Creating company agent for:', { user_id, company_id });
 
     // Obtener datos completos de la empresa
+    console.log('Step 1: Getting company data for company_id:', company_id);
     const companyData = await getCompanyData(company_id);
+    console.log('Step 1 completed: Company data retrieved');
     
     // Crear o actualizar el agente de OpenAI
+    console.log('Step 2: Creating or updating OpenAI agent');
     const agent = await createOrUpdateOpenAIAgent(companyData);
+    console.log('Step 2 completed: Agent created/updated');
     
     // Guardar la información del agente en la base de datos
     const { data: savedAgent, error: saveError } = await supabase
@@ -120,7 +124,10 @@ serve(async (req) => {
 });
 
 async function getCompanyData(company_id: string): Promise<CompanyData> {
+  console.log('Getting company data for ID:', company_id);
+  
   // Obtener información básica de la empresa
+  console.log('Step 1a: Fetching company basic info...');
   const { data: company, error: companyError } = await supabase
     .from('companies')
     .select('*')
@@ -128,28 +135,36 @@ async function getCompanyData(company_id: string): Promise<CompanyData> {
     .single();
 
   if (companyError) {
+    console.error('Error fetching company:', companyError);
     throw new Error(`Error fetching company: ${companyError.message}`);
   }
+  console.log('Step 1a completed: Company basic info retrieved');
 
   // Obtener estrategia empresarial
+  console.log('Step 1b: Fetching company strategy...');
   const { data: strategy } = await supabase
     .from('company_strategy')
     .select('*')
     .eq('company_id', company_id)
     .single();
+  console.log('Step 1b completed: Strategy data:', strategy ? 'found' : 'not found');
 
   // Obtener branding completo
+  console.log('Step 1c: Fetching company branding...');
   const { data: branding } = await supabase
     .from('company_branding')
     .select('*')
     .eq('company_id', company_id)
     .single();
+  console.log('Step 1c completed: Branding data:', branding ? 'found' : 'not found');
 
   // Obtener objetivos
+  console.log('Step 1d: Fetching company objectives...');
   const { data: objectives } = await supabase
     .from('company_objectives')
     .select('*')
     .eq('company_id', company_id);
+  console.log('Step 1d completed: Objectives found:', objectives?.length || 0);
 
   // Obtener datos de redes sociales (sin agregaciones complejas por limitaciones de Supabase client)
   const { data: socialPosts } = await supabase
@@ -205,7 +220,15 @@ async function getCompanyData(company_id: string): Promise<CompanyData> {
 }
 
 async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
+  console.log('Step 2a: Generating agent instructions...');
   const instructions = generateAgentInstructions(companyData);
+  console.log('Step 2a completed: Instructions generated');
+  
+  console.log('Step 2b: Checking OpenAI API key...');
+  if (!openAIApiKey) {
+    throw new Error('OpenAI API key not found in environment variables');
+  }
+  console.log('Step 2b completed: OpenAI API key available');
   
   const agentPayload = {
     name: `Copiloto de ${companyData.name}`,

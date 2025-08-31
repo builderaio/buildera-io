@@ -358,15 +358,17 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
 
       toast({
         title: "🎉 ¡Onboarding completado!",
-        description: "Tu cuenta está configurada. Redirigiendo al dashboard...",
+        description: "Configuración finalizada. Redirigiendo a ADN Empresa...",
         duration: 3000
       });
 
-      // Redirect to company dashboard immediately and add fallback
-      console.log('🚀 Iniciando redirección al dashboard...');
+      // Redirect to ADN Empresa section with completed onboarding flag
+      console.log('🚀 Redirigiendo a ADN Empresa con onboarding completado...');
       
-      // Force navigation by removing query params
-      window.location.href = '/company-dashboard';
+      // Navigate to ADN Empresa with flag to show coachmark
+      setTimeout(() => {
+        window.location.href = '/company-dashboard?view=adn-empresa&onboarding_completed=true';
+      }, 1500);
 
     } catch (error) {
       console.error('Error completing onboarding:', error);
@@ -376,9 +378,11 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         variant: "destructive"
       });
       
-      // Even if there's an error, try to redirect
-      console.log('🚀 Redirección de emergencia debido a error...');
-      window.location.href = '/company-dashboard';
+      // Even if there's an error, try to redirect to ADN Empresa
+      console.log('🚀 Redirección de emergencia a ADN Empresa...');
+      setTimeout(() => {
+        window.location.href = '/company-dashboard?view=adn-empresa&onboarding_completed=true';
+      }, 1000);
     }
   };
 
@@ -548,12 +552,12 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
                   </p>
                   <Button
                     onClick={() => {
-                      // Forzar navegación removiendo query params y refrescando
-                      window.location.href = '/company-dashboard';
+                      // Navegar a ADN Empresa con flag de onboarding completado 
+                      window.location.href = '/company-dashboard?view=adn-empresa&onboarding_completed=true';
                     }}
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    Ir al Dashboard
+                    Ir a ADN Empresa
                   </Button>
                 </CardContent>
               </Card>

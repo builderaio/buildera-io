@@ -34,7 +34,7 @@ const CompanyDashboard = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
-  const { shouldShowCoachMark, hideCoachMark } = useEraCoachMark(user?.id);
+  const { shouldShowCoachMark, hideCoachMark, showCoachMark } = useEraCoachMark(user?.id);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -49,6 +49,7 @@ const CompanyDashboard = () => {
 
       // Check for view parameter in URL
       const viewParam = searchParams.get('view');
+      const onboardingCompletedParam = searchParams.get('onboarding_completed');
       
       // Si viene con parámetro onboarding, mostrar el flujo de 5 pasos
       if (viewParam === 'onboarding') {
@@ -59,6 +60,15 @@ const CompanyDashboard = () => {
       } else if (viewParam === 'adn-empresa') {
         setActiveView('adn-empresa');
         setShouldShowOnboarding(false);
+        
+        // Si viene de completar onboarding, activar coachmark
+        if (onboardingCompletedParam === 'true') {
+          console.log('🎯 Onboarding completado, activando coachmark');
+          setTimeout(() => {
+            showCoachMark();
+          }, 2000); // Esperar 2 segundos para que se cargue la página
+        }
+        
         // Cargar el perfil para asegurar que ADNEmpresa pueda obtener datos de la BD
         const { data: profileData } = await supabase
           .from('profiles')
@@ -82,27 +92,53 @@ const CompanyDashboard = () => {
 
       // Solo verificar onboarding si no viene con parámetros específicos
       const registrationMethod = session.user.app_metadata?.provider || 'email';
-      const { data: companies } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('created_by', session.user.id);
+      
+      // Verificar estado de onboarding para usuarios sin parámetros de vista
+      const { data: onboardingStatus } = await supabase
+        .from('user_onboarding_status')
+        .select('onboarding_completed_at, dna_empresarial_completed')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
 
-      const hasCompany = companies && companies.length > 0;
+      // Si el usuario ya completó onboarding, ir directo al dashboard (NO repetir onboarding)
+      if (onboardingStatus?.onboarding_completed_at) {
+        console.log('✅ Usuario ya completó onboarding, acceso directo al dashboard');
+        const { data: companies } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('created_by', session.user.id);
 
-      console.log('🔍 CompanyDashboard onboarding check:', {
-        hasCompany,
-        companiesLength: companies?.length,
-        registrationMethod,
-        userId: session.user.id,
-        viewParam
-      });
+        const hasCompany = companies && companies.length > 0;
+        console.log('🔍 CompanyDashboard check - Usuario con onboarding completado:', {
+          hasCompany,
+          companiesLength: companies?.length,
+          userId: session.user.id
+        });
+      } else {
+        // Solo mostrar onboarding si NO está completado
+        const { data: companies } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('created_by', session.user.id);
 
-      // Si no tiene empresa Y no viene con view param, mostrar onboarding redirect
-      if (!hasCompany && !viewParam) {
-        console.log('❌ Usuario no tiene empresa, mostrando OnboardingRedirect');
-        setShouldShowOnboarding(true);
-        setLoading(false);
-        return;
+        const hasCompany = companies && companies.length > 0;
+
+        console.log('🔍 CompanyDashboard onboarding check:', {
+          hasCompany,
+          companiesLength: companies?.length,
+          registrationMethod,
+          userId: session.user.id,
+          viewParam,
+          onboardingCompleted: !!onboardingStatus?.onboarding_completed_at
+        });
+
+        // Si no tiene empresa Y no viene con view param Y no ha completado onboarding, mostrar onboarding redirect
+        if (!hasCompany && !viewParam && !onboardingStatus?.onboarding_completed_at) {
+          console.log('❌ Usuario no tiene empresa y no completó onboarding, mostrando OnboardingRedirect');
+          setShouldShowOnboarding(true);
+          setLoading(false);
+          return;
+        }
       }
       
       // Buscar perfil de empresa existente

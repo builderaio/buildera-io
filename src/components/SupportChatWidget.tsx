@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageCircle, X, Send, Bot, User, Minimize2, Maximize2 } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User, Minimize2, Maximize2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanyAgent } from "@/hooks/useCompanyAgent";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: string;
@@ -227,22 +228,38 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
             const objectivesCount = companyObjectives?.length || 0;
             const hasConnections = (linkedinConnections?.length || 0) > 0 || (facebookConnections?.length || 0) > 0;
 
-            // Crear mensaje personalizado con status y sugerencias
-            let statusInfo = `📊 **Status de ${companyName}:**\n`;
-            statusInfo += hasStrategy ? '✅ Estrategia empresarial definida\n' : '⚠️ Estrategia empresarial pendiente\n';
-            statusInfo += objectivesCount > 0 ? `✅ ${objectivesCount} objetivos establecidos\n` : '⚠️ No hay objetivos definidos\n';
-            statusInfo += hasConnections ? '✅ Redes sociales conectadas\n' : '⚠️ Redes sociales desconectadas\n';
+            // Crear mensaje wow personalizado con análisis profundo
+            const completionPercentage = Math.round(([hasStrategy, objectivesCount > 0, hasConnections].filter(Boolean).length / 3) * 100);
             
-            statusInfo += '\n🎯 **Acciones sugeridas:**\n';
-            if (!hasStrategy) statusInfo += '• Completar la estrategia empresarial en ADN Empresa\n';
-            if (objectivesCount === 0) statusInfo += '• Establecer objetivos de crecimiento\n';
-            if (!hasConnections) statusInfo += '• Conectar tus redes sociales en Marketing Hub\n';
-            statusInfo += '• Explorar el Marketplace para encontrar expertos\n';
-            statusInfo += '• Revisar insights en Inteligencia Competitiva';
+            let welcomeContent = `# 🚀 ¡Hola ${displayName}! Soy **ERA**\n\n`;
+            welcomeContent += `Soy tu **Copiloto Empresarial de IA** especializado en ${companyName}. He analizado tu ecosistema empresarial y tengo insights personalizados para ti.\n\n`;
+            
+            welcomeContent += `## 📊 **Análisis Empresarial Instantáneo**\n\n`;
+            welcomeContent += `**Nivel de Configuración:** ${completionPercentage}%\n\n`;
+            
+            welcomeContent += `### Status Actual:\n`;
+            welcomeContent += hasStrategy ? '✅ **Estrategia empresarial** - Sólida base estratégica\n' : '🔧 **Estrategia empresarial** - Oportunidad de definición\n';
+            welcomeContent += objectivesCount > 0 ? `✅ **Objetivos establecidos** - ${objectivesCount} metas activas\n` : '🎯 **Objetivos** - Listos para establecer roadmap\n';
+            welcomeContent += hasConnections ? '✅ **Ecosistema digital** - Redes sociales conectadas\n' : '🌐 **Ecosistema digital** - Canales listos para integrar\n';
+            
+            welcomeContent += `\n### 🧠 **Mi Conocimiento Especializado:**\n`;
+            welcomeContent += `• **Marketing Inteligente** - Estrategias personalizadas para ${companyName}\n`;
+            welcomeContent += `• **Análisis Competitivo** - Insights del sector en tiempo real\n`;
+            welcomeContent += `• **Optimización Operacional** - Automatización de procesos\n`;
+            welcomeContent += `• **Crecimiento Escalable** - Roadmap de expansión\n\n`;
+            
+            welcomeContent += `### 🎯 **Acciones Prioritarias:**\n`;
+            if (!hasStrategy) welcomeContent += `• **Definir ADN Empresarial** - Estructura estratégica fundamental\n`;
+            if (objectivesCount === 0) welcomeContent += `• **Establecer OKRs** - Objetivos medibles y alcanzables\n`;
+            if (!hasConnections) welcomeContent += `• **Activar Marketing Hub** - Integración de canales digitales\n`;
+            welcomeContent += `• **Explorar Marketplace** - Conectar con expertos especializados\n`;
+            welcomeContent += `• **Activar Inteligencia Competitiva** - Ventaja estratégica del mercado\n\n`;
+            
+            welcomeContent += `**¿En qué área quieres que enfoque mi análisis primero?** 🎯`;
 
             const welcomeMessage: Message = {
               id: 'welcome',
-              content: `¡Hola ${displayName || 'Usuario'}! 👋 Soy tu copiloto empresarial personalizado para ${companyName}.\n\n${statusInfo}\n\n¿En qué te puedo ayudar hoy?`,
+              content: welcomeContent,
               sender: 'support',
               timestamp: new Date(),
             };
@@ -252,7 +269,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
           console.error('Error initializing company agent:', error);
           const welcomeMessage: Message = {
             id: 'welcome',
-            content: `¡Hola ${displayName || 'Usuario'}! 👋 Soy tu asistente personal de Buildera. ¿En qué puedo ayudarte hoy?`,
+            content: `# 🤖 ¡Hola ${displayName || 'Usuario'}! Soy **ERA**\n\nTu **Copiloto Empresarial de IA** está configurando tu perfil personalizado.\n\n**Mientras tanto, puedo ayudarte con:**\n• Consultas generales de negocio\n• Estrategias de marketing\n• Análisis competitivo\n• Optimización operacional\n\n¿En qué puedo asistirte hoy? 🚀`,
             sender: 'support',
             timestamp: new Date(),
           };
@@ -282,14 +299,20 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
 
       {/* Chat expandido */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-80 h-96 shadow-xl z-50 flex flex-col">
+        <Card className="fixed bottom-6 right-6 w-96 md:w-[480px] h-[600px] shadow-xl z-50 flex flex-col">
           {/* Header del chat */}
-          <div className="flex items-center justify-between p-4 border-b bg-primary text-primary-foreground rounded-t-lg">
-            <div className="flex items-center gap-2">
-              <Bot className="w-5 h-5" />
+          <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-purple-600 text-primary-foreground rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Bot className="w-6 h-6" />
+                <Sparkles className="w-3 h-3 absolute -top-1 -right-1 text-yellow-300" />
+              </div>
               <div>
-                <h3 className="font-semibold text-sm">Copiloto Empresarial</h3>
-                <p className="text-xs opacity-90">{getPageContext()}</p>
+                <h3 className="font-bold text-base">ERA - Copiloto Empresarial</h3>
+                <p className="text-xs opacity-90 flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                  {getPageContext()}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -331,14 +354,32 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
                         </div>
                       )}
                       <div
-                        className={`max-w-[200px] px-3 py-2 rounded-lg text-sm ${
+                        className={`max-w-[280px] md:max-w-[360px] px-4 py-3 rounded-lg text-sm ${
                           message.sender === 'user'
                             ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
+                            : 'bg-gradient-to-br from-muted to-muted/80 border border-border/50'
                         }`}
                       >
-                        {message.content}
-                        <div className="text-xs opacity-70 mt-1">
+                        {message.sender === 'support' ? (
+                          <div className="prose prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-ul:text-foreground prose-li:text-foreground">
+                            <ReactMarkdown 
+                              components={{
+                                p: ({ children }) => <p className="mb-2 last:mb-0 text-foreground">{children}</p>,
+                                strong: ({ children }) => <strong className="font-semibold text-primary">{children}</strong>,
+                                ul: ({ children }) => <ul className="ml-4 mb-2 space-y-1">{children}</ul>,
+                                li: ({ children }) => <li className="text-sm text-foreground">{children}</li>,
+                                h1: ({ children }) => <h1 className="text-lg font-bold mb-2 text-foreground">{children}</h1>,
+                                h2: ({ children }) => <h2 className="text-base font-semibold mb-2 text-foreground">{children}</h2>,
+                                h3: ({ children }) => <h3 className="text-sm font-semibold mb-1 text-foreground">{children}</h3>
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
+                          </div>
+                        ) : (
+                          message.content
+                        )}
+                        <div className="text-xs opacity-70 mt-2 text-right">
                           {message.timestamp.toLocaleTimeString('es-ES', {
                             hour: '2-digit',
                             minute: '2-digit'

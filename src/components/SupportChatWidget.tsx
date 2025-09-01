@@ -32,8 +32,11 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
+  // Normalizamos el ID y nombre del usuario (compatibilidad con User de Supabase y perfil)
+  const uid = (user as any)?.user_id || (user as any)?.id;
+  const displayName = (user as any)?.display_name || (user as any)?.user_metadata?.full_name || (user as any)?.email;
   // Hook para verificar si el onboarding está completo
-  const { isOnboardingComplete, loading: onboardingLoading } = useOnboardingStatus(user?.user_id);
+  const { isOnboardingComplete, loading: onboardingLoading } = useOnboardingStatus(uid);
   
   // Hook para manejar el agente empresarial
   const { updateCompanyAgent } = useCompanyAgent({ user, enabled: !!user });
@@ -87,7 +90,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
       const { data, error } = await supabase.functions.invoke('company-agent-chat', {
         body: {
           message: inputMessage,
-          user_id: user?.user_id,
+          user_id: uid,
           context: pageContext
         }
       });
@@ -114,8 +117,8 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
             message: inputMessage,
             context: pageContext,
             userInfo: {
-              display_name: user?.display_name || user?.full_name,
-              user_type: user?.user_type
+              display_name: displayName,
+              user_type: (user as any)?.user_type
             }
           }
         });
@@ -138,7 +141,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
         // Final fallback response
         const fallbackMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: `Hola ${user?.display_name || 'Usuario'}, soy tu copiloto empresarial. En este momento estoy configurando tu perfil personalizado. ¿En qué puedo ayudarte mientras tanto?`,
+          content: `Hola ${displayName || 'Usuario'}, soy tu copiloto empresarial. En este momento estoy configurando tu perfil personalizado. ¿En qué puedo ayudarte mientras tanto?`,
           sender: 'support',
           timestamp: new Date(),
         };
@@ -164,7 +167,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
 
   // Mensaje de bienvenida inicial y creación de agente (solo después del onboarding)
   useEffect(() => {
-    if (messages.length === 0 && user && user.user_id && isOnboardingComplete) {
+    if (messages.length === 0 && user && uid && isOnboardingComplete) {
       // Crear agente empresarial si no existe
       const initializeCompanyAgent = async () => {
         try {
@@ -172,7 +175,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
           const { data: userCompany } = await supabase
             .from('company_members')
             .select('company_id, companies(name)')
-            .eq('user_id', user.user_id)
+            .eq('user_id', uid)
             .eq('is_primary', true)
             .maybeSingle();
 
@@ -188,7 +191,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
               supabase
                 .from('company_agents')
                 .select('agent_name')
-                .eq('user_id', user.user_id)
+                .eq('user_id', uid)
                 .maybeSingle(),
               supabase
                 .from('company_strategy')
@@ -202,18 +205,18 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
               supabase
                 .from('linkedin_connections')
                 .select('id')
-                .eq('user_id', user.user_id),
+                .eq('user_id', uid),
               supabase
                 .from('facebook_instagram_connections')
                 .select('id')
-                .eq('user_id', user.user_id)
+                .eq('user_id', uid)
             ]);
 
             if (!companyAgent) {
               // Crear agente en background
               supabase.functions.invoke('create-company-agent', {
                 body: {
-                  user_id: user.user_id,
+                  user_id: uid,
                   company_id: userCompany.company_id
                 }
               }).catch(console.error);
@@ -239,7 +242,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
 
             const welcomeMessage: Message = {
               id: 'welcome',
-              content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy tu copiloto empresarial personalizado para ${companyName}.\n\n${statusInfo}\n\n¿En qué te puedo ayudar hoy?`,
+              content: `¡Hola ${displayName || 'Usuario'}! 👋 Soy tu copiloto empresarial personalizado para ${companyName}.\n\n${statusInfo}\n\n¿En qué te puedo ayudar hoy?`,
               sender: 'support',
               timestamp: new Date(),
             };
@@ -249,7 +252,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
           console.error('Error initializing company agent:', error);
           const welcomeMessage: Message = {
             id: 'welcome',
-            content: `¡Hola ${user?.display_name || 'Usuario'}! 👋 Soy tu asistente personal de Buildera. ¿En qué puedo ayudarte hoy?`,
+            content: `¡Hola ${displayName || 'Usuario'}! 👋 Soy tu asistente personal de Buildera. ¿En qué puedo ayudarte hoy?`,
             sender: 'support',
             timestamp: new Date(),
           };

@@ -227,13 +227,13 @@ const CompanyLayout = ({
   // Check onboarding completion status
   useEffect(() => {
     const checkOnboardingStatus = async () => {
-      if (!profile?.id) return;
+      if (!profile?.user_id) return;
       
       try {
         const { data, error } = await supabase
           .from('user_onboarding_status')
           .select('onboarding_completed_at, dna_empresarial_completed')
-          .eq('user_id', profile.id)
+          .eq('user_id', profile.user_id)
           .maybeSingle();
           
         if (error) {
@@ -269,7 +269,7 @@ const CompanyLayout = ({
     return () => {
       window.removeEventListener('onboarding-completed', handleOnboardingComplete);
     };
-  }, [profile?.id, location.search]);
+  }, [profile?.user_id, location.search]);
   
   const isProfileIncomplete = !profile?.company_name || profile.company_name === 'Mi Negocio' || !profile?.full_name;
   const shouldBlockNavigation = !onboardingComplete && isProfileIncomplete;

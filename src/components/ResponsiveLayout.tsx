@@ -287,8 +287,10 @@ const CompanyLayout = ({
   };
 
   const setActiveView = (view: string) => {
+    console.log('🎯 setActiveView called with:', view, 'shouldBlockNavigation:', shouldBlockNavigation);
+    
     if (shouldBlockNavigation && view !== "adn-empresa") {
-      console.log('Onboarding not complete, access blocked');
+      console.log('⚠️ Navigation blocked - onboarding not complete');
       return;
     }
 
@@ -308,11 +310,15 @@ const CompanyLayout = ({
     };
     
     const targetRoute = routes[view];
+    console.log('🚀 Navigating to route:', targetRoute, 'for view:', view);
+    
     if (targetRoute) {
       navigate(targetRoute);
       if (isMobile) {
         setTimeout(() => setOpenMobile(false), 100);
       }
+    } else {
+      console.error('❌ No route found for view:', view);
     }
   };
 
@@ -396,7 +402,10 @@ const CompanyLayout = ({
                             data-[state=collapsed]:h-12 data-[state=collapsed]:w-12 data-[state=collapsed]:rounded-full data-[state=collapsed]:mx-auto
                             ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-md" : isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-sidebar-accent/50"}
                           `}
-                          onClick={isDisabled ? undefined : () => setActiveView(item.id)}
+                          onClick={isDisabled ? undefined : () => {
+                            console.log('🔄 Clicking sidebar item:', item.id, 'isDisabled:', isDisabled);
+                            setActiveView(item.id);
+                          }}
                           tooltip={item.label}
                         >
                           <div className="flex items-center gap-3">

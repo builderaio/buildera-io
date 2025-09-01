@@ -45,6 +45,7 @@ interface GrowthOpportunity {
 }
 
 const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
+  console.log('🎯 MandoCentral component rendered with profile:', profile);
   const [marketingKPIs, setMarketingKPIs] = useState<MarketingKPI[]>([]);
   const [quickWins, setQuickWins] = useState<QuickWin[]>([]);
   const [growthOpportunities, setGrowthOpportunities] = useState<GrowthOpportunity[]>([]);

@@ -279,6 +279,7 @@ const CompanyDashboard = () => {
         return <OnboardingOrchestrator user={user!} />;
       case "mando-central":
       case "dashboard":
+        console.log('📊 Rendering MandoCentral with profile:', profile);
         return <MandoCentral profile={profile} />;
       case "adn-empresa":
         return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;

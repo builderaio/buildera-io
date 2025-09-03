@@ -50,8 +50,7 @@ import {
   RefreshCw,
   Filter,
   Search,
-  Settings,
-  Camera
+  Settings
 } from "lucide-react";
 
 interface MarketingHubWowProps {
@@ -63,7 +62,7 @@ interface QuickStat {
   value: string;
   change: string;
   trend: 'up' | 'down' | 'neutral';
-  icon: any;
+  icon: React.ComponentType<any>;
   color: string;
   description?: string;
 }
@@ -366,18 +365,16 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   const checkWorkflowStatus = async () => {
     try {
-      const [companyRes, campaignRes, strategyRes, contentRes] = await Promise.all([
+      const [companyRes, campaignRes] = await Promise.all([
         supabase.from('companies').select('*').eq('created_by', profile.user_id).limit(1),
-        supabase.from('marketing_campaigns').select('*').eq('user_id', profile.user_id).limit(1),
-        supabase.from('marketing_strategies').select('*').eq('user_id', profile.user_id).limit(1),
-        supabase.from('content_calendar_items').select('*').eq('user_id', profile.user_id).limit(1)
+        supabase.from('marketing_insights').select('*').eq('user_id', profile.user_id).limit(1)
       ]);
 
       setWorkflow({
         setup: (companyRes.data?.length || 0) > 0,
         analysis: false, // Se establecerá según análisis previos
-        strategy: (strategyRes.data?.length || 0) > 0,
-        content: (contentRes.data?.length || 0) > 0,
+        strategy: (campaignRes.data?.length || 0) > 0,
+        content: false, // Se establecerá según contenido generado
         automation: false // Se establecerá según automatizaciones activas
       });
 
@@ -708,7 +705,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
             <CardContent className="p-8">
                 <AdvancedAILoader
-                  loading={true}
+                  isVisible={true}
                   currentStep={processStep}
                   totalSteps={totalSteps}
                   stepTitle={stepDetails.title}

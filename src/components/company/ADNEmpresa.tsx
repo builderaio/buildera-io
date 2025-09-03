@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -27,7 +28,10 @@ import {
   Instagram,
   Linkedin,
   Youtube,
-  Music
+  Music,
+  Plus,
+  Trash2,
+  X
 } from "lucide-react";
 
 interface ADNEmpresaProps {
@@ -212,6 +216,91 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     }
   };
 
+  const saveObjective = async (objectiveData: any, objectiveId?: string) => {
+    try {
+      const action = objectiveId ? 'update' : 'create';
+      
+      const response = await fetch('https://ubhzzppmkhxbuiajfswa.supabase.co/functions/v1/manage-company-objectives', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          action,
+          objectiveData,
+          objectiveId,
+          companyId: companyData?.id
+        })
+      });
+
+      if (!response.ok) throw new Error('Error en la operación');
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: objectiveId ? "Objetivo actualizado" : "Objetivo creado",
+          description: "Los cambios se han guardado correctamente",
+        });
+        
+        // Recargar objetivos
+        loadOnboardingData();
+        setEditing(null);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Error saving objective:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el objetivo",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteObjective = async (objectiveId: string) => {
+    try {
+      const response = await fetch('https://ubhzzppmkhxbuiajfswa.supabase.co/functions/v1/manage-company-objectives', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify({
+          action: 'delete',
+          objectiveId,
+          companyId: companyData?.id
+        })
+      });
+
+      if (!response.ok) throw new Error('Error eliminando objetivo');
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "Objetivo eliminado",
+          description: "El objetivo se ha eliminado correctamente",
+        });
+        
+        // Recargar objetivos
+        loadOnboardingData();
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error('Error deleting objective:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el objetivo",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Componentes auxiliares
   const EditableField = ({ 
     field, 
     value, 
@@ -283,6 +372,269 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         </span>
         <Edit className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
+    );
+  };
+
+  const EditableObjectiveCard = ({ objective, onSave, onDelete, editing, setEditing }: any) => {
+    const [formData, setFormData] = useState({
+      title: objective.title || '',
+      description: objective.description || '',
+      objective_type: objective.objective_type || 'short_term',
+      priority: objective.priority || 1,
+      target_date: objective.target_date || ''
+    });
+
+    const isEditing = editing === objective.id;
+
+    const handleSave = () => {
+      onSave(formData, objective.id);
+    };
+
+    if (isEditing) {
+      return (
+        <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border">
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Título</label>
+              <Input
+                value={formData.title}
+                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Título del objetivo"
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Descripción</label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Descripción del objetivo"
+                className="mt-1 min-h-[80px]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Tipo</label>
+                <Select 
+                  value={formData.objective_type} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, objective_type: value }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="short_term">Corto plazo</SelectItem>
+                    <SelectItem value="medium_term">Mediano plazo</SelectItem>
+                    <SelectItem value="long_term">Largo plazo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Prioridad</label>
+                <Select 
+                  value={formData.priority.toString()} 
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, priority: parseInt(value) }))}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Alta (1)</SelectItem>
+                    <SelectItem value="2">Media (2)</SelectItem>
+                    <SelectItem value="3">Baja (3)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Fecha objetivo (opcional)</label>
+              <Input
+                type="date"
+                value={formData.target_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, target_date: e.target.value }))}
+                className="mt-1"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button size="sm" onClick={handleSave}>
+                <Save className="w-3 h-3 mr-1" />
+                Guardar
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setEditing(null)}>
+                <X className="w-3 h-3 mr-1" />
+                Cancelar
+              </Button>
+              <Button 
+                size="sm" 
+                variant="destructive" 
+                onClick={() => {
+                  if (confirm('¿Estás seguro de eliminar este objetivo?')) {
+                    onDelete(objective.id);
+                  }
+                }}
+              >
+                <Trash2 className="w-3 h-3 mr-1" />
+                Eliminar
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border cursor-pointer hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors group"
+        onClick={() => setEditing(objective.id)}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <h3 className="font-semibold text-green-900 dark:text-green-100">
+            {objective.title}
+          </h3>
+          <div className="flex gap-2">
+            <Badge 
+              variant={objective.priority === 1 ? "default" : "outline"}
+              className="text-xs"
+            >
+              Prioridad {objective.priority}
+            </Badge>
+            <Edit className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </div>
+        
+        <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+          {objective.description}
+        </p>
+        
+        <div className="flex items-center justify-between text-xs">
+          <Badge variant="secondary">
+            {objective.objective_type === 'short_term' ? 'Corto plazo' : 
+             objective.objective_type === 'medium_term' ? 'Mediano plazo' : 'Largo plazo'}
+          </Badge>
+          
+          {objective.target_date && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Calendar className="w-3 h-3" />
+              {new Date(objective.target_date).toLocaleDateString()}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const NewObjectiveForm = ({ companyId, onSave, onCancel }: any) => {
+    const [formData, setFormData] = useState({
+      title: '',
+      description: '',
+      objective_type: 'short_term',
+      priority: 1,
+      target_date: ''
+    });
+
+    const handleSubmit = () => {
+      if (!formData.title.trim() || !formData.description.trim()) {
+        toast({
+          title: "Campos requeridos",
+          description: "Por favor completa título y descripción",
+          variant: "destructive"
+        });
+        return;
+      }
+      onSave(formData);
+    };
+
+    return (
+      <Card className="border-dashed border-2 border-green-300 dark:border-green-700">
+        <CardHeader>
+          <CardTitle className="text-lg text-green-800 dark:text-green-200">
+            Nuevo Objetivo Estratégico
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Título *</label>
+            <Input
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Ej: Aumentar ventas en un 25%"
+              className="mt-1"
+            />
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Descripción *</label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Describe cómo planeas lograr este objetivo..."
+              className="mt-1 min-h-[100px]"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Plazo</label>
+              <Select 
+                value={formData.objective_type} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, objective_type: value }))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="short_term">Corto plazo (3-6 meses)</SelectItem>
+                  <SelectItem value="medium_term">Mediano plazo (6-12 meses)</SelectItem>
+                  <SelectItem value="long_term">Largo plazo (1+ años)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Prioridad</label>
+              <Select 
+                value={formData.priority.toString()} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, priority: parseInt(value) }))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Alta (1)</SelectItem>
+                  <SelectItem value="2">Media (2)</SelectItem>
+                  <SelectItem value="3">Baja (3)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">Fecha objetivo (opcional)</label>
+            <Input
+              type="date"
+              value={formData.target_date}
+              onChange={(e) => setFormData(prev => ({ ...prev, target_date: e.target.value }))}
+              className="mt-1"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button onClick={handleSubmit}>
+              <Save className="w-4 h-4 mr-2" />
+              Guardar Objetivo
+            </Button>
+            <Button variant="outline" onClick={onCancel}>
+              <X className="w-4 h-4 mr-2" />
+              Cancelar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   };
 
@@ -471,58 +823,48 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         )}
 
         {/* Objetivos de Crecimiento */}
-        {objectives.length > 0 && (
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
-                </div>
-                Objetivos de Crecimiento
-                <Badge variant="secondary" className="ml-auto">{objectives.length} objetivos</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {objectives.map((objective, index) => (
-                  <div key={index} className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border">
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-green-900 dark:text-green-100">
-                        {objective.title}
-                      </h3>
-                      <div className="flex gap-2">
-                        <Badge 
-                          variant={objective.priority === 1 ? "default" : "outline"}
-                          className="text-xs"
-                        >
-                          Prioridad {objective.priority}
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
-                      {objective.description}
-                    </p>
-                    
-                    <div className="flex items-center justify-between text-xs">
-                      <Badge variant="secondary">
-                        {objective.objective_type === 'short_term' ? 'Corto plazo' : 
-                         objective.objective_type === 'medium_term' ? 'Mediano plazo' : 'Largo plazo'}
-                      </Badge>
-                      
-                      {objective.target_date && (
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(objective.target_date).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-green-600" />
               </div>
-            </CardContent>
-          </Card>
-        )}
+              Objetivos de Crecimiento
+              <Badge variant="secondary" className="ml-auto">{objectives.length} objetivos</Badge>
+              <Button
+                size="sm"
+                onClick={() => setEditing('new-objective')}
+                className="ml-2"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar Objetivo
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {objectives.map((objective, index) => (
+                <EditableObjectiveCard
+                  key={objective.id}
+                  objective={objective}
+                  onSave={saveObjective}
+                  onDelete={deleteObjective}
+                  editing={editing}
+                  setEditing={setEditing}
+                />
+              ))}
+            </div>
+            
+            {/* Formulario para nuevo objetivo */}
+            {editing === 'new-objective' && (
+              <NewObjectiveForm
+                companyId={companyData?.id}
+                onSave={saveObjective}
+                onCancel={() => setEditing(null)}
+              />
+            )}
+          </CardContent>
+        </Card>
 
         {/* Identidad de Marca */}
         {brandingData && (

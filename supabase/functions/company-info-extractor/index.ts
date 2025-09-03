@@ -153,41 +153,83 @@ async function extractCompanyData(url: string, userId: string, token: string) {
       const safeParse = (txt: string) => {
         try { return JSON.parse(txt); } catch { return null; }
       };
-      const extractBalanced = (text: string, startIndex: number, openChar: string, closeChar: string) => {
-        let depth = 0;
-        let start = -1;
-        for (let i = startIndex; i < text.length; i++) {
-          const ch = text[i];
-          if (ch === openChar) { if (start === -1) start = i; depth++; }
-          else if (ch === closeChar) { depth--; if (depth === 0 && start !== -1) return text.slice(start, i + 1); }
-        }
-        return null;
+      
+      // Helper function to clean streaming JSON data
+      const cleanStreamingJson = (text: string): string => {
+        // Remove streaming metadata lines that start with {"type":"begin",...} or {"type":"item",...}
+        const lines = text.split('\n').filter(line => {
+          const trimmed = line.trim();
+          if (!trimmed) return false;
+          try {
+            const parsed = JSON.parse(trimmed);
+            // Skip N8N streaming metadata
+            if (parsed.type === 'begin' || parsed.type === 'item' || parsed.type === 'end') {
+              return false;
+            }
+            return true;
+          } catch {
+            // If it's not valid JSON, include it (might be part of larger structure)
+            return true;
+          }
+        });
+        return lines.join('\n');
       };
 
-      // 1) Try full parse
-      apiResult = safeParse(rawBody);
+      // Clean the response first
+      const cleanedBody = cleanStreamingJson(rawBody);
+      console.log('🧹 Cleaned body sample:', cleanedBody.slice(0, 1000));
 
-      // 2) Try extract array []
+      // 1) Try full parse of cleaned body
+      apiResult = safeParse(cleanedBody);
+
+      // 2) If that fails, try original parsing methods
       if (!apiResult) {
-        const firstArr = rawBody.indexOf('[');
+        console.log('🔄 Cleaned parse failed, trying original methods...');
+        apiResult = safeParse(rawBody);
+      }
+
+      // 3) Try extract array [] from cleaned body
+      if (!apiResult) {
+        const extractBalanced = (text: string, startIndex: number, openChar: string, closeChar: string) => {
+          let depth = 0;
+          let start = -1;
+          for (let i = startIndex; i < text.length; i++) {
+            const ch = text[i];
+            if (ch === openChar) { if (start === -1) start = i; depth++; }
+            else if (ch === closeChar) { depth--; if (depth === 0 && start !== -1) return text.slice(start, i + 1); }
+          }
+          return null;
+        };
+
+        const firstArr = cleanedBody.indexOf('[');
         if (firstArr !== -1) {
-          const arrStr = extractBalanced(rawBody, firstArr, '[', ']');
+          const arrStr = extractBalanced(cleanedBody, firstArr, '[', ']');
           apiResult = arrStr ? safeParse(arrStr) : null;
-          if (apiResult) console.log('🧩 Parsed via balanced array extraction');
+          if (apiResult) console.log('🧩 Parsed via balanced array extraction from cleaned body');
         }
       }
 
-      // 3) Try extract object after "data": {...}
+      // 4) Try extract object after "data": {...}
       if (!apiResult) {
-        const dataIdx = rawBody.indexOf('"data"');
+        const dataIdx = cleanedBody.indexOf('"data"');
         if (dataIdx !== -1) {
-          const braceIdx = rawBody.indexOf('{', dataIdx);
+          const braceIdx = cleanedBody.indexOf('{', dataIdx);
           if (braceIdx !== -1) {
-            const objStr = extractBalanced(rawBody, braceIdx, '{', '}');
+            const extractBalanced = (text: string, startIndex: number, openChar: string, closeChar: string) => {
+              let depth = 0;
+              let start = -1;
+              for (let i = startIndex; i < text.length; i++) {
+                const ch = text[i];
+                if (ch === openChar) { if (start === -1) start = i; depth++; }
+                else if (ch === closeChar) { depth--; if (depth === 0 && start !== -1) return text.slice(start, i + 1); }
+              }
+              return null;
+            };
+            const objStr = extractBalanced(cleanedBody, braceIdx, '{', '}');
             const obj = objStr ? safeParse(objStr) : null;
             if (obj) {
               apiResult = [{ data: obj }];
-              console.log('🧩 Parsed via data-object extraction');
+              console.log('🧩 Parsed via data-object extraction from cleaned body');
             }
           }
         }
@@ -205,6 +247,7 @@ async function extractCompanyData(url: string, userId: string, token: string) {
         if (firstItem && typeof firstItem === 'object' && firstItem.data) {
           extracted = firstItem.data;
           console.log('✅ Extracted company data from array[0].data');
+          console.log('📊 Company data keys found:', Object.keys(extracted));
         }
         // Fallback: try other common structures
         else if (firstItem?.output?.data) {
@@ -215,9 +258,14 @@ async function extractCompanyData(url: string, userId: string, token: string) {
           extracted = firstItem.output;
           console.log('✅ Extracted from array[0].output');
         }
+        else if (firstItem && typeof firstItem === 'object' && (firstItem.company_name || firstItem.business_description)) {
+          // Direct company data in first item
+          extracted = firstItem;
+          console.log('✅ Using array[0] directly as company data');
+        }
         else {
           extracted = firstItem;
-          console.log('✅ Using array[0] directly');
+          console.log('⚠️ Using array[0] as fallback (keys:', Object.keys(firstItem || {}), ')');
         }
       } else if (apiResult && typeof apiResult === 'object') {
         // Single object response

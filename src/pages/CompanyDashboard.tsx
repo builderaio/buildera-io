@@ -57,6 +57,11 @@ const CompanyDashboard = () => {
         setShouldShowOnboarding(false);
         setLoading(false);
         return;
+      } else if (viewParam === 'mando-central') {
+        setActiveView('mando-central');
+        setShouldShowOnboarding(false);
+        setLoading(false);
+        return;
       } else if (viewParam === 'adn-empresa') {
         setActiveView('adn-empresa');
         setShouldShowOnboarding(false);

@@ -296,7 +296,7 @@ const CompanyLayout = ({
 
     // Aseguramos que las rutas con parámetros de consulta funcionen correctamente
     const routes: Record<string, string> = {
-      'mando-central': '/company-dashboard',
+      'mando-central': '/company-dashboard?view=mando-central',
       'adn-empresa': '/company-dashboard?view=adn-empresa',
       'base-conocimiento': '/company-dashboard?view=base-conocimiento',
       'marketing-hub': '/company-dashboard?view=marketing-hub',

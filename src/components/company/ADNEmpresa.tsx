@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -18,7 +20,14 @@ import {
   Calendar,
   Users,
   MapPin,
-  ExternalLink
+  ExternalLink,
+  Save,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Youtube,
+  Music
 } from "lucide-react";
 
 interface ADNEmpresaProps {
@@ -34,6 +43,15 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const [brandingData, setBrandingData] = useState<any>(null);
   const [objectives, setObjectives] = useState<any[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [editing, setEditing] = useState<string | null>(null);
+  const [socialMediaData, setSocialMediaData] = useState<any>({
+    facebook_url: '',
+    twitter_url: '',
+    instagram_url: '',
+    linkedin_url: '',
+    youtube_url: '',
+    tiktok_url: ''
+  });
 
   useEffect(() => {
     console.log('🔍 ADNEmpresa useEffect triggered with profile:', profile);
@@ -119,8 +137,19 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
 
       // Establecer datos - tomar los primeros resultados encontrados
       if (companyResult.data && companyResult.data.length > 0) {
-        setCompanyData(companyResult.data[0]); // Tomar la primera empresa
-        setLastUpdated(new Date(companyResult.data[0].updated_at).toLocaleDateString());
+        const company = companyResult.data[0];
+        setCompanyData(company); // Tomar la primera empresa
+        setLastUpdated(new Date(company.updated_at).toLocaleDateString());
+        
+        // Cargar datos de redes sociales
+        setSocialMediaData({
+          facebook_url: company.facebook_url || '',
+          twitter_url: company.twitter_url || '',
+          instagram_url: company.instagram_url || '',
+          linkedin_url: company.linkedin_url || '',
+          youtube_url: company.youtube_url || '',
+          tiktok_url: company.tiktok_url || ''
+        });
       }
       
       if (strategyResult.data && strategyResult.data.length > 0) {
@@ -147,8 +176,114 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     }
   };
 
-  const runOnboardingAgain = () => {
-    window.location.href = '/company-dashboard?view=onboarding';
+  const saveField = async (field: string, value: string, table: string = 'companies', recordId?: string) => {
+    try {
+      const updateData = { [field]: value };
+      
+      if (table === 'companies' && companyData?.id) {
+        const { error } = await supabase
+          .from('companies')
+          .update(updateData)
+          .eq('id', companyData.id);
+          
+        if (error) throw error;
+        
+        setCompanyData(prev => ({ ...prev, [field]: value }));
+        
+        // Actualizar datos de redes sociales si es necesario
+        if (field.includes('_url')) {
+          setSocialMediaData(prev => ({ ...prev, [field]: value }));
+        }
+      }
+      
+      toast({
+        title: "Campo actualizado",
+        description: "Los cambios se han guardado correctamente",
+      });
+      
+      setEditing(null);
+    } catch (error) {
+      console.error('Error saving field:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el campo",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const EditableField = ({ 
+    field, 
+    value, 
+    onSave, 
+    type = "text", 
+    placeholder = "" 
+  }: { 
+    field: string; 
+    value: string; 
+    onSave: (value: string) => void; 
+    type?: string;
+    placeholder?: string;
+  }) => {
+    const [tempValue, setTempValue] = useState(value || '');
+    const isEditing = editing === field;
+    
+    useEffect(() => {
+      setTempValue(value || '');
+    }, [value]);
+    
+    if (isEditing) {
+      return (
+        <div className="flex gap-2 items-center">
+          {type === "textarea" ? (
+            <Textarea
+              value={tempValue}
+              onChange={(e) => setTempValue(e.target.value)}
+              placeholder={placeholder}
+              className="min-h-[60px]"
+            />
+          ) : (
+            <Input
+              type={type}
+              value={tempValue}
+              onChange={(e) => setTempValue(e.target.value)}
+              placeholder={placeholder}
+            />
+          )}
+          <Button
+            size="sm"
+            onClick={() => {
+              onSave(tempValue);
+              setEditing(null);
+            }}
+          >
+            <Save className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setTempValue(value || '');
+              setEditing(null);
+            }}
+          >
+            ✕
+          </Button>
+        </div>
+      );
+    }
+    
+    return (
+      <div 
+        className="group flex items-center gap-2 cursor-pointer hover:bg-muted/20 p-1 rounded transition-colors"
+        onClick={() => setEditing(field)}
+      >
+        <span className={`flex-1 ${!value ? 'text-muted-foreground italic' : ''}`}>
+          {value || placeholder}
+        </span>
+        <Edit className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    );
   };
 
   if (loading) {
@@ -172,11 +307,11 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold text-foreground">ADN Empresarial</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Información de tu empresa recopilada durante el proceso de configuración inicial.
+            Información de tu empresa. Haz clic en cualquier campo para editarlo.
           </p>
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Solo lectura - Para editar configuraciones, ve a Administración</span>
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span>Campos editables - Clic para modificar</span>
           </div>
           {lastUpdated && (
             <p className="text-sm text-muted-foreground">
@@ -198,75 +333,85 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Building2 className="w-4 h-4" />
                     Nombre de la Empresa
                   </div>
-                  <p className="text-lg font-semibold">{companyData.name}</p>
+                  <EditableField
+                    field="name"
+                    value={companyData.name}
+                    onSave={(value) => saveField('name', value)}
+                    placeholder="Nombre de tu empresa"
+                  />
                 </div>
                 
-                {companyData.industry_sector && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <Target className="w-4 h-4" />
-                      Sector Industrial
-                    </div>
-                    <p className="text-lg">{companyData.industry_sector}</p>
-                  </div>
-                )}
-                
-                {companyData.company_size && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <Users className="w-4 h-4" />
-                      Tamaño de Empresa
-                    </div>
-                    <p className="text-lg">{companyData.company_size}</p>
-                  </div>
-                )}
-                
-                {companyData.country && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <MapPin className="w-4 h-4" />
-                      País
-                    </div>
-                    <p className="text-lg">{companyData.country}</p>
-                  </div>
-                )}
-                
-                {companyData.website_url && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <Globe className="w-4 h-4" />
-                      Sitio Web
-                    </div>
-                    <a 
-                      href={companyData.website_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-lg text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      {companyData.website_url}
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                )}
-              </div>
-              
-              {companyData.description && (
-                <div className="space-y-2 pt-4 border-t">
+                <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Eye className="w-4 h-4" />
-                    Descripción del Negocio
+                    <Target className="w-4 h-4" />
+                    Sector Industrial
                   </div>
-                  <p className="text-base leading-relaxed bg-muted/30 p-4 rounded-lg">
-                    {companyData.description}
-                  </p>
+                  <EditableField
+                    field="industry_sector"
+                    value={companyData.industry_sector}
+                    onSave={(value) => saveField('industry_sector', value)}
+                    placeholder="Ej. Tecnología, Salud, Educación..."
+                  />
                 </div>
-              )}
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Users className="w-4 h-4" />
+                    Tamaño de Empresa
+                  </div>
+                  <EditableField
+                    field="company_size"
+                    value={companyData.company_size}
+                    onSave={(value) => saveField('company_size', value)}
+                    placeholder="Ej. 1-10 empleados, 11-50, etc."
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    País
+                  </div>
+                  <EditableField
+                    field="country"
+                    value={companyData.country}
+                    onSave={(value) => saveField('country', value)}
+                    placeholder="País donde opera tu empresa"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Globe className="w-4 h-4" />
+                    Sitio Web
+                  </div>
+                  <EditableField
+                    field="website_url"
+                    value={companyData.website_url}
+                    onSave={(value) => saveField('website_url', value)}
+                    type="url"
+                    placeholder="https://tu-empresa.com"
+                  />
+                </div>
+              
+              <div className="space-y-2 pt-4 border-t">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Eye className="w-4 h-4" />
+                  Descripción del Negocio
+                </div>
+                <EditableField
+                  field="description"
+                  value={companyData.description}
+                  onSave={(value) => saveField('description', value)}
+                  type="textarea"
+                  placeholder="Describe tu empresa, qué hace y a quién sirve..."
+                />
+              </div>
             </CardContent>
           </Card>
         )}
@@ -539,37 +684,101 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
           </Card>
         )}
 
-        {/* Navegación a otras secciones */}
+        {/* Redes Sociales */}
         <Card className="shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-              <div className="text-center sm:text-left">
-                <h3 className="font-semibold text-lg mb-2">¿Necesitas hacer cambios?</h3>
-                <p className="text-muted-foreground">
-                  Para editar configuraciones activas del sistema, ve a Administración. 
-                  Para actualizar la información empresarial, ejecuta el onboarding nuevamente.
-                </p>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Globe className="w-6 h-6 text-blue-600" />
+              </div>
+              Redes Sociales
+              <Badge variant="secondary" className="ml-auto">Editable</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Facebook className="w-4 h-4" />
+                  Facebook
+                </div>
+                <EditableField
+                  field="facebook_url"
+                  value={socialMediaData.facebook_url}
+                  onSave={(value) => saveField('facebook_url', value)}
+                  type="url"
+                  placeholder="https://facebook.com/tu-empresa"
+                />
               </div>
               
-              <div className="flex gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.location.href = '/company-dashboard?view=configuracion'}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Ir a Administración
-                </Button>
-                
-                <Button variant="outline" onClick={loadOnboardingData}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Recargar Datos
-                </Button>
-                
-                <Button onClick={runOnboardingAgain} className="bg-primary hover:bg-primary/90">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Actualizar Información
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Instagram className="w-4 h-4" />
+                  Instagram
+                </div>
+                <EditableField
+                  field="instagram_url"
+                  value={socialMediaData.instagram_url}
+                  onSave={(value) => saveField('instagram_url', value)}
+                  type="url"
+                  placeholder="https://instagram.com/tu-empresa"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Linkedin className="w-4 h-4" />
+                  LinkedIn
+                </div>
+                <EditableField
+                  field="linkedin_url"
+                  value={socialMediaData.linkedin_url}
+                  onSave={(value) => saveField('linkedin_url', value)}
+                  type="url"
+                  placeholder="https://linkedin.com/company/tu-empresa"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Twitter className="w-4 h-4" />
+                  Twitter / X
+                </div>
+                <EditableField
+                  field="twitter_url"
+                  value={socialMediaData.twitter_url}
+                  onSave={(value) => saveField('twitter_url', value)}
+                  type="url"
+                  placeholder="https://twitter.com/tu-empresa"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Youtube className="w-4 h-4" />
+                  YouTube
+                </div>
+                <EditableField
+                  field="youtube_url"
+                  value={socialMediaData.youtube_url}
+                  onSave={(value) => saveField('youtube_url', value)}
+                  type="url"
+                  placeholder="https://youtube.com/@tu-empresa"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Music className="w-4 h-4" />
+                  TikTok
+                </div>
+                <EditableField
+                  field="tiktok_url"
+                  value={socialMediaData.tiktok_url}
+                  onSave={(value) => saveField('tiktok_url', value)}
+                  type="url"
+                  placeholder="https://tiktok.com/@tu-empresa"
+                />
               </div>
             </div>
           </CardContent>
@@ -584,7 +793,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 Parece que aún no has completado el onboarding inicial. Ejecuta el proceso para configurar tu empresa.
               </p>
-              <Button onClick={runOnboardingAgain} size="lg">
+              <Button onClick={() => window.location.href = '/company-dashboard?view=onboarding'} size="lg">
                 <ArrowRight className="w-4 h-4 mr-2" />
                 Comenzar Onboarding
               </Button>

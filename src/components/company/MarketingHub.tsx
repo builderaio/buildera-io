@@ -33,6 +33,7 @@ import MarketingCalendar from './MarketingCalendar';
 import AdvancedMarketingDashboard from './AdvancedMarketingDashboard';
 import MarketingHubOrchestrator from './MarketingHubOrchestrator';
 import MarketingDataPersistenceManager from './MarketingDataPersistenceManager';
+import MarketingHubWow from './MarketingHubWow';
 
 
 interface MarketingHubProps {

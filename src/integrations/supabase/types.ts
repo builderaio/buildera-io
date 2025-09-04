@@ -4237,6 +4237,60 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_social_posts: {
+        Row: {
+          company_username: string
+          content: string | null
+          created_at: string
+          id: string
+          job_id: string
+          media_urls: string[] | null
+          platforms: string[]
+          post_type: string
+          preview_url: string | null
+          scheduled_date: string
+          status: string | null
+          title: string
+          updated_at: string
+          upload_post_response: Json | null
+          user_id: string
+        }
+        Insert: {
+          company_username: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          job_id: string
+          media_urls?: string[] | null
+          platforms: string[]
+          post_type: string
+          preview_url?: string | null
+          scheduled_date: string
+          status?: string | null
+          title: string
+          updated_at?: string
+          upload_post_response?: Json | null
+          user_id: string
+        }
+        Update: {
+          company_username?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          job_id?: string
+          media_urls?: string[] | null
+          platforms?: string[]
+          post_type?: string
+          preview_url?: string | null
+          scheduled_date?: string
+          status?: string | null
+          title?: string
+          updated_at?: string
+          upload_post_response?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_events: {
         Row: {
           created_at: string | null
@@ -4267,6 +4321,63 @@ export type Database = {
           risk_level?: string | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      social_accounts: {
+        Row: {
+          access_token: string | null
+          company_id: string | null
+          company_username: string
+          connected_at: string | null
+          created_at: string
+          facebook_page_id: string | null
+          id: string
+          is_connected: boolean | null
+          last_sync_at: string | null
+          metadata: Json | null
+          platform: string
+          platform_display_name: string | null
+          platform_username: string | null
+          updated_at: string
+          upload_post_profile_exists: boolean | null
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          company_id?: string | null
+          company_username: string
+          connected_at?: string | null
+          created_at?: string
+          facebook_page_id?: string | null
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          platform: string
+          platform_display_name?: string | null
+          platform_username?: string | null
+          updated_at?: string
+          upload_post_profile_exists?: boolean | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          company_id?: string | null
+          company_username?: string
+          connected_at?: string | null
+          created_at?: string
+          facebook_page_id?: string | null
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          platform?: string
+          platform_display_name?: string | null
+          platform_username?: string | null
+          updated_at?: string
+          upload_post_profile_exists?: boolean | null
+          user_id?: string
         }
         Relationships: []
       }

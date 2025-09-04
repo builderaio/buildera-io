@@ -52,6 +52,9 @@ import {
   Search,
   Settings
 } from "lucide-react";
+import { SocialConnectionManager } from './SocialConnectionManager';
+import { SocialPostCreator } from './SocialPostCreator';
+import { ScheduledPostsManager } from './ScheduledPostsManager';
 
 interface MarketingHubWowProps {
   profile: any;
@@ -792,6 +795,12 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-8">
+            {/* Social Connections Section */}
+            <SocialConnectionManager 
+              profile={profile} 
+              onConnectionsUpdated={loadConnections}
+            />
+            
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Platform Overview */}
               <Card className="lg:col-span-2 border-0 bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm">
@@ -984,88 +993,26 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             </div>
           </TabsContent>
 
-          {/* Other tabs content would go here */}
+          {/* Create Tab */}
           <TabsContent value="create" className="space-y-8">
-            <Card className="border-0 bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wand2 className="h-5 w-5 text-primary" />
-                  Crear Contenido con IA
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Wand2 className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Creación de Contenido</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Utilice la campaña inteligente para generar contenido optimizado automáticamente
-                  </p>
-                  <Button
-                    onClick={startIntelligentCampaign}
-                    disabled={currentProcess !== null}
-                    className="px-8 py-3"
-                  >
-                    <Rocket className="w-4 h-4 mr-2" />
-                    Crear Campaña Inteligente
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <SocialPostCreator 
+              profile={profile} 
+              onPostCreated={() => {
+                loadUpcomingPosts();
+                loadRealMetrics();
+              }}
+            />
           </TabsContent>
 
-          <TabsContent value="analyze" className="space-y-8">
-            <Card className="border-0 bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-primary" />
-                  Análisis Inteligente
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Brain className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Análisis Avanzado</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Conecte sus redes sociales y ejecute la campaña inteligente para obtener análisis detallados
-                  </p>
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Plataformas conectadas: {connectedPlatformsCount}/4
-                    </p>
-                    <Progress value={(connectedPlatformsCount / 4) * 100} className="max-w-xs mx-auto" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
+          {/* Schedule Tab */}
           <TabsContent value="schedule" className="space-y-8">
-            <Card className="border-0 bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Programación Inteligente
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Programación Automática</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    La campaña inteligente generará y programará contenido automáticamente en los mejores horarios
-                  </p>
-                  <Badge variant="secondary" className="text-sm">
-                    {upcomingPosts.length} posts programados
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+            <ScheduledPostsManager 
+              profile={profile} 
+              onPostsUpdated={() => {
+                loadUpcomingPosts();
+                loadRealMetrics();
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="results" className="space-y-8">

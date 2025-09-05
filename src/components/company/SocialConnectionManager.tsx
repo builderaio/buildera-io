@@ -99,17 +99,20 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     }
   };
 
-  const initializeProfile = async () => {
+  const initializeProfile = async (): Promise<string | null> => {
     try {
       setLoading(true);
       const { data, error } = await supabase.functions.invoke('upload-post-manager', {
         body: { action: 'init_profile', data: {} }
       });
 
-      if (error) throw error;
+      if (error) throw error as any;
 
       if (data?.success) {
-        setCompanyUsername(data.companyUsername);
+        const resolvedUsername = (data as any).companyUsername as string | undefined;
+        if (resolvedUsername) {
+          setCompanyUsername(resolvedUsername);
+        }
         
         if (!data.profileExists) {
           toast({
@@ -117,45 +120,63 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
             description: "Su perfil de Upload-Post ha sido configurado exitosamente",
           });
         }
+        return resolvedUsername ?? null;
       }
-    } catch (error) {
+      return null;
+    } catch (error: any) {
       console.error('Error initializing profile:', error);
-      if (error.message?.includes('API Key')) {
+      if (error?.message?.includes('401') || error?.message?.includes('API Key')) {
         toast({
           title: "⚠️ Configuración requerida",
           description: "Configure la API Key de Upload-Post para continuar",
           variant: "destructive"
         });
       }
+      return null;
     } finally {
       setLoading(false);
     }
   };
-
   const startConnectionFlow = async () => {
-    if (!companyUsername) {
-      toast({
-        title: "Error",
-        description: "Inicialice el perfil primero",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
       setConnecting(true);
-      
-      const { data, error } = await supabase.functions.invoke('upload-post-manager', {
-        body: { 
-          action: 'generate_jwt', 
-          data: { 
-            companyUsername,
-            platforms: ['tiktok', 'instagram', 'linkedin', 'facebook', 'youtube', 'twitter']
-          } 
-        }
-      });
 
-      if (error) throw error;
+      let username = companyUsername;
+      if (!username) {
+        toast({
+          title: "Preparando perfil",
+          description: "Inicializando perfil automáticamente...",
+        });
+        const resolved = await initializeProfile();
+        username = resolved || '';
+        if (!username) {
+          setConnecting(false);
+          return;
+        }
+      }
+
+      const attemptGenerate = async () => {
+        const { data, error } = await supabase.functions.invoke('upload-post-manager', {
+          body: {
+            action: 'generate_jwt',
+            data: {
+              companyUsername: username,
+              platforms: ['tiktok', 'instagram', 'linkedin', 'facebook', 'youtube', 'twitter']
+            }
+          }
+        });
+        if (error) throw error as any;
+        return data;
+      };
+
+      let data = await attemptGenerate().catch(async (err: any) => {
+        const msg = String(err?.message || '');
+        if (msg.includes('400') || msg.includes('404')) {
+          await initializeProfile();
+          return await attemptGenerate();
+        }
+        throw err;
+      });
 
       if (data?.access_url) {
         const newWindow = window.open(
@@ -163,9 +184,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
           'upload-post-connection',
           'width=800,height=600,scrollbars=yes,resizable=yes'
         );
-        
         setConnectionWindow(newWindow);
-        
         toast({
           title: "🔗 Conectando redes sociales",
           description: "Complete el proceso en la ventana emergente",
@@ -173,23 +192,27 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       }
     } catch (error) {
       console.error('Error starting connection flow:', error);
-      setConnecting(false);
       toast({
         title: "Error",
         description: "No se pudo iniciar el flujo de conexión",
         variant: "destructive"
       });
+      setConnecting(false);
     }
   };
-
   const refreshConnections = async () => {
-    if (!companyUsername) return;
+    let username = companyUsername;
+    if (!username) {
+      const resolved = await initializeProfile();
+      username = resolved || '';
+      if (!username) return;
+    }
 
     try {
       setLoading(true);
       
       const { data, error } = await supabase.functions.invoke('upload-post-manager', {
-        body: { action: 'get_connections', data: { companyUsername } }
+        body: { action: 'get_connections', data: { companyUsername: username } }
       });
 
       if (error) throw error;
@@ -208,7 +231,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       setLoading(false);
     }
   };
-
   const handleFacebookPageSelection = async () => {
     if (!companyUsername) return;
 

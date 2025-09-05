@@ -124,6 +124,7 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
     });
@@ -145,6 +146,7 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
+          'x-api-key': apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username: companyUsername }),
@@ -175,7 +177,8 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
       };
     }
 
-    throw new Error(`Error verificando perfil: ${checkResponse.status}`);
+    const errorText = await checkResponse.text();
+    throw new Error(`Error verificando perfil: ${checkResponse.status} - ${errorText}`);
 
   } catch (error) {
     console.error('Error in initializeProfile:', error);
@@ -191,6 +194,7 @@ async function generateJWT(supabaseClient: any, userId: string, apiKey: string, 
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -228,12 +232,14 @@ async function getConnections(supabaseClient: any, userId: string, apiKey: strin
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Error obteniendo conexiones: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Error obteniendo conexiones: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
@@ -274,6 +280,7 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
     });
@@ -297,12 +304,14 @@ async function getFacebookPages(supabaseClient: any, userId: string, apiKey: str
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Error obteniendo páginas de Facebook: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Error obteniendo páginas de Facebook: ${response.status} - ${errorText}`);
     }
 
     return await response.json();
@@ -348,6 +357,7 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
+          'x-api-key': apiKey,
         },
         body: formData,
       });
@@ -360,6 +370,7 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
+          'x-api-key': apiKey,
         },
         body: formData,
       });
@@ -370,13 +381,15 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
+          'x-api-key': apiKey,
         },
         body: formData,
       });
     }
 
     if (!response || !response.ok) {
-      throw new Error(`Error publicando contenido: ${response?.status}`);
+      const errorText = response ? await response.text() : 'No response';
+      throw new Error(`Error publicando contenido: ${response?.status} - ${errorText}`);
     }
 
     const result = await response.json();
@@ -413,12 +426,14 @@ async function getScheduledPosts(supabaseClient: any, userId: string, apiKey: st
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Error obteniendo posts programados: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Error obteniendo posts programados: ${response.status} - ${errorText}`);
     }
 
     return await response.json();
@@ -437,12 +452,14 @@ async function cancelScheduledPost(supabaseClient: any, userId: string, apiKey: 
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
+        'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Error cancelando post: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Error cancelando post: ${response.status} - ${errorText}`);
     }
 
     // Actualizar estado en base de datos local

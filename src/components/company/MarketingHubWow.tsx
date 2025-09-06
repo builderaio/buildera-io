@@ -414,11 +414,44 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       if (companyMember?.companies) {
         const company = companyMember.companies;
         console.log('Company data found:', company);
-        const newCompanyData = {
+
+        // Enriquecer datos desde company_objectives y company_branding
+        const [objectiveRes, brandingRes] = await Promise.all([
+          supabase
+            .from('company_objectives')
+            .select('title, description, status, priority')
+            .eq('company_id', company.id)
+            .eq('status', 'active')
+            .order('priority', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from('company_branding')
+            .select('brand_voice, visual_identity, full_brand_data')
+            .eq('company_id', company.id)
+            .limit(1)
+            .maybeSingle()
+        ]);
+
+        const objective = objectiveRes.data as any | null;
+        const branding = brandingRes.data as any | null;
+
+        const propuestaDesdeBranding = branding?.brand_voice?.propuesta_de_valor
+          || branding?.full_brand_data?.propuesta_de_valor
+          || branding?.brand_voice?.unified_message;
+
+        const newCompanyData: CompanyData = {
           nombre_empresa: company.name || '',
           pais: company.country || '',
-          objetivo_de_negocio: company.description || company.industry_sector || '',
-          propuesta_de_valor: company.description || '',
+          objetivo_de_negocio:
+            (objective?.description || objective?.title)
+            || company.description
+            || company.industry_sector
+            || '',
+          propuesta_de_valor:
+            (propuestaDesdeBranding as string)
+            || company.description
+            || '',
           url_sitio_web: company.website_url || ''
         };
         console.log('Setting companyData to:', newCompanyData);

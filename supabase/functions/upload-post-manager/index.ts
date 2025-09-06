@@ -66,8 +66,11 @@ serve(async (req) => {
       case 'get_pinterest_boards':
         result = await getPinterestBoards(supabaseClient, user.id, uploadPostApiKey, data);
         break;
-      case 'update_facebook_page':
-        result = await updateFacebookPage(supabaseClient, user.id, data);
+      case 'update_linkedin_page':
+        result = await updateLinkedInPage(supabaseClient, user.id, data);
+        break;
+      case 'update_linkedin_page':
+        result = await updateLinkedInPage(supabaseClient, user.id, data);
         break;
       case 'post_content':
         result = await postContent(supabaseClient, user.id, uploadPostApiKey, data);
@@ -496,6 +499,19 @@ async function updateFacebookPage(supabaseClient: any, userId: string, data: any
     .update({ facebook_page_id: facebookPageId })
     .eq('user_id', userId)
     .eq('platform', 'facebook')
+    .eq('company_username', companyUsername);
+
+  return { success: true };
+}
+
+async function updateLinkedInPage(supabaseClient: any, userId: string, data: any) {
+  const { companyUsername, linkedinPageId } = data;
+
+  await supabaseClient
+    .from('social_accounts')
+    .update({ linkedin_page_id: linkedinPageId })
+    .eq('user_id', userId)
+    .eq('platform', 'linkedin')
     .eq('company_username', companyUsername);
 
   return { success: true };

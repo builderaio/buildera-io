@@ -59,6 +59,9 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const [showFacebookPages, setShowFacebookPages] = useState(false);
   const [facebookPages, setFacebookPages] = useState<FacebookPage[]>([]);
   const [selectedFacebookPage, setSelectedFacebookPage] = useState<string>('');
+  const [linkedinPages, setLinkedinPages] = useState<any[]>([]);
+  const [showLinkedinPages, setShowLinkedinPages] = useState(false);
+  const [selectedLinkedinPage, setSelectedLinkedinPage] = useState('');
   const [connectionWindow, setConnectionWindow] = useState<Window | null>(null);
   const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
   const { toast } = useToast();
@@ -351,6 +354,76 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     }
   };
 
+  const handleLinkedInPageSelection = async () => {
+    if (!companyUsername) {
+      toast({
+        title: "Error",
+        description: "No se encontró el perfil de empresa",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('upload-post-manager', {
+        body: { 
+          action: 'get_linkedin_pages', 
+          data: { companyUsername } 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.pages) {
+        setLinkedinPages(data.pages);
+        setShowLinkedinPages(true);
+      } else {
+        toast({
+          title: "Sin páginas",
+          description: "No se encontraron páginas de LinkedIn disponibles",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error loading LinkedIn pages:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las páginas de LinkedIn",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const selectLinkedInPage = async () => {
+    if (!selectedLinkedinPage || !companyUsername) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('upload-post-manager', {
+        body: { 
+          action: 'update_linkedin_page', 
+          data: { companyUsername, linkedinPageId: selectedLinkedinPage } 
+        }
+      });
+
+      if (error) throw error;
+
+      setShowLinkedinPages(false);
+      await loadSocialAccounts();
+      
+      toast({
+        title: "✅ Página seleccionada",
+        description: "Página de LinkedIn configurada exitosamente",
+      });
+    } catch (error) {
+      console.error('Error selecting LinkedIn page:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo seleccionar la página",
+        variant: "destructive"
+      });
+    }
+  };
+
 
 
   const getConnectionStatus = (platform: string) => {
@@ -476,6 +549,18 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                     Seleccionar Página
                   </Button>
                 )}
+                
+                {platform === 'linkedin' && isConnected && (
+                  <Button
+                    onClick={handleLinkedInPageSelection}
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-2"
+                  >
+                    <Settings className="w-3 h-3 mr-1" />
+                    Seleccionar Página
+                  </Button>
+                )}
               </CardContent>
             </Card>
           );
@@ -542,6 +627,42 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 Cancelar
               </Button>
               <Button onClick={selectFacebookPage} disabled={!selectedFacebookPage}>
+                Seleccionar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* LinkedIn Pages Dialog */}
+      <Dialog open={showLinkedinPages} onOpenChange={setShowLinkedinPages}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Seleccionar Página de LinkedIn</DialogTitle>
+            <DialogDescription>
+              Elija la página de LinkedIn que desea usar para publicar contenido.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <Select value={selectedLinkedinPage} onValueChange={setSelectedLinkedinPage}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar página..." />
+              </SelectTrigger>
+              <SelectContent>
+                {linkedinPages.map((page) => (
+                  <SelectItem key={page.id} value={page.id}>
+                    {page.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowLinkedinPages(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={selectLinkedInPage} disabled={!selectedLinkedinPage}>
                 Seleccionar
               </Button>
             </div>

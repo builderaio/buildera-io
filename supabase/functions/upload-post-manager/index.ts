@@ -497,6 +497,11 @@ async function updateFacebookPage(supabaseClient: any, userId: string, data: any
 
 async function postContent(supabaseClient: any, userId: string, apiKey: string, data: any) {
   const { companyUsername, platforms, title, content, mediaUrls, postType, scheduledDate } = data;
+  
+  console.log(`📝 postContent called with:`, { 
+    companyUsername, platforms, title, postType, 
+    mediaCount: mediaUrls?.length || 0, scheduledDate 
+  });
 
   try {
     let response;
@@ -513,6 +518,8 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     }
 
     if (postType === 'text') {
+      // Para texto solo necesitamos user, platform[], title y scheduled_date
+      console.log('📄 Sending text post to /api/upload_text');
       response = await fetch('https://api.upload-post.com/api/upload_text', {
         method: 'POST',
         headers: {
@@ -521,10 +528,19 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
         body: formData,
       });
     } else if (postType === 'photo' && mediaUrls?.length) {
+      // Para fotos: user, platform[], photos[], title, caption, scheduled_date
       mediaUrls.forEach((url: string) => {
-        formData.append('photos[]', url);
+        if (url.trim()) {
+          formData.append('photos[]', url.trim());
+        }
       });
       
+      // El contenido va como 'caption' para fotos, no como 'title' adicional
+      if (content && content.trim()) {
+        formData.append('caption', content.trim());
+      }
+      
+      console.log(`📸 Sending photo post to /api/upload_photos with ${mediaUrls.length} photos`);
       response = await fetch('https://api.upload-post.com/api/upload_photos', {
         method: 'POST',
         headers: {
@@ -533,8 +549,16 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
         body: formData,
       });
     } else if (postType === 'video' && mediaUrls?.length) {
+      // Para videos: user, platform[], video, title, scheduled_date
       formData.append('video', mediaUrls[0]);
       
+      // Si hay contenido adicional, podemos incluirlo en el title o como descripción
+      if (content && content.trim()) {
+        // Combinar title y content para videos
+        formData.set('title', `${title}\n\n${content.trim()}`);
+      }
+      
+      console.log('🎥 Sending video post to /api/upload');
       response = await fetch('https://api.upload-post.com/api/upload', {
         method: 'POST',
         headers: {
@@ -542,6 +566,8 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
         },
         body: formData,
       });
+    } else {
+      throw new Error(`Tipo de post no soportado o faltan medios: ${postType}`);
     }
 
     if (!response || !response.ok) {

@@ -118,6 +118,26 @@ async function generateCompanyUsername(supabaseClient: any, userId: string): Pro
   return `${baseName}_${userId.substring(0, 8)}`;
 }
 
+async function getPrimaryCompanyId(supabaseClient: any, userId: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabaseClient
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', userId)
+      .eq('is_primary', true)
+      .limit(1);
+
+    if (error) {
+      console.warn('Could not fetch primary company id:', error);
+      return null;
+    }
+    return data?.[0]?.company_id || null;
+  } catch (e) {
+    console.warn('Error getting primary company id:', e);
+    return null;
+  }
+}
+
 async function initializeProfile(supabaseClient: any, userId: string, apiKey: string, data: any) {
   const companyUsername = await generateCompanyUsername(supabaseClient, userId);
 
@@ -161,10 +181,12 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
       }
 
       // Actualizar base de datos local
+      const companyId = await getPrimaryCompanyId(supabaseClient, userId);
       await supabaseClient
         .from('social_accounts')
         .upsert({
           user_id: userId,
+          company_id: companyId,
           company_username: companyUsername,
           platform: 'upload_post_profile',
           upload_post_profile_exists: true,
@@ -313,6 +335,7 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
   try {
     console.log('🔄 Updating per-platform social accounts for:', companyUsername);
 
+    const companyId = await getPrimaryCompanyId(supabaseClient, userId);
     const platforms = Object.keys(socialAccountsData || {});
     console.log('📱 Platforms to process:', platforms);
 
@@ -322,11 +345,12 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
       const hasData = platformData && typeof platformData === 'object';
       const isConnected = !!(hasData && (platformData.username || platformData.display_name || platformData.social_images));
 
-      // Upsert one row per platform (schema requires NOT NULL platform and UNIQUE(user_id, platform))
+      // Upsert one row per plataforma
       const { error } = await supabaseClient
         .from('social_accounts')
         .upsert({
           user_id: userId,
+          company_id: companyId,
           company_username: companyUsername,
           platform,
           platform_username: hasData ? (platformData.username ?? null) : null,

@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import { 
   Sparkles, 
@@ -117,6 +118,14 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     strategy: false,
     content: false,
     automation: false
+  });
+  const [showCompanyDataDialog, setShowCompanyDataDialog] = useState(false);
+  const [tempCompanyData, setTempCompanyData] = useState<CompanyData>({
+    nombre_empresa: '',
+    pais: '',
+    objetivo_de_negocio: '',
+    propuesta_de_valor: '',
+    url_sitio_web: ''
   });
   const [platformStats, setPlatformStats] = useState({
     instagram: { posts: 0, followers: 0, engagement: 0 },
@@ -415,12 +424,21 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   };
 
   const startIntelligentCampaign = async () => {
-    if (!companyData.nombre_empresa || !companyData.objetivo_de_negocio) {
-      toast({
-        title: "Información requerida",
-        description: "Complete los datos básicos de su empresa para continuar.",
-        variant: "destructive"
+    // Validar campos requeridos por el edge function
+    const missingFields = [];
+    if (!companyData.nombre_empresa) missingFields.push('Nombre de empresa');
+    if (!companyData.pais) missingFields.push('País');
+    if (!companyData.objetivo_de_negocio) missingFields.push('Objetivo de negocio');
+    if (!companyData.propuesta_de_valor) missingFields.push('Propuesta de valor');
+
+    if (missingFields.length > 0) {
+      // Pre-llenar el diálogo con los datos existentes
+      setTempCompanyData({
+        ...companyData,
+        pais: companyData.pais || '',
+        propuesta_de_valor: companyData.propuesta_de_valor || companyData.objetivo_de_negocio || ''
       });
+      setShowCompanyDataDialog(true);
       return;
     }
 
@@ -499,6 +517,73 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     } finally {
       setCurrentProcess(null);
       setProcessStep(0);
+    }
+  };
+
+  const handleCompanyDataSave = async () => {
+    try {
+      // Obtener la empresa principal del usuario
+      const { data: companyMember } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', profile.user_id)
+        .eq('is_primary', true)
+        .limit(1)
+        .single();
+
+      if (!companyMember) {
+        toast({
+          title: "Error",
+          description: "No se encontró empresa asociada al usuario",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Actualizar la empresa con los datos faltantes
+      const { error } = await supabase
+        .from('companies')
+        .update({
+          country: tempCompanyData.pais,
+          description: tempCompanyData.propuesta_de_valor || tempCompanyData.objetivo_de_negocio
+        })
+        .eq('id', companyMember.company_id);
+
+      if (error) {
+        console.error('Error updating company:', error);
+        toast({
+          title: "Error",
+          description: "No se pudieron guardar los datos de la empresa",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Actualizar el estado local
+      setCompanyData(prev => ({
+        ...prev,
+        pais: tempCompanyData.pais,
+        propuesta_de_valor: tempCompanyData.propuesta_de_valor,
+        objetivo_de_negocio: tempCompanyData.objetivo_de_negocio || prev.objetivo_de_negocio
+      }));
+
+      setShowCompanyDataDialog(false);
+      
+      toast({
+        title: "Datos guardados",
+        description: "Los datos de la empresa se han actualizado correctamente",
+      });
+
+      // Continuar con la campaña
+      startIntelligentCampaign();
+
+    } catch (error) {
+      console.error('Error saving company data:', error);
+      toast({
+        title: "Error",
+        description: "Error al guardar los datos",
+        variant: "destructive"
+      });
     }
   };
 
@@ -1090,6 +1175,59 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Dialog para completar datos de la empresa */}
+      <Dialog open={showCompanyDataDialog} onOpenChange={setShowCompanyDataDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Completar datos de la empresa</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="pais">País (requerido)</Label>
+              <Input
+                id="pais"
+                placeholder="Ej: Colombia, México, España..."
+                value={tempCompanyData.pais}
+                onChange={(e) => setTempCompanyData(prev => ({ ...prev, pais: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="propuesta_valor">Propuesta de valor (requerido)</Label>
+              <Textarea
+                id="propuesta_valor"
+                placeholder="Describa qué hace única a su empresa y el valor que ofrece a sus clientes..."
+                value={tempCompanyData.propuesta_de_valor}
+                onChange={(e) => setTempCompanyData(prev => ({ ...prev, propuesta_de_valor: e.target.value }))}
+                rows={3}
+              />
+            </div>
+            {!tempCompanyData.objetivo_de_negocio && (
+              <div className="space-y-2">
+                <Label htmlFor="objetivo_negocio">Objetivo de negocio</Label>
+                <Textarea
+                  id="objetivo_negocio"
+                  placeholder="Describa los principales objetivos de su empresa..."
+                  value={tempCompanyData.objetivo_de_negocio}
+                  onChange={(e) => setTempCompanyData(prev => ({ ...prev, objetivo_de_negocio: e.target.value }))}
+                  rows={2}
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCompanyDataDialog(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCompanyDataSave}
+              disabled={!tempCompanyData.pais || !tempCompanyData.propuesta_de_valor}
+            >
+              Guardar y continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -156,6 +156,22 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
       const existing = await checkResponse.json();
       const socialAccounts = existing?.profile?.social_accounts || {};
       await updateSocialAccountsFromProfile(supabaseClient, userId, companyUsername, socialAccounts);
+
+      // Asegurar bandera de existencia del perfil en la base local
+      const companyId = await getPrimaryCompanyId(supabaseClient, userId);
+      await supabaseClient
+        .from('social_accounts')
+        .upsert({
+          user_id: userId,
+          company_id: companyId,
+          company_username: companyUsername,
+          platform: 'upload_post_profile',
+          upload_post_profile_exists: true,
+          is_connected: true,
+          connected_at: new Date().toISOString(),
+          last_sync_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,platform' });
+
       return { 
         success: true, 
         companyUsername, 
@@ -298,6 +314,21 @@ async function getConnections(supabaseClient: any, userId: string, apiKey: strin
     // Actualizar base de datos local con las conexiones usando la estructura correcta
     const socialAccounts = result.profile.social_accounts || {};
     await updateSocialAccountsFromProfile(supabaseClient, userId, companyUsername, socialAccounts);
+
+    // Asegurar bandera de existencia del perfil en la base local
+    const companyId = await getPrimaryCompanyId(supabaseClient, userId);
+    await supabaseClient
+      .from('social_accounts')
+      .upsert({
+        user_id: userId,
+        company_id: companyId,
+        company_username: companyUsername,
+        platform: 'upload_post_profile',
+        upload_post_profile_exists: true,
+        is_connected: true,
+        connected_at: new Date().toISOString(),
+        last_sync_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,platform' });
     
     console.log('✅ Successfully updated local social accounts data');
 

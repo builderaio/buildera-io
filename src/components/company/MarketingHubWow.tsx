@@ -52,11 +52,13 @@ import {
   RefreshCw,
   Filter,
   Search,
-  Settings
+  Settings,
+  History as HistoryIcon
 } from "lucide-react";
 import { SocialConnectionManager } from './SocialConnectionManager';
 import { SocialPostCreator } from './SocialPostCreator';
 import { ScheduledPostsManager } from './ScheduledPostsManager';
+import { UploadHistory } from './UploadHistory';
 
 interface MarketingHubWowProps {
   profile: any;
@@ -1062,6 +1064,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
               { value: "create", icon: Wand2, label: "Crear" },
               { value: "analyze", icon: Brain, label: "Analizar" },
               { value: "schedule", icon: Calendar, label: "Programar" },
+              { value: "history", icon: HistoryIcon, label: "Historial" },
               { value: "results", icon: Star, label: "Resultados" }
             ].map((tab) => (
               <TabsTrigger 
@@ -1284,6 +1287,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 loadRealMetrics();
               }}
             />
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history" className="space-y-8">
+            <UploadHistory profile={profile} />
           </TabsContent>
 
           {/* Schedule Tab */}

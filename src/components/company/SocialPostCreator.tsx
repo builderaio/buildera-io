@@ -45,6 +45,15 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
   const [loading, setLoading] = useState(false);
   const [companyUsername, setCompanyUsername] = useState('');
   const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
+  const [pendingUploads, setPendingUploads] = useState<Array<{
+    requestId: string;
+    title: string;
+    platforms: string[];
+    status: 'pending' | 'in_progress' | 'completed';
+    completed: number;
+    total: number;
+    createdAt: Date;
+  }>>([]);
   const { toast } = useToast();
 
   // Resolver userId y luego cargar
@@ -228,18 +237,41 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
       };
 
       const { data, error } = await supabase.functions.invoke('upload-post-manager', {
-        body: { action: 'post_content', data: postData }
+        body: { 
+          action: 'post_content', 
+          data: { ...postData, async_upload: true } // Usar upload asíncrono
+        }
       });
 
       if (error) throw error;
 
-      if (data?.success || data?.job_id) {
-        toast({
-          title: scheduledDate ? "📅 Post programado" : "🚀 Post publicado",
-          description: scheduledDate 
-            ? "Su contenido ha sido programado exitosamente"
-            : "Su contenido ha sido publicado en las plataformas seleccionadas",
-        });
+      if (data?.success) {
+        // Si hay un request_id, significa que es un upload asíncrono
+        if (data.request_id) {
+          const newUpload = {
+            requestId: data.request_id,
+            title: postData.title,
+            platforms: postData.platforms,
+            status: 'pending' as const,
+            completed: 0,
+            total: postData.platforms.length,
+            createdAt: new Date()
+          };
+          
+          setPendingUploads(prev => [...prev, newUpload]);
+          
+          toast({
+            title: "📤 Upload iniciado",
+            description: "Su contenido está siendo procesado. Puede seguir el progreso arriba.",
+          });
+        } else {
+          toast({
+            title: scheduledDate ? "📅 Post programado" : "🚀 Post publicado",
+            description: scheduledDate 
+              ? "Su contenido ha sido programado exitosamente"
+              : "Su contenido ha sido publicado en las plataformas seleccionadas",
+          });
+        }
 
         // Limpiar formulario
         setTitle('');
@@ -271,6 +303,64 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
     return now.toISOString().slice(0, 16);
   };
 
+  const checkUploadStatus = async (requestId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('upload-post-manager', {
+        body: { action: 'get_upload_status', data: { requestId } }
+      });
+
+      if (error) throw error;
+
+      return data?.status;
+    } catch (error) {
+      console.error('Error checking upload status:', error);
+      return null;
+    }
+  };
+
+  const pollPendingUploads = async () => {
+    if (pendingUploads.length === 0) return;
+
+    const updatedUploads = [];
+    
+    for (const upload of pendingUploads) {
+      if (upload.status !== 'completed') {
+        const status = await checkUploadStatus(upload.requestId);
+        if (status) {
+          updatedUploads.push({
+            ...upload,
+            status: status.status,
+            completed: status.completed || upload.completed,
+            total: status.total || upload.total
+          });
+        } else {
+          updatedUploads.push(upload);
+        }
+      }
+    }
+
+    setPendingUploads(updatedUploads.filter(upload => upload.status !== 'completed'));
+  };
+
+  // Poll pending uploads every 5 seconds
+  useEffect(() => {
+    if (pendingUploads.length === 0) return;
+
+    const interval = setInterval(pollPendingUploads, 5000);
+    return () => clearInterval(interval);
+  }, [pendingUploads]);
+
+  // Remove completed uploads after a delay
+  useEffect(() => {
+    const completedUploads = pendingUploads.filter(upload => upload.status === 'completed');
+    if (completedUploads.length > 0) {
+      const timer = setTimeout(() => {
+        setPendingUploads(prev => prev.filter(upload => upload.status !== 'completed'));
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [pendingUploads]);
+
   if (platforms.length === 0) {
     return (
       <Card>
@@ -297,6 +387,46 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
             Crear Contenido Social
           </CardTitle>
         </CardHeader>
+
+        {/* Uploads en progreso */}
+        {pendingUploads.length > 0 && (
+          <div className="px-6 space-y-2">
+            <h4 className="text-sm font-medium text-muted-foreground">Uploads en progreso</h4>
+            {pendingUploads.map((upload) => (
+              <div key={upload.requestId} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  {upload.status === 'completed' ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Clock className="w-4 h-4 text-blue-500 animate-pulse" />
+                  )}
+                  <div>
+                    <div className="text-sm font-medium">{upload.title}</div>
+                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                      <span>
+                        {upload.status === 'completed' ? '✅ Completado' :
+                         upload.status === 'in_progress' ? '⏳ En progreso' : '⏸️ Pendiente'}
+                      </span>
+                      <span>•</span>
+                      <span>{upload.completed}/{upload.total} plataformas</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {upload.platforms.map(platformId => {
+                    const platform = platforms.find(p => p.id === platformId);
+                    return platform ? (
+                      <span key={platformId} className="text-xs">
+                        {platform.icon}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <CardContent className="space-y-6">
           {/* Tipo de contenido */}
           <div className="space-y-3">

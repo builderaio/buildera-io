@@ -81,6 +81,12 @@ serve(async (req) => {
       case 'smoke_test':
         result = await runSmokeTest(supabaseClient, user.id, uploadPostApiKey, data);
         break;
+      case 'get_upload_status':
+        result = await getUploadStatus(uploadPostApiKey, data);
+        break;
+      case 'get_upload_history':
+        result = await getUploadHistory(uploadPostApiKey, data);
+        break;
       case 'validate_token':
         result = await validateToken(data);
         break;
@@ -679,6 +685,68 @@ async function runSmokeTest(supabaseClient: any, userId: string, apiKey: string,
 
   } catch (error) {
     console.error('Error in runSmokeTest:', error);
+    throw error;
+  }
+}
+
+async function getUploadStatus(apiKey: string, data: any) {
+  const { requestId } = data || {};
+  
+  if (!requestId) {
+    throw new Error('Missing request_id parameter');
+  }
+
+  console.log(`📊 Getting upload status for request: ${requestId}`);
+
+  try {
+    const response = await fetch(`https://api.upload-post.com/api/uploadposts/status?request_id=${requestId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Apikey ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error getting upload status: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ Upload status retrieved:', result);
+    return { success: true, status: result };
+
+  } catch (error) {
+    console.error('Error in getUploadStatus:', error);
+    throw error;
+  }
+}
+
+async function getUploadHistory(apiKey: string, data: any) {
+  const { page = 1, limit = 20 } = data || {};
+
+  console.log(`📚 Getting upload history - page: ${page}, limit: ${limit}`);
+
+  try {
+    const response = await fetch(`https://api.upload-post.com/api/uploadposts/history?page=${page}&limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Apikey ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error getting upload history: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log(`✅ Upload history retrieved: ${result.history?.length || 0} items`);
+    return { success: true, ...result };
+
+  } catch (error) {
+    console.error('Error in getUploadHistory:', error);
     throw error;
   }
 }

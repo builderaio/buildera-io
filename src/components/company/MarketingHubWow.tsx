@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import { 
   Sparkles, 
@@ -77,6 +78,15 @@ interface CompanyData {
   objetivo_de_negocio: string;
   propuesta_de_valor: string;
   url_sitio_web: string;
+  objective_id?: string; // ID del objetivo seleccionado
+}
+
+interface CompanyObjective {
+  id: string;
+  title: string;
+  description: string;
+  priority: number;
+  status: string;
 }
 
 interface WorkflowState {
@@ -125,8 +135,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     pais: '',
     objetivo_de_negocio: '',
     propuesta_de_valor: '',
-    url_sitio_web: ''
+    url_sitio_web: '',
+    objective_id: ''
   });
+  const [availableObjectives, setAvailableObjectives] = useState<CompanyObjective[]>([]);
   const [platformStats, setPlatformStats] = useState({
     instagram: { posts: 0, followers: 0, engagement: 0 },
     linkedin: { posts: 0, connections: 0, engagement: 0 },
@@ -415,14 +427,18 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         const company = companyMember.companies;
         console.log('Company data found:', company);
 
-        // Enriquecer datos desde company_objectives y company_branding
-        const [objectiveRes, brandingRes] = await Promise.all([
+        // Enriquecer datos desde company_strategy, company_objectives y company_branding
+        const [objectivesRes, strategyRes, brandingRes] = await Promise.all([
           supabase
             .from('company_objectives')
-            .select('title, description, status, priority')
+            .select('id, title, description, status, priority')
             .eq('company_id', company.id)
             .eq('status', 'active')
-            .order('priority', { ascending: false })
+            .order('priority', { ascending: false }),
+          supabase
+            .from('company_strategy')
+            .select('propuesta_valor, vision, mision')
+            .eq('company_id', company.id)
             .limit(1)
             .maybeSingle(),
           supabase
@@ -433,26 +449,28 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             .maybeSingle()
         ]);
 
-        const objective = objectiveRes.data as any | null;
+        const objectives = objectivesRes.data as CompanyObjective[] || [];
+        const strategy = strategyRes.data as any | null;
         const branding = brandingRes.data as any | null;
 
-        const propuestaDesdeBranding = branding?.brand_voice?.propuesta_de_valor
+        // Guardar objetivos disponibles
+        setAvailableObjectives(objectives);
+
+        // Obtener propuesta de valor de company_strategy primero
+        const propuestaDeValor = strategy?.propuesta_valor
+          || branding?.brand_voice?.propuesta_de_valor
           || branding?.full_brand_data?.propuesta_de_valor
-          || branding?.brand_voice?.unified_message;
+          || branding?.brand_voice?.unified_message
+          || company.description
+          || '';
 
         const newCompanyData: CompanyData = {
           nombre_empresa: company.name || '',
           pais: company.country || '',
-          objetivo_de_negocio:
-            (objective?.description || objective?.title)
-            || company.description
-            || company.industry_sector
-            || '',
-          propuesta_de_valor:
-            (propuestaDesdeBranding as string)
-            || company.description
-            || '',
-          url_sitio_web: company.website_url || ''
+          objetivo_de_negocio: '', // Se seleccionará desde el diálogo
+          propuesta_de_valor: propuestaDeValor,
+          url_sitio_web: company.website_url || '',
+          objective_id: ''
         };
         console.log('Setting companyData to:', newCompanyData);
         setCompanyData(newCompanyData);
@@ -473,18 +491,19 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     const missingFields = [] as string[];
     if (!dataToUse.nombre_empresa) missingFields.push('Nombre de empresa');
     if (!dataToUse.pais) missingFields.push('País');
-    if (!dataToUse.objetivo_de_negocio) missingFields.push('Objetivo de negocio');
+    if (!dataToUse.objetivo_de_negocio || !dataToUse.objective_id) missingFields.push('Objetivo de negocio');
     if (!dataToUse.propuesta_de_valor) missingFields.push('Propuesta de valor');
 
     console.log('Campos faltantes:', missingFields);
 
-    if (missingFields.length > 0) {
-      console.log('=== DEBUG: Abriendo diálogo para completar datos ===');
+    if (missingFields.length > 0 || availableObjectives.length === 0) {
+      console.log('=== DEBUG: Abriendo diálogo para completar datos o seleccionar objetivo ===');
       // Pre-llenar el diálogo con los datos existentes
       setTempCompanyData({
         ...dataToUse,
         pais: dataToUse.pais || '',
-        propuesta_de_valor: dataToUse.propuesta_de_valor || dataToUse.objetivo_de_negocio || ''
+        propuesta_de_valor: dataToUse.propuesta_de_valor || '',
+        objective_id: dataToUse.objective_id || ''
       });
       setShowCompanyDataDialog(true);
       return;
@@ -590,17 +609,16 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         return;
       }
 
-      // Actualizar la empresa con los datos faltantes
-      const { error } = await supabase
+      // Actualizar la empresa con los datos básicos
+      const { error: companyError } = await supabase
         .from('companies')
         .update({
           country: tempCompanyData.pais,
-          description: tempCompanyData.propuesta_de_valor || tempCompanyData.objetivo_de_negocio
         })
         .eq('id', companyMember.company_id);
 
-      if (error) {
-        console.error('Error updating company:', error);
+      if (companyError) {
+        console.error('Error updating company:', companyError);
         toast({
           title: "Error",
           description: "No se pudieron guardar los datos de la empresa",
@@ -609,12 +627,28 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         return;
       }
 
+      // Guardar o actualizar la propuesta de valor en company_strategy
+      const { error: strategyError } = await supabase
+        .from('company_strategy')
+        .upsert({
+          company_id: companyMember.company_id,
+          propuesta_valor: tempCompanyData.propuesta_de_valor
+        }, {
+          onConflict: 'company_id'
+        });
+
+      if (strategyError) {
+        console.error('Error updating company strategy:', strategyError);
+        // No es crítico, continuar
+      }
+
       // Actualizar el estado local
       setCompanyData(prev => ({
         ...prev,
         pais: tempCompanyData.pais,
         propuesta_de_valor: tempCompanyData.propuesta_de_valor,
-        objetivo_de_negocio: tempCompanyData.objetivo_de_negocio || prev.objetivo_de_negocio
+        objetivo_de_negocio: tempCompanyData.objetivo_de_negocio || prev.objetivo_de_negocio,
+        objective_id: tempCompanyData.objective_id
       }));
 
       setShowCompanyDataDialog(false);
@@ -1252,18 +1286,48 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 rows={3}
               />
             </div>
-            {!tempCompanyData.objetivo_de_negocio && (
-              <div className="space-y-2">
-                <Label htmlFor="objetivo_negocio">Objetivo de negocio</Label>
+            <div className="space-y-2">
+              <Label htmlFor="objetivo_negocio">Objetivo de negocio para la campaña (requerido)</Label>
+              {availableObjectives.length > 0 ? (
+                <Select
+                  value={tempCompanyData.objective_id}
+                  onValueChange={(value) => {
+                    const selectedObjective = availableObjectives.find(obj => obj.id === value);
+                    if (selectedObjective) {
+                      setTempCompanyData(prev => ({
+                        ...prev,
+                        objective_id: value,
+                        objetivo_de_negocio: `${selectedObjective.title}: ${selectedObjective.description}`
+                      }));
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccione un objetivo para esta campaña" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableObjectives.map((objective) => (
+                      <SelectItem key={objective.id} value={objective.id}>
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium">{objective.title}</span>
+                          <span className="text-sm text-muted-foreground truncate max-w-[300px]">
+                            {objective.description}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
                 <Textarea
                   id="objetivo_negocio"
-                  placeholder="Describa los principales objetivos de su empresa..."
+                  placeholder="Describa el objetivo principal para esta campaña..."
                   value={tempCompanyData.objetivo_de_negocio}
                   onChange={(e) => setTempCompanyData(prev => ({ ...prev, objetivo_de_negocio: e.target.value }))}
                   rows={2}
                 />
-              </div>
-            )}
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCompanyDataDialog(false)}>
@@ -1271,7 +1335,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             </Button>
             <Button 
               onClick={handleCompanyDataSave}
-              disabled={!tempCompanyData.pais || !tempCompanyData.propuesta_de_valor}
+              disabled={
+                !tempCompanyData.pais || 
+                !tempCompanyData.propuesta_de_valor || 
+                (!tempCompanyData.objective_id && !tempCompanyData.objetivo_de_negocio)
+              }
             >
               Guardar y continuar
             </Button>

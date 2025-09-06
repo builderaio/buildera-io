@@ -159,10 +159,11 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         const { data, error } = await supabase.functions.invoke('upload-post-manager', {
           body: {
             action: 'generate_jwt',
-            data: {
-              companyUsername: username,
-              platforms: ['tiktok', 'instagram', 'linkedin', 'facebook', 'youtube', 'twitter']
-            }
+                data: {
+                  companyUsername: username,
+                  redirectUrl: `${window.location.origin}/marketing-hub/connections/callback`,
+                  platforms: ['tiktok', 'instagram', 'linkedin', 'facebook', 'youtube', 'twitter']
+                }
           }
         });
         if (error) throw error as any;

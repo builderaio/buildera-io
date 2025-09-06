@@ -75,6 +75,9 @@ serve(async (req) => {
       case 'smoke_test':
         result = await runSmokeTest(supabaseClient, user.id, uploadPostApiKey, data);
         break;
+      case 'validate_token':
+        result = await validateToken(data);
+        break;
       default:
         return new Response(
           JSON.stringify({ error: 'Acción no válida' }),
@@ -123,10 +126,9 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
     const checkResponse = await fetch(`https://api.upload-post.com/api/uploadposts/users/${companyUsername}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'x-api-key': apiKey,
+        'Authorization': `ApiKey ${apiKey}`,
         'Content-Type': 'application/json',
-      },
+      }
     });
 
     if (checkResponse.ok) {
@@ -144,11 +146,10 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
       // Crear nuevo perfil
       const createResponse = await fetch('https://api.upload-post.com/api/uploadposts/users', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json',
-        },
+      headers: {
+        'Authorization': `ApiKey ${apiKey}`,
+        'Content-Type': 'application/json',
+      }
         body: JSON.stringify({ username: companyUsername }),
       });
 
@@ -193,8 +194,7 @@ async function generateJWT(supabaseClient: any, userId: string, apiKey: string, 
     const response = await fetch('https://api.upload-post.com/api/uploadposts/users/generate-jwt', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'x-api-key': apiKey,
+        'Authorization': `ApiKey ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -244,10 +244,9 @@ async function getConnections(supabaseClient: any, userId: string, apiKey: strin
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/users/${companyUsername}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'x-api-key': apiKey,
+        'Authorization': `ApiKey ${apiKey}`,
         'Content-Type': 'application/json',
-      },
+      }
     });
 
     if (!response.ok) {
@@ -292,10 +291,9 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/users/${companyUsername}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'x-api-key': apiKey,
+        'Authorization': `ApiKey ${apiKey}`,
         'Content-Type': 'application/json',
-      },
+      }
     });
 
     if (response.ok) {
@@ -316,10 +314,9 @@ async function getFacebookPages(supabaseClient: any, userId: string, apiKey: str
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/facebook/pages?profile=${companyUsername}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'x-api-key': apiKey,
+        'Authorization': `ApiKey ${apiKey}`,
         'Content-Type': 'application/json',
-      },
+      }
     });
 
     if (!response.ok) {
@@ -369,9 +366,8 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       response = await fetch('https://api.upload-post.com/api/upload_text', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'x-api-key': apiKey,
-        },
+          'Authorization': `ApiKey ${apiKey}`,
+        }
         body: formData,
       });
     } else if (postType === 'photo' && mediaUrls?.length) {
@@ -382,9 +378,8 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       response = await fetch('https://api.upload-post.com/api/upload_photos', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'x-api-key': apiKey,
-        },
+          'Authorization': `ApiKey ${apiKey}`,
+        }
         body: formData,
       });
     } else if (postType === 'video' && mediaUrls?.length) {
@@ -393,9 +388,8 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       response = await fetch('https://api.upload-post.com/api/upload', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'x-api-key': apiKey,
-        },
+          'Authorization': `ApiKey ${apiKey}`,
+        }
         body: formData,
       });
     }
@@ -438,10 +432,9 @@ async function getScheduledPosts(supabaseClient: any, userId: string, apiKey: st
     const response = await fetch('https://api.upload-post.com/api/uploadposts/schedule', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'x-api-key': apiKey,
+        'Authorization': `ApiKey ${apiKey}`,
         'Content-Type': 'application/json',
-      },
+      }
     });
 
     if (!response.ok) {
@@ -464,10 +457,9 @@ async function cancelScheduledPost(supabaseClient: any, userId: string, apiKey: 
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/schedule/${jobId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'x-api-key': apiKey,
+        'Authorization': `ApiKey ${apiKey}`,
         'Content-Type': 'application/json',
-      },
+      }
     });
 
     if (!response.ok) {
@@ -512,5 +504,32 @@ async function runSmokeTest(supabaseClient: any, userId: string, apiKey: string,
   } catch (error) {
     console.error('Error in runSmokeTest:', error);
     throw error;
+  }
+}
+
+async function validateToken(data: any) {
+  const { token } = data || {};
+  if (!token) {
+    return { success: false, error: 'Missing token' };
+  }
+  try {
+    const response = await fetch('https://api.upload-post.com/api/uploadposts/users/validate-jwt', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error validando token: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('Token validated:', { isValid: true, result });
+    return result;
+  } catch (error) {
+    console.error('Error in validateToken:', error);
+    return { success: false, error: (error as any).message };
   }
 }

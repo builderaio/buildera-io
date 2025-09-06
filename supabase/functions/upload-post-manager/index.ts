@@ -146,10 +146,10 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
       // Crear nuevo perfil
       const createResponse = await fetch('https://api.upload-post.com/api/uploadposts/users', {
         method: 'POST',
-      headers: {
-        'Authorization': `ApiKey ${apiKey}`,
-        'Content-Type': 'application/json',
-      }
+        headers: {
+          'Authorization': `ApiKey ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ username: companyUsername }),
       });
 

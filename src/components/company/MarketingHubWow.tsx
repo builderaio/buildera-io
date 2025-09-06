@@ -548,8 +548,16 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   };
 
   const callMarketingFunction = async (functionName: string, data: any) => {
+    // Get N8N credentials for Basic auth
+    const N8N_AUTH_USER = 'buildera_n8n_user';
+    const N8N_AUTH_PASS = 'BuilderaFlow2024!';
+    const credentials = btoa(`${N8N_AUTH_USER}:${N8N_AUTH_PASS}`);
+    
     const { data: result, error } = await supabase.functions.invoke(functionName, {
-      body: { input: data }
+      body: { input: data },
+      headers: {
+        'Authorization': `Basic ${credentials}`,
+      }
     });
 
     if (error) throw error;

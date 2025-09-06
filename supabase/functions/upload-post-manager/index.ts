@@ -502,11 +502,11 @@ async function updateFacebookPage(supabaseClient: any, userId: string, data: any
 }
 
 async function postContent(supabaseClient: any, userId: string, apiKey: string, data: any) {
-  const { companyUsername, platforms, title, content, mediaUrls, postType, scheduledDate } = data;
+  const { companyUsername, platforms, title, content, mediaUrls, postType, scheduledDate, async_upload } = data;
   
   console.log(`📝 postContent called with:`, { 
     companyUsername, platforms, title, postType, 
-    mediaCount: mediaUrls?.length || 0, scheduledDate 
+    mediaCount: mediaUrls?.length || 0, scheduledDate, async_upload
   });
 
   try {
@@ -521,6 +521,11 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     formData.append('title', title);
     if (scheduledDate) {
       formData.append('scheduled_date', scheduledDate);
+    }
+    
+    // Add async upload parameter if requested
+    if (async_upload) {
+      formData.append('async_upload', 'true');
     }
 
     if (postType === 'text') {

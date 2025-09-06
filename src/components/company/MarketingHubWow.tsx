@@ -176,17 +176,21 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   const loadConnections = async () => {
     try {
-      const [linkedinRes, facebookRes, tiktokRes] = await Promise.all([
-        supabase.from('linkedin_connections').select('id').eq('user_id', profile.user_id).limit(1),
-        supabase.from('facebook_instagram_connections').select('id').eq('user_id', profile.user_id).limit(1),
-        supabase.from('tiktok_connections').select('id').eq('user_id', profile.user_id).limit(1)
-      ]);
+      const { data, error } = await supabase
+        .from('social_accounts')
+        .select('platform, is_connected')
+        .eq('user_id', profile.user_id)
+        .eq('is_connected', true);
+
+      if (error) throw error;
+
+      const platforms = new Set((data || []).map((a: any) => a.platform));
 
       setSocialConnections({
-        linkedin: (linkedinRes.data?.length || 0) > 0,
-        instagram: (facebookRes.data?.length || 0) > 0,
-        facebook: (facebookRes.data?.length || 0) > 0,
-        tiktok: (tiktokRes.data?.length || 0) > 0
+        linkedin: platforms.has('linkedin'),
+        instagram: platforms.has('instagram'),
+        facebook: platforms.has('facebook'),
+        tiktok: platforms.has('tiktok'),
       });
     } catch (error) {
       console.error('Error loading connections:', error);

@@ -235,6 +235,53 @@ async function extractCompanyData(url: string, userId: string, token: string) {
         }
       }
 
+      // 5) Reconstruct from N8N streaming events (JSONL with {type,item,content})
+      if (!apiResult && rawBody) {
+        try {
+          const parts: string[] = [];
+          for (const line of rawBody.split('\n')) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            try {
+              const obj = JSON.parse(trimmed);
+              if (obj && typeof obj === 'object' && obj.type && typeof obj.content === 'string') {
+                // collect the content pieces
+                parts.push(obj.content);
+              }
+            } catch { /* ignore non-JSON lines */ }
+          }
+          if (parts.length > 0) {
+            const reconstructed = parts.join('');
+            // Attempt to extract the first balanced object or array
+            const findFirstBalanced = (text: string): string | null => {
+              const arrIdx = text.indexOf('[');
+              const objIdx = text.indexOf('{');
+              const startIdx = (arrIdx !== -1 && (objIdx === -1 || arrIdx < objIdx)) ? arrIdx : objIdx;
+              if (startIdx === -1) return null;
+              const openChar = text[startIdx] as '{' | '[';
+              const closeChar = openChar === '{' ? '}' : ']';
+              let depth = 0;
+              for (let i = startIdx; i < text.length; i++) {
+                const ch = text[i];
+                if (ch === openChar) depth++;
+                else if (ch === closeChar) {
+                  depth--;
+                  if (depth === 0) return text.slice(startIdx, i + 1);
+                }
+              }
+              return null;
+            };
+            const balanced = findFirstBalanced(reconstructed);
+            if (balanced) {
+              apiResult = safeParse(balanced);
+              if (apiResult) console.log('🧩 Parsed via reconstructed streaming content');
+            }
+          }
+        } catch (e) {
+          console.log('⚠️ Failed to reconstruct from stream:', e);
+        }
+      }
+
       console.log('🧩 Parsed shape:', Array.isArray(apiResult) ? `array(len=${apiResult.length})` : typeof apiResult, Array.isArray(apiResult) ? undefined : (apiResult && typeof apiResult === 'object' ? Object.keys(apiResult).slice(0,10) : undefined));
 
       // Normalize the specific N8N response structure: [{ url, fetch_date, data: {...} }]

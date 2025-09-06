@@ -24,7 +24,8 @@ import {
   Sparkles,
   Network,
   PlusCircle,
-  HelpCircle
+  HelpCircle,
+  Rocket
 } from "lucide-react";
 import SocialMediaHub from './SocialMediaHub';
 import MarketingMetrics from './MarketingMetrics';
@@ -50,7 +51,7 @@ interface QuickStat {
 }
 
 const MarketingHub = ({ profile }: MarketingHubProps) => {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("campaign-wizard");  // Cambio por defecto a campaign wizard
   const [socialConnections, setSocialConnections] = useState({
     linkedin: false,
     instagram: false,
@@ -806,15 +807,28 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
             <Sparkles className="h-4 w-4" />
             Reconfigurar
           </Button>
-          <Button className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Crear Campaña
+          <Button 
+            onClick={() => setActiveTab("campaign-wizard")}
+            className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+          >
+            <Rocket className="h-4 w-4" />
+            Crear Campaña IA
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
         <TabsList className="grid w-full grid-cols-8 h-auto p-1">
+          <TabsTrigger 
+            value="campaign-wizard" 
+            className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative"
+          >
+            <Rocket className="h-4 w-4" />
+            <span className="text-xs">Campaña IA</span>
+            <Badge variant="secondary" className="absolute -top-1 -right-1 text-[8px] px-1 py-0 bg-green-500 text-white">
+              NUEVO
+            </Badge>
+          </TabsTrigger>
           <TabsTrigger 
             value="overview" 
             className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -861,16 +875,19 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
             className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             <Target className="h-4 w-4" />
-            <span className="text-xs">AI Orchestrator</span>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="data" 
-            className="flex flex-col gap-1 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-          >
-            <Target className="h-4 w-4" />
-            <span className="text-xs">Data Manager</span>
+            <span className="text-xs">Datos</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* Campaña IA como primera tab */}
+        <TabsContent value="campaign-wizard" className="space-y-6">
+          <MarketingHubOrchestrator />
+        </TabsContent>
+
+        {/* Campaña IA como primera tab */}
+        <TabsContent value="campaign-wizard" className="space-y-6">
+          <MarketingHubOrchestrator />
+        </TabsContent>
 
         <TabsContent value="overview" className="space-y-8">
           {renderQuickStats()}
@@ -984,10 +1001,6 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
 
         <TabsContent value="advanced" className="space-y-6">
           <AdvancedMarketingDashboard profile={profile} />
-        </TabsContent>
-
-        <TabsContent value="orchestrator" className="space-y-6">
-          <MarketingHubOrchestrator />
         </TabsContent>
 
         <TabsContent value="data" className="space-y-6">

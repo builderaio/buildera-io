@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import CampaignWizardQuickAccess from './CampaignWizardQuickAccess';
 
 interface MandoCentralProps {
   profile: any;
@@ -362,6 +363,11 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
     return num.toString();
   };
 
+  const handleNavigateToWizard = () => {
+    // Navegar al Marketing Hub con la tab de campaign-wizard activa
+    window.location.href = '/company-dashboard?view=marketing-hub&tab=campaign-wizard';
+  };
+
   return (
     <div className="space-y-6 md:space-y-8">
       <header className="mb-6 md:mb-8">
@@ -370,6 +376,9 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
           ¡Bienvenido, {profile?.company_name || "Negocio"}! Desde aquí puedes ver todo lo que está pasando en tu negocio y tomar las mejores decisiones para crecer.
         </p>
       </header>
+
+      {/* Campaign Wizard Quick Access - Prominente al inicio */}
+      <CampaignWizardQuickAccess onNavigateToWizard={handleNavigateToWizard} />
 
       {/* Hero Dashboard - Prioritized KPIs */}
       <section className="mb-8">

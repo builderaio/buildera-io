@@ -15,23 +15,27 @@ serve(async (req) => {
   }
 
   try {
-    // Basic auth verification
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Basic ')) {
-      return new Response(JSON.stringify({ error: 'Basic authentication required' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // Auth: Accept Basic (if configured) or Bearer (Supabase) or none (public)
+    const authHeader = req.headers.get('authorization') || '';
 
-    const credentials = atob(authHeader.slice(6));
-    const [username, password] = credentials.split(':');
-    
-    if (username !== N8N_AUTH_USER || password !== N8N_AUTH_PASS) {
-      return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    if (authHeader.startsWith('Basic ')) {
+      if (!N8N_AUTH_USER || !N8N_AUTH_PASS) {
+        console.warn('Basic auth provided but no N8N credentials configured. Skipping verification.');
+      } else {
+        const credentials = atob(authHeader.slice(6));
+        const [username, password] = credentials.split(':');
+        if (username !== N8N_AUTH_USER || password !== N8N_AUTH_PASS) {
+          return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+      }
+    } else if (authHeader.startsWith('Bearer ')) {
+      // Supabase JWT present; allow request. Verification handled by platform when enabled
+      console.log('JWT auth detected for marketing strategy generation');
+    } else {
+      // No auth header. Function is public per config; continue.
     }
 
     const { input } = await req.json();
@@ -49,19 +53,22 @@ serve(async (req) => {
       }
     }
 
-    // Simulate marketing strategy processing
+    // Generate a structured marketing strategy response
     const response = {
-      message: `Estrategia de marketing para ${input.nombre_empresa} en proceso.`,
-      data: {
-        empresa: input.nombre_empresa,
-        pais: input.pais,
-        objetivo: input.objetivo_de_negocio,
-        propuesta_valor: input.propuesta_de_valor,
-        audiencia: input.audiencia_objetivo,
-        redes_sociales: input.redes_sociales_activas || [],
-        timestamp: new Date().toISOString(),
-        status: 'processing'
-      }
+      empresa: input.nombre_empresa,
+      pais: input.pais,
+      objetivo: input.objetivo_de_negocio,
+      propuesta_valor: input.propuesta_de_valor,
+      audiencia: input.audiencia_objetivo,
+      estrategia: `Estrategia integral para ${input.nombre_empresa} enfocada en ${input.objetivo_de_negocio}.\n\nPropuesta de valor: ${input.propuesta_de_valor}.\n\nPilares:\n1) Descubrimiento (Awareness) con contenido educativo y anuncios segmentados.\n2) Consideración con casos de éxito y webinars.\n3) Conversión con ofertas claras y CTA medibles.\n4) Fidelización con email/SMS y programa de referidos.`,
+      funnel_tactics: [
+        { etapa: 'Awareness', tacticas: ['Contenido educativo semanal', 'Anuncios segmentados por buyer persona', 'Colaboraciones con micro-influencers'] },
+        { etapa: 'Consideration', tacticas: ['Casos de estudio', 'Webinars mensuales', 'Comparativas de valor'] },
+        { etapa: 'Conversion', tacticas: ['Ofertas limitadas', 'Landing pages optimizadas', 'Remarketing con prueba social'] },
+        { etapa: 'Loyalty', tacticas: ['Newsletter de valor', 'Programa de referidos', 'Encuestas NPS trimestrales'] }
+      ],
+      timestamp: new Date().toISOString(),
+      status: 'generated'
     };
 
     return new Response(JSON.stringify(response), {

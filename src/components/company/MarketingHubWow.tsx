@@ -59,7 +59,7 @@ import { SocialConnectionManager } from './SocialConnectionManager';
 import { SocialPostCreator } from './SocialPostCreator';
 import { ScheduledPostsManager } from './ScheduledPostsManager';
 import { UploadHistory } from './UploadHistory';
-
+import MarketingHubOrchestrator from './MarketingHubOrchestrator';
 interface MarketingHubWowProps {
   profile: any;
 }
@@ -102,6 +102,13 @@ interface WorkflowState {
 
 const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  // Set initial tab from URL ?tab=
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const allowed = new Set(['dashboard','create','analyze','schedule','history','results','campaign-wizard']);
+    if (tab && allowed.has(tab)) setActiveTab(tab);
+  }, []);
   const [loading, setLoading] = useState(false);
   const [realMetrics, setRealMetrics] = useState<QuickStat[]>([]);
   const [socialConnections, setSocialConnections] = useState({
@@ -1060,10 +1067,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-5 h-16 p-1 bg-muted/50 backdrop-blur-sm rounded-2xl">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-7 h-16 p-1 bg-muted/50 backdrop-blur-sm rounded-2xl">
             {[
               { value: "dashboard", icon: BarChart3, label: "Panel" },
               { value: "create", icon: Wand2, label: "Crear" },
+              { value: "campaign-wizard", icon: Rocket, label: "Campaña IA" },
               { value: "analyze", icon: Brain, label: "Analizar" },
               { value: "schedule", icon: Calendar, label: "Programar" },
               { value: "history", icon: HistoryIcon, label: "Historial" },
@@ -1079,6 +1087,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
               </TabsTrigger>
             ))}
           </TabsList>
+
+          {/* Campaign Wizard Tab */}
+          <TabsContent value="campaign-wizard" className="space-y-8">
+            <MarketingHubOrchestrator />
+          </TabsContent>
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-8">

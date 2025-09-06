@@ -93,7 +93,27 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         .order('platform', { ascending: true });
 
       if (error) throw error;
-      setSocialAccounts(data || []);
+
+      const list = data || [];
+      setSocialAccounts(list);
+
+      // Si no hay conexiones visibles, forzar una sincronización desde Upload-Post
+      const hasConnected = list.some(acc => acc.is_connected && acc.platform !== 'upload_post_profile');
+      if (!hasConnected && companyUsername) {
+        try {
+          await supabase.functions.invoke('upload-post-manager', {
+            body: { action: 'get_connections', data: { companyUsername } }
+          });
+          const { data: refreshed } = await supabase
+            .from('social_accounts')
+            .select('*')
+            .eq('user_id', profile.user_id)
+            .order('platform', { ascending: true });
+          setSocialAccounts(refreshed || []);
+        } catch (e) {
+          console.warn('No se pudo forzar sincronización de conexiones:', e);
+        }
+      }
     } catch (error) {
       console.error('Error loading social accounts:', error);
     }
@@ -120,6 +140,8 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
             description: "Su perfil de Upload-Post ha sido configurado exitosamente",
           });
         }
+        // Importante: recargar las cuentas sociales después de inicializar/sincronizar
+        await loadSocialAccounts();
         return resolvedUsername ?? null;
       }
       return null;

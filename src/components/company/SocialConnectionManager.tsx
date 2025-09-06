@@ -223,6 +223,12 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
           'upload-post-connection',
           'width=800,height=600,scrollbars=yes,resizable=yes'
         );
+        if (!newWindow || newWindow.closed) {
+          // Popup bloqueado: fallback en la misma pestaña
+          setConnecting(false);
+          window.location.href = data.access_url;
+          return;
+        }
         setConnectionWindow(newWindow);
         toast({
           title: "🔗 Conectando redes sociales",
@@ -377,7 +383,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
 
   const runDiagnostics = async () => {
     try {
-      setLoading(true);
+      toast({ title: "🔎 Diagnóstico iniciado", description: "Consultando BD y Upload-Post..." });
       setDiagnosticError('');
 
       // Asegurar companyUsername
@@ -411,10 +417,9 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       }
 
       setShowDiagnostics(true);
+      toast({ title: "✅ Diagnóstico listo", description: "Resultados disponibles." });
     } catch (e: any) {
       setDiagnosticError(prev => prev ? `${prev} | ${e.message}` : e.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -472,13 +477,14 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 onClick={runDiagnostics}
                 variant="outline"
                 size="sm"
-                disabled={loading}
+                disabled={false}
                 title="Ver filas locales y perfil Upload-Post"
               >
                 <Bug className="w-4 h-4" />
                 Diagnóstico
               </Button>
               <Button
+                onClick={startConnectionFlow}
                 disabled={connecting || loading}
                 className="bg-primary hover:bg-primary/90"
               >

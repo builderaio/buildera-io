@@ -69,12 +69,34 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const [diagnosticUploadProfile, setDiagnosticUploadProfile] = useState<any>(null);
   const [diagnosticError, setDiagnosticError] = useState<string>('');
   const [diagnosticLoading, setDiagnosticLoading] = useState<boolean>(false);
+  const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
   const { toast } = useToast();
 
+  // Resolver userId desde el perfil o, si no existe, desde Supabase Auth
   useEffect(() => {
+    let active = true;
+    const resolveUser = async () => {
+      try {
+        if (profile?.user_id) {
+          if (active) setUserId(profile.user_id);
+          return;
+        }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (active) setUserId(user?.id ?? null);
+      } catch (e) {
+        console.warn('No se pudo resolver userId:', e);
+      }
+    };
+    resolveUser();
+    return () => { active = false; };
+  }, [profile?.user_id]);
+
+  // Cargar conexiones cuando tengamos userId
+  useEffect(() => {
+    if (!userId) return;
     loadSocialAccounts();
     initializeProfile();
-  }, [profile?.user_id]);
+  }, [userId]);
 
   useEffect(() => {
     // Verificar si la ventana de conexión se cerró
@@ -92,10 +114,11 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
 
   const loadSocialAccounts = async () => {
     try {
+      if (!userId) return;
       const { data, error } = await supabase
         .from('social_accounts')
         .select('*')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', userId)
         .order('platform', { ascending: true });
 
       if (error) throw error;
@@ -114,7 +137,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
           const { data: refreshed } = await supabase
             .from('social_accounts')
             .select('*')
-            .eq('user_id', profile.user_id)
+            .eq('user_id', userId)
             .order('platform', { ascending: true });
           console.log('🔁 social_accounts refreshed:', refreshed);
           setSocialAccounts(refreshed || []);
@@ -409,15 +432,20 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       }
 
       // 2) Leer filas locales DESPUÉS de sincronizar
-      const { data: dbRows, error: dbErr } = await supabase
-        .from('social_accounts')
-        .select('*')
-        .eq('user_id', profile.user_id)
-        .order('platform', { ascending: true });
-      if (dbErr) {
-        setDiagnosticError(prev => prev ? `${prev} | DB error: ${dbErr.message}` : `DB error: ${dbErr.message}`);
+      if (!userId) {
+        setDiagnosticError(prev => prev ? `${prev} | Usuario no autenticado` : 'Usuario no autenticado');
+        setDiagnosticDbRows([]);
+      } else {
+        const { data: dbRows, error: dbErr } = await supabase
+          .from('social_accounts')
+          .select('*')
+          .eq('user_id', userId)
+          .order('platform', { ascending: true });
+        if (dbErr) {
+          setDiagnosticError(prev => prev ? `${prev} | DB error: ${dbErr.message}` : `DB error: ${dbErr.message}`);
+        }
+        setDiagnosticDbRows(dbRows || []);
       }
-      setDiagnosticDbRows(dbRows || []);
 
       // 3) Refrescar tarjetas visibles
       await loadSocialAccounts();

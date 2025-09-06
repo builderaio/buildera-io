@@ -249,7 +249,7 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
                       <div className={`w-12 h-12 ${config.color} rounded-full flex items-center justify-center mx-auto mb-2 text-white`}>
                         <IconComponent className="h-6 w-6" />
                       </div>
-                      <p className="font-semibold">{count}</p>
+                      <p className="font-semibold">{count as number}</p>
                       <p className="text-xs text-muted-foreground">{config.name}</p>
                     </div>
                   );

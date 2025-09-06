@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import { 
@@ -133,6 +133,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     automation: false
   });
   const [showCompanyDataDialog, setShowCompanyDataDialog] = useState(false);
+  const [showObjectiveDialog, setShowObjectiveDialog] = useState(false);
+  const [selectedObjective, setSelectedObjective] = useState('');
+  const [customObjective, setCustomObjective] = useState('');
   const [tempCompanyData, setTempCompanyData] = useState<CompanyData>({
     nombre_empresa: '',
     pais: '',
@@ -548,37 +551,18 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   const startIntelligentCampaign = async (dataOverride?: CompanyData) => {
     console.log('=== DEBUG: startIntelligentCampaign iniciado ===');
-    const dataToUse = dataOverride ?? companyData;
-    console.log('companyData a usar:', dataToUse);
     
-    // Validar campos requeridos y verificar conexiones sociales
-    const missingFields = [] as string[];
-    if (!dataToUse.nombre_empresa) missingFields.push('Nombre de empresa');
-    if (!dataToUse.pais) missingFields.push('País');
-    if (!dataToUse.objetivo_de_negocio || !dataToUse.objective_id) missingFields.push('Objetivo de negocio');
-    if (!dataToUse.propuesta_de_valor) missingFields.push('Propuesta de valor');
+    // Usar datos existentes de la empresa
+    const existingData = {
+      ...companyData,
+      redes_socciales_activas: Object.keys(socialConnections).filter(
+        platform => socialConnections[platform as keyof typeof socialConnections]
+      )
+    };
     
     // Verificar si hay redes sociales configuradas
-    const hasConnections = dataToUse.redes_socciales_activas && dataToUse.redes_socciales_activas.length > 0;
+    const hasConnections = existingData.redes_socciales_activas && existingData.redes_socciales_activas.length > 0;
 
-    console.log('Campos faltantes:', missingFields);
-    console.log('Tiene conexiones sociales:', hasConnections);
-
-    if (missingFields.length > 0) {
-      console.log('=== DEBUG: Abriendo diálogo para completar datos o seleccionar objetivo ===');
-      // Pre-llenar el diálogo con los datos existentes
-      setTempCompanyData({
-        ...dataToUse,
-        pais: dataToUse.pais || '',
-        propuesta_de_valor: dataToUse.propuesta_de_valor || '',
-        objective_id: dataToUse.objective_id || '',
-        redes_socciales_activas: dataToUse.redes_socciales_activas || []
-      });
-      setShowCompanyDataDialog(true);
-      return;
-    }
-
-    // Verificar conexiones sociales antes de continuar
     if (!hasConnections) {
       toast({
         title: "Redes sociales requeridas",
@@ -588,7 +572,21 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       return;
     }
 
-    console.log('=== DEBUG: Todos los campos están completos, iniciando campaña ===');
+    // Solo solicitar objetivo si no se ha proporcionado uno
+    if (!dataOverride && (!existingData.objetivo_de_negocio || (!existingData.objective_id && !customObjective))) {
+      console.log('=== DEBUG: Solicitando objetivo de campaña ===');
+      setShowObjectiveDialog(true);
+      return;
+    }
+
+    // Usar el objetivo proporcionado o el existente
+    const finalData = dataOverride || {
+      ...existingData,
+      objetivo_de_negocio: customObjective || existingData.objetivo_de_negocio,
+      objective_id: selectedObjective || existingData.objective_id
+    };
+
+    console.log('=== DEBUG: Iniciando campaña con datos:', finalData);
 
     setCurrentProcess('intelligent-campaign');
     setProcessStep(0);
@@ -599,7 +597,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     try {
       // Paso 1: Análisis de audiencia
       updateProcess(1, "Análisis de Audiencia", "Identificando tu audiencia objetivo ideal...");
-      const audienceResult = await callMarketingFunction('marketing-hub-target-audience', dataToUse);
+      const audienceResult = await callMarketingFunction('marketing-hub-target-audience', finalData);
       setAnalysisProgress(15);
 
       // Extraer audiencia objetivo del resultado para usar en siguiente paso
@@ -608,7 +606,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       // Paso 2: Estrategia de marketing
       updateProcess(2, "Estrategia Inteligente", "Desarrollando estrategia personalizada...");
       const strategyData = {
-        ...dataToUse,
+        ...finalData,
         audiencia_objetivo: audienciaObjetivo
       };
       await callMarketingFunction('marketing-hub-marketing-strategy', strategyData);
@@ -617,7 +615,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       // Paso 3: Calendario de contenido
       updateProcess(3, "Calendario de Contenido", "Creando calendario optimizado...");
       const calendarData = {
-        ...dataToUse,
+        ...finalData,
         audiencia_objetivo: audienciaObjetivo,
         fecha_inicio_calendario: new Date().toISOString().split('T')[0],
         numero_dias_generar: 14
@@ -676,87 +674,20 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     }
   };
 
-  const handleCompanyDataSave = async () => {
-    try {
-      // Obtener la empresa principal del usuario
-      const { data: companyMember } = await supabase
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', profile.user_id)
-        .eq('is_primary', true)
-        .limit(1)
-        .single();
+  const handleObjectiveSelection = async () => {
+    const objectiveData = {
+      ...companyData,
+      objetivo_de_negocio: customObjective || companyData.objetivo_de_negocio,
+      objective_id: selectedObjective || companyData.objective_id,
+      redes_socciales_activas: Object.keys(socialConnections).filter(
+        platform => socialConnections[platform as keyof typeof socialConnections]
+      )
+    };
 
-      if (!companyMember) {
-        toast({
-          title: "Error",
-          description: "No se encontró empresa asociada al usuario",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Actualizar la empresa con los datos básicos
-      const { error: companyError } = await supabase
-        .from('companies')
-        .update({
-          country: tempCompanyData.pais,
-        })
-        .eq('id', companyMember.company_id);
-
-      if (companyError) {
-        console.error('Error updating company:', companyError);
-        toast({
-          title: "Error",
-          description: "No se pudieron guardar los datos de la empresa",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Guardar o actualizar la propuesta de valor en company_strategy
-      const { error: strategyError } = await supabase
-        .from('company_strategy')
-        .upsert({
-          company_id: companyMember.company_id,
-          propuesta_valor: tempCompanyData.propuesta_de_valor
-        }, {
-          onConflict: 'company_id'
-        });
-
-      if (strategyError) {
-        console.error('Error updating company strategy:', strategyError);
-        // No es crítico, continuar
-      }
-
-      // Actualizar el estado local
-      setCompanyData(prev => ({
-        ...prev,
-        pais: tempCompanyData.pais,
-        propuesta_de_valor: tempCompanyData.propuesta_de_valor,
-        objetivo_de_negocio: tempCompanyData.objetivo_de_negocio || prev.objetivo_de_negocio,
-        objective_id: tempCompanyData.objective_id,
-        redes_socciales_activas: prev.redes_socciales_activas || []
-      }));
-
-      setShowCompanyDataDialog(false);
-      
-      toast({
-        title: "Datos guardados",
-        description: "Los datos de la empresa se han actualizado correctamente",
-      });
-
-      // Continuar con la campaña
-      startIntelligentCampaign(tempCompanyData);
-
-    } catch (error) {
-      console.error('Error saving company data:', error);
-      toast({
-        title: "Error",
-        description: "Error al guardar los datos",
-        variant: "destructive"
-      });
-    }
+    setShowObjectiveDialog(false);
+    
+    // Continuar con la campaña usando los datos existentes + objetivo
+    startIntelligentCampaign(objectiveData);
   };
 
   const analyzeConnectedPlatforms = async () => {
@@ -1355,53 +1286,25 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         </Tabs>
       </div>
 
-      {/* Dialog para completar datos de la empresa */}
-      <Dialog open={showCompanyDataDialog} onOpenChange={setShowCompanyDataDialog}>
+      {/* Dialog para seleccionar objetivo de campaña */}
+      <Dialog open={showObjectiveDialog} onOpenChange={setShowObjectiveDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Completar datos de la empresa</DialogTitle>
+            <DialogTitle>Objetivo de la Campaña</DialogTitle>
+            <DialogDescription>
+              Seleccione el objetivo principal para esta campaña de marketing
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="pais">País (requerido)</Label>
-              <Input
-                id="pais"
-                placeholder="Ej: Colombia, México, España..."
-                value={tempCompanyData.pais}
-                onChange={(e) => setTempCompanyData(prev => ({ ...prev, pais: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="propuesta_valor">Propuesta de valor (requerido)</Label>
-              <Textarea
-                id="propuesta_valor"
-                placeholder="Describa qué hace única a su empresa y el valor que ofrece a sus clientes..."
-                value={tempCompanyData.propuesta_de_valor}
-                onChange={(e) => setTempCompanyData(prev => ({ ...prev, propuesta_de_valor: e.target.value }))}
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="objetivo_negocio">Objetivo de negocio para la campaña (requerido)</Label>
-              {availableObjectives.length > 0 ? (
-                <Select
-                  value={tempCompanyData.objective_id}
-                  onValueChange={(value) => {
-                    const selectedObjective = availableObjectives.find(obj => obj.id === value);
-                    if (selectedObjective) {
-                      setTempCompanyData(prev => ({
-                        ...prev,
-                        objective_id: value,
-                        objetivo_de_negocio: `${selectedObjective.title}: ${selectedObjective.description}`
-                      }));
-                    }
-                  }}
-                >
+            <div className="space-y-3">
+              <Label>Objetivo de la campaña (requerido)</Label>
+              {availableObjectives && availableObjectives.length > 0 ? (
+                <Select value={selectedObjective} onValueChange={setSelectedObjective}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccione un objetivo para esta campaña" />
+                    <SelectValue placeholder="Seleccione un objetivo..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableObjectives.map((objective) => (
+                    {availableObjectives.map((objective: any) => (
                       <SelectItem key={objective.id} value={objective.id}>
                         <div className="flex flex-col items-start">
                           <span className="font-medium">{objective.title}</span>
@@ -1415,28 +1318,23 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 </Select>
               ) : (
                 <Textarea
-                  id="objetivo_negocio"
                   placeholder="Describa el objetivo principal para esta campaña..."
-                  value={tempCompanyData.objetivo_de_negocio}
-                  onChange={(e) => setTempCompanyData(prev => ({ ...prev, objetivo_de_negocio: e.target.value }))}
-                  rows={2}
+                  value={customObjective}
+                  onChange={(e) => setCustomObjective(e.target.value)}
+                  rows={3}
                 />
               )}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCompanyDataDialog(false)}>
+            <Button variant="outline" onClick={() => setShowObjectiveDialog(false)}>
               Cancelar
             </Button>
             <Button 
-              onClick={handleCompanyDataSave}
-              disabled={
-                !tempCompanyData.pais || 
-                !tempCompanyData.propuesta_de_valor || 
-                (!tempCompanyData.objective_id && !tempCompanyData.objetivo_de_negocio)
-              }
+              onClick={handleObjectiveSelection}
+              disabled={!selectedObjective && !customObjective.trim()}
             >
-              Guardar y continuar
+              Iniciar Campaña
             </Button>
           </DialogFooter>
         </DialogContent>

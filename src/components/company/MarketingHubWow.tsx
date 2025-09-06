@@ -431,16 +431,17 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     }
   };
 
-  const startIntelligentCampaign = async () => {
+  const startIntelligentCampaign = async (dataOverride?: CompanyData) => {
     console.log('=== DEBUG: startIntelligentCampaign iniciado ===');
-    console.log('companyData actual:', companyData);
+    const dataToUse = dataOverride ?? companyData;
+    console.log('companyData a usar:', dataToUse);
     
     // Validar campos requeridos por el edge function
-    const missingFields = [];
-    if (!companyData.nombre_empresa) missingFields.push('Nombre de empresa');
-    if (!companyData.pais) missingFields.push('País');
-    if (!companyData.objetivo_de_negocio) missingFields.push('Objetivo de negocio');
-    if (!companyData.propuesta_de_valor) missingFields.push('Propuesta de valor');
+    const missingFields = [] as string[];
+    if (!dataToUse.nombre_empresa) missingFields.push('Nombre de empresa');
+    if (!dataToUse.pais) missingFields.push('País');
+    if (!dataToUse.objetivo_de_negocio) missingFields.push('Objetivo de negocio');
+    if (!dataToUse.propuesta_de_valor) missingFields.push('Propuesta de valor');
 
     console.log('Campos faltantes:', missingFields);
 
@@ -448,9 +449,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       console.log('=== DEBUG: Abriendo diálogo para completar datos ===');
       // Pre-llenar el diálogo con los datos existentes
       setTempCompanyData({
-        ...companyData,
-        pais: companyData.pais || '',
-        propuesta_de_valor: companyData.propuesta_de_valor || companyData.objetivo_de_negocio || ''
+        ...dataToUse,
+        pais: dataToUse.pais || '',
+        propuesta_de_valor: dataToUse.propuesta_de_valor || dataToUse.objetivo_de_negocio || ''
       });
       setShowCompanyDataDialog(true);
       return;
@@ -467,18 +468,18 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     try {
       // Paso 1: Análisis de audiencia
       updateProcess(1, "Análisis de Audiencia", "Identificando tu audiencia objetivo ideal...");
-      await callMarketingFunction('marketing-hub-target-audience', companyData);
+      await callMarketingFunction('marketing-hub-target-audience', dataToUse);
       setAnalysisProgress(15);
 
       // Paso 2: Estrategia de marketing
       updateProcess(2, "Estrategia Inteligente", "Desarrollando estrategia personalizada...");
-      await callMarketingFunction('marketing-hub-marketing-strategy', companyData);
+      await callMarketingFunction('marketing-hub-marketing-strategy', dataToUse);
       setAnalysisProgress(30);
 
       // Paso 3: Calendario de contenido
       updateProcess(3, "Calendario de Contenido", "Creando calendario optimizado...");
       const calendarData = {
-        ...companyData,
+        ...dataToUse,
         fecha_inicio_calendario: new Date().toISOString().split('T')[0],
         numero_dias_generar: 14
       };
@@ -591,7 +592,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       });
 
       // Continuar con la campaña
-      startIntelligentCampaign();
+      startIntelligentCampaign(tempCompanyData);
 
     } catch (error) {
       console.error('Error saving company data:', error);
@@ -811,7 +812,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             </div>
 
             <Button
-              onClick={startIntelligentCampaign}
+              onClick={() => startIntelligentCampaign()}
               disabled={currentProcess !== null}
               className="bg-white text-primary hover:bg-white/90 font-semibold px-8 py-6 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             >

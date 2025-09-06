@@ -153,7 +153,8 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
     }
 
     const calendarData = {
-      ...calendar,
+      calendar: calendar,
+      calendar_items: isEditing ? editedCalendar : (calendar.calendario_contenido || []),
       edited_calendar: isEditing ? editedCalendar : undefined,
       final_calendar: isEditing ? editedCalendar : (calendar.calendario_contenido || []),
       selected_platforms: selectedPlatforms,

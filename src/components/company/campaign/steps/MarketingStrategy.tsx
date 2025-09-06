@@ -90,7 +90,8 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
     }
 
     const strategyData = {
-      ...strategy,
+      strategy: strategy,
+      tactics: strategy.funnel_tactics || [],
       edited_strategy: isEditing ? editedStrategy : undefined,
       final_strategy: isEditing ? editedStrategy : (
         typeof strategy.estrategia === 'string' 

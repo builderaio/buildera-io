@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,27 +24,40 @@ interface TargetAudienceProps {
   campaignData: any;
   onComplete: (data: any) => void;
   loading: boolean;
+  companyData?: any;
 }
 
-export const TargetAudience = ({ campaignData, onComplete, loading }: TargetAudienceProps) => {
-  const [companyData, setCompanyData] = useState({
-    nombre_empresa: campaignData.company?.nombre_empresa || '',
+export const TargetAudience = ({ campaignData, onComplete, loading, companyData }: TargetAudienceProps) => {
+  const [companyDataState, setCompanyDataState] = useState({
+    nombre_empresa: campaignData.company?.nombre_empresa || companyData?.name || '',
     pais: campaignData.company?.pais || '',
-    objetivo_de_negocio: campaignData.company?.objetivo_de_negocio || '',
+    objetivo_de_negocio: campaignData.company?.objetivo_de_negocio || companyData?.description || '',
     propuesta_de_valor: campaignData.company?.propuesta_de_valor || '',
-    url_sitio_web: campaignData.company?.url_sitio_web || '',
+    url_sitio_web: campaignData.company?.url_sitio_web || companyData?.website_url || '',
   });
+
+  // Update with real company data when available
+  useEffect(() => {
+    if (companyData && !companyDataState.nombre_empresa) {
+      setCompanyDataState(prev => ({
+        ...prev,
+        nombre_empresa: companyData.name || '',
+        objetivo_de_negocio: companyData.description || '',
+        url_sitio_web: companyData.website_url || '',
+      }));
+    }
+  }, [companyData]);
 
   const [aiAnalysisResult, setAiAnalysisResult] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
-    setCompanyData(prev => ({ ...prev, [field]: value }));
+    setCompanyDataState(prev => ({ ...prev, [field]: value }));
   };
 
   const analyzeTargetAudience = async () => {
-    if (!companyData.nombre_empresa || !companyData.objetivo_de_negocio || !companyData.propuesta_de_valor) {
+    if (!companyDataState.nombre_empresa || !companyDataState.objetivo_de_negocio || !companyDataState.propuesta_de_valor) {
       toast({
         title: "Datos incompletos",
         description: "Por favor completa al menos el nombre, objetivo y propuesta de valor",
@@ -58,7 +71,7 @@ export const TargetAudience = ({ campaignData, onComplete, loading }: TargetAudi
       const { data, error } = await supabase.functions.invoke('marketing-hub-target-audience', {
         body: { 
           input: {
-            ...companyData,
+            ...companyDataState,
             redes_socciales_activas: []
           }
         }
@@ -94,7 +107,7 @@ export const TargetAudience = ({ campaignData, onComplete, loading }: TargetAudi
     }
 
     const audienceData = {
-      company: companyData,
+      company: companyDataState,
       analysis: aiAnalysisResult,
       buyer_personas: aiAnalysisResult?.buyer_personas || []
     };
@@ -102,7 +115,7 @@ export const TargetAudience = ({ campaignData, onComplete, loading }: TargetAudi
     onComplete(audienceData);
   };
 
-  const canAnalyze = companyData.nombre_empresa && companyData.objetivo_de_negocio && companyData.propuesta_de_valor;
+  const canAnalyze = companyDataState.nombre_empresa && companyDataState.objetivo_de_negocio && companyDataState.propuesta_de_valor;
   const canProceed = aiAnalysisResult && !analyzing;
 
   return (
@@ -137,7 +150,7 @@ export const TargetAudience = ({ campaignData, onComplete, loading }: TargetAudi
               <Label htmlFor="empresa">Nombre de la Empresa *</Label>
               <Input
                 id="empresa"
-                value={companyData.nombre_empresa}
+                value={companyDataState.nombre_empresa}
                 onChange={(e) => handleInputChange('nombre_empresa', e.target.value)}
                 placeholder="Ej: TechCorp Solutions"
                 className="mt-1"
@@ -147,7 +160,7 @@ export const TargetAudience = ({ campaignData, onComplete, loading }: TargetAudi
               <Label htmlFor="pais">País</Label>
               <Input
                 id="pais"
-                value={companyData.pais}
+                value={companyDataState.pais}
                 onChange={(e) => handleInputChange('pais', e.target.value)}
                 placeholder="Ej: México"
                 className="mt-1"
@@ -159,7 +172,7 @@ export const TargetAudience = ({ campaignData, onComplete, loading }: TargetAudi
             <Label htmlFor="objetivo">Objetivo de Negocio *</Label>
             <Textarea
               id="objetivo"
-              value={companyData.objetivo_de_negocio}
+              value={companyDataState.objetivo_de_negocio}
               onChange={(e) => handleInputChange('objetivo_de_negocio', e.target.value)}
               placeholder="Ej: Aumentar ventas de nuestro software SaaS en un 300% en 6 meses"
               className="mt-1"
@@ -171,7 +184,7 @@ export const TargetAudience = ({ campaignData, onComplete, loading }: TargetAudi
             <Label htmlFor="propuesta">Propuesta de Valor *</Label>
             <Textarea
               id="propuesta"
-              value={companyData.propuesta_de_valor}
+              value={companyDataState.propuesta_de_valor}
               onChange={(e) => handleInputChange('propuesta_de_valor', e.target.value)}
               placeholder="Ej: Automatizamos procesos empresariales con IA, reduciendo costos en 40%"
               className="mt-1"
@@ -183,7 +196,7 @@ export const TargetAudience = ({ campaignData, onComplete, loading }: TargetAudi
             <Label htmlFor="website">URL del Sitio Web</Label>
             <Input
               id="website"
-              value={companyData.url_sitio_web}
+              value={companyDataState.url_sitio_web}
               onChange={(e) => handleInputChange('url_sitio_web', e.target.value)}
               placeholder="https://tuempresa.com"
               className="mt-1"

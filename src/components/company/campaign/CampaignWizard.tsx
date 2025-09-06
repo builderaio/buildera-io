@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useMarketingDataPersistence } from '@/hooks/useMarketingDataPersistence';
+import { useCompanyManagement } from '@/hooks/useCompanyManagement';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Target, 
@@ -115,6 +116,8 @@ const steps = [
 ];
 
 export const CampaignWizard = () => {
+  const { primaryCompany, loading: companyLoading } = useCompanyManagement();
+  
   const [campaignData, setCampaignData] = useState<CampaignData>({
     objective: {
       goal: '',
@@ -130,6 +133,23 @@ export const CampaignWizard = () => {
       redes_sociales_activas: []
     }
   });
+
+  // Populate with real company data when available
+  useEffect(() => {
+    if (primaryCompany && !campaignData.company.nombre_empresa) {
+      setCampaignData(prev => ({
+        ...prev,
+        company: {
+          ...prev.company,
+          nombre_empresa: primaryCompany.name || '',
+          url_sitio_web: primaryCompany.website_url || '',
+          pais: '', // Usuario debe completar esto si no está en company
+          objetivo_de_negocio: primaryCompany.description || '',
+          propuesta_de_valor: '', // Usuario debe completar esto
+        }
+      }));
+    }
+  }, [primaryCompany]);
 
   const [state, setState] = useState<CampaignState>({
     currentStep: 1,
@@ -147,7 +167,7 @@ export const CampaignWizard = () => {
 
   const progress = ((state.completedSteps.length) / steps.length) * 100;
 
-  const handleStepComplete = (stepData: any) => {
+  const handleStepComplete = async (stepData: any) => {
     const currentStep = steps.find(s => s.id === state.currentStep);
     
     // Update campaign data based on step
@@ -159,27 +179,47 @@ export const CampaignWizard = () => {
           updated.objective = { ...updated.objective, ...stepData };
           break;
         case 2:
-          updated.company = { ...updated.company, ...stepData };
+          updated.audience = stepData;
+          // Store target audience data in database
+          if (stepData?.company && stepData?.analysis) {
+            storeTargetAudienceData(stepData.company, stepData.analysis?.buyer_personas || []);
+          }
           break;
         case 3:
-          updated.audience = stepData;
+          updated.strategy = stepData;
+          // Store strategy data and save strategy ID for future steps (handled below)
           break;
         case 4:
-          updated.strategy = stepData;
+          updated.calendar = stepData;
+          // Store calendar data (handled below)
           break;
         case 5:
-          updated.calendar = stepData;
-          break;
-        case 6:
           updated.content = stepData;
           break;
-        case 7:
+        case 6:
           updated.schedule = stepData;
+          break;
+        case 7:
+          updated.measurements = stepData;
           break;
       }
       
       return updated;
     });
+
+    // Handle async operations outside of setState
+    try {
+      if (state.currentStep === 3 && stepData?.strategy) {
+        const strategyId = await storeMarketingStrategyData(stepData.strategy, stepData.tactics || []);
+        setState(prev => ({ ...prev, strategyId }));
+      }
+      
+      if (state.currentStep === 4 && stepData?.calendar_items && Array.isArray(stepData.calendar_items) && state.strategyId) {
+        await storeContentCalendarData(stepData, state.strategyId);
+      }
+    } catch (error) {
+      console.error('Error storing data:', error);
+    }
 
     // Mark step as completed
     setState(prev => ({
@@ -222,7 +262,8 @@ export const CampaignWizard = () => {
     const stepProps = {
       campaignData,
       onComplete: handleStepComplete,
-      loading: loading || isProcessing
+      loading: loading || isProcessing || companyLoading,
+      companyData: primaryCompany
     };
 
     switch(state.currentStep) {

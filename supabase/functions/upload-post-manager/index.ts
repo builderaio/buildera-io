@@ -239,6 +239,8 @@ async function generateJWT(supabaseClient: any, userId: string, apiKey: string, 
 
 async function getConnections(supabaseClient: any, userId: string, apiKey: string, data: any) {
   const { companyUsername } = data;
+  
+  console.log('🔗 Getting connections for user:', companyUsername);
 
   try {
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/users/${companyUsername}`, {
@@ -250,18 +252,37 @@ async function getConnections(supabaseClient: any, userId: string, apiKey: strin
     });
 
     if (!response.ok) {
+      if (response.status === 404) {
+        console.log('❌ User profile not found in upload-post');
+        return {
+          success: false,
+          message: 'User profile not found in upload-post',
+          connections: {}
+        };
+      }
       const errorText = await response.text();
       throw new Error(`Error obteniendo conexiones: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
+    console.log('📊 Profile data received from upload-post:', result);
     
-    // Actualizar base de datos local con las conexiones
-    if (result.social_accounts) {
-      await updateSocialAccountsFromAPI(supabaseClient, userId, companyUsername, result.social_accounts);
+    if (!result.success || !result.profile) {
+      throw new Error('Invalid profile response format from upload-post API');
     }
 
-    return result;
+    // Actualizar base de datos local con las conexiones usando la estructura correcta
+    const socialAccounts = result.profile.social_accounts || {};
+    await updateSocialAccountsFromProfile(supabaseClient, userId, companyUsername, socialAccounts);
+    
+    console.log('✅ Successfully updated local social accounts data');
+
+    return {
+      success: true,
+      connections: socialAccounts,
+      created_at: result.profile.created_at,
+      profile: result.profile
+    };
 
   } catch (error) {
     console.error('Error in getConnections:', error);
@@ -286,18 +307,66 @@ async function updateSocialAccountsFromAPI(supabaseClient: any, userId: string, 
   }
 }
 
-async function updateSocialAccountsFromProfile(supabaseClient: any, userId: string, companyUsername: string, apiKey: string) {
+async function updateSocialAccountsFromProfile(supabaseClient: any, userId: string, companyUsername: string, socialAccountsData: any) {
   try {
-    const response = await fetch(`https://api.upload-post.com/api/uploadposts/users/${companyUsername}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `ApiKey ${apiKey}`,
-        'Content-Type': 'application/json',
-      }
-    });
+    console.log('🔄 Updating social accounts in database for:', companyUsername);
+    
+    // Actualizar o insertar el registro en social_accounts con toda la información de conexiones
+    const { error: upsertError } = await supabaseClient
+      .from('social_accounts')
+      .upsert({
+        user_id: userId,
+        company_username: companyUsername,
+        platform_connections: socialAccountsData, // Almacenar todo el objeto de conexiones
+        last_sync_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,company_username'
+      });
 
-    if (response.ok) {
-      const result = await response.json();
+    if (upsertError) {
+      console.error('❌ Error upserting social_accounts:', upsertError);
+      throw upsertError;
+    }
+
+    // También crear registros individuales para cada plataforma conectada
+    const platforms = Object.keys(socialAccountsData || {});
+    console.log('📱 Processing platforms:', platforms);
+
+    for (const platform of platforms) {
+      const platformData = socialAccountsData[platform];
+      
+      // Solo procesar si la plataforma tiene datos válidos (no es null o string vacío)
+      if (platformData && typeof platformData === 'object' && platformData.username) {
+        await supabaseClient
+          .from('social_accounts')
+          .upsert({
+            user_id: userId,
+            company_username: companyUsername,
+            platform: platform,
+            platform_username: platformData.username || null,
+            platform_display_name: platformData.display_name || null,
+            is_connected: true,
+            metadata: platformData,
+            last_sync_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,platform,company_username'
+          });
+        
+        console.log(`✅ Updated ${platform} connection:`, platformData.username);
+      } else {
+        console.log(`⚠️ Skipping ${platform} - no valid connection data`);
+      }
+    }
+    
+    console.log('✅ Social accounts updated successfully in database');
+    
+  } catch (error) {
+    console.error('❌ Error updating social accounts from profile:', error);
+    throw error;
+  }
+}
       if (result.social_accounts) {
         await updateSocialAccountsFromAPI(supabaseClient, userId, companyUsername, result.social_accounts);
       }

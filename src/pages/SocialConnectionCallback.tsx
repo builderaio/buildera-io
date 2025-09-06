@@ -62,7 +62,7 @@ export const SocialConnectionCallback = () => {
           }
         }
 
-        // Actualizar conexiones
+        // Actualizar conexiones inmediatamente después del éxito
         await refreshConnections();
         
         setSuccess(true);
@@ -126,6 +126,8 @@ export const SocialConnectionCallback = () => {
         .limit(1);
 
       if (socialAccounts?.[0]?.company_username) {
+        console.log('🔄 Refreshing connections for:', socialAccounts[0].company_username);
+        
         const { data, error } = await supabase.functions.invoke('upload-post-manager', {
           body: { 
             action: 'get_connections', 
@@ -135,7 +137,11 @@ export const SocialConnectionCallback = () => {
 
         if (error) {
           console.warn('Could not refresh connections:', error);
+        } else if (data?.success) {
+          console.log('✅ Connections refreshed successfully:', data.connections);
         }
+      } else {
+        console.warn('No company username found for user');
       }
     } catch (error) {
       console.error('Error refreshing connections:', error);

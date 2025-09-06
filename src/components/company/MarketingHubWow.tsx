@@ -368,25 +368,43 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   const checkWorkflowStatus = async () => {
     try {
-      const [companyRes, campaignRes] = await Promise.all([
-        supabase.from('companies').select('*').eq('created_by', profile.user_id).limit(1),
+      // Buscar empresa principal del usuario a través de company_members
+      const { data: companyMember } = await supabase
+        .from('company_members')
+        .select(`
+          company_id,
+          companies (
+            id,
+            name,
+            country,
+            description,
+            website_url,
+            industry_sector
+          )
+        `)
+        .eq('user_id', profile.user_id)
+        .eq('is_primary', true)
+        .limit(1)
+        .single();
+
+      const [campaignRes] = await Promise.all([
         supabase.from('marketing_insights').select('*').eq('user_id', profile.user_id).limit(1)
       ]);
 
       setWorkflow({
-        setup: (companyRes.data?.length || 0) > 0,
+        setup: companyMember?.companies ? true : false,
         analysis: false, // Se establecerá según análisis previos
         strategy: (campaignRes.data?.length || 0) > 0,
         content: false, // Se establecerá según contenido generado
         automation: false // Se establecerá según automatizaciones activas
       });
 
-      if (companyRes.data?.[0]) {
-        const company = companyRes.data[0];
+      if (companyMember?.companies) {
+        const company = companyMember.companies;
         setCompanyData({
           nombre_empresa: company.name || '',
           pais: company.country || '',
-          objetivo_de_negocio: company.description || '',
+          objetivo_de_negocio: company.description || company.industry_sector || '',
           propuesta_de_valor: company.description || '',
           url_sitio_web: company.website_url || ''
         });

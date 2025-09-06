@@ -306,37 +306,53 @@ async function extractCompanyData(url: string, userId: string, token: string) {
     const companyData = {
       name: apiData?.company_name || apiData?.legal_name || fallbackName,
       description: apiData?.business_description || `Empresa líder en el sector de ${fallbackName}`,
-      website_url: apiData?.website || url,
-      industry_sector: apiData?.industries?.[0] || 'General',
-      company_size: apiData?.num_employees ? 
-        (parseInt(apiData.num_employees.replace(/,/g, '')) > 250 ? 'large' : 
-         parseInt(apiData.num_employees.replace(/,/g, '')) > 50 ? 'medium' : 'small') : 'small',
+      website_url: apiData?.website || normalizedUrl,
+      industry_sector: Array.isArray(apiData?.industries) && apiData.industries.length > 0 
+        ? apiData.industries.join(', ') 
+        : 'General',
+      company_size: apiData?.num_employees && apiData.num_employees !== null ? 
+        (typeof apiData.num_employees === 'string' ? 
+          (parseInt(apiData.num_employees.replace(/[^0-9]/g, '')) > 250 ? 'large' : 
+           parseInt(apiData.num_employees.replace(/[^0-9]/g, '')) > 50 ? 'medium' : 'small') :
+          (apiData.num_employees > 250 ? 'large' : 
+           apiData.num_employees > 50 ? 'medium' : 'small')
+        ) : null,
       country: apiData?.address ? extractCountryFromAddress(apiData.address) : null,
-      logo_url: apiData?.logo_url,
-      linkedin_url: apiData?.social_links?.linkedin,
-      facebook_url: apiData?.social_links?.facebook,
-      twitter_url: apiData?.social_links?.twitter,
-      instagram_url: apiData?.social_links?.instagram,
-      youtube_url: apiData?.social_links?.youtube,
-      tiktok_url: apiData?.social_links?.tiktok,
+      logo_url: apiData?.logo_url || null,
+      linkedin_url: apiData?.social_links?.linkedin || null,
+      facebook_url: apiData?.social_links?.facebook || null,
+      twitter_url: apiData?.social_links?.twitter || null,
+      instagram_url: apiData?.social_links?.instagram || null,
+      youtube_url: apiData?.social_links?.youtube || null,
+      tiktok_url: apiData?.social_links?.tiktok || null,
       webhook_data: apiData ? {
         raw_api_response: apiData,
         processed_at: new Date().toISOString(),
-        tax_id: apiData.tax_id,
-        phone: apiData.phone,
-        email: apiData.email,
-        founded_date: apiData.founded_date,
-        annual_revenue: apiData.annual_revenue,
-        revenue_currency: apiData.revenue_currency,
-        value_proposition: apiData.value_proposition,
-        address: apiData.address,
-        products_services: apiData.products_services,
-        key_people: apiData.key_people,
-        corporate_values: apiData.corporate_values
+        tax_id: apiData.tax_id || null,
+        phone: apiData.phone || null,
+        email: apiData.email || null,
+        founded_date: apiData.founded_date || null,
+        annual_revenue: apiData.annual_revenue || null,
+        revenue_currency: apiData.revenue_currency || null,
+        value_proposition: apiData.value_proposition || null,
+        address: apiData.address || null,
+        products_services: apiData.products_services || null,
+        key_people: apiData.key_people || null,
+        corporate_values: apiData.corporate_values || null,
+        legal_name: apiData.legal_name || null
       } : null,
       webhook_processed_at: apiData ? new Date().toISOString() : null,
       updated_at: new Date().toISOString()
     };
+
+    console.log('📋 Mapped company data:', {
+      name: companyData.name,
+      description: companyData.description?.substring(0, 100) + '...',
+      website_url: companyData.website_url,
+      industry_sector: companyData.industry_sector,
+      logo_url: companyData.logo_url,
+      hasWebhookData: !!companyData.webhook_data
+    });
 
     // Check for existing company (match by domain to avoid scheme/WWW mismatches)
     const { data: existingCompany } = await supabase
@@ -354,19 +370,39 @@ async function extractCompanyData(url: string, userId: string, token: string) {
       companyId = existingCompany.id;
       console.log('✅ Updating existing company:', companyId);
       
+      // Only update non-null fields to preserve existing data
+      const updateFields = Object.fromEntries(
+        Object.entries(companyData).filter(([key, value]) => {
+          // Always update these fields
+          if (['updated_at', 'webhook_processed_at', 'webhook_data'].includes(key)) {
+            return true;
+          }
+          // Only update other fields if they have meaningful values
+          return value !== null && value !== undefined && value !== '';
+        })
+      );
+      
+      console.log('📝 Updating company with fields:', Object.keys(updateFields));
+      
       // Update existing company with new data
       const { error: updateError } = await supabase
         .from('companies')
-        .update(companyData)
+        .update(updateFields)
         .eq('id', companyId);
 
       if (updateError) {
-        console.error('Error updating company:', updateError);
+        console.error('❌ Error updating company:', updateError);
         throw updateError;
       }
 
       console.log('✅ Company updated successfully with API data');
     } else {
+      console.log('🆕 Creating new company with data:', {
+        name: companyData.name,
+        industry_sector: companyData.industry_sector,
+        hasWebhookData: !!companyData.webhook_data
+      });
+      
       const { data: newCompany, error: companyError } = await supabase
         .from('companies')
         .insert({
@@ -377,7 +413,7 @@ async function extractCompanyData(url: string, userId: string, token: string) {
         .single();
 
       if (companyError) {
-        console.error('Error creating company:', companyError);
+        console.error('❌ Error creating company:', companyError);
         throw companyError;
       }
 

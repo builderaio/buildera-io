@@ -376,9 +376,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   };
 
   const checkWorkflowStatus = async () => {
+    console.log('=== DEBUG: checkWorkflowStatus iniciado ===');
     try {
       // Buscar empresa principal del usuario a través de company_members
-      const { data: companyMember } = await supabase
+      const { data: companyMember, error: memberError } = await supabase
         .from('company_members')
         .select(`
           company_id,
@@ -396,6 +397,8 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         .limit(1)
         .single();
 
+      console.log('Company member result:', { companyMember, memberError });
+
       const [campaignRes] = await Promise.all([
         supabase.from('marketing_insights').select('*').eq('user_id', profile.user_id).limit(1)
       ]);
@@ -410,13 +413,18 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
       if (companyMember?.companies) {
         const company = companyMember.companies;
-        setCompanyData({
+        console.log('Company data found:', company);
+        const newCompanyData = {
           nombre_empresa: company.name || '',
           pais: company.country || '',
           objetivo_de_negocio: company.description || company.industry_sector || '',
           propuesta_de_valor: company.description || '',
           url_sitio_web: company.website_url || ''
-        });
+        };
+        console.log('Setting companyData to:', newCompanyData);
+        setCompanyData(newCompanyData);
+      } else {
+        console.log('=== DEBUG: No se encontró empresa principal para el usuario ===');
       }
     } catch (error) {
       console.error('Error checking workflow status:', error);
@@ -424,6 +432,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   };
 
   const startIntelligentCampaign = async () => {
+    console.log('=== DEBUG: startIntelligentCampaign iniciado ===');
+    console.log('companyData actual:', companyData);
+    
     // Validar campos requeridos por el edge function
     const missingFields = [];
     if (!companyData.nombre_empresa) missingFields.push('Nombre de empresa');
@@ -431,7 +442,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     if (!companyData.objetivo_de_negocio) missingFields.push('Objetivo de negocio');
     if (!companyData.propuesta_de_valor) missingFields.push('Propuesta de valor');
 
+    console.log('Campos faltantes:', missingFields);
+
     if (missingFields.length > 0) {
+      console.log('=== DEBUG: Abriendo diálogo para completar datos ===');
       // Pre-llenar el diálogo con los datos existentes
       setTempCompanyData({
         ...companyData,
@@ -441,6 +455,8 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       setShowCompanyDataDialog(true);
       return;
     }
+
+    console.log('=== DEBUG: Todos los campos están completos, iniciando campaña ===');
 
     setCurrentProcess('intelligent-campaign');
     setProcessStep(0);

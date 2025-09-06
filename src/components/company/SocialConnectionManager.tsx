@@ -17,7 +17,8 @@ import {
   AlertTriangle,
   RefreshCw,
   Settings,
-  Play
+  Play,
+  Bug
 } from "lucide-react";
 
 interface SocialConnectionManagerProps {
@@ -63,6 +64,10 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const [facebookPages, setFacebookPages] = useState<FacebookPage[]>([]);
   const [selectedFacebookPage, setSelectedFacebookPage] = useState<string>('');
   const [connectionWindow, setConnectionWindow] = useState<Window | null>(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [diagnosticDbRows, setDiagnosticDbRows] = useState<any[]>([]);
+  const [diagnosticUploadProfile, setDiagnosticUploadProfile] = useState<any>(null);
+  const [diagnosticError, setDiagnosticError] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -370,6 +375,49 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     }
   };
 
+  const runDiagnostics = async () => {
+    try {
+      setLoading(true);
+      setDiagnosticError('');
+
+      // Asegurar companyUsername
+      let username = companyUsername;
+      if (!username) {
+        const resolved = await initializeProfile();
+        username = resolved || '';
+      }
+
+      // Leer filas locales
+      const { data: dbRows, error: dbErr } = await supabase
+        .from('social_accounts')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .order('platform', { ascending: true });
+      if (dbErr) {
+        setDiagnosticError(`DB error: ${dbErr.message}`);
+      }
+      setDiagnosticDbRows(dbRows || []);
+
+      // Consultar estado remoto (y de paso sincroniza)
+      if (username) {
+        const { data: uploadRes, error: uploadErr } = await supabase.functions.invoke('upload-post-manager', {
+          body: { action: 'get_connections', data: { companyUsername: username } }
+        });
+        if (uploadErr) {
+          setDiagnosticError(prev => prev ? `${prev} | Remote error: ${uploadErr.message}` : `Remote error: ${uploadErr.message}`);
+        } else {
+          setDiagnosticUploadProfile((uploadRes as any)?.profile || null);
+        }
+      }
+
+      setShowDiagnostics(true);
+    } catch (e: any) {
+      setDiagnosticError(prev => prev ? `${prev} | ${e.message}` : e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getConnectionStatus = (platform: string) => {
     const account = socialAccounts.find(acc => acc.platform === platform);
     return account?.is_connected || false;
@@ -421,7 +469,16 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 Actualizar
               </Button>
               <Button
-                onClick={startConnectionFlow}
+                onClick={runDiagnostics}
+                variant="outline"
+                size="sm"
+                disabled={loading}
+                title="Ver filas locales y perfil Upload-Post"
+              >
+                <Bug className="w-4 h-4" />
+                Diagnóstico
+              </Button>
+              <Button
                 disabled={connecting || loading}
                 className="bg-primary hover:bg-primary/90"
               >
@@ -589,6 +646,34 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
               <Button onClick={selectFacebookPage} disabled={!selectedFacebookPage}>
                 Seleccionar
               </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diagnostics Dialog */}
+      <Dialog open={showDiagnostics} onOpenChange={setShowDiagnostics}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Diagnóstico de Conexiones</DialogTitle>
+            <DialogDescription>
+              Filas locales en social_accounts y último perfil remoto de Upload-Post
+            </DialogDescription>
+          </DialogHeader>
+          {diagnosticError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="w-4 h-4" />
+              <AlertDescription>{diagnosticError}</AlertDescription>
+            </Alert>
+          )}
+          <div className="space-y-4 max-h-[60vh] overflow-auto">
+            <div>
+              <h4 className="font-semibold mb-2">Filas locales ({diagnosticDbRows.length})</h4>
+              <pre className="text-xs bg-muted p-3 rounded-md overflow-auto">{JSON.stringify(diagnosticDbRows, null, 2)}</pre>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">Perfil Upload-Post</h4>
+              <pre className="text-xs bg-muted p-3 rounded-md overflow-auto">{JSON.stringify(diagnosticUploadProfile?.social_accounts || diagnosticUploadProfile, null, 2)}</pre>
             </div>
           </div>
         </DialogContent>

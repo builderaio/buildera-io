@@ -61,14 +61,8 @@ export default function MarketingHubOrchestrator() {
   } = useMarketingDataPersistence();
 
   const callMarketingFunction = async (functionName: string, input: any) => {
-    const credentials = btoa(`${process.env.N8N_AUTH_USER || ''}:${process.env.N8N_AUTH_PASS || ''}`);
-    
     const { data, error } = await supabase.functions.invoke(functionName, {
       body: { input },
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/json'
-      }
     });
 
     if (error) throw error;

@@ -227,11 +227,18 @@ export const CampaignWizard = () => {
       completedSteps: [...prev.completedSteps.filter(s => s !== state.currentStep), state.currentStep]
     }));
 
-    // Show success message
+    // Show success message with confetti effect
     toast({
-      title: "¡Paso completado!",
+      title: "¡Paso completado! 🎉",
       description: `${currentStep?.title} configurado exitosamente`,
     });
+
+    // Auto-advance to next step after a short delay for better UX
+    if (state.currentStep < steps.length) {
+      setTimeout(() => {
+        nextStep();
+      }, 1500);
+    }
   };
 
   const goToStep = (stepNumber: number) => {
@@ -287,31 +294,43 @@ export const CampaignWizard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="container mx-auto py-8 px-4 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+      {/* Background Animation */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
+      
+      <div className="relative z-10 container mx-auto py-8 px-4 space-y-8">
         {/* Header */}
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 animate-fade-in">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="h-8 w-8 text-primary animate-pulse" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <Sparkles className="h-8 w-8 text-primary animate-pulse drop-shadow-lg" />
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent drop-shadow-sm">
               Campaña Inteligente
             </h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Crea campañas de marketing que generen resultados reales con el poder de la IA
           </p>
           
           {/* Progress */}
-          <div className="max-w-md mx-auto space-y-2">
-            <Progress value={progress} className="h-2" />
-            <p className="text-sm text-muted-foreground">
+          <div className="max-w-lg mx-auto space-y-3">
+            <div className="relative">
+              <Progress value={progress} className="h-3 bg-muted/50" />
+              <div className="absolute top-0 left-0 h-3 bg-gradient-to-r from-primary to-primary/60 rounded-full transition-all duration-700 ease-out"
+                   style={{ width: `${progress}%` }}>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-primary rounded-full shadow-lg animate-pulse"></div>
+              </div>
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">
               Paso {state.currentStep} de {steps.length} • {Math.round(progress)}% completado
             </p>
           </div>
         </div>
 
         {/* Steps Navigation */}
-        <Card className="bg-card/50 backdrop-blur-sm border-2">
+        <Card className="bg-card/60 backdrop-blur-md border-2 border-border/50 shadow-xl animate-slide-up">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
               {steps.map((step, index) => {
@@ -323,41 +342,68 @@ export const CampaignWizard = () => {
                 return (
                   <div 
                     key={step.id}
-                    className={`flex flex-col items-center text-center p-4 rounded-lg transition-all cursor-pointer group ${
+                    className={`relative flex flex-col items-center text-center p-4 rounded-xl transition-all duration-300 cursor-pointer group ${
                       isActive 
-                        ? 'bg-primary/10 border-2 border-primary shadow-lg scale-105' 
+                        ? 'bg-gradient-to-br from-primary/15 to-primary/5 border-2 border-primary/40 shadow-xl scale-105 animate-pulse-soft' 
                         : canAccess
-                        ? 'hover:bg-muted/50 hover:scale-102'
-                        : 'opacity-50 cursor-not-allowed'
+                        ? 'hover:bg-gradient-to-br hover:from-muted/60 hover:to-muted/20 hover:scale-[1.02] hover:shadow-lg'
+                        : 'opacity-40 cursor-not-allowed'
                     }`}
                     onClick={() => canAccess && goToStep(step.id)}
                   >
-                    <div className={`relative p-3 rounded-full mb-2 transition-colors ${
+                    {/* Connection Line */}
+                    {index < steps.length - 1 && (
+                      <div className={`hidden md:block absolute top-1/2 -right-2 w-4 h-0.5 transition-colors ${
+                        isCompleted ? 'bg-green-500' : isActive ? 'bg-primary/50' : 'bg-muted'
+                      }`} />
+                    )}
+                    
+                    <div className={`relative p-3 rounded-full mb-3 transition-all duration-300 ${
                       isCompleted 
-                        ? 'bg-green-100 text-green-600' 
+                        ? 'bg-gradient-to-br from-green-100 to-green-50 text-green-600 shadow-lg' 
                         : isActive 
-                        ? 'bg-primary/20 text-primary' 
-                        : 'bg-muted text-muted-foreground'
+                        ? 'bg-gradient-to-br from-primary/20 to-primary/10 text-primary shadow-lg' 
+                        : 'bg-muted/60 text-muted-foreground'
                     }`}>
                       {isCompleted ? (
-                        <CheckCircle className="h-6 w-6" />
+                        <CheckCircle className="h-6 w-6 animate-scale-in" />
                       ) : (
-                        <IconComponent className="h-6 w-6" />
+                        <IconComponent className={`h-6 w-6 ${isActive ? 'animate-bounce-gentle' : ''}`} />
+                      )}
+                      
+                      {/* Glow effect for active step */}
+                      {isActive && (
+                        <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
                       )}
                     </div>
                     
-                    <h3 className={`font-medium text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>
-                      {step.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1 leading-tight">
-                      {step.description}
-                    </p>
+                    <div className="space-y-1">
+                      <h3 className={`font-semibold text-sm transition-colors ${
+                        isActive ? 'text-primary' : isCompleted ? 'text-green-700' : 'text-foreground'
+                      }`}>
+                        {step.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground leading-tight opacity-80">
+                        {step.description}
+                      </p>
+                    </div>
                     
                     {isCompleted && (
-                      <Badge variant="secondary" className="mt-2 text-xs">
-                        Completado
+                      <Badge variant="default" className="mt-2 text-xs bg-green-100 text-green-700 border-green-200 animate-fade-in">
+                        ✓ Completado
                       </Badge>
                     )}
+                    
+                    {/* Step number indicator */}
+                    <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all ${
+                      isCompleted 
+                        ? 'bg-green-500 text-white' 
+                        : isActive 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {step.id}
+                    </div>
                   </div>
                 );
               })}
@@ -366,34 +412,50 @@ export const CampaignWizard = () => {
         </Card>
 
         {/* Current Step Content */}
-        <div className="max-w-4xl mx-auto">
-          {renderCurrentStep()}
+        <div className="max-w-5xl mx-auto">
+          <div className="animate-slide-up-delayed">
+            {renderCurrentStep()}
+          </div>
         </div>
 
         {/* Navigation Controls */}
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
+        <div className="flex items-center justify-between max-w-5xl mx-auto animate-slide-up-delayed">
           <Button 
             variant="outline" 
             onClick={prevStep}
-            disabled={state.currentStep === 1}
-            className="flex items-center gap-2"
+            disabled={state.currentStep === 1 || loading || isProcessing}
+            className="flex items-center gap-2 hover:scale-105 transition-all duration-200 disabled:hover:scale-100"
           >
             <ArrowLeft className="h-4 w-4" />
             Anterior
           </Button>
 
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-3 px-4 py-2 bg-muted/50 rounded-full">
+            <div className="flex gap-1">
+              {steps.map((_, index) => (
+                <div 
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index + 1 <= state.currentStep ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-sm font-medium text-muted-foreground">
               {state.currentStep} / {steps.length}
             </span>
           </div>
 
           <Button 
             onClick={nextStep}
-            disabled={state.currentStep === steps.length || !isStepCompleted(state.currentStep)}
-            className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+            disabled={state.currentStep === steps.length || !isStepCompleted(state.currentStep) || loading || isProcessing}
+            className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 disabled:hover:scale-100 ${
+              state.currentStep === steps.length 
+                ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600' 
+                : 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70'
+            }`}
           >
-            Siguiente
+            {state.currentStep === steps.length ? 'Finalizar' : 'Siguiente'}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

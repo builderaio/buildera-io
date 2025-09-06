@@ -13,12 +13,8 @@ import {
   XCircle, 
   Loader2, 
   ExternalLink, 
-  Zap,
-  AlertTriangle,
   RefreshCw,
-  Settings,
-  Play,
-  Bug
+  Settings
 } from "lucide-react";
 
 interface SocialConnectionManagerProps {
@@ -64,11 +60,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const [facebookPages, setFacebookPages] = useState<FacebookPage[]>([]);
   const [selectedFacebookPage, setSelectedFacebookPage] = useState<string>('');
   const [connectionWindow, setConnectionWindow] = useState<Window | null>(null);
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
-  const [diagnosticDbRows, setDiagnosticDbRows] = useState<any[]>([]);
-  const [diagnosticUploadProfile, setDiagnosticUploadProfile] = useState<any>(null);
-  const [diagnosticError, setDiagnosticError] = useState<string>('');
-  const [diagnosticLoading, setDiagnosticLoading] = useState<boolean>(false);
   const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
   const { toast } = useToast();
 
@@ -360,103 +351,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     }
   };
 
-  const runSmokeTest = async () => {
-    if (!companyUsername) return;
 
-    try {
-      setLoading(true);
-      
-      const connectedPlatforms = socialAccounts
-        .filter(account => account.is_connected)
-        .map(account => account.platform)
-        .filter(platform => platform !== 'upload_post_profile');
-
-      if (connectedPlatforms.length === 0) {
-        toast({
-          title: "Sin conexiones",
-          description: "Conecte al menos una red social para hacer la prueba",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('upload-post-manager', {
-        body: { 
-          action: 'smoke_test', 
-          data: { companyUsername, platforms: connectedPlatforms } 
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "🧪 Prueba programada",
-        description: "Post de prueba programado para los próximos 10 minutos",
-      });
-    } catch (error) {
-      console.error('Error running smoke test:', error);
-      toast({
-        title: "Error en la prueba",
-        description: "No se pudo ejecutar la prueba de conexión",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const runDiagnostics = async () => {
-    try {
-      setShowDiagnostics(true);
-      setDiagnosticLoading(true);
-      toast({ title: "🔎 Diagnóstico iniciado", description: "Sincronizando y consultando datos..." });
-      setDiagnosticError('');
-
-      // Asegurar companyUsername
-      let username = companyUsername;
-      if (!username) {
-        const resolved = await initializeProfile();
-        username = resolved || '';
-      }
-
-      // 1) Sincronizar estado remoto (esto actualiza la tabla local)
-      if (username) {
-        const { data: remote, error: uploadErr } = await supabase.functions.invoke('upload-post-manager', {
-          body: { action: 'get_connections', data: { companyUsername: username } }
-        });
-        if (uploadErr) {
-          setDiagnosticError(prev => prev ? `${prev} | Remote error: ${uploadErr.message}` : `Remote error: ${uploadErr.message}`);
-        } else {
-          setDiagnosticUploadProfile((remote as any)?.profile || null);
-        }
-      }
-
-      // 2) Leer filas locales DESPUÉS de sincronizar
-      if (!userId) {
-        setDiagnosticError(prev => prev ? `${prev} | Usuario no autenticado` : 'Usuario no autenticado');
-        setDiagnosticDbRows([]);
-      } else {
-        const { data: dbRows, error: dbErr } = await supabase
-          .from('social_accounts')
-          .select('*')
-          .eq('user_id', userId)
-          .order('platform', { ascending: true });
-        if (dbErr) {
-          setDiagnosticError(prev => prev ? `${prev} | DB error: ${dbErr.message}` : `DB error: ${dbErr.message}`);
-        }
-        setDiagnosticDbRows(dbRows || []);
-      }
-
-      // 3) Refrescar tarjetas visibles
-      await loadSocialAccounts();
-
-      toast({ title: "✅ Diagnóstico listo", description: "Resultados sincronizados." });
-    } catch (e: any) {
-      setDiagnosticError(prev => prev ? `${prev} | ${e.message}` : e.message);
-    } finally {
-      setDiagnosticLoading(false);
-    }
-  };
 
   const getConnectionStatus = (platform: string) => {
     const account = socialAccounts.find(acc => acc.platform === platform);
@@ -507,16 +402,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 Actualizar
-              </Button>
-              <Button
-                onClick={runDiagnostics}
-                variant="outline"
-                size="sm"
-                disabled={false}
-                title="Ver filas locales y perfil Upload-Post"
-              >
-                <Bug className="w-4 h-4" />
-                Diagnóstico
               </Button>
               <Button
                 onClick={startConnectionFlow}
@@ -597,34 +482,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         })}
       </div>
 
-      {/* Actions */}
-      {connectedCount > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-primary" />
-              Pruebas y Configuración
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <AlertTriangle className="w-4 h-4" />
-              <AlertDescription>
-                Realice una prueba de conexión para verificar que las plataformas están funcionando correctamente.
-              </AlertDescription>
-            </Alert>
-            
-            <Button
-              onClick={runSmokeTest}
-              disabled={loading}
-              className="w-full md:w-auto"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Ejecutar Prueba de Conexión
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Empty State */}
       {connectedCount === 0 && !loading && (
@@ -692,40 +549,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         </DialogContent>
       </Dialog>
 
-      {/* Diagnostics Dialog */}
-      <Dialog open={showDiagnostics} onOpenChange={setShowDiagnostics}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Diagnóstico de Conexiones</DialogTitle>
-            <DialogDescription>
-              Filas locales en social_accounts y último perfil remoto de Upload-Post
-            </DialogDescription>
-          </DialogHeader>
-          {diagnosticError && (
-            <Alert variant="destructive">
-              <AlertTriangle className="w-4 h-4" />
-              <AlertDescription>{diagnosticError}</AlertDescription>
-            </Alert>
-          )}
-          {diagnosticLoading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Consultando datos...
-            </div>
-          ) : (
-            <div className="space-y-4 max-h-[60vh] overflow-auto">
-              <div>
-                <h4 className="font-semibold mb-2">Filas locales ({diagnosticDbRows.length})</h4>
-                <pre className="text-xs bg-muted p-3 rounded-md overflow-auto">{JSON.stringify(diagnosticDbRows, null, 2)}</pre>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">Perfil Upload-Post</h4>
-                <pre className="text-xs bg-muted p-3 rounded-md overflow-auto">{JSON.stringify(diagnosticUploadProfile?.social_accounts || diagnosticUploadProfile, null, 2)}</pre>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

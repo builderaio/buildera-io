@@ -386,7 +386,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     try {
       setShowDiagnostics(true);
       setDiagnosticLoading(true);
-      toast({ title: "🔎 Diagnóstico iniciado", description: "Consultando BD y Upload-Post..." });
+      toast({ title: "🔎 Diagnóstico iniciado", description: "Sincronizando y consultando datos..." });
       setDiagnosticError('');
 
       // Asegurar companyUsername
@@ -396,30 +396,33 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         username = resolved || '';
       }
 
-      // Leer filas locales
+      // 1) Sincronizar estado remoto (esto actualiza la tabla local)
+      if (username) {
+        const { data: remote, error: uploadErr } = await supabase.functions.invoke('upload-post-manager', {
+          body: { action: 'get_connections', data: { companyUsername: username } }
+        });
+        if (uploadErr) {
+          setDiagnosticError(prev => prev ? `${prev} | Remote error: ${uploadErr.message}` : `Remote error: ${uploadErr.message}`);
+        } else {
+          setDiagnosticUploadProfile((remote as any)?.profile || null);
+        }
+      }
+
+      // 2) Leer filas locales DESPUÉS de sincronizar
       const { data: dbRows, error: dbErr } = await supabase
         .from('social_accounts')
         .select('*')
         .eq('user_id', profile.user_id)
         .order('platform', { ascending: true });
       if (dbErr) {
-        setDiagnosticError(`DB error: ${dbErr.message}`);
+        setDiagnosticError(prev => prev ? `${prev} | DB error: ${dbErr.message}` : `DB error: ${dbErr.message}`);
       }
       setDiagnosticDbRows(dbRows || []);
 
-      // Consultar estado remoto (y de paso sincroniza)
-      if (username) {
-        const { data: uploadRes, error: uploadErr } = await supabase.functions.invoke('upload-post-manager', {
-          body: { action: 'get_connections', data: { companyUsername: username } }
-        });
-        if (uploadErr) {
-          setDiagnosticError(prev => prev ? `${prev} | Remote error: ${uploadErr.message}` : `Remote error: ${uploadErr.message}`);
-        } else {
-          setDiagnosticUploadProfile((uploadRes as any)?.profile || null);
-        }
-      }
+      // 3) Refrescar tarjetas visibles
+      await loadSocialAccounts();
 
-      toast({ title: "✅ Diagnóstico listo", description: "Resultados disponibles." });
+      toast({ title: "✅ Diagnóstico listo", description: "Resultados sincronizados." });
     } catch (e: any) {
       setDiagnosticError(prev => prev ? `${prev} | ${e.message}` : e.message);
     } finally {
@@ -676,16 +679,23 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
               <AlertDescription>{diagnosticError}</AlertDescription>
             </Alert>
           )}
-          <div className="space-y-4 max-h-[60vh] overflow-auto">
-            <div>
-              <h4 className="font-semibold mb-2">Filas locales ({diagnosticDbRows.length})</h4>
-              <pre className="text-xs bg-muted p-3 rounded-md overflow-auto">{JSON.stringify(diagnosticDbRows, null, 2)}</pre>
+          {diagnosticLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Consultando datos...
             </div>
-            <div>
-              <h4 className="font-semibold mb-2">Perfil Upload-Post</h4>
-              <pre className="text-xs bg-muted p-3 rounded-md overflow-auto">{JSON.stringify(diagnosticUploadProfile?.social_accounts || diagnosticUploadProfile, null, 2)}</pre>
+          ) : (
+            <div className="space-y-4 max-h-[60vh] overflow-auto">
+              <div>
+                <h4 className="font-semibold mb-2">Filas locales ({diagnosticDbRows.length})</h4>
+                <pre className="text-xs bg-muted p-3 rounded-md overflow-auto">{JSON.stringify(diagnosticDbRows, null, 2)}</pre>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Perfil Upload-Post</h4>
+                <pre className="text-xs bg-muted p-3 rounded-md overflow-auto">{JSON.stringify(diagnosticUploadProfile?.social_accounts || diagnosticUploadProfile, null, 2)}</pre>
+              </div>
             </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

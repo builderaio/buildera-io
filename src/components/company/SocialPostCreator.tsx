@@ -44,19 +44,41 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
   const [scheduledDate, setScheduledDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [companyUsername, setCompanyUsername] = useState('');
+  const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
   const { toast } = useToast();
 
+  // Resolver userId y luego cargar
   useEffect(() => {
+    let active = true;
+    const resolve = async () => {
+      try {
+        if (profile?.user_id) {
+          if (active) setUserId(profile.user_id);
+        } else {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (active) setUserId(user?.id ?? null);
+        }
+      } catch (e) {
+        console.warn('No se pudo resolver userId:', e);
+      }
+    };
+    resolve();
+    return () => { active = false; };
+  }, [profile?.user_id]);
+
+  useEffect(() => {
+    if (!userId) return;
     loadAvailablePlatforms();
     getCompanyUsername();
-  }, [profile?.user_id]);
+  }, [userId]);
 
   const loadAvailablePlatforms = async () => {
     try {
+      if (!userId) return;
       const { data, error } = await supabase
         .from('social_accounts')
         .select('platform, platform_display_name, is_connected')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', userId)
         .eq('is_connected', true)
         .neq('platform', 'upload_post_profile');
 
@@ -87,10 +109,11 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
 
   const getCompanyUsername = async () => {
     try {
+      if (!userId) return;
       const { data, error } = await supabase
         .from('social_accounts')
         .select('company_username')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', userId)
         .limit(1);
 
       if (error) throw error;

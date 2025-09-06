@@ -62,19 +62,41 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
   const [uploadPostJobs, setUploadPostJobs] = useState<UploadPostJob[]>([]);
   const [loading, setLoading] = useState(false);
   const [companyUsername, setCompanyUsername] = useState('');
+  const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
   const { toast } = useToast();
 
+  // Resolver userId y luego cargar datos
   useEffect(() => {
+    let active = true;
+    const resolve = async () => {
+      try {
+        if (profile?.user_id) {
+          if (active) setUserId(profile.user_id);
+        } else {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (active) setUserId(user?.id ?? null);
+        }
+      } catch (e) {
+        console.warn('No se pudo resolver userId:', e);
+      }
+    };
+    resolve();
+    return () => { active = false; };
+  }, [profile?.user_id]);
+
+  useEffect(() => {
+    if (!userId) return;
     loadScheduledPosts();
     getCompanyUsername();
-  }, [profile?.user_id]);
+  }, [userId]);
 
   const getCompanyUsername = async () => {
     try {
+      if (!userId) return;
       const { data, error } = await supabase
         .from('social_accounts')
         .select('company_username')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', userId)
         .limit(1);
 
       if (error) throw error;
@@ -88,13 +110,14 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
 
   const loadScheduledPosts = async () => {
     try {
+      if (!userId) return;
       setLoading(true);
 
       // Cargar posts locales de la base de datos
       const { data: localData, error: localError } = await supabase
         .from('scheduled_social_posts')
         .select('*')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', userId)
         .in('status', ['scheduled', 'published'])
         .order('scheduled_date', { ascending: true });
 

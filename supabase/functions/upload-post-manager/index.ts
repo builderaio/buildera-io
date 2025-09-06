@@ -311,61 +311,45 @@ async function updateSocialAccountsFromAPI(supabaseClient: any, userId: string, 
 
 async function updateSocialAccountsFromProfile(supabaseClient: any, userId: string, companyUsername: string, socialAccountsData: any) {
   try {
-    console.log('🔄 Updating social accounts in database for:', companyUsername);
-    
-    // Actualizar o insertar el registro en social_accounts con toda la información de conexiones
-    const { error: upsertError } = await supabaseClient
-      .from('social_accounts')
-      .upsert({
-        user_id: userId,
-        company_username: companyUsername,
-        platform_connections: socialAccountsData, // Almacenar todo el objeto de conexiones
-        last_sync_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,company_username'
-      });
+    console.log('🔄 Updating per-platform social accounts for:', companyUsername);
 
-    if (upsertError) {
-      console.error('❌ Error upserting social_accounts:', upsertError);
-      throw upsertError;
-    }
-
-    // También crear registros individuales para cada plataforma conectada
     const platforms = Object.keys(socialAccountsData || {});
-    console.log('📱 Processing platforms:', platforms);
+    console.log('📱 Platforms to process:', platforms);
 
     for (const platform of platforms) {
-      const platformData = socialAccountsData[platform];
-      
-      // Solo procesar si la plataforma tiene datos válidos (no es null o string vacío)
-      if (platformData && typeof platformData === 'object' && platformData.username) {
-        await supabaseClient
-          .from('social_accounts')
-          .upsert({
-            user_id: userId,
-            company_username: companyUsername,
-            platform: platform,
-            platform_username: platformData.username || null,
-            platform_display_name: platformData.display_name || null,
-            is_connected: true,
-            metadata: platformData,
-            last_sync_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'user_id,platform,company_username'
-          });
-        
-        console.log(`✅ Updated ${platform} connection:`, platformData.username);
-      } else {
-        console.log(`⚠️ Skipping ${platform} - no valid connection data`);
+      const platformData = (socialAccountsData as any)[platform];
+
+      const hasData = platformData && typeof platformData === 'object';
+      const isConnected = !!(hasData && (platformData.username || platformData.display_name || platformData.social_images));
+
+      // Upsert one row per platform (schema requires NOT NULL platform and UNIQUE(user_id, platform))
+      const { error } = await supabaseClient
+        .from('social_accounts')
+        .upsert({
+          user_id: userId,
+          company_username: companyUsername,
+          platform,
+          platform_username: hasData ? (platformData.username ?? null) : null,
+          platform_display_name: hasData ? (platformData.display_name ?? null) : null,
+          is_connected: isConnected,
+          metadata: hasData ? platformData : {},
+          connected_at: isConnected ? new Date().toISOString() : null,
+          last_sync_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id,platform'
+        });
+
+      if (error) {
+        console.error(`❌ Error upserting ${platform} row:`, error);
+        throw error;
       }
+
+      console.log(`✅ ${platform}: upserted (connected=${isConnected})`);
     }
-    
-    console.log('✅ Social accounts updated successfully in database');
-    
+
+    console.log('✅ All platform rows updated successfully');
   } catch (error) {
-    console.error('❌ Error updating social accounts from profile:', error);
+    console.error('❌ Error in updateSocialAccountsFromProfile:', error);
     throw error;
   }
 }

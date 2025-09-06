@@ -132,8 +132,10 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
     });
 
     if (checkResponse.ok) {
-      // El perfil ya existe
-      await updateSocialAccountsFromProfile(supabaseClient, userId, companyUsername, apiKey);
+      // El perfil ya existe: sincronizar conexiones desde el perfil existente
+      const existing = await checkResponse.json();
+      const socialAccounts = existing?.profile?.social_accounts || {};
+      await updateSocialAccountsFromProfile(supabaseClient, userId, companyUsername, socialAccounts);
       return { 
         success: true, 
         companyUsername, 
@@ -365,14 +367,6 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
   } catch (error) {
     console.error('❌ Error updating social accounts from profile:', error);
     throw error;
-  }
-}
-      if (result.social_accounts) {
-        await updateSocialAccountsFromAPI(supabaseClient, userId, companyUsername, result.social_accounts);
-      }
-    }
-  } catch (error) {
-    console.error('Error updating social accounts from profile:', error);
   }
 }
 

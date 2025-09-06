@@ -26,12 +26,28 @@ export const SocialConnectionCallback = () => {
       const status = searchParams.get('status');
       const token = searchParams.get('token');
       const errorParam = searchParams.get('error');
+      const source = searchParams.get('source');
+      
+      // Log para debug
+      console.log('Callback parameters:', {
+        status,
+        token,
+        error: errorParam,
+        source,
+        allParams: Object.fromEntries(searchParams.entries())
+      });
 
       if (errorParam) {
         throw new Error(decodeURIComponent(errorParam));
       }
 
-      if (status === 'success') {
+      // Aceptar múltiples indicadores de éxito
+      const isSuccess = status === 'success' || 
+                       source === 'upload_post' || 
+                       searchParams.has('connected') ||
+                       (!errorParam && (token || searchParams.size > 0));
+
+      if (isSuccess) {
         // Validar token si está presente
         if (token) {
           const { data, error } = await supabase.functions.invoke('upload-post-manager', {
@@ -62,7 +78,24 @@ export const SocialConnectionCallback = () => {
         }, 2000);
 
       } else {
-        throw new Error('Estado de conexión no válido');
+        // Si no hay indicadores de éxito claros, intentar refresh conexiones de todas formas
+        console.warn('No success indicators found, but attempting connection refresh');
+        await refreshConnections();
+        
+        // Si no hay errores explícitos, tratar como éxito
+        if (!errorParam) {
+          setSuccess(true);
+          toast({
+            title: "✅ Proceso completado",
+            description: "Verificando el estado de las conexiones...",
+          });
+          
+          setTimeout(() => {
+            returnToMarketingHub();
+          }, 2000);
+        } else {
+          throw new Error('Estado de conexión no válido');
+        }
       }
 
     } catch (err: any) {

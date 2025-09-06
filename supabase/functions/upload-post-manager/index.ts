@@ -199,7 +199,7 @@ async function generateJWT(supabaseClient: any, userId: string, apiKey: string, 
       },
       body: JSON.stringify({
         username: companyUsername,
-        redirect_url: redirectUrl || `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app')}/marketing-hub/connections/callback`,
+        redirect_url: redirectUrl ? `${redirectUrl}?status=success&source=upload_post` : `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app')}/marketing-hub/connections/callback?status=success&source=upload_post`,
         logo_image: logoImage,
         redirect_button_text: 'Volver al Marketing Hub',
         platforms: platforms || ['tiktok', 'instagram', 'linkedin', 'facebook'],

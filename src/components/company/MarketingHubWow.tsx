@@ -150,12 +150,31 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   const { toast } = useToast();
 
+  const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
+
   useEffect(() => {
-    if (profile?.user_id) {
-      initializeMarketingHub();
-    }
+    let active = true;
+    const resolve = async () => {
+      try {
+        if (profile?.user_id) {
+          if (active) setUserId(profile.user_id);
+        } else {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (active) setUserId(user?.id ?? null);
+        }
+      } catch (e) {
+        console.warn('No se pudo resolver userId:', e);
+      }
+    };
+    resolve();
+    return () => { active = false; };
   }, [profile?.user_id]);
 
+  useEffect(() => {
+    if (userId) {
+      initializeMarketingHub();
+    }
+  }, [userId]);
   const initializeMarketingHub = async () => {
     setLoading(true);
     try {
@@ -180,7 +199,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       const { data, error } = await supabase
         .from('social_accounts')
         .select('platform, is_connected')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', userId)
         .eq('is_connected', true);
 
       if (error) throw error;
@@ -202,7 +221,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           const { data: refreshed } = await supabase
             .from('social_accounts')
             .select('platform, is_connected')
-            .eq('user_id', profile.user_id)
+             .eq('user_id', userId)
             .eq('is_connected', true);
           platforms = new Set((refreshed || []).map((a: any) => a.platform));
         }
@@ -223,10 +242,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const loadRealMetrics = async () => {
     try {
       const [insightsRes, actionablesRes, postsRes, campaignsRes] = await Promise.all([
-        supabase.from('marketing_insights').select('*').eq('user_id', profile.user_id),
-        supabase.from('marketing_actionables').select('status').eq('user_id', profile.user_id).eq('status', 'completed'),
-        supabase.from('linkedin_posts').select('likes_count, comments_count').eq('user_id', profile.user_id),
-        supabase.from('marketing_insights').select('*').eq('user_id', profile.user_id)
+        supabase.from('marketing_insights').select('*').eq('user_id', userId),
+        supabase.from('marketing_actionables').select('status').eq('user_id', userId).eq('status', 'completed'),
+        supabase.from('linkedin_posts').select('likes_count, comments_count').eq('user_id', userId),
+        supabase.from('marketing_insights').select('*').eq('user_id', userId)
       ]);
 
       const totalInsights = insightsRes.data?.length || 0;
@@ -288,19 +307,19 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       const [insights, posts, campaigns] = await Promise.all([
         supabase.from('marketing_insights')
           .select('created_at, title, insight_type')
-          .eq('user_id', profile.user_id)
+          .eq('user_id', userId)
           .order('created_at', { ascending: false })
           .limit(5),
         
         supabase.from('linkedin_posts')
           .select('posted_at, content')
-          .eq('user_id', profile.user_id)
+          .eq('user_id', userId)
           .order('posted_at', { ascending: false })
           .limit(3),
 
         supabase.from('marketing_campaigns')
           .select('created_at, name, status')
-          .eq('user_id', profile.user_id)
+          .eq('user_id', userId)
           .order('created_at', { ascending: false })
           .limit(2)
       ]);
@@ -342,7 +361,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       const { data: scheduledPosts } = await supabase
         .from('scheduled_posts')
         .select('*')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', userId)
         .gte('scheduled_for', new Date().toISOString())
         .order('scheduled_for', { ascending: true })
         .limit(5);
@@ -366,19 +385,19 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       const [instagramRes, linkedinRes, facebookRes, tiktokRes] = await Promise.all([
         supabase.from('instagram_posts')
           .select('like_count, comment_count, reach')
-          .eq('user_id', profile.user_id),
+          .eq('user_id', userId),
         
         supabase.from('linkedin_posts')
           .select('likes_count, comments_count')
-          .eq('user_id', profile.user_id),
+          .eq('user_id', userId),
         
         supabase.from('facebook_posts')
           .select('likes_count, comments_count, reach')
-          .eq('user_id', profile.user_id),
+          .eq('user_id', userId),
         
         supabase.from('tiktok_posts')
           .select('digg_count, comment_count, play_count')
-          .eq('user_id', profile.user_id)
+          .eq('user_id', userId)
       ]);
 
       const calculateStats = (posts: any[], likeField: string, commentField: string, reachField?: string) => {
@@ -433,7 +452,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             industry_sector
           )
         `)
-        .eq('user_id', profile.user_id)
+        .eq('user_id', userId)
         .eq('is_primary', true)
         .limit(1)
         .single();
@@ -441,7 +460,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       console.log('Company member result:', { companyMember, memberError });
 
       const [campaignRes] = await Promise.all([
-        supabase.from('marketing_insights').select('*').eq('user_id', profile.user_id).limit(1)
+        supabase.from('marketing_insights').select('*').eq('user_id', userId).limit(1)
       ]);
 
       setWorkflow({
@@ -478,9 +497,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             .maybeSingle(),
           // Obtener conexiones sociales activas
           Promise.all([
-            supabase.from('linkedin_connections').select('id').eq('user_id', profile.user_id).limit(1),
-            supabase.from('facebook_instagram_connections').select('id').eq('user_id', profile.user_id).limit(1),
-            supabase.from('tiktok_connections').select('id').eq('user_id', profile.user_id).limit(1)
+            supabase.from('linkedin_connections').select('id').eq('user_id', userId).limit(1),
+            supabase.from('facebook_instagram_connections').select('id').eq('user_id', userId).limit(1),
+            supabase.from('tiktok_connections').select('id').eq('user_id', userId).limit(1)
           ])
         ]);
 

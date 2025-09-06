@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -18,7 +19,8 @@ import {
   Loader2,
   CheckCircle2,
   AlertTriangle,
-  Clock
+  Clock,
+  Sparkles
 } from "lucide-react";
 
 interface SocialPostCreatorProps {
@@ -212,6 +214,72 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
     return true;
   };
 
+  const generateIntelligentContent = async () => {
+    if (!selectedPlatforms.length) {
+      toast({
+        title: "Seleccione plataformas",
+        description: "Debe seleccionar al menos una plataforma para generar contenido",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Determinar el tipo de generador a usar según el tipo de post
+      let edgeFunction = 'marketing-hub-post-creator';
+      if (postType === 'photo') {
+        edgeFunction = 'marketing-hub-image-creator';
+      } else if (postType === 'video') {
+        edgeFunction = 'marketing-hub-reel-creator';
+      }
+
+      const { data, error } = await supabase.functions.invoke(edgeFunction, {
+        body: {
+          input: {
+            tono_de_la_marca: 'profesional y cercano',
+            buyer_persona_objetivo: 'audiencia general',
+            calendario_item: {
+              tema_concepto: title || `Contenido para ${selectedPlatforms.join(', ')}`,
+              titulo_gancho: title || '',
+              tipo_contenido: postType,
+              plataformas: selectedPlatforms,
+              objetivo: 'engagement y alcance'
+            },
+            contexto_adicional: content
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.message) {
+        // Generar contenido basado en la respuesta
+        const generatedTitle = title || `Nuevo post para ${selectedPlatforms.join(' y ')}`;
+        const generatedContent = `${content}\n\nGenerado automáticamente para maximizar engagement en ${selectedPlatforms.join(', ')}\n\n#marketing #contenido #socialmedia`;
+
+        setTitle(generatedTitle);
+        setContent(generatedContent);
+
+        toast({
+          title: "✨ Contenido generado",
+          description: "Se ha generado contenido optimizado para tus plataformas seleccionadas",
+        });
+      }
+
+    } catch (error) {
+      console.error('Error generating content:', error);
+      toast({
+        title: "Error generando contenido",
+        description: "No se pudo generar el contenido automáticamente",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
     if (!companyUsername) {
@@ -285,7 +353,7 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
         throw new Error('Respuesta inválida del servidor');
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating post:', error);
       toast({
         title: "Error al publicar",
@@ -473,9 +541,59 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
             </div>
           </div>
 
+          {/* Generador de contenido inteligente */}
+          <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-600" />
+                <span className="font-medium text-purple-700 dark:text-purple-300">
+                  Generador de Contenido Inteligente
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={generateIntelligentContent}
+                disabled={loading || !selectedPlatforms.length}
+                className="gap-2 border-purple-300 text-purple-700 hover:bg-purple-100 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-950/30"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Generar con IA
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-sm text-purple-600 dark:text-purple-400">
+              Usa IA para generar título y contenido optimizado para las plataformas seleccionadas
+            </p>
+          </div>
+
           {/* Título */}
           <div className="space-y-2">
-            <Label htmlFor="title">Título *</Label>
+            <Label htmlFor="title" className="flex items-center justify-between">
+              <span>Título *</span>
+              <EraOptimizerButton
+                currentText={title}
+                fieldType="título de post social"
+                context={{
+                  postType,
+                  selectedPlatforms,
+                  contentType: 'social_media_title'
+                }}
+                onOptimized={setTitle}
+                size="sm"
+                variant="outline"
+                disabled={!title.trim()}
+              />
+            </Label>
             <Input
               id="title"
               value={title}
@@ -487,7 +605,23 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
 
           {/* Contenido */}
           <div className="space-y-2">
-            <Label htmlFor="content">Contenido adicional</Label>
+            <Label htmlFor="content" className="flex items-center justify-between">
+              <span>Contenido adicional</span>
+              <EraOptimizerButton
+                currentText={content}
+                fieldType="contenido de post social"
+                context={{
+                  postType,
+                  selectedPlatforms,
+                  title,
+                  contentType: 'social_media_content'
+                }}
+                onOptimized={setContent}
+                size="sm"
+                variant="outline"
+                disabled={!content.trim()}
+              />
+            </Label>
             <Textarea
               id="content"
               value={content}

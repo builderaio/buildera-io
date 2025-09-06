@@ -208,15 +208,28 @@ async function generateJWT(supabaseClient: any, userId: string, apiKey: string, 
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('Upload-Post JWT Generation Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText,
+        request: { companyUsername, platforms }
+      });
       throw new Error(`Error generando JWT: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
     
     // Log de telemetría
-    console.log('JWT Generated:', { userId, companyUsername, platforms });
+    console.log('JWT Generated:', { userId, companyUsername, platforms, result });
+    
+    // Mapear la respuesta para que sea compatible con el frontend
+    // El frontend espera access_url, pero el API puede devolver url o access_url
+    const mappedResult = {
+      ...result,
+      access_url: result.access_url || result.url || result.auth_url || result.connection_url
+    };
 
-    return result;
+    return mappedResult;
 
   } catch (error) {
     console.error('Error in generateJWT:', error);

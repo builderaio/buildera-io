@@ -176,6 +176,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   const loadConnections = async () => {
     try {
+      // 1) Leer desde la BD
       const { data, error } = await supabase
         .from('social_accounts')
         .select('platform, is_connected')
@@ -184,7 +185,28 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
       if (error) throw error;
 
-      const platforms = new Set((data || []).map((a: any) => a.platform));
+      let platforms = new Set((data || []).map((a: any) => a.platform));
+
+      // 2) Si no hay conexiones, forzar sincronización con Upload-Post y volver a leer
+      if (!platforms.size) {
+        console.log('ℹ️ No hay conexiones en BD. Intentando sincronizar con Upload-Post...');
+        // inicializar/obtener username
+        const init = await supabase.functions.invoke('upload-post-manager', {
+          body: { action: 'init_profile', data: {} }
+        });
+        const companyUsername = (init.data as any)?.companyUsername;
+        if (companyUsername) {
+          await supabase.functions.invoke('upload-post-manager', {
+            body: { action: 'get_connections', data: { companyUsername } }
+          });
+          const { data: refreshed } = await supabase
+            .from('social_accounts')
+            .select('platform, is_connected')
+            .eq('user_id', profile.user_id)
+            .eq('is_connected', true);
+          platforms = new Set((refreshed || []).map((a: any) => a.platform));
+        }
+      }
 
       setSocialConnections({
         linkedin: platforms.has('linkedin'),
@@ -196,6 +218,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       console.error('Error loading connections:', error);
     }
   };
+
 
   const loadRealMetrics = async () => {
     try {

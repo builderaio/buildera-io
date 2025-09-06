@@ -60,6 +60,12 @@ serve(async (req) => {
       case 'get_facebook_pages':
         result = await getFacebookPages(supabaseClient, user.id, uploadPostApiKey, data);
         break;
+      case 'get_linkedin_pages':
+        result = await getLinkedInPages(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
+      case 'get_pinterest_boards':
+        result = await getPinterestBoards(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
       case 'update_facebook_page':
         result = await updateFacebookPage(supabaseClient, user.id, data);
         break;
@@ -430,6 +436,48 @@ async function getFacebookPages(supabaseClient: any, userId: string, apiKey: str
 
   } catch (error) {
     console.error('Error in getFacebookPages:', error);
+    throw error;
+  }
+}
+
+async function getLinkedInPages(supabaseClient: any, userId: string, apiKey: string, data: any) {
+  const { companyUsername } = data;
+  try {
+    const response = await fetch(`https://api.upload-post.com/api/uploadposts/linkedin/pages?profile=${companyUsername}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `ApiKey ${apiKey}`,
+        'Content-Type': 'application/json',
+      }
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error obteniendo páginas de LinkedIn: ${response.status} - ${errorText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in getLinkedInPages:', error);
+    throw error;
+  }
+}
+
+async function getPinterestBoards(supabaseClient: any, userId: string, apiKey: string, data: any) {
+  const { companyUsername } = data;
+  try {
+    const response = await fetch(`https://api.upload-post.com/api/uploadposts/pinterest/boards?profile=${companyUsername}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `ApiKey ${apiKey}`,
+        'Content-Type': 'application/json',
+      }
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error obteniendo tableros de Pinterest: ${response.status} - ${errorText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in getPinterestBoards:', error);
     throw error;
   }
 }

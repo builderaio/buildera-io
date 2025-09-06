@@ -367,7 +367,7 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
         method: 'POST',
         headers: {
           'Authorization': `ApiKey ${apiKey}`,
-        }
+        },
         body: formData,
       });
     } else if (postType === 'photo' && mediaUrls?.length) {
@@ -379,7 +379,7 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
         method: 'POST',
         headers: {
           'Authorization': `ApiKey ${apiKey}`,
-        }
+        },
         body: formData,
       });
     } else if (postType === 'video' && mediaUrls?.length) {
@@ -389,7 +389,7 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
         method: 'POST',
         headers: {
           'Authorization': `ApiKey ${apiKey}`,
-        }
+        },
         body: formData,
       });
     }

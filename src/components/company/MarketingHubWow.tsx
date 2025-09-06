@@ -552,6 +552,12 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const startIntelligentCampaign = async (dataOverride?: CompanyData) => {
     console.log('=== DEBUG: startIntelligentCampaign iniciado ===');
     
+    // Verificar datos de empresa y cargar si están faltantes
+    if (!companyData.nombre_empresa) {
+      console.log('⚠️ Datos de empresa no cargados, recargando...');
+      await checkWorkflowStatus();
+    }
+    
     // Usar datos existentes de la empresa
     const existingData = {
       ...companyData,
@@ -560,6 +566,8 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       )
     };
     
+    console.log('📊 Datos de empresa para campaña:', existingData);
+    
     // Verificar si hay redes sociales configuradas
     const hasConnections = existingData.redes_socciales_activas && existingData.redes_socciales_activas.length > 0;
 
@@ -567,6 +575,16 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       toast({
         title: "Redes sociales requeridas",
         description: "Debe configurar al menos una red social antes de crear una campaña. Vaya a la pestaña Dashboard para conectar sus redes sociales.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Verificar datos mínimos de la empresa
+    if (!existingData.nombre_empresa || !existingData.propuesta_de_valor) {
+      toast({
+        title: "Datos de empresa incompletos",
+        description: "Se necesitan datos básicos de la empresa para crear la campaña. Por favor complete el perfil de empresa.",
         variant: "destructive"
       });
       return;
@@ -586,7 +604,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       objective_id: selectedObjective || existingData.objective_id
     };
 
-    console.log('=== DEBUG: Iniciando campaña con datos:', finalData);
+    console.log('=== DEBUG: Iniciando campaña con datos validados:', finalData);
 
     setCurrentProcess('intelligent-campaign');
     setProcessStep(0);
@@ -597,7 +615,13 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     try {
       // Paso 1: Análisis de audiencia
       updateProcess(1, "Análisis de Audiencia", "Identificando tu audiencia objetivo ideal...");
-      const audienceResult = await callMarketingFunction('marketing-hub-target-audience', finalData);
+      let audienceResult;
+      try {
+        audienceResult = await callMarketingFunction('marketing-hub-target-audience', finalData);
+      } catch (error) {
+        console.warn('Error en análisis de audiencia, continuando...', error);
+        audienceResult = { data: { audiencia_objetivo: "Audiencia general" } };
+      }
       setAnalysisProgress(15);
 
       // Extraer audiencia objetivo del resultado para usar en siguiente paso
@@ -609,7 +633,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         ...finalData,
         audiencia_objetivo: audienciaObjetivo
       };
-      await callMarketingFunction('marketing-hub-marketing-strategy', strategyData);
+      try {
+        await callMarketingFunction('marketing-hub-marketing-strategy', strategyData);
+      } catch (error) {
+        console.warn('Error en estrategia de marketing, continuando...', error);
+      }
       setAnalysisProgress(30);
 
       // Paso 3: Calendario de contenido
@@ -620,27 +648,47 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         fecha_inicio_calendario: new Date().toISOString().split('T')[0],
         numero_dias_generar: 14
       };
-      await callMarketingFunction('marketing-hub-content-calendar', calendarData);
+      try {
+        await callMarketingFunction('marketing-hub-content-calendar', calendarData);
+      } catch (error) {
+        console.warn('Error en calendario de contenido, continuando...', error);
+      }
       setAnalysisProgress(45);
 
       // Paso 4: Análisis de plataformas conectadas
       updateProcess(4, "Análisis de Redes Sociales", "Analizando plataformas conectadas...");
-      await analyzeConnectedPlatforms();
+      try {
+        await analyzeConnectedPlatforms();
+      } catch (error) {
+        console.warn('Error en análisis de plataformas, continuando...', error);
+      }
       setAnalysisProgress(60);
 
       // Paso 5: Creación de contenido
       updateProcess(5, "Creación de Contenido", "Generando posts optimizados...");
-      await createOptimizedContent();
+      try {
+        await createOptimizedContent();
+      } catch (error) {
+        console.warn('Error en creación de contenido, continuando...', error);
+      }
       setAnalysisProgress(75);
 
       // Paso 6: Análisis avanzado
       updateProcess(6, "Análisis Avanzado", "Ejecutando análisis inteligente...");
-      await runAdvancedAnalysis();
+      try {
+        await runAdvancedAnalysis();
+      } catch (error) {
+        console.warn('Error en análisis avanzado, continuando...', error);
+      }
       setAnalysisProgress(90);
 
       // Paso 7: Optimización
       updateProcess(7, "Optimización Final", "Aplicando mejores prácticas...");
-      await optimizeCampaign();
+      try {
+        await optimizeCampaign();
+      } catch (error) {
+        console.warn('Error en optimización, continuando...', error);
+      }
       setAnalysisProgress(100);
 
       // Paso 8: Resultados
@@ -655,17 +703,21 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       });
 
       // Recargar métricas y actividad
-      await Promise.all([
-        loadRealMetrics(),
-        loadRecentActivity(),
-        loadUpcomingPosts()
-      ]);
+      try {
+        await Promise.all([
+          loadRealMetrics(),
+          loadRecentActivity(),
+          loadUpcomingPosts()
+        ]);
+      } catch (error) {
+        console.warn('Error recargando métricas, continuando...', error);
+      }
 
-    } catch (error) {
-      console.error('Error creating intelligent campaign:', error);
+    } catch (error: any) {
+      console.error('❌ Error creating intelligent campaign:', error);
       toast({
-        title: "Error",
-        description: "No se pudo completar la campaña inteligente",
+        title: "Error en la campaña",
+        description: `No se pudo completar la campaña inteligente: ${error.message || 'Error desconocido'}`,
         variant: "destructive"
       });
     } finally {
@@ -695,13 +747,18 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       .filter(([_, connected]) => connected)
       .map(([platform, _]) => platform);
 
+    console.log(`📱 Analizando ${connectedPlatforms.length} plataformas conectadas:`, connectedPlatforms);
+
     for (const platform of connectedPlatforms) {
       try {
+        console.log(`🔍 Analizando ${platform}...`);
         await supabase.functions.invoke(`${platform}-intelligent-analysis`, {
           body: { platform }
         });
+        console.log(`✅ Análisis de ${platform} completado`);
       } catch (error) {
-        console.error(`Error analyzing ${platform}:`, error);
+        console.error(`❌ Error analyzing ${platform}:`, error);
+        // Continuar con la siguiente plataforma sin fallar
       }
     }
   };
@@ -711,6 +768,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     
     for (const type of contentTypes) {
       try {
+        console.log(`🎨 Creando contenido ${type}...`);
         await callMarketingFunction(`marketing-hub-${type}-creator`, {
           tono_de_la_marca: "Profesional e innovador",
           buyer_persona_objetivo: {
@@ -721,11 +779,13 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             fecha: new Date().toISOString().split('T')[0],
             red_social: "LinkedIn",
             tipo_contenido: type,
-            tema_concepto: companyData.propuesta_de_valor
+            tema_concepto: companyData.propuesta_de_valor || "Contenido optimizado"
           }
         });
+        console.log(`✅ Contenido ${type} creado exitosamente`);
       } catch (error) {
-        console.error(`Error creating ${type}:`, error);
+        console.error(`❌ Error creating ${type}:`, error);
+        // Continuar con el siguiente tipo de contenido sin fallar
       }
     }
   };
@@ -759,16 +819,27 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     const N8N_AUTH_PASS = 'BuilderaFlow2024!';
     const credentials = btoa(`${N8N_AUTH_USER}:${N8N_AUTH_PASS}`);
     
-    const { data: result, error } = await supabase.functions.invoke(functionName, {
-      body: { input: data },
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-      }
-    });
+    console.log(`🔄 Calling marketing function: ${functionName}`, data);
+    
+    try {
+      const { data: result, error } = await supabase.functions.invoke(functionName, {
+        body: { input: data },
+        headers: {
+          'Authorization': `Basic ${credentials}`,
+        }
+      });
 
-    if (error) throw error;
-    return result;
-    return result;
+      if (error) {
+        console.error(`❌ Error in ${functionName}:`, error);
+        throw error;
+      }
+      
+      console.log(`✅ Success in ${functionName}:`, result);
+      return result;
+    } catch (error) {
+      console.error(`🚨 Fatal error in ${functionName}:`, error);
+      throw error;
+    }
   };
 
   const updateProcess = (step: number, title: string, description: string) => {

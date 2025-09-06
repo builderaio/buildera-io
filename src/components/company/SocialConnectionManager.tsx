@@ -68,6 +68,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const [diagnosticDbRows, setDiagnosticDbRows] = useState<any[]>([]);
   const [diagnosticUploadProfile, setDiagnosticUploadProfile] = useState<any>(null);
   const [diagnosticError, setDiagnosticError] = useState<string>('');
+  const [diagnosticLoading, setDiagnosticLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -383,6 +384,8 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
 
   const runDiagnostics = async () => {
     try {
+      setShowDiagnostics(true);
+      setDiagnosticLoading(true);
       toast({ title: "🔎 Diagnóstico iniciado", description: "Consultando BD y Upload-Post..." });
       setDiagnosticError('');
 
@@ -416,10 +419,11 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         }
       }
 
-      setShowDiagnostics(true);
       toast({ title: "✅ Diagnóstico listo", description: "Resultados disponibles." });
     } catch (e: any) {
       setDiagnosticError(prev => prev ? `${prev} | ${e.message}` : e.message);
+    } finally {
+      setDiagnosticLoading(false);
     }
   };
 

@@ -79,6 +79,8 @@ interface CompanyData {
   propuesta_de_valor: string;
   url_sitio_web: string;
   objective_id?: string; // ID del objetivo seleccionado
+  audiencia_objetivo?: string; // Audiencia objetivo desde company_strategy
+  redes_socciales_activas?: string[]; // Redes sociales conectadas
 }
 
 interface CompanyObjective {
@@ -136,7 +138,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     objetivo_de_negocio: '',
     propuesta_de_valor: '',
     url_sitio_web: '',
-    objective_id: ''
+    objective_id: '',
+    audiencia_objetivo: '',
+    redes_socciales_activas: []
   });
   const [availableObjectives, setAvailableObjectives] = useState<CompanyObjective[]>([]);
   const [platformStats, setPlatformStats] = useState({
@@ -427,8 +431,8 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         const company = companyMember.companies;
         console.log('Company data found:', company);
 
-        // Enriquecer datos desde company_strategy, company_objectives y company_branding
-        const [objectivesRes, strategyRes, brandingRes] = await Promise.all([
+        // Enriquecer datos desde company_strategy, company_objectives, company_branding y conexiones sociales
+        const [objectivesRes, strategyRes, brandingRes, connectionsRes] = await Promise.all([
           supabase
             .from('company_objectives')
             .select('id, title, description, status, priority')
@@ -437,7 +441,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             .order('priority', { ascending: false }),
           supabase
             .from('company_strategy')
-            .select('propuesta_valor, vision, mision')
+            .select('propuesta_valor, vision, mision, audiencia_objetivo')
             .eq('company_id', company.id)
             .limit(1)
             .maybeSingle(),
@@ -446,15 +450,28 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             .select('brand_voice, visual_identity, full_brand_data')
             .eq('company_id', company.id)
             .limit(1)
-            .maybeSingle()
+            .maybeSingle(),
+          // Obtener conexiones sociales activas
+          Promise.all([
+            supabase.from('linkedin_connections').select('id').eq('user_id', profile.user_id).limit(1),
+            supabase.from('facebook_instagram_connections').select('id').eq('user_id', profile.user_id).limit(1),
+            supabase.from('tiktok_connections').select('id').eq('user_id', profile.user_id).limit(1)
+          ])
         ]);
 
         const objectives = objectivesRes.data as CompanyObjective[] || [];
         const strategy = strategyRes.data as any | null;
         const branding = brandingRes.data as any | null;
+        const [linkedinConn, facebookConn, tiktokConn] = connectionsRes;
 
         // Guardar objetivos disponibles
         setAvailableObjectives(objectives);
+
+        // Determinar redes sociales activas
+        const redesSocialesActivas = [];
+        if (linkedinConn.data && linkedinConn.data.length > 0) redesSocialesActivas.push('linkedin');
+        if (facebookConn.data && facebookConn.data.length > 0) redesSocialesActivas.push('instagram', 'facebook');
+        if (tiktokConn.data && tiktokConn.data.length > 0) redesSocialesActivas.push('tiktok');
 
         // Obtener propuesta de valor de company_strategy primero
         const propuestaDeValor = strategy?.propuesta_valor
@@ -470,7 +487,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           objetivo_de_negocio: '', // Se seleccionará desde el diálogo
           propuesta_de_valor: propuestaDeValor,
           url_sitio_web: company.website_url || '',
-          objective_id: ''
+          objective_id: '',
+          audiencia_objetivo: strategy?.audiencia_objetivo || '',
+          redes_socciales_activas: redesSocialesActivas
         };
         console.log('Setting companyData to:', newCompanyData);
         setCompanyData(newCompanyData);
@@ -493,17 +512,20 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     if (!dataToUse.pais) missingFields.push('País');
     if (!dataToUse.objetivo_de_negocio || !dataToUse.objective_id) missingFields.push('Objetivo de negocio');
     if (!dataToUse.propuesta_de_valor) missingFields.push('Propuesta de valor');
+    if (!dataToUse.audiencia_objetivo) missingFields.push('Audiencia objetivo');
 
     console.log('Campos faltantes:', missingFields);
 
-    if (missingFields.length > 0 || availableObjectives.length === 0) {
+    if (missingFields.length > 0) {
       console.log('=== DEBUG: Abriendo diálogo para completar datos o seleccionar objetivo ===');
       // Pre-llenar el diálogo con los datos existentes
       setTempCompanyData({
         ...dataToUse,
         pais: dataToUse.pais || '',
         propuesta_de_valor: dataToUse.propuesta_de_valor || '',
-        objective_id: dataToUse.objective_id || ''
+        objective_id: dataToUse.objective_id || '',
+        audiencia_objetivo: dataToUse.audiencia_objetivo || '',
+        redes_socciales_activas: dataToUse.redes_socciales_activas || []
       });
       setShowCompanyDataDialog(true);
       return;
@@ -627,12 +649,13 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         return;
       }
 
-      // Guardar o actualizar la propuesta de valor en company_strategy
+      // Guardar o actualizar la propuesta de valor y audiencia objetivo en company_strategy
       const { error: strategyError } = await supabase
         .from('company_strategy')
         .upsert({
           company_id: companyMember.company_id,
-          propuesta_valor: tempCompanyData.propuesta_de_valor
+          propuesta_valor: tempCompanyData.propuesta_de_valor,
+          audiencia_objetivo: tempCompanyData.audiencia_objetivo
         }, {
           onConflict: 'company_id'
         });
@@ -648,7 +671,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         pais: tempCompanyData.pais,
         propuesta_de_valor: tempCompanyData.propuesta_de_valor,
         objetivo_de_negocio: tempCompanyData.objetivo_de_negocio || prev.objetivo_de_negocio,
-        objective_id: tempCompanyData.objective_id
+        objective_id: tempCompanyData.objective_id,
+        audiencia_objetivo: tempCompanyData.audiencia_objetivo,
+        redes_socciales_activas: prev.redes_socciales_activas || []
       }));
 
       setShowCompanyDataDialog(false);
@@ -1287,6 +1312,16 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="audiencia_objetivo">Audiencia objetivo (requerido)</Label>
+              <Textarea
+                id="audiencia_objetivo"
+                placeholder="Describa quién es su audiencia objetivo (ej: empresarios de 25-45 años interesados en tecnología)..."
+                value={tempCompanyData.audiencia_objetivo || ''}
+                onChange={(e) => setTempCompanyData(prev => ({ ...prev, audiencia_objetivo: e.target.value }))}
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="objetivo_negocio">Objetivo de negocio para la campaña (requerido)</Label>
               {availableObjectives.length > 0 ? (
                 <Select
@@ -1338,6 +1373,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
               disabled={
                 !tempCompanyData.pais || 
                 !tempCompanyData.propuesta_de_valor || 
+                !tempCompanyData.audiencia_objetivo ||
                 (!tempCompanyData.objective_id && !tempCompanyData.objetivo_de_negocio)
               }
             >

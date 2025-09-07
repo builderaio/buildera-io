@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Users, 
@@ -86,12 +88,15 @@ interface SocialAnalysisData {
 
 interface SocialAnalysisDisplayProps {
   userId: string;
+  companyData?: any;
 }
 
-const SocialAnalysisDisplay = ({ userId }: SocialAnalysisDisplayProps) => {
+const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayProps) => {
   const [analyses, setAnalyses] = useState<SocialAnalysisData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshingPlatform, setRefreshingPlatform] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadSocialAnalyses();
@@ -116,6 +121,89 @@ const SocialAnalysisDisplay = ({ userId }: SocialAnalysisDisplayProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const extractSocialUrls = (company: any) => {
+    const urls: any = {};
+    const supported = ['instagram', 'youtube', 'twitter', 'tiktok', 'facebook'];
+    if (company?.instagram_url && supported.includes('instagram')) urls.instagram = company.instagram_url;
+    if (company?.facebook_url && supported.includes('facebook')) urls.facebook = company.facebook_url;
+    if (company?.twitter_url && supported.includes('twitter')) urls.twitter = company.twitter_url;
+    if (company?.tiktok_url && supported.includes('tiktok')) urls.tiktok = company.tiktok_url;
+    if (company?.youtube_url && supported.includes('youtube')) urls.youtube = company.youtube_url;
+    return urls;
+  };
+
+  const refreshSocialAnalysis = async (platformType?: string) => {
+    if (!companyData) {
+      toast({
+        title: "Error",
+        description: "No se encontraron datos de la empresa",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const socialUrls = extractSocialUrls(companyData);
+    
+    let urlsToAnalyze = [];
+    if (platformType) {
+      // Refresh specific platform
+      const platformUrl = socialUrls[platformType];
+      if (!platformUrl) {
+        toast({
+          title: "Error",
+          description: `No se encontró URL para ${platformType}`,
+          variant: "destructive"
+        });
+        return;
+      }
+      urlsToAnalyze = [{ platform: platformType, url: platformUrl }];
+      setRefreshingPlatform(platformType);
+    } else {
+      // Refresh all platforms
+      urlsToAnalyze = Object.entries(socialUrls).map(([platform, url]) => ({
+        platform,
+        url: url as string
+      }));
+      setRefreshingPlatform('all');
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-social-audience', {
+        body: { urls: urlsToAnalyze }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        await loadSocialAnalyses(); // Reload the data
+        toast({
+          title: "Análisis Actualizado",
+          description: `Se actualizaron ${data.data?.length || 0} perfiles exitosamente`,
+        });
+      } else {
+        throw new Error(data.error || 'Failed to analyze URLs');
+      }
+    } catch (error) {
+      console.error('Error refreshing social analysis:', error);
+      toast({
+        title: "Error en la Actualización",
+        description: "No se pudo actualizar el análisis",
+        variant: "destructive"
+      });
+    } finally {
+      setRefreshingPlatform(null);
+    }
+  };
+
+  const getPlatformFromUrl = (url: string): string | null => {
+    if (url.includes('instagram.com')) return 'instagram';
+    if (url.includes('facebook.com')) return 'facebook';
+    if (url.includes('twitter.com') || url.includes('x.com')) return 'twitter';
+    if (url.includes('tiktok.com')) return 'tiktok';
+    if (url.includes('youtube.com')) return 'youtube';
+    return null;
   };
 
   const getPlatformIcon = (socialType: string) => {
@@ -222,6 +310,28 @@ const SocialAnalysisDisplay = ({ userId }: SocialAnalysisDisplayProps) => {
         </Card>
       </div>
 
+      {/* Global Refresh Button */}
+      <div className="flex justify-center">
+        <Button 
+          onClick={() => refreshSocialAnalysis()}
+          disabled={refreshingPlatform === 'all'}
+          className="gap-2"
+          variant="outline"
+        >
+          {refreshingPlatform === 'all' ? (
+            <>
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              Actualizando todas las redes...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4" />
+              Actualizar Todas las Redes Sociales
+            </>
+          )}
+        </Button>
+      </div>
+
       {/* Individual Platform Analysis */}
       {analyses.map((analysis) => (
         <Card key={analysis.id} className="overflow-hidden">
@@ -242,6 +352,28 @@ const SocialAnalysisDisplay = ({ userId }: SocialAnalysisDisplayProps) => {
               <Badge variant={analysis.community_status === 'COLLECTING' ? 'default' : 'secondary'}>
                 {analysis.community_status}
               </Badge>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const platform = getPlatformFromUrl(analysis.url);
+                  if (platform) refreshSocialAnalysis(platform);
+                }}
+                disabled={refreshingPlatform === getPlatformFromUrl(analysis.url)}
+                className="gap-2 ml-2"
+              >
+                {refreshingPlatform === getPlatformFromUrl(analysis.url) ? (
+                  <>
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                    Actualizando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-3 w-3" />
+                    Actualizar
+                  </>
+                )}
+              </Button>
             </div>
           </CardHeader>
 

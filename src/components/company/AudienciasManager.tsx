@@ -703,7 +703,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
               <p className="text-muted-foreground">Datos detallados desde tus redes sociales conectadas</p>
             </div>
             
-            {userId && <SocialAnalysisDisplay userId={userId} />}
+            {userId && <SocialAnalysisDisplay userId={userId} companyData={companyData} />}
           </div>
           
           {/* Frescura de Datos */}

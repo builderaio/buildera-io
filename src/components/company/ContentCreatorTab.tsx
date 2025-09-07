@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import { PlusCircle, Sparkles, Lightbulb, Copy, Brain, Target, TrendingUp, Clock } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import InsightsRenderer from "./InsightsRenderer";
 
 interface Props {
   profile: { user_id?: string };
@@ -59,9 +61,20 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
   const generateAIInsights = async () => {
     setGeneratingInsights(true);
     try {
+      const topPostsContext = topPosts.slice(0, 5).map(post => ({
+        text: post.text?.substring(0, 200),
+        hashtags: post.hashTags?.slice(0, 5),
+        likes: post.likes || 0,
+        comments: post.comments || 0,
+        platform: post.platform,
+        type: post.type
+      }));
+
       const { data, error } = await supabase.functions.invoke('content-insights-generator', {
         body: {
-          user_id: profile.user_id
+          user_id: profile.user_id,
+          platform: selectedPlatform !== 'all' ? selectedPlatform : null,
+          top_posts: topPostsContext
         }
       });
       
@@ -117,7 +130,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
           </Button>
           
           {aiInsights && (
-            <Card className="bg-white/50 backdrop-blur-sm">
+            <Card className="bg-background/60 backdrop-blur-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Target className="h-5 w-5 text-primary" />
@@ -125,14 +138,15 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-primary/10">
-                    <div className="prose prose-sm max-w-none">
-                      <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
-                        {aiInsights}
-                      </pre>
-                    </div>
+                <div className="space-y-6">
+                  {/* Pretty idea cards if we can parse them */}
+                  <InsightsRenderer insightsText={aiInsights} onUseIdea={(idea) => setContentPrompt(idea)} />
+
+                  {/* Fallback full markdown rendering */}
+                  <div className="p-4 rounded-lg border border-border">
+                    <ReactMarkdown>{aiInsights}</ReactMarkdown>
                   </div>
+
                   <div className="flex items-center gap-2 pt-2">
                     <Button 
                       size="sm" 

@@ -32,7 +32,7 @@ serve(async (req) => {
   }
 
   try {
-    const { user_id } = await req.json();
+    const { user_id, platform, top_posts } = await req.json();
 
     if (!user_id) {
       throw new Error('User ID is required');
@@ -98,20 +98,32 @@ serve(async (req) => {
       console.log('Audience insights fetch error:', audienceInsightsErr.message);
     }
 
-    // Get recent social posts from platform-specific tables and combine
-    const [ig, li, tt] = await Promise.all([
-      supabase.from('instagram_posts').select('*').eq('user_id', user_id).order('posted_at', { ascending: false }).limit(10),
-      supabase.from('linkedin_posts').select('*').eq('user_id', user_id).order('posted_at', { ascending: false }).limit(10),
-      supabase.from('tiktok_posts').select('*').eq('user_id', user_id).order('posted_at', { ascending: false }).limit(10),
-    ]);
+    // Build recent posts context: use provided top_posts if available, else fetch from DB
+    let socialPosts: any[] = [];
+    if (Array.isArray(top_posts) && top_posts.length > 0) {
+      socialPosts = top_posts.map((p: any) => ({
+        text: (p.text || '').substring(0, 300),
+        platform: p.platform || platform || 'general',
+        hashtags: p.hashtags || p.hashTags || p.hash_tags || [],
+        likes: p.likes || p.like_count || 0,
+        comments: p.comments || p.comment_count || 0,
+        created_at: p.created_at || new Date().toISOString(),
+      }));
+    } else {
+      const [ig, li, tt] = await Promise.all([
+        supabase.from('instagram_posts').select('*').eq('user_id', user_id).order('posted_at', { ascending: false }).limit(10),
+        supabase.from('linkedin_posts').select('*').eq('user_id', user_id).order('posted_at', { ascending: false }).limit(10),
+        supabase.from('tiktok_posts').select('*').eq('user_id', user_id).order('posted_at', { ascending: false }).limit(10),
+      ]);
 
-    const socialPosts = [
-      ...((ig.data || []).map((p: any) => ({ ...p, platform: 'instagram' }))),
-      ...((li.data || []).map((p: any) => ({ ...p, platform: 'linkedin' }))),
-      ...((tt.data || []).map((p: any) => ({ ...p, platform: 'tiktok' }))),
-    ]
-      .sort((a: any, b: any) => new Date(b.posted_at || b.created_at).getTime() - new Date(a.posted_at || a.created_at).getTime())
-      .slice(0, 15);
+      socialPosts = [
+        ...((ig.data || []).map((p: any) => ({ ...p, platform: 'instagram' }))),
+        ...((li.data || []).map((p: any) => ({ ...p, platform: 'linkedin' }))),
+        ...((tt.data || []).map((p: any) => ({ ...p, platform: 'tiktok' }))),
+      ]
+        .sort((a: any, b: any) => new Date(b.posted_at || b.created_at).getTime() - new Date(a.posted_at || a.created_at).getTime())
+        .slice(0, 15);
+    }
 
     // Prepare context for AI
     const context = {
@@ -178,20 +190,8 @@ Para cada idea de contenido incluye:
 
 Sé específico, creativo y enfócate en generar valor real para la audiencia.`;
 
-    const userPrompt = `Analiza esta información y genera insights y ideas de contenido:
+    const userPrompt = `Empresa (opcional):\n${JSON.stringify(context.company, null, 2)}\n\nAudiencias (opcional):\n${JSON.stringify(context.audiences, null, 2)}\n\nInsights de audiencia (opcional):\n${JSON.stringify(context.audience_insights, null, 2)}\n\nPublicaciones recientes o top_posts:\n${JSON.stringify(context.recent_posts, null, 2)}\n`;
 
-EMPRESA:
-${JSON.stringify(context.company, null, 2)}
-
-AUDIENCIAS DEFINIDAS:
-${JSON.stringify(context.audiences, null, 2)}
-
-INSIGHTS DE AUDIENCIA:
-${JSON.stringify(context.audience_insights, null, 2)}
-
-CONTENIDO RECIENTE:
-${JSON.stringify(context.recent_posts, null, 2)}
-`;
 
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {

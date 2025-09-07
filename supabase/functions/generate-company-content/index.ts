@@ -39,7 +39,10 @@ serve(async (req) => {
       const systemPrompt = `Eres un estratega y copywriter de redes sociales. Genera contenido listo para publicar.
 - Adapta el tono a la plataforma objetivo (${platform}).
 - Apóyate en los patrones de los top posts cuando estén disponibles.
-- Devuelve texto claro, con emojis moderados y una llamada a la acción.`;
+- Devuelve texto claro, con emojis moderados y una llamada a la acción.
+- NO uses formato markdown (**texto**) ni negritas, el texto debe ser plano y natural
+- Escribe texto directo para redes sociales, sin formateo especial
+- Usa emojis para dar énfasis en lugar de negritas`;
 
       const userPrompt = `Instrucciones del usuario:\n${prompt}\n\nContexto (si hay):\nTop posts (máx 5):\n${JSON.stringify(topPosts.slice(0,5), null, 2)}\nPlataforma: ${platform}\n`;
 
@@ -67,7 +70,13 @@ serve(async (req) => {
       }
 
       const ai = await response.json();
-      const content = ai.choices?.[0]?.message?.content?.trim() || '';
+      let content = ai.choices?.[0]?.message?.content?.trim() || '';
+      
+      // Remove markdown formatting like **text** and replace with plain text
+      content = content.replace(/\*\*(.*?)\*\*/g, '$1');
+      content = content.replace(/\*(.*?)\*/g, '$1');
+      content = content.replace(/__(.*?)__/g, '$1');
+      content = content.replace(/_(.*?)_/g, '$1');
 
       return new Response(JSON.stringify({ success: true, content }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -514,6 +514,8 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
 
   const connectedCount = socialAccounts.filter(acc => acc.is_connected && acc.platform !== 'upload_post_profile').length;
   const totalPlatforms = Object.keys(platformConfig).length;
+  const configuredUrlCount = Object.values(urlValues).filter(url => url && url.trim() !== '').length;
+  const hasCompleteSetup = connectedCount > 0 && configuredUrlCount > 0;
 
   if (loading && socialAccounts.length === 0) {
     return (
@@ -704,6 +706,63 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         })}
       </div>
 
+
+      {/* Progress and Next Steps */}
+      {connectedCount > 0 && (
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-1">Configuración Completada</h3>
+                <p className="text-sm text-muted-foreground">
+                  {connectedCount} red{connectedCount !== 1 ? 'es' : ''} conectada{connectedCount !== 1 ? 's' : ''} • {configuredUrlCount} URL{configuredUrlCount !== 1 ? 's' : ''} configurada{configuredUrlCount !== 1 ? 's' : ''}
+                </p>
+              </div>
+              {hasCompleteSetup && (
+                <Badge className="bg-green-100 text-green-700 border-green-200">
+                  ✅ Listo para continuar
+                </Badge>
+              )}
+            </div>
+            
+            {!hasCompleteSetup && (
+              <Alert className="mb-4">
+                <AlertDescription>
+                  {connectedCount === 0 
+                    ? "Conecte al menos una red social para continuar."
+                    : "Configure las URLs de sus perfiles para completar la configuración."
+                  }
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {hasCompleteSetup && (
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  onClick={() => window.location.href = '/company-dashboard?view=marketing-hub'}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  Ir al Marketing Hub
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => window.location.href = '/company-dashboard?view=audiencias'}
+                >
+                  Analizar Audiencias
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={refreshConnections}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Verificar Conexiones
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Empty State */}
       {connectedCount === 0 && !loading && (

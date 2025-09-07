@@ -30,6 +30,50 @@ serve(async (req) => {
     const body = await req.json();
     console.log('📝 Datos recibidos:', body);
 
+    // Nueva ruta: generación libre de contenido con prompt + contexto
+    if (body.prompt) {
+      const { prompt, context } = body;
+      const topPosts = context?.top_posts || [];
+      const platform = context?.platform || 'general';
+
+      const systemPrompt = `Eres un estratega y copywriter de redes sociales. Genera contenido listo para publicar.
+- Adapta el tono a la plataforma objetivo (${platform}).
+- Apóyate en los patrones de los top posts cuando estén disponibles.
+- Devuelve texto claro, con emojis moderados y una llamada a la acción.`;
+
+      const userPrompt = `Instrucciones del usuario:\n${prompt}\n\nContexto (si hay):\nTop posts (máx 5):\n${JSON.stringify(topPosts.slice(0,5), null, 2)}\nPlataforma: ${platform}\n`;
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: 700,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        console.error('❌ Error de OpenAI (prompt libre):', response.status, err);
+        throw new Error(`Error de OpenAI: ${response.status} - ${err}`);
+      }
+
+      const ai = await response.json();
+      const content = ai.choices?.[0]?.message?.content?.trim() || '';
+
+      return new Response(JSON.stringify({ success: true, content }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Verificar si es una llamada para generar estrategia completa
     if (body.companyName) {
       // Nuevo formato para generar estrategia completa

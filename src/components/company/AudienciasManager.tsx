@@ -791,9 +791,176 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Audiencias Existentes */}
+          {audiences.length > 0 && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-bold">📋 Mis Audiencias</h3>
+                <div className="flex items-center gap-4">
+                  <Badge variant="outline" className="text-sm">
+                    {audiences.length} audiencia{audiences.length > 1 ? 's' : ''} creada{audiences.length > 1 ? 's' : ''}
+                  </Badge>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => loadAudiences()}
+                    className="gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Actualizar
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid gap-4">
+                {audiences.map((audience) => (
+                  <Card key={audience.id} className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                              <Users className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-semibold">{audience.name}</h4>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                {audience.estimated_size && (
+                                  <span>{audience.estimated_size.toLocaleString()} usuarios estimados</span>
+                                )}
+                                {audience.confidence_score && (
+                                  <span>Confianza: {Math.round(audience.confidence_score * 100)}%</span>
+                                )}
+                                <span>Creado: {new Date(audience.created_at).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {audience.description && (
+                            <p className="text-muted-foreground mb-4">{audience.description}</p>
+                          )}
+                          
+                          {/* Mostrar tags y atributos */}
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {audience.goals?.map((goal, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                🎯 {goal}
+                              </Badge>
+                            ))}
+                            {audience.pain_points?.slice(0, 2).map((point, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                ⚠️ {point}
+                              </Badge>
+                            ))}
+                            {audience.ai_insights?.generatedFrom && (
+                              <Badge variant="default" className="text-xs">
+                                🤖 Generado por IA
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          {/* Indicadores de rendimiento */}
+                          <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-border/50">
+                            <div className="text-center">
+                              <p className="text-lg font-semibold text-green-600">
+                                {audience.conversion_potential ? Math.round(audience.conversion_potential * 100) : 0}%
+                              </p>
+                              <p className="text-xs text-muted-foreground">Potencial de Conversión</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-lg font-semibold text-blue-600">
+                                ${(audience.lifetime_value_estimate || 0).toFixed(0)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">Valor de Vida Estimado</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-lg font-semibold text-orange-600">
+                                ${(audience.acquisition_cost_estimate || 0).toFixed(2)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">Costo de Adquisición</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Acciones */}
+                        <div className="flex flex-col gap-2 ml-6">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setSelectedAudience(audience)}
+                            className="gap-2 whitespace-nowrap"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Ver Detalles
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => editAudience(audience)}
+                            className="gap-2 whitespace-nowrap"
+                          >
+                            <Settings className="w-4 h-4" />
+                            Editar
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => deleteAudience(audience.id)}
+                            className="gap-2 whitespace-nowrap"
+                          >
+                            <X className="w-4 h-4" />
+                            Eliminar
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
+  };
+
+  // Editar audiencia
+  const editAudience = (audience: AudienceSegment) => {
+    setSelectedAudience(audience);
+    setNewAudienceName(audience.name);
+    setNewAudienceDescription(audience.description || '');
+    setCurrentView('edit-audience');
+  };
+
+  // Eliminar audiencia
+  const deleteAudience = async (audienceId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta audiencia?')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('company_audiences')
+        .delete()
+        .eq('id', audienceId)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      setAudiences(audiences.filter(a => a.id !== audienceId));
+      toast({
+        title: "Audiencia Eliminada",
+        description: "La audiencia se eliminó exitosamente",
+      });
+    } catch (error) {
+      console.error('Error deleting audience:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la audiencia",
+        variant: "destructive"
+      });
+    }
   };
 
   // Generar sugerencias de audiencias basadas en datos sociales
@@ -1164,6 +1331,174 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     );
   };
 
+  // Renderizar vista de edición de audiencia
+  const renderEditAudienceView = () => {
+    const mainProfile = socialStats[0] || {};
+    
+    if (!selectedAudience) {
+      setCurrentView('main');
+      return null;
+    }
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => setCurrentView('main')}
+            className="gap-2"
+          >
+            <ArrowRight className="h-4 w-4 rotate-180" />
+            Volver
+          </Button>
+          <h2 className="text-2xl font-bold">Editar Audiencia</h2>
+        </div>
+
+        <Card>
+          <CardContent className="p-6">
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              
+              try {
+                const audienceData = {
+                  name: formData.get('name') as string,
+                  description: formData.get('description') as string,
+                  estimated_size: parseInt(formData.get('estimatedSize') as string) || selectedAudience.estimated_size,
+                  goals: (formData.get('goals') as string)?.split(',').map(g => g.trim()) || selectedAudience.goals,
+                  pain_points: (formData.get('painPoints') as string)?.split(',').map(p => p.trim()) || selectedAudience.pain_points,
+                  updated_at: new Date().toISOString()
+                };
+
+                const { data, error } = await supabase
+                  .from('company_audiences')
+                  .update(audienceData)
+                  .eq('id', selectedAudience.id)
+                  .eq('user_id', userId)
+                  .select()
+                  .single();
+
+                if (error) throw error;
+
+                setAudiences(audiences.map(a => a.id === selectedAudience.id ? data : a));
+                setCurrentView('main');
+                setSelectedAudience(null);
+                toast({
+                  title: "Audiencia Actualizada",
+                  description: `Se actualizó la audiencia "${audienceData.name}" exitosamente`,
+                });
+              } catch (error) {
+                console.error('Error updating audience:', error);
+                toast({
+                  title: "Error",
+                  description: "No se pudo actualizar la audiencia",
+                  variant: "destructive"
+                });
+              }
+            }} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="name">Nombre de la Audiencia</Label>
+                  <Input 
+                    id="name" 
+                    name="name" 
+                    defaultValue={selectedAudience.name}
+                    placeholder="Ej: Emprendedores Tecnológicos" 
+                    required 
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="estimatedSize">Tamaño Estimado</Label>
+                  <Input 
+                    id="estimatedSize" 
+                    name="estimatedSize" 
+                    type="number" 
+                    defaultValue={selectedAudience.estimated_size || ''}
+                    placeholder="1000" 
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="description">Descripción</Label>
+                <Textarea 
+                  id="description" 
+                  name="description" 
+                  defaultValue={selectedAudience.description || ''}
+                  placeholder="Describe las características principales de esta audiencia..."
+                  rows={3}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="goals">Objetivos (separados por comas)</Label>
+                  <Textarea 
+                    id="goals" 
+                    name="goals" 
+                    defaultValue={selectedAudience.goals?.join(', ') || ''}
+                    placeholder="Innovación, Productividad, Crecimiento..."
+                    rows={2}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="painPoints">Puntos de Dolor (separados por comas)</Label>
+                  <Textarea 
+                    id="painPoints" 
+                    name="painPoints" 
+                    defaultValue={selectedAudience.pain_points?.join(', ') || ''}
+                    placeholder="Falta de tiempo, Recursos limitados..."
+                    rows={2}
+                  />
+                </div>
+              </div>
+
+              <Card className="bg-muted/50">
+                <CardContent className="p-4">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <Database className="w-4 h-4" />
+                    Información de la Audiencia
+                  </h4>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p>• Creada: {new Date(selectedAudience.created_at).toLocaleDateString()}</p>
+                    <p>• Confianza: {Math.round((selectedAudience.confidence_score || 0) * 100)}%</p>
+                    <p>• Potencial de conversión: {Math.round((selectedAudience.conversion_potential || 0) * 100)}%</p>
+                    {selectedAudience.ai_insights?.generatedFrom && (
+                      <p>• Generada por: {selectedAudience.ai_insights.generatedFrom === 'social_analysis' ? 'Análisis de redes sociales' : 'Manual'}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex gap-4">
+                <Button type="submit" className="gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Guardar Cambios
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setCurrentView('main')}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+                const { data, error } = await supabase
+                  .from('company_audiences')
+                  .insert(audienceData)
+                  .select()
+                  .single();
+
+
   // Renderizar vista de conexiones sociales
   const renderConnectionsView = () => {
     return (
@@ -1190,6 +1525,10 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
 
   if (currentView === 'create-audience') {
     return renderCreateAudienceView();
+  }
+
+  if (currentView === 'edit-audience') {
+    return renderEditAudienceView();
   }
 
   if (currentView === 'audience-suggestions') {

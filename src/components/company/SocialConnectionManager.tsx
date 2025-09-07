@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -14,7 +16,9 @@ import {
   Loader2, 
   ExternalLink, 
   RefreshCw,
-  Settings
+  Settings,
+  Edit,
+  Save
 } from "lucide-react";
 
 interface SocialConnectionManagerProps {
@@ -41,14 +45,14 @@ interface FacebookPage {
 }
 
 const platformConfig = {
-  facebook: { name: 'Facebook', icon: '📘', color: 'bg-blue-600' },
-  instagram: { name: 'Instagram', icon: '📷', color: 'bg-pink-600' },
-  linkedin: { name: 'LinkedIn', icon: '💼', color: 'bg-blue-700' },
-  tiktok: { name: 'TikTok', icon: '🎵', color: 'bg-black' },
-  youtube: { name: 'YouTube', icon: '📺', color: 'bg-red-600' },
-  twitter: { name: 'X (Twitter)', icon: '🐦', color: 'bg-gray-900' },
-  threads: { name: 'Threads', icon: '🧵', color: 'bg-gray-800' },
-  pinterest: { name: 'Pinterest', icon: '📌', color: 'bg-red-700' },
+  facebook: { name: 'Facebook', icon: '📘', color: 'bg-blue-600', urlField: 'facebook_url' },
+  instagram: { name: 'Instagram', icon: '📷', color: 'bg-pink-600', urlField: 'instagram_url' },
+  linkedin: { name: 'LinkedIn', icon: '💼', color: 'bg-blue-700', urlField: 'linkedin_url' },
+  tiktok: { name: 'TikTok', icon: '🎵', color: 'bg-black', urlField: 'tiktok_url' },
+  youtube: { name: 'YouTube', icon: '📺', color: 'bg-red-600', urlField: 'youtube_url' },
+  twitter: { name: 'X (Twitter)', icon: '🐦', color: 'bg-gray-900', urlField: 'twitter_url' },
+  threads: { name: 'Threads', icon: '🧵', color: 'bg-gray-800', urlField: null },
+  pinterest: { name: 'Pinterest', icon: '📌', color: 'bg-red-700', urlField: null },
 };
 
 export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: SocialConnectionManagerProps) => {
@@ -64,6 +68,9 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const [selectedLinkedinPage, setSelectedLinkedinPage] = useState('');
   const [connectionWindow, setConnectionWindow] = useState<Window | null>(null);
   const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
+  const [companyData, setCompanyData] = useState<any>(null);
+  const [editingUrl, setEditingUrl] = useState<string | null>(null);
+  const [urlValues, setUrlValues] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   // Resolver userId desde el perfil o, si no existe, desde Supabase Auth
@@ -90,6 +97,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     if (!userId) return;
     loadSocialAccounts();
     initializeProfile();
+    loadCompanyData();
   }, [userId]);
 
   useEffect(() => {
@@ -263,6 +271,75 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       setConnecting(false);
     }
   };
+  const loadCompanyData = async () => {
+    try {
+      if (!userId) return;
+      
+      // Obtener la empresa principal del usuario
+      const { data: memberData, error: memberError } = await supabase
+        .from('company_members')
+        .select(`
+          companies (
+            id, name, facebook_url, instagram_url, linkedin_url, 
+            tiktok_url, youtube_url, twitter_url
+          )
+        `)
+        .eq('user_id', userId)
+        .eq('is_primary', true)
+        .single();
+
+      if (memberError || !memberData) {
+        console.warn('No se encontró empresa principal:', memberError);
+        return;
+      }
+
+      const company = memberData.companies;
+      setCompanyData(company);
+      
+      // Inicializar valores de URL
+      const initialUrls: Record<string, string> = {};
+      Object.entries(platformConfig).forEach(([platform, config]) => {
+        if (config.urlField) {
+          initialUrls[platform] = company[config.urlField] || '';
+        }
+      });
+      setUrlValues(initialUrls);
+    } catch (error) {
+      console.error('Error loading company data:', error);
+    }
+  };
+
+  const saveUrl = async (platform: string) => {
+    try {
+      if (!companyData?.id) return;
+      
+      const config = platformConfig[platform as keyof typeof platformConfig];
+      if (!config.urlField) return;
+
+      const { error } = await supabase
+        .from('companies')
+        .update({ [config.urlField]: urlValues[platform] || null })
+        .eq('id', companyData.id);
+
+      if (error) throw error;
+
+      setEditingUrl(null);
+      await loadCompanyData();
+      
+      toast({
+        title: "✅ URL actualizada",
+        description: `URL de ${config.name} guardada correctamente`,
+      });
+    } catch (error) {
+      console.error('Error saving URL:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar la URL",
+        variant: "destructive"
+      });
+    }
+  };
+
   const refreshConnections = async () => {
     let username = companyUsername;
     if (!username) {
@@ -560,6 +637,66 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                     <Settings className="w-3 h-3 mr-1" />
                     Seleccionar Página
                   </Button>
+                )}
+
+                {/* URL Configuration */}
+                {config.urlField && (
+                  <div className="mt-3 space-y-2">
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      URL del perfil
+                    </Label>
+                    {editingUrl === platform ? (
+                      <div className="flex gap-1">
+                        <Input
+                          value={urlValues[platform] || ''}
+                          onChange={(e) => setUrlValues(prev => ({ ...prev, [platform]: e.target.value }))}
+                          placeholder={`URL de ${config.name}`}
+                          className="text-xs"
+                          size={1}
+                        />
+                        <Button
+                          onClick={() => saveUrl(platform)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <Save className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          onClick={() => setEditingUrl(null)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <XCircle className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        <div className="text-xs text-muted-foreground flex-1 truncate">
+                          {urlValues[platform] || 'No configurada'}
+                        </div>
+                        <Button
+                          onClick={() => setEditingUrl(platform)}
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                        {urlValues[platform] && (
+                          <Button
+                            onClick={() => window.open(urlValues[platform], '_blank')}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>

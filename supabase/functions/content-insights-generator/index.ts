@@ -7,6 +7,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function getOpenAIApiKey(supabase: any) {
+  console.log('Fetching OpenAI API key from DB...');
+  const { data, error } = await supabase
+    .from('llm_api_keys')
+    .select('api_key_hash')
+    .eq('provider', 'openai')
+    .eq('status', 'active')
+    .single();
+
+  if (error || !data?.api_key_hash) {
+    console.log('Falling back to OPENAI_API_KEY env');
+    const envKey = Deno.env.get('OPENAI_API_KEY');
+    if (!envKey) throw new Error('OpenAI API key not configured');
+    return envKey;
+  }
+
+  return data.api_key_hash;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -19,10 +38,9 @@ serve(async (req) => {
       throw new Error('User ID is required');
     }
 
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
+    // Load OpenAI API key (DB first, then env)
+    const openAIApiKey = await getOpenAIApiKey(supabase);
+
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;

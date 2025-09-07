@@ -162,34 +162,49 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     }
   };
 
-  const saveField = async (field: string, value: string, table: string = 'companies', recordId?: string) => {
+  const saveField = async (field: string, value: any, table: string = 'companies', recordId?: string) => {
     try {
-      const updateData = { [field]: value };
+      const updateData: any = { [field]: value };
+
+      // Parse JSON for known JSON fields if a string is provided
+      if (typeof value === 'string' && ['publico_objetivo','visual_synthesis','brand_voice','full_brand_data','color_justifications'].includes(field)) {
+        try { updateData[field] = JSON.parse(value); } catch { /* keep as string */ }
+      }
       
       if (table === 'companies' && companyData?.id) {
         const { error } = await supabase
           .from('companies')
           .update(updateData)
           .eq('id', companyData.id);
-          
         if (error) throw error;
-        
-        setCompanyData(prev => ({ ...prev, [field]: value }));
+        setCompanyData((prev: any) => ({ ...prev, [field]: updateData[field] }));
+      } else if (table === 'company_strategy') {
+        const id = recordId || strategyData?.id;
+        let error = null as any;
+        if (id) {
+          ({ error } = await supabase.from('company_strategy').update(updateData).eq('id', id));
+        } else if (companyData?.id) {
+          ({ error } = await supabase.from('company_strategy').update(updateData).eq('company_id', companyData.id));
+        }
+        if (error) throw error;
+        setStrategyData((prev: any) => ({ ...prev, [field]: updateData[field] }));
+      } else if (table === 'company_branding') {
+        const id = recordId || brandingData?.id;
+        let error = null as any;
+        if (id) {
+          ({ error } = await supabase.from('company_branding').update(updateData).eq('id', id));
+        } else if (companyData?.id) {
+          ({ error } = await supabase.from('company_branding').update(updateData).eq('company_id', companyData.id));
+        }
+        if (error) throw error;
+        setBrandingData((prev: any) => ({ ...prev, [field]: updateData[field] }));
       }
       
-      toast({
-        title: "Campo actualizado",
-        description: "Los cambios se han guardado correctamente",
-      });
-      
+      toast({ title: "Campo actualizado", description: "Los cambios se han guardado correctamente" });
       setEditing(null);
     } catch (error) {
       console.error('Error saving field:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo guardar el campo",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "No se pudo guardar el campo", variant: "destructive" });
     }
   };
 
@@ -816,30 +831,42 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {strategyData.mision && (
+              {strategyData.mision !== undefined && (
                 <div className="space-y-3">
                   <h3 className="font-semibold text-purple-800 dark:text-purple-200">Misión</h3>
-                  <p className="text-base leading-relaxed bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg">
-                    {strategyData.mision}
-                  </p>
+                  <EditableField
+                    field="mision"
+                    value={strategyData.mision}
+                    onSave={(value) => saveField('mision', value, 'company_strategy', strategyData.id)}
+                    type="textarea"
+                    placeholder="Define la misión de tu empresa"
+                  />
                 </div>
               )}
               
-              {strategyData.vision && (
+              {strategyData.vision !== undefined && (
                 <div className="space-y-3">
                   <h3 className="font-semibold text-purple-800 dark:text-purple-200">Visión</h3>
-                  <p className="text-base leading-relaxed bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg">
-                    {strategyData.vision}
-                  </p>
+                  <EditableField
+                    field="vision"
+                    value={strategyData.vision}
+                    onSave={(value) => saveField('vision', value, 'company_strategy', strategyData.id)}
+                    type="textarea"
+                    placeholder="Define la visión de tu empresa"
+                  />
                 </div>
               )}
               
-              {strategyData.propuesta_valor && (
+              {strategyData.propuesta_valor !== undefined && (
                 <div className="space-y-3">
                   <h3 className="font-semibold text-purple-800 dark:text-purple-200">Propuesta de Valor</h3>
-                  <p className="text-base leading-relaxed bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg">
-                    {strategyData.propuesta_valor}
-                  </p>
+                  <EditableField
+                    field="propuesta_valor"
+                    value={strategyData.propuesta_valor}
+                    onSave={(value) => saveField('propuesta_valor', value, 'company_strategy', strategyData.id)}
+                    type="textarea"
+                    placeholder="Describe tu propuesta de valor"
+                  />
                 </div>
               )}
               
@@ -926,7 +953,12 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                         />
                         <div>
                           <p className="font-medium">Color Principal</p>
-                          <p className="text-sm text-muted-foreground">{brandingData.primary_color}</p>
+                          <EditableField
+                            field="primary_color"
+                            value={brandingData.primary_color}
+                            onSave={(value) => saveField('primary_color', value, 'company_branding', brandingData.id)}
+                            placeholder="#HEX o hsl(...)"
+                          />
                         </div>
                       </div>
                     )}
@@ -939,7 +971,12 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                         />
                         <div>
                           <p className="font-medium">Color Secundario</p>
-                          <p className="text-sm text-muted-foreground">{brandingData.secondary_color}</p>
+                          <EditableField
+                            field="secondary_color"
+                            value={brandingData.secondary_color}
+                            onSave={(value) => saveField('secondary_color', value, 'company_branding', brandingData.id)}
+                            placeholder="#HEX o hsl(...)"
+                          />
                         </div>
                       </div>
                     )}
@@ -952,7 +989,12 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                         />
                         <div>
                           <p className="font-medium">Complementario 1</p>
-                          <p className="text-sm text-muted-foreground">{brandingData.complementary_color_1}</p>
+                          <EditableField
+                            field="complementary_color_1"
+                            value={brandingData.complementary_color_1}
+                            onSave={(value) => saveField('complementary_color_1', value, 'company_branding', brandingData.id)}
+                            placeholder="#HEX o hsl(...)"
+                          />
                         </div>
                       </div>
                     )}
@@ -965,7 +1007,12 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                         />
                         <div>
                           <p className="font-medium">Complementario 2</p>
-                          <p className="text-sm text-muted-foreground">{brandingData.complementary_color_2}</p>
+                          <EditableField
+                            field="complementary_color_2"
+                            value={brandingData.complementary_color_2}
+                            onSave={(value) => saveField('complementary_color_2', value, 'company_branding', brandingData.id)}
+                            placeholder="#HEX o hsl(...)"
+                          />
                         </div>
                       </div>
                     )}
@@ -976,9 +1023,13 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               {brandingData.visual_identity && (
                 <div className="space-y-3">
                   <h3 className="font-semibold text-orange-800 dark:text-orange-200">Identidad Visual</h3>
-                  <p className="text-base leading-relaxed bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg">
-                    {brandingData.visual_identity}
-                  </p>
+                  <EditableField
+                    field="visual_identity"
+                    value={brandingData.visual_identity}
+                    onSave={(value) => saveField('visual_identity', value, 'company_branding', brandingData.id)}
+                    type="textarea"
+                    placeholder="Describe la identidad visual"
+                  />
                 </div>
               )}
               

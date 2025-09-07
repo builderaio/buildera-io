@@ -1492,13 +1492,6 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     );
   };
 
-                const { data, error } = await supabase
-                  .from('company_audiences')
-                  .insert(audienceData)
-                  .select()
-                  .single();
-
-
   // Renderizar vista de conexiones sociales
   const renderConnectionsView = () => {
     return (

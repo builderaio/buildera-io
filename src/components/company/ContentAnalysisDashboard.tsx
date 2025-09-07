@@ -62,7 +62,8 @@ interface ContentAnalysisData {
 }
 
 interface Profile {
-  user_id: string;
+  user_id?: string;
+  id?: string;
   full_name?: string;
   user_type?: string;
 }
@@ -99,7 +100,12 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const loadExistingData = async () => {
     setLoading(true);
     try {
-      if (!profile.user_id) {
+      console.log('Profile recibido en ContentAnalysisDashboard:', profile);
+      
+      // Get current user ID - handle different profile structures
+      const currentUserId = profile?.user_id || profile?.id;
+      
+      if (!currentUserId) {
         toast({
           title: "Error de usuario",
           description: "No se pudo identificar el usuario. Por favor, recargue la página.",
@@ -109,11 +115,13 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         return;
       }
 
+      console.log('Consultando social_analysis para user_id:', currentUserId);
+
       // Load existing social accounts with analysis
       const { data: socialAccounts, error: socialError } = await supabase
         .from('social_analysis')
         .select('social_type, cid, name, users_count, avg_er, quality_score')
-        .eq('user_id', profile.user_id);
+        .eq('user_id', currentUserId);
 
       if (socialError) {
         console.error('Error al consultar social_analysis:', socialError);

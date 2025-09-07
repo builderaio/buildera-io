@@ -81,27 +81,46 @@ serve(async (req) => {
       throw new Error('RapidAPI key not configured')
     }
 
+    // Supported platforms validation
+    const supportedPlatforms = ['instagram', 'youtube', 'twitter', 'tiktok', 'facebook']
+    const platformValidationRules = {
+      'instagram': (url: string) => url.includes('instagram.com/') && !url.includes('/p/') && !url.includes('/reel/'),
+      'youtube': (url: string) => url.includes('youtube.com/') && (url.includes('/@') || url.includes('/channel/') || url.includes('/c/')),
+      'twitter': (url: string) => url.includes('twitter.com/') || url.includes('x.com/'),
+      'tiktok': (url: string) => url.includes('tiktok.com/@'),
+      'facebook': (url: string) => url.includes('facebook.com/') && !url.includes('/groups/') && !url.includes('/profile.php')
+    }
+
     const results: AudienceStats[] = []
 
     for (const urlData of urls) {
       try {
-        console.log(`Analyzing ${urlData.platform}: ${urlData.url}`)
+        const platform = urlData.platform.toLowerCase()
+        console.log(`Analyzing ${platform}: ${urlData.url}`)
         
+        // Validate platform is supported
+        if (!supportedPlatforms.includes(platform)) {
+          console.log(`Platform ${platform} not supported, skipping`)
+          continue
+        }
+
+        // Validate URL format for the platform
+        const validator = platformValidationRules[platform as keyof typeof platformValidationRules]
+        if (validator && !validator(urlData.url)) {
+          console.log(`Invalid URL format for ${platform}: ${urlData.url}, skipping`)
+          continue
+        }
+
         // Map platform to social type
         const socialTypeMap: { [key: string]: string } = {
           'instagram': 'INST',
           'facebook': 'FB',
           'twitter': 'TW',
           'tiktok': 'TT',
-          'youtube': 'YT',
-          'linkedin': 'LI'
+          'youtube': 'YT'
         }
 
-        const socialType = socialTypeMap[urlData.platform.toLowerCase()]
-        if (!socialType) {
-          console.log(`Platform ${urlData.platform} not supported, skipping`)
-          continue
-        }
+        const socialType = socialTypeMap[platform]
 
         // Call Community endpoint as shown in curl example
         console.log(`Making Community API call for: ${urlData.url}`)
@@ -115,12 +134,12 @@ serve(async (req) => {
         })
 
         if (!response.ok) {
-          console.error(`API error for ${urlData.platform}: ${response.status} ${response.statusText}`)
+          console.error(`API error for ${platform}: ${response.status} ${response.statusText}`)
           continue
         }
 
         const apiData = await response.json()
-        console.log(`Successfully received data for ${urlData.platform}`)
+        console.log(`Successfully received data for ${platform}`)
 
         // Transform API response to our format
         const audienceStats: AudienceStats = {
@@ -153,6 +172,37 @@ serve(async (req) => {
           avgComments: apiData.avgComments || apiData.averageComments || 0,
           avgViews: apiData.avgViews || apiData.averageViews || 0,
           lastPosts: apiData.lastPosts || apiData.recentPosts || []
+        }
+
+        // Store raw data and processed data in social_accounts table
+        try {
+          const { error: dbError } = await supabase
+            .from('social_accounts')
+            .upsert({
+              user_id: user.id,
+              platform: platform,
+              platform_username: audienceStats.screenName,
+              platform_display_name: audienceStats.name,
+              is_connected: true,
+              metadata: {
+                raw_analysis_data: apiData,
+                processed_stats: audienceStats,
+                analysis_timestamp: new Date().toISOString(),
+                api_source: 'instagram-statistics-api'
+              },
+              last_sync_at: new Date().toISOString(),
+              connected_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id,platform'
+            })
+
+          if (dbError) {
+            console.error('Error storing social account data:', dbError)
+          } else {
+            console.log(`Successfully stored ${platform} data to database`)
+          }
+        } catch (dbError) {
+          console.error('Database storage error:', dbError)
         }
 
         results.push(audienceStats)

@@ -872,7 +872,7 @@ const MarketingHubWow = ({
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-7 h-16 p-1 bg-muted/50 backdrop-blur-sm rounded-2xl">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-8 h-16 p-1 bg-muted/50 backdrop-blur-sm rounded-2xl">
             {[{
             value: "dashboard",
             icon: BarChart3,
@@ -894,6 +894,10 @@ const MarketingHubWow = ({
             icon: Calendar,
             label: "Programar"
           }, {
+            value: "configuracion",
+            icon: Settings,
+            label: "Configuración"
+          }, {
             value: "history",
             icon: HistoryIcon,
             label: "Historial"
@@ -914,9 +918,6 @@ const MarketingHubWow = ({
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-8">
-            {/* Social Connections Section */}
-            <SocialConnectionManager profile={profile} onConnectionsUpdated={loadConnections} />
-            
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Platform Overview */}
               <Card className="lg:col-span-2 border-0 bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm">
@@ -1092,6 +1093,11 @@ const MarketingHubWow = ({
             loadUpcomingPosts();
             loadRealMetrics();
           }} />
+          </TabsContent>
+
+          {/* Configuración Tab */}
+          <TabsContent value="configuracion" className="space-y-8">
+            <SocialConnectionManager profile={profile} onConnectionsUpdated={loadConnections} />
           </TabsContent>
 
           <TabsContent value="results" className="space-y-8">

@@ -10,9 +10,11 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Linkedin, 
-  Music, 
   Instagram, 
-  Facebook,
+  Facebook, 
+  Music, 
+  Twitter, 
+  Youtube,
   ExternalLink,
   CheckCircle,
   AlertTriangle,
@@ -41,8 +43,10 @@ import {
   Camera,
   Edit,
   Lightbulb,
-  Share
-} from "lucide-react";
+  Share,
+  type LucideIcon 
+} from 'lucide-react';
+import { SOCIAL_PLATFORMS, getPlatform, getPlatformDisplayName, getPlatformIcon } from '@/lib/socialPlatforms';
 
 interface SocialMediaHubProps {
   profile: any;
@@ -168,80 +172,43 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
   const [facebookAnalysis, setFacebookAnalysis] = useState<any>(null);
   const [loadingFacebookAnalysis, setLoadingFacebookAnalysis] = useState(false);
 
-  // Initialize social networks
+  // Initialize social networks using centralized platform configuration
   const initializeSocialNetworks = (companyData: any): SocialNetwork[] => {
-    return [
-      {
-        id: 'linkedin',
-        name: 'LinkedIn',
-        icon: Linkedin,
-        color: 'bg-blue-700',
-        url: companyData?.linkedin_url || null,
-        isValid: validateLinkedInUrl(companyData?.linkedin_url),
-        isActive: !!companyData?.linkedin_url && validateLinkedInUrl(companyData?.linkedin_url),
+    const platforms = ['linkedin', 'tiktok', 'instagram', 'facebook'];
+    
+    return platforms.map(platformId => {
+      const platform = getPlatform(platformId);
+      if (!platform) return null;
+      
+      return {
+        id: platform.id,
+        name: platform.name,
+        icon: platform.icon,
+        color: platform.bgColor,
+        url: companyData?.[`${platform.id}_url`] || null,
+        isValid: validateUrl(companyData?.[`${platform.id}_url`], platform.id),
+        isActive: !!companyData?.[`${platform.id}_url`] && validateUrl(companyData?.[`${platform.id}_url`], platform.id),
         hasDetails: true,
         hasPosts: true
-      },
-      {
-        id: 'tiktok',
-        name: 'TikTok',
-        icon: Music,
-        color: 'bg-black',
-        url: companyData?.tiktok_url || null,
-        isValid: validateTikTokUrl(companyData?.tiktok_url),
-        isActive: !!companyData?.tiktok_url && validateTikTokUrl(companyData?.tiktok_url),
-        hasDetails: true,
-        hasPosts: true
-      },
-      {
-        id: 'instagram',
-        name: 'Instagram',
-        icon: Instagram,
-        color: 'bg-gradient-to-r from-purple-500 to-pink-500',
-        url: companyData?.instagram_url || null,
-        isValid: validateInstagramUrl(companyData?.instagram_url),
-        isActive: !!companyData?.instagram_url && validateInstagramUrl(companyData?.instagram_url),
-        hasDetails: true,
-        hasPosts: true
-      },
-      {
-        id: 'facebook',
-        name: 'Facebook',
-        icon: Facebook,
-        color: 'bg-blue-600',
-        url: companyData?.facebook_url || null,
-        isValid: validateFacebookUrl(companyData?.facebook_url),
-        isActive: !!companyData?.facebook_url && validateFacebookUrl(companyData?.facebook_url),
-        hasDetails: true,
-        hasPosts: true
-      }
-    ];
+      };
+    }).filter(Boolean) as SocialNetwork[];
   };
 
-  // URL validation functions
-  const validateLinkedInUrl = (url: string | null): boolean => {
+  // Unified URL validation function
+  const validateUrl = (url: string | null, platform: string): boolean => {
     if (!url) return false;
-    const linkedinRegex = /^https?:\/\/(www\.)?linkedin\.com\/company\/[a-zA-Z0-9-_]+\/?$/;
-    return linkedinRegex.test(url);
+    
+    const validators: Record<string, RegExp> = {
+      linkedin: /^https?:\/\/(www\.)?linkedin\.com\/company\/[a-zA-Z0-9-_]+\/?$/,
+      tiktok: /^https?:\/\/(www\.)?tiktok\.com\/@[a-zA-Z0-9._-]+\/?$/,
+      instagram: /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9._-]+\/?$/,
+      facebook: /^https?:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9.-]+\/?$/
+    };
+    
+    const validator = validators[platform];
+    return validator ? validator.test(url) : false;
   };
 
-  const validateTikTokUrl = (url: string | null): boolean => {
-    if (!url) return false;
-    const tiktokRegex = /^https?:\/\/(www\.)?tiktok\.com\/@[a-zA-Z0-9._-]+\/?$/;
-    return tiktokRegex.test(url);
-  };
-
-  const validateInstagramUrl = (url: string | null): boolean => {
-    if (!url) return false;
-    const instagramRegex = /^https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9._-]+\/?$/;
-    return instagramRegex.test(url);
-  };
-
-  const validateFacebookUrl = (url: string | null): boolean => {
-    if (!url) return false;
-    const facebookRegex = /^https?:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9.-]+\/?$/;
-    return facebookRegex.test(url);
-  };
 
 
   // Extract company identifier from LinkedIn URL

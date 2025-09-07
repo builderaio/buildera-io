@@ -28,14 +28,7 @@ interface ContentSchedulingProps {
   loading: boolean;
 }
 
-const platformIcons = {
-  linkedin: { icon: Linkedin, color: 'bg-blue-700', name: 'LinkedIn' },
-  instagram: { icon: Instagram, color: 'bg-pink-600', name: 'Instagram' },
-  tiktok: { icon: Music, color: 'bg-black', name: 'TikTok' },
-  facebook: { icon: Facebook, color: 'bg-blue-600', name: 'Facebook' },
-  twitter: { icon: Twitter, color: 'bg-gray-900', name: 'X (Twitter)' },
-  youtube: { icon: Youtube, color: 'bg-red-600', name: 'YouTube' }
-};
+import { SOCIAL_PLATFORMS, getPlatform, getPlatformDisplayName, getPlatformIcon } from '@/lib/socialPlatforms';
 
 export const ContentScheduling = ({ campaignData, onComplete, loading }: ContentSchedulingProps) => {
   const [schedulingSettings, setSchedulingSettings] = useState({
@@ -239,18 +232,18 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
             <div className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {Object.entries(scheduledByPlatform).map(([platform, count]) => {
-                  const config = platformIcons[platform];
-                  if (!config) return null;
+                  const platformConfig = getPlatform(platform);
+                  if (!platformConfig) return null;
                   
-                  const IconComponent = config.icon;
+                  const IconComponent = platformConfig.icon;
                   
                   return (
                     <div key={platform} className="text-center p-4 border rounded-lg">
-                      <div className={`w-12 h-12 ${config.color} rounded-full flex items-center justify-center mx-auto mb-2 text-white`}>
+                      <div className={`w-12 h-12 ${platformConfig.bgColor} rounded-full flex items-center justify-center mx-auto mb-2 text-white`}>
                         <IconComponent className="h-6 w-6" />
                       </div>
                       <p className="font-semibold">{count as number}</p>
-                      <p className="text-xs text-muted-foreground">{config.name}</p>
+                      <p className="text-xs text-muted-foreground">{platformConfig.name}</p>
                     </div>
                   );
                 })}

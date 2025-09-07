@@ -86,6 +86,8 @@ interface ContentAnalysisDashboardProps {
   profile: Profile;
 }
 
+import { SOCIAL_PLATFORMS, getPlatformDisplayName, getPlatformIcon, getPlatformColor } from '@/lib/socialPlatforms';
+
 const PLATFORM_COLORS = {
   instagram: '#E4405F',
   linkedin: '#0077B5', 

@@ -31,19 +31,22 @@ interface SocialMediaTimelineProps {
   userId?: string;
 }
 
-const platformIcons = {
-  instagram: '📷',
-  linkedin: '💼',
-  tiktok: '🎵',
-  facebook: '📘'
-};
+import { SOCIAL_PLATFORMS, getPlatformDisplayName, getPlatformIcon } from '@/lib/socialPlatforms';
 
-const platformColors = {
-  instagram: 'hsl(var(--chart-1))',
-  linkedin: 'hsl(var(--chart-2))',
-  tiktok: 'hsl(var(--chart-3))',
-  facebook: 'hsl(var(--chart-4))'
-};
+// Platform icons now use centralized configuration
+const platformIcons = Object.fromEntries(
+  Object.entries(SOCIAL_PLATFORMS).map(([key, platform]) => [
+    key, 
+    platform.name // Use display name from centralized config
+  ])
+);
+
+const platformColors = Object.fromEntries(
+  Object.entries(SOCIAL_PLATFORMS).map(([key, platform]) => [
+    key,
+    `hsl(var(--chart-${Object.keys(SOCIAL_PLATFORMS).indexOf(key) + 1}))`
+  ])
+);
 
 export const SocialMediaTimeline: React.FC<SocialMediaTimelineProps> = ({ userId }) => {
   const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -192,10 +195,11 @@ export const SocialMediaTimeline: React.FC<SocialMediaTimelineProps> = ({ userId
             <Badge
               key={platform}
               variant={selectedPlatform === platform ? 'default' : 'outline'}
-              className="cursor-pointer capitalize"
+              className="cursor-pointer capitalize flex items-center gap-1"
               onClick={() => setSelectedPlatform(platform)}
             >
-              {platformIcons[platform as keyof typeof platformIcons]} {platform}
+              {React.createElement(getPlatformIcon(platform), { className: "w-3 h-3" })}
+              {getPlatformDisplayName(platform)}
             </Badge>
           ))}
         </div>
@@ -223,7 +227,7 @@ export const SocialMediaTimeline: React.FC<SocialMediaTimelineProps> = ({ userId
                     className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-lg"
                     style={{ backgroundColor: platformColors[post.platform] + '20' }}
                   >
-                    {platformIcons[post.platform]}
+                    {React.createElement(getPlatformIcon(post.platform), { className: "inline w-3 h-3 mr-1" })}
                   </div>
                   
                   {/* Post content */}

@@ -13,7 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
-import { Sparkles, BarChart3, Calendar, TrendingUp, Users, Heart, MessageCircle, ArrowRight, Plus, ChevronRight, Zap, Eye, Target, Brain, Rocket, Star, Activity, PieChart, LineChart, CheckCircle2, PlayCircle, Image, Video, PenTool, Globe, Wand2, Camera, TrendingDown, Hash, Clock, Award, Network, Share2, Download, Upload, RefreshCw, Filter, Search, Settings, History as HistoryIcon } from "lucide-react";
+import { Sparkles, BarChart3, Calendar, TrendingUp, Users, Heart, MessageCircle, ArrowRight, Plus, ChevronRight, Zap, Eye, Target, Brain, Rocket, Star, Activity, PieChart, LineChart, CheckCircle2, PlayCircle, Image, Video, PenTool, Globe, Wand2, Camera, TrendingDown, Hash, Clock, Award, Network, Share2, Download, Upload, RefreshCw, Filter, Search, Settings, History as HistoryIcon, Linkedin, Instagram, Facebook, Music } from "lucide-react";
+import { SOCIAL_PLATFORMS, getPlatform, getPlatformDisplayName, getPlatformIcon } from '@/lib/socialPlatforms';
 import { SocialConnectionManager } from './SocialConnectionManager';
 import { ContentAnalysisDashboard } from './ContentAnalysisDashboard';
 import { ScheduledPostsManager } from './ScheduledPostsManager';
@@ -806,15 +807,19 @@ const MarketingHubWow = ({
     }
   };
   const getPlatformIcon = (platform: string) => {
+    const platformConfig = getPlatform(platform);
+    if (!platformConfig) return Globe;
+    
+    const IconComponent = platformConfig.icon;
     switch (platform?.toLowerCase()) {
       case 'linkedin':
-        return Network;
+        return Linkedin;
       case 'instagram':
-        return Camera;
+        return Instagram; 
       case 'facebook':
-        return Share2;
+        return Facebook;
       case 'tiktok':
-        return PlayCircle;
+        return Music; // Usando Music como representativo de TikTok
       default:
         return Globe;
     }

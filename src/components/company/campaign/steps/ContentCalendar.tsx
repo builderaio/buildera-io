@@ -31,14 +31,7 @@ interface ContentCalendarProps {
   loading: boolean;
 }
 
-const platformIcons = {
-  linkedin: { icon: Linkedin, color: 'bg-blue-700', name: 'LinkedIn' },
-  instagram: { icon: Instagram, color: 'bg-pink-600', name: 'Instagram' },
-  tiktok: { icon: Music, color: 'bg-black', name: 'TikTok' },
-  facebook: { icon: Facebook, color: 'bg-blue-600', name: 'Facebook' },
-  twitter: { icon: Twitter, color: 'bg-gray-900', name: 'X (Twitter)' },
-  youtube: { icon: Youtube, color: 'bg-red-600', name: 'YouTube' }
-};
+import { SOCIAL_PLATFORMS, getPlatform, getPlatformDisplayName, getPlatformIcon } from '@/lib/socialPlatforms';
 
 const timeSlots = [
   '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
@@ -209,10 +202,10 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {connectedPlatforms.map(platform => {
-                  const config = platformIcons[platform];
-                  if (!config) return null;
+                  const platformConfig = getPlatform(platform);
+                  if (!platformConfig) return null;
                   
-                  const IconComponent = config.icon;
+                  const IconComponent = platformConfig.icon;
                   const isSelected = selectedPlatforms.includes(platform);
                   
                   return (

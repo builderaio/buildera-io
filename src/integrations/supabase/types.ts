@@ -4537,6 +4537,177 @@ export type Database = {
         }
         Relationships: []
       }
+      social_analysis: {
+        Row: {
+          age: string | null
+          ages: Json | null
+          audience_severity: number | null
+          avg_er: number | null
+          avg_interactions: number | null
+          avg_views: number | null
+          brand_safety: Json | null
+          categories: string[] | null
+          cid: string | null
+          cities: Json | null
+          city: string | null
+          community_status: string | null
+          contact_email: string | null
+          countries: Json | null
+          country: string | null
+          country_code: string | null
+          created_at: string
+          description: string | null
+          gender: string | null
+          genders: Json | null
+          group_id: string | null
+          id: string
+          image: string | null
+          interests: Json | null
+          is_blocked: boolean | null
+          is_closed: boolean | null
+          last_from_mentions: Json | null
+          last_posts: Json | null
+          members_cities: Json | null
+          members_countries: Json | null
+          members_genders_ages: Json | null
+          members_reachability: Json | null
+          members_types: Json | null
+          name: string | null
+          pct_fake_followers: number | null
+          profile_type: string | null
+          quality_score: number | null
+          rating_index: number | null
+          rating_tags: Json | null
+          raw_api_response: Json
+          screen_name: string | null
+          similar_profiles: Json | null
+          social_type: string
+          start_date: string | null
+          suggested_tags: string[] | null
+          tags: string[] | null
+          time_posts_loaded: string | null
+          time_short_loop: string | null
+          time_statistics: string | null
+          updated_at: string
+          url: string
+          user_id: string
+          users_count: number | null
+          verified: boolean | null
+        }
+        Insert: {
+          age?: string | null
+          ages?: Json | null
+          audience_severity?: number | null
+          avg_er?: number | null
+          avg_interactions?: number | null
+          avg_views?: number | null
+          brand_safety?: Json | null
+          categories?: string[] | null
+          cid?: string | null
+          cities?: Json | null
+          city?: string | null
+          community_status?: string | null
+          contact_email?: string | null
+          countries?: Json | null
+          country?: string | null
+          country_code?: string | null
+          created_at?: string
+          description?: string | null
+          gender?: string | null
+          genders?: Json | null
+          group_id?: string | null
+          id?: string
+          image?: string | null
+          interests?: Json | null
+          is_blocked?: boolean | null
+          is_closed?: boolean | null
+          last_from_mentions?: Json | null
+          last_posts?: Json | null
+          members_cities?: Json | null
+          members_countries?: Json | null
+          members_genders_ages?: Json | null
+          members_reachability?: Json | null
+          members_types?: Json | null
+          name?: string | null
+          pct_fake_followers?: number | null
+          profile_type?: string | null
+          quality_score?: number | null
+          rating_index?: number | null
+          rating_tags?: Json | null
+          raw_api_response: Json
+          screen_name?: string | null
+          similar_profiles?: Json | null
+          social_type: string
+          start_date?: string | null
+          suggested_tags?: string[] | null
+          tags?: string[] | null
+          time_posts_loaded?: string | null
+          time_short_loop?: string | null
+          time_statistics?: string | null
+          updated_at?: string
+          url: string
+          user_id: string
+          users_count?: number | null
+          verified?: boolean | null
+        }
+        Update: {
+          age?: string | null
+          ages?: Json | null
+          audience_severity?: number | null
+          avg_er?: number | null
+          avg_interactions?: number | null
+          avg_views?: number | null
+          brand_safety?: Json | null
+          categories?: string[] | null
+          cid?: string | null
+          cities?: Json | null
+          city?: string | null
+          community_status?: string | null
+          contact_email?: string | null
+          countries?: Json | null
+          country?: string | null
+          country_code?: string | null
+          created_at?: string
+          description?: string | null
+          gender?: string | null
+          genders?: Json | null
+          group_id?: string | null
+          id?: string
+          image?: string | null
+          interests?: Json | null
+          is_blocked?: boolean | null
+          is_closed?: boolean | null
+          last_from_mentions?: Json | null
+          last_posts?: Json | null
+          members_cities?: Json | null
+          members_countries?: Json | null
+          members_genders_ages?: Json | null
+          members_reachability?: Json | null
+          members_types?: Json | null
+          name?: string | null
+          pct_fake_followers?: number | null
+          profile_type?: string | null
+          quality_score?: number | null
+          rating_index?: number | null
+          rating_tags?: Json | null
+          raw_api_response?: Json
+          screen_name?: string | null
+          similar_profiles?: Json | null
+          social_type?: string
+          start_date?: string | null
+          suggested_tags?: string[] | null
+          tags?: string[] | null
+          time_posts_loaded?: string | null
+          time_short_loop?: string | null
+          time_statistics?: string | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+          users_count?: number | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       social_media_analytics: {
         Row: {
           created_at: string

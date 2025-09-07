@@ -271,10 +271,83 @@ serve(async (req) => {
           if (dbError) {
             console.error('Error storing social account data:', JSON.stringify(dbError, null, 2))
           } else {
-            console.log(`Successfully stored ${platform} data to database`)
+            console.log(`Successfully stored ${platform} data to social_accounts table`)
           }
         } catch (dbError) {
           console.error('Database storage error:', JSON.stringify(dbError, null, 2))
+        }
+
+        // Store detailed analysis data in social_analysis table
+        try {
+          console.log(`Storing detailed analysis data for platform ${platform}`)
+
+          const analysisData = {
+            user_id: user.id,
+            cid: profileData.cid || null,
+            social_type: profileData.socialType || socialType,
+            group_id: profileData.groupID || null,
+            url: urlData.url,
+            name: profileData.name || null,
+            image: profileData.image || null,
+            description: profileData.description || null,
+            screen_name: profileData.screenName || null,
+            users_count: profileData.usersCount || 0,
+            community_status: profileData.communityStatus || null,
+            is_blocked: profileData.isBlocked || false,
+            is_closed: profileData.isClosed || false,
+            verified: profileData.verified || false,
+            tags: profileData.tags || [],
+            suggested_tags: profileData.suggestedTags || [],
+            rating_tags: profileData.ratingTags || [],
+            categories: profileData.categories || [],
+            avg_er: profileData.avgER || 0,
+            avg_interactions: profileData.avgInteractions || 0,
+            avg_views: profileData.avgViews || 0,
+            rating_index: profileData.ratingIndex || 0,
+            quality_score: profileData.qualityScore || 0,
+            time_statistics: profileData.timeStatistics ? new Date(profileData.timeStatistics).toISOString() : null,
+            time_posts_loaded: profileData.timePostsLoaded ? new Date(profileData.timePostsLoaded).toISOString() : null,
+            time_short_loop: profileData.timeShortLoop ? new Date(profileData.timeShortLoop).toISOString() : null,
+            start_date: profileData.startDate ? new Date(profileData.startDate).toISOString() : null,
+            members_cities: profileData.membersCities || [],
+            members_countries: profileData.membersCountries || [],
+            members_genders_ages: profileData.membersGendersAges || {},
+            country: profileData.country || null,
+            country_code: profileData.countryCode || null,
+            city: profileData.city || null,
+            profile_type: profileData.type || null,
+            gender: profileData.gender || null,
+            age: profileData.age || null,
+            last_posts: profileData.lastPosts || [],
+            last_from_mentions: profileData.lastFromMentions || [],
+            similar_profiles: profileData.similar || [],
+            members_types: profileData.membersTypes || [],
+            members_reachability: profileData.membersReachability || [],
+            countries: profileData.countries || [],
+            cities: profileData.cities || [],
+            genders: profileData.genders || [],
+            ages: profileData.ages || [],
+            interests: profileData.interests || [],
+            brand_safety: profileData.brandSafety || {},
+            pct_fake_followers: profileData.pctFakeFollowers || 0,
+            audience_severity: profileData.audienceSeverity || 0,
+            contact_email: profileData.contactEmail || null, // Instagram specific
+            raw_api_response: apiData
+          }
+
+          const { error: analysisError } = await supabase
+            .from('social_analysis')
+            .upsert(analysisData, {
+              onConflict: 'user_id,url'
+            })
+
+          if (analysisError) {
+            console.error('Error storing social analysis data:', JSON.stringify(analysisError, null, 2))
+          } else {
+            console.log(`Successfully stored detailed analysis data for ${platform}`)
+          }
+        } catch (analysisError) {
+          console.error('Social analysis storage error:', JSON.stringify(analysisError, null, 2))
         }
 
         results.push(audienceStats)

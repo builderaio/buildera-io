@@ -258,11 +258,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     const urls = extractSocialUrls(companyData);
     setSocialUrls(urls);
     
-    if (Object.keys(urls).length > 0) {
-      setShowUrlConfirmation(true);
-      return true;
-    }
-    return false;
+    // Solo retornar si hay URLs, pero NO activar automáticamente la confirmación
+    return Object.keys(urls).length > 0;
   };
 
   const analyzeWithConfirmedUrls = async () => {
@@ -317,17 +314,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     
     setSocialStatsLoading(true);
     
-    // Primero verificar si hay URLs de redes sociales en la empresa
-    if (companyData && !showUrlConfirmation) {
-      const hasUrls = checkCompanySocialUrls();
-      if (hasUrls) {
-        setSocialStatsLoading(false);
-        return;
-      }
-    }
-    
     try {
-      // Consultar directamente la tabla social_analysis para ver si hay datos existentes
+      // PRIMERO: Consultar directamente la tabla social_analysis para ver si hay datos existentes
       const { data: existingAnalyses, error } = await supabase
         .from('social_analysis')
         .select('*')
@@ -336,13 +324,25 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
 
       if (error) throw error;
 
-      // Si hay análisis existentes, configurar el estado para mostrarlos
+      // Si hay análisis existentes, configurar el estado para mostrarlos y NO mostrar confirmación
       if (existingAnalyses && existingAnalyses.length > 0) {
         setSocialStats(existingAnalyses);
         setHasSocialConnections(true);
+        setShowUrlConfirmation(false); // Asegurarse de no mostrar confirmación
       } else {
+        // SOLO si no hay análisis existentes, verificar URLs de empresa para mostrar confirmación
         setSocialStats([]);
         setHasSocialConnections(false);
+        
+        // Verificar si hay URLs de redes sociales en la empresa para análisis inicial
+        if (companyData) {
+          const urls = extractSocialUrls(companyData);
+          setSocialUrls(urls);
+          
+          if (Object.keys(urls).length > 0) {
+            setShowUrlConfirmation(true);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading social audience stats:', error);

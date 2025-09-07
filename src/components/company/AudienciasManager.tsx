@@ -380,7 +380,6 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                   {platform === 'instagram' && <Instagram className="w-5 h-5 text-pink-500" />}
                   {platform === 'facebook' && <Facebook className="w-5 h-5 text-blue-600" />}
                   {platform === 'twitter' && <Twitter className="w-5 h-5 text-blue-400" />}
-                  {platform === 'linkedin' && <Linkedin className="w-5 h-5 text-blue-700" />}
                   {platform === 'tiktok' && <Music className="w-5 h-5 text-black" />}
                   {platform === 'youtube' && <Youtube className="w-5 h-5 text-red-500" />}
                   

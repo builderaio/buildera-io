@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
-import { PlusCircle, Sparkles, Lightbulb, Copy, Brain, Target, TrendingUp, Clock } from "lucide-react";
+import { PlusCircle, Sparkles, Lightbulb, Copy, Brain, Target, TrendingUp, Clock, ArrowRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import InsightsRenderer from "./InsightsRenderer";
+import AdvancedContentCreator from "./AdvancedContentCreator";
 
 interface Props {
   profile: { user_id?: string };
@@ -20,8 +20,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
   const [generatingContent, setGeneratingContent] = useState(false);
   const [contentPrompt, setContentPrompt] = useState('');
   const [generatedContent, setGeneratedContent] = useState('');
-  const [generatingInsights, setGeneratingInsights] = useState(false);
-  const [aiInsights, setAiInsights] = useState('');
+  const [showAdvancedCreator, setShowAdvancedCreator] = useState(false);
 
   const generateContent = async () => {
     if (!contentPrompt.trim()) {
@@ -58,128 +57,74 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
     }
   };
 
-  const generateAIInsights = async () => {
-    setGeneratingInsights(true);
-    try {
-      const topPostsContext = topPosts.slice(0, 5).map(post => ({
-        text: post.text?.substring(0, 200),
-        hashtags: post.hashTags?.slice(0, 5),
-        likes: post.likes || 0,
-        comments: post.comments || 0,
-        platform: post.platform,
-        type: post.type
-      }));
-
-      const { data, error } = await supabase.functions.invoke('content-insights-generator', {
-        body: {
-          user_id: profile.user_id,
-          platform: selectedPlatform !== 'all' ? selectedPlatform : null,
-          top_posts: topPostsContext
-        }
-      });
-      
-      if (error) throw error;
-      
-      setAiInsights(data.insights || 'No se pudieron generar insights');
-      toast({ 
-        title: "¡Insights generados!", 
-        description: "Se han analizado tus datos para crear ideas personalizadas" 
-      });
-    } catch (error) {
-      console.error('Error generating insights:', error);
-      toast({ 
-        title: "Error", 
-        description: "No se pudieron generar los insights. Intenta de nuevo.", 
-        variant: "destructive" 
-      });
-    } finally {
-      setGeneratingInsights(false);
-    }
-  };
+  if (showAdvancedCreator) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Button 
+            variant="outline" 
+            onClick={() => setShowAdvancedCreator(false)}
+            size="sm"
+          >
+            ← Volver a Creador Simple
+          </Button>
+        </div>
+        <AdvancedContentCreator 
+          profile={profile}
+          topPosts={topPosts}
+          selectedPlatform={selectedPlatform}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* AI Insights Section */}
-      <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-purple-500/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
-            Insights & Ideas Personalizados
+      {/* Upgrade to Advanced Creator */}
+      <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-purple-700">
+            <Brain className="h-5 w-5" />
+            Content Studio IA - Versión Avanzada
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Genera ideas de contenido específicas basadas en tu audiencia, industria y contenido histórico
+          <p className="text-sm text-purple-600">
+            Crea, guarda y gestiona insights personalizados con generación multimedia automática
           </p>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Button 
-            onClick={generateAIInsights} 
-            disabled={generatingInsights || !profile.user_id} 
-            className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-          >
-            {generatingInsights ? (
-              <>
-                <AdvancedAILoader isVisible={true} />
-                Analizando tu audiencia y contenido...
-              </>
-            ) : (
-              <>
-                <Lightbulb className="h-4 w-4 mr-2" />
-                Generar Insights IA
-              </>
-            )}
-          </Button>
-          
-          {aiInsights && (
-            <Card className="bg-background/60 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
-                  Ideas de Contenido Personalizadas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* Pretty idea cards if we can parse them */}
-                  <InsightsRenderer insightsText={aiInsights} onUseIdea={(idea) => setContentPrompt(idea)} />
-
-                  {/* Fallback full markdown rendering */}
-                  <div className="p-4 rounded-lg border border-border">
-                    <ReactMarkdown>{aiInsights}</ReactMarkdown>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => navigator.clipboard.writeText(aiInsights)}
-                      className="flex items-center gap-1"
-                    >
-                      <Copy className="h-4 w-4" />
-                      Copiar Insights
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={() => setAiInsights('')}
-                    >
-                      Limpiar
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm text-purple-600">
+                <Target className="h-4 w-4" />
+                <span>Insights persistentes y organizados</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-purple-600">
+                <Sparkles className="h-4 w-4" />
+                <span>Generación automática de imágenes y videos</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-purple-600">
+                <TrendingUp className="h-4 w-4" />
+                <span>Gestión completa de contenido multimedia</span>
+              </div>
+            </div>
+            <Button 
+              onClick={() => setShowAdvancedCreator(true)}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              Probar Ahora <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Content Creator Section */}
+      {/* Simple Content Creator */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PlusCircle className="h-5 w-5 text-primary" />
-            Creador de Contenido IA
+            Creador de Contenido Simple
           </CardTitle>
-          <p className="text-sm text-muted-foreground">Genera nuevo contenido basado en el rendimiento de tus publicaciones exitosas</p>
+          <p className="text-sm text-muted-foreground">Genera contenido rápido basado en tus publicaciones exitosas</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>

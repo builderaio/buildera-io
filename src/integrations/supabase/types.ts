@@ -2321,6 +2321,48 @@ export type Database = {
           },
         ]
       }
+      content_insights: {
+        Row: {
+          created_at: string
+          description: string | null
+          format_type: string | null
+          hashtags: string[] | null
+          id: string
+          platform: string | null
+          raw_insight: string | null
+          suggested_schedule: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          format_type?: string | null
+          hashtags?: string[] | null
+          id?: string
+          platform?: string | null
+          raw_insight?: string | null
+          suggested_schedule?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          format_type?: string | null
+          hashtags?: string[] | null
+          id?: string
+          platform?: string | null
+          raw_insight?: string | null
+          suggested_schedule?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       content_library: {
         Row: {
           content_text: string | null
@@ -3411,6 +3453,50 @@ export type Database = {
             columns: ["calendar_item_id"]
             isOneToOne: false
             referencedRelation: "content_calendar_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_content: {
+        Row: {
+          content_text: string
+          content_type: string
+          created_at: string
+          generation_prompt: string | null
+          id: string
+          insight_id: string | null
+          media_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_text: string
+          content_type?: string
+          created_at?: string
+          generation_prompt?: string | null
+          id?: string
+          insight_id?: string | null
+          media_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_text?: string
+          content_type?: string
+          created_at?: string
+          generation_prompt?: string | null
+          id?: string
+          insight_id?: string | null
+          media_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_content_insight_id_fkey"
+            columns: ["insight_id"]
+            isOneToOne: false
+            referencedRelation: "content_insights"
             referencedColumns: ["id"]
           },
         ]

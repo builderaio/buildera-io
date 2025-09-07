@@ -11,7 +11,7 @@ import EraCoachMark from "@/components/ui/era-coach-mark";
 import MandoCentral from "@/components/company/MandoCentral";
 import Dashboard360 from "@/components/company/Dashboard360";
 import ADNEmpresa from "@/components/company/ADNEmpresa";
-import MarketingHubRedesigned from "@/components/company/MarketingHubRedesigned";
+import MarketingHub from "@/components/company/MarketingHubWow";
 import InteligenciaCompetitiva from "@/components/company/InteligenciaCompetitiva";
 import MisArchivos from "@/components/company/BaseConocimiento";
 import AcademiaBuildiera from "@/components/company/AcademiaBuildera";
@@ -307,7 +307,7 @@ const CompanyDashboard = () => {
       case "base-conocimiento":
         return <MisArchivos />;
       case "marketing-hub":
-        return <MarketingHubRedesigned profile={profile} />;
+        return <MarketingHub profile={profile} />;
       case "audiencias":
         console.log('🎯 Rendering AudienciasManager with profile:', profile);
         return <AudienciasManager profile={profile} />;

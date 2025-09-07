@@ -51,7 +51,19 @@ import {
   Sparkles,
   Brain,
   Globe,
-  Lightbulb
+  Lightbulb,
+  Image,
+  FileText,
+  Copy,
+  Download,
+  ExternalLink,
+  TrendingUpIcon,
+  Award,
+  Filter,
+  Search,
+  PlusCircle,
+  Save,
+  Bookmark
 } from 'lucide-react';
 
 interface ContentAnalysisData {
@@ -91,6 +103,11 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     socialAccounts: []
   });
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
+  const [posts, setPosts] = useState<any[]>([]);
+  const [topPosts, setTopPosts] = useState<any[]>([]);
+  const [savedContent, setSavedContent] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'engagement' | 'date' | 'performance'>('engagement');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -167,11 +184,34 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         socialAccounts: socialAccounts || []
       });
 
+      // Extract posts from content analysis
+      const allPosts: any[] = [];
+      contentRes.data?.forEach((analysis: any) => {
+        if (analysis.posts_data && Array.isArray(analysis.posts_data)) {
+          allPosts.push(...analysis.posts_data.map((post: any) => ({
+            ...post,
+            platform: analysis.platform,
+            analysis_date: analysis.created_at
+          })));
+        }
+      });
+      
+      setPosts(allPosts);
+      
+      // Get top performing posts
+      const sortedPosts = [...allPosts].sort((a, b) => {
+        const aEngagement = (a.likes || 0) + (a.comments || 0) + (a.rePosts || 0);
+        const bEngagement = (b.likes || 0) + (b.comments || 0) + (b.rePosts || 0);
+        return bEngagement - aEngagement;
+      });
+      setTopPosts(sortedPosts.slice(0, 10));
+
       // Datos cargados exitosamente - no ejecutar análisis automático
       console.log('Content analysis data loaded:', {
         retrospective: retrospectiveRes.data?.length || 0,
         activity: activityRes.data?.length || 0,
-        content: contentRes.data?.length || 0
+        content: contentRes.data?.length || 0,
+        posts: allPosts.length
       });
 
     } catch (error) {
@@ -729,6 +769,487 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     );
   }
 
+  // Render Posts Analysis Tab
+  const renderPostsAnalysis = () => {
+    const filteredPosts = posts.filter(post => {
+      const matchesPlatform = selectedPlatform === 'all' || post.platform === selectedPlatform;
+      const matchesSearch = searchTerm === '' || 
+        post.text?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        post.hashTags?.some((tag: string) => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      return matchesPlatform && matchesSearch;
+    });
+
+    const sortedPosts = [...filteredPosts].sort((a, b) => {
+      switch (sortBy) {
+        case 'engagement':
+          const aEng = (a.likes || 0) + (a.comments || 0) + (a.rePosts || 0);
+          const bEng = (b.likes || 0) + (b.comments || 0) + (b.rePosts || 0);
+          return bEng - aEng;
+        case 'date':
+          return new Date(b.date || b.published_at).getTime() - new Date(a.date || a.published_at).getTime();
+        case 'performance':
+          return (b.er || 0) - (a.er || 0);
+        default:
+          return 0;
+      }
+    });
+
+    const saveContentToLibrary = async (post: any) => {
+      try {
+        // Save to content library
+        const { error } = await supabase
+          .from('content_library')
+          .insert({
+            user_id: profile.user_id,
+            post_id: post.postID,
+            platform: post.platform || post.socialType,
+            content_type: post.type || 'post',
+            content_text: post.text,
+            image_url: post.image || post.postImage,
+            video_url: post.videoLink,
+            hashtags: post.hashTags || [],
+            metrics: {
+              likes: post.likes || 0,
+              comments: post.comments || 0,
+              shares: post.rePosts || 0,
+              views: post.videoViews || post.views || 0,
+              engagement_rate: post.er || 0
+            },
+            post_url: post.postUrl,
+            published_at: post.date || post.published_at,
+            is_template: true
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Contenido guardado",
+          description: "El post se ha agregado a tu biblioteca de contenidos",
+        });
+
+        // Refresh saved content
+        loadSavedContent();
+      } catch (error) {
+        console.error('Error saving content:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo guardar el contenido",
+          variant: "destructive"
+        });
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Controls */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Buscar en posts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-border rounded-lg bg-background"
+              />
+            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="px-3 py-2 border border-border rounded-lg bg-background"
+            >
+              <option value="engagement">Engagement</option>
+              <option value="date">Fecha</option>
+              <option value="performance">Rendimiento</option>
+            </select>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {filteredPosts.length} posts encontrados
+          </div>
+        </div>
+
+        {/* Top Performers */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-primary" />
+              Top Posts Performers
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {topPosts.slice(0, 6).map((post, index) => (
+                <div key={post.postID || index} className="border border-border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="text-xs">
+                      #{index + 1} • {post.platform || post.socialType}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => saveContentToLibrary(post)}
+                    >
+                      <Bookmark className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  {post.image && (
+                    <img 
+                      src={post.image} 
+                      alt="Post" 
+                      className="w-full h-32 object-cover rounded-md"
+                    />
+                  )}
+                  
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {post.text?.substring(0, 150)}...
+                  </p>
+                  
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <Heart className="h-3 w-3" />
+                        {post.likes || 0}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageCircle className="h-3 w-3" />
+                        {post.comments || 0}
+                      </span>
+                    </div>
+                    <span className="text-primary font-medium">
+                      {((post.likes || 0) + (post.comments || 0) + (post.rePosts || 0))} interacciones
+                    </span>
+                  </div>
+                  
+                  {post.postUrl && (
+                    <Button size="sm" variant="outline" className="w-full" asChild>
+                      <a href={post.postUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        Ver Post
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* All Posts */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Todos los Posts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {sortedPosts.map((post, index) => (
+                <div key={post.postID || index} className="border border-border rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        {post.platform || post.socialType}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(post.date || post.published_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => saveContentToLibrary(post)}
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                      {post.postUrl && (
+                        <Button size="sm" variant="ghost" asChild>
+                          <a href={post.postUrl} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {post.image && (
+                      <div className="md:col-span-1">
+                        <img 
+                          src={post.image} 
+                          alt="Post" 
+                          className="w-full h-24 object-cover rounded-md"
+                        />
+                      </div>
+                    )}
+                    <div className={post.image ? "md:col-span-3" : "md:col-span-4"}>
+                      <p className="text-sm text-muted-foreground line-clamp-3 mb-2">
+                        {post.text}
+                      </p>
+                      
+                      {post.hashTags && post.hashTags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {post.hashTags.slice(0, 5).map((tag: string, tagIndex: number) => (
+                            <Badge key={tagIndex} variant="secondary" className="text-xs">
+                              #{tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="flex items-center gap-1">
+                            <Heart className="h-4 w-4 text-red-500" />
+                            {post.likes || 0}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MessageCircle className="h-4 w-4 text-blue-500" />
+                            {post.comments || 0}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Share2 className="h-4 w-4 text-green-500" />
+                            {post.rePosts || 0}
+                          </span>
+                          {(post.videoViews || post.views) && (
+                            <span className="flex items-center gap-1">
+                              <Eye className="h-4 w-4 text-purple-500" />
+                              {post.videoViews || post.views || 0}
+                            </span>
+                          )}
+                        </div>
+                        {post.er && (
+                          <Badge variant="outline" className="text-primary">
+                            {post.er.toFixed(2)}% ER
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Render Content Library Tab
+  const renderContentLibrary = () => {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Image className="h-5 w-5 text-primary" />
+              Biblioteca de Contenidos
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Guarda y reutiliza tus mejores contenidos como plantillas para futuras publicaciones
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-12">
+              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full flex items-center justify-center">
+                <Image className="w-12 h-12 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Biblioteca de Contenidos</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Aquí podrás guardar imágenes, videos y textos de tus publicaciones más exitosas para reutilizarlos como plantillas.
+              </p>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>✨ Guarda contenido desde la pestaña "Posts"</p>
+                <p>🎨 Reutiliza imágenes exitosas</p>
+                <p>📝 Crea plantillas de texto</p>
+                <p>📊 Filtra por rendimiento</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  // Render Content Creator Tab
+  const renderContentCreator = () => {
+    const [generatingContent, setGeneratingContent] = useState(false);
+    const [contentPrompt, setContentPrompt] = useState('');
+    const [generatedContent, setGeneratedContent] = useState('');
+
+    const generateContent = async () => {
+      if (!contentPrompt.trim()) {
+        toast({
+          title: "Error",
+          description: "Por favor ingresa una descripción para el contenido",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setGeneratingContent(true);
+      try {
+        // Get insights from top posts for context
+        const topPostsContext = topPosts.slice(0, 3).map(post => ({
+          text: post.text?.substring(0, 200),
+          hashtags: post.hashTags?.slice(0, 5),
+          engagement: (post.likes || 0) + (post.comments || 0),
+          platform: post.platform
+        }));
+
+        const { data, error } = await supabase.functions.invoke('generate-company-content', {
+          body: {
+            prompt: contentPrompt,
+            context: {
+              top_posts: topPostsContext,
+              platform: selectedPlatform !== 'all' ? selectedPlatform : 'general',
+              user_id: profile.user_id
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        setGeneratedContent(data.content || data.generatedText || 'No se pudo generar contenido');
+        
+        toast({
+          title: "¡Contenido generado!",
+          description: "Tu nuevo contenido está listo para revisar",
+        });
+      } catch (error) {
+        console.error('Error generating content:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo generar el contenido. Intenta de nuevo.",
+          variant: "destructive"
+        });
+      } finally {
+        setGeneratingContent(false);
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PlusCircle className="h-5 w-5 text-primary" />
+              Creador de Contenido IA
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Genera nuevo contenido basado en el rendimiento de tus publicaciones exitosas
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Describe el contenido que quieres crear
+              </label>
+              <textarea
+                value={contentPrompt}
+                onChange={(e) => setContentPrompt(e.target.value)}
+                placeholder="Ej: Crea una publicación sobre los beneficios de la automatización empresarial, enfocada en ahorro de tiempo y costos..."
+                className="w-full h-24 px-3 py-2 border border-border rounded-lg bg-background resize-none"
+              />
+            </div>
+            
+            <Button 
+              onClick={generateContent}
+              disabled={generatingContent || !contentPrompt.trim()}
+              className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+            >
+              {generatingContent ? (
+                <>
+                  <AdvancedAILoader />
+                  Generando contenido...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generar Contenido
+                </>
+              )}
+            </Button>
+
+            {generatedContent && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Contenido Generado</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-muted/50 rounded-lg">
+                      <pre className="whitespace-pre-wrap text-sm">{generatedContent}</pre>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigator.clipboard.writeText(generatedContent)}
+                      >
+                        <Copy className="h-4 w-4 mr-1" />
+                        Copiar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setGeneratedContent('')}
+                      >
+                        Limpiar
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Content Insights */}
+        {topPosts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-primary" />
+                Insights de Contenido Exitoso
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Hashtags más exitosos</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {Array.from(new Set(topPosts.flatMap(post => post.hashTags || []))).slice(0, 10).map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        #{tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Tipos de contenido exitoso</h4>
+                  <div className="space-y-1 text-sm">
+                    {Array.from(new Set(topPosts.map(post => post.type || 'POST'))).map((type, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        {type}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  };
+
+  const loadSavedContent = async () => {
+    // This would load saved content from content_library table
+    // Implementation would go here when the table exists
+  };
+
   return (
     <div className="space-y-8">
       {/* Header with Controls */}
@@ -770,7 +1291,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
       {/* Analysis Tabs */}
       <Tabs defaultValue="performance" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="performance" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Rendimiento
@@ -786,6 +1307,18 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           <TabsTrigger value="insights" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             Insights
+          </TabsTrigger>
+          <TabsTrigger value="posts" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Posts
+          </TabsTrigger>
+          <TabsTrigger value="library" className="flex items-center gap-2">
+            <Image className="h-4 w-4" />
+            Biblioteca
+          </TabsTrigger>
+          <TabsTrigger value="creator" className="flex items-center gap-2">
+            <PlusCircle className="h-4 w-4" />
+            Crear
           </TabsTrigger>
         </TabsList>
 
@@ -803,6 +1336,18 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
         <TabsContent value="insights">
           {renderInsights()}
+        </TabsContent>
+
+        <TabsContent value="posts">
+          {renderPostsAnalysis()}
+        </TabsContent>
+
+        <TabsContent value="library">
+          {renderContentLibrary()}
+        </TabsContent>
+
+        <TabsContent value="creator">
+          {renderContentCreator()}
         </TabsContent>
       </Tabs>
     </div>

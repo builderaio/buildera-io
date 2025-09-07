@@ -305,10 +305,10 @@ serve(async (req) => {
             avg_views: profileData.avgViews || 0,
             rating_index: profileData.ratingIndex || 0,
             quality_score: profileData.qualityScore || 0,
-            time_statistics: profileData.timeStatistics ? new Date(profileData.timeStatistics).toISOString() : null,
-            time_posts_loaded: profileData.timePostsLoaded ? new Date(profileData.timePostsLoaded).toISOString() : null,
-            time_short_loop: profileData.timeShortLoop ? new Date(profileData.timeShortLoop).toISOString() : null,
-            start_date: profileData.startDate ? new Date(profileData.startDate).toISOString() : null,
+            time_statistics: profileData.timeStatistics && profileData.timeStatistics !== '1970-01-01T00:00:00.000Z' ? new Date(profileData.timeStatistics).toISOString() : null,
+            time_posts_loaded: profileData.timePostsLoaded && profileData.timePostsLoaded !== '1970-01-01T00:00:00.000Z' ? new Date(profileData.timePostsLoaded).toISOString() : null,
+            time_short_loop: profileData.timeShortLoop && profileData.timeShortLoop !== '1970-01-01T00:00:00.000Z' ? new Date(profileData.timeShortLoop).toISOString() : null,
+            start_date: profileData.startDate && profileData.startDate !== '1970-01-01T00:00:00.000Z' ? new Date(profileData.startDate).toISOString() : null,
             members_cities: profileData.membersCities || [],
             members_countries: profileData.membersCountries || [],
             members_genders_ages: profileData.membersGendersAges || {},
@@ -337,9 +337,7 @@ serve(async (req) => {
 
           const { error: analysisError } = await supabase
             .from('social_analysis')
-            .upsert(analysisData, {
-              onConflict: 'user_id,url'
-            })
+            .insert(analysisData)
 
           if (analysisError) {
             console.error('Error storing social analysis data:', JSON.stringify(analysisError, null, 2))

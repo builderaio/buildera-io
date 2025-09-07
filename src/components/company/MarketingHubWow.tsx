@@ -872,39 +872,27 @@ const MarketingHubWow = ({
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-8 h-16 p-1 bg-muted/50 backdrop-blur-sm rounded-2xl">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-5 h-16 p-1 bg-muted/50 backdrop-blur-sm rounded-2xl">
             {[{
             value: "dashboard",
             icon: BarChart3,
             label: "Panel"
           }, {
+            value: "analyze",
+            icon: Users,
+            label: "Audiencias"
+          }, {
             value: "create",
             icon: Wand2,
-            label: "Crear"
+            label: "Contenido"
           }, {
             value: "campaign-wizard",
             icon: Rocket,
-            label: "Campaña IA"
-          }, {
-            value: "analyze",
-            icon: Brain,
-            label: "Analizar"
-          }, {
-            value: "schedule",
-            icon: Calendar,
-            label: "Programar"
+            label: "Campañas"
           }, {
             value: "configuracion",
             icon: Settings,
             label: "Configuración"
-          }, {
-            value: "history",
-            icon: HistoryIcon,
-            label: "Historial"
-          }, {
-            value: "results",
-            icon: Star,
-            label: "Resultados"
           }].map(tab => <TabsTrigger key={tab.value} value={tab.value} className="flex flex-col items-center gap-1 py-3 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-xl transition-all duration-300">
                 <tab.icon className="h-5 w-5" />
                 <span className="text-xs font-medium">{tab.label}</span>
@@ -1074,7 +1062,30 @@ const MarketingHubWow = ({
             </div>
           </TabsContent>
 
-          {/* Create Tab */}
+          {/* Audiencias Tab */}
+          <TabsContent value="analyze" className="space-y-8">
+            <Card className="border-0 bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Análisis de Audiencias
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Análisis de Audiencias</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Analiza el comportamiento y preferencias de tu audiencia en todas las plataformas
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Contenido Tab */}
           <TabsContent value="create" className="space-y-8">
             <SocialPostCreator profile={profile} onPostCreated={() => {
             loadUpcomingPosts();
@@ -1082,66 +1093,14 @@ const MarketingHubWow = ({
           }} />
           </TabsContent>
 
-          {/* History Tab */}
-          <TabsContent value="history" className="space-y-8">
-            <UploadHistory profile={profile} />
-          </TabsContent>
-
-          {/* Schedule Tab */}
-          <TabsContent value="schedule" className="space-y-8">
-            <ScheduledPostsManager profile={profile} onPostsUpdated={() => {
-            loadUpcomingPosts();
-            loadRealMetrics();
-          }} />
+          {/* Campañas Tab */}
+          <TabsContent value="campaign-wizard" className="space-y-8">
+            <MarketingHubOrchestrator />
           </TabsContent>
 
           {/* Configuración Tab */}
           <TabsContent value="configuracion" className="space-y-8">
             <SocialConnectionManager profile={profile} onConnectionsUpdated={loadConnections} />
-          </TabsContent>
-
-          <TabsContent value="results" className="space-y-8">
-            <Card className="border-0 bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-primary" />
-                  Resultados y Métricas
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                {showResults ? <div className="space-y-6">
-                    <Alert className="border-green-200 bg-green-50/50">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      <AlertDescription className="text-green-800">
-                        ¡Campaña inteligente creada exitosamente! Revise las métricas actualizadas en el panel principal.
-                      </AlertDescription>
-                    </Alert>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center p-4 rounded-xl bg-primary/5 border border-primary/20">
-                        <div className="text-2xl font-bold text-primary">{realMetrics[0]?.value || '0'}</div>
-                        <div className="text-sm text-muted-foreground">Insights Generados</div>
-                      </div>
-                      <div className="text-center p-4 rounded-xl bg-green-50 border border-green-200">
-                        <div className="text-2xl font-bold text-green-600">{upcomingPosts.length}</div>
-                        <div className="text-sm text-muted-foreground">Posts Programados</div>
-                      </div>
-                      <div className="text-center p-4 rounded-xl bg-blue-50 border border-blue-200">
-                        <div className="text-2xl font-bold text-blue-600">{connectedPlatformsCount}</div>
-                        <div className="text-sm text-muted-foreground">Plataformas Activas</div>
-                      </div>
-                    </div>
-                  </div> : <div className="text-center py-12">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <Star className="w-8 h-8 text-primary" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-2">Resultados de Campañas</h3>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                      Execute una campaña inteligente para ver resultados detallados y métricas de rendimiento
-                    </p>
-                  </div>}
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
@@ -1185,6 +1144,8 @@ const MarketingHubWow = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 };
+
 export default MarketingHubWow;

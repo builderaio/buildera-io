@@ -289,7 +289,7 @@ const CompanyLayout = ({
   const setActiveView = (view: string) => {
     console.log('🎯 setActiveView called with:', view, 'shouldBlockNavigation:', shouldBlockNavigation);
     
-    if (shouldBlockNavigation && view !== "adn-empresa") {
+    if (shouldBlockNavigation && view !== "configuracion-empresarial") {
       console.log('⚠️ Navigation blocked - onboarding not complete');
       return;
     }
@@ -297,7 +297,7 @@ const CompanyLayout = ({
     // Aseguramos que las rutas con parámetros de consulta funcionen correctamente
     const routes: Record<string, string> = {
       'mando-central': '/company-dashboard?view=mando-central',
-      'adn-empresa': '/company-dashboard?view=adn-empresa',
+      'configuracion-empresarial': '/company-dashboard?view=configuracion-empresarial',
       'base-conocimiento': '/company-dashboard?view=base-conocimiento',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
       'audiencias': '/company-dashboard?view=audiencias',
@@ -326,11 +326,11 @@ const CompanyLayout = ({
   const sidebarMenuItems = [{
     category: "Central",
     icon: "🎯",
-    items: [{ id: "mando-central", label: "Dashboard", icon: Activity, description: "Vista general y KPIs", priority: "high" }]
-  }, {
-    category: "Mi Empresa",
-    icon: "🏢",
-    items: [{ id: "adn-empresa", label: "Configuración Empresarial", icon: Building, description: "Datos y configuración", priority: "high" }, { id: "base-conocimiento", label: "Base de Conocimiento", icon: User, description: "Gestión de información", priority: "medium" }]
+    items: [
+      { id: "mando-central", label: "Dashboard", icon: Activity, description: "Vista general y KPIs", priority: "high" },
+      { id: "configuracion-empresarial", label: "Configuración Empresarial", icon: Building, description: "Datos y configuración", priority: "high" },
+      { id: "base-conocimiento", label: "Base de Conocimiento", icon: User, description: "Gestión de información", priority: "medium" }
+    ]
   }, {
     category: "Marketing & Ventas",
     icon: "📈",

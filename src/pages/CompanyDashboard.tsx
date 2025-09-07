@@ -11,6 +11,7 @@ import EraCoachMark from "@/components/ui/era-coach-mark";
 import MandoCentral from "@/components/company/MandoCentral";
 import Dashboard360 from "@/components/company/Dashboard360";
 import ADNEmpresa from "@/components/company/ADNEmpresa";
+import ConfiguracionEmpresarial from "@/components/company/ConfiguracionEmpresarial";
 import MarketingHub from "@/components/company/MarketingHubWow";
 import InteligenciaCompetitiva from "@/components/company/InteligenciaCompetitiva";
 import MisArchivos from "@/components/company/BaseConocimiento";
@@ -287,8 +288,8 @@ const CompanyDashboard = () => {
       case "dashboard":
         console.log('📊 Rendering MandoCentral with profile:', profile);
         return <MandoCentral profile={profile} />;
-      case "adn-empresa":
-        return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;
+      case "configuracion-empresarial":
+        return <ConfiguracionEmpresarial profile={profile} onProfileUpdate={handleProfileUpdate} />;
       case "base-conocimiento":
         return <MisArchivos />;
       case "marketing-hub":

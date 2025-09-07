@@ -60,6 +60,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { SocialConnectionManager } from "./SocialConnectionManager";
+import SocialAnalysisDisplay from "./SocialAnalysisDisplay";
 
 interface AudienciasManagerProps {
   profile: any;
@@ -739,10 +740,12 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           </TabsContent>
 
           <TabsContent value="audiencia" className="space-y-6 mt-6">
-            <div className="text-center">
+            <div className="text-center mb-6">
               <h2 className="text-3xl font-bold mb-2">🔬 Radiografía de la Audiencia</h2>
               <p className="text-lg text-muted-foreground">¿Quiénes son realmente tus seguidores?</p>
             </div>
+            
+            {userId && <SocialAnalysisDisplay userId={userId} />}
           </TabsContent>
 
           <TabsContent value="contenido" className="space-y-6 mt-6">

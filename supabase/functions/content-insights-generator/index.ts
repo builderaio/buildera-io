@@ -38,14 +38,13 @@ serve(async (req) => {
       throw new Error('User ID is required');
     }
 
-    // Load OpenAI API key (DB first, then env)
-    const openAIApiKey = await getOpenAIApiKey(supabase);
-
-
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    // Load OpenAI API key (DB first, then env)
+    const openAIApiKey = await getOpenAIApiKey(supabase);
 
     // Get user's primary company (optional)
     let companyId: string | null = null;

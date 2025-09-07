@@ -50,6 +50,8 @@ interface ConnectionStatus {
   icon: any;
   color: string;
   url?: string;
+  username?: string;
+  display_name?: string;
 }
 
 interface FlowStep {
@@ -70,10 +72,26 @@ const MarketingHubRedesigned = ({ profile }: MarketingHubRedesignedProps) => {
   const [loading, setLoading] = useState(true);
   const [flowProgress, setFlowProgress] = useState(0);
   const [userJourney, setUserJourney] = useState<FlowStep[]>([]);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [companyUsername, setCompanyUsername] = useState<string | null>(null);
 
   useEffect(() => {
     checkSetupStatus();
     initializeUserJourney();
+
+    // Listener para detectar cuando regresa de una conexión exitosa
+    const handleFocus = () => {
+      // Recargar conexiones después de un pequeño delay
+      setTimeout(() => {
+        checkSetupStatus();
+      }, 2000);
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [profile?.user_id]);
 
   const checkSetupStatus = async () => {
@@ -82,66 +100,136 @@ const MarketingHubRedesigned = ({ profile }: MarketingHubRedesignedProps) => {
     try {
       setLoading(true);
       
-      // Obtener datos de la empresa para verificar conexiones
-      const { data: companyData } = await supabase
-        .from('companies')
+      // Verificar conexiones desde la tabla social_accounts
+      const { data: socialAccountsData } = await supabase
+        .from('social_accounts')
         .select('*')
-        .eq('created_by', profile.user_id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('user_id', profile.user_id);
 
-      if (companyData) {
-        const connectionList: ConnectionStatus[] = [
-          {
-            platform: 'Instagram',
-            connected: isValidUrl(companyData.instagram_url),
-            icon: Instagram,
-            color: 'text-pink-600',
-            url: companyData.instagram_url
-          },
-          {
-            platform: 'Facebook',
-            connected: isValidUrl(companyData.facebook_url),
-            icon: Facebook,
-            color: 'text-blue-600',
-            url: companyData.facebook_url
-          },
-          {
-            platform: 'LinkedIn',
-            connected: isValidUrl(companyData.linkedin_url),
-            icon: Linkedin,
-            color: 'text-blue-700',
-            url: companyData.linkedin_url
-          },
-          {
-            platform: 'TikTok',
-            connected: isValidUrl(companyData.tiktok_url),
-            icon: Play,
-            color: 'text-black',
-            url: companyData.tiktok_url
-          }
-        ];
-
-        setConnections(connectionList);
-        
-        const connectedCount = connectionList.filter(c => c.connected).length;
-        setHasAnyConnection(connectedCount > 0);
-        
-        // Determinar el módulo inicial basado en el estado
-        if (connectedCount === 0) {
-          setCurrentModule('setup');
-        } else {
-          setCurrentModule('overview');
+      // Inicializar array de conexiones
+      const connectionList: ConnectionStatus[] = [
+        {
+          platform: 'Instagram',
+          connected: false,
+          icon: Instagram,
+          color: 'text-pink-600',
+        },
+        {
+          platform: 'Facebook',
+          connected: false,
+          icon: Facebook,
+          color: 'text-blue-600',
+        },
+        {
+          platform: 'LinkedIn',
+          connected: false,
+          icon: Linkedin,
+          color: 'text-blue-700',
+        },
+        {
+          platform: 'TikTok',
+          connected: false,
+          icon: Play,
+          color: 'text-black',
         }
-        
-        // Calcular progreso del flujo
-        calculateFlowProgress(connectedCount);
+      ];
+
+      // Actualizar estado de conexiones basado en social_accounts
+      if (socialAccountsData) {
+        socialAccountsData.forEach(account => {
+          const platformKey = account.platform?.toLowerCase();
+          const connectionIndex = connectionList.findIndex(
+            conn => conn.platform.toLowerCase() === platformKey || 
+                   (platformKey === 'tiktok' && conn.platform === 'TikTok')
+          );
+          
+          if (connectionIndex !== -1) {
+            connectionList[connectionIndex] = {
+              ...connectionList[connectionIndex],
+              connected: account.is_connected || false,
+              username: account.platform_username,
+              display_name: account.platform_display_name
+            };
+          }
+        });
+
+        // Buscar el company_username para upload-post
+        const uploadPostProfile = socialAccountsData.find(account => 
+          account.platform === 'upload_post_profile'
+        );
+        if (uploadPostProfile?.company_username) {
+          setCompanyUsername(uploadPostProfile.company_username);
+        }
       }
+
+      setConnections(connectionList);
+      
+      const connectedCount = connectionList.filter(c => c.connected).length;
+      setHasAnyConnection(connectedCount > 0);
+      
+      // Determinar el módulo inicial basado en el estado
+      if (connectedCount === 0) {
+        setCurrentModule('setup');
+      } else {
+        setCurrentModule('overview');
+      }
+      
+      // Calcular progreso del flujo
+      calculateFlowProgress(connectedCount);
     } catch (error) {
       console.error('Error checking setup status:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConnectPlatform = async (platform: string) => {
+    if (isConnecting) return;
+
+    try {
+      setIsConnecting(true);
+      
+      // Inicializar perfil si es necesario
+      if (!companyUsername) {
+        const initResult = await supabase.functions.invoke('upload-post-manager', {
+          body: { action: 'init_profile' }
+        });
+
+        if (initResult.error) {
+          throw new Error(initResult.error.message);
+        }
+
+        setCompanyUsername(initResult.data.companyUsername);
+      }
+
+      // Generar JWT para conectar la plataforma específica
+      const jwtResult = await supabase.functions.invoke('upload-post-manager', {
+        body: { 
+          action: 'generate_jwt',
+          data: {
+            companyUsername: companyUsername || `empresa_${profile.user_id.substring(0, 8)}`,
+            platforms: [platform.toLowerCase()],
+            redirectUrl: window.location.origin + '/company-dashboard?view=marketing-hub'
+          }
+        }
+      });
+
+      if (jwtResult.error) {
+        throw new Error(jwtResult.error.message);
+      }
+
+      const { access_url } = jwtResult.data;
+      if (access_url) {
+        window.open(access_url, '_blank', 'width=800,height=600');
+      } else {
+        throw new Error('No se recibió URL de acceso para conectar');
+      }
+
+    } catch (error) {
+      console.error('Error connecting platform:', error);
+      toast.error(`Error conectando ${platform}: ${error.message}`);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -285,6 +373,14 @@ const MarketingHubRedesigned = ({ profile }: MarketingHubRedesignedProps) => {
         <p className="text-lg text-muted-foreground">
           Sincroniza tus redes sociales para obtener insights poderosos sobre tu audiencia
         </p>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => checkSetupStatus()}
+          disabled={loading}
+        >
+          {loading ? 'Verificando...' : '🔄 Actualizar Estado'}
+        </Button>
       </div>
 
       {/* Progress Bar */}
@@ -319,17 +415,27 @@ const MarketingHubRedesigned = ({ profile }: MarketingHubRedesignedProps) => {
                   {connection.connected ? (
                     <div className="flex items-center space-x-2">
                       <CheckCircle2 className="w-5 h-5 text-green-600" />
-                      <Button variant="outline" size="sm">Gestionar</Button>
+                      <Button variant="outline" size="sm">Reconectar</Button>
                     </div>
                   ) : (
-                    <Button size="sm" className="shadow-md">Conectar</Button>
+                    <Button 
+                      size="sm" 
+                      className="shadow-md"
+                      onClick={() => handleConnectPlatform(connection.platform)}
+                      disabled={isConnecting}
+                    >
+                      {isConnecting ? 'Conectando...' : 'Conectar'}
+                    </Button>
                   )}
                 </div>
                 
                 {connection.connected && (
                   <div className="mt-4 pt-4 border-t">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">URL configurada:</span>
+                      <div>
+                        <span className="text-muted-foreground">Conectado como:</span>
+                        <p className="font-medium">{connection.display_name || connection.username}</p>
+                      </div>
                       <Button variant="ghost" size="sm" className="text-primary hover:text-primary-dark">
                         Ver Análisis <ArrowRight className="w-4 h-4 ml-1" />
                       </Button>
@@ -352,7 +458,7 @@ const MarketingHubRedesigned = ({ profile }: MarketingHubRedesignedProps) => {
           </p>
           <Button variant="outline">
             <Plus className="w-4 h-4 mr-2" />
-            Agregar URL del Sitio
+            Conectar Sitio Web
           </Button>
         </CardContent>
       </Card>

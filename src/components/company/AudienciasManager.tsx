@@ -63,25 +63,53 @@ interface AudienciasManagerProps {
 interface AudienceSegment {
   id: string;
   name: string;
-  description: string;
-  estimated_size: number;
-  confidence_score: number;
-  conversion_potential: number;
-  platform_optimization: {
-    facebook: any;
-    instagram: any;
-    linkedin: any;
-    tiktok: any;
-    twitter: any;
-    youtube: any;
-  };
-  demographics: any;
-  psychographics: any;
-  behavioral_data: any;
-  acquisition_cost_estimate: number;
-  lifetime_value_estimate: number;
+  description?: string;
+  estimated_size?: number;
+  confidence_score?: number;
+  conversion_potential?: number;
+  acquisition_cost_estimate?: number;
+  lifetime_value_estimate?: number;
   created_at: string;
-  ai_insights: any;
+  updated_at: string;
+  user_id: string;
+  company_id: string;
+  is_active?: boolean;
+  ai_insights?: any;
+  age_ranges?: any;
+  gender_split?: any;
+  geographic_locations?: any;
+  interests?: any;
+  income_ranges?: any;
+  education_levels?: any;
+  job_titles?: any;
+  industries?: any;
+  company_sizes?: any;
+  relationship_status?: any;
+  device_usage?: any;
+  platform_preferences?: any;
+  content_preferences?: any;
+  engagement_patterns?: any;
+  online_behaviors?: any;
+  purchase_behaviors?: any;
+  brand_affinities?: any;
+  influencer_following?: any;
+  hashtag_usage?: any;
+  content_consumption_habits?: any;
+  active_hours?: any;
+  facebook_targeting?: any;
+  instagram_targeting?: any;
+  linkedin_targeting?: any;
+  twitter_targeting?: any;
+  tiktok_targeting?: any;
+  youtube_targeting?: any;
+  goals?: string[];
+  pain_points?: string[];
+  motivations?: string[];
+  challenges?: string[];
+  tags?: string[];
+  custom_attributes?: any;
+  last_analysis_date?: string;
+  professional_level?: any;
 }
 
 const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
@@ -300,9 +328,9 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   // Filtrar audiencias
   const filteredAudiences = audiences.filter(audience => {
     const matchesSearch = audience.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         audience.description.toLowerCase().includes(searchQuery.toLowerCase());
+                         (audience.description || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPlatform = filterPlatform === "all" || 
-                           (audience.platform_optimization && audience.platform_optimization[filterPlatform as keyof typeof audience.platform_optimization]);
+                           (audience[`${filterPlatform}_targeting` as keyof AudienceSegment] !== null);
     return matchesSearch && matchesPlatform;
   });
 
@@ -461,7 +489,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                  {audience.description}
+                  {audience.description || 'Sin descripción'}
                 </p>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -695,7 +723,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                 <div className="flex-1">
                   <CardTitle className="text-lg">{audience.name}</CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {audience.description}
+                    {audience.description || 'Sin descripción'}
                   </p>
                 </div>
                 <Badge 
@@ -755,8 +783,9 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
               <div>
                 <p className="text-sm font-medium mb-2">Optimizada para:</p>
                 <div className="flex flex-wrap gap-2">
-                  {Object.entries(audience.platform_optimization || {}).map(([platform, data]) => {
-                    if (!data) return null;
+                  {['facebook', 'instagram', 'linkedin', 'twitter', 'tiktok', 'youtube'].map((platform) => {
+                    const targetingData = audience[`${platform}_targeting` as keyof AudienceSegment];
+                    if (!targetingData) return null;
                     
                     const icons = {
                       facebook: Facebook,
@@ -861,7 +890,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'bg-red-600' }
         ].map((platform) => {
           const platformAudiences = audiences.filter(aud => 
-            aud.platform_optimization && aud.platform_optimization[platform.id as keyof typeof aud.platform_optimization]
+            aud[`${platform.id}_targeting` as keyof AudienceSegment] !== null
           );
 
           return (
@@ -1045,7 +1074,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
       {/* Header */}
       <div className="text-center">
         <h3 className="text-xl font-bold">{audience.name}</h3>
-        <p className="text-muted-foreground mt-1">{audience.description}</p>
+        <p className="text-muted-foreground mt-1">{audience.description || 'Sin descripción'}</p>
         <Badge className="mt-2">
           {audience.confidence_score}% Confianza
         </Badge>
@@ -1093,7 +1122,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            {Object.entries(audience.platform_optimization || {}).map(([platform, data]) => {
+            {['facebook', 'instagram', 'linkedin', 'twitter', 'tiktok', 'youtube'].map((platform) => {
+              const data = audience[`${platform}_targeting` as keyof AudienceSegment];
               if (!data) return null;
               
               const icons = {
@@ -1114,8 +1144,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                     <h4 className="font-semibold capitalize">{platform}</h4>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {typeof data === 'object' && data.description ? 
-                      data.description : 
+                    {typeof data === 'object' && data && (data as any).description ? 
+                      (data as any).description : 
                       `Estrategia optimizada para ${platform}`
                     }
                   </div>

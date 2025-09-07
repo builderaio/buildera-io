@@ -91,13 +91,14 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     socialAccounts: []
   });
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
+  const [autoTriggered, setAutoTriggered] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     loadExistingData();
   }, [profile.user_id]);
 
-  const loadExistingData = async () => {
+  const loadExistingData = async (options?: { skipAutoTrigger?: boolean }) => {
     setLoading(true);
     try {
       console.log('Profile recibido en ContentAnalysisDashboard:', profile);
@@ -167,8 +168,9 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         socialAccounts: socialAccounts || []
       });
 
-      // If no data exists, trigger analysis
-      if (!retrospectiveRes.data?.length || !activityRes.data?.length || !contentRes.data?.length) {
+      // If no data exists, trigger analysis (only once automatically)
+      if (!options?.skipAutoTrigger && !autoTriggered && (!retrospectiveRes.data?.length || !activityRes.data?.length || !contentRes.data?.length)) {
+        setAutoTriggered(true);
         await triggerContentAnalysis();
       }
 
@@ -204,7 +206,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       }
 
       // Reload data after analysis
-      await loadExistingData();
+      await loadExistingData({ skipAutoTrigger: true });
 
       toast({
         title: "Análisis completado",

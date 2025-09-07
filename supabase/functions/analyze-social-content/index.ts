@@ -129,8 +129,10 @@ Deno.serve(async (req) => {
         const contentData = await apiResponse.json();
 
         if (!contentData.data || !contentData.data.posts) {
-          console.log(`No posts found for CID ${cid}`);
-          continue;
+          console.log(`No posts found for CID ${cid} — storing empty analysis`);
+          contentData.data = contentData.data || {};
+          contentData.data.posts = [];
+          contentData.data.summary = contentData.data.summary || null;
         }
 
         console.log(`✅ Found ${contentData.data.posts.length} posts for CID ${cid}`);

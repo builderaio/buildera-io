@@ -6,6 +6,9 @@ verify_jwt = true
 [functions.analyze-social-retrospective]
 verify_jwt = true
 
+[functions.analyze-social-activity]
+verify_jwt = true
+
 [functions.company-info-extractor]
 verify_jwt = false
 

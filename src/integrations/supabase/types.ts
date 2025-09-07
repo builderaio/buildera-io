@@ -4927,6 +4927,75 @@ export type Database = {
         }
         Relationships: []
       }
+      social_retrospective_analysis: {
+        Row: {
+          analysis_period_end: string
+          analysis_period_start: string
+          average_er: number
+          avg_posts_per_week: number
+          cid: string
+          created_at: string
+          current_followers: number
+          followers_growth: number
+          id: string
+          platform: string
+          quality_score: number
+          raw_api_response: Json | null
+          series_data: Json | null
+          summary_data: Json | null
+          total_comments: number
+          total_interactions: number
+          total_likes: number
+          total_posts: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_period_end: string
+          analysis_period_start: string
+          average_er?: number
+          avg_posts_per_week?: number
+          cid: string
+          created_at?: string
+          current_followers?: number
+          followers_growth?: number
+          id?: string
+          platform: string
+          quality_score?: number
+          raw_api_response?: Json | null
+          series_data?: Json | null
+          summary_data?: Json | null
+          total_comments?: number
+          total_interactions?: number
+          total_likes?: number
+          total_posts?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_period_end?: string
+          analysis_period_start?: string
+          average_er?: number
+          avg_posts_per_week?: number
+          cid?: string
+          created_at?: string
+          current_followers?: number
+          followers_growth?: number
+          id?: string
+          platform?: string
+          quality_score?: number
+          raw_api_response?: Json | null
+          series_data?: Json | null
+          summary_data?: Json | null
+          total_comments?: number
+          total_interactions?: number
+          total_likes?: number
+          total_posts?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_plans: {
         Row: {
           created_at: string

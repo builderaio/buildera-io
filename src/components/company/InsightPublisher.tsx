@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface SocialAccount {
@@ -45,6 +47,8 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedContent, setSelectedContent] = useState<GeneratedContent | null>(null);
+  const [editingContent, setEditingContent] = useState<string>("");
+  const [isEditing, setIsEditing] = useState(false);
 
   const loadSocialAccounts = async () => {
     if (!userId) return;
@@ -76,6 +80,7 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
     // Auto-select first content if available
     if (generatedContents.length > 0) {
       setSelectedContent(generatedContents[0]);
+      setEditingContent(generatedContents[0].content_text);
     }
   };
 
@@ -85,6 +90,24 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
         ? prev.filter(p => p !== platform)
         : [...prev, platform]
     );
+  };
+
+  const handleContentSelect = (content: GeneratedContent) => {
+    setSelectedContent(content);
+    setEditingContent(content.content_text);
+    setIsEditing(false);
+  };
+
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+    if (!isEditing && selectedContent) {
+      setEditingContent(selectedContent.content_text);
+    }
+  };
+
+  const handleSaveEdit = () => {
+    setIsEditing(false);
+    // The editingContent will be used for publishing
   };
 
   const publishContent = async () => {
@@ -108,11 +131,14 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
         throw new Error('No se encontró el nombre de usuario de la empresa');
       }
 
+      // Use edited content if available, otherwise use original
+      const contentToPublish = isEditing ? editingContent : (editingContent || selectedContent.content_text);
+
       // Prepare content for publishing
       let publishData: any = {
         companyUsername,
         platforms: selectedPlatforms,
-        textContent: selectedContent.content_text
+        textContent: contentToPublish
       };
 
       // Add hashtags from insight if available
@@ -201,7 +227,7 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
           size="sm"
           onClick={handleOpen}
           disabled={generatedContents.length === 0}
-          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
         >
           <Share2 className="h-3 w-3 mr-1" />
           Publicar
@@ -229,7 +255,7 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
                       ? 'ring-2 ring-primary border-primary' 
                       : 'hover:border-primary/50'
                   }`}
-                  onClick={() => setSelectedContent(content)}
+                  onClick={() => handleContentSelect(content)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
@@ -255,6 +281,62 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
               ))}
             </div>
           </div>
+
+          {/* Content Editor */}
+          {selectedContent && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Contenido a publicar:</h4>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEditToggle}
+                >
+                  {isEditing ? (
+                    <>
+                      <X className="h-4 w-4 mr-1" />
+                      Cancelar
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 className="h-4 w-4 mr-1" />
+                      Editar
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              {isEditing ? (
+                <div className="space-y-3">
+                  <Label htmlFor="content-editor">Editar contenido:</Label>
+                  <Textarea
+                    id="content-editor"
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    className="min-h-[120px] resize-none"
+                    placeholder="Edita tu contenido aquí..."
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSaveEdit}
+                      className="flex-1"
+                    >
+                      <Save className="h-4 w-4 mr-1" />
+                      Guardar cambios
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Card className="p-4 bg-muted/50">
+                  <div className="text-sm whitespace-pre-wrap">
+                    {editingContent || selectedContent.content_text}
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
 
           {/* Platform Selection */}
           <div className="space-y-3">

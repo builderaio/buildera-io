@@ -217,22 +217,50 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
     let current: Idea | null = null;
     let inIdeasSection = false;
 
+    // Keywords to filter out non-content sections
+    const excludeKeywords = [
+      'INSIGHTS DE AUDIENCIA', 'ANÁLISIS DE AUDIENCIA', 'COMPORTAMIENTO DIGITAL',
+      'PREFERENCIAS DE CONTENIDO', 'RECOMENDACIONES GENERALES', 'ANÁLISIS',
+      'INSIGHTS GENERALES', 'DATOS DE AUDIENCIA', 'MÉTRICAS', 'ESTADÍSTICAS'
+    ];
+
     for (const rawLine of lines) {
       const line = rawLine;
 
+      // Skip lines that are general insights or analysis headers
+      if (excludeKeywords.some(keyword => line.toUpperCase().includes(keyword))) {
+        continue;
+      }
+
+      // Look for content ideas section
       if (/\*\*?💡?\s*IDEAS DE CONTENIDO/i.test(line)) {
         inIdeasSection = true;
         continue;
       }
 
+      // More specific title patterns for actual content ideas
       const tituloCampo = line.match(/\*\*T[íi]tulo\/?tema\*\*:\s*(.+)/i);
       const tituloEnumerado = line.match(/^\d+\.\s*\*\*\"?(.+?)\"?\*\*/);
-      const tituloNegrita = line.match(/^\*\*\"?(.+?)\"?\*\*/);
+      const tituloNegrita = line.match(/^\*\*\"?([^*]+?)\"?\*\*$/);
+      
+      // Additional patterns for content ideas
+      const ideaPattern = line.match(/^💡\s*\*\*(.+?)\*\*/);
+      const contentPattern = line.match(/^🎯\s*\*\*(.+?)\*\*/);
 
-      const titleMatch = tituloCampo || tituloEnumerado || tituloNegrita;
+      const titleMatch = tituloCampo || tituloEnumerado || tituloNegrita || ideaPattern || contentPattern;
+      
       if (titleMatch) {
+        const title = (titleMatch[1] || '').trim().replace(/^"|"$/g, '');
+        
+        // Filter out titles that are too generic or are analysis headers
+        if (title.length < 10 || 
+            /^(Comportamiento|Preferencias|Análisis|Insights|Recomendaciones)(\s|$)/i.test(title) ||
+            excludeKeywords.some(keyword => title.toUpperCase().includes(keyword))) {
+          continue;
+        }
+        
         if (current) ideas.push(current);
-        current = { title: (titleMatch[1] || '').trim().replace(/^"|"$/g, '') };
+        current = { title };
         continue;
       }
 
@@ -265,7 +293,14 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
     }
 
     if (current) ideas.push(current);
-    return ideas.filter(i => i.title && i.title.length > 0);
+    
+    // Final filter to ensure we only have valid content ideas
+    return ideas.filter(i => 
+      i.title && 
+      i.title.length > 10 && 
+      i.title.length < 150 && // Not too long
+      !excludeKeywords.some(keyword => i.title.toUpperCase().includes(keyword))
+    );
   };
 
   const deleteInsight = async (insightId: string) => {
@@ -311,11 +346,21 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
       
       const { data, error } = await supabase.functions.invoke('generate-company-content', {
         body: {
-          prompt: `Crear contenido para: ${insight.title}. Formato: ${insight.format_type}. Plataforma: ${insight.platform}. Incluir hashtags: ${insight.hashtags?.join(', ')}`,
+          prompt: `Crear un post conciso para redes sociales sobre: "${insight.title}". 
+          
+          INSTRUCCIONES IMPORTANTES:
+          - Máximo 200 palabras
+          - Formato para ${insight.platform || selectedPlatform}
+          - Usar emojis sutilmente (máximo 3-4)
+          - Incluir call-to-action claro y breve
+          - Tono profesional pero cercano
+          - NO incluir hashtags (se añaden por separado)
+          - NO usar formato de blog o artículo largo`,
           context: {
             top_posts: topPosts.slice(0, 3),
             platform: insight.platform || selectedPlatform,
-            user_id: profile.user_id
+            user_id: profile.user_id,
+            content_type: 'social_media_post'
           }
         }
       });

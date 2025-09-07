@@ -151,6 +151,12 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         return;
       }
 
+      // Always set social accounts data, even if no analysis exists yet
+      setAnalysisData(prevData => ({
+        ...prevData,
+        socialAccounts: socialAccounts || []
+      }));
+
       if (!socialAccounts?.length) {
         toast({
           title: "No hay análisis de audiencias",
@@ -177,12 +183,13 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           .eq('user_id', profile.user_id)
       ]);
 
-      setAnalysisData({
+      // Update analysis data with all results
+      setAnalysisData(prevData => ({
+        ...prevData,
         retrospective: retrospectiveRes.data || [],
         activity: activityRes.data || [],
-        content: contentRes.data || [],
-        socialAccounts: socialAccounts || []
-      });
+        content: contentRes.data || []
+      }));
 
       // Extract posts from content analysis
       const allPosts: any[] = [];

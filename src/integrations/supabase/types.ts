@@ -2321,6 +2321,69 @@ export type Database = {
           },
         ]
       }
+      content_library: {
+        Row: {
+          content_text: string | null
+          content_type: string | null
+          created_at: string
+          hashtags: string[] | null
+          id: string
+          image_url: string | null
+          is_favorite: boolean | null
+          is_template: boolean | null
+          metrics: Json | null
+          notes: string | null
+          platform: string
+          post_id: string | null
+          post_url: string | null
+          published_at: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          content_text?: string | null
+          content_type?: string | null
+          created_at?: string
+          hashtags?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_favorite?: boolean | null
+          is_template?: boolean | null
+          metrics?: Json | null
+          notes?: string | null
+          platform: string
+          post_id?: string | null
+          post_url?: string | null
+          published_at?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          content_text?: string | null
+          content_type?: string | null
+          created_at?: string
+          hashtags?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_favorite?: boolean | null
+          is_template?: boolean | null
+          metrics?: Json | null
+          notes?: string | null
+          platform?: string
+          post_id?: string | null
+          post_url?: string | null
+          published_at?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       content_recommendations: {
         Row: {
           confidence_score: number | null

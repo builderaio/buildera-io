@@ -1037,6 +1037,35 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
   // Render Content Library Tab
   const renderContentLibrary = () => {
+    useEffect(() => {
+      loadSavedContent();
+    }, []);
+
+    const deleteFromLibrary = async (id: string) => {
+      try {
+        const { error } = await supabase
+          .from('content_library')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Contenido eliminado",
+          description: "El contenido se ha eliminado de tu biblioteca",
+        });
+
+        loadSavedContent();
+      } catch (error) {
+        console.error('Error deleting content:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo eliminar el contenido",
+          variant: "destructive"
+        });
+      }
+    };
+
     return (
       <div className="space-y-6">
         <Card>
@@ -1050,21 +1079,91 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             </p>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-12">
-              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full flex items-center justify-center">
-                <Image className="w-12 h-12 text-primary" />
+            {savedContent.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full flex items-center justify-center">
+                  <Image className="w-12 h-12 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Biblioteca de Contenidos</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Aquí podrás guardar imágenes, videos y textos de tus publicaciones más exitosas para reutilizarlos como plantillas.
+                </p>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>✨ Guarda contenido desde la pestaña "Posts"</p>
+                  <p>🎨 Reutiliza imágenes exitosas</p>
+                  <p>📝 Crea plantillas de texto</p>
+                  <p>📊 Filtra por rendimiento</p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Biblioteca de Contenidos</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Aquí podrás guardar imágenes, videos y textos de tus publicaciones más exitosas para reutilizarlos como plantillas.
-              </p>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✨ Guarda contenido desde la pestaña "Posts"</p>
-                <p>🎨 Reutiliza imágenes exitosas</p>
-                <p>📝 Crea plantillas de texto</p>
-                <p>📊 Filtra por rendimiento</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {savedContent.map((item) => (
+                  <div key={item.id} className="border border-border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="secondary" className="text-xs">
+                        {item.platform}
+                      </Badge>
+                      <div className="flex items-center gap-1">
+                        {item.is_favorite && (
+                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteFromLibrary(item.id)}
+                        >
+                          <span className="sr-only">Eliminar</span>
+                          ×
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {item.image_url && (
+                      <img 
+                        src={item.image_url} 
+                        alt="Saved content" 
+                        className="w-full h-32 object-cover rounded-md"
+                      />
+                    )}
+                    
+                    <p className="text-sm text-muted-foreground line-clamp-3">
+                      {item.content_text?.substring(0, 150)}...
+                    </p>
+                    
+                    {item.hashtags && item.hashtags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {item.hashtags.slice(0, 3).map((tag: string, index: number) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            #{tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" onClick={() => {
+                          navigator.clipboard.writeText(item.content_text || '');
+                          toast({ title: "Copiado", description: "Texto copiado al portapapeles" });
+                        }}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                        {item.post_url && (
+                          <Button size="sm" variant="outline" asChild>
+                            <a href={item.post_url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -1160,7 +1259,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             >
               {generatingContent ? (
                 <>
-                  <AdvancedAILoader />
+                  <AdvancedAILoader isVisible={true} />
                   Generando contenido...
                 </>
               ) : (
@@ -1246,8 +1345,18 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   };
 
   const loadSavedContent = async () => {
-    // This would load saved content from content_library table
-    // Implementation would go here when the table exists
+    try {
+      const { data, error } = await supabase
+        .from('content_library')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSavedContent(data || []);
+    } catch (error) {
+      console.error('Error loading saved content:', error);
+    }
   };
 
   return (

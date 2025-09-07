@@ -202,6 +202,17 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     }
   };
 
+  // Cuando se cargan datos de la empresa, preparar la confirmación de URLs automáticamente
+  useEffect(() => {
+    if (!companyData) return;
+    const urls = extractSocialUrls(companyData);
+    setSocialUrls(urls);
+    if (Object.keys(urls).length > 0) {
+      setShowUrlConfirmation(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyData]);
+
   const loadAudiences = async (uid?: string) => {
     const resolvedUid = uid || profile?.user_id || userId;
     if (!resolvedUid) return;

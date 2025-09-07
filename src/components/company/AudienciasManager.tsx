@@ -382,19 +382,6 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     return matchesSearch && matchesPlatform;
   });
 
-  // Renderizado condicional si no hay usuario resuelto
-  if (!userId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando información del perfil...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Renderizar Overview Dashboard
   const renderOverview = () => (
     <div className="space-y-8">
       {/* Hero Section */}

@@ -134,17 +134,32 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     highPerformingSegments: 0
   });
 
+  // Log para debugging
+  console.log('AudienciasManager - profile:', profile);
+
   useEffect(() => {
-    loadAudiences();
-    loadCompanyData();
+    if (profile?.user_id) {
+      console.log('AudienciasManager - Cargando datos para user_id:', profile.user_id);
+      loadAudiences();
+      loadCompanyData();
+    } else {
+      console.log('AudienciasManager - Sin user_id disponible');
+    }
   }, [profile?.user_id]);
 
   const loadCompanyData = async () => {
+    if (!profile?.user_id) {
+      console.log('AudienciasManager - No se puede cargar datos de empresa sin user_id');
+      return;
+    }
+
     try {
+      console.log('AudienciasManager - Cargando datos de empresa para user_id:', profile.user_id);
+      
       const { data: memberData } = await supabase
         .from('company_members')
         .select('company_id')
-        .eq('user_id', profile?.user_id)
+        .eq('user_id', profile.user_id)
         .eq('is_primary', true)
         .single();
 
@@ -155,7 +170,10 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           .eq('id', memberData.company_id)
           .single();
         
+        console.log('AudienciasManager - Datos de empresa cargados:', company?.name);
         setCompanyData(company);
+      } else {
+        console.log('AudienciasManager - No se encontró empresa principal para el usuario');
       }
     } catch (error) {
       console.error('Error loading company data:', error);
@@ -163,16 +181,28 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   };
 
   const loadAudiences = async () => {
+    if (!profile?.user_id) {
+      console.log('AudienciasManager - No se puede cargar audiencias sin user_id');
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log('AudienciasManager - Cargando audiencias para user_id:', profile.user_id);
+      
       const { data, error } = await supabase
         .from('company_audiences')
         .select('*')
-        .eq('user_id', profile?.user_id)
+        .eq('user_id', profile.user_id)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('AudienciasManager - Error al cargar audiencias:', error);
+        throw error;
+      }
+      
+      console.log('AudienciasManager - Audiencias cargadas:', data?.length || 0);
       setAudiences(data || []);
     } catch (error) {
       console.error('Error loading audiences:', error);
@@ -333,6 +363,19 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                            (audience[`${filterPlatform}_targeting` as keyof AudienceSegment] !== null);
     return matchesSearch && matchesPlatform;
   });
+
+  
+  // Renderizado condicional si no hay perfil
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando información del perfil...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Renderizar Overview Dashboard
   const renderOverview = () => (

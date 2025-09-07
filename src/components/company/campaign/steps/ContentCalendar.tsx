@@ -225,11 +225,11 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
                       }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded ${config.color} text-white`}>
+                        <div className={`p-2 rounded ${platformConfig.bgColor} text-white`}>
                           <IconComponent className="h-4 w-4" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-medium text-sm">{config.name}</p>
+                          <p className="font-medium text-sm">{platformConfig.name}</p>
                           <div className="flex items-center gap-2">
                             <Checkbox checked={isSelected} />
                             <span className="text-xs text-muted-foreground">Incluir</span>
@@ -326,14 +326,14 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
           <CardContent>
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {editedCalendar.map((item: any, index: number) => {
-                const platformConfig = platformIcons[item.red_social?.toLowerCase()];
+                const platformConfig = getPlatform(item.red_social);
                 const IconComponent = platformConfig?.icon || Calendar;
                 
                 return (
                   <Card key={index} className="bg-white">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded ${platformConfig?.color || 'bg-gray-500'} text-white`}>
+                        <div className={`p-2 rounded ${platformConfig?.bgColor || 'bg-gray-500'} text-white`}>
                           <IconComponent className="h-4 w-4" />
                         </div>
                         <div className="flex-1 space-y-3">
@@ -352,7 +352,7 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
                                     <SelectContent>
                                       {selectedPlatforms.map(platform => (
                                         <SelectItem key={platform} value={platform}>
-                                          {platformIcons[platform]?.name || platform}
+                                          {getPlatformDisplayName(platform)}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>

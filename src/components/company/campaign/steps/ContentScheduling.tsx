@@ -301,12 +301,12 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
           <CardContent>
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {scheduledItems.slice(0, 10).map((item: any) => {
-                const platformConfig = platformIcons[item.platform];
+                const platformConfig = getPlatform(item.platform);
                 const IconComponent = platformConfig?.icon || Calendar;
                 
                 return (
                   <div key={item.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                    <div className={`p-2 rounded ${platformConfig?.color || 'bg-gray-500'} text-white`}>
+                    <div className={`p-2 rounded ${platformConfig?.bgColor || 'bg-gray-500'} text-white`}>
                       <IconComponent className="h-4 w-4" />
                     </div>
                     <div className="flex-1">

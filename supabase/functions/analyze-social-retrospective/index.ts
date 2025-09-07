@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
         // Store retrospective analysis results
         const retrospectiveAnalysisData = {
           user_id: user.id,
-          platform: analysis.platform || 'instagram',
+          platform: analysis.social_type || 'instagram',
           cid: cid,
           analysis_period_start: fromDate.toISOString(),
           analysis_period_end: toDate.toISOString(),
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
         }
 
         results.push({
-          platform: analysis.platform || 'instagram',
+          platform: analysis.social_type || 'instagram',
           cid: cid,
           analysis_id: insertedData.id,
           current_followers: currentSummary.usersCount || 0,

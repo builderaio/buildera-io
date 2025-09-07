@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAvatarUpload } from "@/hooks/useAvatarUpload";
+import BaseConocimiento from "./BaseConocimiento";
 import { 
   Building2, 
   Target, 
@@ -23,15 +25,12 @@ import {
   MapPin,
   ExternalLink,
   Save,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin,
-  Youtube,
-  Music,
   Plus,
   Trash2,
-  X
+  X,
+  Upload,
+  FileText,
+  Camera
 } from "lucide-react";
 
 interface ADNEmpresaProps {
@@ -41,6 +40,7 @@ interface ADNEmpresaProps {
 
 const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const { toast } = useToast();
+  const { uploadAvatar, uploading } = useAvatarUpload();
   const [loading, setLoading] = useState(true);
   const [companyData, setCompanyData] = useState<any>(null);
   const [strategyData, setStrategyData] = useState<any>(null);
@@ -48,14 +48,6 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const [objectives, setObjectives] = useState<any[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [editing, setEditing] = useState<string | null>(null);
-  const [socialMediaData, setSocialMediaData] = useState<any>({
-    facebook_url: '',
-    twitter_url: '',
-    instagram_url: '',
-    linkedin_url: '',
-    youtube_url: '',
-    tiktok_url: ''
-  });
 
   useEffect(() => {
     console.log('🔍 ADNEmpresa useEffect triggered with profile:', profile);
@@ -144,16 +136,6 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         const company = companyResult.data[0];
         setCompanyData(company); // Tomar la primera empresa
         setLastUpdated(new Date(company.updated_at).toLocaleDateString());
-        
-        // Cargar datos de redes sociales
-        setSocialMediaData({
-          facebook_url: company.facebook_url || '',
-          twitter_url: company.twitter_url || '',
-          instagram_url: company.instagram_url || '',
-          linkedin_url: company.linkedin_url || '',
-          youtube_url: company.youtube_url || '',
-          tiktok_url: company.tiktok_url || ''
-        });
       }
       
       if (strategyResult.data && strategyResult.data.length > 0) {
@@ -193,11 +175,6 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         if (error) throw error;
         
         setCompanyData(prev => ({ ...prev, [field]: value }));
-        
-        // Actualizar datos de redes sociales si es necesario
-        if (field.includes('_url')) {
-          setSocialMediaData(prev => ({ ...prev, [field]: value }));
-        }
       }
       
       toast({
@@ -750,6 +727,64 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                     placeholder="https://tu-empresa.com"
                   />
                 </div>
+
+                {/* Logo empresarial */}
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Camera className="w-4 h-4" />
+                    Logo de la Empresa
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center bg-muted/20">
+                      {companyData.logo_url ? (
+                        <img 
+                          src={companyData.logo_url} 
+                          alt="Logo empresa" 
+                          className="w-full h-full object-contain rounded-lg"
+                        />
+                      ) : (
+                        <Building2 className="w-8 h-8 text-muted-foreground/50" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file && profile?.user_id) {
+                            const logoUrl = await uploadAvatar(file, profile.user_id);
+                            if (logoUrl) {
+                              await saveField('logo_url', logoUrl);
+                            }
+                          }
+                        }}
+                        className="hidden"
+                        id="logo-upload"
+                      />
+                      <label htmlFor="logo-upload">
+                        <Button variant="outline" size="sm" disabled={uploading} asChild>
+                          <span className="cursor-pointer">
+                            {uploading ? (
+                              <>
+                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                Subiendo...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-4 h-4 mr-2" />
+                                Subir Logo
+                              </>
+                            )}
+                          </span>
+                        </Button>
+                      </label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Formato PNG, JPG. Máximo 5MB.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               
               <div className="space-y-2 pt-4 border-t">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -1026,103 +1061,19 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
           </Card>
         )}
 
-        {/* Redes Sociales */}
+        {/* Base de Conocimiento */}
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <Globe className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                <FileText className="w-6 h-6 text-emerald-600" />
               </div>
-              Redes Sociales
-              <Badge variant="secondary" className="ml-auto">Editable</Badge>
+              Base de Conocimiento
+              <Badge variant="secondary" className="ml-auto">Mis Archivos</Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Facebook className="w-4 h-4" />
-                  Facebook
-                </div>
-                <EditableField
-                  field="facebook_url"
-                  value={socialMediaData.facebook_url}
-                  onSave={(value) => saveField('facebook_url', value)}
-                  type="url"
-                  placeholder="https://facebook.com/tu-empresa"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Instagram className="w-4 h-4" />
-                  Instagram
-                </div>
-                <EditableField
-                  field="instagram_url"
-                  value={socialMediaData.instagram_url}
-                  onSave={(value) => saveField('instagram_url', value)}
-                  type="url"
-                  placeholder="https://instagram.com/tu-empresa"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Linkedin className="w-4 h-4" />
-                  LinkedIn
-                </div>
-                <EditableField
-                  field="linkedin_url"
-                  value={socialMediaData.linkedin_url}
-                  onSave={(value) => saveField('linkedin_url', value)}
-                  type="url"
-                  placeholder="https://linkedin.com/company/tu-empresa"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Twitter className="w-4 h-4" />
-                  Twitter / X
-                </div>
-                <EditableField
-                  field="twitter_url"
-                  value={socialMediaData.twitter_url}
-                  onSave={(value) => saveField('twitter_url', value)}
-                  type="url"
-                  placeholder="https://twitter.com/tu-empresa"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Youtube className="w-4 h-4" />
-                  YouTube
-                </div>
-                <EditableField
-                  field="youtube_url"
-                  value={socialMediaData.youtube_url}
-                  onSave={(value) => saveField('youtube_url', value)}
-                  type="url"
-                  placeholder="https://youtube.com/@tu-empresa"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Music className="w-4 h-4" />
-                  TikTok
-                </div>
-                <EditableField
-                  field="tiktok_url"
-                  value={socialMediaData.tiktok_url}
-                  onSave={(value) => saveField('tiktok_url', value)}
-                  type="url"
-                  placeholder="https://tiktok.com/@tu-empresa"
-                />
-              </div>
-            </div>
+          <CardContent>
+            <BaseConocimiento />
           </CardContent>
         </Card>
 

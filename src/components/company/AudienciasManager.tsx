@@ -327,17 +327,22 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     }
     
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-social-audience', {
-        body: { urls: [] as any[] }
-      });
+      // Consultar directamente la tabla social_analysis para ver si hay datos existentes
+      const { data: existingAnalyses, error } = await supabase
+        .from('social_analysis')
+        .select('*')
+        .eq('user_id', resolvedUid)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      if (data.success) {
-        setSocialStats(data.data || []);
-        setHasSocialConnections(data.data && data.data.length > 0);
+      // Si hay análisis existentes, configurar el estado para mostrarlos
+      if (existingAnalyses && existingAnalyses.length > 0) {
+        setSocialStats(existingAnalyses);
+        setHasSocialConnections(true);
       } else {
-        throw new Error(data.error || 'Failed to load social stats');
+        setSocialStats([]);
+        setHasSocialConnections(false);
       }
     } catch (error) {
       console.error('Error loading social audience stats:', error);
@@ -481,11 +486,11 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
             <div className="flex gap-3">
               {socialStats.map((profile, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  {profile.socialType === 'INST' && <Instagram className="w-5 h-5 text-pink-500" />}
-                  {profile.socialType === 'FB' && <Facebook className="w-5 h-5 text-blue-600" />}
-                  {profile.socialType === 'TW' && <Twitter className="w-5 h-5 text-blue-400" />}
-                  {profile.socialType === 'TT' && <Music className="w-5 h-5 text-black" />}
-                  {profile.socialType === 'YT' && <Youtube className="w-5 h-5 text-red-500" />}
+                  {profile.social_type === 'INST' && <Instagram className="w-5 h-5 text-pink-500" />}
+                  {profile.social_type === 'FB' && <Facebook className="w-5 h-5 text-blue-600" />}
+                  {profile.social_type === 'TW' && <Twitter className="w-5 h-5 text-blue-400" />}
+                  {profile.social_type === 'TT' && <Music className="w-5 h-5 text-black" />}
+                  {profile.social_type === 'YT' && <Youtube className="w-5 h-5 text-red-500" />}
                 </div>
               ))}
             </div>
@@ -503,13 +508,13 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                   {mainProfile.name || 'Mi Perfil'}
                   {mainProfile.verified && <CheckCircle className="w-5 h-5 text-blue-500" />}
                 </h1>
-                <p className="text-lg text-muted-foreground">@{mainProfile.screenName || 'usuario'}</p>
+                <p className="text-lg text-muted-foreground">@{mainProfile.screen_name || 'usuario'}</p>
                 <p className="text-sm text-muted-foreground mt-1">{mainProfile.description}</p>
               </div>
             </div>
             
             <div className="text-right">
-              <p className="text-3xl font-bold">{((socialStats.reduce((acc, s) => acc + (s.usersCount || 0), 0)) / 1000).toFixed(1)}K</p>
+              <p className="text-3xl font-bold">{((socialStats.reduce((acc, s) => acc + (s.users_count || 0), 0)) / 1000).toFixed(1)}K</p>
               <p className="text-sm text-muted-foreground">Total Seguidores</p>
             </div>
           </div>
@@ -530,10 +535,10 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                   <div>
                     <p className="text-sm text-muted-foreground">Puntaje de Calidad</p>
                     <p className="text-2xl font-bold text-green-600">
-                      {Math.round((mainProfile.qualityScore || 0.8) * 100)}%
+                      {Math.round((mainProfile.quality_score || 0.8) * 100)}%
                     </p>
                     <p className="text-xs text-green-600 mt-1">
-                      {(mainProfile.qualityScore || 0.8) > 0.7 ? 'Saludable' : 'Necesita Atención'}
+                      {(mainProfile.quality_score || 0.8) > 0.7 ? 'Saludable' : 'Necesita Atención'}
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -609,13 +614,13 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                       )}
                       <div>
                         <p className="font-semibold text-lg">{mainProfile.name}</p>
-                        <p className="text-muted-foreground">@{mainProfile.screenName}</p>
+                        <p className="text-muted-foreground">@{mainProfile.screen_name}</p>
                         {mainProfile.verified && <CheckCircle className="w-4 h-4 text-blue-500 inline ml-2" />}
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">{mainProfile.description}</p>
                     <div className="bg-primary/5 rounded-lg p-3">
-                      <p className="text-2xl font-bold text-primary">{((socialStats.reduce((acc, s) => acc + (s.usersCount || 0), 0)) / 1000).toFixed(1)}K</p>
+                      <p className="text-2xl font-bold text-primary">{((socialStats.reduce((acc, s) => acc + (s.users_count || 0), 0)) / 1000).toFixed(1)}K</p>
                       <p className="text-sm text-muted-foreground">Total Seguidores</p>
                     </div>
                   </div>
@@ -663,10 +668,10 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-2">Top 3 Países</p>
                       <div className="space-y-1">
-                        {Object.entries(mainProfile.countries || {}).slice(0, 3).map(([country, percentage]: [string, any], idx) => (
+                        {(mainProfile.countries || []).slice(0, 3).map((country: any, idx: number) => (
                           <div key={idx} className="flex items-center justify-between text-sm">
-                            <span>{country}</span>
-                            <span className="font-medium">{percentage}%</span>
+                            <span>{country.name}</span>
+                            <span className="font-medium">{Math.round(country.percent * 100)}%</span>
                           </div>
                         ))}
                       </div>
@@ -677,11 +682,11 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                       <div className="grid grid-cols-2 gap-2">
                         <div className="bg-blue-100 dark:bg-blue-900/30 rounded p-2 text-center">
                           <p className="text-xs text-muted-foreground">Masculino</p>
-                          <p className="font-semibold text-sm">{mainProfile.genders?.male || 50}%</p>
+                          <p className="font-semibold text-sm">{Math.round((mainProfile.genders?.find((g: any) => g.name === 'm')?.percent || 0) * 100)}%</p>
                         </div>
                         <div className="bg-pink-100 dark:bg-pink-900/30 rounded p-2 text-center">
                           <p className="text-xs text-muted-foreground">Femenino</p>
-                          <p className="font-semibold text-sm">{mainProfile.genders?.female || 50}%</p>
+                          <p className="font-semibold text-sm">{Math.round((mainProfile.genders?.find((g: any) => g.name === 'f')?.percent || 0) * 100)}%</p>
                         </div>
                       </div>
                     </div>
@@ -713,7 +718,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    Datos actualizados: {new Date(mainProfile.timeStatistics || Date.now()).toLocaleDateString()}
+                    Datos actualizados: {new Date(mainProfile.time_statistics || Date.now()).toLocaleDateString()}
                   </span>
                 </div>
                 <Button variant="outline" size="sm" className="gap-2">

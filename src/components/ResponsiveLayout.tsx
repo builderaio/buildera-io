@@ -298,7 +298,6 @@ const CompanyLayout = ({
     const routes: Record<string, string> = {
       'mando-central': '/company-dashboard?view=mando-central',
       'adn-empresa': '/company-dashboard?view=adn-empresa',
-      'base-conocimiento': '/company-dashboard?view=base-conocimiento',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
       'audiencias': '/company-dashboard?view=audiencias',
       'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
@@ -330,7 +329,7 @@ const CompanyLayout = ({
   }, {
     category: "Mi Empresa",
     icon: "🏢",
-    items: [{ id: "adn-empresa", label: "Configuración Empresarial", icon: Building, description: "Datos y configuración", priority: "high" }, { id: "base-conocimiento", label: "Base de Conocimiento", icon: User, description: "Gestión de información", priority: "medium" }]
+    items: [{ id: "adn-empresa", label: "Configuración Empresarial", icon: Building, description: "Datos y configuración", priority: "high" }]
   }, {
     category: "Marketing & Ventas",
     icon: "📈",
@@ -370,7 +369,7 @@ const CompanyLayout = ({
               <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-7 object-contain filter brightness-0 invert" />
             </div>
             <div className="grid flex-1 text-left">
-              <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">BUILDERA</span>
+              <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">{profile?.company_name || "BUILDERA"}</span>
               <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide uppercase">AI Business Platform</span>
             </div>
           </div>

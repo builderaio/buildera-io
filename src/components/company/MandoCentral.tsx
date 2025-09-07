@@ -373,7 +373,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       <header className="mb-6 md:mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-foreground">Mando Central</h1>
         <p className="text-base md:text-lg text-muted-foreground">
-          ¡Bienvenido, {profile?.company_name || "Negocio"}! Desde aquí puedes ver todo lo que está pasando en tu negocio y tomar las mejores decisiones para crecer.
+          ¡Bienvenido, {profile?.full_name?.split(' ')[0] || "Usuario"}! Desde aquí puedes ver todo lo que está pasando en tu negocio y tomar las mejores decisiones para crecer.
         </p>
       </header>
 

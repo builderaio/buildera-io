@@ -1382,6 +1382,162 @@ export type Database = {
         }
         Relationships: []
       }
+      company_audiences: {
+        Row: {
+          acquisition_cost_estimate: number | null
+          active_hours: Json | null
+          age_ranges: Json | null
+          ai_insights: Json | null
+          brand_affinities: Json | null
+          challenges: string[] | null
+          company_id: string
+          company_sizes: Json | null
+          confidence_score: number | null
+          content_consumption_habits: Json | null
+          content_preferences: Json | null
+          conversion_potential: number | null
+          created_at: string
+          custom_attributes: Json | null
+          description: string | null
+          device_usage: Json | null
+          education_levels: Json | null
+          engagement_patterns: Json | null
+          estimated_size: number | null
+          facebook_targeting: Json | null
+          gender_split: Json | null
+          geographic_locations: Json | null
+          goals: string[] | null
+          hashtag_usage: Json | null
+          id: string
+          income_ranges: Json | null
+          industries: Json | null
+          influencer_following: Json | null
+          instagram_targeting: Json | null
+          interests: Json | null
+          is_active: boolean | null
+          job_titles: Json | null
+          last_analysis_date: string | null
+          lifetime_value_estimate: number | null
+          linkedin_targeting: Json | null
+          motivations: string[] | null
+          name: string
+          online_behaviors: Json | null
+          pain_points: string[] | null
+          platform_preferences: Json | null
+          professional_level: Json | null
+          purchase_behaviors: Json | null
+          relationship_status: Json | null
+          tags: string[] | null
+          tiktok_targeting: Json | null
+          twitter_targeting: Json | null
+          updated_at: string
+          user_id: string
+          youtube_targeting: Json | null
+        }
+        Insert: {
+          acquisition_cost_estimate?: number | null
+          active_hours?: Json | null
+          age_ranges?: Json | null
+          ai_insights?: Json | null
+          brand_affinities?: Json | null
+          challenges?: string[] | null
+          company_id: string
+          company_sizes?: Json | null
+          confidence_score?: number | null
+          content_consumption_habits?: Json | null
+          content_preferences?: Json | null
+          conversion_potential?: number | null
+          created_at?: string
+          custom_attributes?: Json | null
+          description?: string | null
+          device_usage?: Json | null
+          education_levels?: Json | null
+          engagement_patterns?: Json | null
+          estimated_size?: number | null
+          facebook_targeting?: Json | null
+          gender_split?: Json | null
+          geographic_locations?: Json | null
+          goals?: string[] | null
+          hashtag_usage?: Json | null
+          id?: string
+          income_ranges?: Json | null
+          industries?: Json | null
+          influencer_following?: Json | null
+          instagram_targeting?: Json | null
+          interests?: Json | null
+          is_active?: boolean | null
+          job_titles?: Json | null
+          last_analysis_date?: string | null
+          lifetime_value_estimate?: number | null
+          linkedin_targeting?: Json | null
+          motivations?: string[] | null
+          name: string
+          online_behaviors?: Json | null
+          pain_points?: string[] | null
+          platform_preferences?: Json | null
+          professional_level?: Json | null
+          purchase_behaviors?: Json | null
+          relationship_status?: Json | null
+          tags?: string[] | null
+          tiktok_targeting?: Json | null
+          twitter_targeting?: Json | null
+          updated_at?: string
+          user_id: string
+          youtube_targeting?: Json | null
+        }
+        Update: {
+          acquisition_cost_estimate?: number | null
+          active_hours?: Json | null
+          age_ranges?: Json | null
+          ai_insights?: Json | null
+          brand_affinities?: Json | null
+          challenges?: string[] | null
+          company_id?: string
+          company_sizes?: Json | null
+          confidence_score?: number | null
+          content_consumption_habits?: Json | null
+          content_preferences?: Json | null
+          conversion_potential?: number | null
+          created_at?: string
+          custom_attributes?: Json | null
+          description?: string | null
+          device_usage?: Json | null
+          education_levels?: Json | null
+          engagement_patterns?: Json | null
+          estimated_size?: number | null
+          facebook_targeting?: Json | null
+          gender_split?: Json | null
+          geographic_locations?: Json | null
+          goals?: string[] | null
+          hashtag_usage?: Json | null
+          id?: string
+          income_ranges?: Json | null
+          industries?: Json | null
+          influencer_following?: Json | null
+          instagram_targeting?: Json | null
+          interests?: Json | null
+          is_active?: boolean | null
+          job_titles?: Json | null
+          last_analysis_date?: string | null
+          lifetime_value_estimate?: number | null
+          linkedin_targeting?: Json | null
+          motivations?: string[] | null
+          name?: string
+          online_behaviors?: Json | null
+          pain_points?: string[] | null
+          platform_preferences?: Json | null
+          professional_level?: Json | null
+          purchase_behaviors?: Json | null
+          relationship_status?: Json | null
+          tags?: string[] | null
+          tiktok_targeting?: Json | null
+          twitter_targeting?: Json | null
+          updated_at?: string
+          user_id?: string
+          youtube_targeting?: Json | null
+        }
+        Relationships: []
+      }
       company_branding: {
         Row: {
           brand_manual_file_path: string | null

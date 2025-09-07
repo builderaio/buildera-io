@@ -333,7 +333,11 @@ const CompanyLayout = ({
   }, {
     category: "Marketing & Ventas",
     icon: "📈",
-    items: [{ id: "marketing-hub", label: "Marketing Hub", icon: Bell, description: "Campañas y automatización", priority: "high" }, { id: "inteligencia-competitiva", label: "Análisis Competitivo", icon: Search, description: "Inteligencia de mercado", priority: "medium" }]
+    items: [
+      { id: "marketing-hub", label: "Marketing Hub", icon: Bell, description: "Campañas y automatización", priority: "high" }, 
+      { id: "audiencias", label: "Audiencias", icon: Users, description: "Gestión de audiencias", priority: "high" },
+      { id: "inteligencia-competitiva", label: "Análisis Competitivo", icon: Search, description: "Inteligencia de mercado", priority: "medium" }
+    ]
   }, {
     category: "Agentes IA",
     icon: "🤖",

@@ -18,6 +18,7 @@ import AcademiaBuildiera from "@/components/company/AcademiaBuildera";
 import Marketplace from "@/components/company/Marketplace";
 import Expertos from "@/components/company/Expertos";
 import Configuracion from "@/components/company/Configuracion";
+import AudienciasManager from "@/components/company/AudienciasManager";
 import UserProfile from "./UserProfile";
 import CompanyAgents from "./CompanyAgents";
 import OnboardingRedirect from "@/components/OnboardingRedirect";
@@ -292,6 +293,8 @@ const CompanyDashboard = () => {
         return <MisArchivos />;
       case "marketing-hub":
         return <MarketingHub profile={profile} />;
+      case "audiencias":
+        return <AudienciasManager profile={profile} />;
       case "inteligencia-competitiva":
         return <InteligenciaCompetitiva />;
       case "academia-buildera":

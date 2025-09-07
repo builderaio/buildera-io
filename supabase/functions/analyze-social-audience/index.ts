@@ -80,40 +80,53 @@ serve(async (req) => {
 
     // Helper to derive a company username for storage if missing
     const deriveCompanyUsername = async (): Promise<string> => {
-      // Try to reuse any existing company_username for this user
-      const { data: existing } = await supabase
-        .from('social_accounts')
-        .select('company_username')
-        .eq('user_id', user.id)
-        .not('company_username', 'is', null)
-        .limit(1)
-        .maybeSingle()
-
-      if (existing?.company_username) return existing.company_username as string
-
-      // Fallback: try primary company name and slugify
-      const { data: membership } = await supabase
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .eq('is_primary', true)
-        .maybeSingle()
-
-      if (membership?.company_id) {
-        const { data: company } = await supabase
-          .from('companies')
-          .select('name')
-          .eq('id', membership.company_id)
+      try {
+        // Try to reuse any existing company_username for this user
+        const { data: existing } = await supabase
+          .from('social_accounts')
+          .select('company_username')
+          .eq('user_id', user.id)
+          .not('company_username', 'is', null)
+          .limit(1)
           .maybeSingle()
-        const base = (company?.name || 'company')
-          .normalize('NFD').replace(/\p{Diacritic}/gu, '')
-          .toLowerCase().replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, '')
-        return `${base}_${user.id.substring(0,8)}`
-      }
 
-      // Final fallback: user-based slug
-      return `user_${user.id.substring(0,8)}`
+        if (existing?.company_username) {
+          console.log(`Reusing existing company_username: ${existing.company_username}`)
+          return existing.company_username as string
+        }
+
+        // Fallback: try primary company name and slugify
+        const { data: membership } = await supabase
+          .from('company_members')
+          .select('company_id')
+          .eq('user_id', user.id)
+          .eq('is_primary', true)
+          .maybeSingle()
+
+        if (membership?.company_id) {
+          const { data: company } = await supabase
+            .from('companies')
+            .select('name')
+            .eq('id', membership.company_id)
+            .maybeSingle()
+          const base = (company?.name || 'company')
+            .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+            .toLowerCase().replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '')
+          const derivedUsername = `${base}_${user.id.substring(0,8)}`
+          console.log(`Derived company_username from company: ${derivedUsername}`)
+          return derivedUsername
+        }
+
+        // Final fallback: user-based slug
+        const fallbackUsername = `user_${user.id.substring(0,8)}`
+        console.log(`Using fallback company_username: ${fallbackUsername}`)
+        return fallbackUsername
+      } catch (error) {
+        console.error('Error deriving company_username:', error)
+        // Emergency fallback
+        return `user_${user.id.substring(0,8)}`
+      }
     }
 
     const { urls }: { urls: UrlAnalysisRequest[] } = await req.json()
@@ -138,7 +151,7 @@ serve(async (req) => {
     for (const urlData of urls) {
       try {
         const platform = urlData.platform.toLowerCase()
-        console.log(`Analyzing ${platform}: ${urlData.url}`)
+        console.log(`Starting analysis for ${platform}: ${urlData.url}`)
         
         // Validate platform is supported
         if (!supportedPlatforms.includes(platform)) {
@@ -181,92 +194,115 @@ serve(async (req) => {
         }
 
         const apiData = await response.json()
-        console.log(`Successfully received data for ${platform}`)
+        console.log(`Successfully received data for ${platform}:`, JSON.stringify(apiData, null, 2))
 
-        // Transform API response to our format
-        const audienceStats: AudienceStats = {
-          socialType: socialType,
-          name: apiData.name || apiData.displayName || 'Perfil',
-          screenName: apiData.screenName || apiData.username || '',
-          description: apiData.description || apiData.bio || '',
-          image: apiData.image || apiData.profilePicture || apiData.avatar || '',
-          verified: apiData.verified || false,
-          usersCount: apiData.usersCount || apiData.followers || apiData.subscribersCount || 0,
-          qualityScore: apiData.qualityScore || Math.random() * 0.3 + 0.7, // Fallback
-          avgER: apiData.avgER || apiData.engagementRate || 0,
-          pctUsersCount180d: apiData.pctUsersCount180d || apiData.growthRate || 0,
-          membersTypes: apiData.membersTypes || {
-            real: 70 + Math.random() * 20,
-            suspicious: Math.random() * 10,
-            massfollowers: Math.random() * 15,
-            influencer: Math.random() * 5
-          },
-          categories: apiData.categories || ['General'],
-          tags: apiData.tags || apiData.hashtags || [],
-          type: apiData.type || apiData.accountType || 'profile',
-          countries: apiData.countries || apiData.demographics?.countries || {},
-          genders: apiData.genders || apiData.demographics?.genders || { male: 50, female: 50 },
-          ages: apiData.ages || apiData.demographics?.ages || {},
-          timeStatistics: apiData.timeStatistics || new Date().toISOString(),
-          pctFakeFollowers: apiData.pctFakeFollowers || Math.random() * 15,
-          membersReachability: apiData.membersReachability || {},
-          avgLikes: apiData.avgLikes || apiData.averageLikes || 0,
-          avgComments: apiData.avgComments || apiData.averageComments || 0,
-          avgViews: apiData.avgViews || apiData.averageViews || 0,
-          lastPosts: apiData.lastPosts || apiData.recentPosts || []
+        // Check if response has the expected structure
+        if (!apiData.data || apiData.meta?.code !== 200) {
+          console.error(`Invalid API response format for ${platform}:`, apiData)
+          continue
         }
 
-        // Store raw data and processed data in social_accounts table (tolerant to missing fields)
+        const profileData = apiData.data
+
+        // Transform API response to our format using the actual data structure
+        const audienceStats: AudienceStats = {
+          socialType: socialType,
+          name: profileData.name || 'Perfil',
+          screenName: profileData.screenName || '',
+          description: profileData.description || '',
+          image: profileData.image || '',
+          verified: profileData.verified || false,
+          usersCount: profileData.usersCount || 0,
+          qualityScore: profileData.qualityScore || 0,
+          avgER: profileData.avgER || 0,
+          pctUsersCount180d: 0, // Not provided in API response
+          membersTypes: profileData.membersTypes || {},
+          categories: profileData.categories || [],
+          tags: profileData.tags || [],
+          type: profileData.type || 'profile',
+          countries: profileData.countries || [],
+          genders: profileData.genders || [],
+          ages: profileData.ages || [],
+          timeStatistics: profileData.timeStatistics || new Date().toISOString(),
+          pctFakeFollowers: profileData.pctFakeFollowers || 0,
+          membersReachability: profileData.membersReachability || {},
+          avgLikes: 0, // Calculate from lastPosts if needed
+          avgComments: 0, // Calculate from lastPosts if needed
+          avgViews: profileData.avgViews || 0,
+          lastPosts: profileData.lastPosts || []
+        }
+
+        // Store raw data and processed data in social_accounts table
         try {
           // Ensure we have a non-null company_username to satisfy DB constraint
           const companyUsername = await deriveCompanyUsername()
+          console.log(`Storing data for platform ${platform} with company_username: ${companyUsername}`)
+
+          const socialAccountData = {
+            user_id: user.id,
+            company_username: companyUsername,
+            platform: platform,
+            platform_username: audienceStats.screenName || null,
+            platform_display_name: audienceStats.name || 'Perfil',
+            is_connected: true,
+            metadata: {
+              raw_analysis_data: apiData,
+              processed_stats: audienceStats,
+              analysis_timestamp: new Date().toISOString(),
+              api_source: 'instagram-statistics-api',
+              api_response_meta: apiData.meta
+            },
+            last_sync_at: new Date().toISOString(),
+            connected_at: new Date().toISOString()
+          }
+
+          console.log(`Attempting to upsert social account data:`, {
+            user_id: socialAccountData.user_id,
+            platform: socialAccountData.platform,
+            company_username: socialAccountData.company_username
+          })
 
           const { error: dbError } = await supabase
             .from('social_accounts')
-            .upsert({
-              user_id: user.id,
-              company_username: companyUsername,
-              platform: platform,
-              platform_username: audienceStats.screenName || null,
-              platform_display_name: audienceStats.name || 'Perfil',
-              is_connected: true,
-              metadata: {
-                raw_analysis_data: apiData ?? {},
-                processed_stats: audienceStats ?? {},
-                analysis_timestamp: new Date().toISOString(),
-                api_source: 'instagram-statistics-api'
-              },
-              last_sync_at: new Date().toISOString(),
-              connected_at: new Date().toISOString()
-            }, {
+            .upsert(socialAccountData, {
               onConflict: 'user_id,platform'
             })
 
           if (dbError) {
-            console.error('Error storing social account data:', dbError)
+            console.error('Error storing social account data:', JSON.stringify(dbError, null, 2))
           } else {
             console.log(`Successfully stored ${platform} data to database`)
           }
         } catch (dbError) {
-          console.error('Database storage error:', dbError)
+          console.error('Database storage error:', JSON.stringify(dbError, null, 2))
         }
 
         results.push(audienceStats)
 
       } catch (error) {
-        console.error(`Error analyzing ${urlData.platform}:`, error)
+        console.error(`Error analyzing ${urlData.platform} (${urlData.url}):`, error)
+        // Continue processing other URLs even if one fails
         continue
       }
     }
 
     console.log(`Analysis completed. Successfully analyzed ${results.length} out of ${urls.length} URLs`)
+    
+    // If no results were obtained, provide helpful feedback
+    if (results.length === 0 && urls.length > 0) {
+      console.warn('No profiles could be analyzed successfully')
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         data: results,
         supportedPlatforms,
-        message: `Successfully analyzed ${results.length} social media profiles`
+        message: results.length > 0 
+          ? `Successfully analyzed ${results.length} social media profiles`
+          : urls.length > 0 
+            ? 'No profiles could be analyzed at this time. Please check your URLs and try again.'
+            : 'No URLs provided for analysis'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

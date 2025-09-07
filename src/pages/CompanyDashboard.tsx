@@ -92,6 +92,19 @@ const CompanyDashboard = () => {
       } else if (viewParam) {
         setActiveView(viewParam);
         setShouldShowOnboarding(false);
+        
+        // Asegurar que el perfil esté cargado para vistas que lo necesitan (como audiencias)
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        if (profileData) {
+          setProfile(profileData);
+        } else {
+          setProfile({ user_id: session.user.id, email: session.user.email });
+        }
+        
         setLoading(false);
         return;
       }

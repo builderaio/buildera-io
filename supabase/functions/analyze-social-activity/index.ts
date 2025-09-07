@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // Fetch social analysis data (containing CIDs) for the user
     const { data: socialAnalysisData, error: fetchError } = await supabaseClient
       .from('social_analysis')
-      .select('cid, platform')
+      .select('cid, social_type')
       .eq('user_id', user.id);
 
     if (fetchError) {
@@ -82,9 +82,9 @@ Deno.serve(async (req) => {
 
     // Process each social analysis record
     for (const analysisData of socialAnalysisData) {
-      const { cid, platform } = analysisData;
+      const { cid, social_type } = analysisData;
       
-      console.log(`Analyzing activity for CID: ${cid}, Platform: ${platform}`);
+      console.log(`Analyzing activity for CID: ${cid}, Platform: ${social_type}`);
 
       try {
         // Call Instagram Statistics API for activity data
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
         // Prepare analysis data to store
         const analysisResults = {
           user_id: user.id,
-          platform: platform,
+          platform: social_type,
           cid: cid,
           peak_hour: parseInt(peakHour) || 0,
           peak_day_of_week: parseInt(peakDayOfWeek) || 1,
@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
           console.log(`Successfully stored activity analysis for CID: ${cid}`);
           results.push({
             cid,
-            platform,
+            platform: social_type,
             peak_hour: peakHour,
             peak_day_of_week: peakDayOfWeek,
             total_interactions: totalInteractions,
@@ -216,7 +216,7 @@ Deno.serve(async (req) => {
         console.error(`Error processing CID ${cid}:`, error);
         results.push({
           cid,
-          platform,
+          platform: social_type,
           status: 'error',
           error: error.message
         });

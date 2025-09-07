@@ -75,7 +75,8 @@ Deno.serve(async (req) => {
     const fromFormatted = formatDate(fromDate);
     const toFormatted = formatDate(toDate);
 
-    console.log(`📅 Analyzing content from ${fromFormatted} to ${toFormatted}`);
+    console.log(`📅 Current date: ${toFormatted}`);
+    console.log(`📅 Analyzing content from ${fromFormatted} to ${toFormatted} (last 90 days)`);
 
     const rapidApiKey = Deno.env.get('RAPIDAPI_KEY');
     if (!rapidApiKey) {

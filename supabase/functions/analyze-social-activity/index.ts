@@ -78,6 +78,24 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${socialAnalysisData.length} social accounts to analyze`);
 
+    // Calculate date range (last 90 days)
+    const toDate = new Date();
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - 90);
+
+    const formatDate = (date: Date) => {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}.${month}.${year}`;
+    };
+
+    const fromFormatted = formatDate(fromDate);
+    const toFormatted = formatDate(toDate);
+
+    console.log(`📅 Current date: ${toFormatted}`);
+    console.log(`📅 Analyzing activity data from ${fromFormatted} to ${toFormatted} (last 90 days)`);
+
     const results = [];
 
     // Process each social analysis record
@@ -173,6 +191,8 @@ Deno.serve(async (req) => {
           user_id: user.id,
           platform: social_type,
           cid: cid,
+          analysis_period_start: fromDate.toISOString(),
+          analysis_period_end: toDate.toISOString(),
           peak_hour: parseInt(peakHour) || 0,
           peak_day_of_week: parseInt(peakDayOfWeek) || 1,
           peak_interactions: maxInteractions,
@@ -226,8 +246,12 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Social activity analysis completed successfully',
+        message: `Activity analysis completed for ${results.length} social networks`,
         results: results,
+        period: {
+          from: fromFormatted,
+          to: toFormatted,
+        },
         total_processed: results.length
       }),
       { 

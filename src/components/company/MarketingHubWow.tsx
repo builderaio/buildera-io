@@ -814,7 +814,8 @@ const MarketingHubWow = ({
   const connectedPlatformsCount = Object.values(socialConnections).filter(Boolean).length;
   const workflowProgress = Object.values(workflow).filter(Boolean).length;
   if (loading) {
-    return <div className="flex items-center justify-center min-h-[600px]">
+    return (
+      <div className="flex items-center justify-center min-h-[600px]">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-primary/70 flex items-center justify-center animate-pulse">
             <Sparkles className="w-8 h-8 text-white" />
@@ -824,9 +825,12 @@ const MarketingHubWow = ({
             <p className="text-muted-foreground">Cargando tu centro de comando inteligente...</p>
           </div>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Hero Header */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-primary/90 to-primary/80 p-8 text-white">

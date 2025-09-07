@@ -802,7 +802,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 </Button>
                 <Button 
                   variant="outline"
-                  onClick={() => window.location.href = '/company-dashboard?view=audiencias'}
+                  onClick={() => window.location.href = '/company-dashboard?view=marketing-hub&tab=analyze'}
                 >
                   Analizar Audiencias
                 </Button>

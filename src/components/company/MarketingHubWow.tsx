@@ -19,6 +19,7 @@ import { SocialPostCreator } from './SocialPostCreator';
 import { ScheduledPostsManager } from './ScheduledPostsManager';
 import { UploadHistory } from './UploadHistory';
 import MarketingHubOrchestrator from './MarketingHubOrchestrator';
+import AudienciasManager from './AudienciasManager';
 interface MarketingHubWowProps {
   profile: any;
 }
@@ -62,8 +63,15 @@ const MarketingHubWow = ({
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const allowed = new Set(['dashboard', 'create', 'analyze', 'schedule', 'history', 'results', 'campaign-wizard']);
-    if (tab && allowed.has(tab)) setActiveTab(tab);
+    const view = params.get('view');
+    
+    // If coming from audiencias route, open analyze tab
+    if (view === 'marketing-hub' && tab === 'analyze') {
+      setActiveTab('analyze');
+    } else if (tab) {
+      const allowed = new Set(['dashboard', 'create', 'analyze', 'campaign-wizard', 'configuracion']);
+      if (tab && allowed.has(tab)) setActiveTab(tab);
+    }
   }, []);
   const [loading, setLoading] = useState(false);
   const [realMetrics, setRealMetrics] = useState<QuickStat[]>([]);
@@ -1068,25 +1076,7 @@ const MarketingHubWow = ({
 
           {/* Audiencias Tab */}
           <TabsContent value="analyze" className="space-y-8">
-            <Card className="border-0 bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  Análisis de Audiencias
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Users className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2">Análisis de Audiencias</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Analiza el comportamiento y preferencias de tu audiencia en todas las plataformas
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <AudienciasManager profile={profile} />
           </TabsContent>
 
           {/* Contenido Tab */}

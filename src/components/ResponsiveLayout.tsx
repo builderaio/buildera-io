@@ -299,7 +299,7 @@ const CompanyLayout = ({
       'mando-central': '/company-dashboard?view=mando-central',
       'adn-empresa': '/company-dashboard?view=adn-empresa',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
-      'audiencias': '/company-dashboard?view=audiencias',
+      'audiencias': '/company-dashboard?view=marketing-hub&tab=analyze',
       'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
       'academia-buildera': '/company-dashboard?view=academia-buildera',
       'expertos': '/company-dashboard?view=expertos',

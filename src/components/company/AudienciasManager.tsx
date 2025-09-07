@@ -118,6 +118,7 @@ interface AudienceSegment {
 }
 
 const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
+  console.log('🎯 AudienciasManager component rendered with profile:', profile);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [currentView, setCurrentView] = useState("main");

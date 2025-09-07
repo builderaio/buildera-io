@@ -90,6 +90,7 @@ const CompanyDashboard = () => {
         setLoading(false);
         return;
       } else if (viewParam) {
+        console.log('🎯 Setting activeView from URL param:', viewParam);
         setActiveView(viewParam);
         setShouldShowOnboarding(false);
         
@@ -292,7 +293,8 @@ const CompanyDashboard = () => {
   };
 
   const renderContent = () => {
-    console.log('Rendering content for activeView:', activeView);
+    console.log('🔄 Rendering content for activeView:', activeView, 'profile:', profile);
+    console.log('🔄 Current URL search params:', searchParams.get('view'));
     switch (activeView) {
       case "onboarding":
         return <OnboardingOrchestrator user={user!} />;
@@ -307,6 +309,7 @@ const CompanyDashboard = () => {
       case "marketing-hub":
         return <MarketingHub profile={profile} />;
       case "audiencias":
+        console.log('🎯 Rendering AudienciasManager with profile:', profile);
         return <AudienciasManager profile={profile} />;
       case "inteligencia-competitiva":
         return <InteligenciaCompetitiva />;

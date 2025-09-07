@@ -138,6 +138,10 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   const [socialStats, setSocialStats] = useState<any[]>([]);
   const [socialStatsLoading, setSocialStatsLoading] = useState(true);
   const [hasSocialConnections, setHasSocialConnections] = useState(false);
+  const [showUrlConfirmation, setShowUrlConfirmation] = useState(false);
+  const [socialUrls, setSocialUrls] = useState<any>({});
+  const [confirmedUrls, setConfirmedUrls] = useState<string[]>([]);
+  const [analyzingUrls, setAnalyzingUrls] = useState(false);
   
   const [stats, setStats] = useState({
     totalAudiences: 0,
@@ -224,11 +228,90 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     }
   };
 
+  const extractSocialUrls = (company: any) => {
+    const urls: any = {};
+    if (company?.instagram_url) urls.instagram = company.instagram_url;
+    if (company?.facebook_url) urls.facebook = company.facebook_url;
+    if (company?.twitter_url) urls.twitter = company.twitter_url;
+    if (company?.linkedin_url) urls.linkedin = company.linkedin_url;
+    if (company?.tiktok_url) urls.tiktok = company.tiktok_url;
+    if (company?.youtube_url) urls.youtube = company.youtube_url;
+    return urls;
+  };
+
+  const checkCompanySocialUrls = () => {
+    if (!companyData) return false;
+    const urls = extractSocialUrls(companyData);
+    setSocialUrls(urls);
+    
+    if (Object.keys(urls).length > 0) {
+      setShowUrlConfirmation(true);
+      return true;
+    }
+    return false;
+  };
+
+  const analyzeWithConfirmedUrls = async () => {
+    if (confirmedUrls.length === 0) {
+      toast({
+        title: "Error",
+        description: "Por favor confirma al menos una URL de red social",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAnalyzingUrls(true);
+    try {
+      const urlsToAnalyze = confirmedUrls.map(platform => ({
+        platform,
+        url: socialUrls[platform]
+      }));
+
+      const { data, error } = await supabase.functions.invoke('analyze-social-audience', {
+        body: { urls: urlsToAnalyze }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setSocialStats(data.data || []);
+        setHasSocialConnections(true);
+        setShowUrlConfirmation(false);
+        toast({
+          title: "Análisis Completado",
+          description: `Se analizaron ${data.data?.length || 0} perfiles exitosamente`,
+        });
+      } else {
+        throw new Error(data.error || 'Failed to analyze URLs');
+      }
+    } catch (error) {
+      console.error('Error analyzing social URLs:', error);
+      toast({
+        title: "Error en el Análisis",
+        description: "No se pudieron analizar las redes sociales",
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyzingUrls(false);
+    }
+  };
+
   const loadSocialAudienceStats = async (uid?: string) => {
     const resolvedUid = uid || profile?.user_id || userId;
     if (!resolvedUid) return;
     
     setSocialStatsLoading(true);
+    
+    // Primero verificar si hay URLs de redes sociales en la empresa
+    if (companyData && !showUrlConfirmation) {
+      const hasUrls = checkCompanySocialUrls();
+      if (hasUrls) {
+        setSocialStatsLoading(false);
+        return;
+      }
+    }
+    
     try {
       const { data, error } = await supabase.functions.invoke('get-social-audience-stats', {
         body: {}
@@ -265,6 +348,80 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
       );
     }
 
+    // Vista de confirmación de URLs
+    if (showUrlConfirmation) {
+      return (
+        <div className="space-y-8 animate-fade-in">
+          <div className="text-center">
+            <Target className="h-16 w-16 mx-auto text-primary mb-4" />
+            <h3 className="text-2xl font-bold mb-2">🎯 Confirma tus Redes Sociales</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Hemos encontrado estas URLs en tu perfil de empresa. Confirma cuáles quieres analizar.
+            </p>
+          </div>
+
+          <div className="max-w-2xl mx-auto space-y-4">
+            {Object.entries(socialUrls).map(([platform, url]: [string, any]) => (
+              <div key={platform} className="flex items-center space-x-4 p-4 border rounded-lg bg-card">
+                <div className="flex items-center space-x-3 flex-1">
+                  {platform === 'instagram' && <Instagram className="w-5 h-5 text-pink-500" />}
+                  {platform === 'facebook' && <Facebook className="w-5 h-5 text-blue-600" />}
+                  {platform === 'twitter' && <Twitter className="w-5 h-5 text-blue-400" />}
+                  {platform === 'linkedin' && <Linkedin className="w-5 h-5 text-blue-700" />}
+                  {platform === 'tiktok' && <Music className="w-5 h-5 text-black" />}
+                  {platform === 'youtube' && <Youtube className="w-5 h-5 text-red-500" />}
+                  
+                  <div className="flex-1">
+                    <p className="font-medium capitalize">{platform}</p>
+                    <p className="text-sm text-muted-foreground truncate">{url}</p>
+                  </div>
+                </div>
+                
+                <input
+                  type="checkbox"
+                  checked={confirmedUrls.includes(platform)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setConfirmedUrls([...confirmedUrls, platform]);
+                    } else {
+                      setConfirmedUrls(confirmedUrls.filter(p => p !== platform));
+                    }
+                  }}
+                  className="w-5 h-5"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center space-x-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowUrlConfirmation(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={analyzeWithConfirmedUrls}
+              disabled={confirmedUrls.length === 0 || analyzingUrls}
+              className="gap-2"
+            >
+              {analyzingUrls ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Analizando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  Analizar {confirmedUrls.length} Red{confirmedUrls.length > 1 ? 'es' : ''}
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     if (!hasSocialConnections) {
       return (
         <div className="text-center py-16">
@@ -273,15 +430,30 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           <p className="text-muted-foreground mb-8 max-w-md mx-auto">
             Desbloquea insights profundos de audiencia conectando tus redes sociales.
           </p>
-          <Button 
-            onClick={() => setCurrentView('connections')} 
-            size="lg"
-            className="gap-3 px-8 py-6 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600"
-          >
-            <Wifi className="h-5 w-5" />
-            Conectar Mis Redes Sociales
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          <div className="space-y-4">
+            {companyData && Object.keys(extractSocialUrls(companyData)).length > 0 ? (
+              <Button 
+                onClick={() => setShowUrlConfirmation(true)}
+                size="lg"
+                className="gap-3 px-8 py-6 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600"
+              >
+                <Target className="h-5 w-5" />
+                Analizar URLs de la Empresa
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            ) : null}
+            
+            <Button 
+              onClick={() => setCurrentView('connections')} 
+              size="lg"
+              variant="outline"
+              className="gap-3 px-8 py-6 text-lg font-semibold"
+            >
+              <Wifi className="h-5 w-5" />
+              Conectar Nuevas Redes Sociales
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       );
     }

@@ -194,9 +194,7 @@ Deno.serve(async (req) => {
         // Insert analysis data into database
         const { error: insertError } = await supabaseClient
           .from('social_activity_analysis')
-          .upsert(analysisResults, {
-            onConflict: 'user_id,platform,cid'
-          });
+          .insert(analysisResults);
 
         if (insertError) {
           console.error(`Error inserting activity analysis for CID ${cid}:`, insertError);

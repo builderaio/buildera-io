@@ -1050,7 +1050,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   };
 
   // Render Content Library Tab
-  const renderContentLibrary = () => {
+  const ContentLibraryTab: React.FC = () => {
     const [libraryLoading, setLibraryLoading] = useState(true);
 
     useEffect(() => {
@@ -1203,7 +1203,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   };
 
   // Render Content Creator Tab
-  const renderContentCreator = () => {
+  const ContentCreatorTab: React.FC = () => {
     const [generatingContent, setGeneratingContent] = useState(false);
     const [contentPrompt, setContentPrompt] = useState('');
     const [generatedContent, setGeneratedContent] = useState('');
@@ -1486,11 +1486,11 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         </TabsContent>
 
         <TabsContent value="library">
-          {renderContentLibrary()}
+          <ContentLibraryTab />
         </TabsContent>
 
         <TabsContent value="creator">
-          {renderContentCreator()}
+          <ContentCreatorTab />
         </TabsContent>
       </Tabs>
     </div>

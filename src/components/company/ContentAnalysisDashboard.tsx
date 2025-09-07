@@ -99,11 +99,32 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const loadExistingData = async () => {
     setLoading(true);
     try {
+      if (!profile.user_id) {
+        toast({
+          title: "Error de usuario",
+          description: "No se pudo identificar el usuario. Por favor, recargue la página.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       // Load existing social accounts with analysis
-      const { data: socialAccounts } = await supabase
+      const { data: socialAccounts, error: socialError } = await supabase
         .from('social_analysis')
-        .select('platform, cid, analysis_data')
+        .select('social_type, cid, name, users_count, avg_er, quality_score')
         .eq('user_id', profile.user_id);
+
+      if (socialError) {
+        console.error('Error al consultar social_analysis:', socialError);
+        toast({
+          title: "Error de consulta",
+          description: "Error al consultar los análisis de audiencias.",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
 
       if (!socialAccounts?.length) {
         toast({

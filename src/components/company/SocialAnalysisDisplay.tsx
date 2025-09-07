@@ -96,11 +96,15 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshingPlatform, setRefreshingPlatform] = useState<string | null>(null);
+  const [pendingPlatforms, setPendingPlatforms] = useState<Array<{platform: string, url: string}>>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     loadSocialAnalyses();
-  }, [userId]);
+    if (companyData) {
+      loadPendingPlatforms();
+    }
+  }, [userId, companyData]);
 
   const loadSocialAnalyses = async () => {
     if (!userId) return;
@@ -122,6 +126,26 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
       setLoading(false);
     }
   };
+
+  const loadPendingPlatforms = () => {
+    if (!companyData) return;
+    
+    const socialUrls = extractSocialUrls(companyData);
+    const analyzedPlatforms = new Set(analyses.map(a => getPlatformFromSocialType(a.social_type)));
+    
+    const pending = Object.entries(socialUrls)
+      .filter(([platform]) => !analyzedPlatforms.has(platform))
+      .map(([platform, url]) => ({ platform, url: url as string }));
+    
+    setPendingPlatforms(pending);
+  };
+
+  // Update pending platforms when analyses change
+  useEffect(() => {
+    if (companyData) {
+      loadPendingPlatforms();
+    }
+  }, [analyses, companyData]);
 
   const extractSocialUrls = (company: any) => {
     const urls: any = {};
@@ -197,6 +221,17 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
     }
   };
 
+  const getPlatformFromSocialType = (socialType: string): string => {
+    switch (socialType) {
+      case 'INST': return 'instagram';
+      case 'FB': return 'facebook';
+      case 'TW': return 'twitter';
+      case 'TT': return 'tiktok';
+      case 'YT': return 'youtube';
+      default: return socialType.toLowerCase();
+    }
+  };
+
   const getPlatformFromUrl = (url: string): string | null => {
     if (url.includes('instagram.com')) return 'instagram';
     if (url.includes('facebook.com')) return 'facebook';
@@ -204,6 +239,28 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
     if (url.includes('tiktok.com')) return 'tiktok';
     if (url.includes('youtube.com')) return 'youtube';
     return null;
+  };
+
+  const getPlatformDisplayName = (platform: string): string => {
+    switch (platform) {
+      case 'instagram': return 'Instagram';
+      case 'facebook': return 'Facebook';
+      case 'twitter': return 'Twitter';
+      case 'tiktok': return 'TikTok';
+      case 'youtube': return 'YouTube';
+      default: return platform.charAt(0).toUpperCase() + platform.slice(1);
+    }
+  };
+
+  const getPlatformIconByName = (platform: string) => {
+    switch (platform) {
+      case 'instagram': return <Instagram className="w-5 h-5 text-pink-500" />;
+      case 'facebook': return <Facebook className="w-5 h-5 text-blue-600" />;
+      case 'twitter': return <Twitter className="w-5 h-5 text-blue-400" />;
+      case 'tiktok': return <Music className="w-5 h-5 text-black" />;
+      case 'youtube': return <Youtube className="w-5 h-5 text-red-500" />;
+      default: return <Globe className="w-5 h-5 text-gray-500" />;
+    }
   };
 
   const getPlatformIcon = (socialType: string) => {
@@ -254,12 +311,15 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
     );
   }
 
-  if (analyses.length === 0) {
+  if (analyses.length === 0 && pendingPlatforms.length === 0) {
     return (
       <Card className="p-6">
         <div className="text-center">
           <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No se encontraron análisis de redes sociales</p>
+          <p className="text-muted-foreground mb-4">No se encontraron análisis de redes sociales</p>
+          <p className="text-sm text-muted-foreground">
+            Configura las URLs de tus redes sociales en el perfil de tu empresa para comenzar el análisis
+          </p>
         </div>
       </Card>
     );
@@ -267,73 +327,138 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Seguidores</p>
-                <p className="text-2xl font-bold">
-                  {formatNumber(analyses.reduce((sum, a) => sum + (a.users_count || 0), 0))}
-                </p>
+      {/* Pending Platforms Section - Show first if there are pending platforms */}
+      {pendingPlatforms.length > 0 && (
+        <Card className="border-dashed border-2 border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Target className="w-5 h-5" />
+              Redes Sociales Pendientes por Analizar
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Estas redes sociales están configuradas en tu empresa pero aún no han sido analizadas
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pendingPlatforms.map(({ platform, url }) => (
+                <div key={platform} className="flex items-center justify-between p-4 bg-background rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    {getPlatformIconByName(platform)}
+                    <div>
+                      <p className="font-medium">{getPlatformDisplayName(platform)}</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-32">
+                        {url.replace(/https?:\/\//, '')}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => refreshSocialAnalysis(platform)}
+                    disabled={refreshingPlatform === platform}
+                    className="gap-2"
+                  >
+                    {refreshingPlatform === platform ? (
+                      <>
+                        <RefreshCw className="h-3 w-3 animate-spin" />
+                        Analizando...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-3 w-3" />
+                        Analizar
+                      </>
+                    )}
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+              <div className="flex items-start gap-2">
+                <Target className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-blue-800 dark:text-blue-200">Plataformas Compatibles</p>
+                  <p className="text-blue-600 dark:text-blue-300">
+                    Instagram, Facebook, Twitter, TikTok, YouTube - Estas son las redes sociales que podemos analizar automáticamente
+                  </p>
+                </div>
               </div>
-              <Users className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
+      )}
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Engagement Promedio</p>
-                <p className="text-2xl font-bold">
-                  {(analyses.reduce((sum, a) => sum + (a.avg_er || 0), 0) / analyses.length * 100).toFixed(1)}%
-                </p>
+      {/* Show summary cards only if there are analyzed platforms */}
+      {analyses.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Seguidores</p>
+                  <p className="text-2xl font-bold">
+                    {formatNumber(analyses.reduce((sum, a) => sum + (a.users_count || 0), 0))}
+                  </p>
+                </div>
+                <Users className="h-8 w-8 text-primary" />
               </div>
-              <Zap className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Plataformas</p>
-                <p className="text-2xl font-bold">{analyses.length}</p>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Engagement Promedio</p>
+                  <p className="text-2xl font-bold">
+                    {(analyses.reduce((sum, a) => sum + (a.avg_er || 0), 0) / analyses.length * 100).toFixed(1)}%
+                  </p>
+                </div>
+                <Zap className="h-8 w-8 text-green-500" />
               </div>
-              <Globe className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
 
-      {/* Global Refresh Button */}
-      <div className="flex justify-center">
-        <Button 
-          onClick={() => refreshSocialAnalysis()}
-          disabled={refreshingPlatform === 'all'}
-          className="gap-2"
-          variant="outline"
-        >
-          {refreshingPlatform === 'all' ? (
-            <>
-              <RefreshCw className="h-4 w-4 animate-spin" />
-              Actualizando todas las redes...
-            </>
-          ) : (
-            <>
-              <RefreshCw className="h-4 w-4" />
-              Actualizar Todas las Redes Sociales
-            </>
-          )}
-        </Button>
-      </div>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Plataformas</p>
+                  <p className="text-2xl font-bold">{analyses.length}</p>
+                </div>
+                <Globe className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      {/* Individual Platform Analysis */}
-      {analyses.map((analysis) => (
+      {/* Global Refresh Button - only show if there are analyzed platforms */}
+      {analyses.length > 0 && (
+        <div className="flex justify-center">
+          <Button 
+            onClick={() => refreshSocialAnalysis()}
+            disabled={refreshingPlatform === 'all'}
+            className="gap-2"
+            variant="outline"
+          >
+            {refreshingPlatform === 'all' ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Actualizando todas las redes...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4" />
+                Actualizar Todas las Redes Sociales
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Individual Platform Analysis - only show if there are analyzed platforms */}
+      {analyses.length > 0 && analyses.map((analysis) => (
         <Card key={analysis.id} className="overflow-hidden">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
@@ -349,31 +474,33 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
                   </p>
                 </div>
               </div>
-              <Badge variant={analysis.community_status === 'COLLECTING' ? 'default' : 'secondary'}>
-                {analysis.community_status}
-              </Badge>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const platform = getPlatformFromUrl(analysis.url);
-                  if (platform) refreshSocialAnalysis(platform);
-                }}
-                disabled={refreshingPlatform === getPlatformFromUrl(analysis.url)}
-                className="gap-2 ml-2"
-              >
-                {refreshingPlatform === getPlatformFromUrl(analysis.url) ? (
-                  <>
-                    <RefreshCw className="h-3 w-3 animate-spin" />
-                    Actualizando...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-3 w-3" />
-                    Actualizar
-                  </>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Badge variant={analysis.community_status === 'COLLECTING' ? 'default' : 'secondary'}>
+                  {analysis.community_status}
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const platform = getPlatformFromUrl(analysis.url);
+                    if (platform) refreshSocialAnalysis(platform);
+                  }}
+                  disabled={refreshingPlatform === getPlatformFromUrl(analysis.url)}
+                  className="gap-2"
+                >
+                  {refreshingPlatform === getPlatformFromUrl(analysis.url) ? (
+                    <>
+                      <RefreshCw className="h-3 w-3 animate-spin" />
+                      Actualizando...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-3 w-3" />
+                      Actualizar
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardHeader>
 

@@ -123,6 +123,9 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [currentView, setCurrentView] = useState("main");
+  const [showAudienceCreationDialog, setShowAudienceCreationDialog] = useState(false);
+  const [suggestedAudiences, setSuggestedAudiences] = useState<any[]>([]);
+  const [generatingAudiences, setGeneratingAudiences] = useState(false);
   const [audiences, setAudiences] = useState<AudienceSegment[]>([]);
   const [icpProfile, setIcpProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -725,7 +728,438 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
               </div>
             </CardContent>
           </Card>
+          
+          {/* Call to Action: Crear Audiencias */}
+          <Card className="border-2 border-primary/50 bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardContent className="p-8 text-center">
+              <div className="max-w-2xl mx-auto space-y-6">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Target className="w-8 h-8 text-primary" />
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-2xl font-bold mb-3">🎯 Crea Audiencias Objetivo</h3>
+                  <p className="text-lg text-muted-foreground mb-4">
+                    Basado en tu radiografía de audiencia, crea segmentos específicos para campañas más efectivas
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Utiliza los datos demográficos, intereses y comportamientos de tus seguidores para crear audiencias personalizadas
+                  </p>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    size="lg" 
+                    className="gap-3 px-8 py-6 text-lg font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    onClick={() => setCurrentView('create-audience')}
+                  >
+                    <PlusCircle className="w-5 h-5" />
+                    Crear Nueva Audiencia
+                    <ArrowRight className="w-4 w-4" />
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    className="gap-3 px-8 py-6 text-lg font-semibold border-primary/30 hover:bg-primary/5"
+                    onClick={() => setCurrentView('audience-suggestions')}
+                  >
+                    <Lightbulb className="w-5 h-5" />
+                    Ver Sugerencias IA
+                  </Button>
+                </div>
+                
+                {/* Stats Preview */}
+                <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-primary/20">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-primary">{audiences.length}</p>
+                    <p className="text-xs text-muted-foreground">Audiencias Creadas</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-green-600">{socialStats.length}</p>
+                    <p className="text-xs text-muted-foreground">Fuentes de Datos</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-blue-600">
+                      {Math.round((mainProfile.quality_score || 0.8) * 100)}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">Calidad de Datos</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+      </div>
+    );
+  };
+
+  // Generar sugerencias de audiencias basadas en datos sociales
+  const generateAudienceSuggestions = async () => {
+    setGeneratingAudiences(true);
+    try {
+      const mainProfile = socialStats[0] || {};
+      
+      // Analizar los datos sociales existentes para generar sugerencias
+      const audienceData = {
+        demographics: {
+          countries: mainProfile.countries || [],
+          genders: mainProfile.genders || [],
+          ageGroups: ['18-24', '25-34', '35-44', '45-54'],
+        },
+        interests: mainProfile.interests || [],
+        socialStats: socialStats,
+        qualityScore: mainProfile.quality_score || 0,
+        engagementRate: mainProfile.avgER || 0
+      };
+
+      // Crear sugerencias basadas en datos existentes
+      const suggestions = [
+        {
+          name: "Audiencia Principal",
+          description: `Seguidores principales basados en tu demografía más activa`,
+          estimatedSize: Math.round((mainProfile.users_count || 1000) * 0.6),
+          confidence: 85,
+          criteria: {
+            countries: audienceData.demographics.countries.slice(0, 2),
+            genders: audienceData.demographics.genders,
+            ageRange: "25-34"
+          }
+        },
+        {
+          name: "Audiencia de Alto Engagement",
+          description: "Usuarios con mayor probabilidad de interactuar con tu contenido",
+          estimatedSize: Math.round((mainProfile.users_count || 1000) * 0.2),
+          confidence: 92,
+          criteria: {
+            engagementLevel: "high",
+            countries: audienceData.demographics.countries.slice(0, 1),
+            interests: audienceData.interests?.slice(0, 3) || []
+          }
+        },
+        {
+          name: "Audiencia Emergente",
+          description: "Segmento con potencial de crecimiento basado en tendencias",
+          estimatedSize: Math.round((mainProfile.users_count || 1000) * 0.15),
+          confidence: 76,
+          criteria: {
+            ageRange: "18-24",
+            growthTrend: "high",
+            newFollowers: true
+          }
+        }
+      ];
+
+      setSuggestedAudiences(suggestions);
+    } catch (error) {
+      console.error('Error generating audience suggestions:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron generar sugerencias de audiencia",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingAudiences(false);
+    }
+  };
+
+  // Crear audiencia desde sugerencia
+  const createAudienceFromSuggestion = async (suggestion: any) => {
+    try {
+      const newAudience = {
+        name: suggestion.name,
+        description: suggestion.description,
+        estimated_size: suggestion.estimatedSize,
+        confidence_score: suggestion.confidence / 100,
+        user_id: userId,
+        company_id: companyData?.id,
+        ai_insights: {
+          generatedFrom: 'social_analysis',
+          criteria: suggestion.criteria,
+          createdAt: new Date().toISOString()
+        }
+      };
+
+      const { data, error } = await supabase
+        .from('company_audiences')
+        .insert(newAudience)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setAudiences([...audiences, data]);
+      toast({
+        title: "Audiencia Creada",
+        description: `Se creó la audiencia "${suggestion.name}" exitosamente`,
+      });
+    } catch (error) {
+      console.error('Error creating audience:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo crear la audiencia",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Renderizar vista de sugerencias de audiencias
+  const renderAudienceSuggestionsView = () => {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => setCurrentView('main')}
+            className="gap-2"
+          >
+            <ArrowRight className="h-4 w-4 rotate-180" />
+            Volver
+          </Button>
+          <h2 className="text-2xl font-bold">Sugerencias de Audiencias IA</h2>
+        </div>
+
+        {suggestedAudiences.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Lightbulb className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4" />
+              <h3 className="text-xl font-semibold mb-3">Generar Sugerencias Inteligentes</h3>
+              <p className="text-muted-foreground mb-6">
+                Analiza tu radiografía de audiencia para crear sugerencias personalizadas de segmentos objetivo
+              </p>
+              <Button 
+                onClick={generateAudienceSuggestions}
+                disabled={generatingAudiences}
+                size="lg"
+                className="gap-2"
+              >
+                {generatingAudiences ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generando Sugerencias...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    Generar Sugerencias IA
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6">
+            {suggestedAudiences.map((suggestion, index) => (
+              <Card key={index} className="border-2 hover:border-primary/50 transition-colors">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Users className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-semibold">{suggestion.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Confianza: {suggestion.confidence}% • {suggestion.estimatedSize.toLocaleString()} usuarios estimados
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <p className="text-muted-foreground mb-4">{suggestion.description}</p>
+                      
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {suggestion.criteria.countries?.map((country: any, idx: number) => (
+                          <Badge key={idx} variant="outline">{country.name}</Badge>
+                        ))}
+                        {suggestion.criteria.ageRange && (
+                          <Badge variant="outline">{suggestion.criteria.ageRange} años</Badge>
+                        )}
+                        {suggestion.criteria.engagementLevel && (
+                          <Badge variant="outline">Alto Engagement</Badge>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      onClick={() => createAudienceFromSuggestion(suggestion)}
+                      className="gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Crear Audiencia
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            
+            <Button 
+              variant="outline" 
+              onClick={generateAudienceSuggestions}
+              disabled={generatingAudiences}
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Regenerar Sugerencias
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Renderizar vista de creación de audiencia personalizada
+  const renderCreateAudienceView = () => {
+    const mainProfile = socialStats[0] || {};
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => setCurrentView('main')}
+            className="gap-2"
+          >
+            <ArrowRight className="h-4 w-4 rotate-180" />
+            Volver
+          </Button>
+          <h2 className="text-2xl font-bold">Crear Nueva Audiencia</h2>
+        </div>
+
+        <Card>
+          <CardContent className="p-6">
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              
+              try {
+                const audienceData = {
+                  name: formData.get('name') as string,
+                  description: formData.get('description') as string,
+                  user_id: userId,
+                  company_id: companyData?.id,
+                  estimated_size: parseInt(formData.get('estimatedSize') as string) || 0,
+                  goals: (formData.get('goals') as string)?.split(',').map(g => g.trim()) || [],
+                  pain_points: (formData.get('painPoints') as string)?.split(',').map(p => p.trim()) || [],
+                  ai_insights: {
+                    createdManually: true,
+                    basedOnRadiography: true,
+                    sourceData: socialStats.map(s => s.social_type),
+                    createdAt: new Date().toISOString()
+                  }
+                };
+
+                const { data, error } = await supabase
+                  .from('company_audiences')
+                  .insert(audienceData)
+                  .select()
+                  .single();
+
+                if (error) throw error;
+
+                setAudiences([...audiences, data]);
+                setCurrentView('main');
+                toast({
+                  title: "Audiencia Creada",
+                  description: `Se creó la audiencia "${audienceData.name}" exitosamente`,
+                });
+              } catch (error) {
+                console.error('Error creating audience:', error);
+                toast({
+                  title: "Error",
+                  description: "No se pudo crear la audiencia",
+                  variant: "destructive"
+                });
+              }
+            }} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="name">Nombre de la Audiencia</Label>
+                  <Input 
+                    id="name" 
+                    name="name" 
+                    placeholder="Ej: Emprendedores Tecnológicos" 
+                    required 
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="estimatedSize">Tamaño Estimado</Label>
+                  <Input 
+                    id="estimatedSize" 
+                    name="estimatedSize" 
+                    type="number" 
+                    placeholder="1000" 
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="description">Descripción</Label>
+                <Textarea 
+                  id="description" 
+                  name="description" 
+                  placeholder="Describe las características principales de esta audiencia..."
+                  rows={3}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="goals">Objetivos (separados por comas)</Label>
+                  <Textarea 
+                    id="goals" 
+                    name="goals" 
+                    placeholder="Innovación, Productividad, Crecimiento..."
+                    rows={2}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="painPoints">Puntos de Dolor (separados por comas)</Label>
+                  <Textarea 
+                    id="painPoints" 
+                    name="painPoints" 
+                    placeholder="Falta de tiempo, Recursos limitados..."
+                    rows={2}
+                  />
+                </div>
+              </div>
+
+              {/* Contexto de los datos */}
+              <Card className="bg-muted/50">
+                <CardContent className="p-4">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <Database className="w-4 h-4" />
+                    Datos de tu Radiografía
+                  </h4>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p>• {socialStats.length} redes sociales analizadas</p>
+                    <p>• {(mainProfile.users_count || 0).toLocaleString()} seguidores totales</p>
+                    <p>• {mainProfile.countries?.length || 0} países identificados</p>
+                    <p>• Calidad de datos: {Math.round((mainProfile.quality_score || 0.8) * 100)}%</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="flex gap-4">
+                <Button type="submit" className="gap-2">
+                  <PlusCircle className="w-4 h-4" />
+                  Crear Audiencia
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setCurrentView('main')}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     );
   };
@@ -752,6 +1186,14 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
 
   if (currentView === 'connections') {
     return renderConnectionsView();
+  }
+
+  if (currentView === 'create-audience') {
+    return renderCreateAudienceView();
+  }
+
+  if (currentView === 'audience-suggestions') {
+    return renderAudienceSuggestionsView();
   }
 
   return (

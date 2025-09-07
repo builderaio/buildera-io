@@ -409,7 +409,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           </Button>
           <h2 className="text-2xl font-bold">Conectar Redes Sociales</h2>
         </div>
-        <SocialConnectionManager />
+        <SocialConnectionManager profile={profile} />
       </div>
     );
   };

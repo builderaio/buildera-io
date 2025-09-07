@@ -91,14 +91,13 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     socialAccounts: []
   });
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
-  const [autoTriggered, setAutoTriggered] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     loadExistingData();
   }, [profile.user_id]);
 
-  const loadExistingData = async (options?: { skipAutoTrigger?: boolean }) => {
+  const loadExistingData = async () => {
     setLoading(true);
     try {
       console.log('Profile recibido en ContentAnalysisDashboard:', profile);
@@ -168,11 +167,12 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         socialAccounts: socialAccounts || []
       });
 
-      // If no data exists, trigger analysis (only once automatically)
-      if (!options?.skipAutoTrigger && !autoTriggered && (!retrospectiveRes.data?.length || !activityRes.data?.length || !contentRes.data?.length)) {
-        setAutoTriggered(true);
-        await triggerContentAnalysis();
-      }
+      // Datos cargados exitosamente - no ejecutar análisis automático
+      console.log('Content analysis data loaded:', {
+        retrospective: retrospectiveRes.data?.length || 0,
+        activity: activityRes.data?.length || 0,
+        content: contentRes.data?.length || 0
+      });
 
     } catch (error) {
       console.error('Error loading analysis data:', error);
@@ -206,7 +206,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       }
 
       // Reload data after analysis
-      await loadExistingData({ skipAutoTrigger: true });
+      await loadExistingData();
 
       toast({
         title: "Análisis completado",
@@ -698,6 +698,37 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     );
   }
 
+  // Check if we have any analysis data
+  const hasAnalysisData = analysisData.retrospective.length > 0 || 
+                         analysisData.activity.length > 0 || 
+                         analysisData.content.length > 0;
+
+  // If no data exists, show empty state with initial analysis button
+  if (!loading && !hasAnalysisData && analysisData.socialAccounts.length > 0) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center py-12">
+          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full flex items-center justify-center">
+            <BarChart3 className="w-12 h-12 text-primary" />
+          </div>
+          <h3 className="text-2xl font-semibold mb-2">Análisis de Contenido</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Analice el rendimiento de su contenido en todas las plataformas de redes sociales conectadas.
+          </p>
+          <Button 
+            onClick={triggerContentAnalysis}
+            disabled={loading}
+            size="lg"
+            className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+          >
+            <Sparkles className="h-5 w-5 mr-2" />
+            Iniciar Análisis de Contenido
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header with Controls */}
@@ -718,8 +749,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           >
             <option value="all">Todas las plataformas</option>
             {analysisData.socialAccounts.map(account => (
-              <option key={account.platform} value={account.platform}>
-                {account.platform}
+              <option key={account.social_type || account.platform} value={account.social_type || account.platform}>
+                {account.social_type || account.platform}
               </option>
             ))}
           </select>

@@ -124,6 +124,10 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   const [filterPlatform, setFilterPlatform] = useState("all");
   const [companyData, setCompanyData] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
+  // Estado para creación de audiencia (mover hooks fuera de funciones internas)
+  const [newAudienceName, setNewAudienceName] = useState('');
+  const [newAudienceDescription, setNewAudienceDescription] = useState('');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   
   // Stats de la dashboard
   const [stats, setStats] = useState({
@@ -996,10 +1000,6 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
 
   // Renderizar creación de audiencia
   const renderCreateAudience = () => {
-    const [newAudienceName, setNewAudienceName] = useState('');
-    const [newAudienceDescription, setNewAudienceDescription] = useState('');
-    const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-
     const handleCreateAudience = () => {
       if (!newAudienceName.trim() || !newAudienceDescription.trim()) {
         toast({

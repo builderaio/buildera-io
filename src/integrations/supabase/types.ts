@@ -4708,6 +4708,51 @@ export type Database = {
         }
         Relationships: []
       }
+      social_content_analysis: {
+        Row: {
+          analysis_period_end: string
+          analysis_period_start: string
+          cid: string
+          created_at: string
+          id: string
+          platform: string
+          posts_analyzed: number
+          posts_data: Json | null
+          raw_api_response: Json | null
+          summary_data: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_period_end: string
+          analysis_period_start: string
+          cid: string
+          created_at?: string
+          id?: string
+          platform: string
+          posts_analyzed?: number
+          posts_data?: Json | null
+          raw_api_response?: Json | null
+          summary_data?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_period_end?: string
+          analysis_period_start?: string
+          cid?: string
+          created_at?: string
+          id?: string
+          platform?: string
+          posts_analyzed?: number
+          posts_data?: Json | null
+          raw_api_response?: Json | null
+          summary_data?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       social_media_analytics: {
         Row: {
           created_at: string

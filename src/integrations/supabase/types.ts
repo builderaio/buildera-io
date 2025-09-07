@@ -4537,6 +4537,81 @@ export type Database = {
         }
         Relationships: []
       }
+      social_activity_analysis: {
+        Row: {
+          analysis_date: string
+          avg_comments_per_hour: number
+          avg_interactions_per_hour: number
+          avg_likes_per_hour: number
+          cid: string
+          created_at: string
+          daily_breakdown: Json | null
+          hourly_breakdown: Json | null
+          id: string
+          peak_day_of_week: number
+          peak_hour: number
+          peak_interactions: number
+          platform: string
+          raw_activity_data: Json | null
+          raw_api_response: Json | null
+          total_comments: number
+          total_interactions: number
+          total_likes: number
+          total_reposts: number
+          total_views: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_date?: string
+          avg_comments_per_hour?: number
+          avg_interactions_per_hour?: number
+          avg_likes_per_hour?: number
+          cid: string
+          created_at?: string
+          daily_breakdown?: Json | null
+          hourly_breakdown?: Json | null
+          id?: string
+          peak_day_of_week?: number
+          peak_hour?: number
+          peak_interactions?: number
+          platform: string
+          raw_activity_data?: Json | null
+          raw_api_response?: Json | null
+          total_comments?: number
+          total_interactions?: number
+          total_likes?: number
+          total_reposts?: number
+          total_views?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_date?: string
+          avg_comments_per_hour?: number
+          avg_interactions_per_hour?: number
+          avg_likes_per_hour?: number
+          cid?: string
+          created_at?: string
+          daily_breakdown?: Json | null
+          hourly_breakdown?: Json | null
+          id?: string
+          peak_day_of_week?: number
+          peak_hour?: number
+          peak_interactions?: number
+          platform?: string
+          raw_activity_data?: Json | null
+          raw_api_response?: Json | null
+          total_comments?: number
+          total_interactions?: number
+          total_likes?: number
+          total_reposts?: number
+          total_views?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       social_analysis: {
         Row: {
           age: string | null

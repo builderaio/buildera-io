@@ -884,11 +884,6 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
           <MarketingHubOrchestrator />
         </TabsContent>
 
-        {/* Campaña IA como primera tab */}
-        <TabsContent value="campaign-wizard" className="space-y-6">
-          <MarketingHubOrchestrator />
-        </TabsContent>
-
         <TabsContent value="overview" className="space-y-8">
           {renderQuickStats()}
           {renderConnectionStatus()}

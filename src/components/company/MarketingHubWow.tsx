@@ -1089,10 +1089,6 @@ const MarketingHubWow = ({
             <ContentAnalysisDashboard profile={profile} />
           </TabsContent>
 
-          {/* Campañas Tab */}
-          <TabsContent value="campaign-wizard" className="space-y-8">
-            <MarketingHubOrchestrator />
-          </TabsContent>
 
           {/* Configuración Tab */}
           <TabsContent value="configuracion" className="space-y-8">

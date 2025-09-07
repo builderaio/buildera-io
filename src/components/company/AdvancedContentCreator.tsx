@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Brain, Sparkles, Trash2, RefreshCw, Image, Video, Copy, Download, Share2, Plus, Lightbulb } from "lucide-react";
 import ContentCreationLoader from "@/components/ui/content-creation-loader";
 import { motion, AnimatePresence } from "framer-motion";
+import InsightPublisher from "./InsightPublisher";
 
 interface Props {
   profile: { user_id?: string };
@@ -524,6 +525,7 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
                   onGenerateVideo={generateVideo}
                   isGeneratingMedia={loadingMedia}
                   currentLoadingStep={currentLoadingStep}
+                  userId={profile.user_id || ''}
                 />
               </motion.div>
             ))}
@@ -561,7 +563,8 @@ function InsightCard({
   onGenerateImage,
   onGenerateVideo,
   isGeneratingMedia,
-  currentLoadingStep 
+  currentLoadingStep,
+  userId 
 }: {
   insight: ContentInsight;
   onDelete: (id: string) => void;
@@ -572,6 +575,7 @@ function InsightCard({
   onGenerateVideo: (content: GeneratedContent) => void;
   isGeneratingMedia: string | null;
   currentLoadingStep: string;
+  userId: string;
 }) {
   const { toast } = useToast();
 
@@ -653,6 +657,17 @@ function InsightCard({
             </>
           )}
         </Button>
+
+        {/* Publish Button - only show if there's generated content */}
+        {generatedContents.length > 0 && (
+          <div className="w-full">
+            <InsightPublisher
+              insight={insight}
+              generatedContents={generatedContents}
+              userId={userId}
+            />
+          </div>
+        )}
 
         {/* Loading State for Content Generation */}
         <AnimatePresence>

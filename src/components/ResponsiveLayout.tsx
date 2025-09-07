@@ -299,7 +299,6 @@ const CompanyLayout = ({
       'mando-central': '/company-dashboard?view=mando-central',
       'adn-empresa': '/company-dashboard?view=adn-empresa',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
-      'audiencias': '/company-dashboard?view=marketing-hub&tab=analyze',
       'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
       'academia-buildera': '/company-dashboard?view=academia-buildera',
       'expertos': '/company-dashboard?view=expertos',
@@ -335,7 +334,6 @@ const CompanyLayout = ({
     icon: "📈",
     items: [
       { id: "marketing-hub", label: "Marketing Hub", icon: Bell, description: "Campañas y automatización", priority: "high" }, 
-      { id: "audiencias", label: "Audiencias", icon: Users, description: "Gestión de audiencias", priority: "high" },
       { id: "inteligencia-competitiva", label: "Análisis Competitivo", icon: Search, description: "Inteligencia de mercado", priority: "medium" }
     ]
   }, {

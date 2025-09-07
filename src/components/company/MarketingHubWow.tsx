@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import { Sparkles, BarChart3, Calendar, TrendingUp, Users, Heart, MessageCircle, ArrowRight, Plus, ChevronRight, Zap, Eye, Target, Brain, Rocket, Star, Activity, PieChart, LineChart, CheckCircle2, PlayCircle, Image, Video, PenTool, Globe, Wand2, Camera, TrendingDown, Hash, Clock, Award, Network, Share2, Download, Upload, RefreshCw, Filter, Search, Settings, History as HistoryIcon } from "lucide-react";
 import { SocialConnectionManager } from './SocialConnectionManager';
-import { SocialPostCreator } from './SocialPostCreator';
+import { ContentAnalysisDashboard } from './ContentAnalysisDashboard';
 import { ScheduledPostsManager } from './ScheduledPostsManager';
 import { UploadHistory } from './UploadHistory';
 import MarketingHubOrchestrator from './MarketingHubOrchestrator';
@@ -1081,10 +1081,7 @@ const MarketingHubWow = ({
 
           {/* Contenido Tab */}
           <TabsContent value="create" className="space-y-8">
-            <SocialPostCreator profile={profile} onPostCreated={() => {
-            loadUpcomingPosts();
-            loadRealMetrics();
-          }} />
+            <ContentAnalysisDashboard profile={profile} />
           </TabsContent>
 
           {/* Campañas Tab */}

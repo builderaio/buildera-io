@@ -191,8 +191,6 @@ Deno.serve(async (req) => {
           user_id: user.id,
           platform: social_type,
           cid: cid,
-          analysis_period_start: fromDate.toISOString(),
-          analysis_period_end: toDate.toISOString(),
           peak_hour: parseInt(peakHour) || 0,
           peak_day_of_week: parseInt(peakDayOfWeek) || 1,
           peak_interactions: maxInteractions,

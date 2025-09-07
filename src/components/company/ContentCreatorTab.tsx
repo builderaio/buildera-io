@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
-import { PlusCircle, Sparkles, Lightbulb, Copy } from "lucide-react";
+import { PlusCircle, Sparkles, Lightbulb, Copy, Brain, Target, TrendingUp, Clock } from "lucide-react";
 
 interface Props {
   profile: { user_id?: string };
@@ -18,6 +18,8 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
   const [generatingContent, setGeneratingContent] = useState(false);
   const [contentPrompt, setContentPrompt] = useState('');
   const [generatedContent, setGeneratedContent] = useState('');
+  const [generatingInsights, setGeneratingInsights] = useState(false);
+  const [aiInsights, setAiInsights] = useState('');
 
   const generateContent = async () => {
     if (!contentPrompt.trim()) {
@@ -54,8 +56,109 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
     }
   };
 
+  const generateAIInsights = async () => {
+    setGeneratingInsights(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('content-insights-generator', {
+        body: {
+          user_id: profile.user_id
+        }
+      });
+      
+      if (error) throw error;
+      
+      setAiInsights(data.insights || 'No se pudieron generar insights');
+      toast({ 
+        title: "¡Insights generados!", 
+        description: "Se han analizado tus datos para crear ideas personalizadas" 
+      });
+    } catch (error) {
+      console.error('Error generating insights:', error);
+      toast({ 
+        title: "Error", 
+        description: "No se pudieron generar los insights. Intenta de nuevo.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setGeneratingInsights(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* AI Insights Section */}
+      <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-purple-500/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            Insights & Ideas Personalizados
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Genera ideas de contenido específicas basadas en tu audiencia, industria y contenido histórico
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button 
+            onClick={generateAIInsights} 
+            disabled={generatingInsights || !profile.user_id} 
+            className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+          >
+            {generatingInsights ? (
+              <>
+                <AdvancedAILoader isVisible={true} />
+                Analizando tu audiencia y contenido...
+              </>
+            ) : (
+              <>
+                <Lightbulb className="h-4 w-4 mr-2" />
+                Generar Insights IA
+              </>
+            )}
+          </Button>
+          
+          {aiInsights && (
+            <Card className="bg-white/50 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  Ideas de Contenido Personalizadas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-primary/10">
+                    <div className="prose prose-sm max-w-none">
+                      <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
+                        {aiInsights}
+                      </pre>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => navigator.clipboard.writeText(aiInsights)}
+                      className="flex items-center gap-1"
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copiar Insights
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setAiInsights('')}
+                    >
+                      Limpiar
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Content Creator Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -100,33 +203,58 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
         </CardContent>
       </Card>
 
+      {/* Historical Performance Insights */}
       {topPosts.length > 0 && (
-        <Card>
+        <Card className="border-l-4 border-l-primary">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-primary" />Insights de Contenido Exitoso
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Análisis de Contenido Histórico
             </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Patrones identificados en tu contenido con mejor rendimiento
+            </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-medium mb-2">Hashtags más exitosos</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-primary rounded-full"></div>
+                  <h4 className="font-medium">Hashtags más exitosos</h4>
+                </div>
                 <div className="flex flex-wrap gap-1">
-                  {Array.from(new Set(topPosts.flatMap(post => post.hashTags || []))).slice(0, 10).map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">#{tag}</Badge>
+                  {Array.from(new Set(topPosts.flatMap(post => post.hashTags || []))).slice(0, 8).map((tag, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs hover:bg-primary hover:text-white transition-colors">
+                      #{tag}
+                    </Badge>
                   ))}
                 </div>
               </div>
-              <div>
-                <h4 className="font-medium mb-2">Tipos de contenido exitoso</h4>
-                <div className="space-y-1 text-sm">
-                  {Array.from(new Set(topPosts.map(post => post.type || 'POST'))).map((type, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                      {type}
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                  <h4 className="font-medium">Formatos exitosos</h4>
+                </div>
+                <div className="space-y-1">
+                  {Array.from(new Set(topPosts.map(post => post.type || 'POST'))).slice(0, 4).map((type, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span className="capitalize">{type.toLowerCase()}</span>
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3 h-3 text-orange-500" />
+                  <h4 className="font-medium">Engagement promedio</h4>
+                </div>
+                <div className="text-2xl font-bold text-primary">
+                  {Math.round(topPosts.reduce((acc, post) => acc + ((post.likes || 0) + (post.comments || 0)), 0) / topPosts.length)}
+                </div>
+                <p className="text-xs text-muted-foreground">interacciones por post</p>
               </div>
             </div>
           </CardContent>

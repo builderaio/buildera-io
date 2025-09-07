@@ -195,14 +195,19 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
             {generatingContent ? (<><AdvancedAILoader isVisible={true} />Generando contenido...</>) : (<><Sparkles className="h-4 w-4 mr-2" />Generar Contenido</>)}
           </Button>
           {generatedContent && (
-            <Card>
+            <Card className="border-l-4 border-l-green-500">
               <CardHeader>
-                <CardTitle className="text-lg">Contenido Generado</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-green-600" />
+                  Contenido Generado
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <pre className="whitespace-pre-wrap text-sm">{generatedContent}</pre>
+                  <div className="p-4 bg-gradient-to-br from-green-50/50 to-blue-50/50 rounded-lg border border-green-200/50">
+                    <div className="prose prose-sm max-w-none text-foreground leading-relaxed whitespace-pre-wrap">
+                      {generatedContent}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedContent)}>

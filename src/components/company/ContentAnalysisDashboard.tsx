@@ -111,8 +111,9 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const { toast } = useToast();
 
   useEffect(() => {
+    if (!profile) return;
     loadExistingData();
-  }, [profile.user_id]);
+  }, [profile?.user_id, profile?.id]);
 
   const loadExistingData = async () => {
     setLoading(true);
@@ -1053,8 +1054,9 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     const [libraryLoading, setLibraryLoading] = useState(true);
 
     useEffect(() => {
+      if (!profile?.user_id) return;
       loadSavedContent().finally(() => setLibraryLoading(false));
-    }, [profile.user_id]);
+    }, [profile?.user_id]);
 
     const deleteFromLibrary = async (id: string) => {
       try {

@@ -103,10 +103,10 @@ serve(async (req) => {
           continue
         }
 
-        // Call Profile by URL method for accurate social media analysis
-        console.log(`Making Profile by URL API call for: ${urlData.url}`)
+        // Call Community endpoint as shown in curl example
+        console.log(`Making Community API call for: ${urlData.url}`)
 
-        const response = await fetch(`https://instagram-statistics-api.p.rapidapi.com/profile?url=${encodeURIComponent(urlData.url)}&force=false`, {
+        const response = await fetch(`https://instagram-statistics-api.p.rapidapi.com/community?url=${encodeURIComponent(urlData.url)}`, {
           method: 'GET',
           headers: {
             'x-rapidapi-host': 'instagram-statistics-api.p.rapidapi.com',

@@ -87,3 +87,6 @@ verify_jwt = false
 
 [functions.check-subscription-status]
 verify_jwt = true
+
+[functions.content-insights-generator]
+verify_jwt = true

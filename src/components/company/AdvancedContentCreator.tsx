@@ -145,7 +145,10 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
       if (error) throw error;
       
       // Parse and save insights to database
-      const aiInsights = data.insights || '';
+      const aiInsights = data?.insights || data?.content || data?.generatedText || '';
+      if (!aiInsights) {
+        throw new Error('La función no devolvió texto de insights');
+      }
       await saveInsightsToDatabase(aiInsights);
       
       toast({ 
@@ -169,47 +172,79 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
 
   const saveInsightsToDatabase = async (rawInsights: string) => {
     try {
-      // Parse insights to extract individual ideas
       const ideas = parseInsightsToIdeas(rawInsights);
-      
-      // Save each idea as a separate insight
-      for (const idea of ideas) {
-        await supabase.from('content_insights').insert({
+
+      if (ideas.length === 0) {
+        // Fallback: save a single generic insight with the raw text
+        const { error } = await supabase.from('content_insights').insert({
           user_id: profile.user_id,
-          title: idea.title,
-          description: idea.description,
-          format_type: idea.format,
-          platform: idea.platform,
-          hashtags: idea.hashtags,
-          suggested_schedule: idea.schedule,
+          title: 'Ideas de contenido generadas',
+          description: 'Consulta el texto completo en raw_insight',
+          platform: selectedPlatform !== 'all' ? selectedPlatform : null,
           raw_insight: rawInsights
         });
+        if (error) throw error;
+        return;
       }
+
+      // Bulk insert for performance and reliability
+      const payload = ideas.map((idea) => ({
+        user_id: profile.user_id,
+        title: idea.title,
+        description: idea.description,
+        format_type: idea.format,
+        platform: idea.platform || (selectedPlatform !== 'all' ? selectedPlatform : null),
+        hashtags: idea.hashtags,
+        suggested_schedule: idea.schedule,
+        raw_insight: rawInsights,
+      }));
+
+      const { error } = await supabase.from('content_insights').insert(payload);
+      if (error) throw error;
     } catch (error) {
       console.error('Error saving insights:', error);
+      toast({ title: 'Error guardando insights', description: 'Revisa tu sesión y vuelve a intentar.', variant: 'destructive' });
+      throw error;
     }
   };
 
   const parseInsightsToIdeas = (text: string) => {
-    const ideas: Array<{ title: string; description?: string; format?: string; platform?: string; hashtags?: string[]; schedule?: string }> = [];
-    const lines = text.split(/\r?\n/);
-    let current: any = null;
-    
-    for (const line of lines) {
-      const titleMatch = line.match(/\*\*Título\/tema\*\*:\s*(.+)/i);
-      if (titleMatch) {
-        if (current) ideas.push(current);
-        current = { title: titleMatch[1].trim().replace(/"/g, '') };
+    type Idea = { title: string; description?: string; format?: string; platform?: string; hashtags?: string[]; schedule?: string };
+    const ideas: Idea[] = [];
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+    let current: Idea | null = null;
+    let inIdeasSection = false;
+
+    for (const rawLine of lines) {
+      const line = rawLine;
+
+      if (/\*\*?💡?\s*IDEAS DE CONTENIDO/i.test(line)) {
+        inIdeasSection = true;
         continue;
       }
-      if (!current) continue;
-      
+
+      const tituloCampo = line.match(/\*\*T[íi]tulo\/?tema\*\*:\s*(.+)/i);
+      const tituloEnumerado = line.match(/^\d+\.\s*\*\*\"?(.+?)\"?\*\*/);
+      const tituloNegrita = line.match(/^\*\*\"?(.+?)\"?\*\*/);
+
+      const titleMatch = tituloCampo || tituloEnumerado || tituloNegrita;
+      if (titleMatch) {
+        if (current) ideas.push(current);
+        current = { title: (titleMatch[1] || '').trim().replace(/^"|"$/g, '') };
+        continue;
+      }
+
+      if (!current) {
+        continue;
+      }
+
       const formatMatch = line.match(/\*\*Formato sugerido\*\*:\s*(.+)/i);
       if (formatMatch) current.format = formatMatch[1].trim();
-      
+
       const platformMatch = line.match(/\*\*Plataforma recomendada\*\*:\s*(.+)/i);
       if (platformMatch) current.platform = platformMatch[1].trim();
-      
+
       const hashtagsMatch = line.match(/\*\*Hashtags\*\*:\s*(.+)/i);
       if (hashtagsMatch) {
         current.hashtags = hashtagsMatch[1]
@@ -218,13 +253,18 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
           .filter(Boolean)
           .slice(0, 6);
       }
-      
-      const scheduleMatch = line.match(/\*\*Hora\/día sugerido para publicar\*\*:\s*(.+)/i);
-      if (scheduleMatch) current.schedule = scheduleMatch[1].trim();
+
+      const scheduleMatch = line.match(/\*\*Hora\/?d[íi]a sugerido (para )?publicar\*\*:\s*(.+)/i);
+      if (scheduleMatch) current.schedule = scheduleMatch[2] ? scheduleMatch[2].trim() : scheduleMatch[1].trim();
+
+      const estrategiaMatch = line.match(/\*\*?Estrategia\*\*?:\s*(.+)/i);
+      if (estrategiaMatch) {
+        current.description = (current.description ? current.description + ' ' : '') + estrategiaMatch[1].trim();
+      }
     }
-    
+
     if (current) ideas.push(current);
-    return ideas;
+    return ideas.filter(i => i.title && i.title.length > 0);
   };
 
   const deleteInsight = async (insightId: string) => {

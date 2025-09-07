@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
         // Store content analysis results
         const contentAnalysisData = {
           user_id: user.id,
-          platform: analysis.platform || 'instagram',
+          platform: analysis.social_type || 'instagram',
           cid: cid,
           analysis_period_start: fromDate.toISOString(),
           analysis_period_end: toDate.toISOString(),
@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
         }
 
         results.push({
-          platform: analysis.platform || 'instagram',
+          platform: analysis.social_type || 'instagram',
           cid: cid,
           posts_count: contentData.data.posts.length,
           analysis_id: insertedData.id,

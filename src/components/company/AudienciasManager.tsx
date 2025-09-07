@@ -123,6 +123,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPlatform, setFilterPlatform] = useState("all");
   const [companyData, setCompanyData] = useState<any>(null);
+  const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
   
   // Stats de la dashboard
   const [stats, setStats] = useState({
@@ -138,28 +139,44 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   console.log('AudienciasManager - profile:', profile);
 
   useEffect(() => {
-    if (profile?.user_id) {
-      console.log('AudienciasManager - Cargando datos para user_id:', profile.user_id);
-      loadAudiences();
-      loadCompanyData();
-    } else {
-      console.log('AudienciasManager - Sin user_id disponible');
-    }
-  }, [profile?.user_id]);
+    const init = async () => {
+      try {
+        let uid = profile?.user_id || userId;
+        if (!uid) {
+          const { data: { session } } = await supabase.auth.getSession();
+          uid = session?.user?.id || null;
+          if (uid) setUserId(uid);
+        }
+        if (uid) {
+          console.log('AudienciasManager - Cargando datos para user_id:', uid);
+          await Promise.all([
+            loadAudiences(uid),
+            loadCompanyData(uid),
+          ]);
+        } else {
+          console.log('AudienciasManager - Sin user_id disponible');
+        }
+      } catch (e) {
+        console.error('AudienciasManager - Error inicializando:', e);
+      }
+    };
+    init();
+  }, [profile?.user_id, userId]);
 
-  const loadCompanyData = async () => {
-    if (!profile?.user_id) {
+  const loadCompanyData = async (uid?: string) => {
+    const resolvedUid = uid || profile?.user_id || userId;
+    if (!resolvedUid) {
       console.log('AudienciasManager - No se puede cargar datos de empresa sin user_id');
       return;
     }
 
     try {
-      console.log('AudienciasManager - Cargando datos de empresa para user_id:', profile.user_id);
+      console.log('AudienciasManager - Cargando datos de empresa para user_id:', resolvedUid);
       
       const { data: memberData } = await supabase
         .from('company_members')
         .select('company_id')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', resolvedUid)
         .eq('is_primary', true)
         .single();
 
@@ -180,20 +197,21 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     }
   };
 
-  const loadAudiences = async () => {
-    if (!profile?.user_id) {
+  const loadAudiences = async (uid?: string) => {
+    const resolvedUid = uid || profile?.user_id || userId;
+    if (!resolvedUid) {
       console.log('AudienciasManager - No se puede cargar audiencias sin user_id');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('AudienciasManager - Cargando audiencias para user_id:', profile.user_id);
+      console.log('AudienciasManager - Cargando audiencias para user_id:', resolvedUid);
       
       const { data, error } = await supabase
         .from('company_audiences')
         .select('*')
-        .eq('user_id', profile.user_id)
+        .eq('user_id', resolvedUid)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -364,9 +382,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     return matchesSearch && matchesPlatform;
   });
 
-  
-  // Renderizado condicional si no hay perfil
-  if (!profile) {
+  // Renderizado condicional si no hay usuario resuelto
+  if (!userId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
         <div className="text-center">

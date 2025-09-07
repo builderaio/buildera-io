@@ -68,10 +68,62 @@ serve(async (req) => {
       throw new Error('Method not allowed')
     }
 
+    // Supported platforms and validators (only those the function can analyze)
+    const supportedPlatforms = ['instagram', 'youtube', 'twitter', 'tiktok', 'facebook']
+    const platformValidationRules: Record<string, (url: string) => boolean> = {
+      'instagram': (url: string) => url.includes('instagram.com/') && !url.includes('/p/') && !url.includes('/reel/'),
+      'youtube': (url: string) => url.includes('youtube.com/') && (url.includes('/@') || url.includes('/channel/') || url.includes('/c/')),
+      'twitter': (url: string) => url.includes('twitter.com/') || url.includes('x.com/'),
+      'tiktok': (url: string) => url.includes('tiktok.com/@'),
+      'facebook': (url: string) => url.includes('facebook.com/') && !url.includes('/groups/') && !url.includes('/profile.php')
+    }
+
+    // Helper to derive a company username for storage if missing
+    const deriveCompanyUsername = async (): Promise<string> => {
+      // Try to reuse any existing company_username for this user
+      const { data: existing } = await supabase
+        .from('social_accounts')
+        .select('company_username')
+        .eq('user_id', user.id)
+        .not('company_username', 'is', null)
+        .limit(1)
+        .maybeSingle()
+
+      if (existing?.company_username) return existing.company_username as string
+
+      // Fallback: try primary company name and slugify
+      const { data: membership } = await supabase
+        .from('company_members')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .eq('is_primary', true)
+        .maybeSingle()
+
+      if (membership?.company_id) {
+        const { data: company } = await supabase
+          .from('companies')
+          .select('name')
+          .eq('id', membership.company_id)
+          .maybeSingle()
+        const base = (company?.name || 'company')
+          .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+          .toLowerCase().replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+        return `${base}_${user.id.substring(0,8)}`
+      }
+
+      // Final fallback: user-based slug
+      return `user_${user.id.substring(0,8)}`
+    }
+
     const { urls }: { urls: UrlAnalysisRequest[] } = await req.json()
-    
+
+    // If no URLs provided, return supported platforms so UI can adapt gracefully
     if (!urls || !Array.isArray(urls) || urls.length === 0) {
-      throw new Error('URLs array is required')
+      return new Response(
+        JSON.stringify({ success: true, data: [], supportedPlatforms }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
     }
 
     console.log(`Analyzing ${urls.length} social media URLs for user ${user.id}`)
@@ -79,16 +131,6 @@ serve(async (req) => {
     const rapidApiKey = Deno.env.get('RAPIDAPI_KEY')
     if (!rapidApiKey) {
       throw new Error('RapidAPI key not configured')
-    }
-
-    // Supported platforms validation
-    const supportedPlatforms = ['instagram', 'youtube', 'twitter', 'tiktok', 'facebook']
-    const platformValidationRules = {
-      'instagram': (url: string) => url.includes('instagram.com/') && !url.includes('/p/') && !url.includes('/reel/'),
-      'youtube': (url: string) => url.includes('youtube.com/') && (url.includes('/@') || url.includes('/channel/') || url.includes('/c/')),
-      'twitter': (url: string) => url.includes('twitter.com/') || url.includes('x.com/'),
-      'tiktok': (url: string) => url.includes('tiktok.com/@'),
-      'facebook': (url: string) => url.includes('facebook.com/') && !url.includes('/groups/') && !url.includes('/profile.php')
     }
 
     const results: AudienceStats[] = []
@@ -174,19 +216,23 @@ serve(async (req) => {
           lastPosts: apiData.lastPosts || apiData.recentPosts || []
         }
 
-        // Store raw data and processed data in social_accounts table
+        // Store raw data and processed data in social_accounts table (tolerant to missing fields)
         try {
+          // Ensure we have a non-null company_username to satisfy DB constraint
+          const companyUsername = await deriveCompanyUsername()
+
           const { error: dbError } = await supabase
             .from('social_accounts')
             .upsert({
               user_id: user.id,
+              company_username: companyUsername,
               platform: platform,
-              platform_username: audienceStats.screenName,
-              platform_display_name: audienceStats.name,
+              platform_username: audienceStats.screenName || null,
+              platform_display_name: audienceStats.name || 'Perfil',
               is_connected: true,
               metadata: {
-                raw_analysis_data: apiData,
-                processed_stats: audienceStats,
+                raw_analysis_data: apiData ?? {},
+                processed_stats: audienceStats ?? {},
                 analysis_timestamp: new Date().toISOString(),
                 api_source: 'instagram-statistics-api'
               },
@@ -219,6 +265,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         data: results,
+        supportedPlatforms,
         message: `Successfully analyzed ${results.length} social media profiles`
       }),
       {

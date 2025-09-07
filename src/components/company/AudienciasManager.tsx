@@ -242,12 +242,13 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
 
   const extractSocialUrls = (company: any) => {
     const urls: any = {};
-    if (company?.instagram_url) urls.instagram = company.instagram_url;
-    if (company?.facebook_url) urls.facebook = company.facebook_url;
-    if (company?.twitter_url) urls.twitter = company.twitter_url;
-    if (company?.linkedin_url) urls.linkedin = company.linkedin_url;
-    if (company?.tiktok_url) urls.tiktok = company.tiktok_url;
-    if (company?.youtube_url) urls.youtube = company.youtube_url;
+    const supported = ['instagram', 'youtube', 'twitter', 'tiktok', 'facebook'];
+    if (company?.instagram_url && supported.includes('instagram')) urls.instagram = company.instagram_url;
+    if (company?.facebook_url && supported.includes('facebook')) urls.facebook = company.facebook_url;
+    if (company?.twitter_url && supported.includes('twitter')) urls.twitter = company.twitter_url;
+    if (company?.linkedin_url && supported.includes('linkedin')) {/* not supported - ignore */}
+    if (company?.tiktok_url && supported.includes('tiktok')) urls.tiktok = company.tiktok_url;
+    if (company?.youtube_url && supported.includes('youtube')) urls.youtube = company.youtube_url;
     return urls;
   };
 
@@ -326,7 +327,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     
     try {
       const { data, error } = await supabase.functions.invoke('analyze-social-audience', {
-        body: { urls: [] } // Empty array for initial load
+        body: { urls: [] as any[] }
       });
 
       if (error) throw error;

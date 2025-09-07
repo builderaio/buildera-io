@@ -13,48 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
-import { 
-  Sparkles, 
-  BarChart3, 
-  Calendar, 
-  TrendingUp,
-  Users,
-  Heart,
-  MessageCircle,
-  ArrowRight,
-  Plus,
-  ChevronRight,
-  Zap,
-  Eye,
-  Target,
-  Brain,
-  Rocket,
-  Star,
-  Activity,
-  PieChart,
-  LineChart,
-  CheckCircle2,
-  PlayCircle,
-  Image,
-  Video,
-  PenTool,
-  Globe,
-  Wand2,
-  Camera,
-  TrendingDown,
-  Hash,
-  Clock,
-  Award,
-  Network,
-  Share2,
-  Download,
-  Upload,
-  RefreshCw,
-  Filter,
-  Search,
-  Settings,
-  History as HistoryIcon
-} from "lucide-react";
+import { Sparkles, BarChart3, Calendar, TrendingUp, Users, Heart, MessageCircle, ArrowRight, Plus, ChevronRight, Zap, Eye, Target, Brain, Rocket, Star, Activity, PieChart, LineChart, CheckCircle2, PlayCircle, Image, Video, PenTool, Globe, Wand2, Camera, TrendingDown, Hash, Clock, Award, Network, Share2, Download, Upload, RefreshCw, Filter, Search, Settings, History as HistoryIcon } from "lucide-react";
 import { SocialConnectionManager } from './SocialConnectionManager';
 import { SocialPostCreator } from './SocialPostCreator';
 import { ScheduledPostsManager } from './ScheduledPostsManager';
@@ -63,7 +22,6 @@ import MarketingHubOrchestrator from './MarketingHubOrchestrator';
 interface MarketingHubWowProps {
   profile: any;
 }
-
 interface QuickStat {
   label: string;
   value: string;
@@ -73,7 +31,6 @@ interface QuickStat {
   color: string;
   description?: string;
 }
-
 interface CompanyData {
   nombre_empresa: string;
   pais: string;
@@ -83,7 +40,6 @@ interface CompanyData {
   objective_id?: string; // ID del objetivo seleccionado
   redes_socciales_activas?: string[]; // Redes sociales conectadas
 }
-
 interface CompanyObjective {
   id: string;
   title: string;
@@ -91,7 +47,6 @@ interface CompanyObjective {
   priority: number;
   status: string;
 }
-
 interface WorkflowState {
   setup: boolean;
   analysis: boolean;
@@ -99,14 +54,15 @@ interface WorkflowState {
   content: boolean;
   automation: boolean;
 }
-
-const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
+const MarketingHubWow = ({
+  profile
+}: MarketingHubWowProps) => {
   const [activeTab, setActiveTab] = useState("dashboard");
   // Set initial tab from URL ?tab=
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    const allowed = new Set(['dashboard','create','analyze','schedule','history','results','campaign-wizard']);
+    const allowed = new Set(['dashboard', 'create', 'analyze', 'schedule', 'history', 'results', 'campaign-wizard']);
     if (tab && allowed.has(tab)) setActiveTab(tab);
   }, []);
   const [loading, setLoading] = useState(false);
@@ -120,7 +76,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const [currentProcess, setCurrentProcess] = useState<string | null>(null);
   const [processStep, setProcessStep] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
-  const [stepDetails, setStepDetails] = useState({ title: '', description: '' });
+  const [stepDetails, setStepDetails] = useState({
+    title: '',
+    description: ''
+  });
   const [recentActivity, setRecentActivity] = useState([]);
   const [upcomingPosts, setUpcomingPosts] = useState([]);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -154,16 +113,31 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   });
   const [availableObjectives, setAvailableObjectives] = useState<CompanyObjective[]>([]);
   const [platformStats, setPlatformStats] = useState({
-    instagram: { posts: 0, followers: 0, engagement: 0 },
-    linkedin: { posts: 0, connections: 0, engagement: 0 },
-    facebook: { posts: 0, likes: 0, engagement: 0 },
-    tiktok: { posts: 0, views: 0, engagement: 0 }
+    instagram: {
+      posts: 0,
+      followers: 0,
+      engagement: 0
+    },
+    linkedin: {
+      posts: 0,
+      connections: 0,
+      engagement: 0
+    },
+    facebook: {
+      posts: 0,
+      likes: 0,
+      engagement: 0
+    },
+    tiktok: {
+      posts: 0,
+      views: 0,
+      engagement: 0
+    }
   });
-
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
-
   useEffect(() => {
     let active = true;
     const resolve = async () => {
@@ -171,7 +145,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         if (profile?.user_id) {
           if (active) setUserId(profile.user_id);
         } else {
-          const { data: { user } } = await supabase.auth.getUser();
+          const {
+            data: {
+              user
+            }
+          } = await supabase.auth.getUser();
           if (active) setUserId(user?.id ?? null);
         }
       } catch (e) {
@@ -179,9 +157,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       }
     };
     resolve();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [profile?.user_id]);
-
   useEffect(() => {
     if (userId) {
       initializeMarketingHub();
@@ -190,32 +169,21 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const initializeMarketingHub = async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        loadConnections(),
-        loadRealMetrics(),
-        loadRecentActivity(),
-        loadUpcomingPosts(),
-        loadPlatformStats(),
-        checkWorkflowStatus()
-      ]);
+      await Promise.all([loadConnections(), loadRealMetrics(), loadRecentActivity(), loadUpcomingPosts(), loadPlatformStats(), checkWorkflowStatus()]);
     } catch (error) {
       console.error('Error initializing Marketing Hub:', error);
     } finally {
       setLoading(false);
     }
   };
-
   const loadConnections = async () => {
     try {
       // 1) Leer desde la BD
-      const { data, error } = await supabase
-        .from('social_accounts')
-        .select('platform, is_connected')
-        .eq('user_id', userId)
-        .eq('is_connected', true);
-
+      const {
+        data,
+        error
+      } = await supabase.from('social_accounts').select('platform, is_connected').eq('user_id', userId).eq('is_connected', true);
       if (error) throw error;
-
       let platforms = new Set((data || []).map((a: any) => a.platform));
 
       // 2) Si no hay conexiones, forzar sincronización con Upload-Post y volver a leer
@@ -223,121 +191,95 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         console.log('ℹ️ No hay conexiones en BD. Intentando sincronizar con Upload-Post...');
         // inicializar/obtener username
         const init = await supabase.functions.invoke('upload-post-manager', {
-          body: { action: 'init_profile', data: {} }
+          body: {
+            action: 'init_profile',
+            data: {}
+          }
         });
         const companyUsername = (init.data as any)?.companyUsername;
         if (companyUsername) {
           await supabase.functions.invoke('upload-post-manager', {
-            body: { action: 'get_connections', data: { companyUsername } }
+            body: {
+              action: 'get_connections',
+              data: {
+                companyUsername
+              }
+            }
           });
-          const { data: refreshed } = await supabase
-            .from('social_accounts')
-            .select('platform, is_connected')
-             .eq('user_id', userId)
-            .eq('is_connected', true);
+          const {
+            data: refreshed
+          } = await supabase.from('social_accounts').select('platform, is_connected').eq('user_id', userId).eq('is_connected', true);
           platforms = new Set((refreshed || []).map((a: any) => a.platform));
         }
       }
-
       setSocialConnections({
         linkedin: platforms.has('linkedin'),
         instagram: platforms.has('instagram'),
         facebook: platforms.has('facebook'),
-        tiktok: platforms.has('tiktok'),
+        tiktok: platforms.has('tiktok')
       });
     } catch (error) {
       console.error('Error loading connections:', error);
     }
   };
-
-
   const loadRealMetrics = async () => {
     try {
-      const [insightsRes, actionablesRes, postsRes, campaignsRes] = await Promise.all([
-        supabase.from('marketing_insights').select('*').eq('user_id', userId),
-        supabase.from('marketing_actionables').select('status').eq('user_id', userId).eq('status', 'completed'),
-        supabase.from('linkedin_posts').select('likes_count, comments_count').eq('user_id', userId),
-        supabase.from('marketing_insights').select('*').eq('user_id', userId)
-      ]);
-
+      const [insightsRes, actionablesRes, postsRes, campaignsRes] = await Promise.all([supabase.from('marketing_insights').select('*').eq('user_id', userId), supabase.from('marketing_actionables').select('status').eq('user_id', userId).eq('status', 'completed'), supabase.from('linkedin_posts').select('likes_count, comments_count').eq('user_id', userId), supabase.from('marketing_insights').select('*').eq('user_id', userId)]);
       const totalInsights = insightsRes.data?.length || 0;
       const completedActions = actionablesRes.data?.length || 0;
       const posts = postsRes.data || [];
       const campaigns = campaignsRes.data?.length || 0;
-      
       const totalLikes = posts.reduce((sum, post) => sum + (post.likes_count || 0), 0);
       const totalComments = posts.reduce((sum, post) => sum + (post.comments_count || 0), 0);
       const totalEngagement = totalLikes + totalComments;
-
-      const metrics: QuickStat[] = [
-        {
-          label: "Insights Generados",
-          value: totalInsights.toString(),
-          change: totalInsights > 0 ? `+${Math.min(totalInsights, 15)}` : "0",
-          trend: "up",
-          icon: Brain,
-          color: "text-purple-600",
-          description: "Análisis inteligentes generados"
-        },
-        {
-          label: "Engagement Total",
-          value: formatNumber(totalEngagement),
-          change: totalEngagement > 0 ? "+12.5%" : "0%",
-          trend: totalEngagement > 0 ? "up" : "neutral",
-          icon: Heart,
-          color: "text-pink-600",
-          description: "Interacciones en todas las plataformas"
-        },
-        {
-          label: "Campañas Activas",
-          value: campaigns.toString(),
-          change: campaigns > 0 ? `+${campaigns}` : "0",
-          trend: campaigns > 0 ? "up" : "neutral",
-          icon: Rocket,
-          color: "text-blue-600",
-          description: "Campañas de marketing en ejecución"
-        },
-        {
-          label: "Score de Automatización",
-          value: `${Math.round((completedActions / Math.max(totalInsights, 1)) * 100)}%`,
-          change: completedActions > 0 ? "+15%" : "0%",
-          trend: completedActions > 0 ? "up" : "neutral",
-          icon: Zap,
-          color: "text-green-600",
-          description: "Eficiencia de automatización"
-        }
-      ];
-
+      const metrics: QuickStat[] = [{
+        label: "Insights Generados",
+        value: totalInsights.toString(),
+        change: totalInsights > 0 ? `+${Math.min(totalInsights, 15)}` : "0",
+        trend: "up",
+        icon: Brain,
+        color: "text-purple-600",
+        description: "Análisis inteligentes generados"
+      }, {
+        label: "Engagement Total",
+        value: formatNumber(totalEngagement),
+        change: totalEngagement > 0 ? "+12.5%" : "0%",
+        trend: totalEngagement > 0 ? "up" : "neutral",
+        icon: Heart,
+        color: "text-pink-600",
+        description: "Interacciones en todas las plataformas"
+      }, {
+        label: "Campañas Activas",
+        value: campaigns.toString(),
+        change: campaigns > 0 ? `+${campaigns}` : "0",
+        trend: campaigns > 0 ? "up" : "neutral",
+        icon: Rocket,
+        color: "text-blue-600",
+        description: "Campañas de marketing en ejecución"
+      }, {
+        label: "Score de Automatización",
+        value: `${Math.round(completedActions / Math.max(totalInsights, 1) * 100)}%`,
+        change: completedActions > 0 ? "+15%" : "0%",
+        trend: completedActions > 0 ? "up" : "neutral",
+        icon: Zap,
+        color: "text-green-600",
+        description: "Eficiencia de automatización"
+      }];
       setRealMetrics(metrics);
     } catch (error) {
       console.error('Error loading metrics:', error);
     }
   };
-
   const loadRecentActivity = async () => {
     try {
-      const [insights, posts, campaigns] = await Promise.all([
-        supabase.from('marketing_insights')
-          .select('created_at, title, insight_type')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(5),
-        
-        supabase.from('linkedin_posts')
-          .select('posted_at, content')
-          .eq('user_id', userId)
-          .order('posted_at', { ascending: false })
-          .limit(3),
-
-        supabase.from('marketing_campaigns')
-          .select('created_at, name, status')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(2)
-      ]);
-
+      const [insights, posts, campaigns] = await Promise.all([supabase.from('marketing_insights').select('created_at, title, insight_type').eq('user_id', userId).order('created_at', {
+        ascending: false
+      }).limit(5), supabase.from('linkedin_posts').select('posted_at, content').eq('user_id', userId).order('posted_at', {
+        ascending: false
+      }).limit(3), supabase.from('marketing_campaigns').select('created_at, name, status').eq('user_id', userId).order('created_at', {
+        ascending: false
+      }).limit(2)]);
       const activities = [];
-
       insights.data?.forEach(insight => {
         activities.push({
           icon: getInsightIcon(insight.insight_type),
@@ -348,7 +290,6 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           category: insight.insight_type
         });
       });
-
       posts.data?.forEach(post => {
         activities.push({
           icon: MessageCircle,
@@ -360,24 +301,20 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         });
       });
 
-        // Skip campaigns for now due to schema mismatch
+      // Skip campaigns for now due to schema mismatch
 
       setRecentActivity(activities.slice(0, 8));
     } catch (error) {
       console.error('Error loading recent activity:', error);
     }
   };
-
   const loadUpcomingPosts = async () => {
     try {
-      const { data: scheduledPosts } = await supabase
-        .from('scheduled_posts')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('scheduled_for', new Date().toISOString())
-        .order('scheduled_for', { ascending: true })
-        .limit(5);
-
+      const {
+        data: scheduledPosts
+      } = await supabase.from('scheduled_posts').select('*').eq('user_id', userId).gte('scheduled_for', new Date().toISOString()).order('scheduled_for', {
+        ascending: true
+      }).limit(5);
       const upcoming = scheduledPosts?.map(post => ({
         icon: getContentTypeIcon('post'),
         title: typeof post.content === 'string' ? post.content.substring(0, 50) + '...' : 'Post programado',
@@ -385,45 +322,24 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         platform: post.platform,
         type: 'post'
       })) || [];
-
       setUpcomingPosts(upcoming);
     } catch (error) {
       console.error('Error loading upcoming posts:', error);
     }
   };
-
   const loadPlatformStats = async () => {
     try {
-      const [instagramRes, linkedinRes, facebookRes, tiktokRes] = await Promise.all([
-        supabase.from('instagram_posts')
-          .select('like_count, comment_count, reach')
-          .eq('user_id', userId),
-        
-        supabase.from('linkedin_posts')
-          .select('likes_count, comments_count')
-          .eq('user_id', userId),
-        
-        supabase.from('facebook_posts')
-          .select('likes_count, comments_count, reach')
-          .eq('user_id', userId),
-        
-        supabase.from('tiktok_posts')
-          .select('digg_count, comment_count, play_count')
-          .eq('user_id', userId)
-      ]);
-
+      const [instagramRes, linkedinRes, facebookRes, tiktokRes] = await Promise.all([supabase.from('instagram_posts').select('like_count, comment_count, reach').eq('user_id', userId), supabase.from('linkedin_posts').select('likes_count, comments_count').eq('user_id', userId), supabase.from('facebook_posts').select('likes_count, comments_count, reach').eq('user_id', userId), supabase.from('tiktok_posts').select('digg_count, comment_count, play_count').eq('user_id', userId)]);
       const calculateStats = (posts: any[], likeField: string, commentField: string, reachField?: string) => {
         const totalLikes = posts.reduce((sum, post) => sum + (post[likeField] || 0), 0);
         const totalComments = posts.reduce((sum, post) => sum + (post[commentField] || 0), 0);
         const totalReach = reachField ? posts.reduce((sum, post) => sum + (post[reachField] || 0), 0) : 0;
-        
         return {
           posts: posts.length,
           engagement: totalLikes + totalComments,
           reach: totalReach
         };
       };
-
       setPlatformStats({
         instagram: {
           ...calculateStats(instagramRes.data || [], 'like_count', 'comment_count', 'reach'),
@@ -446,14 +362,14 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       console.error('Error loading platform stats:', error);
     }
   };
-
   const checkWorkflowStatus = async () => {
     console.log('=== DEBUG: checkWorkflowStatus iniciado ===');
     try {
       // Buscar empresa principal del usuario a través de company_members
-      const { data: companyMember, error: memberError } = await supabase
-        .from('company_members')
-        .select(`
+      const {
+        data: companyMember,
+        error: memberError
+      } = await supabase.from('company_members').select(`
           company_id,
           companies (
             id,
@@ -463,58 +379,31 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             website_url,
             industry_sector
           )
-        `)
-        .eq('user_id', userId)
-        .eq('is_primary', true)
-        .limit(1)
-        .single();
-
-      console.log('Company member result:', { companyMember, memberError });
-
-      const [campaignRes] = await Promise.all([
-        supabase.from('marketing_insights').select('*').eq('user_id', userId).limit(1)
-      ]);
-
+        `).eq('user_id', userId).eq('is_primary', true).limit(1).single();
+      console.log('Company member result:', {
+        companyMember,
+        memberError
+      });
+      const [campaignRes] = await Promise.all([supabase.from('marketing_insights').select('*').eq('user_id', userId).limit(1)]);
       setWorkflow({
         setup: companyMember?.companies ? true : false,
-        analysis: false, // Se establecerá según análisis previos
+        analysis: false,
+        // Se establecerá según análisis previos
         strategy: (campaignRes.data?.length || 0) > 0,
-        content: false, // Se establecerá según contenido generado
+        content: false,
+        // Se establecerá según contenido generado
         automation: false // Se establecerá según automatizaciones activas
       });
-
       if (companyMember?.companies) {
         const company = companyMember.companies;
         console.log('Company data found:', company);
 
         // Enriquecer datos desde company_strategy, company_objectives, company_branding y conexiones sociales
-        const [objectivesRes, strategyRes, brandingRes, connectionsRes] = await Promise.all([
-          supabase
-            .from('company_objectives')
-            .select('id, title, description, status, priority')
-            .eq('company_id', company.id)
-            .eq('status', 'active')
-            .order('priority', { ascending: false }),
-          supabase
-            .from('company_strategy')
-            .select('propuesta_valor, vision, mision')
-            .eq('company_id', company.id)
-            .limit(1)
-            .maybeSingle(),
-          supabase
-            .from('company_branding')
-            .select('brand_voice, visual_identity, full_brand_data')
-            .eq('company_id', company.id)
-            .limit(1)
-            .maybeSingle(),
-          // Obtener conexiones sociales activas
-          Promise.all([
-            supabase.from('linkedin_connections').select('id').eq('user_id', userId).limit(1),
-            supabase.from('facebook_instagram_connections').select('id').eq('user_id', userId).limit(1),
-            supabase.from('tiktok_connections').select('id').eq('user_id', userId).limit(1)
-          ])
-        ]);
-
+        const [objectivesRes, strategyRes, brandingRes, connectionsRes] = await Promise.all([supabase.from('company_objectives').select('id, title, description, status, priority').eq('company_id', company.id).eq('status', 'active').order('priority', {
+          ascending: false
+        }), supabase.from('company_strategy').select('propuesta_valor, vision, mision').eq('company_id', company.id).limit(1).maybeSingle(), supabase.from('company_branding').select('brand_voice, visual_identity, full_brand_data').eq('company_id', company.id).limit(1).maybeSingle(),
+        // Obtener conexiones sociales activas
+        Promise.all([supabase.from('linkedin_connections').select('id').eq('user_id', userId).limit(1), supabase.from('facebook_instagram_connections').select('id').eq('user_id', userId).limit(1), supabase.from('tiktok_connections').select('id').eq('user_id', userId).limit(1)])]);
         const objectives = objectivesRes.data as CompanyObjective[] || [];
         const strategy = strategyRes.data as any | null;
         const branding = brandingRes.data as any | null;
@@ -530,17 +419,12 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         if (tiktokConn.data && tiktokConn.data.length > 0) redesSocialesActivas.push('tiktok');
 
         // Obtener propuesta de valor de company_strategy primero
-        const propuestaDeValor = strategy?.propuesta_valor
-          || branding?.brand_voice?.propuesta_de_valor
-          || branding?.full_brand_data?.propuesta_de_valor
-          || branding?.brand_voice?.unified_message
-          || company.description
-          || '';
-
+        const propuestaDeValor = strategy?.propuesta_valor || branding?.brand_voice?.propuesta_de_valor || branding?.full_brand_data?.propuesta_de_valor || branding?.brand_voice?.unified_message || company.description || '';
         const newCompanyData: CompanyData = {
           nombre_empresa: company.name || '',
           pais: company.country || '',
-          objetivo_de_negocio: '', // Se seleccionará desde el diálogo
+          objetivo_de_negocio: '',
+          // Se seleccionará desde el diálogo
           propuesta_de_valor: propuestaDeValor,
           url_sitio_web: company.website_url || '',
           objective_id: '',
@@ -555,29 +439,24 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       console.error('Error checking workflow status:', error);
     }
   };
-
   const startIntelligentCampaign = async (dataOverride?: CompanyData) => {
     console.log('=== DEBUG: startIntelligentCampaign iniciado ===');
-    
+
     // Verificar datos de empresa y cargar si están faltantes
     if (!companyData.nombre_empresa) {
       console.log('⚠️ Datos de empresa no cargados, recargando...');
       await checkWorkflowStatus();
     }
-    
+
     // Usar datos existentes de la empresa
     const existingData = {
       ...companyData,
-      redes_socciales_activas: Object.keys(socialConnections).filter(
-        platform => socialConnections[platform as keyof typeof socialConnections]
-      )
+      redes_socciales_activas: Object.keys(socialConnections).filter(platform => socialConnections[platform as keyof typeof socialConnections])
     };
-    
     console.log('📊 Datos de empresa para campaña:', existingData);
-    
+
     // Verificar si hay redes sociales configuradas
     const hasConnections = existingData.redes_socciales_activas && existingData.redes_socciales_activas.length > 0;
-
     if (!hasConnections) {
       toast({
         title: "Redes sociales requeridas",
@@ -598,7 +477,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     }
 
     // Solo solicitar objetivo si no se ha proporcionado uno
-    if (!dataOverride && (!existingData.objetivo_de_negocio || (!existingData.objective_id && !customObjective))) {
+    if (!dataOverride && (!existingData.objetivo_de_negocio || !existingData.objective_id && !customObjective)) {
       console.log('=== DEBUG: Solicitando objetivo de campaña ===');
       setShowObjectiveDialog(true);
       return;
@@ -610,15 +489,12 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       objetivo_de_negocio: customObjective || existingData.objetivo_de_negocio,
       objective_id: selectedObjective || existingData.objective_id
     };
-
     console.log('=== DEBUG: Iniciando campaña con datos validados:', finalData);
-
     setCurrentProcess('intelligent-campaign');
     setProcessStep(0);
     setTotalSteps(8);
     setAnalysisProgress(0);
     setShowResults(false);
-
     try {
       // Paso 1: Análisis de audiencia
       updateProcess(1, "Análisis de Audiencia", "Identificando tu audiencia objetivo ideal...");
@@ -627,7 +503,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         audienceResult = await callMarketingFunction('marketing-hub-target-audience', finalData);
       } catch (error) {
         console.warn('Error en análisis de audiencia, continuando...', error);
-        audienceResult = { data: { audiencia_objetivo: "Audiencia general" } };
+        audienceResult = {
+          data: {
+            audiencia_objetivo: "Audiencia general"
+          }
+        };
       }
       setAnalysisProgress(15);
 
@@ -700,26 +580,24 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
       // Paso 8: Resultados
       updateProcess(8, "¡Campaña Lista!", "Su campaña inteligente está lista para ejecutar");
-      
       setShowResults(true);
-      setWorkflow(prev => ({ ...prev, analysis: true, strategy: true, content: true }));
-      
+      setWorkflow(prev => ({
+        ...prev,
+        analysis: true,
+        strategy: true,
+        content: true
+      }));
       toast({
         title: "🚀 ¡Campaña Inteligente Creada!",
-        description: "Su campaña de marketing ha sido generada con IA avanzada",
+        description: "Su campaña de marketing ha sido generada con IA avanzada"
       });
 
       // Recargar métricas y actividad
       try {
-        await Promise.all([
-          loadRealMetrics(),
-          loadRecentActivity(),
-          loadUpcomingPosts()
-        ]);
+        await Promise.all([loadRealMetrics(), loadRecentActivity(), loadUpcomingPosts()]);
       } catch (error) {
         console.warn('Error recargando métricas, continuando...', error);
       }
-
     } catch (error: any) {
       console.error('❌ Error creating intelligent campaign:', error);
       toast({
@@ -732,35 +610,28 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       setProcessStep(0);
     }
   };
-
   const handleObjectiveSelection = async () => {
     const objectiveData = {
       ...companyData,
       objetivo_de_negocio: customObjective || companyData.objetivo_de_negocio,
       objective_id: selectedObjective || companyData.objective_id,
-      redes_socciales_activas: Object.keys(socialConnections).filter(
-        platform => socialConnections[platform as keyof typeof socialConnections]
-      )
+      redes_socciales_activas: Object.keys(socialConnections).filter(platform => socialConnections[platform as keyof typeof socialConnections])
     };
-
     setShowObjectiveDialog(false);
-    
+
     // Continuar con la campaña usando los datos existentes + objetivo
     startIntelligentCampaign(objectiveData);
   };
-
   const analyzeConnectedPlatforms = async () => {
-    const connectedPlatforms = Object.entries(socialConnections)
-      .filter(([_, connected]) => connected)
-      .map(([platform, _]) => platform);
-
+    const connectedPlatforms = Object.entries(socialConnections).filter(([_, connected]) => connected).map(([platform, _]) => platform);
     console.log(`📱 Analizando ${connectedPlatforms.length} plataformas conectadas:`, connectedPlatforms);
-
     for (const platform of connectedPlatforms) {
       try {
         console.log(`🔍 Analizando ${platform}...`);
         await supabase.functions.invoke(`${platform}-intelligent-analysis`, {
-          body: { platform }
+          body: {
+            platform
+          }
         });
         console.log(`✅ Análisis de ${platform} completado`);
       } catch (error) {
@@ -769,10 +640,8 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       }
     }
   };
-
   const createOptimizedContent = async () => {
     const contentTypes = ['post', 'image', 'reel'];
-    
     for (const type of contentTypes) {
       try {
         console.log(`🎨 Creando contenido ${type}...`);
@@ -796,51 +665,57 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       }
     }
   };
-
   const runAdvancedAnalysis = async () => {
     try {
-      await Promise.all([
-        supabase.functions.invoke('advanced-social-analyzer', { body: { action: 'comprehensive_analysis' } }),
-        supabase.functions.invoke('content-insights-analyzer', { body: { platform: null } }),
-        supabase.functions.invoke('calculate-social-analytics', { body: {} })
-      ]);
+      await Promise.all([supabase.functions.invoke('advanced-social-analyzer', {
+        body: {
+          action: 'comprehensive_analysis'
+        }
+      }), supabase.functions.invoke('content-insights-analyzer', {
+        body: {
+          platform: null
+        }
+      }), supabase.functions.invoke('calculate-social-analytics', {
+        body: {}
+      })]);
     } catch (error) {
       console.error('Error in advanced analysis:', error);
     }
   };
-
   const optimizeCampaign = async () => {
     // Aplicar optimizaciones finales y configurar automatizaciones
     try {
       await supabase.functions.invoke('premium-ai-insights', {
-        body: { optimize: true }
+        body: {
+          optimize: true
+        }
       });
     } catch (error) {
       console.error('Error optimizing campaign:', error);
     }
   };
-
   const callMarketingFunction = async (functionName: string, data: any) => {
     // Get N8N credentials for Basic auth
     const N8N_AUTH_USER = 'buildera_n8n_user';
     const N8N_AUTH_PASS = 'BuilderaFlow2024!';
     const credentials = btoa(`${N8N_AUTH_USER}:${N8N_AUTH_PASS}`);
-    
     console.log(`🔄 Calling marketing function: ${functionName}`, data);
-    
     try {
-      const { data: result, error } = await supabase.functions.invoke(functionName, {
-        body: { input: data },
+      const {
+        data: result,
+        error
+      } = await supabase.functions.invoke(functionName, {
+        body: {
+          input: data
+        },
         headers: {
-          'Authorization': `Basic ${credentials}`,
+          'Authorization': `Basic ${credentials}`
         }
       });
-
       if (error) {
         console.error(`❌ Error in ${functionName}:`, error);
         throw error;
       }
-      
       console.log(`✅ Success in ${functionName}:`, result);
       return result;
     } catch (error) {
@@ -848,10 +723,12 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       throw error;
     }
   };
-
   const updateProcess = (step: number, title: string, description: string) => {
     setProcessStep(step);
-    setStepDetails({ title, description });
+    setStepDetails({
+      title,
+      description
+    });
   };
 
   // Utility functions
@@ -860,76 +737,84 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num.toString();
   };
-
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
     const date = new Date(dateString);
     const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
     if (diffHours < 1) return 'Hace menos de 1h';
     if (diffHours < 24) return `Hace ${diffHours}h`;
     const diffDays = Math.floor(diffHours / 24);
     if (diffDays < 7) return `Hace ${diffDays}d`;
     return date.toLocaleDateString();
   };
-
   const formatScheduledTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffHours = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60));
-    
     if (diffHours < 24) return `En ${diffHours}h`;
     const diffDays = Math.floor(diffHours / 24);
     if (diffDays === 1) return 'Mañana';
     if (diffDays < 7) return `En ${diffDays}d`;
     return date.toLocaleDateString();
   };
-
   const getInsightIcon = (type: string) => {
     switch (type) {
-      case 'optimal_timing': return Clock;
-      case 'content_performance': return BarChart3;
-      case 'hashtag_optimization': return Hash;
-      case 'sentiment_analysis': return Heart;
-      default: return Sparkles;
+      case 'optimal_timing':
+        return Clock;
+      case 'content_performance':
+        return BarChart3;
+      case 'hashtag_optimization':
+        return Hash;
+      case 'sentiment_analysis':
+        return Heart;
+      default:
+        return Sparkles;
     }
   };
-
   const getInsightColor = (type: string) => {
     switch (type) {
-      case 'optimal_timing': return 'text-blue-600';
-      case 'content_performance': return 'text-green-600';
-      case 'hashtag_optimization': return 'text-purple-600';
-      case 'sentiment_analysis': return 'text-pink-600';
-      default: return 'text-yellow-600';
+      case 'optimal_timing':
+        return 'text-blue-600';
+      case 'content_performance':
+        return 'text-green-600';
+      case 'hashtag_optimization':
+        return 'text-purple-600';
+      case 'sentiment_analysis':
+        return 'text-pink-600';
+      default:
+        return 'text-yellow-600';
     }
   };
-
   const getContentTypeIcon = (type: string) => {
     switch (type) {
-      case 'image': return Image;
-      case 'video': return Video;
-      case 'reel': return PlayCircle;
-      default: return PenTool;
+      case 'image':
+        return Image;
+      case 'video':
+        return Video;
+      case 'reel':
+        return PlayCircle;
+      default:
+        return PenTool;
     }
   };
-
   const getPlatformIcon = (platform: string) => {
     switch (platform?.toLowerCase()) {
-      case 'linkedin': return Network;
-      case 'instagram': return Camera;
-      case 'facebook': return Share2;
-      case 'tiktok': return PlayCircle;
-      default: return Globe;
+      case 'linkedin':
+        return Network;
+      case 'instagram':
+        return Camera;
+      case 'facebook':
+        return Share2;
+      case 'tiktok':
+        return PlayCircle;
+      default:
+        return Globe;
     }
   };
-
   const connectedPlatformsCount = Object.values(socialConnections).filter(Boolean).length;
   const workflowProgress = Object.values(workflow).filter(Boolean).length;
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[600px]">
+    return <div className="flex items-center justify-center min-h-[600px]">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-primary/70 flex items-center justify-center animate-pulse">
             <Sparkles className="w-8 h-8 text-white" />
@@ -939,12 +824,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             <p className="text-muted-foreground">Cargando tu centro de comando inteligente...</p>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Hero Header */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-primary/90 to-primary/80 p-8 text-white">
@@ -964,49 +846,17 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                  <span className="text-sm text-white/90">{connectedPlatformsCount} plataformas conectadas</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-400" />
-                  <span className="text-sm text-white/90">{workflowProgress}/5 configuración completa</span>
-                </div>
-              </div>
+              
             </div>
 
-            <Button
-              onClick={() => startIntelligentCampaign()}
-              disabled={currentProcess !== null}
-              className="bg-white text-primary hover:bg-white/90 font-semibold px-8 py-6 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-            >
-              {currentProcess ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  Creando Campaña...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Rocket className="w-5 h-5" />
-                  Crear Campaña Inteligente
-                </div>
-              )}
-            </Button>
+            
           </div>
         </div>
 
         {/* Process Loading */}
-        {currentProcess && (
-          <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+        {currentProcess && <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-background">
             <CardContent className="p-8">
-                <AdvancedAILoader
-                  isVisible={true}
-                  currentStep={processStep}
-                  totalSteps={totalSteps}
-                  stepTitle={stepDetails.title}
-                  stepDescription={stepDetails.description}
-                />
+                <AdvancedAILoader isVisible={true} currentStep={processStep} totalSteps={totalSteps} stepTitle={stepDetails.title} stepDescription={stepDetails.description} />
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Progreso de la campaña</span>
@@ -1015,77 +865,46 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 <Progress value={analysisProgress} className="h-3 bg-primary/10" />
               </div>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* Metrics Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {realMetrics.map((metric, index) => {
-            const IconComponent = metric.icon;
-            return (
-              <Card key={index} className="group hover:shadow-xl transition-all duration-500 hover:scale-105 border-0 bg-gradient-to-br from-background via-background/90 to-background/70 backdrop-blur-sm overflow-hidden">
-                <CardContent className="p-6 relative">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/10 to-transparent rounded-full -translate-y-6 translate-x-6"></div>
-                  
-                  <div className="flex items-start justify-between relative z-10">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-primary/10 to-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                          <IconComponent className={`h-6 w-6 ${metric.color}`} />
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold text-foreground">{metric.value}</p>
-                          <p className="text-sm text-muted-foreground">{metric.label}</p>
-                        </div>
-                      </div>
-                      
-                      {metric.description && (
-                        <p className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          {metric.description}
-                        </p>
-                      )}
-                    </div>
-                    
-                    <Badge 
-                      variant="default" 
-                      className={`${ 
-                        metric.trend === 'up' ? 'bg-green-100 text-green-700 border-green-200' :
-                        metric.trend === 'down' ? 'bg-red-100 text-red-700 border-red-200' :
-                        'bg-yellow-100 text-yellow-700 border-yellow-200'
-                      } transition-all duration-300 hover:scale-110`}
-                    >
-                      {metric.trend === 'up' && <TrendingUp className="w-3 h-3 mr-1" />}
-                      {metric.trend === 'down' && <TrendingDown className="w-3 h-3 mr-1" />}
-                      {metric.change}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-7 h-16 p-1 bg-muted/50 backdrop-blur-sm rounded-2xl">
-            {[
-              { value: "dashboard", icon: BarChart3, label: "Panel" },
-              { value: "create", icon: Wand2, label: "Crear" },
-              { value: "campaign-wizard", icon: Rocket, label: "Campaña IA" },
-              { value: "analyze", icon: Brain, label: "Analizar" },
-              { value: "schedule", icon: Calendar, label: "Programar" },
-              { value: "history", icon: HistoryIcon, label: "Historial" },
-              { value: "results", icon: Star, label: "Resultados" }
-            ].map((tab) => (
-              <TabsTrigger 
-                key={tab.value}
-                value={tab.value}
-                className="flex flex-col items-center gap-1 py-3 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-xl transition-all duration-300"
-              >
+            {[{
+            value: "dashboard",
+            icon: BarChart3,
+            label: "Panel"
+          }, {
+            value: "create",
+            icon: Wand2,
+            label: "Crear"
+          }, {
+            value: "campaign-wizard",
+            icon: Rocket,
+            label: "Campaña IA"
+          }, {
+            value: "analyze",
+            icon: Brain,
+            label: "Analizar"
+          }, {
+            value: "schedule",
+            icon: Calendar,
+            label: "Programar"
+          }, {
+            value: "history",
+            icon: HistoryIcon,
+            label: "Historial"
+          }, {
+            value: "results",
+            icon: Star,
+            label: "Resultados"
+          }].map(tab => <TabsTrigger key={tab.value} value={tab.value} className="flex flex-col items-center gap-1 py-3 px-4 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-xl transition-all duration-300">
                 <tab.icon className="h-5 w-5" />
                 <span className="text-xs font-medium">{tab.label}</span>
-              </TabsTrigger>
-            ))}
+              </TabsTrigger>)}
           </TabsList>
 
           {/* Campaign Wizard Tab */}
@@ -1096,10 +915,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-8">
             {/* Social Connections Section */}
-            <SocialConnectionManager 
-              profile={profile} 
-              onConnectionsUpdated={loadConnections}
-            />
+            <SocialConnectionManager profile={profile} onConnectionsUpdated={loadConnections} />
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Platform Overview */}
@@ -1113,20 +929,12 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 <CardContent className="p-6">
                   <div className="grid grid-cols-2 gap-6">
                     {Object.entries(platformStats).map(([platform, stats]) => {
-                      const PlatformIcon = getPlatformIcon(platform);
-                      const isConnected = socialConnections[platform as keyof typeof socialConnections];
-                      
-                      return (
-                        <div key={platform} className={`p-4 rounded-xl border-2 transition-all duration-300 ${
-                          isConnected ? 'border-green-200 bg-green-50/50 hover:shadow-md' : 'border-gray-200 bg-gray-50/50'
-                        }`}>
+                    const PlatformIcon = getPlatformIcon(platform);
+                    const isConnected = socialConnections[platform as keyof typeof socialConnections];
+                    return <div key={platform} className={`p-4 rounded-xl border-2 transition-all duration-300 ${isConnected ? 'border-green-200 bg-green-50/50 hover:shadow-md' : 'border-gray-200 bg-gray-50/50'}`}>
                           <div className="flex items-center gap-3 mb-3">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                              isConnected ? 'bg-green-100' : 'bg-gray-100'
-                            }`}>
-                              <PlatformIcon className={`w-5 h-5 ${
-                                isConnected ? 'text-green-600' : 'text-gray-500'
-                              }`} />
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isConnected ? 'bg-green-100' : 'bg-gray-100'}`}>
+                              <PlatformIcon className={`w-5 h-5 ${isConnected ? 'text-green-600' : 'text-gray-500'}`} />
                             </div>
                             <div>
                               <h4 className="font-semibold capitalize">{platform}</h4>
@@ -1146,9 +954,8 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                               <span className="font-medium">{formatNumber(stats.engagement)}</span>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        </div>;
+                  })}
                   </div>
                 </CardContent>
               </Card>
@@ -1162,10 +969,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
-                  <Button
-                    onClick={() => setActiveTab("create")}
-                    className="w-full justify-between h-14 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 group transition-all duration-300"
-                  >
+                  <Button onClick={() => setActiveTab("create")} className="w-full justify-between h-14 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 group transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <Plus className="w-5 h-5" />
                       <span className="font-medium">Contenido con IA</span>
@@ -1173,11 +977,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                   
-                  <Button
-                    onClick={() => setActiveTab("analyze")}
-                    variant="outline"
-                    className="w-full justify-between h-14 hover:bg-primary/5 group transition-all duration-300"
-                  >
+                  <Button onClick={() => setActiveTab("analyze")} variant="outline" className="w-full justify-between h-14 hover:bg-primary/5 group transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <Brain className="w-5 h-5 text-primary" />
                       <span className="font-medium">Análisis Inteligente</span>
@@ -1185,11 +985,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>
                   
-                  <Button
-                    onClick={() => setActiveTab("schedule")}
-                    variant="outline"
-                    className="w-full justify-between h-14 hover:bg-primary/5 group transition-all duration-300"
-                  >
+                  <Button onClick={() => setActiveTab("schedule")} variant="outline" className="w-full justify-between h-14 hover:bg-primary/5 group transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <Calendar className="w-5 h-5 text-primary" />
                       <span className="font-medium">Programar Posts</span>
@@ -1212,36 +1008,26 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-4">
-                    {recentActivity.length > 0 ? (
-                      recentActivity.map((activity, index) => {
-                        const IconComponent = activity.icon;
-                        return (
-                          <div key={index} className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer group">
+                    {recentActivity.length > 0 ? recentActivity.map((activity, index) => {
+                    const IconComponent = activity.icon;
+                    return <div key={index} className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer group">
                             <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-primary/10 to-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                               <IconComponent className={`h-4 w-4 ${activity.iconColor}`} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-foreground truncate">{activity.title}</p>
                               <p className="text-xs text-muted-foreground">{activity.time}</p>
-                              {activity.preview && (
-                                <p className="text-xs text-muted-foreground/80 mt-1 italic">{activity.preview}</p>
-                              )}
+                              {activity.preview && <p className="text-xs text-muted-foreground/80 mt-1 italic">{activity.preview}</p>}
                             </div>
-                            {activity.category && (
-                              <Badge variant="secondary" className="text-xs">
+                            {activity.category && <Badge variant="secondary" className="text-xs">
                                 {activity.category}
-                              </Badge>
-                            )}
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
+                              </Badge>}
+                          </div>;
+                  }) : <div className="text-center py-8 text-muted-foreground">
                         <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>No hay actividad reciente</p>
                         <p className="text-sm mt-1">Cree su primera campaña para empezar</p>
-                      </div>
-                    )}
+                      </div>}
                   </div>
                 </CardContent>
               </Card>
@@ -1256,12 +1042,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-4">
-                    {upcomingPosts.length > 0 ? (
-                      upcomingPosts.map((post, index) => {
-                        const IconComponent = post.icon;
-                        const PlatformIcon = getPlatformIcon(post.platform);
-                        return (
-                          <div key={index} className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer group">
+                    {upcomingPosts.length > 0 ? upcomingPosts.map((post, index) => {
+                    const IconComponent = post.icon;
+                    const PlatformIcon = getPlatformIcon(post.platform);
+                    return <div key={index} className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors cursor-pointer group">
                             <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-primary/10 to-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                               <IconComponent className="h-4 w-4 text-primary" />
                             </div>
@@ -1277,16 +1061,12 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                             <Badge variant="outline" className="text-xs">
                               {post.type}
                             </Badge>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
+                          </div>;
+                  }) : <div className="text-center py-8 text-muted-foreground">
                         <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>No hay posts programados</p>
                         <p className="text-sm mt-1">Programe contenido para automatizar su marketing</p>
-                      </div>
-                    )}
+                      </div>}
                   </div>
                 </CardContent>
               </Card>
@@ -1295,13 +1075,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
           {/* Create Tab */}
           <TabsContent value="create" className="space-y-8">
-            <SocialPostCreator 
-              profile={profile} 
-              onPostCreated={() => {
-                loadUpcomingPosts();
-                loadRealMetrics();
-              }}
-            />
+            <SocialPostCreator profile={profile} onPostCreated={() => {
+            loadUpcomingPosts();
+            loadRealMetrics();
+          }} />
           </TabsContent>
 
           {/* History Tab */}
@@ -1311,13 +1088,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
           {/* Schedule Tab */}
           <TabsContent value="schedule" className="space-y-8">
-            <ScheduledPostsManager 
-              profile={profile} 
-              onPostsUpdated={() => {
-                loadUpcomingPosts();
-                loadRealMetrics();
-              }}
-            />
+            <ScheduledPostsManager profile={profile} onPostsUpdated={() => {
+            loadUpcomingPosts();
+            loadRealMetrics();
+          }} />
           </TabsContent>
 
           <TabsContent value="results" className="space-y-8">
@@ -1329,8 +1103,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                {showResults ? (
-                  <div className="space-y-6">
+                {showResults ? <div className="space-y-6">
                     <Alert className="border-green-200 bg-green-50/50">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                       <AlertDescription className="text-green-800">
@@ -1352,9 +1125,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                         <div className="text-sm text-muted-foreground">Plataformas Activas</div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
+                  </div> : <div className="text-center py-12">
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                       <Star className="w-8 h-8 text-primary" />
                     </div>
@@ -1362,8 +1133,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                     <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                       Execute una campaña inteligente para ver resultados detallados y métricas de rendimiento
                     </p>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1382,49 +1152,33 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           <div className="space-y-4 py-4">
             <div className="space-y-3">
               <Label>Objetivo de la campaña (requerido)</Label>
-              {availableObjectives && availableObjectives.length > 0 ? (
-                <Select value={selectedObjective} onValueChange={setSelectedObjective}>
+              {availableObjectives && availableObjectives.length > 0 ? <Select value={selectedObjective} onValueChange={setSelectedObjective}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccione un objetivo..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableObjectives.map((objective: any) => (
-                      <SelectItem key={objective.id} value={objective.id}>
+                    {availableObjectives.map((objective: any) => <SelectItem key={objective.id} value={objective.id}>
                         <div className="flex flex-col items-start">
                           <span className="font-medium">{objective.title}</span>
                           <span className="text-sm text-muted-foreground truncate max-w-[300px]">
                             {objective.description}
                           </span>
                         </div>
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
-                </Select>
-              ) : (
-                <Textarea
-                  placeholder="Describa el objetivo principal para esta campaña..."
-                  value={customObjective}
-                  onChange={(e) => setCustomObjective(e.target.value)}
-                  rows={3}
-                />
-              )}
+                </Select> : <Textarea placeholder="Describa el objetivo principal para esta campaña..." value={customObjective} onChange={e => setCustomObjective(e.target.value)} rows={3} />}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowObjectiveDialog(false)}>
               Cancelar
             </Button>
-            <Button 
-              onClick={handleObjectiveSelection}
-              disabled={!selectedObjective && !customObjective.trim()}
-            >
+            <Button onClick={handleObjectiveSelection} disabled={!selectedObjective && !customObjective.trim()}>
               Iniciar Campaña
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
-
 export default MarketingHubWow;

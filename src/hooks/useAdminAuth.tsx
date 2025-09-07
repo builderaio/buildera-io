@@ -74,14 +74,20 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return false;
       }
 
-      // For now, use hardcoded credentials but log security events
-      // In production, this should validate against hashed passwords in admin_credentials table
-      const isValidCredentials = username === 'admin@buildera.io' && password === 'Buildera2024!';
+      // Use secure database validation instead of hardcoded credentials
+      const { data: validationData, error: validationError } = await supabase
+        .rpc('validate_admin_credentials', {
+          p_username: username,
+          p_password: password
+        });
+
+      const isValidCredentials = validationData && validationData.length > 0 && !validationError;
       
       if (isValidCredentials) {
+        const adminData = validationData[0];
         const userData: AdminUser = {
-          username: 'admin@buildera.io',
-          role: 'super_admin'
+          username: adminData.username,
+          role: adminData.role
         };
 
         // Log successful login

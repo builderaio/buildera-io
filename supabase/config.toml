@@ -10,13 +10,13 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.company-info-extractor]
-verify_jwt = false
+verify_jwt = true
 
 [functions.company-strategy]
-verify_jwt = false
+verify_jwt = true
 
 [functions.brand-identity]
-verify_jwt = false
+verify_jwt = true
 
 [functions.marketing-hub-target-audience]
 verify_jwt = false
@@ -56,10 +56,10 @@ verify_jwt = false
 
 
 [functions.generate-company-content]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-company-objetivos]
-verify_jwt = false
+verify_jwt = true
 
 [functions.linkedin-oauth-callback]
 verify_jwt = false
@@ -71,7 +71,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.instagram-scraper]
-verify_jwt = false
+verify_jwt = true
 
 [functions.linkedin-intelligent-analysis]
 verify_jwt = true

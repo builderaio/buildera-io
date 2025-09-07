@@ -6316,6 +6316,14 @@ export type Database = {
         Args: { company_data: Json; user_id_param: string }
         Returns: string
       }
+      validate_admin_credentials: {
+        Args: { p_password: string; p_username: string }
+        Returns: {
+          role: string
+          user_id: string
+          username: string
+        }[]
+      }
       validate_admin_login: {
         Args: { p_password: string; p_username: string }
         Returns: {
@@ -6325,7 +6333,7 @@ export type Database = {
         }[]
       }
       validate_password_strength: {
-        Args: { password: string }
+        Args: { password_input: string }
         Returns: Json
       }
       vector_avg: {

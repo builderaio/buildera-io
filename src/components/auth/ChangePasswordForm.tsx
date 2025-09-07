@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useRateLimit, logSecurityEvent } from "@/hooks/useSecurity";
+import { usePasswordValidation } from "@/hooks/usePasswordValidation";
 import { supabase } from "@/integrations/supabase/client";
 import { Lock, Check } from "lucide-react";
 
@@ -14,7 +15,7 @@ export const ChangePasswordForm = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState<{ score: number; isValid: boolean }>({ score: 0, isValid: false });
+  const passwordStrength = usePasswordValidation(newPassword);
   const { toast } = useToast();
   
   // Rate limiting para cambios de contraseña
@@ -30,10 +31,10 @@ export const ChangePasswordForm = () => {
 
     try {
       // Validaciones
-      if (newPassword.length < 6) {
+      if (newPassword.length < 8) {
         toast({
           title: "Error",
-          description: "La nueva contraseña debe tener al menos 6 caracteres",
+          description: "Password must be at least 8 characters long and meet complexity requirements",
           variant: "destructive",
         });
         return;
@@ -151,7 +152,7 @@ export const ChangePasswordForm = () => {
             </Label>
             <PasswordInput
               id="newPassword"
-              placeholder="Tu nueva contraseña (mínimo 6 caracteres)"
+              placeholder="Tu nueva contraseña (mínimo 8 caracteres)"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required

@@ -85,10 +85,10 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           return;
         }
 
-        if (password.length < 6) {
+        if (password.length < 8) {
           toast({
             title: "Error",
-            description: "La contraseña debe tener al menos 6 caracteres",
+            description: "Password must be at least 8 characters long",
             variant: "destructive",
           });
           setLoading(false);

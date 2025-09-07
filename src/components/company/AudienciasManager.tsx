@@ -515,260 +515,215 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           </div>
         </div>
 
-        {/* Sistema de Pestañas */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full grid grid-cols-5 h-14 p-1 bg-muted/50">
-            <TabsTrigger value="dashboard" className="text-sm font-medium">
-              <Gauge className="w-4 h-4 mr-2" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="audiencia" className="text-sm font-medium">
-              <Users className="w-4 h-4 mr-2" />
-              Audiencia
-            </TabsTrigger>
-            <TabsTrigger value="contenido" className="text-sm font-medium">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Contenido
-            </TabsTrigger>
-            <TabsTrigger value="colaboraciones" className="text-sm font-medium">
-              <Share2 className="w-4 h-4 mr-2" />
-              Colaboraciones
-            </TabsTrigger>
-            <TabsTrigger value="tendencias" className="text-sm font-medium">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Tendencias
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-6 mt-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold mb-2">🧠 Dashboard de Inteligencia</h2>
-              <p className="text-lg text-muted-foreground">El vistazo WOW - 80% del valor en 20% del tiempo</p>
-            </div>
-            
-            {/* Tarjeta de Perfil Principal */}
-            <Card className="overflow-hidden border-2 border-primary/20">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Información del Perfil */}
-                  <div className="lg:col-span-1">
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <Users className="w-5 h-5" />
-                      Perfil Principal
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        {mainProfile.image && (
-                          <img src={mainProfile.image} alt="Profile" className="w-12 h-12 rounded-full" />
-                        )}
-                        <div>
-                          <p className="font-semibold">{mainProfile.name}</p>
-                          <p className="text-sm text-muted-foreground">@{mainProfile.screenName}</p>
-                        </div>
-                        {mainProfile.verified && <CheckCircle className="w-4 h-4 text-blue-500" />}
-                      </div>
-                      <p className="text-sm">{mainProfile.description}</p>
-                      <p className="text-lg font-bold">{(mainProfile.usersCount || 0).toLocaleString()} Seguidores</p>
-                    </div>
-                  </div>
-                  
-                  {/* KPIs Principales */}
-                  <div className="lg:col-span-2">
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <Gauge className="w-5 h-5" />
-                      Indicadores Clave de Salud
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-4 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Puntaje de Calidad</p>
-                            <p className="text-2xl font-bold text-green-600">
-                              {Math.round((mainProfile.qualityScore || 0.8) * 100)}%
-                            </p>
-                          </div>
-                          <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                            <ThumbsUp className="w-6 h-6 text-green-600" />
-                          </div>
-                        </div>
-                        <p className="text-xs text-green-600 mt-1">
-                          {(mainProfile.qualityScore || 0.8) > 0.7 ? 'Saludable' : 'Necesita Atención'}
-                        </p>
-                      </div>
-                      
-                      <div className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-4 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Engagement Rate</p>
-                            <p className="text-2xl font-bold text-blue-600">
-                              {((mainProfile.avgER || 0) * 100).toFixed(1)}%
-                            </p>
-                          </div>
-                          <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                            <Zap className="w-6 h-6 text-blue-600" />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-4 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Crecimiento 6M</p>
-                            <p className="text-2xl font-bold text-purple-600">
-                              +{((mainProfile.pctUsersCount180d || 0) * 100).toFixed(1)}%
-                            </p>
-                          </div>
-                          <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                            <TrendingUp className="w-6 h-6 text-purple-600" />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 p-4 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Audiencia Real</p>
-                            <p className="text-2xl font-bold text-orange-600">
-                              {Math.round((mainProfile.membersTypes?.real || 75))}%
-                            </p>
-                          </div>
-                          <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                            <Users className="w-6 h-6 text-orange-600" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* ADN del Perfil y Resumen Visual */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="w-5 h-5" />
-                    ADN del Perfil (IA de Buildera)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Categorías Principales</p>
-                    <div className="flex flex-wrap gap-2">
-                      {(mainProfile.categories || ['General']).map((cat: string, idx: number) => (
-                        <Badge key={idx} variant="secondary">{cat}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Temas Clave</p>
-                    <div className="flex flex-wrap gap-2">
-                      {(mainProfile.tags || []).slice(0, 6).map((tag: string, idx: number) => (
-                        <Badge key={idx} variant="outline">{tag}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Tipo de Cuenta</p>
-                    <Badge variant="default">{mainProfile.type || 'Perfil'}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="w-5 h-5" />
-                    Resumen Visual de la Audiencia
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Top 3 Países</p>
-                    <div className="space-y-2">
-                      {Object.entries(mainProfile.countries || {}).slice(0, 3).map(([country, percentage]: [string, any], idx) => (
-                        <div key={idx} className="flex items-center justify-between">
-                          <span className="text-sm">{country}</span>
-                          <span className="text-sm font-medium">{percentage}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Distribución de Género</p>
-                    <div className="flex gap-2">
-                      <div className="flex-1 bg-blue-100 dark:bg-blue-900/30 rounded p-2 text-center">
-                        <p className="text-xs text-muted-foreground">Masculino</p>
-                        <p className="font-semibold">{mainProfile.genders?.male || 50}%</p>
-                      </div>
-                      <div className="flex-1 bg-pink-100 dark:bg-pink-900/30 rounded p-2 text-center">
-                        <p className="text-xs text-muted-foreground">Femenino</p>
-                        <p className="font-semibold">{mainProfile.genders?.female || 50}%</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Rango de Edad Dominante</p>
-                    <p className="text-lg font-semibold">25-34 años</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Frescura de Datos */}
-            <Card>
+        {/* Vista Unificada: Radiografía de la Audiencia */}
+        <div className="space-y-8">
+          <div className="text-center mb-8">
+            <h2 className="text-4xl font-bold mb-3">🔬 Radiografía de la Audiencia</h2>
+            <p className="text-xl text-muted-foreground">¿Quiénes son realmente tus seguidores?</p>
+          </div>
+          
+          {/* KPIs Principales en Cards horizontales */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Datos actualizados por última vez el: {new Date(mainProfile.timeStatistics || Date.now()).toLocaleDateString()}
-                    </span>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Puntaje de Calidad</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {Math.round((mainProfile.qualityScore || 0.8) * 100)}%
+                    </p>
+                    <p className="text-xs text-green-600 mt-1">
+                      {(mainProfile.qualityScore || 0.8) > 0.7 ? 'Saludable' : 'Necesita Atención'}
+                    </p>
                   </div>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <RefreshCw className="w-4 h-4" />
-                    Actualizar Análisis
-                  </Button>
+                  <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                    <ThumbsUp className="w-6 h-6 text-green-600" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+            
+            <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Engagement Rate</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {((mainProfile.avgER || 0) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <Zap className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Crecimiento 6M</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      +{((mainProfile.pctUsersCount180d || 0) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-purple-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 border-orange-200 dark:border-orange-800">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Audiencia Real</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {Math.round((mainProfile.membersTypes?.real || 75))}%
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                    <Users className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          <TabsContent value="audiencia" className="space-y-6 mt-6">
-            <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold mb-2">🔬 Radiografía de la Audiencia</h2>
-              <p className="text-lg text-muted-foreground">¿Quiénes son realmente tus seguidores?</p>
+          {/* Perfil Principal */}
+          <Card className="overflow-hidden border-2 border-primary/20">
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Información del Perfil */}
+                <div className="lg:col-span-1">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Users className="w-5 h-5" />
+                    Perfil Principal
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      {mainProfile.image && (
+                        <img src={mainProfile.image} alt="Profile" className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg" />
+                      )}
+                      <div>
+                        <p className="font-semibold text-lg">{mainProfile.name}</p>
+                        <p className="text-muted-foreground">@{mainProfile.screenName}</p>
+                        {mainProfile.verified && <CheckCircle className="w-4 h-4 text-blue-500 inline ml-2" />}
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{mainProfile.description}</p>
+                    <div className="bg-primary/5 rounded-lg p-3">
+                      <p className="text-2xl font-bold text-primary">{((socialStats.reduce((acc, s) => acc + (s.usersCount || 0), 0)) / 1000).toFixed(1)}K</p>
+                      <p className="text-sm text-muted-foreground">Total Seguidores</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* ADN del Perfil */}
+                <div className="lg:col-span-1">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Brain className="w-5 h-5" />
+                    ADN del Perfil
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Categorías</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(mainProfile.categories || ['General']).map((cat: string, idx: number) => (
+                          <Badge key={idx} variant="secondary">{cat}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Temas Clave</p>
+                      <div className="flex flex-wrap gap-2">
+                        {(mainProfile.tags || []).slice(0, 4).map((tag: string, idx: number) => (
+                          <Badge key={idx} variant="outline">{tag}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Tipo de Cuenta</p>
+                      <Badge variant="default">{mainProfile.type || 'Perfil'}</Badge>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Demografía Rápida */}
+                <div className="lg:col-span-1">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Globe className="w-5 h-5" />
+                    Demografía Clave
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Top 3 Países</p>
+                      <div className="space-y-1">
+                        {Object.entries(mainProfile.countries || {}).slice(0, 3).map(([country, percentage]: [string, any], idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm">
+                            <span>{country}</span>
+                            <span className="font-medium">{percentage}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Género</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-blue-100 dark:bg-blue-900/30 rounded p-2 text-center">
+                          <p className="text-xs text-muted-foreground">Masculino</p>
+                          <p className="font-semibold text-sm">{mainProfile.genders?.male || 50}%</p>
+                        </div>
+                        <div className="bg-pink-100 dark:bg-pink-900/30 rounded p-2 text-center">
+                          <p className="text-xs text-muted-foreground">Femenino</p>
+                          <p className="font-semibold text-sm">{mainProfile.genders?.female || 50}%</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Edad Dominante</p>
+                      <p className="font-semibold">25-34 años</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Análisis Detallado de la Audiencia */}
+          <div className="space-y-6">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold mb-2">📊 Análisis Profundo de la Audiencia</h3>
+              <p className="text-muted-foreground">Datos detallados desde tus redes sociales conectadas</p>
             </div>
             
             {userId && <SocialAnalysisDisplay userId={userId} />}
-          </TabsContent>
-
-          <TabsContent value="contenido" className="space-y-6 mt-6">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold mb-2">📊 Análisis de Contenido</h2>
-              <p className="text-lg text-muted-foreground">Qué contenido funciona, cuándo publicarlo y por qué</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="colaboraciones" className="space-y-6 mt-6">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold mb-2">🤝 Red de Colaboraciones</h2>
-              <p className="text-lg text-muted-foreground">Tu ecosistema: con quién colaboras y quién te da visibilidad</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="tendencias" className="space-y-6 mt-6">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold mb-2">📈 Tendencias e Historial</h2>
-              <p className="text-lg text-muted-foreground">La evolución de tu perfil a lo largo del tiempo</p>
-            </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+          
+          {/* Frescura de Datos */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Datos actualizados: {new Date(mainProfile.timeStatistics || Date.now()).toLocaleDateString()}
+                  </span>
+                </div>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <RefreshCw className="w-4 h-4" />
+                  Actualizar Análisis
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   };

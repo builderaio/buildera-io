@@ -81,9 +81,9 @@ const MarketingHubRedesigned = ({ profile }: MarketingHubRedesignedProps) => {
 
     // Listener para detectar cuando regresa de una conexión exitosa
     const handleFocus = () => {
-      // Recargar conexiones después de un pequeño delay
+      // Recargar conexiones después de un pequeño delay forzando refresh desde upload-post
       setTimeout(() => {
-        checkSetupStatus();
+        checkSetupStatus(true);
       }, 2000);
     };
 
@@ -94,17 +94,56 @@ const MarketingHubRedesigned = ({ profile }: MarketingHubRedesignedProps) => {
     };
   }, [profile?.user_id]);
 
-  const checkSetupStatus = async () => {
+  const checkSetupStatus = async (forceRefresh = false) => {
     if (!profile?.user_id) return;
 
     try {
       setLoading(true);
       
-      // Verificar conexiones desde la tabla social_accounts
-      const { data: socialAccountsData } = await supabase
+      let socialAccountsData;
+      
+      // Si se fuerza el refresh o no hay company_username, sincronizar desde upload-post
+      if (forceRefresh || !companyUsername) {
+        try {
+          // Primero obtener el company_username desde la base local
+          const { data: localProfile } = await supabase
+            .from('social_accounts')
+            .select('company_username')
+            .eq('user_id', profile.user_id)
+            .eq('platform', 'upload_post_profile')
+            .limit(1);
+
+          const existingUsername = localProfile?.[0]?.company_username;
+          
+          if (existingUsername) {
+            // Sincronizar conexiones desde upload-post API
+            const connectionsResult = await supabase.functions.invoke('upload-post-manager', {
+              body: { 
+                action: 'get_connections',
+                data: { companyUsername: existingUsername }
+              }
+            });
+
+            if (connectionsResult.data?.success) {
+              console.log('✅ Conexiones sincronizadas desde upload-post');
+              setCompanyUsername(existingUsername);
+            } else {
+              console.warn('⚠️ No se pudieron sincronizar conexiones desde upload-post');
+            }
+          }
+        } catch (syncError) {
+          console.warn('⚠️ Error sincronizando desde upload-post:', syncError);
+          // Continuar con datos locales si falla la sincronización
+        }
+      }
+
+      // Obtener datos actualizados desde la tabla social_accounts
+      const { data: updatedData } = await supabase
         .from('social_accounts')
         .select('*')
         .eq('user_id', profile.user_id);
+
+      socialAccountsData = updatedData;
 
       // Inicializar array de conexiones
       const connectionList: ConnectionStatus[] = [
@@ -176,8 +215,15 @@ const MarketingHubRedesigned = ({ profile }: MarketingHubRedesignedProps) => {
       
       // Calcular progreso del flujo
       calculateFlowProgress(connectedCount);
+
+      if (forceRefresh) {
+        toast.success('Estado de conexiones actualizado');
+      }
     } catch (error) {
       console.error('Error checking setup status:', error);
+      if (forceRefresh) {
+        toast.error('Error actualizando el estado de las conexiones');
+      }
     } finally {
       setLoading(false);
     }
@@ -376,10 +422,10 @@ const MarketingHubRedesigned = ({ profile }: MarketingHubRedesignedProps) => {
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => checkSetupStatus()}
+          onClick={() => checkSetupStatus(true)}
           disabled={loading}
         >
-          {loading ? 'Verificando...' : '🔄 Actualizar Estado'}
+          {loading ? 'Sincronizando...' : '🔄 Actualizar Estado'}
         </Button>
       </div>
 
@@ -415,7 +461,14 @@ const MarketingHubRedesigned = ({ profile }: MarketingHubRedesignedProps) => {
                   {connection.connected ? (
                     <div className="flex items-center space-x-2">
                       <CheckCircle2 className="w-5 h-5 text-green-600" />
-                      <Button variant="outline" size="sm">Reconectar</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleConnectPlatform(connection.platform)}
+                        disabled={isConnecting}
+                      >
+                        {isConnecting ? 'Conectando...' : 'Reconectar'}
+                      </Button>
                     </div>
                   ) : (
                     <Button 

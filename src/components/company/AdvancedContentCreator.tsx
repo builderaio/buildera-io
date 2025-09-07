@@ -52,12 +52,20 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
 
   // Load existing insights on component mount
   useEffect(() => {
-    loadInsights();
-    loadGeneratedContents();
+    console.log('AdvancedContentCreator mounted with profile:', profile);
+    if (profile.user_id) {
+      loadInsights();
+      loadGeneratedContents();
+    }
   }, [profile.user_id]);
 
   const loadInsights = async () => {
-    if (!profile.user_id) return;
+    if (!profile.user_id) {
+      console.log('No user_id available');
+      return;
+    }
+    
+    console.log('Loading insights for user:', profile.user_id);
     
     try {
       const { data, error } = await supabase
@@ -66,10 +74,20 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
         .eq('user_id', profile.user_id)
         .order('created_at', { ascending: false });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error loading insights:', error);
+        throw error;
+      }
+      
+      console.log('Loaded insights:', data);
       setInsights(data || []);
     } catch (error) {
       console.error('Error loading insights:', error);
+      toast({ 
+        title: "Error al cargar insights", 
+        description: "No se pudieron cargar los insights existentes", 
+        variant: "destructive" 
+      });
     }
   };
 

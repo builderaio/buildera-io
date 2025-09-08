@@ -66,8 +66,8 @@ serve(async (req) => {
       case 'get_pinterest_boards':
         result = await getPinterestBoards(supabaseClient, user.id, uploadPostApiKey, data);
         break;
-      case 'update_linkedin_page':
-        result = await updateLinkedInPage(supabaseClient, user.id, data);
+      case 'update_facebook_page':
+        result = await updateFacebookPage(supabaseClient, user.id, data);
         break;
       case 'update_linkedin_page':
         result = await updateLinkedInPage(supabaseClient, user.id, data);

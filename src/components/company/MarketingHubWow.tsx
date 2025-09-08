@@ -22,6 +22,8 @@ import { ScheduledPostsManager } from './ScheduledPostsManager';
 import { UploadHistory } from './UploadHistory';
 import MarketingHubOrchestrator from './MarketingHubOrchestrator';
 import AudienciasManager from './AudienciasManager';
+import { ContentAnalysisDashboard } from './ContentAnalysisDashboard';
+import AdvancedMarketingDashboard from './AdvancedMarketingDashboard';
 interface MarketingHubWowProps {
   profile: any;
 }
@@ -1098,7 +1100,7 @@ const MarketingHubWow = ({
               </div>
 
               <Tabs defaultValue="post" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-6">
+                <TabsList className="grid w-full grid-cols-5 mb-6">
                   <TabsTrigger value="post" className="flex items-center gap-2">
                     <PenTool className="h-4 w-4" />
                     Post
@@ -1114,6 +1116,10 @@ const MarketingHubWow = ({
                   <TabsTrigger value="programados" className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
                     Programados
+                  </TabsTrigger>
+                  <TabsTrigger value="analisis" className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Análisis
                   </TabsTrigger>
                 </TabsList>
 
@@ -1135,6 +1141,40 @@ const MarketingHubWow = ({
 
                 <TabsContent value="programados" className="space-y-6">
                   <ScheduledPostsManager profile={profile} />
+                </TabsContent>
+
+                <TabsContent value="analisis" className="space-y-6">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xl font-semibold tracking-tight">Análisis de Contenido</h3>
+                        <p className="text-muted-foreground">
+                          Análisis inteligente de audiencias y rendimiento de contenido en redes sociales
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <Tabs defaultValue="content-analysis" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2 mb-6">
+                        <TabsTrigger value="content-analysis" className="flex items-center gap-2">
+                          <PieChart className="h-4 w-4" />
+                          Análisis de Contenido
+                        </TabsTrigger>
+                        <TabsTrigger value="advanced-analysis" className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4" />
+                          Análisis Avanzado
+                        </TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="content-analysis" className="space-y-6">
+                        <ContentAnalysisDashboard profile={profile} />
+                      </TabsContent>
+
+                      <TabsContent value="advanced-analysis" className="space-y-6">
+                        <AdvancedMarketingDashboard profile={profile} />
+                      </TabsContent>
+                    </Tabs>
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>

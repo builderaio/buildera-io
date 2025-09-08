@@ -35,6 +35,10 @@ import AdvancedMarketingDashboard from './AdvancedMarketingDashboard';
 import MarketingHubOrchestrator from './MarketingHubOrchestrator';
 import MarketingDataPersistenceManager from './MarketingDataPersistenceManager';
 import MarketingHubWow from './MarketingHubWow';
+import ContentLibraryTab from './ContentLibraryTab';
+import ContentCreatorTab from './ContentCreatorTab';
+import { UploadHistory } from './UploadHistory';
+import { ScheduledPostsManager } from './ScheduledPostsManager';
 
 
 interface MarketingHubProps {
@@ -980,7 +984,30 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
         </TabsContent>
 
         <TabsContent value="content" className="space-y-6">
-          <ContentGenerator profile={profile} />
+          <Tabs defaultValue="post" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="post">Post</TabsTrigger>
+              <TabsTrigger value="library">Biblioteca</TabsTrigger>
+              <TabsTrigger value="history">Historial</TabsTrigger>
+              <TabsTrigger value="scheduled">Programados</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="post">
+              <ContentCreatorTab profile={profile} topPosts={[]} selectedPlatform="all" />
+            </TabsContent>
+
+            <TabsContent value="library">
+              <ContentLibraryTab profile={profile} />
+            </TabsContent>
+
+            <TabsContent value="history">
+              <UploadHistory profile={profile} />
+            </TabsContent>
+
+            <TabsContent value="scheduled">
+              <ScheduledPostsManager profile={profile} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="calendar" className="space-y-6">

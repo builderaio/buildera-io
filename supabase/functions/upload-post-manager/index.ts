@@ -428,7 +428,9 @@ async function getFacebookPages(supabaseClient: any, userId: string, apiKey: str
   const { companyUsername } = data;
 
   try {
-    const response = await fetch(`https://api.upload-post.com/api/uploadposts/facebook/pages?profile=${companyUsername}`, {
+    console.log(`📘 Getting Facebook pages for profile: ${companyUsername}`);
+    
+    const response = await fetch(`https://api.upload-post.com/api/get-facebook-pages?profile=${companyUsername}`, {
       method: 'GET',
       headers: {
         'Authorization': `ApiKey ${apiKey}`,
@@ -436,12 +438,18 @@ async function getFacebookPages(supabaseClient: any, userId: string, apiKey: str
       }
     });
 
+    console.log(`📘 Facebook pages response status: ${response.status}`);
+
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`📘 Facebook pages error: ${response.status} - ${errorText}`);
       throw new Error(`Error obteniendo páginas de Facebook: ${response.status} - ${errorText}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log(`📘 Facebook pages result:`, result);
+    
+    return result;
 
   } catch (error) {
     console.error('Error in getFacebookPages:', error);

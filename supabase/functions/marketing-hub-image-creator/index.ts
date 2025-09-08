@@ -38,24 +38,26 @@ serve(async (req) => {
 
     console.log('📤 Enviando request a n8n webhook...');
     
-    // Prepare payload for n8n
-    const n8nPayload = {
+    // Prepare query parameters for GET request to n8n
+    const queryParams = new URLSearchParams({
       prompt: enhancedPrompt,
-      user_id: user_id,
-      content_id: content_id,
+      user_id: user_id || '',
+      content_id: content_id || '',
       platform: platform || 'general',
       size: '1024x1024',
       quality: 'high',
       output_format: 'png',
       timestamp: new Date().toISOString()
-    };
+    });
 
-    const response = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
+    const requestUrl = `${N8N_WEBHOOK_URL}?${queryParams.toString()}`;
+    console.log('🔗 Request URL:', requestUrl);
+
+    const response = await fetch(requestUrl, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
-      body: JSON.stringify(n8nPayload),
     });
 
     if (!response.ok) {

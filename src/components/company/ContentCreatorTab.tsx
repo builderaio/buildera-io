@@ -2,12 +2,16 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
-import { PlusCircle, Sparkles, Lightbulb, Copy, Brain, Target, TrendingUp, Clock, ArrowRight } from "lucide-react";
+import { PlusCircle, Sparkles, Lightbulb, Copy, Brain, Target, TrendingUp, Clock, ArrowRight, Edit3, Image, Send, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import AdvancedContentCreator from "./AdvancedContentCreator";
+import { useEraOptimizer } from "@/hooks/useEraOptimizer";
+import SimpleContentPublisher from "./SimpleContentPublisher";
 
 interface Props {
   profile: { user_id?: string };
@@ -21,6 +25,17 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
   const [contentPrompt, setContentPrompt] = useState('');
   const [generatedContent, setGeneratedContent] = useState('');
   const [showAdvancedCreator, setShowAdvancedCreator] = useState(false);
+  const [manualContent, setManualContent] = useState('');
+  const [generatedImage, setGeneratedImage] = useState('');
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [showPublisher, setShowPublisher] = useState(false);
+  const [publisherContent, setPublisherContent] = useState('');
+  
+  const { optimizeWithEra, isOptimizing, optimizedText, showOptimizedDialog, acceptOptimization, rejectOptimization } = useEraOptimizer({
+    onOptimized: (optimizedText) => {
+      setManualContent(optimizedText);
+    }
+  });
 
   const generateContent = async () => {
     if (!contentPrompt.trim()) {
@@ -55,6 +70,39 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
     } finally {
       setGeneratingContent(false);
     }
+  };
+
+  const generateImageWithEra = async () => {
+    const contentToUse = manualContent || generatedContent;
+    if (!contentToUse.trim()) {
+      toast({ title: "Error", description: "Necesitas contenido para generar una imagen", variant: "destructive" });
+      return;
+    }
+    
+    setGeneratingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('marketing-hub-image-creator', {
+        body: {
+          prompt: `Create a professional social media image for this content: ${contentToUse.substring(0, 500)}`,
+          user_id: profile.user_id
+        }
+      });
+      
+      if (error) throw error;
+      
+      setGeneratedImage(data.image_url);
+      toast({ title: "¡Imagen generada!", description: "Tu imagen está lista" });
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast({ title: "Error", description: "No se pudo generar la imagen. Intenta de nuevo.", variant: "destructive" });
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  const handlePublish = (content: string) => {
+    setPublisherContent(content);
+    setShowPublisher(true);
   };
 
   if (showAdvancedCreator) {
@@ -124,46 +172,125 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
             <PlusCircle className="h-5 w-5 text-primary" />
             Creador de Contenido Simple
           </CardTitle>
-          <p className="text-sm text-muted-foreground">Genera contenido rápido basado en tus publicaciones exitosas</p>
+          <p className="text-sm text-muted-foreground">Crea contenido manualmente o genera con IA</p>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Describe el contenido que quieres crear</label>
-            <textarea
-              value={contentPrompt}
-              onChange={(e) => setContentPrompt(e.target.value)}
-              placeholder="Ej: Crea una publicación sobre los beneficios de la automatización empresarial, enfocada en ahorro de tiempo y costos..."
-              className="w-full h-24 px-3 py-2 border border-border rounded-lg bg-background resize-none"
-            />
-          </div>
-          <Button onClick={generateContent} disabled={generatingContent || !contentPrompt.trim()} className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
-            {generatingContent ? (<><AdvancedAILoader isVisible={true} />Generando contenido...</>) : (<><Sparkles className="h-4 w-4 mr-2" />Generar Contenido</>)}
-          </Button>
-          {generatedContent && (
-            <Card className="border-l-4 border-l-green-500">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-green-600" />
-                  Contenido Generado
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-4 bg-gradient-to-br from-green-50/50 to-blue-50/50 rounded-lg border border-green-200/50">
-                    <div className="prose prose-sm max-w-none text-foreground leading-relaxed whitespace-pre-wrap">
-                      {generatedContent}
+        <CardContent>
+          <Tabs defaultValue="auto" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="auto" className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Generación IA
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="flex items-center gap-2">
+                <Edit3 className="h-4 w-4" />
+                Escribir Manualmente
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="auto" className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Describe el contenido que quieres crear</label>
+                <Textarea
+                  value={contentPrompt}
+                  onChange={(e) => setContentPrompt(e.target.value)}
+                  placeholder="Ej: Crea una publicación sobre los beneficios de la automatización empresarial, enfocada en ahorro de tiempo y costos..."
+                  className="h-24"
+                />
+              </div>
+              <Button onClick={generateContent} disabled={generatingContent || !contentPrompt.trim()} className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+                {generatingContent ? (<><AdvancedAILoader isVisible={true} />Generando contenido...</>) : (<><Sparkles className="h-4 w-4 mr-2" />Generar Contenido</>)}
+              </Button>
+            </TabsContent>
+
+            <TabsContent value="manual" className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Escribe tu contenido</label>
+                <Textarea
+                  value={manualContent}
+                  onChange={(e) => setManualContent(e.target.value)}
+                  placeholder="Escribe tu publicación aquí..."
+                  className="h-32"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => optimizeWithEra(manualContent, 'social_post')}
+                  disabled={isOptimizing || !manualContent.trim()}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  {isOptimizing ? (<><AdvancedAILoader isVisible={true} />Optimizando...</>) : (<><Brain className="h-4 w-4 mr-2" />Optimizar con Era</>)}
+                </Button>
+                <Button 
+                  onClick={generateImageWithEra}
+                  disabled={generatingImage || !manualContent.trim()}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  {generatingImage ? (<><AdvancedAILoader isVisible={true} />Generando...</>) : (<><Image className="h-4 w-4 mr-2" />Generar Imagen</>)}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Generated/Manual Content Display */}
+            {(generatedContent || manualContent) && (
+              <Card className="border-l-4 border-l-green-500">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-green-600" />
+                    {manualContent ? 'Tu Contenido' : 'Contenido Generado'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gradient-to-br from-green-50/50 to-blue-50/50 rounded-lg border border-green-200/50">
+                      <div className="prose prose-sm max-w-none text-foreground leading-relaxed whitespace-pre-wrap">
+                        {manualContent || generatedContent}
+                      </div>
+                    </div>
+                    
+                    {/* Generated Image */}
+                    {generatedImage && (
+                      <div className="p-4 bg-gradient-to-br from-blue-50/50 to-purple-50/50 rounded-lg border border-blue-200/50">
+                        <h4 className="font-medium mb-2 flex items-center gap-2">
+                          <Image className="h-4 w-4" />
+                          Imagen Generada
+                        </h4>
+                        <img 
+                          src={generatedImage} 
+                          alt="Generated content image" 
+                          className="max-w-full h-auto rounded-lg border"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(manualContent || generatedContent)}>
+                        <Copy className="h-4 w-4 mr-1" />Copiar
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handlePublish(manualContent || generatedContent)}
+                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                      >
+                        <Send className="h-4 w-4 mr-1" />Publicar
+                      </Button>
+                      {!manualContent && (
+                        <Button size="sm" variant="outline" onClick={() => setGeneratedContent('')}>
+                          Limpiar
+                        </Button>
+                      )}
+                      {manualContent && (
+                        <Button size="sm" variant="outline" onClick={() => {setManualContent(''); setGeneratedImage('');}}>
+                          Limpiar Todo
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedContent)}>
-                      <Copy className="h-4 w-4 mr-1" />Copiar
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setGeneratedContent('')}>Limpiar</Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                </CardContent>
+              </Card>
+            )}
+          </Tabs>
         </CardContent>
       </Card>
 
@@ -223,6 +350,58 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Era Optimization Dialog */}
+      {showOptimizedDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-4xl max-h-[80vh] overflow-hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-purple-600" />
+                Era ha optimizado tu contenido
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Contenido Original</h4>
+                  <div className="p-3 bg-gray-50 rounded-lg text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
+                    {manualContent}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Contenido Optimizado</h4>
+                  <div className="p-3 bg-green-50 rounded-lg text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
+                    {optimizedText}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={acceptOptimization} className="flex-1">
+                  Usar Optimización
+                </Button>
+                <Button onClick={rejectOptimization} variant="outline" className="flex-1">
+                  Mantener Original
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Publisher Dialog */}
+      {showPublisher && (
+        <SimpleContentPublisher
+          isOpen={showPublisher}
+          onClose={() => setShowPublisher(false)}
+          content={{
+            title: 'Contenido Simple',
+            content: publisherContent,
+            generatedImage: generatedImage || undefined
+          }}
+          profile={profile}
+        />
       )}
     </div>
   );

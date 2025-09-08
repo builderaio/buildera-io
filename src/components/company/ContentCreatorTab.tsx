@@ -12,6 +12,7 @@ import ReactMarkdown from "react-markdown";
 import AdvancedContentCreator from "./AdvancedContentCreator";
 import { useEraOptimizer } from "@/hooks/useEraOptimizer";
 import SimpleContentPublisher from "./SimpleContentPublisher";
+import { EraOptimizerDialog } from "@/components/ui/era-optimizer-dialog";
 
 interface Props {
   profile: { user_id?: string };
@@ -31,9 +32,17 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
   const [showPublisher, setShowPublisher] = useState(false);
   const [publisherContent, setPublisherContent] = useState('');
   
-  const { optimizeWithEra, isOptimizing, optimizedText, showOptimizedDialog, acceptOptimization, rejectOptimization } = useEraOptimizer({
-    onOptimized: (optimizedText) => {
-      setManualContent(optimizedText);
+  // Era Optimizer hook
+  const {
+    optimizeWithEra,
+    isOptimizing,
+    optimizedText,
+    showOptimizedDialog,
+    acceptOptimization,
+    rejectOptimization
+  } = useEraOptimizer({
+    onOptimized: (optimized) => {
+      setManualContent(optimized);
     }
   });
 
@@ -214,12 +223,25 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
               </div>
               <div className="flex gap-2">
                 <Button 
-                  onClick={() => optimizeWithEra(manualContent, 'social_post')}
+                  onClick={() => optimizeWithEra(manualContent, 'social_post', {
+                    platform: selectedPlatform,
+                    userType: 'company'
+                  })}
                   disabled={isOptimizing || !manualContent.trim()}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
                 >
-                  {isOptimizing ? (<><AdvancedAILoader isVisible={true} />Optimizando...</>) : (<><Brain className="h-4 w-4 mr-2" />Optimizar con Era</>)}
+                  {isOptimizing ? (
+                    <>
+                      <AdvancedAILoader isVisible={true} />
+                      <span className="text-purple-600">Era optimizando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-4 w-4 mr-2 text-purple-600" />
+                      <span>Optimizar con Era</span>
+                    </>
+                  )}
                 </Button>
                 <Button 
                   onClick={generateImageWithEra}
@@ -353,42 +375,14 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
       )}
 
       {/* Era Optimization Dialog */}
-      {showOptimizedDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-4xl max-h-[80vh] overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-purple-600" />
-                Era ha optimizado tu contenido
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-medium mb-2">Contenido Original</h4>
-                  <div className="p-3 bg-gray-50 rounded-lg text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
-                    {manualContent}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Contenido Optimizado</h4>
-                  <div className="p-3 bg-green-50 rounded-lg text-sm whitespace-pre-wrap max-h-40 overflow-y-auto">
-                    {optimizedText}
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={acceptOptimization} className="flex-1">
-                  Usar Optimización
-                </Button>
-                <Button onClick={rejectOptimization} variant="outline" className="flex-1">
-                  Mantener Original
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <EraOptimizerDialog
+        isOpen={showOptimizedDialog}
+        onClose={() => rejectOptimization()}
+        originalText={manualContent}
+        optimizedText={optimizedText}
+        onAccept={acceptOptimization}
+        onReject={rejectOptimization}
+      />
 
       {/* Publisher Dialog */}
       {showPublisher && (

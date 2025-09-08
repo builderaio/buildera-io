@@ -85,51 +85,26 @@ serve(async (req) => {
 
     console.log('⏳ Making request to n8n...');
     
-    // Build authentication for n8n
-    const authType = Deno.env.get('N8N_IMAGE_WEBHOOK_AUTH_TYPE') || 'none'; // 'basic' | 'bearer' | 'apikey' | 'none'
-    const n8nHeaders: Record<string, string> = {
-      'Accept': 'application/json',
-      'User-Agent': 'Supabase-Edge-Function/1.0',
-    };
-    let finalUrl = requestUrl;
+    // Basic auth EXACTLY like company-info-extractor / company-strategy
+    const authUser = Deno.env.get('N8N_AUTH_USER') || '';
+    const authPass = Deno.env.get('N8N_AUTH_PASS') || '';
 
-    if (authType === 'basic') {
-      const userName = Deno.env.get('N8N_IMAGE_WEBHOOK_USER') || '';
-      const password = Deno.env.get('N8N_IMAGE_WEBHOOK_PASSWORD') || '';
-      if (userName && password) {
-        const basic = btoa(`${userName}:${password}`);
-        n8nHeaders['Authorization'] = `Basic ${basic}`;
-      } else {
-        console.warn('⚠️ N8N basic auth missing user/password');
-      }
-    } else if (authType === 'bearer') {
-      const bearer = Deno.env.get('N8N_IMAGE_WEBHOOK_BEARER') || '';
-      if (bearer) {
-        n8nHeaders['Authorization'] = `Bearer ${bearer}`;
-      } else {
-        console.warn('⚠️ N8N bearer token not set');
-      }
-    } else if (authType === 'apikey') {
-      const keyName = Deno.env.get('N8N_IMAGE_WEBHOOK_API_KEY_NAME') || 'x-api-key';
-      const keyValue = Deno.env.get('N8N_IMAGE_WEBHOOK_API_KEY_VALUE') || '';
-      if (keyValue) {
-        n8nHeaders[keyName] = keyValue;
-        // Also pass via query to maximize compatibility
-        try {
-          const u = new URL(finalUrl);
-          u.searchParams.set(keyName, keyValue);
-          finalUrl = u.toString();
-        } catch (_) {}
-      } else {
-        console.warn('⚠️ N8N API key value not set');
-      }
+    console.log('🔑 N8N basic auth present?', Boolean(authUser && authPass));
+    if (!authUser || !authPass) {
+      throw new Error('N8N authentication credentials not configured (N8N_AUTH_USER / N8N_AUTH_PASS)');
     }
 
-    console.log('🔐 n8n auth type:', authType, 'headers sent:', Object.keys(n8nHeaders));
+    const credentials = btoa(`${authUser}:${authPass}`);
+    const finalUrl = requestUrl;
 
     const response = await fetch(finalUrl, {
       method: 'GET',
-      headers: n8nHeaders,
+      headers: {
+        'Authorization': `Basic ${credentials}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'Supabase-Edge-Function/1.0',
+      },
     });
 
     console.log('📡 Response received:', {

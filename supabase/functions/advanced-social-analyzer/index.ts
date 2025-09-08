@@ -661,18 +661,40 @@ async function generateBasicInsights(userId: string, platform: string, posts: an
           }))
           .sort((a, b) => parseFloat(b.avgEngagement) - parseFloat(a.avgEngagement))
           .slice(0, 5)
+      }
+    }
+  ];
+
+  // Guardar insights básicos
+  await supabase
+    .from('marketing_insights')
+    .delete()
+    .eq('user_id', userId)
+    .eq('platform', platform)
+    .eq('insight_type', 'optimal_timing');
+
+  const { error: insertError } = await supabase
+    .from('marketing_insights')
+    .insert(basicInsights);
+
+  if (insertError) {
+    console.error('❌ Error saving basic insights:', insertError);
+    return 0;
   }
+
+  console.log('✅ Successfully saved basic insights');
+  return basicInsights.length;
 }
 
 // Helper function to save images to content library
 async function saveImagesToContentLibrary(
-  supabase: any, 
-  userId: string, 
-  posts: any[], 
+  supabase: any,
+  userId: string,
+  posts: any[],
   platform: string
 ): Promise<number> {
   let savedCount = 0;
-  
+
   for (const post of posts) {
     try {
       // Extract image URL
@@ -688,7 +710,7 @@ async function saveImagesToContentLibrary(
       // Only save if there's an image
       if (!imageUrl) continue;
 
-      const title = post.text 
+      const title = post.text
         ? `Post de ${platform} - ${post.text.slice(0, 50)}...`
         : `Imagen de ${platform}`;
 
@@ -716,39 +738,17 @@ async function saveImagesToContentLibrary(
             metrics
           }
         });
-      
+
       savedCount++;
       console.log(`✅ Saved image to content library: ${title}`);
-      
+
       // Small delay to avoid overwhelming the database
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
       console.error('❌ Error saving image to content library:', error);
     }
   }
-  
+
   console.log(`✅ Saved ${savedCount} images from ${platform} to content library`);
   return savedCount;
-}
-  ];
-
-  // Guardar insights básicos
-  await supabase
-    .from('marketing_insights')
-    .delete()
-    .eq('user_id', userId)
-    .eq('platform', platform)
-    .eq('insight_type', 'optimal_timing');
-
-  const { error: insertError } = await supabase
-    .from('marketing_insights')
-    .insert(basicInsights);
-
-  if (insertError) {
-    console.error('❌ Error saving basic insights:', insertError);
-    return 0;
-  }
-
-  console.log('✅ Successfully saved basic insights');
-  return basicInsights.length;
 }

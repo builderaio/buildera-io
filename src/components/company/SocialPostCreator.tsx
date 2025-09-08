@@ -31,6 +31,7 @@ interface SocialPostCreatorProps {
 interface Platform {
   id: string;
   name: string;
+  displayName: string;
   icon: string;
   color: string;
   isConnected: boolean;
@@ -107,6 +108,7 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
       const connectedPlatforms = data?.map(account => ({
         id: account.platform,
         name: platformConfig[account.platform as keyof typeof platformConfig]?.name || account.platform,
+        displayName: account.platform_display_name || platformConfig[account.platform as keyof typeof platformConfig]?.name || account.platform,
         icon: platformConfig[account.platform as keyof typeof platformConfig]?.icon || '🌐',
         color: platformConfig[account.platform as keyof typeof platformConfig]?.color || 'bg-gray-600',
         isConnected: account.is_connected
@@ -534,7 +536,12 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
                     className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                   >
                     <span className="text-lg">{platform.icon}</span>
-                    {platform.name}
+                    <div className="flex flex-col">
+                      <span>{platform.name}</span>
+                      {platform.displayName && platform.displayName !== platform.name && (
+                        <span className="text-xs text-muted-foreground">{platform.displayName}</span>
+                      )}
+                    </div>
                   </label>
                 </div>
               ))}

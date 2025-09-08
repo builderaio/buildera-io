@@ -529,8 +529,11 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     let response;
     const formData = new FormData();
     formData.append('user', companyUsername);
+    const platformsToSend = (postType === 'text' || postType === 'photo')
+      ? platforms.map((p: string) => p === 'twitter' ? 'x' : p)
+      : platforms;
     
-    platforms.forEach((platform: string) => {
+    platformsToSend.forEach((platform: string) => {
       formData.append('platform[]', platform);
     });
     
@@ -550,7 +553,7 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       response = await fetch('https://api.upload-post.com/api/upload_text', {
         method: 'POST',
         headers: {
-          'Authorization': `ApiKey ${apiKey}`,
+          'Authorization': `Apikey ${apiKey}`,
         },
         body: formData,
       });
@@ -571,7 +574,7 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       response = await fetch('https://api.upload-post.com/api/upload_photos', {
         method: 'POST',
         headers: {
-          'Authorization': `ApiKey ${apiKey}`,
+          'Authorization': `Apikey ${apiKey}`,
         },
         body: formData,
       });
@@ -589,7 +592,7 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       response = await fetch('https://api.upload-post.com/api/upload', {
         method: 'POST',
         headers: {
-          'Authorization': `ApiKey ${apiKey}`,
+          'Authorization': `Apikey ${apiKey}`,
         },
         body: formData,
       });
@@ -635,7 +638,7 @@ async function getScheduledPosts(supabaseClient: any, userId: string, apiKey: st
     const response = await fetch('https://api.upload-post.com/api/uploadposts/schedule', {
       method: 'GET',
       headers: {
-        'Authorization': `ApiKey ${apiKey}`,
+        'Authorization': `Apikey ${apiKey}`,
         'Content-Type': 'application/json',
       }
     });
@@ -660,7 +663,7 @@ async function cancelScheduledPost(supabaseClient: any, userId: string, apiKey: 
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/schedule/${jobId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `ApiKey ${apiKey}`,
+        'Authorization': `Apikey ${apiKey}`,
         'Content-Type': 'application/json',
       }
     });

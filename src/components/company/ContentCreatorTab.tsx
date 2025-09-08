@@ -125,24 +125,19 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
       
       setGeneratedImage(data.image_url);
       
-      // Save generated image to content library
+      // Save generated image to content library using helper
       if (data.image_url && profile.user_id) {
+        const { saveImageToContentLibrary } = await import('@/utils/contentLibraryHelper');
         try {
-          await supabase
-            .from('content_recommendations')
-            .insert({
-              user_id: profile.user_id,
-              title: `Imagen IA - ${(manualContent || generatedContent).slice(0, 50)}...`,
-              description: (manualContent || generatedContent).slice(0, 200) + '...',
-              recommendation_type: 'post_template',
-              status: 'template',
-              platform: selectedPlatform !== 'all' ? selectedPlatform : 'general',
-              suggested_content: {
-                content_text: manualContent || generatedContent,
-                image_url: data.image_url,
-                metrics: { likes: 0, comments: 0 }
-              }
-            });
+          await saveImageToContentLibrary({
+            userId: profile.user_id,
+            title: `Imagen IA - ${(manualContent || generatedContent).slice(0, 50)}...`,
+            description: (manualContent || generatedContent).slice(0, 200) + '...',
+            imageUrl: data.image_url,
+            contentText: manualContent || generatedContent,
+            platform: selectedPlatform !== 'all' ? selectedPlatform : 'general',
+            metrics: { likes: 0, comments: 0 }
+          });
         } catch (saveError) {
           console.warn('Error saving generated image to library:', saveError);
         }

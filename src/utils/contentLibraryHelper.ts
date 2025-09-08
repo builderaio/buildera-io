@@ -25,6 +25,19 @@ export async function saveImageToContentLibrary({
   metrics = {}
 }: SaveToLibraryOptions): Promise<boolean> {
   try {
+    // Verificar si la imagen ya existe para evitar duplicados
+    const { data: existing } = await supabase
+      .from('content_recommendations')
+      .select('id')
+      .eq('user_id', userId)
+      .contains('suggested_content', { image_url: imageUrl })
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      console.log('📚 Image already exists in library, skipping...');
+      return false;
+    }
+    
     await supabase
       .from('content_recommendations')
       .insert({

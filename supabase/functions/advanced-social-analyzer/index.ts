@@ -116,6 +116,14 @@ serve(async (req) => {
 async function processCalendarData(userId: string, platform: string, supabase: any) {
   console.log(`📅 Processing calendar data for ${platform}`);
 
+  // Limpiar análisis previos para evitar duplicados
+  console.log('🧹 Cleaning previous analysis data to avoid duplicates...');
+  await Promise.all([
+    supabase.from('social_media_calendar').delete().eq('user_id', userId).eq('platform', platform),
+    supabase.from('marketing_insights').delete().eq('user_id', userId).eq('platform', platform),
+    supabase.from('marketing_actionables').delete().eq('user_id', userId).eq('platform', platform)
+  ]);
+
   let posts: any[] = [];
 
   // Obtener posts según la plataforma
@@ -221,6 +229,11 @@ async function processCalendarData(userId: string, platform: string, supabase: a
     console.log(`✅ Successfully saved ${calendarEntries.length} calendar entries`);
   }
 
+  // Guardar imágenes en la biblioteca de contenidos
+  console.log('📚 Saving images to content library...');
+  const imagesSaved = await saveImagesToContentLibrary(supabase, userId, posts, platform);
+  console.log(`✅ Saved ${imagesSaved} images to content library`);
+
   // Generar insights de marketing con IA
   console.log('🤖 Generating marketing insights with AI...');
   const insightsGenerated = await generateMarketingInsights(userId, platform, posts, supabase);
@@ -229,7 +242,8 @@ async function processCalendarData(userId: string, platform: string, supabase: a
     calendar_entries: calendarEntries.length,
     insights_generated: insightsGenerated,
     posts_analyzed: posts.length,
-    message: `Procesados ${calendarEntries.length} posts y generados ${insightsGenerated} insights`
+    images_saved: imagesSaved,
+    message: `Procesados ${calendarEntries.length} posts, generados ${insightsGenerated} insights y guardadas ${imagesSaved} imágenes`
   };
 }
 
@@ -709,6 +723,19 @@ async function saveImagesToContentLibrary(
 
       // Only save if there's an image
       if (!imageUrl) continue;
+
+      // Check if image already exists to avoid duplicates
+      const { data: existing } = await supabase
+        .from('content_recommendations')
+        .select('id')
+        .eq('user_id', userId)
+        .contains('suggested_content', { image_url: imageUrl })
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        console.log('📚 Image already exists in library, skipping...');
+        continue;
+      }
 
       const title = post.text
         ? `Post de ${platform} - ${post.text.slice(0, 50)}...`

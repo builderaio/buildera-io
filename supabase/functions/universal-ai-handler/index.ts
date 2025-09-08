@@ -18,15 +18,22 @@ let providerConfigs: Record<string, any> = {};
 // Base provider adapters - these handle the API specifics for each provider
 const PROVIDER_ADAPTERS = {
   openai: {
-    formatRequest: (model: string, messages: any[], config: any) => ({
-      model,
-      messages,
-      temperature: config.temperature,
-      max_tokens: config.max_tokens,
-      top_p: config.top_p,
-      frequency_penalty: config.frequency_penalty,
-      presence_penalty: config.presence_penalty,
-    }),
+    formatRequest: (model: string, messages: any[], config: any) => {
+      const isModern = /gpt-5|gpt-4\.1|o3|o4/.test(model);
+      const base: any = { model, messages };
+      if (isModern) {
+        // Newer models: use max_completion_tokens and DO NOT send temperature
+        base.max_completion_tokens = config.max_tokens;
+      } else {
+        // Legacy models
+        base.temperature = config.temperature;
+        base.max_tokens = config.max_tokens;
+        base.top_p = config.top_p;
+        base.frequency_penalty = config.frequency_penalty;
+        base.presence_penalty = config.presence_penalty;
+      }
+      return base;
+    },
     parseResponse: (data: any) => data.choices[0].message.content,
     getHeaders: (apiKey: string) => ({
       'Authorization': `Bearer ${apiKey}`,
@@ -299,18 +306,23 @@ serve(async (req) => {
 
     // Get active model assignment for this function
     console.log(`🔍 Getting model assignment for function: ${functionName}`);
-    const assignment = await getActiveModelAssignment(functionName);
+    let assignment = await getActiveModelAssignment(functionName);
     console.log('📋 Assignment result:', assignment ? 'Found' : 'Not found', assignment);
     
     if (!assignment) {
-      console.error(`❌ No assignment found for function: ${functionName}`);
-      return new Response(JSON.stringify({ 
-        success: false,
-        error: `No active model assignment found for function: ${functionName}` 
-      }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.warn(`⚠️ No assignment found for function: ${functionName}. Using safe default (OpenAI gpt-4.1-2025-04-14).`);
+      // Fallback default assignment using OpenAI
+      const openaiProvider = providerConfigs['openai'] || {
+        name: 'openai',
+        display_name: 'OpenAI',
+        base_url: 'https://api.openai.com/v1',
+        env_key: 'OPENAI_API_KEY'
+      };
+      assignment = {
+        provider: openaiProvider,
+        model: { model_name: 'gpt-4.1-2025-04-14', name: 'gpt-4.1-2025-04-14' },
+        model_parameters: { max_tokens: 500 }
+      };
     }
 
     let formattedMessages = messages;

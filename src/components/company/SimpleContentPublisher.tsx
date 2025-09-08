@@ -9,8 +9,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X, Calendar } from "lucide-react";
+import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X, Calendar, Image } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import ContentImageSelector from "./ContentImageSelector";
 
 interface SocialAccount {
   platform: string;
@@ -42,6 +43,8 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
   const [publishMode, setPublishMode] = useState<'immediate' | 'scheduled'>('immediate');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
+  const [showImageSelector, setShowImageSelector] = useState(false);
+  const [selectedContentImage, setSelectedContentImage] = useState<string>('');
 
   // Fetch social accounts when dialog opens
   useEffect(() => {
@@ -125,11 +128,35 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
         throw new Error('No se encontró el perfil de Upload-Post (companyUsername)');
       }
 
+      // Si hay imagen generada o seleccionada, guardarla en la biblioteca de contenidos
+      const finalImage = selectedContentImage || content.generatedImage;
+      if (finalImage && !selectedContentImage) {
+        try {
+          await supabase
+            .from('content_recommendations')
+            .insert({
+              user_id: profile.user_id,
+              title: content.title || 'Imagen generada',
+              description: editingContent.slice(0, 200) + (editingContent.length > 200 ? '...' : ''),
+              recommendation_type: 'post_template',
+              status: 'template',
+              platform: selectedPlatforms.join(', '),
+              suggested_content: {
+                content_text: editingContent,
+                image_url: finalImage,
+                metrics: { likes: 0, comments: 0 }
+              }
+            });
+        } catch (saveError) {
+          console.warn('Error saving to content library:', saveError);
+        }
+      }
+
       // Preparar payload para la función edge
-      const isPhoto = Boolean(content.generatedImage);
+      const isPhoto = Boolean(finalImage);
       const postType: 'text' | 'photo' | 'video' = isPhoto ? 'photo' : 'text';
       const title = content.title?.trim() || editingContent.slice(0, 80);
-      const mediaUrls = isPhoto && content.generatedImage ? [content.generatedImage] : undefined;
+      const mediaUrls = isPhoto && finalImage ? [finalImage] : undefined;
       const scheduledISO = publishMode === 'scheduled'
         ? new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString()
         : undefined;
@@ -236,17 +263,48 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
                 </div>
               )}
 
-              {/* Generated Image Preview */}
-              {content.generatedImage && (
-                <div className="mt-4">
-                  <Label className="text-sm font-medium mb-2 block">Imagen</Label>
-                  <img 
-                    src={content.generatedImage} 
-                    alt="Generated content" 
-                    className="max-w-full h-auto rounded-lg border max-h-48 object-cover"
-                  />
+              {/* Image Section */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-sm font-medium">Imagen</Label>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => setShowImageSelector(true)}
+                    className="text-xs"
+                  >
+                    <Image className="h-3 w-3 mr-1" />
+                    Seleccionar de biblioteca
+                  </Button>
                 </div>
-              )}
+                
+                {(selectedContentImage || content.generatedImage) && (
+                  <div className="relative">
+                    <img 
+                      src={selectedContentImage || content.generatedImage} 
+                      alt="Content image" 
+                      className="max-w-full h-auto rounded-lg border max-h-48 object-cover"
+                    />
+                    {selectedContentImage && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="absolute top-2 right-2 p-1 h-6 w-6"
+                        onClick={() => setSelectedContentImage('')}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+                
+                {!selectedContentImage && !content.generatedImage && (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <Image className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-500">No hay imagen seleccionada</p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -358,6 +416,18 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
           </div>
         </div>
       </DialogContent>
+
+      <ContentImageSelector
+        isOpen={showImageSelector}
+        onClose={() => setShowImageSelector(false)}
+        onSelectImage={(imageUrl, contentText) => {
+          setSelectedContentImage(imageUrl);
+          if (contentText && !isEditing) {
+            setEditingContent(contentText);
+          }
+        }}
+        profile={profile}
+      />
     </Dialog>
   );
 }

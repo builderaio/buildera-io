@@ -117,6 +117,14 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
                       }}>
                         <Copy className="h-3 w-3 mr-1" />Copiar texto
                       </Button>
+                      {item.suggested_content?.image_url && (
+                        <Button size="sm" variant="outline" onClick={() => {
+                          navigator.clipboard.writeText(item.suggested_content.image_url);
+                          toast({ title: "URL copiada", description: "La URL de la imagen se ha copiado al portapapeles" });
+                        }}>
+                          <Image className="h-3 w-3" />
+                        </Button>
+                      )}
                       <Button size="sm" variant="ghost" onClick={() => deleteFromLibrary(item.id)}>
                         <Eye className="h-3 w-3" />
                       </Button>

@@ -16,7 +16,8 @@ import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import { Sparkles, BarChart3, Calendar, TrendingUp, Users, Heart, MessageCircle, ArrowRight, Plus, ChevronRight, Zap, Eye, Target, Brain, Rocket, Star, Activity, PieChart, LineChart, CheckCircle2, PlayCircle, Image, Video, PenTool, Globe, Wand2, Camera, TrendingDown, Hash, Clock, Award, Network, Share2, Download, Upload, RefreshCw, Filter, Search, Settings, History as HistoryIcon, Linkedin, Instagram, Facebook, Music } from "lucide-react";
 import { SOCIAL_PLATFORMS, getPlatform, getPlatformDisplayName, getPlatformIcon } from '@/lib/socialPlatforms';
 import { SocialConnectionManager } from './SocialConnectionManager';
-import { ContentAnalysisDashboard } from './ContentAnalysisDashboard';
+import ContentCreatorTab from './ContentCreatorTab';
+import ContentLibraryTab from './ContentLibraryTab';
 import { ScheduledPostsManager } from './ScheduledPostsManager';
 import { UploadHistory } from './UploadHistory';
 import MarketingHubOrchestrator from './MarketingHubOrchestrator';
@@ -1086,7 +1087,57 @@ const MarketingHubWow = ({
 
           {/* Contenido Tab */}
           <TabsContent value="create" className="space-y-8">
-            <ContentAnalysisDashboard profile={profile} />
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight">Centro de Contenido</h2>
+                  <p className="text-muted-foreground">
+                    Gestiona tu contenido, biblioteca y publicaciones programadas
+                  </p>
+                </div>
+              </div>
+
+              <Tabs defaultValue="post" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 mb-6">
+                  <TabsTrigger value="post" className="flex items-center gap-2">
+                    <PenTool className="h-4 w-4" />
+                    Post
+                  </TabsTrigger>
+                  <TabsTrigger value="biblioteca" className="flex items-center gap-2">
+                    <Image className="h-4 w-4" />
+                    Biblioteca
+                  </TabsTrigger>
+                  <TabsTrigger value="historial" className="flex items-center gap-2">
+                    <HistoryIcon className="h-4 w-4" />
+                    Historial
+                  </TabsTrigger>
+                  <TabsTrigger value="programados" className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Programados
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="post" className="space-y-6">
+                  <ContentCreatorTab 
+                    profile={profile} 
+                    topPosts={[]} 
+                    selectedPlatform="instagram" 
+                  />
+                </TabsContent>
+
+                <TabsContent value="biblioteca" className="space-y-6">
+                  <ContentLibraryTab profile={profile} />
+                </TabsContent>
+
+                <TabsContent value="historial" className="space-y-6">
+                  <UploadHistory profile={profile} />
+                </TabsContent>
+
+                <TabsContent value="programados" className="space-y-6">
+                  <ScheduledPostsManager profile={profile} />
+                </TabsContent>
+              </Tabs>
+            </div>
           </TabsContent>
 
 

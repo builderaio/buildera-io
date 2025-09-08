@@ -75,29 +75,62 @@ serve(async (req) => {
       size: '1024x1024',
       quality: 'high',
       output_format: 'png',
-      timestamp: new Date().toISOString(),
-      auth_token: token // Add auth token for n8n
+      timestamp: new Date().toISOString()
     });
 
     const requestUrl = `${N8N_WEBHOOK_URL}?${queryParams.toString()}`;
-    console.log('🔗 Request URL:', requestUrl);
+    console.log('🔗 Complete Request URL:', requestUrl);
+    console.log('🔗 N8N_WEBHOOK_URL:', N8N_WEBHOOK_URL);
+    console.log('🔗 Query Parameters:', queryParams.toString());
 
+    console.log('⏳ Making request to n8n...');
+    
     const response = await fetch(requestUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`, // Add authorization header
+        'User-Agent': 'Supabase-Edge-Function/1.0',
       },
+    });
+
+    console.log('📡 Response received:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries())
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('❌ Error de n8n webhook:', response.status, errorData);
+      console.error('❌ Error de n8n webhook:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+        requestUrl
+      });
+      
+      // Try to test connectivity to n8n
+      console.log('🔍 Testing connectivity to n8n...');
+      try {
+        const testResponse = await fetch(N8N_WEBHOOK_URL, {
+          method: 'HEAD',
+          headers: { 'User-Agent': 'Connectivity-Test' }
+        });
+        console.log('🔍 Connectivity test result:', testResponse.status, testResponse.statusText);
+      } catch (testError) {
+        console.error('🔍 Connectivity test failed:', testError);
+      }
+      
       throw new Error(`Error de n8n webhook: ${response.status} - ${errorData}`);
     }
 
     const data = await response.json();
-    console.log('✅ Respuesta de n8n recibida:', data);
+    console.log('✅ Respuesta de n8n recibida:', {
+      success: data.success,
+      hasImageUrl: !!data.image_url,
+      responseKeys: Object.keys(data),
+      fullResponse: data
+    });
 
     if (!data.success) {
       console.error('❌ Error en la respuesta de n8n:', data.error);
@@ -169,10 +202,11 @@ serve(async (req) => {
     // Log failed image generation
     try {
       const body = await req.json().catch(() => ({}));
+      const userId = body.user_id || 'unknown';
       await supabase
         .from('api_usage_logs')
         .insert({
-          user_id: authenticatedUserId,
+          user_id: userId,
           function_name: 'marketing-hub-image-creator',
           request_data: body,
           response_data: { error: error.message },

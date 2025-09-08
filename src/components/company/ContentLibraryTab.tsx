@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
-import { Image, Heart, MessageCircle, Copy, Eye } from "lucide-react";
+import { SmartLoader } from "@/components/ui/smart-loader";
+import { Image, Heart, MessageCircle, Copy, Eye, RefreshCw } from "lucide-react";
 
 interface Profile { user_id?: string }
 
@@ -52,11 +52,21 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
     }
   };
 
+  const refreshLibrary = async () => {
+    setLibraryLoading(true);
+    await loadSavedContent();
+    setLibraryLoading(false);
+    toast({ title: "Biblioteca actualizada", description: "Se ha actualizado el contenido de tu biblioteca" });
+  };
+
   if (libraryLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <AdvancedAILoader isVisible={true} />
-      </div>
+      <SmartLoader
+        isVisible={true}
+        type="generic"
+        message="Cargando tu biblioteca de contenidos..."
+        size="md"
+      />
     );
   }
 
@@ -64,12 +74,23 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Image className="h-5 w-5 text-primary" />
-            Biblioteca de Contenidos
-            <Badge variant="secondary" className="ml-2">{savedContent.length} elementos</Badge>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Image className="h-5 w-5 text-primary" />
+              Biblioteca de Contenidos
+              <Badge variant="secondary" className="ml-2">{savedContent.length} elementos</Badge>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshLibrary}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Actualizar
+            </Button>
           </CardTitle>
-          <p className="text-sm text-muted-foreground">Guarda y reutiliza tus mejores contenidos como plantillas para futuras publicaciones</p>
+          <p className="text-sm text-muted-foreground">Guarda y reutiliza tus mejores contenidos. Las imágenes se guardan automáticamente al analizar redes sociales y generar contenido.</p>
         </CardHeader>
         <CardContent>
           {savedContent.length === 0 ? (

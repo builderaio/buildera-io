@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
+import { SmartLoader } from "@/components/ui/smart-loader";
 import { PlusCircle, Sparkles, Lightbulb, Copy, Brain, Target, TrendingUp, Clock, ArrowRight, Edit3, Image, Send, Calendar } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import AdvancedContentCreator from "./AdvancedContentCreator";
@@ -72,6 +72,30 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
       });
       if (error) throw error;
       setGeneratedContent(data.content || data.generatedText || 'No se pudo generar contenido');
+      
+      // Save generated content to library if it includes suggestions
+      if (data.content && profile.user_id) {
+        try {
+          await supabase
+            .from('content_recommendations')
+            .insert({
+              user_id: profile.user_id,
+              title: `Contenido IA - ${contentPrompt.slice(0, 50)}...`,
+              description: data.content.slice(0, 200) + (data.content.length > 200 ? '...' : ''),
+              recommendation_type: 'post_template',
+              status: 'template',
+              platform: selectedPlatform !== 'all' ? selectedPlatform : 'general',
+              suggested_content: {
+                content_text: data.content,
+                image_url: '',
+                metrics: { likes: 0, comments: 0 }
+              }
+            });
+        } catch (saveError) {
+          console.warn('Error saving generated content to library:', saveError);
+        }
+      }
+      
       toast({ title: "¡Contenido generado!", description: "Tu nuevo contenido está listo para revisar" });
     } catch (error) {
       console.error('Error generating content:', error);
@@ -100,6 +124,30 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
       if (error) throw error;
       
       setGeneratedImage(data.image_url);
+      
+      // Save generated image to content library
+      if (data.image_url && profile.user_id) {
+        try {
+          await supabase
+            .from('content_recommendations')
+            .insert({
+              user_id: profile.user_id,
+              title: `Imagen IA - ${(manualContent || generatedContent).slice(0, 50)}...`,
+              description: (manualContent || generatedContent).slice(0, 200) + '...',
+              recommendation_type: 'post_template',
+              status: 'template',
+              platform: selectedPlatform !== 'all' ? selectedPlatform : 'general',
+              suggested_content: {
+                content_text: manualContent || generatedContent,
+                image_url: data.image_url,
+                metrics: { likes: 0, comments: 0 }
+              }
+            });
+        } catch (saveError) {
+          console.warn('Error saving generated image to library:', saveError);
+        }
+      }
+      
       toast({ title: "¡Imagen generada!", description: "Tu imagen está lista" });
     } catch (error) {
       console.error('Error generating image:', error);
@@ -207,7 +255,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
                 />
               </div>
               <Button onClick={generateContent} disabled={generatingContent || !contentPrompt.trim()} className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
-                {generatingContent ? (<><AdvancedAILoader isVisible={true} />Generando contenido...</>) : (<><Sparkles className="h-4 w-4 mr-2" />Generar Contenido</>)}
+                {generatingContent ? "Generando contenido..." : "Generar Contenido"}
               </Button>
             </TabsContent>
 
@@ -231,17 +279,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
                   variant="outline"
                   className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
                 >
-                  {isOptimizing ? (
-                    <>
-                      <AdvancedAILoader isVisible={true} />
-                      <span className="text-purple-600">Era optimizando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Brain className="h-4 w-4 mr-2 text-purple-600" />
-                      <span>Optimizar con Era</span>
-                    </>
-                  )}
+                  {isOptimizing ? "Era optimizando..." : "Optimizar con Era"}
                 </Button>
                 <Button 
                   onClick={generateImageWithEra}
@@ -249,7 +287,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
                   variant="outline"
                   className="flex-1"
                 >
-                  {generatingImage ? (<><AdvancedAILoader isVisible={true} />Generando...</>) : (<><Image className="h-4 w-4 mr-2" />Generar Imagen</>)}
+                  {generatingImage ? "Generando..." : "Generar Imagen"}
                 </Button>
               </div>
             </TabsContent>
@@ -397,6 +435,28 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
           profile={profile}
         />
       )}
+
+      {/* Smart Loaders */}
+      <SmartLoader
+        isVisible={generatingContent}
+        type="content-generation"
+        message="Creando contenido personalizado para tu audiencia..."
+        size="md"
+      />
+      
+      <SmartLoader
+        isVisible={generatingImage}
+        type="image-generation"
+        message="Generando imagen profesional para tu contenido..."
+        size="md"
+      />
+      
+      <SmartLoader
+        isVisible={isOptimizing}
+        type="optimization"
+        message="Era está optimizando tu contenido..."
+        size="md"
+      />
     </div>
   );
 }

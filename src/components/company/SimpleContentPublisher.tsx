@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X, Calendar, Image } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import ContentImageSelector from "./ContentImageSelector";
+import { SmartLoader } from "@/components/ui/smart-loader";
 
 interface SocialAccount {
   platform: string;
@@ -184,7 +185,23 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
         title: publishMode === 'immediate' ? '¡Publicado!' : '¡Programado!',
         description: `Contenido ${publishMode === 'immediate' ? 'publicado' : 'programado'} en ${selectedPlatforms.length} plataforma(s)`,
       });
+      
+      // Close dialog and navigate to posts tab
       onClose();
+      
+      // Navigate to posts tab in marketing hub
+      setTimeout(() => {
+        const contentTab = document.querySelector('[data-value="content"]');
+        if (contentTab) {
+          (contentTab as HTMLElement).click();
+          setTimeout(() => {
+            const postsTab = document.querySelector('[data-value="post"]');
+            if (postsTab) {
+              (postsTab as HTMLElement).click();
+            }
+          }, 100);
+        }
+      }, 500);
     } catch (error: any) {
       console.error('Error publishing content:', error);
       toast({
@@ -427,6 +444,13 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
           }
         }}
         profile={profile}
+      />
+
+      <SmartLoader
+        isVisible={loading}
+        type="publishing"
+        message={publishMode === 'immediate' ? 'Publicando en redes sociales...' : 'Programando publicación...'}
+        size="md"
       />
     </Dialog>
   );

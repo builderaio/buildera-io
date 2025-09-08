@@ -112,77 +112,58 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
 
     setLoading(true);
     try {
-      // Get API key from Supabase function
-      const { data: apiKeyData, error: apiKeyError } = await supabase.functions.invoke('get-upload-post-key');
-      
-      if (apiKeyError) {
-        throw new Error('Error obteniendo API key de Upload Post');
+      // Determinar el username del perfil en Upload-Post
+      let companyUsername = socialAccounts[0]?.company_username;
+      if (!companyUsername && profile.user_id) {
+        const { data: initData, error: initError } = await supabase.functions.invoke('upload-post-manager', {
+          body: { action: 'init_profile', data: {} }
+        });
+        if (initError) throw new Error('No se pudo inicializar el perfil de Upload-Post');
+        companyUsername = initData?.companyUsername;
       }
-      
-      const apiKey = apiKeyData?.api_key;
+      if (!companyUsername) {
+        throw new Error('No se encontró el perfil de Upload-Post (companyUsername)');
+      }
 
-      const publishPromises = selectedPlatforms.map(async (platform) => {
-        const postData = {
-          text: editingContent,
-          platforms: [platform],
-          ...(content.generatedImage && { mediaUrls: [content.generatedImage] }),
-          ...(publishMode === 'scheduled' && {
-            scheduleDate: `${scheduledDate}T${scheduledTime}:00`
-          })
-        };
+      // Preparar payload para la función edge
+      const isPhoto = Boolean(content.generatedImage);
+      const postType: 'text' | 'photo' | 'video' = isPhoto ? 'photo' : 'text';
+      const title = content.title?.trim() || editingContent.slice(0, 80);
+      const mediaUrls = isPhoto && content.generatedImage ? [content.generatedImage] : undefined;
+      const scheduledISO = publishMode === 'scheduled'
+        ? new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString()
+        : undefined;
 
-        if (publishMode === 'immediate') {
-          // Immediate publish using upload-text API
-          const response = await fetch('https://api.upload-post.com/api/upload-text', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(postData)
-          });
-
-          if (!response.ok) {
-            throw new Error(`Error publishing to ${platform}: ${response.statusText}`);
+      const { data, error } = await supabase.functions.invoke('upload-post-manager', {
+        body: {
+          action: 'post_content',
+          data: {
+            companyUsername,
+            platforms: selectedPlatforms,
+            title,
+            content: editingContent,
+            mediaUrls,
+            postType,
+            scheduledDate: scheduledISO,
+            async_upload: true,
           }
-
-          return await response.json();
-        } else {
-          // Scheduled publish using schedule-posts API
-          const response = await fetch('https://api.upload-post.com/api/schedule-posts', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(postData)
-          });
-
-          if (!response.ok) {
-            throw new Error(`Error scheduling to ${platform}: ${response.statusText}`);
-          }
-
-          return await response.json();
         }
       });
 
-      const results = await Promise.all(publishPromises);
-      
-      // Log successful uploads
-      console.log('Successfully published to platforms:', selectedPlatforms);
+      if (error) throw error;
 
+      console.log('Successfully published via edge function:', data);
       toast({
-        title: publishMode === 'immediate' ? "¡Publicado!" : "¡Programado!",
+        title: publishMode === 'immediate' ? '¡Publicado!' : '¡Programado!',
         description: `Contenido ${publishMode === 'immediate' ? 'publicado' : 'programado'} en ${selectedPlatforms.length} plataforma(s)`,
       });
-
       onClose();
     } catch (error: any) {
       console.error('Error publishing content:', error);
       toast({
-        title: "Error",
-        description: error.message || "No se pudo publicar el contenido",
-        variant: "destructive"
+        title: 'Error',
+        description: error.message || 'No se pudo publicar el contenido',
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);

@@ -138,25 +138,51 @@ serve(async (req) => {
       throw new Error(`Error de n8n webhook: ${response.status} - ${errorData}`);
     }
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const contentLength = response.headers.get('content-length') || '';
+    const rawBody = await response.text();
+
+    let data: any = null;
+    if (rawBody && rawBody.trim().length > 0) {
+      try {
+        data = JSON.parse(rawBody);
+      } catch (parseErr) {
+        console.warn('⚠️ n8n respondió con texto no-JSON. Intentando continuar.', { parseErr, preview: rawBody.slice(0, 500) });
+      }
+    } else {
+      console.warn('⚠️ n8n devolvió 200 OK sin cuerpo.', { contentType, contentLength });
+    }
+
     console.log('✅ Respuesta de n8n recibida:', {
-      success: data.success,
-      hasImageUrl: !!data.image_url,
-      responseKeys: Object.keys(data),
-      fullResponse: data
+      success: data?.success,
+      hasImageUrl: !!(data?.image_url || data?.imageUrl || data?.url),
+      responseKeys: data ? Object.keys(data) : [],
+      contentType,
+      contentLength,
     });
 
-    if (!data.success) {
+    if (data && data.success === false) {
       console.error('❌ Error en la respuesta de n8n:', data.error);
       throw new Error(data.error || 'Error en el webhook de n8n');
     }
 
-    // Extract image URL from n8n response
-    const imageUrl = data.image_url || data.imageUrl || data.url;
-    
+    // Extraer URL de imagen
+    let imageUrl: string | null =
+      (data && (data.image_url || data.imageUrl || data.url)) || null;
+
+    if (!imageUrl && rawBody) {
+      const match = rawBody.match(/https?:\/\/[^\s"']+\.(?:png|jpg|jpeg|webp)/i);
+      if (match) imageUrl = match[0];
+    }
+
     if (!imageUrl) {
-      console.error('❌ No se recibió URL de imagen de n8n:', data);
-      throw new Error('No se recibió URL de imagen del webhook');
+      console.error('❌ No se recibió URL de imagen de n8n.', {
+        status: response.status,
+        contentType,
+        contentLength,
+        bodyPreview: rawBody?.slice(0, 500) || '',
+      });
+      throw new Error('n8n devolvió una respuesta vacía o sin URL de imagen');
     }
 
     console.log('🖼️ Imagen generada exitosamente, URL:', imageUrl);

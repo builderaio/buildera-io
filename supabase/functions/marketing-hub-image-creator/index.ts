@@ -58,6 +58,22 @@ serve(async (req) => {
       throw new Error('Prompt es requerido');
     }
 
+    // Get company information for brand identity
+    console.log('🏢 Obteniendo información de la empresa...');
+    const { data: companyData, error: companyError } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('created_by', authenticatedUserId)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (companyError) {
+      console.warn('⚠️ Error obteniendo datos de empresa:', companyError);
+    }
+
+    console.log('🏢 Datos de empresa obtenidos:', companyData ? 'Sí' : 'No');
+
     // Enhanced prompt for social media images
     const enhancedPrompt = `Create a professional, engaging social media image for: ${prompt}. 
     Style: Modern, clean, eye-catching design suitable for social media platforms. 
@@ -77,6 +93,23 @@ serve(async (req) => {
       output_format: 'png',
       timestamp: new Date().toISOString()
     });
+
+    // Add company brand identity if available
+    if (companyData) {
+      console.log('🎨 Agregando identidad de marca al query...');
+      
+      // Add essential company information for brand consistency
+      if (companyData.name) queryParams.set('company_name', companyData.name);
+      if (companyData.industry) queryParams.set('company_industry', companyData.industry);
+      if (companyData.brand_colors) queryParams.set('brand_colors', companyData.brand_colors);
+      if (companyData.brand_fonts) queryParams.set('brand_fonts', companyData.brand_fonts);
+      if (companyData.brand_style) queryParams.set('brand_style', companyData.brand_style);
+      if (companyData.logo_url) queryParams.set('logo_url', companyData.logo_url);
+      if (companyData.description) queryParams.set('company_description', companyData.description);
+      if (companyData.target_audience) queryParams.set('target_audience', companyData.target_audience);
+      if (companyData.brand_voice) queryParams.set('brand_voice', companyData.brand_voice);
+      if (companyData.visual_guidelines) queryParams.set('visual_guidelines', companyData.visual_guidelines);
+    }
 
     const requestUrl = `${N8N_WEBHOOK_URL}?${queryParams.toString()}`;
     console.log('🔗 Complete Request URL:', requestUrl);

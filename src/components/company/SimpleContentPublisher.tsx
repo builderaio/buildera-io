@@ -112,8 +112,14 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
 
     setLoading(true);
     try {
-      // For now, we'll use a placeholder API key - this should be configured in admin
-      const apiKey = "demo-api-key"; // This should come from user configuration
+      // Get API key from Supabase function
+      const { data: apiKeyData, error: apiKeyError } = await supabase.functions.invoke('get-upload-post-key');
+      
+      if (apiKeyError) {
+        throw new Error('Error obteniendo API key de Upload Post');
+      }
+      
+      const apiKey = apiKeyData?.api_key;
 
       const publishPromises = selectedPlatforms.map(async (platform) => {
         const postData = {

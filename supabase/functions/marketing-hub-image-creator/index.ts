@@ -53,7 +53,7 @@ serve(async (req) => {
         prompt: enhancedPrompt,
         n: 1,
         size: '1024x1024',
-        quality: 'hd',
+        quality: 'high',
         output_format: 'png'
       }),
     });

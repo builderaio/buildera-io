@@ -21,10 +21,38 @@ serve(async (req) => {
   try {
     console.log('🎨 Iniciando generación de imagen con n8n...');
     
+    // Get user from authorization header
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Authorization header required' 
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Invalid user token' 
+        }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const body = await req.json();
     console.log('📝 Datos recibidos:', body);
 
     const { prompt, user_id, content_id, platform } = body;
+
+    // Use authenticated user ID if not provided in body
+    const authenticatedUserId = user_id || user.id;
 
     if (!prompt) {
       throw new Error('Prompt es requerido');
@@ -41,13 +69,14 @@ serve(async (req) => {
     // Prepare query parameters for GET request to n8n
     const queryParams = new URLSearchParams({
       prompt: enhancedPrompt,
-      user_id: user_id || '',
+      user_id: authenticatedUserId || '',
       content_id: content_id || '',
       platform: platform || 'general',
       size: '1024x1024',
       quality: 'high',
       output_format: 'png',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      auth_token: token // Add auth token for n8n
     });
 
     const requestUrl = `${N8N_WEBHOOK_URL}?${queryParams.toString()}`;
@@ -57,6 +86,7 @@ serve(async (req) => {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`, // Add authorization header
       },
     });
 
@@ -85,7 +115,7 @@ serve(async (req) => {
     console.log('🖼️ Imagen generada exitosamente, URL:', imageUrl);
 
     // Optional: Store image info in database for tracking
-    if (user_id && content_id) {
+    if (authenticatedUserId && content_id) {
       try {
         const { error: logError } = await supabase
           .from('generated_content')
@@ -95,7 +125,7 @@ serve(async (req) => {
             updated_at: new Date().toISOString()
           })
           .eq('id', content_id)
-          .eq('user_id', user_id);
+          .eq('user_id', authenticatedUserId);
 
         if (logError) {
           console.error('❌ Error updating content record:', logError);
@@ -113,7 +143,7 @@ serve(async (req) => {
       await supabase
         .from('api_usage_logs')
         .insert({
-          user_id: user_id,
+          user_id: authenticatedUserId,
           function_name: 'marketing-hub-image-creator',
           request_data: { prompt: enhancedPrompt, platform },
           response_data: { success: true, image_url: imageUrl },
@@ -142,7 +172,7 @@ serve(async (req) => {
       await supabase
         .from('api_usage_logs')
         .insert({
-          user_id: body.user_id,
+          user_id: authenticatedUserId,
           function_name: 'marketing-hub-image-creator',
           request_data: body,
           response_data: { error: error.message },

@@ -2,9 +2,9 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const N8N_WEBHOOK_URL = 'https://buildera.app.n8n.cloud/webhook/image-creator';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,17 +19,12 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🎨 Iniciando generación de imagen...');
+    console.log('🎨 Iniciando generación de imagen con n8n...');
     
-    if (!openAIApiKey) {
-      console.error('❌ OPENAI_API_KEY no está configurada');
-      throw new Error('OPENAI_API_KEY no está configurada');
-    }
-
     const body = await req.json();
     console.log('📝 Datos recibidos:', body);
 
-    const { prompt, user_id, content_id } = body;
+    const { prompt, user_id, content_id, platform } = body;
 
     if (!prompt) {
       throw new Error('Prompt es requerido');
@@ -38,55 +33,54 @@ serve(async (req) => {
     // Enhanced prompt for social media images
     const enhancedPrompt = `Create a professional, engaging social media image for: ${prompt}. 
     Style: Modern, clean, eye-catching design suitable for social media platforms. 
-    High quality, vibrant colors, professional composition, visually appealing for marketing content.`;
+    High quality, vibrant colors, professional composition, visually appealing for marketing content.
+    Platform: ${platform || 'general social media'}`;
 
-    console.log('📤 Enviando request a OpenAI para generar imagen...');
+    console.log('📤 Enviando request a n8n webhook...');
     
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    // Prepare payload for n8n
+    const n8nPayload = {
+      prompt: enhancedPrompt,
+      user_id: user_id,
+      content_id: content_id,
+      platform: platform || 'general',
+      size: '1024x1024',
+      quality: 'high',
+      output_format: 'png',
+      timestamp: new Date().toISOString()
+    };
+
+    const response = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'gpt-image-1',
-        prompt: enhancedPrompt,
-        n: 1,
-        size: '1024x1024',
-        quality: 'high',
-        output_format: 'png'
-      }),
+      body: JSON.stringify(n8nPayload),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('❌ Error de OpenAI Images:', response.status, errorData);
-      throw new Error(`Error de OpenAI Images: ${response.status} - ${errorData}`);
+      console.error('❌ Error de n8n webhook:', response.status, errorData);
+      throw new Error(`Error de n8n webhook: ${response.status} - ${errorData}`);
     }
 
     const data = await response.json();
-    console.log('✅ Imagen generada exitosamente');
+    console.log('✅ Respuesta de n8n recibida:', data);
 
-    if (!data.data || !data.data[0]) {
-      console.error('❌ Respuesta inválida de OpenAI Images:', data);
-      throw new Error('Respuesta inválida de OpenAI Images');
+    if (!data.success) {
+      console.error('❌ Error en la respuesta de n8n:', data.error);
+      throw new Error(data.error || 'Error en el webhook de n8n');
     }
 
-    // Since gpt-image-1 returns base64, we get the image data directly
-    const imageData = data.data[0];
-    let imageUrl = '';
-
-    if (imageData.b64_json) {
-      // Convert base64 to data URL
-      imageUrl = `data:image/png;base64,${imageData.b64_json}`;
-    } else if (imageData.url) {
-      // Fallback to URL if available
-      imageUrl = imageData.url;
-    } else {
-      throw new Error('No image data received from OpenAI');
+    // Extract image URL from n8n response
+    const imageUrl = data.image_url || data.imageUrl || data.url;
+    
+    if (!imageUrl) {
+      console.error('❌ No se recibió URL de imagen de n8n:', data);
+      throw new Error('No se recibió URL de imagen del webhook');
     }
 
-    console.log('🖼️ Imagen procesada, tamaño de datos:', imageUrl.length);
+    console.log('🖼️ Imagen generada exitosamente, URL:', imageUrl);
 
     // Optional: Store image info in database for tracking
     if (user_id && content_id) {
@@ -95,7 +89,8 @@ serve(async (req) => {
           .from('generated_content')
           .update({ 
             media_url: imageUrl,
-            content_type: 'image'
+            content_type: 'image',
+            updated_at: new Date().toISOString()
           })
           .eq('id', content_id)
           .eq('user_id', user_id);
@@ -111,19 +106,55 @@ serve(async (req) => {
       }
     }
 
+    // Log successful image generation
+    try {
+      await supabase
+        .from('api_usage_logs')
+        .insert({
+          user_id: user_id,
+          function_name: 'marketing-hub-image-creator',
+          request_data: { prompt: enhancedPrompt, platform },
+          response_data: { success: true, image_url: imageUrl },
+          status: 'success',
+          created_at: new Date().toISOString()
+        });
+    } catch (logError) {
+      console.error('❌ Error logging API usage:', logError);
+    }
+
     return new Response(JSON.stringify({ 
       success: true,
       image_url: imageUrl,
-      prompt: enhancedPrompt
+      prompt: enhancedPrompt,
+      provider: 'n8n'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error: any) {
     console.error('❌ Error en marketing-hub-image-creator:', error);
+    
+    // Log failed image generation
+    try {
+      const body = await req.json().catch(() => ({}));
+      await supabase
+        .from('api_usage_logs')
+        .insert({
+          user_id: body.user_id,
+          function_name: 'marketing-hub-image-creator',
+          request_data: body,
+          response_data: { error: error.message },
+          status: 'error',
+          created_at: new Date().toISOString()
+        });
+    } catch (logError) {
+      console.error('❌ Error logging failed API usage:', logError);
+    }
+
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'Error interno del servidor' 
+      error: error.message || 'Error interno del servidor',
+      provider: 'n8n'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

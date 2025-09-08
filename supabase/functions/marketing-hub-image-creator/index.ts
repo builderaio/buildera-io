@@ -74,6 +74,24 @@ serve(async (req) => {
 
     console.log('🏢 Datos de empresa obtenidos:', companyData ? 'Sí' : 'No');
 
+    // Get company branding details
+    let brandingData: any = null;
+    if (companyData?.id) {
+      console.log('🎨 Obteniendo branding de la empresa...');
+      const { data: branding, error: brandingError } = await supabase
+        .from('company_branding')
+        .select('*')
+        .eq('company_id', companyData.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (brandingError) {
+        console.warn('⚠️ Error obteniendo branding:', brandingError);
+      }
+      brandingData = branding;
+      console.log('🎨 Branding obtenido:', brandingData ? 'Sí' : 'No');
+    }
+
     // Enhanced prompt for social media images
     const enhancedPrompt = `Create a professional, engaging social media image for: ${prompt}. 
     Style: Modern, clean, eye-catching design suitable for social media platforms. 
@@ -100,15 +118,23 @@ serve(async (req) => {
       
       // Add essential company information for brand consistency
       if (companyData.name) queryParams.set('company_name', companyData.name);
-      if (companyData.industry) queryParams.set('company_industry', companyData.industry);
-      if (companyData.brand_colors) queryParams.set('brand_colors', companyData.brand_colors);
-      if (companyData.brand_fonts) queryParams.set('brand_fonts', companyData.brand_fonts);
-      if (companyData.brand_style) queryParams.set('brand_style', companyData.brand_style);
+      if (companyData.industry_sector) queryParams.set('company_industry', companyData.industry_sector);
       if (companyData.logo_url) queryParams.set('logo_url', companyData.logo_url);
       if (companyData.description) queryParams.set('company_description', companyData.description);
-      if (companyData.target_audience) queryParams.set('target_audience', companyData.target_audience);
-      if (companyData.brand_voice) queryParams.set('brand_voice', companyData.brand_voice);
-      if (companyData.visual_guidelines) queryParams.set('visual_guidelines', companyData.visual_guidelines);
+      if (companyData.website_url) queryParams.set('company_website', companyData.website_url);
+      if (companyData.country) queryParams.set('company_country', companyData.country);
+    }
+
+    // Include detailed branding if available
+    if (brandingData) {
+      if (brandingData.primary_color) queryParams.set('brand_primary_color', brandingData.primary_color);
+      if (brandingData.secondary_color) queryParams.set('brand_secondary_color', brandingData.secondary_color);
+      if (brandingData.complementary_color_1) queryParams.set('brand_complementary_color_1', brandingData.complementary_color_1);
+      if (brandingData.complementary_color_2) queryParams.set('brand_complementary_color_2', brandingData.complementary_color_2);
+      if (brandingData.visual_identity) queryParams.set('brand_visual_identity', brandingData.visual_identity);
+      if (brandingData.brand_manual_url) queryParams.set('brand_manual_url', brandingData.brand_manual_url);
+      if (brandingData.brand_voice) queryParams.set('brand_voice', JSON.stringify(brandingData.brand_voice).slice(0, 1000));
+      if (brandingData.visual_synthesis) queryParams.set('brand_visual_synthesis', JSON.stringify(brandingData.visual_synthesis).slice(0, 1000));
     }
 
     const requestUrl = `${N8N_WEBHOOK_URL}?${queryParams.toString()}`;

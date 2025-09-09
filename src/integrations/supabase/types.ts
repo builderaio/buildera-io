@@ -1047,6 +1047,33 @@ export type Database = {
           },
         ]
       }
+      audience_analysis: {
+        Row: {
+          analysis_data: Json
+          created_at: string | null
+          id: string
+          insights: Json | null
+          platform: string
+          user_id: string
+        }
+        Insert: {
+          analysis_data: Json
+          created_at?: string | null
+          id?: string
+          insights?: Json | null
+          platform: string
+          user_id: string
+        }
+        Update: {
+          analysis_data?: Json
+          created_at?: string | null
+          id?: string
+          insights?: Json | null
+          platform?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audience_insights: {
         Row: {
           age_ranges: Json | null
@@ -2467,6 +2494,39 @@ export type Database = {
           suggested_content?: Json | null
           title?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      custom_audiences: {
+        Row: {
+          created_at: string | null
+          criteria: Json
+          description: string | null
+          id: string
+          name: string
+          platform: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          criteria: Json
+          description?: string | null
+          id?: string
+          name: string
+          platform?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          criteria?: Json
+          description?: string | null
+          id?: string
+          name?: string
+          platform?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -5739,6 +5799,78 @@ export type Database = {
           total_points?: number | null
           total_study_time_minutes?: number | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_guided_tour: {
+        Row: {
+          completed_steps: number[] | null
+          created_at: string | null
+          current_step: number | null
+          id: string
+          tour_completed: boolean | null
+          tour_completed_at: string | null
+          tour_skipped: boolean | null
+          tour_started_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_steps?: number[] | null
+          created_at?: string | null
+          current_step?: number | null
+          id?: string
+          tour_completed?: boolean | null
+          tour_completed_at?: string | null
+          tour_skipped?: boolean | null
+          tour_started_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_steps?: number[] | null
+          created_at?: string | null
+          current_step?: number | null
+          id?: string
+          tour_completed?: boolean | null
+          tour_completed_at?: string | null
+          tour_skipped?: boolean | null
+          tour_started_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_hired_agents: {
+        Row: {
+          agent_id: string
+          agent_name: string
+          agent_type: string
+          configuration: Json | null
+          hired_at: string | null
+          id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          agent_name: string
+          agent_type: string
+          configuration?: Json | null
+          hired_at?: string | null
+          id?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          agent_name?: string
+          agent_type?: string
+          configuration?: Json | null
+          hired_at?: string | null
+          id?: string
+          status?: string | null
           user_id?: string
         }
         Relationships: []

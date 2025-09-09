@@ -23,6 +23,8 @@ import UserProfile from "./UserProfile";
 import CompanyAgents from "./CompanyAgents";
 import OnboardingRedirect from "@/components/OnboardingRedirect";
 import OnboardingOrchestrator from "@/components/OnboardingOrchestrator";
+import SimpleEraGuide from "@/components/SimpleEraGuide";
+import EraContextualTips from "@/components/EraContextualTips";
 import { User } from "@supabase/supabase-js";
 
 const CompanyDashboard = () => {
@@ -292,6 +294,10 @@ const CompanyDashboard = () => {
     // Removed: Webhook logic simplificada - ahora se ejecuta en "Comenzar configuración"
   };
 
+  const handleNavigate = (section: string) => {
+    setActiveView(section);
+  };
+
   const renderContent = () => {
     console.log('🔄 Rendering content for activeView:', activeView, 'profile:', profile);
     console.log('🔄 Current URL search params:', searchParams.get('view'));
@@ -359,6 +365,22 @@ const CompanyDashboard = () => {
           onClose={hideCoachMark}
           userId={user.id}
         />
+      )}
+      
+      {/* Guía de Era para experiencia paso a paso */}
+      {user && !shouldShowOnboarding && (
+        <>
+          <SimpleEraGuide
+            userId={user.id}
+            currentSection={activeView}
+            onNavigate={handleNavigate}
+          />
+          <EraContextualTips
+            userId={user.id}
+            currentSection={activeView}
+            onNavigate={handleNavigate}
+          />
+        </>
       )}
     </div>
   );

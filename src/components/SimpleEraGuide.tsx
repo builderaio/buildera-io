@@ -523,7 +523,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                         whileTap={{ scale: 0.98 }}
                       >
                         <Button
-                          onClick={() => onNavigate(nextIncompleteStep.target_section)}
+                          onClick={() => {
+                            console.log('🎯 Navegando a sección:', nextIncompleteStep.target_section);
+                            onNavigate(nextIncompleteStep.target_section);
+                          }}
                           size="sm"
                           className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-medium"
                         >

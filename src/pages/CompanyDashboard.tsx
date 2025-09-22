@@ -295,7 +295,13 @@ const CompanyDashboard = () => {
   };
 
   const handleNavigate = (section: string) => {
+    console.log('🎯 Navegando desde SimpleEraGuide a:', section);
     setActiveView(section);
+    
+    // También actualizar la URL para reflejar el cambio
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', section);
+    window.history.pushState({}, '', url);
   };
 
   const renderContent = () => {

@@ -47,6 +47,7 @@ import {
   type LucideIcon 
 } from 'lucide-react';
 import { SOCIAL_PLATFORMS, getPlatform, getPlatformDisplayName, getPlatformIcon } from '@/lib/socialPlatforms';
+import { SocialConnectionManager } from './SocialConnectionManager';
 
 interface SocialMediaHubProps {
   profile: any;
@@ -738,6 +739,22 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Conexión de redes sociales - mostrar SocialConnectionManager si no hay conexiones */}
+      {socialNetworks.filter(n => n.isActive).length === 0 && (
+        <Card className="mb-6 border-2 border-dashed border-primary/30">
+          <CardContent className="p-8 text-center">
+            <div className="mb-4">
+              <Link className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Conecta tus Redes Sociales</h3>
+              <p className="text-muted-foreground mb-4">
+                Conecta tus perfiles de redes sociales para comenzar a obtener insights y análisis automáticos.
+              </p>
+            </div>
+            <SocialConnectionManager profile={profile} onConnectionsUpdated={fetchCompanyData} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Redes sociales grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

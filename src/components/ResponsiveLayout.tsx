@@ -54,30 +54,36 @@ const ResponsiveLayout = () => {
         navigate('/auth');
         return;
       }
-      const {
-        data: profileData,
-        error
-      } = await supabase
+      // Primero obtenemos el perfil del usuario
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profileError) {
+        throw profileError;
+      }
+      
+      // Luego obtenemos el nombre de la empresa del usuario desde company_members
+      const { data: companyMember } = await supabase
+        .from('company_members')
         .select(`
-          *,
-          companies!profiles_primary_company_id_fkey(
+          companies (
             name
           )
         `)
         .eq('user_id', user.id)
+        .eq('is_primary', true)
         .single();
       
-      if (error) {
-        throw error;
-      }
-      
-      // Asignar el nombre de la empresa desde la relación
+      // Asignar el nombre de la empresa desde la relación o usar el company_name del perfil como fallback
       const profileWithCompanyName = {
         ...profileData,
-        company_name: profileData.companies?.name || profileData.company_name
+        company_name: companyMember?.companies?.name || profileData.company_name || 'Mi Empresa'
       };
       
+      console.log('📊 Profile loaded with company name:', profileWithCompanyName.company_name);
       setProfile(profileWithCompanyName);
     } catch (error) {
       console.error('Error checking auth:', error);

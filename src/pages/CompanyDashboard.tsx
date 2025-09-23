@@ -24,7 +24,6 @@ import CompanyAgents from "./CompanyAgents";
 import OnboardingRedirect from "@/components/OnboardingRedirect";
 import OnboardingOrchestrator from "@/components/OnboardingOrchestrator";
 import SimpleEraGuide from "@/components/SimpleEraGuide";
-import EraContextualTips from "@/components/EraContextualTips";
 import { User } from "@supabase/supabase-js";
 
 const CompanyDashboard = () => {
@@ -375,18 +374,11 @@ const CompanyDashboard = () => {
       
       {/* Guía de Era para experiencia paso a paso */}
       {user && !shouldShowOnboarding && (
-        <>
-          <SimpleEraGuide
-            userId={user.id}
-            currentSection={activeView}
-            onNavigate={handleNavigate}
-          />
-          <EraContextualTips
-            userId={user.id}
-            currentSection={activeView}
-            onNavigate={handleNavigate}
-          />
-        </>
+        <SimpleEraGuide
+          userId={user.id}
+          currentSection={activeView}
+          onNavigate={handleNavigate}
+        />
       )}
     </div>
   );

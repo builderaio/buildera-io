@@ -43,6 +43,7 @@ import { ScheduledPostsManager } from './ScheduledPostsManager';
 
 interface MarketingHubProps {
   profile: any;
+  onNavigate?: (section: string) => void;
 }
 
 interface QuickStat {
@@ -54,7 +55,7 @@ interface QuickStat {
   color: string;
 }
 
-const MarketingHub = ({ profile }: MarketingHubProps) => {
+const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
   const [activeTab, setActiveTab] = useState("campaign-wizard");  // Cambio por defecto a campaign wizard
   const [socialConnections, setSocialConnections] = useState({
     linkedin: false,
@@ -1085,7 +1086,7 @@ const MarketingHub = ({ profile }: MarketingHubProps) => {
         </TabsContent>
 
         <TabsContent value="social" className="space-y-6">
-          <SocialMediaHub profile={profile} />
+          <SocialMediaHub profile={profile} onNavigate={onNavigate} />
         </TabsContent>
 
         <TabsContent value="content" className="space-y-6">

@@ -51,6 +51,7 @@ import { SocialConnectionManager } from './SocialConnectionManager';
 
 interface SocialMediaHubProps {
   profile: any;
+  onNavigate?: (section: string) => void;
 }
 
 interface SocialNetwork {
@@ -151,7 +152,7 @@ interface LinkedInPost {
   };
 }
 
-const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
+const SocialMediaHub = ({ profile, onNavigate }: SocialMediaHubProps & { onNavigate?: (section: string) => void }) => {
   const { toast } = useToast();
   const [companyData, setCompanyData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -231,13 +232,20 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     }
   }, [profile?.user_id]);
 
-  // Update social networks when company data changes
+  // Update social networks when company data changes and check if redirect is needed
   useEffect(() => {
     if (companyData) {
       const networks = initializeSocialNetworks(companyData);
       setSocialNetworks(networks);
+      
+      // Check if no networks are connected and redirect to configuration
+      const hasConnectedNetworks = networks.some(network => network.isActive);
+      if (!hasConnectedNetworks && onNavigate) {
+        console.log('🔄 No hay redes conectadas, redirigiendo a configuración...');
+        onNavigate('configuracion');
+      }
     }
-  }, [companyData]);
+  }, [companyData, onNavigate]);
 
   const fetchCompanyData = async () => {
     try {

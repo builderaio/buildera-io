@@ -65,10 +65,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       id: 2,
       title: "Conectar Redes Sociales",
       description: "Conecta LinkedIn, Instagram y otras redes sociales",
-      target_section: "marketing-hub",
+      target_section: "configuracion",
       completed: false,
       icon: Zap,
-      actionText: "Conectar redes",
+      actionText: "Ir a configuración",
       color: "from-green-500 to-green-600"
     },
     {

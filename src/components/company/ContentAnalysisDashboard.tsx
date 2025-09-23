@@ -254,6 +254,46 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     }
   };
 
+  const triggerContentOnlyAnalysis = async () => {
+    setLoading(true);
+    
+    try {
+      toast({
+        title: "Iniciando análisis de posts",
+        description: "Analizando solo el contenido de sus publicaciones...",
+      });
+
+      // Execute only content analysis
+      const { data, error } = await supabase.functions.invoke('analyze-social-content');
+      
+      if (error) {
+        throw error;
+      }
+
+      // Reload data after analysis
+      await loadExistingData();
+
+      if (data && !data.error) {
+        toast({
+          title: "Análisis de posts completado",
+          description: "Se ha completado el análisis de contenido de sus publicaciones.",
+        });
+      } else {
+        throw new Error(data?.error || 'Error en el análisis de contenido');
+      }
+
+    } catch (error) {
+      console.error('Error triggering content analysis:', error);
+      toast({
+        title: "Error en el análisis de posts",
+        description: "No se pudo completar el análisis de contenido. La API puede estar temporalmente limitada.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const triggerContentAnalysis = async () => {
     setLoading(true);
     let successfulAnalyses = 0;
@@ -885,7 +925,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
               
               <div className="flex gap-3 justify-center">
                 <Button 
-                  onClick={triggerContentAnalysis} 
+                  onClick={triggerContentOnlyAnalysis} 
                   disabled={loading} 
                   size="lg"
                   className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700"

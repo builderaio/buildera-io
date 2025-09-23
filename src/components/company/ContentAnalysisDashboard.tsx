@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import ContentLibraryTab from "./ContentLibraryTab";
 import ContentCreatorTab from "./ContentCreatorTab";
+import InsightsRenderer from "./InsightsRenderer";
 import {
   BarChart,
   Bar,
@@ -801,15 +802,23 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
         {/* Mostrar insights */}
         {aiInsights ? (
-          <Card>
-            <CardContent className="p-6">
-              <div className="prose prose-sm max-w-none">
-                <div className="whitespace-pre-wrap">
-                  {aiInsights}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <InsightsRenderer 
+            insights={aiInsights}
+            onCreateContent={() => {
+              // Cambiar a la pestaña de creador de contenido
+              const creatorTab = document.querySelector('[value="creator"]') as HTMLElement;
+              creatorTab?.click();
+            }}
+            onOpenCalendar={() => {
+              // Navegar al calendario de marketing
+              window.location.href = '/company-dashboard?tab=calendario';
+            }}
+            onOpenCreator={() => {
+              // Cambiar a la pestaña de creador de contenido
+              const creatorTab = document.querySelector('[value="creator"]') as HTMLElement;
+              creatorTab?.click();
+            }}
+          />
         ) : (
           <Card>
             <CardContent className="p-8 text-center">

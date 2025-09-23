@@ -49,6 +49,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  const [connectedCount, setConnectedCount] = useState(0);
+  const TOTAL_PLATFORMS = 8;
 
   const steps: GuideStep[] = [
     {
@@ -74,8 +76,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     {
       id: 3,
       title: "Configurar URLs de Redes",
-      description: "Actualiza las URLs de tus perfiles sociales",
-      target_section: "configuracion",
+      description: "Actualiza las URLs de los perfiles de las redes que conectaste (sección Conexiones de Redes Sociales)",
+      target_section: "marketing-hub",
       completed: false,
       icon: Settings,
       actionText: "Configurar URLs",
@@ -147,6 +149,23 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     loadTourProgress();
   }, [userId]);
 
+  // Cargar conteo de conexiones para mostrar "X/8 plataformas conectadas" en el paso 2
+  useEffect(() => {
+    if (!userId || !isActive) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('social_accounts')
+          .select('platform, is_connected')
+          .eq('user_id', userId);
+        const count = (data || []).filter(acc => acc.is_connected && (acc as any).platform !== 'upload_post_profile').length;
+        setConnectedCount(count);
+      } catch (e) {
+        console.warn('No se pudo cargar el conteo de conexiones:', e);
+      }
+    })();
+  }, [userId, isActive, currentStep]);
+
   const loadTourProgress = async () => {
     if (!userId) return;
 
@@ -213,8 +232,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     try {
       const newCompletedSteps = [...completedSteps, stepId];
       const nextStep = stepId + 1;
-      // Si se completa el paso 2 (conectar redes), completar todo el tour
-      const allCompleted = stepId === 2 || newCompletedSteps.length === steps.length;
+      const allCompleted = newCompletedSteps.length === steps.length;
 
       setCompletedSteps(newCompletedSteps);
       setCurrentStep(nextStep);
@@ -233,8 +251,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       if (allCompleted) {
         setIsActive(false);
         toast({
-          title: "¡Felicitaciones! 🎉",
-          description: "Has configurado las redes sociales. Era está disponible como asistente.",
+          title: "¡Tour completado! 🎉",
+          description: "Has terminado todas las etapas del tour.",
+        });
+      } else if (stepId === 2) {
+        toast({
+          title: "Conexiones verificadas",
+          description: `${connectedCount}/${TOTAL_PLATFORMS} plataformas conectadas. Ahora configura las URLs de tus perfiles (siguiente paso).`,
         });
       } else {
         toast({
@@ -242,6 +265,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           description: `Paso ${stepId} de ${steps.length} completado.`,
         });
       }
+
     } catch (error) {
       console.error('Error completing step:', error);
     }
@@ -272,51 +296,24 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const progressPercentage = (completedSteps.length / steps.length) * 100;
   const isCurrentSectionRelevant = nextIncompleteStep?.target_section === currentSection;
   
-  // Verificar si el paso 2 (conectar redes) puede completarse
+  // Verificar si el paso 2 (conectar redes) puede completarse usando el mismo conteo que Conexiones de Redes Sociales
   const canCompleteNetworkStep = async () => {
     if (nextIncompleteStep?.id !== 2) return true;
-    
     try {
-      // Verificar conexiones OAuth reales, no solo URLs
-      const [linkedinConnections, facebookConnections, tiktokConnections] = await Promise.all([
-        supabase
-          .from('linkedin_connections')
-          .select('id')
-          .eq('user_id', userId)
-          .limit(1),
-        supabase
-          .from('facebook_instagram_connections')
-          .select('id')
-          .eq('user_id', userId)
-          .limit(1),
-        supabase
-          .from('tiktok_connections')
-          .select('id')
-          .eq('user_id', userId)
-          .limit(1)
-      ]);
-      
-      const hasConnectedNetworks = !!(
-        linkedinConnections.data?.length || 
-        facebookConnections.data?.length || 
-        tiktokConnections.data?.length
-      );
-      
-      console.log('🔍 Verificando conexiones de redes:', {
-        linkedin: linkedinConnections.data?.length || 0,
-        facebook: facebookConnections.data?.length || 0,
-        tiktok: tiktokConnections.data?.length || 0,
-        hasConnectedNetworks
-      });
-      
-      return hasConnectedNetworks;
+      const { data, error } = await supabase
+        .from('social_accounts')
+        .select('platform, is_connected')
+        .eq('user_id', userId);
+      if (error) throw error as any;
+      const count = (data || []).filter(acc => acc.is_connected && (acc as any).platform !== 'upload_post_profile').length;
+      setConnectedCount(count);
+      console.log('🔍 Conteo de conexiones (tour):', { connected: count, total: TOTAL_PLATFORMS });
+      return count > 0;
     } catch (error) {
       console.error('Error checking network connections:', error);
+      return false;
     }
-    
-    return false;
   };
-
   if (loading) return null;
 
   if (!isActive) {
@@ -543,7 +540,12 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                       <p className="text-sm text-muted-foreground mb-3">
                         {nextIncompleteStep.description}
                       </p>
-                      
+                      {nextIncompleteStep.id === 2 && (
+                        <p className="text-sm">
+                          {connectedCount}/{TOTAL_PLATFORMS} plataformas conectadas
+                        </p>
+                      )}
+
                       <motion.div 
                         className="flex items-center gap-2 mb-4"
                         initial={{ scale: 0.9 }}

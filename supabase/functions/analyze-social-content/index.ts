@@ -169,9 +169,27 @@ Deno.serve(async (req) => {
             created_at: new Date().toISOString(),
           };
 
-          await supabaseClient
+          const platformStr = analysis.social_type || 'instagram';
+
+          // Upsert manually without unique constraint
+          const { data: existingErrorRow } = await supabaseClient
             .from('social_content_analysis')
-            .upsert(errorAnalysisData, { onConflict: 'user_id,platform,cid' });
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('platform', platformStr)
+            .eq('cid', cid)
+            .maybeSingle();
+
+          if (existingErrorRow?.id) {
+            await supabaseClient
+              .from('social_content_analysis')
+              .update({ ...errorAnalysisData, updated_at: new Date().toISOString() })
+              .eq('id', existingErrorRow.id);
+          } else {
+            await supabaseClient
+              .from('social_content_analysis')
+              .insert(errorAnalysisData);
+          }
 
           continue;
         }
@@ -201,23 +219,47 @@ Deno.serve(async (req) => {
           created_at: new Date().toISOString(),
         };
 
-        // Upsert into social_content_analysis table to avoid duplicates
-        const { data: insertedData, error: insertError } = await supabaseClient
+        // Upsert manually without requiring a DB unique constraint
+        const platformStr = analysis.social_type || 'instagram';
+        const { data: existingRow } = await supabaseClient
           .from('social_content_analysis')
-          .upsert(contentAnalysisData, { onConflict: 'user_id,platform,cid' })
-          .select()
-          .single();
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('platform', platformStr)
+          .eq('cid', cid)
+          .maybeSingle();
 
-        if (insertError) {
-          console.error('Error storing content analysis:', insertError);
-          continue;
+        let analysisId: string | null = null;
+        if (existingRow?.id) {
+          const { data: updatedRow, error: updateError } = await supabaseClient
+            .from('social_content_analysis')
+            .update({ ...contentAnalysisData, updated_at: new Date().toISOString() })
+            .eq('id', existingRow.id)
+            .select()
+            .single();
+          if (updateError) {
+            console.error('Error updating content analysis:', updateError);
+            continue;
+          }
+          analysisId = updatedRow?.id ?? existingRow.id;
+        } else {
+          const { data: insertedRow, error: insertError } = await supabaseClient
+            .from('social_content_analysis')
+            .insert(contentAnalysisData)
+            .select()
+            .single();
+          if (insertError) {
+            console.error('Error inserting content analysis:', insertError);
+            continue;
+          }
+          analysisId = insertedRow?.id ?? null;
         }
 
         results.push({
-          platform: analysis.social_type || 'instagram',
+          platform: platformStr,
           cid: cid,
           posts_count: contentData.data.posts.length,
-          analysis_id: insertedData.id,
+          analysis_id: analysisId,
           summary: contentData.data.summary,
         });
 

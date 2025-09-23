@@ -573,7 +573,12 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                         <Button
                           onClick={() => {
                             console.log('🎯 Navegando a sección:', nextIncompleteStep.target_section);
-                            onNavigate(nextIncompleteStep.target_section);
+                            // Si es el paso 4 (analizar audiencia), navegar al audiencias manager
+                            if (nextIncompleteStep.id === 4) {
+                              onNavigate("audiencias-manager");
+                            } else {
+                              onNavigate(nextIncompleteStep.target_section);
+                            }
                           }}
                           size="sm"
                           className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-medium"
@@ -602,13 +607,18 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                                 return;
                               }
                             }
+                            // Si es el paso 4 (analizar audiencia), navegar al audiencias manager
+                            if (nextIncompleteStep.id === 4) {
+                              onNavigate("audiencias-manager");
+                              return;
+                            }
                             completeStep(nextIncompleteStep.id);
                           }}
                           size="sm"
                           className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium"
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
-                          {nextIncompleteStep.id === 2 ? "Verificar conexión" : "Marcar completado"}
+                          {nextIncompleteStep.id === 2 ? "Verificar conexión" : nextIncompleteStep.id === 4 ? "Ir a analizar" : "Marcar completado"}
                         </Button>
                       </motion.div>
                     )}

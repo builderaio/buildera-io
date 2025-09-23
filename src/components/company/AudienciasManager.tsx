@@ -308,6 +308,56 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     }
   };
 
+  // Función para analizar todas las redes con URLs configuradas de un solo clic
+  const analyzeAllNetworksWithUrls = async () => {
+    if (!companyData) {
+      toast({
+        title: "Error",
+        description: "No se encontró información de la empresa",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const urls = extractSocialUrls(companyData);
+    if (Object.keys(urls).length === 0) {
+      toast({
+        title: "Sin URLs",
+        description: "No se encontraron URLs de redes sociales configuradas",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAnalyzing(true);
+    try {
+      // Usar la función get-social-audience-stats directamente
+      const { data, error } = await supabase.functions.invoke('get-social-audience-stats');
+
+      if (error) throw error;
+
+      if (data.success) {
+        setSocialStats(data.data || []);
+        setHasSocialConnections(true);
+        toast({
+          title: "Análisis Completado",
+          description: `Se analizaron ${data.accounts_processed || 0} perfiles exitosamente`,
+        });
+      } else {
+        throw new Error(data.error || 'Failed to analyze audience stats');
+      }
+    } catch (error) {
+      console.error('Error analyzing all networks:', error);
+      toast({
+        title: "Error en el Análisis",
+        description: "No se pudieron analizar las audiencias",
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   const loadSocialAudienceStats = async (uid?: string) => {
     const resolvedUid = uid || profile?.user_id || userId;
     if (!resolvedUid) return;
@@ -451,13 +501,23 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           <div className="space-y-4">
             {companyData && Object.keys(extractSocialUrls(companyData)).length > 0 ? (
               <Button 
-                onClick={() => setShowUrlConfirmation(true)}
+                onClick={analyzeAllNetworksWithUrls}
                 size="lg"
+                disabled={analyzing}
                 className="gap-3 px-8 py-6 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600"
               >
-                <Target className="h-5 w-5" />
-                Analizar URLs de la Empresa
-                <ArrowRight className="h-4 w-4" />
+                {analyzing ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Analizando...
+                  </>
+                ) : (
+                  <>
+                    <Target className="h-5 w-5" />
+                    Analizar Todas las Redes (Un Solo Clic)
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
               </Button>
             ) : null}
             
@@ -480,6 +540,28 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     
     return (
       <div className="space-y-8 animate-fade-in">
+        {/* Botón de Análisis Rápido */}
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">🎯 Análisis de Audiencias</h2>
+          <Button 
+            onClick={analyzeAllNetworksWithUrls}
+            disabled={analyzing}
+            className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600"
+          >
+            {analyzing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Analizando...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4" />
+                Actualizar Análisis
+              </>
+            )}
+          </Button>
+        </div>
+
         {/* Header del Perfil Principal */}
         <div className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900 rounded-2xl p-6">
           <div className="flex items-center gap-6">

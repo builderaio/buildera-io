@@ -222,6 +222,42 @@ Sé específico, creativo y enfócate en generar valor real para la audiencia.`;
 
     console.log('Generated insights:', insights);
 
+    // Guardar insights en la base de datos
+    try {
+      const { error: saveError } = await supabase
+        .from('content_recommendations')
+        .upsert({
+          user_id: user_id,
+          recommendation_type: 'ai_insights',
+          platform: platform || 'all',
+          title: 'Insights de Contenido IA',
+          description: 'Insights generados automáticamente basados en análisis de contenido',
+          suggested_content: {
+            insights: insights,
+            generated_at: new Date().toISOString(),
+            context_analyzed: {
+              company_name: company?.name,
+              audiences_count: audiences?.length || 0,
+              insights_count: audienceInsights?.length || 0,
+              posts_analyzed: socialPosts?.length || 0
+            }
+          },
+          status: 'active',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,recommendation_type,platform'
+        });
+
+      if (saveError) {
+        console.error('Error saving insights:', saveError);
+      } else {
+        console.log('Insights saved successfully to database');
+      }
+    } catch (saveError) {
+      console.error('Error saving insights to database:', saveError);
+    }
+
     return new Response(JSON.stringify({ 
       insights,
       context_analyzed: {

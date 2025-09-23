@@ -115,6 +115,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const [sortBy, setSortBy] = useState<'engagement' | 'date' | 'performance'>('engagement');
   const [aiInsights, setAiInsights] = useState<string>('');
   const [loadingInsights, setLoadingInsights] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('performance');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -217,6 +218,31 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         return bEngagement - aEngagement;
       });
       setTopPosts(sortedPosts.slice(0, 10));
+
+      // Load existing insights
+      try {
+        const { data: insightsData, error: insightsError } = await supabase
+          .from('content_recommendations')
+          .select('*')
+          .eq('user_id', currentUserId)
+          .eq('recommendation_type', 'ai_insights')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (insightsError) {
+          console.error('Error loading insights:', insightsError);
+        } else if (insightsData && insightsData.length > 0) {
+          const latestInsight = insightsData[0];
+          const suggestedContent = latestInsight.suggested_content as any;
+          if (suggestedContent?.insights) {
+            setAiInsights(suggestedContent.insights);
+            console.log('Loaded existing insights from database');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading insights:', error);
+      }
 
       // Data loaded successfully - do not execute automatic analysis or show confusing messages
       console.log('Content analysis data loaded:', {
@@ -805,18 +831,14 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           <InsightsRenderer 
             insights={aiInsights}
             onCreateContent={() => {
-              // Cambiar a la pestaña de creador de contenido
-              const creatorTab = document.querySelector('[value="creator"]') as HTMLElement;
-              creatorTab?.click();
+              setActiveTab('creator');
             }}
             onOpenCalendar={() => {
               // Navegar al calendario de marketing
               window.location.href = '/company-dashboard?tab=calendario';
             }}
             onOpenCreator={() => {
-              // Cambiar a la pestaña de creador de contenido
-              const creatorTab = document.querySelector('[value="creator"]') as HTMLElement;
-              creatorTab?.click();
+              setActiveTab('creator');
             }}
           />
         ) : (
@@ -1274,7 +1296,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       {renderPerformanceOverview()}
 
       {/* Analysis Tabs */}
-      <Tabs defaultValue="performance" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="performance" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />

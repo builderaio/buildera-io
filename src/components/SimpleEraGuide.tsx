@@ -270,6 +270,28 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const nextIncompleteStep = steps.find(step => !completedSteps.includes(step.id));
   const progressPercentage = (completedSteps.length / steps.length) * 100;
   const isCurrentSectionRelevant = nextIncompleteStep?.target_section === currentSection;
+  
+  // Verificar si el paso 2 (conectar redes) puede completarse
+  const canCompleteNetworkStep = async () => {
+    if (nextIncompleteStep?.id !== 2) return true;
+    
+    try {
+      const { data: companies } = await supabase
+        .from('companies')
+        .select('linkedin_url, facebook_url, instagram_url, tiktok_url')
+        .eq('created_by', userId)
+        .single();
+      
+      if (companies) {
+        const hasConnectedNetworks = !!(companies.linkedin_url || companies.facebook_url || companies.instagram_url || companies.tiktok_url);
+        return hasConnectedNetworks;
+      }
+    } catch (error) {
+      console.error('Error checking network connections:', error);
+    }
+    
+    return false;
+  };
 
   if (loading) return null;
 
@@ -541,12 +563,26 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                         whileTap={{ scale: 0.98 }}
                       >
                         <Button
-                          onClick={() => completeStep(nextIncompleteStep.id)}
+                          onClick={async () => {
+                            // Verificar si es el paso de conectar redes
+                            if (nextIncompleteStep.id === 2) {
+                              const canComplete = await canCompleteNetworkStep();
+                              if (!canComplete) {
+                                toast({
+                                  title: "Conexión requerida",
+                                  description: "Debes conectar al menos una red social antes de continuar",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+                            }
+                            completeStep(nextIncompleteStep.id);
+                          }}
                           size="sm"
                           className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium"
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Marcar completado
+                          {nextIncompleteStep.id === 2 ? "Verificar conexión" : "Marcar completado"}
                         </Button>
                       </motion.div>
                     )}

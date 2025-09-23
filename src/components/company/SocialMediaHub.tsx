@@ -698,6 +698,43 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
     }
   };
 
+  // Mostrar solo la conexión de redes si no hay ninguna red conectada
+  const hasConnectedNetworks = socialNetworks.filter(n => n.isActive).length > 0;
+
+  if (!hasConnectedNetworks) {
+    return (
+      <div className="space-y-8 animate-fade-in">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Hub de Redes Sociales</h2>
+            <p className="text-muted-foreground">
+              Conecta tus redes sociales para acceder a todas las funcionalidades
+            </p>
+          </div>
+        </div>
+
+        {/* Solo mostrar conexión de redes */}
+        <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-purple/5">
+          <CardContent className="p-12 text-center">
+            <div className="mb-6">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
+                <Link className="h-10 w-10 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">¡Conecta tus Redes Sociales!</h3>
+              <p className="text-muted-foreground text-lg mb-2">
+                Para comenzar a usar el Marketing Hub, necesitas conectar al menos una red social.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Una vez conectadas, podrás analizar tu audiencia, crear contenido optimizado y gestionar campañas.
+              </p>
+            </div>
+            <SocialConnectionManager profile={profile} onConnectionsUpdated={fetchCompanyData} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -739,22 +776,6 @@ const SocialMediaHub = ({ profile }: SocialMediaHubProps) => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Conexión de redes sociales - mostrar SocialConnectionManager si no hay conexiones */}
-      {socialNetworks.filter(n => n.isActive).length === 0 && (
-        <Card className="mb-6 border-2 border-dashed border-primary/30">
-          <CardContent className="p-8 text-center">
-            <div className="mb-4">
-              <Link className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Conecta tus Redes Sociales</h3>
-              <p className="text-muted-foreground mb-4">
-                Conecta tus perfiles de redes sociales para comenzar a obtener insights y análisis automáticos.
-              </p>
-            </div>
-            <SocialConnectionManager profile={profile} onConnectionsUpdated={fetchCompanyData} />
-          </CardContent>
-        </Card>
-      )}
 
       {/* Redes sociales grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

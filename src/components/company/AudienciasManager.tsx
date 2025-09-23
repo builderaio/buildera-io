@@ -335,17 +335,28 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
 
     setAnalyzing(true);
     try {
-      // Usar la función get-social-audience-stats directamente
-      const { data, error } = await supabase.functions.invoke('get-social-audience-stats');
+      // Preparar URLs para análisis
+      const urlsToAnalyze = Object.entries(urls).map(([platform, url]) => ({
+        platform,
+        url: url as string
+      }));
+
+      console.log('🚀 Iniciando análisis de todas las redes:', urlsToAnalyze);
+
+      // Usar la función analyze-social-audience para obtener datos frescos
+      const { data, error } = await supabase.functions.invoke('analyze-social-audience', {
+        body: { urls: urlsToAnalyze }
+      });
 
       if (error) throw error;
 
       if (data.success) {
-        setSocialStats(data.data || []);
-        setHasSocialConnections(true);
+        // Recargar los datos después del análisis
+        await loadSocialAudienceStats();
+        
         toast({
-          title: "Análisis Completado",
-          description: `Se analizaron ${data.accounts_processed || 0} perfiles exitosamente`,
+          title: "✅ Análisis Completado",
+          description: `Se analizaron ${data.results?.length || urlsToAnalyze.length} redes sociales exitosamente`,
         });
       } else {
         throw new Error(data.error || 'Failed to analyze audience stats');
@@ -354,7 +365,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
       console.error('Error analyzing all networks:', error);
       toast({
         title: "Error en el Análisis",
-        description: "No se pudieron analizar las audiencias",
+        description: "No se pudieron analizar las audiencias. Intenta de nuevo.",
         variant: "destructive"
       });
     } finally {
@@ -544,26 +555,48 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     
     return (
       <div className="space-y-8 animate-fade-in">
-        {/* Botón de Análisis Rápido */}
-        <div className="flex justify-between items-center">
+        {/* Botones de Análisis */}
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <h2 className="text-2xl font-bold">🎯 Análisis de Audiencias</h2>
-          <Button 
-            onClick={analyzeAllNetworksWithUrls}
-            disabled={analyzing}
-            className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600"
-          >
-            {analyzing ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Analizando...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4" />
-                Actualizar Análisis
-              </>
-            )}
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={analyzeAllNetworksWithUrls}
+              disabled={analyzing}
+              size="lg"
+              className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-6 py-3"
+            >
+              {analyzing ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Analizando Todas las Redes...
+                </>
+              ) : (
+                <>
+                  <Target className="h-5 w-5" />
+                  Analizar Todas las Redes
+                </>
+              )}
+            </Button>
+            
+            <Button 
+              onClick={() => loadSocialAudienceStats()}
+              disabled={socialStatsLoading}
+              variant="outline"
+              className="gap-2"
+            >
+              {socialStatsLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Cargando...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4" />
+                  Actualizar Vista
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Header del Perfil Principal */}

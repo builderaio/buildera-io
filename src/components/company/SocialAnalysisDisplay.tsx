@@ -112,10 +112,12 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
       return;
     }
     
-    console.log('🔍 SocialAnalysisDisplay - Loading data for userId:', userId);
+    console.log('🔍 SocialAnalysisDisplay - Loading REAL data for userId:', userId);
     
     try {
       setLoading(true);
+      
+      // CRÍTICO: Solo usar datos reales de la base de datos
       const { data, error } = await supabase
         .from('social_analysis')
         .select('*')
@@ -124,13 +126,16 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
 
       if (error) throw error;
       
-      console.log('📊 SocialAnalysisDisplay - Loaded analyses:', data?.length || 0, 'records');
-      console.log('📊 SocialAnalysisDisplay - Data:', data);
+      console.log('📊 SocialAnalysisDisplay - Loaded REAL analyses:', data?.length || 0, 'records');
+      console.log('📊 SocialAnalysisDisplay - REAL Data:', data);
       
+      // Solo mostrar datos reales, sin fallbacks ni mock data
       setAnalyses(data || []);
+      setError(null);
     } catch (err) {
       console.error('❌ SocialAnalysisDisplay - Error loading social analyses:', err);
       setError('Error al cargar los análisis de redes sociales');
+      setAnalyses([]); // Asegurar que no hay datos mock
     } finally {
       setLoading(false);
     }

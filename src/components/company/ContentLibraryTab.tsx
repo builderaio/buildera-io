@@ -18,11 +18,9 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
     if (!profile?.user_id) return;
     try {
       const { data, error } = await supabase
-        .from('content_recommendations')
+        .from('content_library')
         .select('*')
         .eq('user_id', profile.user_id)
-        .eq('recommendation_type', 'post_template')
-        .eq('status', 'template')
         .order('created_at', { ascending: false });
       if (error) throw error;
       setSavedContent(data || []);
@@ -40,7 +38,7 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
   const deleteFromLibrary = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('content_recommendations')
+        .from('content_library')
         .delete()
         .eq('id', id);
       if (error) throw error;
@@ -113,39 +111,76 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
                 <Card key={item.id} className="overflow-hidden">
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <Badge variant="outline">{item.platform}</Badge>
+                      <Badge variant="outline">{item.file_type}</Badge>
                       <span className="text-xs text-muted-foreground">{new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
-                    {item.suggested_content?.image_url && (
-                      <img src={item.suggested_content.image_url} alt="Content" className="w-full h-32 object-cover rounded-md" />
-                    )}
-                    <div>
-                      <h4 className="font-medium text-sm mb-1">{item.title}</h4>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
-                    </div>
-                    {item.suggested_content?.metrics && (
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className="flex items-center gap-1"><Heart className="h-3 w-3" />{item.suggested_content.metrics.likes || 0}</span>
-                        <span className="flex items-center gap-1"><MessageCircle className="h-3 w-3" />{item.suggested_content.metrics.comments || 0}</span>
+                    
+                    {/* Media preview */}
+                    {item.file_url && (
+                      <div className="relative">
+                        {item.file_type === 'video' ? (
+                          <video 
+                            src={item.file_url} 
+                            className="w-full h-32 object-cover rounded-md"
+                            controls={false}
+                            muted
+                            preload="metadata"
+                          />
+                        ) : (
+                          <img 
+                            src={item.file_url} 
+                            alt={item.title || 'Content'} 
+                            className="w-full h-32 object-cover rounded-md"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
                       </div>
                     )}
+                    
+                    <div>
+                      <h4 className="font-medium text-sm mb-1">{item.title || 'Sin título'}</h4>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{item.description || 'Sin descripción'}</p>
+                      {item.tags && item.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {item.tags.slice(0, 3).map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              #{tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Metadata metrics if available */}
+                    {item.metadata?.metrics && (
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="flex items-center gap-1">
+                          <Heart className="h-3 w-3" />
+                          {item.metadata.metrics.likes || 0}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageCircle className="h-3 w-3" />
+                          {item.metadata.metrics.comments || 0}
+                        </span>
+                      </div>
+                    )}
+                    
                     <div className="flex items-center gap-2">
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => {
-                        if (item.suggested_content?.content_text) {
-                          navigator.clipboard.writeText(item.suggested_content.content_text);
-                          toast({ title: "Texto copiado", description: "El contenido se ha copiado al portapapeles" });
-                        }
+                        navigator.clipboard.writeText(item.file_url);
+                        toast({ title: "URL copiada", description: "La URL del archivo se ha copiado al portapapeles" });
                       }}>
-                        <Copy className="h-3 w-3 mr-1" />Copiar texto
+                        <Copy className="h-3 w-3 mr-1" />Copiar URL
                       </Button>
-                      {item.suggested_content?.image_url && (
-                        <Button size="sm" variant="outline" onClick={() => {
-                          navigator.clipboard.writeText(item.suggested_content.image_url);
-                          toast({ title: "URL copiada", description: "La URL de la imagen se ha copiado al portapapeles" });
-                        }}>
-                          <Image className="h-3 w-3" />
-                        </Button>
-                      )}
+                      
+                      <Button size="sm" variant="outline" onClick={() => {
+                        window.open(item.file_url, '_blank');
+                      }}>
+                        <Image className="h-3 w-3" />
+                      </Button>
+                      
                       <Button size="sm" variant="ghost" onClick={() => deleteFromLibrary(item.id)}>
                         <Eye className="h-3 w-3" />
                       </Button>

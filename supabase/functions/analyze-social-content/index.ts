@@ -113,16 +113,66 @@ Deno.serve(async (req) => {
         // Call RapidAPI Instagram Statistics API
         const apiUrl = `https://instagram-statistics-api.p.rapidapi.com/posts?cid=${encodeURIComponent(cid)}&from=${fromFormatted}&to=${toFormatted}&type=posts&sort=date`;
         
-        const apiResponse = await fetch(apiUrl, {
-          method: 'GET',
-          headers: {
-            'x-rapidapi-host': 'instagram-statistics-api.p.rapidapi.com',
-            'x-rapidapi-key': rapidApiKey,
-          },
-        });
+        let apiResponse;
+        let retryCount = 0;
+        const maxRetries = 3;
+        const baseDelay = 2000; // 2 seconds
 
-        if (!apiResponse.ok) {
+        // Implement exponential backoff for rate limiting
+        while (retryCount <= maxRetries) {
+          apiResponse = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+              'x-rapidapi-host': 'instagram-statistics-api.p.rapidapi.com',
+              'x-rapidapi-key': rapidApiKey,
+            },
+          });
+
+          if (apiResponse.ok) {
+            break; // Success
+          }
+
+          if (apiResponse.status === 429 && retryCount < maxRetries) {
+            // Rate limited - wait and retry
+            const delay = baseDelay * Math.pow(2, retryCount);
+            console.log(`Rate limited for CID ${cid}. Retrying in ${delay}ms... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            retryCount++;
+            continue;
+          }
+
+          // Other error or max retries reached
           console.error(`API error for CID ${cid}:`, apiResponse.status, apiResponse.statusText);
+          if (apiResponse.status === 429) {
+            console.error(`Rate limit exceeded for CID ${cid} after ${maxRetries + 1} attempts`);
+          }
+          break;
+        }
+
+        if (!apiResponse?.ok) {
+          // Store partial analysis with error info for better user feedback
+          const errorAnalysisData = {
+            user_id: user.id,
+            platform: analysis.social_type || 'instagram',
+            cid: cid,
+            analysis_period_start: fromDate.toISOString(),
+            analysis_period_end: toDate.toISOString(),
+            posts_analyzed: 0,
+            posts_data: [],
+            summary_data: null,
+            error_details: {
+              status: apiResponse?.status,
+              statusText: apiResponse?.statusText,
+              message: apiResponse?.status === 429 ? 'Rate limit exceeded - try again later' : 'API error'
+            },
+            raw_api_response: null,
+            created_at: new Date().toISOString(),
+          };
+
+          await supabaseClient
+            .from('social_content_analysis')
+            .upsert(errorAnalysisData, { onConflict: 'user_id,platform,cid' });
+
           continue;
         }
 

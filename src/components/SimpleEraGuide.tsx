@@ -87,7 +87,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       id: 4,
       title: "Analizar Audiencias",
       description: "Descubre insights sobre tu audiencia actual",
-      target_section: "inteligencia-competitiva",
+      target_section: "audiencias-manager",
       completed: false,
       icon: BarChart3,
       actionText: "Analizar audiencia",

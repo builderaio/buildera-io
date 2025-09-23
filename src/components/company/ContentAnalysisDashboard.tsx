@@ -163,13 +163,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       }));
 
       if (!socialAccounts?.length) {
-        toast({
-          title: "No hay análisis de audiencias",
-          description: "Primero debe realizar análisis de audiencias para acceder al análisis de contenido.",
-          variant: "destructive"
-        });
         setLoading(false);
-        return;
+        return; // Just exit without showing error toast - let the empty state handle it
       }
 
       // Load existing analysis data from database
@@ -218,28 +213,12 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       });
       setTopPosts(sortedPosts.slice(0, 10));
 
-      // Verificar si necesitamos mostrar estado del análisis
-      const hasContentData = contentRes.data && contentRes.data.length > 0;
-      const hasActivityData = activityRes.data && activityRes.data.length > 0;
-      const hasRetrospectiveData = retrospectiveRes.data && retrospectiveRes.data.length > 0;
-
-      // Mostrar estado del análisis al usuario
-      if (hasActivityData && hasRetrospectiveData && !hasContentData) {
-        toast({
-          title: "Análisis Parcial Disponible",
-          description: "Hay datos de actividad y retrospectivo, pero el análisis de contenido está pendiente. Puede ejecutarlo manualmente.",
-          variant: "default"
-        });
-      }
-
-      // Datos cargados exitosamente - no ejecutar análisis automático
+      // Data loaded successfully - do not execute automatic analysis or show confusing messages
       console.log('Content analysis data loaded:', {
         retrospective: retrospectiveRes.data?.length || 0,
         activity: activityRes.data?.length || 0,
         content: contentRes.data?.length || 0,
-        posts: allPosts.length,
-        hasPartialData: hasActivityData || hasRetrospectiveData,
-        needsContentAnalysis: (hasActivityData || hasRetrospectiveData) && !hasContentData
+        posts: allPosts.length
       });
 
     } catch (error) {
@@ -816,12 +795,12 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       <Card className="text-center py-12">
         <CardContent>
           <Brain className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-xl font-semibold mb-2">Análisis de Contenido No Disponible</h3>
+          <h3 className="text-xl font-semibold mb-2">Conecte sus Redes Sociales</h3>
           <p className="text-muted-foreground mb-6">
-            Para acceder al análisis de contenido, primero debe realizar el análisis de audiencias en la pestaña correspondiente.
+            Primero debe conectar sus redes sociales y realizar el análisis de audiencias para acceder al análisis de contenido.
           </p>
-          <Button onClick={() => window.location.reload()}>
-            Verificar Análisis
+          <Button onClick={() => window.history.back()}>
+            Volver al Paso Anterior
           </Button>
         </CardContent>
       </Card>
@@ -872,96 +851,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     );
   }
 
-  // If we have partial data but missing content analysis, show enhanced status
-  if (!loading && hasPartialData && analysisData.content.length === 0 && analysisData.socialAccounts.length > 0) {
-    return (
-      <div className="space-y-8">
-        <Card className="border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50 dark:border-yellow-800 dark:bg-gradient-to-br dark:from-yellow-900/20 dark:to-orange-900/20">
-          <CardHeader>
-            <CardTitle className="text-center flex items-center justify-center gap-2">
-              <Brain className="w-6 h-6 text-yellow-600" />
-              Análisis Parcial Disponible
-            </CardTitle>
-            <CardDescription className="text-center">
-              Tenemos datos de actividad y tendencias, pero el análisis de posts está pendiente debido a límites de API
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center space-y-6">
-              {/* Status Grid */}
-              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-                <div className="p-4 rounded-lg border-2 bg-green-100 border-green-300 text-green-800">
-                  <TrendingUp className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-sm font-medium">Retrospectivo</p>
-                  <p className="text-xs">✅ Datos Disponibles</p>
-                  <p className="text-xs font-semibold">{analysisData.retrospective.length} redes</p>
-                </div>
-                <div className="p-4 rounded-lg border-2 bg-green-100 border-green-300 text-green-800">
-                  <Activity className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-sm font-medium">Actividad</p>
-                  <p className="text-xs">✅ Datos Disponibles</p>
-                  <p className="text-xs font-semibold">{analysisData.activity.length} redes</p>
-                </div>
-                <div className="p-4 rounded-lg border-2 bg-yellow-100 border-yellow-300 text-yellow-800">
-                  <FileText className="w-6 h-6 mx-auto mb-2" />
-                  <p className="text-sm font-medium">Posts</p>
-                  <p className="text-xs">⚠️ API Limitada</p>
-                  <p className="text-xs font-semibold">Reintentar</p>
-                </div>
-              </div>
-
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 max-w-lg mx-auto border border-blue-200 dark:border-blue-800">
-                <h4 className="font-semibold mb-2 text-blue-800 dark:text-blue-200 flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4" />
-                  Estado Actual del Análisis:
-                </h4>
-                <ul className="text-sm text-left space-y-1 text-blue-700 dark:text-blue-300">
-                  <li>• <strong>Tendencias y actividad:</strong> ✅ Completados exitosamente</li>
-                  <li>• <strong>Análisis de posts:</strong> ⚠️ Bloqueado por rate limiting (HTTP 429)</li>
-                  <li>• <strong>Solución:</strong> Esperar 10-15 minutos y reintentar el análisis</li>
-                  <li>• <strong>Datos disponibles:</strong> Métricas de rendimiento y patrones de actividad</li>
-                </ul>
-              </div>
-              
-              <div className="flex gap-3 justify-center">
-                <Button 
-                  onClick={triggerContentOnlyAnalysis} 
-                  disabled={loading} 
-                  size="lg"
-                  className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700"
-                >
-                  {loading ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Reintentando...
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Reintentar Análisis de Posts
-                    </>
-                  )}
-                </Button>
-                
-                <Button 
-                  variant="outline"
-                  onClick={() => window.location.reload()}
-                  size="lg"
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Ver Datos Disponibles
-                </Button>
-              </div>
-              
-              <p className="text-xs text-muted-foreground mt-4">
-                💡 <strong>Tip:</strong> Los datos de tendencias y actividad ya están disponibles. El análisis de posts se completará cuando la API esté disponible.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Show normal dashboard even with partial data - let user see what's available
+  // and trigger missing analysis when needed
 
   // Render Posts Analysis Tab
   const renderPostsAnalysis = () => {
@@ -1262,6 +1153,17 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
               </option>
             ))}
           </select>
+          {analysisData.content.length === 0 && (
+            <Button 
+              onClick={triggerContentOnlyAnalysis} 
+              disabled={loading}
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Analizar Posts
+            </Button>
+          )}
           <Button 
             onClick={triggerContentAnalysis} 
             disabled={loading}

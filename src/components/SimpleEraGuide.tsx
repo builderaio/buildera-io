@@ -105,6 +105,16 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     },
     {
       id: 6,
+      title: "Crear Campañas",
+      description: "Diseña campañas de marketing efectivas como paso final",
+      target_section: "campaign-wizard",
+      completed: false,
+      icon: Megaphone,
+      actionText: "Crear campaña",
+      color: "from-red-500 to-red-600"
+    },
+    {
+      id: 7,
       title: "Actualizar Información Empresarial",
       description: "Completa el perfil de tu empresa para personalizar la experiencia",
       target_section: "adn-empresa",
@@ -114,7 +124,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       color: "from-blue-500 to-blue-600"
     },
     {
-      id: 7,
+      id: 8,
       title: "Crear Contenido",
       description: "Genera contenido optimizado con IA",
       target_section: "marketing-hub",
@@ -122,16 +132,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       icon: Sparkles,
       actionText: "Crear contenido",
       color: "from-yellow-500 to-yellow-600"
-    },
-    {
-      id: 8,
-      title: "Crear Campañas",
-      description: "Diseña campañas de marketing efectivas",
-      target_section: "marketing-hub",
-      completed: false,
-      icon: Megaphone,
-      actionText: "Crear campaña",
-      color: "from-red-500 to-red-600"
     },
     {
       id: 9,
@@ -575,6 +575,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                             } else if (nextIncompleteStep.id === 5) {
                               // Para crear audiencias, ir directo a la vista de creación
                               onNavigate("audiencias-manager", { audience_view: "create" });
+                            } else if (nextIncompleteStep.id === 6) {
+                              // Para crear campañas, ir directo al campaign wizard
+                              onNavigate("marketing-hub", { campaign_wizard: "true" });
                             } else {
                               onNavigate(nextIncompleteStep.target_section);
                             }

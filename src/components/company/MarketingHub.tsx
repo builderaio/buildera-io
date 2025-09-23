@@ -115,6 +115,20 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
     loadUpcomingPosts();
   }, [profile?.user_id]);
 
+  // Check URL parameters to set active tab
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const campaignWizardParam = urlParams.get('campaign_wizard');
+    
+    if (campaignWizardParam === 'true') {
+      setActiveTab('campaign-wizard');
+      // Remove the parameter from URL to keep it clean
+      urlParams.delete('campaign_wizard');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
+
   // Auto-redirect to social tab if no connections are available
   useEffect(() => {
     const hasConnections = Object.values(socialConnections).some(Boolean);

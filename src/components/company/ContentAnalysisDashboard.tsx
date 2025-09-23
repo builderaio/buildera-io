@@ -783,11 +783,27 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <AdvancedAILoader 
-          isVisible={true}
-          stepTitle="Analizando el contenido de sus redes sociales..." 
-          stepDescription="Esto puede tomar unos momentos mientras procesamos toda la información"
-        />
+        <Card className="p-8 max-w-md mx-auto text-center">
+          <CardContent className="space-y-4">
+            <div className="relative">
+              <BarChart3 className="h-12 w-12 text-primary animate-pulse mx-auto" />
+            </div>
+            <h3 className="text-lg font-semibold">
+              Analizando contenido
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Obteniendo y procesando las publicaciones de sus redes sociales conectadas...
+            </p>
+            <div className="space-y-2">
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full animate-pulse w-2/3"></div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Este proceso puede tardar unos momentos
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

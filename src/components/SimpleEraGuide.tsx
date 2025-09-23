@@ -213,7 +213,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     try {
       const newCompletedSteps = [...completedSteps, stepId];
       const nextStep = stepId + 1;
-      const allCompleted = newCompletedSteps.length === steps.length;
+      // Si se completa el paso 2 (conectar redes), completar todo el tour
+      const allCompleted = stepId === 2 || newCompletedSteps.length === steps.length;
 
       setCompletedSteps(newCompletedSteps);
       setCurrentStep(nextStep);
@@ -233,7 +234,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         setIsActive(false);
         toast({
           title: "¡Felicitaciones! 🎉",
-          description: "Has completado el tour guiado. Era está disponible como asistente.",
+          description: "Has configurado las redes sociales. Era está disponible como asistente.",
         });
       } else {
         toast({

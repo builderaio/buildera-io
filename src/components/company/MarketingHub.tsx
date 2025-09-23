@@ -121,12 +121,40 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
     const campaignWizardParam = urlParams.get('campaign_wizard');
     
     if (campaignWizardParam === 'true') {
+      console.log('🎯 Detectado parámetro campaign_wizard, activando tab campaign-wizard');
       setActiveTab('campaign-wizard');
       // Remove the parameter from URL to keep it clean
       urlParams.delete('campaign_wizard');
       const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
       window.history.replaceState({}, '', newUrl);
     }
+  }, [profile?.user_id]); // Re-run when profile changes (component re-mounts)
+
+  // Also listen for URL changes (for navigation from SimpleEraGuide)
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const campaignWizardParam = urlParams.get('campaign_wizard');
+      
+      if (campaignWizardParam === 'true') {
+        console.log('🎯 URL change detectado - activando campaign-wizard');
+        setActiveTab('campaign-wizard');
+        // Clean URL
+        urlParams.delete('campaign_wizard');
+        const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        window.history.replaceState({}, '', newUrl);
+      }
+    };
+
+    // Listen for popstate events
+    window.addEventListener('popstate', handleLocationChange);
+    
+    // Also check immediately in case URL changed
+    handleLocationChange();
+    
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+    };
   }, []);
 
   // Auto-redirect to social tab if no connections are available

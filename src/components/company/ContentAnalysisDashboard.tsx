@@ -177,15 +177,15 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         supabase
           .from('social_retrospective_analysis')
           .select('*')
-          .eq('user_id', profile.user_id),
+          .eq('user_id', currentUserId),
         supabase
           .from('social_activity_analysis')
           .select('*')
-          .eq('user_id', profile.user_id),
+          .eq('user_id', currentUserId),
         supabase
           .from('social_content_analysis')
           .select('*')
-          .eq('user_id', profile.user_id)
+          .eq('user_id', currentUserId)
       ]);
 
       // Update analysis data with all results

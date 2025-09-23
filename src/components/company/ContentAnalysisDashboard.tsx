@@ -139,11 +139,13 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
       console.log('Consultando social_analysis para user_id:', currentUserId);
 
-      // Load existing social accounts with analysis
+      // Load existing social accounts - check connected accounts first
       const { data: socialAccounts, error: socialError } = await supabase
-        .from('social_analysis')
-        .select('social_type, cid, name, users_count, avg_er, quality_score')
-        .eq('user_id', currentUserId);
+        .from('social_accounts')
+        .select('platform, platform_display_name, is_connected, metadata')
+        .eq('user_id', currentUserId)
+        .eq('is_connected', true)
+        .neq('platform', 'upload_post_profile');
 
       if (socialError) {
         console.error('Error al consultar social_analysis:', socialError);

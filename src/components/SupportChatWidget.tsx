@@ -29,6 +29,8 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isTourCompleted, setIsTourCompleted] = useState(false);
+  const [tourLoading, setTourLoading] = useState(true);
   const location = useLocation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -41,6 +43,31 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
   
   // Hook para manejar el agente empresarial
   const { updateCompanyAgent } = useCompanyAgent({ user, enabled: !!user });
+
+  // Verificar si el tour guiado está completado
+  useEffect(() => {
+    const checkTourStatus = async () => {
+      if (!uid) return;
+      
+      try {
+        setTourLoading(true);
+        const { data: tourStatus } = await supabase
+          .from('user_guided_tour')
+          .select('tour_completed')
+          .eq('user_id', uid)
+          .maybeSingle();
+
+        setIsTourCompleted(tourStatus?.tour_completed || false);
+      } catch (error) {
+        console.error('Error checking tour status:', error);
+        setIsTourCompleted(false);
+      } finally {
+        setTourLoading(false);
+      }
+    };
+
+    checkTourStatus();
+  }, [uid]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -166,9 +193,9 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
     }
   };
 
-  // Mensaje de bienvenida inicial y creación de agente (solo después del onboarding)
+  // Mensaje de bienvenida inicial y creación de agente (solo después del onboarding Y del tour)
   useEffect(() => {
-    if (messages.length === 0 && user && uid && isOnboardingComplete) {
+    if (messages.length === 0 && user && uid && isOnboardingComplete && isTourCompleted) {
       // Crear agente empresarial si no existe
       const initializeCompanyAgent = async () => {
         try {
@@ -279,10 +306,10 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
 
       initializeCompanyAgent();
     }
-  }, [user, isOnboardingComplete]);
+  }, [user, isOnboardingComplete, isTourCompleted]);
 
-  // No mostrar el widget si el usuario no existe, está cargando el onboarding, o no ha completado el onboarding
-  if (!user || onboardingLoading || !isOnboardingComplete) return null;
+  // No mostrar el widget si el usuario no existe, está cargando, o no ha completado onboarding Y tour
+  if (!user || onboardingLoading || tourLoading || !isOnboardingComplete || !isTourCompleted) return null;
 
   return (
     <>

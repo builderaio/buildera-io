@@ -201,10 +201,10 @@ Deno.serve(async (req) => {
           created_at: new Date().toISOString(),
         };
 
-        // Insert into social_content_analysis table
+        // Upsert into social_content_analysis table to avoid duplicates
         const { data: insertedData, error: insertError } = await supabaseClient
           .from('social_content_analysis')
-          .insert(contentAnalysisData)
+          .upsert(contentAnalysisData, { onConflict: 'user_id,platform,cid' })
           .select()
           .single();
 

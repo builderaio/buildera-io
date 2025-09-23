@@ -162,10 +162,10 @@ Deno.serve(async (req) => {
           created_at: new Date().toISOString(),
         };
 
-        // Insert into social_retrospective_analysis table
+        // Upsert into social_retrospective_analysis table to avoid duplicates
         const { data: insertedData, error: insertError } = await supabaseClient
           .from('social_retrospective_analysis')
-          .insert(retrospectiveAnalysisData)
+          .upsert(retrospectiveAnalysisData, { onConflict: 'user_id,platform,cid' })
           .select()
           .single();
 

@@ -277,16 +277,39 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     if (nextIncompleteStep?.id !== 2) return true;
     
     try {
-      const { data: companies } = await supabase
-        .from('companies')
-        .select('linkedin_url, facebook_url, instagram_url, tiktok_url')
-        .eq('created_by', userId)
-        .single();
+      // Verificar conexiones OAuth reales, no solo URLs
+      const [linkedinConnections, facebookConnections, tiktokConnections] = await Promise.all([
+        supabase
+          .from('linkedin_connections')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(1),
+        supabase
+          .from('facebook_instagram_connections')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(1),
+        supabase
+          .from('tiktok_connections')
+          .select('id')
+          .eq('user_id', userId)
+          .limit(1)
+      ]);
       
-      if (companies) {
-        const hasConnectedNetworks = !!(companies.linkedin_url || companies.facebook_url || companies.instagram_url || companies.tiktok_url);
-        return hasConnectedNetworks;
-      }
+      const hasConnectedNetworks = !!(
+        linkedinConnections.data?.length || 
+        facebookConnections.data?.length || 
+        tiktokConnections.data?.length
+      );
+      
+      console.log('🔍 Verificando conexiones de redes:', {
+        linkedin: linkedinConnections.data?.length || 0,
+        facebook: facebookConnections.data?.length || 0,
+        tiktok: tiktokConnections.data?.length || 0,
+        hasConnectedNetworks
+      });
+      
+      return hasConnectedNetworks;
     } catch (error) {
       console.error('Error checking network connections:', error);
     }

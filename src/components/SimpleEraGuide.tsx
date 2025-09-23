@@ -55,16 +55,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const steps: GuideStep[] = [
     {
       id: 1,
-      title: "Actualizar Información Empresarial",
-      description: "Completa el perfil de tu empresa para personalizar la experiencia",
-      target_section: "adn-empresa",
-      completed: false,
-      icon: Settings,
-      actionText: "Completar perfil",
-      color: "from-blue-500 to-blue-600"
-    },
-    {
-      id: 2,
       title: "Conectar Redes Sociales",
       description: "Conecta LinkedIn, Instagram y otras redes sociales",
       target_section: "marketing-hub",
@@ -74,7 +64,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       color: "from-green-500 to-green-600"
     },
     {
-      id: 3,
+      id: 2,
       title: "Configurar URLs de Redes",
       description: "Actualiza las URLs de los perfiles de las redes que conectaste (sección Conexiones de Redes Sociales)",
       target_section: "marketing-hub",
@@ -84,7 +74,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       color: "from-purple-500 to-purple-600"
     },
     {
-      id: 4,
+      id: 3,
       title: "Analizar Audiencias",
       description: "Descubre insights sobre tu audiencia actual",
       target_section: "audiencias-manager",
@@ -94,17 +84,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       color: "from-orange-500 to-orange-600"
     },
     {
-      id: 5,
-      title: "Crear Audiencias Personalizadas",
-      description: "Define segmentos específicos de audiencia",
-      target_section: "inteligencia-competitiva",
-      completed: false,
-      icon: Users,
-      actionText: "Crear audiencias",
-      color: "from-pink-500 to-pink-600"
-    },
-    {
-      id: 6,
+      id: 4,
       title: "Analizar Contenido",
       description: "Evalúa el rendimiento de tu contenido actual",
       target_section: "content-analysis-dashboard",
@@ -112,6 +92,26 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       icon: FileText,
       actionText: "Analizar contenido",
       color: "from-cyan-500 to-cyan-600"
+    },
+    {
+      id: 5,
+      title: "Crear Audiencia por Red",
+      description: "Define segmentos específicos de audiencia para cada red social",
+      target_section: "audiencias-manager",
+      completed: false,
+      icon: Users,
+      actionText: "Crear audiencias",
+      color: "from-pink-500 to-pink-600"
+    },
+    {
+      id: 6,
+      title: "Actualizar Información Empresarial",
+      description: "Completa el perfil de tu empresa para personalizar la experiencia",
+      target_section: "adn-empresa",
+      completed: false,
+      icon: Settings,
+      actionText: "Completar perfil",
+      color: "from-blue-500 to-blue-600"
     },
     {
       id: 7,
@@ -232,11 +232,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     try {
       const newCompletedSteps = [...completedSteps, stepId];
       
-      // Si se está completando el paso 4, también completar el paso 5 automáticamente
+      // Solo completar el paso actual, sin lógica especial
       let finalCompletedSteps = newCompletedSteps;
-      if (stepId === 4 && !newCompletedSteps.includes(5)) {
-        finalCompletedSteps = [...newCompletedSteps, 5];
-      }
       
       const nextStep = Math.max(...finalCompletedSteps) + 1;
       const allCompleted = finalCompletedSteps.length === steps.length;
@@ -261,14 +258,16 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           title: "¡Tour completado! 🎉",
           description: "Has terminado todas las etapas del tour.",
         });
-      } else if (stepId === 2) {
+      } else if (stepId === 1) {
         toast({
           title: "Conexiones verificadas",
           description: `${connectedCount}/${TOTAL_PLATFORMS} plataformas conectadas. Ahora configura las URLs de tus perfiles (siguiente paso).`,
         });
-      } else if (stepId === 4) {
-        // No mostrar toast aquí, se maneja en el onClick
-        return;
+      } else if (stepId === 3) {
+        toast({
+          title: "Audiencias analizadas ✅",
+          description: "Excelente, ahora analicemos tu contenido actual.",
+        });
       } else {
         toast({
           title: "¡Paso Completado! ✅",
@@ -306,9 +305,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const progressPercentage = (completedSteps.length / steps.length) * 100;
   const isCurrentSectionRelevant = nextIncompleteStep?.target_section === currentSection;
   
-  // Verificar si el paso 2 (conectar redes) puede completarse usando el mismo conteo que Conexiones de Redes Sociales
+  // Verificar si el paso 1 (conectar redes) puede completarse usando el mismo conteo que Conexiones de Redes Sociales
   const canCompleteNetworkStep = async () => {
-    if (nextIncompleteStep?.id !== 2) return true;
+    if (nextIncompleteStep?.id !== 1) return true;
     try {
       const { data, error } = await supabase
         .from('social_accounts')
@@ -550,7 +549,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                       <p className="text-sm text-muted-foreground mb-3">
                         {nextIncompleteStep.description}
                       </p>
-                      {nextIncompleteStep.id === 2 && (
+                      {nextIncompleteStep.id === 1 && (
                         <p className="text-sm">
                           {connectedCount}/{TOTAL_PLATFORMS} plataformas conectadas
                         </p>
@@ -583,10 +582,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                         <Button
                           onClick={() => {
                             console.log('🎯 Navegando a sección:', nextIncompleteStep.target_section);
-                            // Si es el paso 4 (analizar audiencia), navegar al audiencias manager
-                            if (nextIncompleteStep.id === 4) {
+                            // Si es el paso 3 (analizar audiencia), navegar al audiencias manager
+                            if (nextIncompleteStep.id === 3) {
                               onNavigate("audiencias-manager");
-                            } else if (nextIncompleteStep.id === 6) {
+                            } else if (nextIncompleteStep.id === 4) {
                               onNavigate("content-analysis-dashboard");
                             } else {
                               onNavigate(nextIncompleteStep.target_section);
@@ -608,7 +607,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                         <Button
                           onClick={async () => {
                             // Verificar si es el paso de conectar redes
-                            if (nextIncompleteStep.id === 2) {
+                            if (nextIncompleteStep.id === 1) {
                               const canComplete = await canCompleteNetworkStep();
                               if (!canComplete) {
                                 toast({
@@ -619,29 +618,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                                 return;
                               }
                             }
-                            // Si es el paso 4 (analizar audiencia), completar y avanzar automáticamente al paso 6
-                            if (nextIncompleteStep.id === 4) {
-                              // Completar paso 4
-                              await completeStep(4);
-                              // También completar paso 5 automáticamente para saltar al análisis de contenido
-                              await completeStep(5);
-                              // Auto-avanzar al paso 6 (análisis de contenido)
-                              setTimeout(() => {
-                                onNavigate("content-analysis-dashboard");
-                                toast({
-                                  title: "Audiencias analizadas ✅",
-                                  description: "Ahora continuemos con el análisis de contenido",
-                                });
-                              }, 1000);
-                              return;
-                            }
                             completeStep(nextIncompleteStep.id);
                           }}
                           size="sm"
                           className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium"
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
-                          {nextIncompleteStep.id === 2 ? "Verificar conexión" : nextIncompleteStep.id === 4 ? "Completar análisis" : "Marcar completado"}
+                          {nextIncompleteStep.id === 1 ? "Verificar conexión" : "Marcar completado"}
                         </Button>
                       </motion.div>
                     )}

@@ -157,6 +157,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     highPerformingSegments: 0
   });
 
+  const [aiGenerating, setAiGenerating] = useState(false);
+
   // Separate useEffect to listen for URL parameter changes
   useEffect(() => {
     const handleURLChange = () => {
@@ -278,6 +280,58 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateAIAudiences = async () => {
+    if (!userId || !companyData?.id) {
+      toast({
+        title: "Error",
+        description: "Datos de usuario o empresa no disponibles",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      console.log('🤖 Iniciando generación de audiencias con IA...');
+      
+      const { data, error } = await supabase.functions.invoke('ai-audience-generator', {
+        body: {
+          user_id: userId,
+          company_id: companyData.id
+        }
+      });
+
+      if (error) {
+        console.error('Error en la función de IA:', error);
+        throw error;
+      }
+
+      console.log('✅ Respuesta de la IA:', data);
+
+      if (data.success && data.audiences?.length > 0) {
+        await loadAudiences(userId);
+        setCurrentView('main');
+        
+        toast({
+          title: "¡Audiencias Generadas con IA!",
+          description: `Se crearon ${data.generated_count} audiencias inteligentes basadas en tus datos`,
+        });
+      } else {
+        throw new Error(data.error || 'No se pudieron generar audiencias');
+      }
+
+    } catch (error) {
+      console.error('Error generando audiencias con IA:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron generar las audiencias con IA. Verifica que tengas datos de análisis disponibles.",
+        variant: "destructive"
+      });
+    } finally {
+      setAiGenerating(false);
     }
   };
 
@@ -1478,7 +1532,26 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
               <div className="flex gap-4">
                 <Button type="submit" className="gap-2">
                   <PlusCircle className="w-4 h-4" />
-                  Crear Audiencia
+                  Crear Audiencia Manual
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  onClick={handleGenerateAIAudiences}
+                  disabled={aiGenerating}
+                  className="gap-2"
+                >
+                  {aiGenerating ? (
+                    <>
+                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      Generando con IA...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Generar con IA
+                    </>
+                  )}
                 </Button>
                 <Button 
                   type="button" 

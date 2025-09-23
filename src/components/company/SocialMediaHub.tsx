@@ -232,20 +232,13 @@ const SocialMediaHub = ({ profile, onNavigate }: SocialMediaHubProps & { onNavig
     }
   }, [profile?.user_id]);
 
-  // Update social networks when company data changes and check if redirect is needed
+  // Update social networks when company data changes
   useEffect(() => {
     if (companyData) {
       const networks = initializeSocialNetworks(companyData);
       setSocialNetworks(networks);
-      
-      // Check if no networks are connected and redirect to configuration
-      const hasConnectedNetworks = networks.some(network => network.isActive);
-      if (!hasConnectedNetworks && onNavigate) {
-        console.log('🔄 No hay redes conectadas, redirigiendo a configuración...');
-        onNavigate('configuracion');
-      }
     }
-  }, [companyData, onNavigate]);
+  }, [companyData]);
 
   const fetchCompanyData = async () => {
     try {

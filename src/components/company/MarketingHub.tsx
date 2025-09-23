@@ -56,7 +56,7 @@ interface QuickStat {
 }
 
 const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
-  const [activeTab, setActiveTab] = useState("campaign-wizard");  // Cambio por defecto a campaign wizard
+  const [activeTab, setActiveTab] = useState("campaign-wizard");
   const [socialConnections, setSocialConnections] = useState({
     linkedin: false,
     instagram: false,
@@ -114,6 +114,15 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
     loadRecentActivity();
     loadUpcomingPosts();
   }, [profile?.user_id]);
+
+  // Auto-redirect to social tab if no connections are available
+  useEffect(() => {
+    const hasConnections = Object.values(socialConnections).some(Boolean);
+    if (!hasConnections && activeTab !== "social") {
+      console.log('🔄 No hay redes conectadas, cambiando al tab social...');
+      setActiveTab("social");
+    }
+  }, [socialConnections, activeTab]);
 
   const checkOnboardingStatus = async () => {
     if (!profile?.user_id) return;

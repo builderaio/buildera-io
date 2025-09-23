@@ -231,18 +231,25 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
 
     try {
       const newCompletedSteps = [...completedSteps, stepId];
-      const nextStep = stepId + 1;
-      const allCompleted = newCompletedSteps.length === steps.length;
+      
+      // Si se está completando el paso 4, también completar el paso 5 automáticamente
+      let finalCompletedSteps = newCompletedSteps;
+      if (stepId === 4 && !newCompletedSteps.includes(5)) {
+        finalCompletedSteps = [...newCompletedSteps, 5];
+      }
+      
+      const nextStep = Math.max(...finalCompletedSteps) + 1;
+      const allCompleted = finalCompletedSteps.length === steps.length;
 
-      setCompletedSteps(newCompletedSteps);
+      setCompletedSteps(finalCompletedSteps);
       setCurrentStep(nextStep);
 
       await supabase
         .from('user_guided_tour')
         .upsert({
           user_id: userId,
-          current_step: allCompleted ? stepId : nextStep,
-          completed_steps: newCompletedSteps,
+          current_step: allCompleted ? Math.max(...finalCompletedSteps) : nextStep,
+          completed_steps: finalCompletedSteps,
           tour_completed: allCompleted,
           updated_at: new Date().toISOString(),
           ...(allCompleted && { tour_completed_at: new Date().toISOString() })
@@ -259,6 +266,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           title: "Conexiones verificadas",
           description: `${connectedCount}/${TOTAL_PLATFORMS} plataformas conectadas. Ahora configura las URLs de tus perfiles (siguiente paso).`,
         });
+      } else if (stepId === 4) {
+        // No mostrar toast aquí, se maneja en el onClick
+        return;
       } else {
         toast({
           title: "¡Paso Completado! ✅",
@@ -611,10 +621,12 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                             }
                             // Si es el paso 4 (analizar audiencia), completar y avanzar automáticamente al paso 6
                             if (nextIncompleteStep.id === 4) {
+                              // Completar paso 4
                               await completeStep(4);
+                              // También completar paso 5 automáticamente para saltar al análisis de contenido
+                              await completeStep(5);
                               // Auto-avanzar al paso 6 (análisis de contenido)
                               setTimeout(() => {
-                                setCurrentStep(6);
                                 onNavigate("content-analysis-dashboard");
                                 toast({
                                   title: "Audiencias analizadas ✅",

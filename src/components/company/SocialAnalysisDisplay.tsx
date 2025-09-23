@@ -107,7 +107,12 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
   }, [userId, companyData]);
 
   const loadSocialAnalyses = async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.log('❌ SocialAnalysisDisplay - No userId provided');
+      return;
+    }
+    
+    console.log('🔍 SocialAnalysisDisplay - Loading data for userId:', userId);
     
     try {
       setLoading(true);
@@ -118,9 +123,13 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('📊 SocialAnalysisDisplay - Loaded analyses:', data?.length || 0, 'records');
+      console.log('📊 SocialAnalysisDisplay - Data:', data);
+      
       setAnalyses(data || []);
     } catch (err) {
-      console.error('Error loading social analyses:', err);
+      console.error('❌ SocialAnalysisDisplay - Error loading social analyses:', err);
       setError('Error al cargar los análisis de redes sociales');
     } finally {
       setLoading(false);

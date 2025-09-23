@@ -166,6 +166,10 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           uid = session?.user?.id || null;
           if (uid) setUserId(uid);
         }
+        
+        console.log('🔍 AudienciasManager - userId actual:', uid);
+        console.log('🔍 AudienciasManager - profile:', profile);
+        
         if (uid) {
           await Promise.all([
             loadAudiences(uid),
@@ -790,7 +794,16 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
               <p className="text-muted-foreground">Datos detallados desde tus redes sociales conectadas</p>
             </div>
             
-            {userId && <SocialAnalysisDisplay userId={userId} companyData={companyData} />}
+            {userId ? (
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">userId: {userId}</p>
+                <SocialAnalysisDisplay userId={userId} companyData={companyData} />
+              </div>
+            ) : (
+              <div className="text-center p-4">
+                <p className="text-muted-foreground">Usuario no identificado</p>
+              </div>
+            )}
           </div>
           
           {/* Frescura de Datos */}

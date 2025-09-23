@@ -157,6 +157,30 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     highPerformingSegments: 0
   });
 
+  // Separate useEffect to listen for URL parameter changes
+  useEffect(() => {
+    const handleURLChange = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const viewParam = urlParams.get('audience_view');
+      
+      if (viewParam === 'create') {
+        setCurrentView('create-audience');
+      } else if (viewParam === 'suggestions') {
+        setCurrentView('audience-suggestions');
+      }
+    };
+
+    // Listen for URL changes (back/forward navigation)
+    window.addEventListener('popstate', handleURLChange);
+    
+    // Check URL on component mount/update
+    handleURLChange();
+
+    return () => {
+      window.removeEventListener('popstate', handleURLChange);
+    };
+  }, []);
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -169,6 +193,18 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
         
         console.log('🔍 AudienciasManager - userId actual:', uid);
         console.log('🔍 AudienciasManager - profile:', profile);
+        
+        // Check URL params to determine initial view
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewParam = urlParams.get('audience_view');
+        
+        if (viewParam === 'create') {
+          console.log('🎯 Setting currentView to create-audience from URL param');
+          setCurrentView('create-audience');
+        } else if (viewParam === 'suggestions') {
+          console.log('🎯 Setting currentView to audience-suggestions from URL param');
+          setCurrentView('audience-suggestions');
+        }
         
         if (uid) {
           await Promise.all([

@@ -39,7 +39,7 @@ interface GuideStep {
 interface SimpleEraGuideProps {
   userId: string;
   currentSection: string;
-  onNavigate: (section: string) => void;
+  onNavigate: (section: string, params?: Record<string, string>) => void;
 }
 
 const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuideProps) => {
@@ -572,6 +572,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                               onNavigate("audiencias-manager");
                             } else if (nextIncompleteStep.id === 4) {
                               onNavigate("content-analysis-dashboard");
+                            } else if (nextIncompleteStep.id === 5) {
+                              // Para crear audiencias, ir directo a la vista de creación
+                              onNavigate("audiencias-manager", { audience_view: "create" });
                             } else {
                               onNavigate(nextIncompleteStep.target_section);
                             }

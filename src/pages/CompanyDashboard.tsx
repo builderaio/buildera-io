@@ -295,13 +295,21 @@ const CompanyDashboard = () => {
     // Removed: Webhook logic simplificada - ahora se ejecuta en "Comenzar configuración"
   };
 
-  const handleNavigate = (section: string) => {
-    console.log('🎯 Navegando desde SimpleEraGuide a:', section);
+  const handleNavigate = (section: string, params?: Record<string, string>) => {
+    console.log('🎯 Navegando desde SimpleEraGuide a:', section, 'con params:', params);
     setActiveView(section);
     
     // También actualizar la URL para reflejar el cambio
     const url = new URL(window.location.href);
     url.searchParams.set('view', section);
+    
+    // Agregar parámetros adicionales si existen
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        url.searchParams.set(key, value);
+      });
+    }
+    
     window.history.pushState({}, '', url);
   };
 

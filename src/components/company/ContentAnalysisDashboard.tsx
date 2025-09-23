@@ -112,6 +112,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const [savedContent, setSavedContent] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'engagement' | 'date' | 'performance'>('engagement');
+  const [aiInsights, setAiInsights] = useState<string>('');
+  const [loadingInsights, setLoadingInsights] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -725,57 +727,115 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     );
   };
 
-  const renderInsights = () => {
-    const filteredData = getFilteredData();
+  const generateAIInsights = async () => {
+    if (!profile.user_id) return;
     
-    const insights = [
-      {
-        icon: Lightbulb,
-        title: "Momento Óptimo",
-        description: "Los mejores horarios para publicar son entre las 18:00-20:00",
-        type: "timing",
-        color: "text-yellow-500"
-      },
-      {
-        icon: TrendingUp,
-        title: "Crecimiento Sostenido",
-        description: "Su audiencia ha crecido un 15% en el último mes",
-        type: "growth",
-        color: "text-green-500"
-      },
-      {
-        icon: Brain,
-        title: "Contenido de Calidad",
-        description: "Sus posts tienen un score de calidad del 78%, superior al promedio",
-        type: "quality",
-        color: "text-purple-500"
-      },
-      {
-        icon: Target,
-        title: "Engagement Mejorado",
-        description: "El engagement rate ha aumentado un 23% esta semana",
-        type: "engagement",
-        color: "text-blue-500"
-      }
-    ];
+    setLoadingInsights(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('content-insights-generator', {
+        body: {
+          user_id: profile.user_id,
+          platform: selectedPlatform === 'all' ? null : selectedPlatform,
+          top_posts: topPosts.slice(0, 10) // Enviar los top 10 posts
+        }
+      });
 
+      if (error) {
+        console.error('Error generating insights:', error);
+        toast({
+          title: "Error",
+          description: "No se pudieron generar los insights",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (data?.insights) {
+        setAiInsights(data.insights);
+        toast({
+          title: "Insights generados",
+          description: "Se han generado nuevos insights basados en tu contenido",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating insights:', error);
+      toast({
+        title: "Error",
+        description: "Error al generar insights",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingInsights(false);
+    }
+  };
+
+  const renderInsights = () => {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {insights.map((insight, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+      <div className="space-y-6">
+        {/* Botón para generar insights */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold">Insights Inteligentes</h3>
+            <p className="text-sm text-muted-foreground">
+              Insights generados por IA basados en tu contenido y audiencia
+            </p>
+          </div>
+          <Button 
+            onClick={generateAIInsights} 
+            disabled={loadingInsights || topPosts.length === 0}
+            variant="outline"
+          >
+            {loadingInsights ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Generando...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generar Insights
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Mostrar insights */}
+        {aiInsights ? (
+          <Card>
             <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5`}>
-                  <insight.icon className={`h-6 w-6 ${insight.color}`} />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-2">{insight.title}</h3>
-                  <p className="text-muted-foreground">{insight.description}</p>
+              <div className="prose prose-sm max-w-none">
+                <div className="whitespace-pre-wrap">
+                  {aiInsights}
                 </div>
               </div>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Brain className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h4 className="text-lg font-semibold mb-2">
+                {topPosts.length === 0 ? 'Sin datos suficientes' : 'Insights no generados'}
+              </h4>
+              <p className="text-muted-foreground mb-4">
+                {topPosts.length === 0 
+                  ? 'Necesitas tener posts analizados para generar insights'
+                  : 'Haz clic en "Generar Insights" para obtener recomendaciones personalizadas'
+                }
+              </p>
+              {topPosts.length === 0 && (
+                <Button 
+                  onClick={triggerContentOnlyAnalysis}
+                  disabled={loading}
+                  variant="default"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Analizar Posts
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     );
   };
@@ -1003,11 +1063,15 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
                     </Button>
                   </div>
                   
-                  {post.image && (
+                  {(post.image || post.videoLink) && (
                     <img 
-                      src={post.image} 
-                      alt="Post" 
+                      src={post.image || post.videoLink} 
+                      alt="Post content" 
                       className="w-full h-32 object-cover rounded-md"
+                      onError={(e) => {
+                        console.log('Error loading image:', post.image || post.videoLink);
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   )}
                   
@@ -1082,16 +1146,20 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {post.image && (
-                      <div className="md:col-span-1">
-                        <img 
-                          src={post.image} 
-                          alt="Post" 
-                          className="w-full h-24 object-cover rounded-md"
-                        />
-                      </div>
-                    )}
-                    <div className={post.image ? "md:col-span-3" : "md:col-span-4"}>
+                  {(post.image || post.videoLink) && (
+                    <div className="md:col-span-1">
+                      <img 
+                        src={post.image || post.videoLink} 
+                        alt="Post content" 
+                        className="w-full h-24 object-cover rounded-md"
+                        onError={(e) => {
+                          console.log('Error loading image:', post.image || post.videoLink);
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                    <div className={post.image || post.videoLink ? "md:col-span-3" : "md:col-span-4"}>
                       <p className="text-sm text-muted-foreground line-clamp-3 mb-2">
                         {post.text}
                       </p>

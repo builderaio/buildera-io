@@ -107,7 +107,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       id: 6,
       title: "Analizar Contenido",
       description: "Evalúa el rendimiento de tu contenido actual",
-      target_section: "marketing-hub",
+      target_section: "content-analysis-dashboard",
       completed: false,
       icon: FileText,
       actionText: "Analizar contenido",
@@ -576,6 +576,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                             // Si es el paso 4 (analizar audiencia), navegar al audiencias manager
                             if (nextIncompleteStep.id === 4) {
                               onNavigate("audiencias-manager");
+                            } else if (nextIncompleteStep.id === 6) {
+                              onNavigate("content-analysis-dashboard");
                             } else {
                               onNavigate(nextIncompleteStep.target_section);
                             }
@@ -607,9 +609,18 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                                 return;
                               }
                             }
-                            // Si es el paso 4 (analizar audiencia), navegar al audiencias manager
+                            // Si es el paso 4 (analizar audiencia), completar y avanzar automáticamente al paso 6
                             if (nextIncompleteStep.id === 4) {
-                              onNavigate("audiencias-manager");
+                              await completeStep(4);
+                              // Auto-avanzar al paso 6 (análisis de contenido)
+                              setTimeout(() => {
+                                setCurrentStep(6);
+                                onNavigate("content-analysis-dashboard");
+                                toast({
+                                  title: "Audiencias analizadas ✅",
+                                  description: "Ahora continuemos con el análisis de contenido",
+                                });
+                              }, 1000);
                               return;
                             }
                             completeStep(nextIncompleteStep.id);
@@ -618,7 +629,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                           className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium"
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
-                          {nextIncompleteStep.id === 2 ? "Verificar conexión" : nextIncompleteStep.id === 4 ? "Ir a analizar" : "Marcar completado"}
+                          {nextIncompleteStep.id === 2 ? "Verificar conexión" : nextIncompleteStep.id === 4 ? "Completar análisis" : "Marcar completado"}
                         </Button>
                       </motion.div>
                     )}

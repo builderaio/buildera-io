@@ -254,25 +254,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
 
       if (allCompleted) {
         setIsActive(false);
-        toast({
-          title: "¡Tour completado! 🎉",
-          description: "Has terminado todas las etapas del tour.",
-        });
+        // Toast removido para evitar bloqueo de botones
       } else if (stepId === 1) {
-        toast({
-          title: "Conexiones verificadas",
-          description: `${connectedCount}/${TOTAL_PLATFORMS} plataformas conectadas. Ahora configura las URLs de tus perfiles (siguiente paso).`,
-        });
+        // Toast removido para evitar bloqueo de botones
       } else if (stepId === 3) {
-        toast({
-          title: "Audiencias analizadas ✅",
-          description: "Excelente, ahora analicemos tu contenido actual.",
-        });
+        // Toast removido para evitar bloqueo de botones
       } else {
-        toast({
-          title: "¡Paso Completado! ✅",
-          description: `Paso ${stepId} de ${steps.length} completado.`,
-        });
+        // Toast removido para evitar bloqueo de botones
       }
 
     } catch (error) {
@@ -292,10 +280,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         });
 
       setIsActive(false);
-      toast({
-        title: "Tour Omitido",
-        description: "Puedes reactivarlo desde configuración.",
-      });
+      // Toast removido para evitar bloqueo de botones
     } catch (error) {
       console.error('Error skipping tour:', error);
     }
@@ -610,11 +595,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                             if (nextIncompleteStep.id === 1) {
                               const canComplete = await canCompleteNetworkStep();
                               if (!canComplete) {
-                                toast({
-                                  title: "Conexión requerida",
-                                  description: "Debes conectar al menos una red social antes de continuar",
-                                  variant: "destructive",
-                                });
+                                // Toast removido para evitar bloqueo - simplemente no continuar
                                 return;
                               }
                             }

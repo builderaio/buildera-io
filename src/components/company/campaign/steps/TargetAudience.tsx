@@ -28,95 +28,72 @@ interface TargetAudienceProps {
 }
 
 export const TargetAudience = ({ campaignData, onComplete, loading, companyData }: TargetAudienceProps) => {
-  const [companyDataState, setCompanyDataState] = useState({
-    nombre_empresa: campaignData.company?.nombre_empresa || companyData?.name || '',
-    pais: campaignData.company?.pais || '',
-    objetivo_de_negocio: campaignData.company?.objetivo_de_negocio || companyData?.description || '',
-    propuesta_de_valor: campaignData.company?.propuesta_de_valor || '',
-    url_sitio_web: campaignData.company?.url_sitio_web || companyData?.website_url || '',
-  });
-
-  // Update with real company data when available
-  useEffect(() => {
-    if (companyData && !companyDataState.nombre_empresa) {
-      setCompanyDataState(prev => ({
-        ...prev,
-        nombre_empresa: companyData.name || '',
-        objetivo_de_negocio: companyData.description || '',
-        url_sitio_web: companyData.website_url || '',
-      }));
-    }
-  }, [companyData]);
-
-  const [aiAnalysisResult, setAiAnalysisResult] = useState(null);
-  const [analyzing, setAnalyzing] = useState(false);
+  const [existingAudiences, setExistingAudiences] = useState([]);
+  const [selectedAudiences, setSelectedAudiences] = useState(campaignData.audiences || []);
+  const [loadingAudiences, setLoadingAudiences] = useState(true);
   const { toast } = useToast();
 
-  const handleInputChange = (field: string, value: string) => {
-    setCompanyDataState(prev => ({ ...prev, [field]: value }));
-  };
+  // Load existing audiences
+  useEffect(() => {
+    const loadAudiences = async () => {
+      if (!companyData?.id) return;
 
-  const analyzeTargetAudience = async () => {
-    if (!companyDataState.nombre_empresa || !companyDataState.objetivo_de_negocio || !companyDataState.propuesta_de_valor) {
-      toast({
-        title: "Datos incompletos",
-        description: "Por favor completa al menos el nombre, objetivo y propuesta de valor",
-        variant: "destructive"
-      });
-      return;
-    }
+      try {
+        const { data, error } = await supabase
+          .from('company_audiences')
+          .select('*')
+          .eq('company_id', companyData.id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
 
-    setAnalyzing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('marketing-hub-target-audience', {
-        body: { 
-          input: {
-            ...companyDataState,
-            redes_socciales_activas: []
-          }
-        }
-      });
+        if (error) throw error;
+        
+        setExistingAudiences(data || []);
+      } catch (error) {
+        console.error('Error loading audiences:', error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar las audiencias",
+          variant: "destructive"
+        });
+      } finally {
+        setLoadingAudiences(false);
+      }
+    };
 
-      if (error) throw error;
+    loadAudiences();
+  }, [companyData?.id]);
 
-      setAiAnalysisResult(data);
-      
-      toast({
-        title: "¡Análisis completado!",
-        description: "Hemos identificado tu audiencia objetivo ideal",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error en el análisis",
-        description: error.message || "No se pudo completar el análisis de audiencia",
-        variant: "destructive"
-      });
-    } finally {
-      setAnalyzing(false);
-    }
+  const toggleAudienceSelection = (audience) => {
+    setSelectedAudiences(prev => {
+      const isSelected = prev.some(a => a.id === audience.id);
+      if (isSelected) {
+        return prev.filter(a => a.id !== audience.id);
+      } else {
+        return [...prev, audience];
+      }
+    });
   };
 
   const handleComplete = () => {
-    if (!aiAnalysisResult) {
+    if (selectedAudiences.length === 0) {
       toast({
-        title: "Análisis requerido",
-        description: "Primero debes ejecutar el análisis de audiencia objetivo",
+        title: "Selecciona audiencias",
+        description: "Debes seleccionar al menos una audiencia para la campaña",
         variant: "destructive"
       });
       return;
     }
 
     const audienceData = {
-      company: companyDataState,
-      analysis: aiAnalysisResult,
-      buyer_personas: aiAnalysisResult?.buyer_personas || []
+      selected_audiences: selectedAudiences,
+      audience_count: selectedAudiences.length
     };
 
     onComplete(audienceData);
   };
 
-  const canAnalyze = companyDataState.nombre_empresa && companyDataState.objetivo_de_negocio && companyDataState.propuesta_de_valor;
-  const canProceed = aiAnalysisResult && !analyzing;
+  const canProceed = selectedAudiences.length > 0;
 
   return (
     <div className="space-y-6">
@@ -125,203 +102,129 @@ export const TargetAudience = ({ campaignData, onComplete, loading, companyData 
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-green-800">
             <Users className="h-6 w-6" />
-            Identifica tu Audiencia Objetivo
+            Selecciona las Audiencias para tu Campaña
           </CardTitle>
           <p className="text-green-600">
-            Nuestra IA analizará tu negocio para identificar el público perfecto
+            Elige las audiencias creadas para tu empresa que participarán en esta campaña
           </p>
         </CardHeader>
       </Card>
 
-      {/* Company Information Form */}
+      {/* Existing Audiences Selection */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Briefcase className="h-5 w-5 text-primary" />
-            Información de tu Empresa
+            <Target className="h-5 w-5 text-primary" />
+            Audiencias Disponibles
           </CardTitle>
           <p className="text-muted-foreground">
-            Proporciona detalles sobre tu empresa para un análisis preciso
+            Selecciona las audiencias que quieres incluir en esta campaña
           </p>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="empresa">Nombre de la Empresa *</Label>
-              <Input
-                id="empresa"
-                value={companyDataState.nombre_empresa}
-                onChange={(e) => handleInputChange('nombre_empresa', e.target.value)}
-                placeholder="Ej: TechCorp Solutions"
-                className="mt-1"
-              />
+        <CardContent>
+          {loadingAudiences ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="ml-2">Cargando audiencias...</span>
             </div>
-            <div>
-              <Label htmlFor="pais">País</Label>
-              <Input
-                id="pais"
-                value={companyDataState.pais}
-                onChange={(e) => handleInputChange('pais', e.target.value)}
-                placeholder="Ej: México"
-                className="mt-1"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="objetivo">Objetivo de Negocio *</Label>
-            <Textarea
-              id="objetivo"
-              value={companyDataState.objetivo_de_negocio}
-              onChange={(e) => handleInputChange('objetivo_de_negocio', e.target.value)}
-              placeholder="Ej: Aumentar ventas de nuestro software SaaS en un 300% en 6 meses"
-              className="mt-1"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="propuesta">Propuesta de Valor *</Label>
-            <Textarea
-              id="propuesta"
-              value={companyDataState.propuesta_de_valor}
-              onChange={(e) => handleInputChange('propuesta_de_valor', e.target.value)}
-              placeholder="Ej: Automatizamos procesos empresariales con IA, reduciendo costos en 40%"
-              className="mt-1"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="website">URL del Sitio Web</Label>
-            <Input
-              id="website"
-              value={companyDataState.url_sitio_web}
-              onChange={(e) => handleInputChange('url_sitio_web', e.target.value)}
-              placeholder="https://tuempresa.com"
-              className="mt-1"
-            />
-          </div>
-
-          <div className="pt-4">
-            <Button 
-              onClick={analyzeTargetAudience}
-              disabled={!canAnalyze || analyzing || loading}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-              size="lg"
-            >
-              {analyzing ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Analizando con IA...
-                </>
-              ) : (
-                <>
-                  <Brain className="w-5 h-5 mr-2" />
-                  Analizar Audiencia con IA
-                </>
+          ) : existingAudiences.length > 0 ? (
+            <div className="space-y-4">
+              {existingAudiences.map((audience) => {
+                const isSelected = selectedAudiences.some(a => a.id === audience.id);
+                
+                return (
+                  <div
+                    key={audience.id}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:scale-[1.02] ${
+                      isSelected 
+                        ? 'border-primary bg-primary/5 shadow-lg' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => toggleAudienceSelection(audience)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-semibold text-lg">{audience.name}</h3>
+                          {isSelected && (
+                            <CheckCircle className="h-5 w-5 text-primary" />
+                          )}
+                        </div>
+                        
+                        {audience.description && (
+                          <p className="text-muted-foreground text-sm mb-3">{audience.description}</p>
+                        )}
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {audience.age_ranges && Object.keys(audience.age_ranges).length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-sm mb-2">Rango de Edad</h5>
+                              <div className="flex flex-wrap gap-1">
+                                {Object.entries(audience.age_ranges).map(([range, percentage]) => (
+                                  <Badge key={range} variant="outline" className="text-xs">
+                                    {range}: {percentage as string}%
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {audience.geographic_locations && Object.keys(audience.geographic_locations).length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-sm mb-2">Ubicaciones</h5>
+                              <div className="flex flex-wrap gap-1">
+                                {Object.entries(audience.geographic_locations).slice(0, 3).map(([location, percentage]) => (
+                                  <Badge key={location} variant="secondary" className="text-xs">
+                                    {location}: {percentage as string}%
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {audience.platform_preferences && Object.keys(audience.platform_preferences).length > 0 && (
+                            <div>
+                              <h5 className="font-medium text-sm mb-2">Plataformas Preferidas</h5>
+                              <div className="flex flex-wrap gap-1">
+                                {Object.entries(audience.platform_preferences).slice(0, 3).map(([platform, percentage]) => (
+                                  <Badge key={platform} variant="default" className="text-xs">
+                                    {platform}: {percentage as string}%
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {selectedAudiences.length > 0 && (
+                <div className="mt-6 p-4 bg-primary/10 rounded-lg">
+                  <h4 className="font-semibold text-primary mb-2">
+                    Audiencias Seleccionadas: {selectedAudiences.length}
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAudiences.map(audience => (
+                      <Badge key={audience.id} className="bg-primary/20 text-primary">
+                        {audience.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               )}
-            </Button>
-          </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="h-8 w-8 mx-auto mb-3 opacity-50" />
+              <p>No hay audiencias creadas para esta empresa</p>
+              <p className="text-sm">Primero crea audiencias desde el Manager de Audiencias</p>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* AI Analysis Results */}
-      {aiAnalysisResult && (
-        <Card className="border-green-200 bg-green-50/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
-              <CheckCircle className="h-5 w-5" />
-              Análisis de Audiencia Completado
-            </CardTitle>
-            <p className="text-green-600">
-              Hemos identificado tu audiencia objetivo ideal
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Buyer Personas */}
-            {aiAnalysisResult?.buyer_personas && (
-              <div>
-                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
-                  Buyer Personas Identificados
-                </h3>
-                <div className="grid gap-4">
-                  {aiAnalysisResult.buyer_personas.slice(0, 3).map((persona: any, index: number) => (
-                    <Card key={index} className="bg-white">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="bg-primary/10 p-2 rounded-full">
-                            <Users className="h-5 w-5 text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-lg text-primary">
-                              {persona.nombre_ficticio}
-                            </h4>
-                            {persona.profesion && (
-                              <p className="text-sm text-muted-foreground mb-2">
-                                {persona.profesion}
-                              </p>
-                            )}
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                              {persona.puntos_de_dolor && persona.puntos_de_dolor.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-sm mb-2 flex items-center gap-1">
-                                    <Heart className="h-4 w-4 text-red-500" />
-                                    Puntos de Dolor
-                                  </h5>
-                                  <div className="flex flex-wrap gap-1">
-                                    {persona.puntos_de_dolor.slice(0, 3).map((dolor: string, i: number) => (
-                                      <Badge key={i} variant="secondary" className="text-xs">
-                                        {dolor}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {persona.plataformas_prioritarias && persona.plataformas_prioritarias.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-sm mb-2 flex items-center gap-1">
-                                    <TrendingUp className="h-4 w-4 text-blue-500" />
-                                    Plataformas Prioritarias
-                                  </h5>
-                                  <div className="flex flex-wrap gap-1">
-                                    {persona.plataformas_prioritarias.map((plataforma: string, i: number) => (
-                                      <Badge key={i} variant="outline" className="text-xs">
-                                        {plataforma}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Key insights */}
-            {aiAnalysisResult?.insights && (
-              <div>
-                <h3 className="font-semibold text-lg mb-3">Insights Clave</h3>
-                <div className="bg-white p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {typeof aiAnalysisResult.insights === 'string' 
-                      ? aiAnalysisResult.insights 
-                      : JSON.stringify(aiAnalysisResult.insights)}
-                  </p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* Complete Button */}
       <div className="flex justify-end">

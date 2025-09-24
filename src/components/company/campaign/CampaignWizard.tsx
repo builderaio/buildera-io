@@ -17,7 +17,8 @@ import {
   CheckCircle,
   ArrowRight,
   ArrowLeft,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 
 import { CampaignObjective } from './steps/CampaignObjective';
@@ -116,7 +117,91 @@ const steps = [
 ];
 
 export const CampaignWizard = () => {
+  const [state, setState] = useState<CampaignState>({
+    currentStep: 1,
+    completedSteps: []
+  });
+  
+  const [campaignData, setCampaignData] = useState<CampaignData>({
+    objective: {
+      goal: '',
+      target_metrics: {},
+      timeline: ''
+    },
+    company: {
+      nombre_empresa: '',
+      pais: '',
+      objetivo_de_negocio: '',
+      propuesta_de_valor: '',
+      url_sitio_web: '',
+      redes_sociales_activas: []
+    }
+  });
+
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const { primaryCompany, loading: companyLoading } = useCompanyManagement();
+  const { toast } = useToast();
+  const { 
+    storeTargetAudienceData, 
+    storeMarketingStrategyData, 
+    storeContentCalendarData,
+    isProcessing 
+  } = useMarketingDataPersistence();
+
+  // Populate with real company data when available
+  useEffect(() => {
+    if (primaryCompany && !campaignData.company.nombre_empresa) {
+      setCampaignData(prev => ({
+        ...prev,
+        company: {
+          ...prev.company,
+          nombre_empresa: primaryCompany.name || '',
+          url_sitio_web: primaryCompany.website_url || '',
+          pais: '',
+          objetivo_de_negocio: primaryCompany.description || '',
+          propuesta_de_valor: '',
+        }
+      }));
+    }
+  }, [primaryCompany]);
+
+  const generateCampaignsWithAI = async () => {
+    if (!primaryCompany?.id) {
+      toast({
+        title: "Error",
+        description: "No se encontró información de la empresa",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('campaign-ai-generator', {
+        body: { companyId: primaryCompany.id }
+      });
+
+      if (error) throw error;
+
+      setAiSuggestions(data);
+      toast({
+        title: "¡Campañas generadas!",
+        description: `Se generaron ${data.campañas_recomendadas?.length || 0} campañas personalizadas`,
+      });
+    } catch (error: any) {
+      console.error('Error generating AI campaigns:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron generar las campañas con IA",
+        variant: "destructive"
+      });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
   
   const [campaignData, setCampaignData] = useState<CampaignData>({
     objective: {
@@ -156,7 +241,49 @@ export const CampaignWizard = () => {
     completedSteps: []
   });
 
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState(null);
+
+  const { primaryCompany } = useCompanyManagement();
+  const { storeTargetAudienceData, storeMarketingStrategyData, storeContentCalendarData } = useMarketingDataPersistence();
+  const { toast } = useToast();
+
   const [loading, setLoading] = useState(false);
+
+  const generateCampaignsWithAI = async () => {
+    if (!primaryCompany?.id) {
+      toast({
+        title: "Error",
+        description: "No se encontró información de la empresa",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('campaign-ai-generator', {
+        body: { companyId: primaryCompany.id }
+      });
+
+      if (error) throw error;
+
+      setAiSuggestions(data);
+      toast({
+        title: "¡Campañas generadas!",
+        description: `Se generaron ${data.campañas_recomendadas?.length || 0} campañas personalizadas`,
+      });
+    } catch (error: any) {
+      console.error('Error generating AI campaigns:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron generar las campañas con IA",
+        variant: "destructive"
+      });
+    } finally {
+      setAiGenerating(false);
+    }
+  };
   const { toast } = useToast();
   const { 
     storeTargetAudienceData, 

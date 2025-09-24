@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Target, 
   TrendingUp, 
@@ -16,7 +18,9 @@ import {
   Share2,
   ShoppingCart,
   Calendar,
-  Sparkles
+  Sparkles,
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
 
 interface CampaignObjectiveProps {
@@ -76,15 +80,49 @@ const timeframes = [
   { value: '1-year', label: '1 Año' }
 ];
 
-export const CampaignObjective = ({ campaignData, onComplete, loading }: CampaignObjectiveProps) => {
+export const CampaignObjective = ({ campaignData, onComplete, loading, companyData }: CampaignObjectiveProps) => {
   const [selectedObjective, setSelectedObjective] = useState(campaignData.objective?.type || '');
   const [campaignName, setCampaignName] = useState(campaignData.objective?.name || '');
   const [description, setDescription] = useState(campaignData.objective?.description || '');
   const [timeline, setTimeline] = useState(campaignData.objective?.timeline || '');
   const [budget, setBudget] = useState(campaignData.objective?.budget || '');
   const [targetMetrics, setTargetMetrics] = useState(campaignData.objective?.target_metrics || {});
+  const [companyObjectives, setCompanyObjectives] = useState([]);
+  const [loadingObjectives, setLoadingObjectives] = useState(true);
+  const { toast } = useToast();
 
   const selectedObjectiveData = objectiveTypes.find(obj => obj.id === selectedObjective);
+
+  // Load company objectives
+  useEffect(() => {
+    const loadCompanyObjectives = async () => {
+      if (!companyData?.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('company_objectives')
+          .select('*')
+          .eq('company_id', companyData.id)
+          .eq('status', 'active')
+          .order('priority', { ascending: true });
+
+        if (error) throw error;
+        
+        setCompanyObjectives(data || []);
+      } catch (error) {
+        console.error('Error loading company objectives:', error);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los objetivos de la empresa",
+          variant: "destructive"
+        });
+      } finally {
+        setLoadingObjectives(false);
+      }
+    };
+
+    loadCompanyObjectives();
+  }, [companyData?.id]);
 
   const handleMetricChange = (metric: string, value: string) => {
     setTargetMetrics(prev => ({

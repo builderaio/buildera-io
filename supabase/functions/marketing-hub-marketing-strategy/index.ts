@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +9,10 @@ const corsHeaders = {
 
 const N8N_AUTH_USER = Deno.env.get('N8N_AUTH_USER');
 const N8N_AUTH_PASS = Deno.env.get('N8N_AUTH_PASS');
+
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -65,43 +70,106 @@ serve(async (req) => {
       }
     }
 
-    // Set defaults for optional fields
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get user from JWT token
+    if (!authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Bearer token required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      console.error('Error getting user:', userError);
+      return new Response(JSON.stringify({ error: 'Authentication required' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log('User authenticated:', user.id);
+
+    // Get user's primary company
+    const { data: companyMember, error: companyError } = await supabase
+      .from('company_members')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .eq('is_primary', true)
+      .single();
+
+    if (companyError || !companyMember) {
+      console.error('Error getting user company:', companyError);
+      return new Response(JSON.stringify({ error: 'No primary company found for user' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log('Company found:', companyMember.company_id);
+
+    // Get company strategy to obtain propuesta_valor
+    const { data: companyStrategy, error: strategyError } = await supabase
+      .from('company_strategy')
+      .select('propuesta_valor, mision, vision')
+      .eq('company_id', companyMember.company_id)
+      .single();
+
+    let propuestaValor = input.propuesta_de_valor || 'Por definir';
+    
+    if (!strategyError && companyStrategy?.propuesta_valor) {
+      propuestaValor = companyStrategy.propuesta_valor;
+      console.log('Using propuesta_valor from company_strategy:', propuestaValor);
+    } else {
+      console.log('No company strategy found or no propuesta_valor, using default');
+    }
+
+    // Set defaults for optional fields with real propuesta_valor
     const processedInput = {
       nombre_empresa: input.nombre_empresa,
       pais: input.pais || 'No especificado',
       objetivo_de_negocio: input.objetivo_de_negocio,
-      propuesta_de_valor: input.propuesta_de_valor || 'Por definir',
+      propuesta_de_valor: propuestaValor,
       audiencia_objetivo: input.audiencia_objetivo || { buyer_personas: [] },
       objetivo_campana: input.objetivo_campana || 'No especificado'
     };
 
-    console.log('Processed input:', JSON.stringify(processedInput, null, 2));
+    console.log('Processed input with real propuesta_valor:', JSON.stringify(processedInput, null, 2));
 
-    // Generate a structured marketing strategy response
-    const response = {
-      empresa: processedInput.nombre_empresa,
-      pais: processedInput.pais,
-      objetivo: processedInput.objetivo_de_negocio,
-      propuesta_valor: processedInput.propuesta_de_valor,
-      audiencia: processedInput.audiencia_objetivo,
-      estrategia: `Estrategia integral para ${processedInput.nombre_empresa} enfocada en ${processedInput.objetivo_de_negocio}.\n\nObjetivo de campaña: ${processedInput.objetivo_campana}\nPropuesta de valor: ${processedInput.propuesta_de_valor}\n\nPilares estratégicos:\n1) Descubrimiento (Awareness): Contenido educativo y anuncios segmentados\n2) Consideración: Casos de éxito y webinars informativos\n3) Conversión: Ofertas claras y CTA optimizados\n4) Fidelización: Programa de seguimiento y referidos\n\nEsta estrategia está diseñada específicamente para ${processedInput.nombre_empresa} y sus objetivos de crecimiento.`,
-      funnel_tactics: [
-        { fase: 'Awareness', descripcion: 'Contenido educativo semanal en redes sociales' },
-        { fase: 'Awareness', descripcion: 'Anuncios segmentados por buyer persona' },
-        { fase: 'Consideration', descripcion: 'Casos de estudio y testimonios' },
-        { fase: 'Consideration', descripcion: 'Webinars mensuales informativos' },
-        { fase: 'Conversion', descripcion: 'Landing pages optimizadas' },
-        { fase: 'Conversion', descripcion: 'Ofertas limitadas en tiempo' },
-        { fase: 'Loyalty', descripcion: 'Newsletter de valor agregado' },
-        { fase: 'Loyalty', descripcion: 'Programa de referidos incentivado' }
-      ],
-      timestamp: new Date().toISOString(),
-      status: 'generated'
-    };
+    // Call N8N webhook
+    const webhookUrl = 'https://buildera.app.n8n.cloud/webhook/marketing-strategy';
+    console.log('Calling N8N webhook:', webhookUrl);
 
-    console.log('Generated response:', JSON.stringify(response, null, 2));
+    const webhookResponse = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(N8N_AUTH_USER && N8N_AUTH_PASS ? {
+          'Authorization': `Basic ${btoa(`${N8N_AUTH_USER}:${N8N_AUTH_PASS}`)}`
+        } : {})
+      },
+      body: JSON.stringify(processedInput)
+    });
 
-    return new Response(JSON.stringify(response), {
+    if (!webhookResponse.ok) {
+      console.error('N8N webhook failed:', webhookResponse.status, await webhookResponse.text());
+      return new Response(JSON.stringify({ 
+        error: 'Failed to generate marketing strategy',
+        details: `Webhook returned ${webhookResponse.status}`
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const webhookResult = await webhookResponse.json();
+    console.log('N8N webhook response:', JSON.stringify(webhookResult, null, 2));
+
+    return new Response(JSON.stringify(webhookResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 

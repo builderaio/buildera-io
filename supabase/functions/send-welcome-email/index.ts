@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
+// Import Resend using ESM from a CDN instead of npm
+const { Resend } = await import("https://esm.sh/resend@2.0.0");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

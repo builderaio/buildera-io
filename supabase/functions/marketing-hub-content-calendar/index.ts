@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,29 +10,54 @@ const corsHeaders = {
 const N8N_AUTH_USER = Deno.env.get('N8N_AUTH_USER');
 const N8N_AUTH_PASS = Deno.env.get('N8N_AUTH_PASS');
 
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Basic auth verification
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Basic ')) {
-      return new Response(JSON.stringify({ error: 'Basic authentication required' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const credentials = atob(authHeader.slice(6));
-    const [username, password] = credentials.split(':');
-    
-    if (username !== N8N_AUTH_USER || password !== N8N_AUTH_PASS) {
-      return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    // Auth: Accept Basic (if configured) or Bearer (Supabase) or none (public)
+    const authHeader = req.headers.get('authorization') || '';
+
+    if (authHeader.startsWith('Basic ')) {
+      if (!N8N_AUTH_USER || !N8N_AUTH_PASS) {
+        console.warn('Basic auth provided but no N8N credentials configured. Skipping verification.');
+      } else {
+        const credentials = atob(authHeader.slice(6));
+        const [username, password] = credentials.split(':');
+        if (username !== N8N_AUTH_USER || password !== N8N_AUTH_PASS) {
+          return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+      }
+    } else if (authHeader.startsWith('Bearer ')) {
+      // Supabase JWT authentication
+      console.log('JWT auth detected for content calendar generation');
+      
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+      if (userError || !user) {
+        console.error('Error getting user:', userError);
+        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      console.log('User authenticated:', user.id);
+    } else {
+      // No auth header. Function is public per config; continue.
+      console.log('No authentication provided, proceeding as public function');
     }
 
     const { input } = await req.json();

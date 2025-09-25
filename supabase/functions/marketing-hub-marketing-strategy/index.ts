@@ -42,10 +42,10 @@ serve(async (req) => {
     
     console.log('Marketing Hub Strategy Request:', input);
 
-    // Validate required fields
-    const requiredFields = ['nombre_empresa', 'pais', 'objetivo_de_negocio', 'propuesta_de_valor', 'audiencia_objetivo'];
+    // Validate essential required fields
+    const requiredFields = ['nombre_empresa', 'objetivo_de_negocio'];
     for (const field of requiredFields) {
-      if (!input[field]) {
+      if (!input[field] || (typeof input[field] === 'string' && input[field].trim() === '')) {
         return new Response(JSON.stringify({ error: `Missing required field: ${field}` }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -53,14 +53,22 @@ serve(async (req) => {
       }
     }
 
+    // Set defaults for optional fields
+    const processedInput = {
+      ...input,
+      pais: input.pais || 'No especificado',
+      propuesta_de_valor: input.propuesta_de_valor || 'Por definir',
+      audiencia_objetivo: input.audiencia_objetivo || { buyer_personas: [] }
+    };
+
     // Generate a structured marketing strategy response
     const response = {
-      empresa: input.nombre_empresa,
-      pais: input.pais,
-      objetivo: input.objetivo_de_negocio,
-      propuesta_valor: input.propuesta_de_valor,
-      audiencia: input.audiencia_objetivo,
-      estrategia: `Estrategia integral para ${input.nombre_empresa} enfocada en ${input.objetivo_de_negocio}.\n\nPropuesta de valor: ${input.propuesta_de_valor}.\n\nPilares:\n1) Descubrimiento (Awareness) con contenido educativo y anuncios segmentados.\n2) Consideración con casos de éxito y webinars.\n3) Conversión con ofertas claras y CTA medibles.\n4) Fidelización con email/SMS y programa de referidos.`,
+      empresa: processedInput.nombre_empresa,
+      pais: processedInput.pais,
+      objetivo: processedInput.objetivo_de_negocio,
+      propuesta_valor: processedInput.propuesta_de_valor,
+      audiencia: processedInput.audiencia_objetivo,
+      estrategia: `Estrategia integral para ${processedInput.nombre_empresa} enfocada en ${processedInput.objetivo_de_negocio}.\n\nPropuesta de valor: ${processedInput.propuesta_de_valor}.\n\nPilares:\n1) Descubrimiento (Awareness) con contenido educativo y anuncios segmentados.\n2) Consideración con casos de éxito y webinars.\n3) Conversión con ofertas claras y CTA medibles.\n4) Fidelización con email/SMS y programa de referidos.`,
       funnel_tactics: [
         { etapa: 'Awareness', tacticas: ['Contenido educativo semanal', 'Anuncios segmentados por buyer persona', 'Colaboraciones con micro-influencers'] },
         { etapa: 'Consideration', tacticas: ['Casos de estudio', 'Webinars mensuales', 'Comparativas de valor'] },

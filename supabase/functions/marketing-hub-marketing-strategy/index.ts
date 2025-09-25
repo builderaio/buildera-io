@@ -38,14 +38,26 @@ serve(async (req) => {
       // No auth header. Function is public per config; continue.
     }
 
-    const { input } = await req.json();
+    const body = await req.json();
+    console.log('Raw request body:', JSON.stringify(body));
     
-    console.log('Marketing Hub Strategy Request:', input);
+    const { input } = body;
+    
+    if (!input) {
+      console.error('No input found in request body');
+      return new Response(JSON.stringify({ error: 'Input parameter is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    console.log('Marketing Hub Strategy Request - Input:', JSON.stringify(input, null, 2));
 
     // Validate essential required fields
     const requiredFields = ['nombre_empresa', 'objetivo_de_negocio'];
     for (const field of requiredFields) {
       if (!input[field] || (typeof input[field] === 'string' && input[field].trim() === '')) {
+        console.error(`Validation failed: Missing field ${field}`);
         return new Response(JSON.stringify({ error: `Missing required field: ${field}` }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -55,11 +67,15 @@ serve(async (req) => {
 
     // Set defaults for optional fields
     const processedInput = {
-      ...input,
+      nombre_empresa: input.nombre_empresa,
       pais: input.pais || 'No especificado',
+      objetivo_de_negocio: input.objetivo_de_negocio,
       propuesta_de_valor: input.propuesta_de_valor || 'Por definir',
-      audiencia_objetivo: input.audiencia_objetivo || { buyer_personas: [] }
+      audiencia_objetivo: input.audiencia_objetivo || { buyer_personas: [] },
+      objetivo_campana: input.objetivo_campana || 'No especificado'
     };
+
+    console.log('Processed input:', JSON.stringify(processedInput, null, 2));
 
     // Generate a structured marketing strategy response
     const response = {
@@ -68,16 +84,22 @@ serve(async (req) => {
       objetivo: processedInput.objetivo_de_negocio,
       propuesta_valor: processedInput.propuesta_de_valor,
       audiencia: processedInput.audiencia_objetivo,
-      estrategia: `Estrategia integral para ${processedInput.nombre_empresa} enfocada en ${processedInput.objetivo_de_negocio}.\n\nPropuesta de valor: ${processedInput.propuesta_de_valor}.\n\nPilares:\n1) Descubrimiento (Awareness) con contenido educativo y anuncios segmentados.\n2) Consideración con casos de éxito y webinars.\n3) Conversión con ofertas claras y CTA medibles.\n4) Fidelización con email/SMS y programa de referidos.`,
+      estrategia: `Estrategia integral para ${processedInput.nombre_empresa} enfocada en ${processedInput.objetivo_de_negocio}.\n\nObjetivo de campaña: ${processedInput.objetivo_campana}\nPropuesta de valor: ${processedInput.propuesta_de_valor}\n\nPilares estratégicos:\n1) Descubrimiento (Awareness): Contenido educativo y anuncios segmentados\n2) Consideración: Casos de éxito y webinars informativos\n3) Conversión: Ofertas claras y CTA optimizados\n4) Fidelización: Programa de seguimiento y referidos\n\nEsta estrategia está diseñada específicamente para ${processedInput.nombre_empresa} y sus objetivos de crecimiento.`,
       funnel_tactics: [
-        { etapa: 'Awareness', tacticas: ['Contenido educativo semanal', 'Anuncios segmentados por buyer persona', 'Colaboraciones con micro-influencers'] },
-        { etapa: 'Consideration', tacticas: ['Casos de estudio', 'Webinars mensuales', 'Comparativas de valor'] },
-        { etapa: 'Conversion', tacticas: ['Ofertas limitadas', 'Landing pages optimizadas', 'Remarketing con prueba social'] },
-        { etapa: 'Loyalty', tacticas: ['Newsletter de valor', 'Programa de referidos', 'Encuestas NPS trimestrales'] }
+        { fase: 'Awareness', descripcion: 'Contenido educativo semanal en redes sociales' },
+        { fase: 'Awareness', descripcion: 'Anuncios segmentados por buyer persona' },
+        { fase: 'Consideration', descripcion: 'Casos de estudio y testimonios' },
+        { fase: 'Consideration', descripcion: 'Webinars mensuales informativos' },
+        { fase: 'Conversion', descripcion: 'Landing pages optimizadas' },
+        { fase: 'Conversion', descripcion: 'Ofertas limitadas en tiempo' },
+        { fase: 'Loyalty', descripcion: 'Newsletter de valor agregado' },
+        { fase: 'Loyalty', descripcion: 'Programa de referidos incentivado' }
       ],
       timestamp: new Date().toISOString(),
       status: 'generated'
     };
+
+    console.log('Generated response:', JSON.stringify(response, null, 2));
 
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

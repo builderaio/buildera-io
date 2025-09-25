@@ -115,7 +115,7 @@ serve(async (req) => {
     console.error('Error creating company agent:', error);
     return new Response(JSON.stringify({ 
       error: 'Error al crear el agente empresarial',
-      details: error.message
+      details: (error as Error).message
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

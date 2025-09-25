@@ -115,7 +115,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error downloading content asset:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: (error as Error).message,
       details: 'Failed to download and store content asset'
     }), {
       status: 500,

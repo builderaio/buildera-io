@@ -91,7 +91,7 @@ const createOpenAIAssistant = async (agentData: any) => {
     throw new Error('OpenAI API key not configured');
   }
 
-  const tools = [];
+  const tools: any[] = [];
   
   // Configurar herramientas basadas en tools_permissions
   if (agentData.tools_permissions) {
@@ -241,7 +241,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error deploying agent:', error);
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: (error as Error).message 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

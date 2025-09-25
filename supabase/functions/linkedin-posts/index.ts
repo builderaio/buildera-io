@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Internal server error'
+      error: (error as Error).message || 'Internal server error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -112,7 +112,7 @@ async function createLinkedInPost(accessToken: string, companyPageId: string, co
 
   // Si hay imagen, añadir media
   if (content.mediaUrl) {
-    postData.specificContent["com.linkedin.ugc.ShareContent"].media = [
+    (postData.specificContent["com.linkedin.ugc.ShareContent"] as any).media = [
       {
         status: "READY",
         description: {
@@ -284,7 +284,7 @@ async function getLinkedInAnalytics(accessToken: string, companyPageId: string) 
       analytics.impressions = stats.totalShareStatistics?.impressionCount || 0;
       analytics.clicks = stats.totalShareStatistics?.clickCount || 0;
       analytics.shares = stats.totalShareStatistics?.shareCount || 0;
-      analytics.engagement = analytics.followers > 0 ? 
+      (analytics as any).engagement = Number(analytics.followers) > 0 ? 
         ((analytics.clicks + analytics.shares) / analytics.followers * 100).toFixed(2) : 0;
     }
   }

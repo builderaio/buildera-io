@@ -247,7 +247,7 @@ Deno.serve(async (req) => {
           console.log(`🔍 Processing ${posts.length} Facebook posts for user ${user.id}`);
           
           // Preparar los posts para insertar
-          const postsToInsert = posts.slice(0, 20).map((post, index) => {
+          const postsToInsert = posts.slice(0, 20).map((post: any, index: number) => {
             const postId = post.post_id || post.id || `fb_${page_id}_${index}`;
             console.log('📝 Processing post:', { postId, hasText: !!post.text, hasMessage: !!post.message });
             

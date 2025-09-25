@@ -273,7 +273,7 @@ Sé específico, creativo y enfócate en generar valor real para la audiencia.`;
   } catch (error) {
     console.error('Error in content-insights-generator:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: (error as Error).message,
       details: 'Failed to generate content insights'
     }), {
       status: 500,

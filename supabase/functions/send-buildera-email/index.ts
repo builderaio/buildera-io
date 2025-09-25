@@ -135,7 +135,7 @@ async function sendSMTPEmail(
     return { success: true };
   } catch (error) {
     console.error("SMTP Error:", error);
-    throw new Error(`Failed to send email via SMTP: ${error.message}`);
+    throw new Error(`Failed to send email via SMTP: ${(error as Error).message}`);
   }
 }
 
@@ -156,6 +156,8 @@ const handler = async (req: Request): Promise<Response> => {
   let requestData: SendEmailRequest;
   
   try {
+    let requestData: any;
+    requestData = await req.json();
     requestData = await req.json();
     console.log("Request data received:", {
       test: requestData.test,

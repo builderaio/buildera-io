@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
         expires_at: expiresAt.toISOString(),
         scope: tokenData.scope,
         company_page_id: orgIdFormatted,
-        company_page_name: companyData.localizedName || 'Empresa LinkedIn',
+        company_page_name: (companyData as any).localizedName || 'Empresa LinkedIn',
         company_page_data: companyData,
       })
       .select()
@@ -152,7 +152,7 @@ Deno.serve(async (req) => {
       success: true,
       data: {
         companyPageId: orgIdFormatted,
-        companyPageName: companyData.localizedName || 'Empresa LinkedIn',
+        companyPageName: (companyData as any).localizedName || 'Empresa LinkedIn',
         scope: tokenData.scope,
         expiresAt: expiresAt.toISOString(),
       }
@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: false,
-      error: error.message || 'Internal server error'
+      error: (error as Error).message || 'Internal server error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

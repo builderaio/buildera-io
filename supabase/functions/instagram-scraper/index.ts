@@ -583,7 +583,7 @@ async function getInstagramPosts(username: string, userId: string, supabase: any
     return {
       posts: [],
       analysis: {
-        summary: `Error al obtener posts de @${username}: ${error.message}`,
+        summary: `Error al obtener posts de @${username}: ${(error as Error).message}`,
         recommendations: [
           "Verificar que la cuenta de Instagram exista y sea pública",
           "Revisar la conectividad de la API",

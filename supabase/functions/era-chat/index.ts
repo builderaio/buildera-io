@@ -101,7 +101,7 @@ Responde de manera conversacional, útil y siempre relacionando tus respuestas c
     console.error('Error in era-chat function:', error);
     return new Response(JSON.stringify({ 
       error: 'Lo siento, no puedo procesar tu mensaje en este momento. Inténtalo de nuevo.',
-      details: error.message
+      details: (error as Error).message
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -45,8 +45,8 @@ serve(async (req) => {
     console.log(`🚀 Iniciando análisis de datos para ${platform} - Usuario: ${userId}`);
 
     // Obtener datos según la plataforma
-    let posts = [];
-    let analytics = [];
+    let posts: any[] = [];
+    let analytics: any[] = [];
     
     switch (platform) {
       case 'linkedin':
@@ -120,7 +120,7 @@ serve(async (req) => {
     console.error('Error en análisis de redes sociales:', error);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message 
+      error: (error as Error).message 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -94,7 +94,7 @@ serve(async (req) => {
     console.error('Error en análisis semántico:', error);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message 
+      error: (error as Error).message 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -116,23 +116,23 @@ async function performSemanticClustering(userId: string, platform: string, embed
 
     // Calcular métricas del cluster
     const totalEngagement = cluster.posts.reduce((sum, post) => {
-      const metrics = post.social_media_posts.metrics || {};
+      const metrics = (post as any).social_media_posts?.metrics || {};
       return sum + (metrics.likes || 0) + (metrics.comments || 0);
     }, 0);
 
     const avgEngagement = totalEngagement / cluster.posts.length;
 
     // Extraer hashtags más comunes
-    const hashtagCounts = {};
+    const hashtagCounts: Record<string, number> = {};
     cluster.posts.forEach(post => {
-      const hashtags = post.social_media_posts.hashtags || [];
-      hashtags.forEach(tag => {
+      const hashtags = (post as any).social_media_posts?.hashtags || [];
+      hashtags.forEach((tag: any) => {
         hashtagCounts[tag] = (hashtagCounts[tag] || 0) + 1;
       });
     });
 
     const topHashtags = Object.entries(hashtagCounts)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a: any, b: any) => b[1] - a[1])
       .slice(0, 5)
       .map(([tag]) => tag);
 
@@ -147,7 +147,7 @@ async function performSemanticClustering(userId: string, platform: string, embed
       post_count: cluster.posts.length,
       avg_engagement: avgEngagement,
       top_hashtags: topHashtags,
-      representative_posts: cluster.posts.slice(0, 3).map(p => p.post_id),
+      representative_posts: cluster.posts.slice(0, 3).map((p: any) => p.post_id),
       embedding_centroid: `[${cluster.centroid.join(',')}]`
     };
 
@@ -175,11 +175,11 @@ async function simplifiedKMeansClustering(embeddings: any[], k: number) {
   // Convertir embeddings string a arrays numéricos
   const vectors = embeddings.map(e => {
     const embeddingStr = e.embedding.replace(/[\[\]]/g, '');
-    return embeddingStr.split(',').map(num => parseFloat(num.trim()));
+    return embeddingStr.split(',').map((num: string) => parseFloat(num.trim()));
   });
 
   // Inicializar centroides aleatoriamente
-  const centroids = [];
+  const centroids: number[][] = [];
   for (let i = 0; i < k; i++) {
     const randomIndex = Math.floor(Math.random() * vectors.length);
     centroids.push([...vectors[randomIndex]]);
@@ -187,7 +187,7 @@ async function simplifiedKMeansClustering(embeddings: any[], k: number) {
 
   // Iteraciones de K-means (simplificado, 3 iteraciones)
   for (let iter = 0; iter < 3; iter++) {
-    const clusters = Array(k).fill(null).map(() => ({ posts: [], vectors: [] }));
+    const clusters: Array<{ posts: any[]; vectors: number[][] }> = Array(k).fill(null).map(() => ({ posts: [], vectors: [] }));
 
     // Asignar cada punto al centroide más cercano
     embeddings.forEach((embedding, idx) => {
@@ -203,7 +203,7 @@ async function simplifiedKMeansClustering(embeddings: any[], k: number) {
         }
       }
 
-      clusters[closestCluster].posts.push(embedding);
+      clusters[closestCluster].posts.push(embedding as any);
       clusters[closestCluster].vectors.push(vector);
     });
 
@@ -211,8 +211,8 @@ async function simplifiedKMeansClustering(embeddings: any[], k: number) {
     for (let c = 0; c < k; c++) {
       if (clusters[c].vectors.length > 0) {
         const newCentroid = Array(vectors[0].length).fill(0);
-        clusters[c].vectors.forEach(vector => {
-          vector.forEach((val, idx) => {
+        clusters[c].vectors.forEach((vector: number[]) => {
+          vector.forEach((val: number, idx: number) => {
             newCentroid[idx] += val;
           });
         });
@@ -229,7 +229,7 @@ async function simplifiedKMeansClustering(embeddings: any[], k: number) {
   // Crear resultado final
   const finalClusters = [];
   for (let c = 0; c < k; c++) {
-    const cluster = Array(k).fill(null).map(() => ({ posts: [] }))[c] || { posts: [] };
+    const cluster: { posts: any[] } = { posts: [] };
     
     embeddings.forEach((embedding, idx) => {
       const vector = vectors[idx];
@@ -245,7 +245,7 @@ async function simplifiedKMeansClustering(embeddings: any[], k: number) {
       }
 
       if (closestCluster === c) {
-        cluster.posts.push(embedding);
+        cluster.posts.push(embedding as any);
       }
     });
 
@@ -403,7 +403,7 @@ async function generateContentRecommendations(userId: string, platform: string, 
 
 async function analyzeTrendingTopics(embeddings: any[]) {
   // Análisis simple de hashtags trending
-  const hashtagCounts = {};
+  const hashtagCounts: Record<string, number> = {};
   const recentPosts = embeddings.filter(e => {
     const publishedDate = new Date(e.social_media_posts.published_at);
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -412,13 +412,13 @@ async function analyzeTrendingTopics(embeddings: any[]) {
 
   recentPosts.forEach(post => {
     const hashtags = post.social_media_posts.hashtags || [];
-    hashtags.forEach(tag => {
+    hashtags.forEach((tag: any) => {
       hashtagCounts[tag] = (hashtagCounts[tag] || 0) + 1;
     });
   });
 
   const trendingHashtags = Object.entries(hashtagCounts)
-    .sort((a, b) => b[1] - a[1])
+    .sort((a: any, b: any) => b[1] - a[1])
     .slice(0, 10)
     .map(([tag, count]) => ({ tag, count }));
 

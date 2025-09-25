@@ -268,7 +268,7 @@ FORMATO DE RESPUESTA (JSON):
         status: 'active',
         suggested_content: {
           path: recommendations.learning_path,
-          total_estimated_days: recommendations.learning_path.reduce((acc, curr) => acc + curr.estimated_days, 0)
+          total_estimated_days: recommendations.learning_path.reduce((acc: number, curr: any) => acc + curr.estimated_days, 0)
         }
       });
     }
@@ -316,7 +316,7 @@ FORMATO DE RESPUESTA (JSON):
   } catch (error) {
     console.error('❌ Error generating learning recommendations:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: (error as Error).message,
       success: false 
     }), {
       status: 500,

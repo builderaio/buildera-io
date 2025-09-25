@@ -210,7 +210,7 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
 
     // Guardar insights
     if (analysisResult.insights && analysisResult.insights.length > 0) {
-      const insightsToInsert = analysisResult.insights.map(insight => ({
+      const insightsToInsert = analysisResult.insights.map((insight: any) => ({
         user_id: userId,
         title: insight.title,
         description: insight.description,
@@ -234,7 +234,7 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
 
     // Guardar actionables
     if (analysisResult.actionables && analysisResult.actionables.length > 0) {
-      const actionablesToInsert = analysisResult.actionables.map(actionable => ({
+      const actionablesToInsert = analysisResult.actionables.map((actionable: any) => ({
         user_id: userId,
         title: actionable.title,
         description: actionable.description,
@@ -256,7 +256,7 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
 
     // Guardar recomendaciones
     if (analysisResult.recommendations && analysisResult.recommendations.length > 0) {
-      const recommendationsToInsert = analysisResult.recommendations.map(rec => ({
+      const recommendationsToInsert = analysisResult.recommendations.map((rec: any) => ({
         user_id: userId,
         platform: rec.platform || 'all',
         recommendation_type: rec.type,
@@ -293,7 +293,7 @@ Responde ÚNICAMENTE con un JSON válido con esta estructura:
   } catch (error) {
     console.error('❌ Error en análisis de contenido:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: (error as Error).message }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }

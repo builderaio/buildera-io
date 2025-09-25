@@ -95,7 +95,7 @@ serve(async (req) => {
     console.error('Error en procesamiento masivo:', error);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: error.message 
+      error: (error as Error).message 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -111,7 +111,7 @@ async function getConnectionData(userId: string, platform: string) {
     'tiktok': 'tiktok_connections'
   };
 
-  const table = tableMap[platform];
+  const table = (tableMap as any)[platform];
   if (!table) return null;
 
   const { data } = await supabase
@@ -310,7 +310,7 @@ function generateRealisticContent(theme: string, index: number): string {
     ]
   };
 
-  const templates = contentTemplates[theme] || ['Contenido sobre ' + theme];
+  const templates = (contentTemplates as any)[theme] || ['Contenido sobre ' + theme];
   const template = templates[index % templates.length];
   
   return `${template} #${index + 1}`;
@@ -324,11 +324,11 @@ function generateRealisticMetrics(platform: string) {
     tiktok: { likes: [100, 1000], comments: [10, 200], shares: [5, 100] }
   };
 
-  const metrics = baseMetrics[platform];
+  const metrics = (baseMetrics as any)[platform];
   const result = {};
 
   for (const [key, range] of Object.entries(metrics)) {
-    result[key] = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
+    (result as any)[key] = Math.floor(Math.random() * ((range as any)[1] - (range as any)[0] + 1)) + (range as any)[0];
   }
 
   if (platform === 'tiktok') {

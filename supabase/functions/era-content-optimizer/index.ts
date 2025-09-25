@@ -110,7 +110,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Error interno del servidor' 
+        error: (error as Error).message || 'Error interno del servidor' 
       }),
       { 
         status: 500, 

@@ -140,7 +140,7 @@ serve(async (req) => {
         if (posts && posts.length > 0) {
           console.log(`🔍 Processing ${posts.length} LinkedIn posts for user ${user.id}`);
           
-          const postsToInsert = posts.map((post, index) => {
+          const postsToInsert = posts.map((post: any, index: number) => {
             // La API devuelve posts con activity_urn, full_urn, etc.
             const postId = post.activity_urn || post.full_urn || post.post_id || post.activity_id || post.id || `li_${company_identifier}_${index}`;
             
@@ -230,7 +230,7 @@ serve(async (req) => {
             } catch (error) {
               console.error(`❌ Exception inserting LinkedIn post ${index + 1}:`, {
                 error: error,
-                message: error.message,
+                message: (error as Error).message,
                 postId: postData.post_id,
                 userId: postData.user_id
               });

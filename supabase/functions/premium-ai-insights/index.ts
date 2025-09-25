@@ -572,7 +572,7 @@ serve(async (req: Request): Promise<Response> => {
     console.error('❌ Error en análisis premium:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: (error as Error).message,
       details: 'Error en el análisis estratégico premium'
     }), {
       status: 500,

@@ -72,7 +72,7 @@ serve(async (req) => {
     console.error('Error in company agent chat:', error);
     return new Response(JSON.stringify({ 
       error: 'Error en el chat del copiloto empresarial',
-      details: error.message
+      details: (error as Error).message
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -234,7 +234,7 @@ async function handleToolCalls(toolCalls: any[]) {
           output = 'Función no implementada';
       }
     } catch (error) {
-      output = `Error ejecutando ${functionName}: ${error.message}`;
+      output = `Error ejecutando ${functionName}: ${(error as Error).message}`;
     }
 
     toolOutputs.push({
@@ -256,7 +256,7 @@ async function analyzeCompanyPerformance(metricType: string): Promise<string> {
 }
 
 async function generateStrategicRecommendations(area: string): Promise<string> {
-  const recommendations = {
+  const recommendations: Record<string, string> = {
     marketing: 'Recomendaciones de marketing: Aumentar frecuencia de publicación, diversificar formatos de contenido, implementar estrategia de hashtags.',
     strategy: 'Recomendaciones estratégicas: Revisar objetivos trimestrales, identificar nuevas oportunidades de mercado.',
     competitive_analysis: 'Análisis competitivo: Monitorear estrategias de precios, analizar propuestas de valor de competidores.',

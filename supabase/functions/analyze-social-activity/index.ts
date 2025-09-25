@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
           cid,
           platform: social_type,
           status: 'error',
-          error: error.message
+          error: (error as Error).message
         });
       }
     }
@@ -263,7 +263,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error', 
-        details: error.message 
+        details: (error as Error).message 
       }),
       { 
         status: 500, 

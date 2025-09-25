@@ -325,7 +325,7 @@ serve(async (req) => {
     console.error('Error in ai-provider-handler function:', error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'Error interno del servidor' 
+      error: (error as Error).message || 'Error interno del servidor' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

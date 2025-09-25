@@ -238,7 +238,7 @@ Recuerda: Eres un mentor que ayuda a profesionales a dominar la IA para sus nego
   } catch (error) {
     console.error('❌ Error in AI Tutor:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: (error as Error).message,
       success: false 
     }), {
       status: 500,

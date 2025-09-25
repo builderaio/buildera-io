@@ -54,7 +54,7 @@ async function validateStatusPageAvailability(statusUrl: string): Promise<boolea
       },
       signal: AbortSignal.timeout(10000) // 10 second timeout
     });
-    return response.ok && response.headers.get('content-type')?.includes('application/json');
+    return response.ok && (response.headers.get('content-type')?.includes('application/json') || false);
   } catch (error) {
     console.error(`Status page validation failed for ${statusUrl}:`, error);
     return false;
@@ -282,7 +282,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message,
+        error: (error as Error).message,
         timestamp: new Date().toISOString()
       }),
       { 

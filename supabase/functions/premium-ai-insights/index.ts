@@ -2,13 +2,53 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// @ts-nocheck for edge function compatibility
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Type definitions
+interface SocialDataItem {
+  id?: string;
+  platform?: string;
+  user_id?: string;
+  [key: string]: any;
+}
+
+interface SocialMediaData {
+  posts: SocialDataItem[];
+  comments: SocialDataItem[];
+  followers: SocialDataItem[];
+  profiles: SocialDataItem[];
+  calendar: SocialDataItem[];
+  insights: SocialDataItem[];
+  actionables: SocialDataItem[];
+  recommendations: SocialDataItem[];
+  competitors: SocialDataItem[];
+  locationAnalysis?: SocialDataItem[];
+}
+
+interface ModelConfig {
+  modelName: string;
+  provider: {
+    name: string;
+    base_url: string;
+    env_key: string;
+    configuration?: any;
+  };
+  functionConfig: any;
+}
+
+interface UserContext {
+  company_name?: string;
+  industry_sector?: string;
+  company_size?: string;
+}
+
 // Obtener configuración del modelo de análisis
-async function getAnalysisModelConfig(supabase: any) {
+async function getAnalysisModelConfig(supabase: any): Promise<ModelConfig> {
   console.log('🔧 Getting data analysis model configuration...');
   
   const { data: functionConfig, error: functionError } = await supabase
@@ -70,10 +110,10 @@ async function getProviderApiKey(supabase: any, provider: any): Promise<string> 
 }
 
 // Recopilar toda la información de redes sociales
-async function gatherSocialMediaData(supabase: any, userId: string, platform?: string) {
+async function gatherSocialMediaData(supabase: any, userId: string, platform?: string): Promise<SocialMediaData> {
   console.log(`📊 Gathering comprehensive social media data for user ${userId}`);
   
-  const data: any = {
+  const data: SocialMediaData = {
     posts: [],
     comments: [],
     followers: [],
@@ -98,7 +138,7 @@ async function gatherSocialMediaData(supabase: any, userId: string, platform?: s
         .order('posted_at', { ascending: false })
         .limit(100);
       
-      data.posts.push(...(instagramPosts || []).map((post: any) => ({ ...post, platform: 'instagram' })));
+      data.posts.push(...(instagramPosts || []).map((post: SocialDataItem) => ({ ...post, platform: 'instagram' })));
     }
 
     // Posts de TikTok
@@ -110,7 +150,7 @@ async function gatherSocialMediaData(supabase: any, userId: string, platform?: s
         .order('posted_at', { ascending: false })
         .limit(100);
       
-      data.posts.push(...(tiktokPosts || []).map((post: any) => ({ ...post, platform: 'tiktok' })));
+      data.posts.push(...(tiktokPosts || []).map((post: SocialDataItem) => ({ ...post, platform: 'tiktok' })));
     }
 
     // Posts de LinkedIn
@@ -122,7 +162,7 @@ async function gatherSocialMediaData(supabase: any, userId: string, platform?: s
         .order('posted_at', { ascending: false })
         .limit(100);
       
-      data.posts.push(...(linkedinPosts || []).map((post: any) => ({ ...post, platform: 'linkedin' })));
+      data.posts.push(...(linkedinPosts || []).map((post: SocialDataItem) => ({ ...post, platform: 'linkedin' })));
     }
 
     // Posts de Facebook (de la tabla instagram_posts con platform facebook)
@@ -155,7 +195,7 @@ async function gatherSocialMediaData(supabase: any, userId: string, platform?: s
       .eq('user_id', userId)
       .limit(50);
     
-    data.followers.push(...(instagramFollowers || []).map((f: any) => ({ ...f, platform: 'instagram' })));
+    data.followers.push(...(instagramFollowers || []).map((f: SocialDataItem) => ({ ...f, platform: 'instagram' })));
 
     // TikTok followers
     const { data: tiktokFollowers } = await supabase
@@ -164,7 +204,7 @@ async function gatherSocialMediaData(supabase: any, userId: string, platform?: s
       .eq('user_id', userId)
       .limit(50);
     
-    data.followers.push(...(tiktokFollowers || []).map((f: any) => ({ ...f, platform: 'tiktok' })));
+    data.followers.push(...(tiktokFollowers || []).map((f: SocialDataItem) => ({ ...f, platform: 'tiktok' })));
 
     // Calendario de redes sociales
     const { data: calendar } = await supabase
@@ -236,7 +276,7 @@ async function gatherSocialMediaData(supabase: any, userId: string, platform?: s
 }
 
 // Generar análisis profundo con modelos de razonamiento
-async function generatePremiumInsights(modelConfig: any, apiKey: string, socialData: any, userContext: any) {
+async function generatePremiumInsights(modelConfig: ModelConfig, apiKey: string, socialData: SocialMediaData, userContext: UserContext) {
   console.log(`🧠 Generating premium AI insights with reasoning model: ${modelConfig.modelName}...`);
 
   const systemPrompt = `Eres un consultor estratégico senior especializado en marketing digital y redes sociales con más de 15 años de experiencia trabajando con marcas Fortune 500. Tu trabajo es generar análisis estratégicos profundos y accionables para empresas, proporcionando insights de nivel ejecutivo que impulsen el crecimiento y ROI.
@@ -383,7 +423,7 @@ Genera un análisis estratégico profundo basado en estos datos principales.`;
 }
 
 // Guardar resultados del análisis premium
-async function savePremiumResults(supabase: any, userId: string, analysis: any) {
+async function savePremiumResults(supabase: any, userId: string, analysis: any): Promise<any> {
   console.log('💾 Saving premium analysis results...');
 
   try {
@@ -410,7 +450,7 @@ async function savePremiumResults(supabase: any, userId: string, analysis: any) 
 
     // Guardar actionables de alta prioridad
     if (analysis.roadmap_ejecutivo?.acciones_prioritarias) {
-      for (const accion of analysis.roadmap_ejecutivo.acciones_prioritarias.slice(0, 5)) {
+      for (const accion of analysis.roadmap_ejecutivo.acciones_prioritarias.slice(0, 5) as any[]) {
         const { error: actionableError } = await supabase
           .from('marketing_actionables')
           .insert({
@@ -432,7 +472,7 @@ async function savePremiumResults(supabase: any, userId: string, analysis: any) 
 
     // Guardar recomendaciones premium
     if (analysis.estrategias_crecimiento?.recomendaciones) {
-      for (const recomendacion of analysis.estrategias_crecimiento.recomendaciones.slice(0, 3)) {
+      for (const recomendacion of analysis.estrategias_crecimiento.recomendaciones.slice(0, 3) as any[]) {
         const { error: recError } = await supabase
           .from('content_recommendations')
           .insert({
@@ -460,7 +500,7 @@ async function savePremiumResults(supabase: any, userId: string, analysis: any) 
   }
 }
 
-serve(async (req) => {
+serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

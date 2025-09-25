@@ -137,8 +137,8 @@ Deno.serve(async (req) => {
         let totalViews = 0;
         let totalRePosts = 0;
 
-        const hourlyStats = {};
-        const dailyStats = {};
+        const hourlyStats: Record<string, { interactions: number; likes: number; comments: number; count: number }> = {};
+        const dailyStats: Record<string, { interactions: number; likes: number; comments: number; count: number }> = {};
 
         activityData.forEach((timePoint: any) => {
           const [dayOfWeek, hour] = timePoint.time.split('_');

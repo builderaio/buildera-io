@@ -391,7 +391,7 @@ Formato JSON:
   } catch (error) {
     console.error('❌ Error in Adaptive Assessment:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: (error as Error).message,
       success: false 
     }), {
       status: 500,

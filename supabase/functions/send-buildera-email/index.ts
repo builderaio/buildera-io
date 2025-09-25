@@ -153,10 +153,9 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  let requestData: SendEmailRequest;
+  let requestData: any;
   
   try {
-    let requestData: any;
     requestData = await req.json();
     requestData = await req.json();
     console.log("Request data received:", {

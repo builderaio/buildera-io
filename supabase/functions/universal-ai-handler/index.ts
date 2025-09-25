@@ -236,8 +236,8 @@ async function callAIProvider(
 
   // Get URL
   let url = provider.base_url;
-  if (adapter.getUrl) {
-    url = adapter.getUrl(provider.base_url, model.model_name, apiKey);
+  if ((adapter as any).getUrl) {
+    url = (adapter as any).getUrl(provider.base_url, model.model_name, apiKey);
   } else {
     // Default URL construction for most providers
     if (providerName === 'openai' || providerName === 'xai') {
@@ -378,7 +378,7 @@ serve(async (req) => {
     console.error('Error in universal-ai-handler:', error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'Internal server error' 
+      error: (error as Error).message || 'Internal server error' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

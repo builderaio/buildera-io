@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
     console.error('❌ TikTok intelligent analysis error:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: (error as Error).message,
         details: 'TikTok intelligent analysis failed'
       }),
       { 

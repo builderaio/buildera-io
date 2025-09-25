@@ -106,7 +106,7 @@ serve(async (req) => {
           api_key_name: apiKey.api_key_name,
           provider: apiKey.provider,
           success: false,
-          error: error.message
+          error: (error as Error).message
         });
       }
     }
@@ -128,7 +128,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in sync-api-usage function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: (error as Error).message,
       success: false 
     }), {
       status: 500,

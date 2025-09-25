@@ -325,10 +325,10 @@ function generateRealisticMetrics(platform: string) {
   };
 
   const metrics = (baseMetrics as any)[platform];
-  const result = {};
+  const result: Record<string, number> = {};
 
   for (const [key, range] of Object.entries(metrics)) {
-    (result as any)[key] = Math.floor(Math.random() * ((range as any)[1] - (range as any)[0] + 1)) + (range as any)[0];
+    result[key] = Math.floor(Math.random() * ((range as any)[1] - (range as any)[0] + 1)) + (range as any)[0];
   }
 
   if (platform === 'tiktok') {
@@ -339,7 +339,7 @@ function generateRealisticMetrics(platform: string) {
 }
 
 function generateHashtags(theme: string): string[] {
-  const hashtagMap = {
+  const hashtagMap: Record<string, string[]> = {
     'estrategia empresarial': ['#strategy', '#business', '#growth', '#planning'],
     'marketing digital': ['#digitalmarketing', '#marketing', '#socialmedia', '#roi'],
     'liderazgo': ['#leadership', '#management', '#team', '#motivation'],

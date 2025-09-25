@@ -139,13 +139,28 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
               <p className="text-sm">{campaignData.company?.nombre_empresa || 'No definido'}</p>
             </div>
             <div className="md:col-span-2">
-              <h4 className="font-semibold text-sm text-muted-foreground mb-2">AUDIENCIAS IDENTIFICADAS</h4>
+              <h4 className="font-semibold text-sm text-muted-foreground mb-2">AUDIENCIAS SELECCIONADAS</h4>
               <div className="flex flex-wrap gap-2">
-                {campaignData.audience?.buyer_personas?.slice(0, 3).map((persona: any, index: number) => (
-                  <Badge key={index} variant="outline">
-                    {persona.nombre_ficticio}
+                {campaignData.audience?.buyer_personas?.length > 0 ? (
+                  campaignData.audience.buyer_personas.slice(0, 3).map((persona: any, index: number) => (
+                    <Badge key={index} variant="outline">
+                      {persona.nombre_ficticio}
+                    </Badge>
+                  ))
+                ) : campaignData.audience?.selected_audiences?.length > 0 ? (
+                  campaignData.audience.selected_audiences.slice(0, 3).map((audience: any, index: number) => (
+                    <Badge key={index} variant="outline">
+                      {audience.name}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground">Ninguna audiencia seleccionada</span>
+                )}
+                {(campaignData.audience?.buyer_personas?.length > 3 || campaignData.audience?.selected_audiences?.length > 3) && (
+                  <Badge variant="secondary">
+                    +{(campaignData.audience?.buyer_personas?.length || campaignData.audience?.selected_audiences?.length || 0) - 3} más
                   </Badge>
-                )) || <span className="text-sm text-muted-foreground">No identificadas</span>}
+                )}
               </div>
             </div>
           </div>

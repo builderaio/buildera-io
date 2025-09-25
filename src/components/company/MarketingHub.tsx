@@ -157,10 +157,16 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
     };
   }, []);
 
-  // Auto-redirect to social tab if no connections are available
+  // Auto-redirect to social tab if no connections are available (but respect campaign_wizard parameter)
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const campaignWizardParam = urlParams.get('campaign_wizard');
+    
+    // Don't redirect to social if campaign_wizard is active
+    if (campaignWizardParam === 'true') return;
+    
     const hasConnections = Object.values(socialConnections).some(Boolean);
-    if (!hasConnections && activeTab !== "social") {
+    if (!hasConnections && activeTab !== "social" && activeTab !== "campaign-wizard") {
       console.log('🔄 No hay redes conectadas, cambiando al tab social...');
       setActiveTab("social");
     }

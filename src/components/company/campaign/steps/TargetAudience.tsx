@@ -85,8 +85,23 @@ export const TargetAudience = ({ campaignData, onComplete, loading, companyData 
       return;
     }
 
+    // Convert selected audiences to buyer_personas format for compatibility with strategy step
+    const buyerPersonas = selectedAudiences.map(audience => ({
+      id: audience.id,
+      nombre_ficticio: audience.name,
+      descripcion: audience.description,
+      demograficos: {
+        edad: audience.age_ranges ? Object.keys(audience.age_ranges)[0] : '',
+        ubicacion: audience.geographic_locations ? Object.keys(audience.geographic_locations)[0] : '',
+        plataforma_preferida: audience.platform_preferences ? Object.keys(audience.platform_preferences)[0] : ''
+      },
+      intereses: audience.interests || [],
+      comportamientos: audience.behaviors || []
+    }));
+
     const audienceData = {
       selected_audiences: selectedAudiences,
+      buyer_personas: buyerPersonas,
       audience_count: selectedAudiences.length
     };
 

@@ -64,21 +64,32 @@ serve(async (req) => {
     
     console.log('Marketing Hub Content Calendar Request:', input);
 
-    // Validate required fields
-    const requiredFields = ['nombre_empresa', 'pais', 'fecha_inicio_calendario', 'numero_dias_generar', 'audiencia_objetivo', 'estrategia_de_marketing'];
-    for (const field of requiredFields) {
-      if (!input[field]) {
-        return new Response(JSON.stringify({ error: `Missing required field: ${field}` }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
+    // Validate minimally required fields (allow optional/empty fields like pais)
+    const errors: string[] = [];
+    const nombreEmpresaOk = typeof input?.nombre_empresa === 'string' && input.nombre_empresa.trim().length > 0;
+    const fechaInicioOk = typeof input?.fecha_inicio_calendario === 'string' && input.fecha_inicio_calendario.trim().length > 0;
+    const diasNum = parseInt(String(input?.numero_dias_generar ?? 0));
+
+    if (!nombreEmpresaOk) errors.push('nombre_empresa requerido');
+    if (!fechaInicioOk) errors.push('fecha_inicio_calendario requerido');
+    if (!Number.isFinite(diasNum) || diasNum <= 0) errors.push('numero_dias_generar debe ser > 0');
+
+    if (errors.length > 0) {
+      console.warn('Validation errors:', errors);
+      return new Response(JSON.stringify({ error: 'Invalid input', details: errors }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Generate content calendar
     const startDate = new Date(input.fecha_inicio_calendario);
-    const numDays = parseInt(input.numero_dias_generar);
-    const platforms = input.plataformas_seleccionadas || [];
+    const numDays = Number.isFinite(Number(input.numero_dias_generar)) && Number(input.numero_dias_generar) > 0
+      ? Number(input.numero_dias_generar)
+      : 7;
+    const platforms = Array.isArray(input.plataformas_seleccionadas) && input.plataformas_seleccionadas.length > 0
+      ? input.plataformas_seleccionadas
+      : ['linkedin'];
     
     console.log('Generando calendario:', { startDate, numDays, platforms });
     

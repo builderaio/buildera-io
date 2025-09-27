@@ -134,6 +134,10 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
   const handleSubmit = () => {
     if (!selectedObjective || !campaignName || !timeline) return;
 
+    const selectedCompanyObjectives = companyObjectives.filter(obj => 
+      targetMetrics.selectedObjectives?.includes(obj.id)
+    );
+
     const objectiveData = {
       type: selectedObjective,
       name: campaignName,
@@ -141,6 +145,8 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
       timeline,
       budget: budget ? parseFloat(budget) : undefined,
       target_metrics: targetMetrics,
+      company_objectives: selectedCompanyObjectives,
+      selected_objectives_ids: targetMetrics.selectedObjectives || [],
       goal: `${selectedObjectiveData?.title}: ${campaignName}`
     };
 
@@ -278,60 +284,112 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
         </CardContent>
       </Card>
 
-      {/* Metrics Configuration */}
-      {selectedObjectiveData && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Metas Específicas
-            </CardTitle>
-            <p className="text-muted-foreground">
-              Define objetivos numéricos para medir el éxito
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {selectedObjectiveData.metrics.map((metric) => {
-                const metricLabels = {
-                  reach: 'Alcance',
-                  impressions: 'Impresiones',
-                  brand_mentions: 'Menciones de Marca',
-                  likes: 'Me Gusta',
-                  comments: 'Comentarios',
-                  shares: 'Compartidos',
-                  saves: 'Guardados',
-                  form_submissions: 'Formularios Completados',
-                  email_signups: 'Suscripciones Email',
-                  downloads: 'Descargas',
-                  conversions: 'Conversiones',
-                  revenue: 'Ingresos ($)',
-                  roi: 'ROI (%)',
-                  website_clicks: 'Clicks al Sitio Web',
-                  page_views: 'Vistas de Página',
-                  session_duration: 'Duración Sesión (min)'
-                };
-
-                return (
-                  <div key={metric}>
-                    <Label htmlFor={metric}>
-                      {metricLabels[metric] || metric}
-                    </Label>
-                    <Input
-                      id={metric}
-                      type="number"
-                      value={targetMetrics[metric] || ''}
-                      onChange={(e) => handleMetricChange(metric, e.target.value)}
-                      placeholder="Meta numérica"
-                      className="mt-1"
-                    />
-                  </div>
-                );
-              })}
+      {/* Company Growth Objectives */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Objetivos de Crecimiento de la Empresa
+          </CardTitle>
+          <p className="text-muted-foreground">
+            Selecciona los objetivos estratégicos que esta campaña ayudará a alcanzar
+          </p>
+        </CardHeader>
+        <CardContent>
+          {loadingObjectives ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="ml-2 text-muted-foreground">Cargando objetivos...</span>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : companyObjectives.length > 0 ? (
+            <div className="space-y-4">
+              {companyObjectives.map((objective: any) => (
+                <div
+                  key={objective.id}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:scale-[1.02] ${
+                    targetMetrics.selectedObjectives?.includes(objective.id)
+                      ? 'border-primary bg-primary/5 shadow-lg' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => {
+                    const currentSelected = targetMetrics.selectedObjectives || [];
+                    const isSelected = currentSelected.includes(objective.id);
+                    const newSelected = isSelected 
+                      ? currentSelected.filter(id => id !== objective.id)
+                      : [...currentSelected, objective.id];
+                    
+                    setTargetMetrics(prev => ({
+                      ...prev,
+                      selectedObjectives: newSelected,
+                      companyObjectives: companyObjectives.filter(obj => newSelected.includes(obj.id))
+                    }));
+                  }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-base text-foreground mb-2">
+                        {objective.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {objective.description}
+                      </p>
+                      
+                      {objective.metrics && objective.metrics.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-foreground">Métricas clave:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {objective.metrics.map((metric: any, index: number) => (
+                              <Badge key={index} variant="secondary" className="text-xs">
+                                {metric.name}: {metric.target_value} {metric.unit}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {objective.deadline && (
+                        <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          Fecha límite: {new Date(objective.deadline).toLocaleDateString('es-ES')}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {targetMetrics.selectedObjectives?.includes(objective.id) && (
+                      <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 ml-4" />
+                    )}
+                  </div>
+                  
+                  <div className="mt-3 flex items-center justify-between">
+                    <Badge 
+                      variant={objective.priority === 'high' ? 'destructive' : 
+                             objective.priority === 'medium' ? 'default' : 'secondary'}
+                      className="text-xs"
+                    >
+                      Prioridad {objective.priority === 'high' ? 'Alta' : 
+                                objective.priority === 'medium' ? 'Media' : 'Baja'}
+                    </Badge>
+                    
+                    <div className="text-xs text-muted-foreground">
+                      Progreso: {objective.progress || 0}%
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-2">
+                No hay objetivos de crecimiento definidos para tu empresa
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Ve a la sección de estrategia empresarial para definir tus objetivos
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Submit Button */}
       <div className="flex justify-end">

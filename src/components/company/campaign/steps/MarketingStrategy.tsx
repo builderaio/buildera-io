@@ -67,16 +67,20 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
 
       setStrategy(processedStrategy);
       
-      // Crear un resumen editable de la estrategia
-      const strategyText = processedStrategy.competitors?.[3]?.message_differentiator ? 
-        `DIFERENCIADOR PRINCIPAL: ${processedStrategy.competitors[3].message_differentiator.core}
+      // Crear un resumen editable de la estrategia basado en la nueva estructura
+      const strategyText = processedStrategy.core_message ? 
+        `MENSAJE PRINCIPAL: ${processedStrategy.core_message}
+
+VARIACIONES POR PLATAFORMA:
+${Object.entries(processedStrategy.message_variants || {}).map(([platform, message]: [string, any]) => 
+  `• ${platform.toUpperCase()}: ${message}`).join('\n')}
 
 ESTRATEGIAS POR FUNNEL:
-${Object.entries(processedStrategy.competitors[3].strategies || {}).map(([key, value]: [string, any]) => 
+${Object.entries(processedStrategy.strategies || {}).map(([key, value]: [string, any]) => 
   `• ${key.toUpperCase()}: ${value.objective}`).join('\n')}
 
-CANALES PRINCIPALES:
-${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([platform, config]: [string, any]) => 
+PLAN DE CONTENIDO:
+${Object.entries(processedStrategy.content_plan || {}).map(([platform, config]: [string, any]) => 
   `• ${platform}: ${config.frequency} - ${config.tone}`).join('\n')}` 
         : JSON.stringify(processedStrategy, null, 2);
 
@@ -111,12 +115,17 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
     const strategyData = {
       strategy: strategy,
       competitors: strategy.competitors || [],
-      content_plan: strategy.competitors?.[3]?.content_plan || {},
-      editorial_calendar: strategy.competitors?.[3]?.editorial_calendar || [],
-      kpis: strategy.competitors?.[3]?.kpis || {},
-      execution_plan: strategy.competitors?.[3]?.execution_plan || {},
-      message_differentiator: strategy.competitors?.[3]?.message_differentiator || {},
-      funnel_strategies: strategy.competitors?.[3]?.strategies || {},
+      content_plan: strategy.content_plan || {},
+      editorial_calendar: strategy.editorial_calendar || [],
+      kpis: strategy.kpis_goals || [],
+      execution_plan: strategy.execution_plan || {},
+      message_differentiator: {
+        core: strategy.core_message || '',
+        linkedin_variation: strategy.message_variants?.LinkedIn || '',
+        instagram_variation: strategy.message_variants?.Instagram || '',
+        tiktok_variation: strategy.message_variants?.TikTok || ''
+      },
+      funnel_strategies: strategy.strategies || {},
       edited_strategy: isEditing ? editedStrategy : undefined,
       final_strategy: isEditing ? editedStrategy : strategy
     };
@@ -242,7 +251,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
           </Card>
 
           {/* Message Differentiator */}
-          {strategy.competitors?.[3]?.message_differentiator && (
+          {strategy.core_message && (
             <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
@@ -257,55 +266,67 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
                 <div className="text-center mb-6">
                   <div className="bg-white/50 backdrop-blur p-6 rounded-xl border">
                     <h3 className="text-2xl font-bold text-primary mb-2">
-                      "{strategy.competitors[3].message_differentiator.core}"
+                      "{strategy.core_message}"
                     </h3>
                     <p className="text-muted-foreground">Mensaje central de tu estrategia</p>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white/70 p-6 rounded-xl border border-blue-100">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-bold text-sm">Li</span>
-                      </div>
-                      <h4 className="font-semibold text-blue-900">LinkedIn</h4>
-                    </div>
-                    <p className="text-sm text-blue-700 leading-relaxed">
-                      {strategy.competitors[3].message_differentiator.linkedin_variation}
-                    </p>
+                {strategy.message_variants && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {Object.entries(strategy.message_variants).map(([platform, message]: [string, any]) => {
+                      const platformColors = {
+                        LinkedIn: 'border-blue-100 bg-blue-50',
+                        Instagram: 'border-pink-100 bg-pink-50',
+                        TikTok: 'border-purple-100 bg-purple-50'
+                      };
+                      
+                      const platformIcons = {
+                        LinkedIn: 'Li',
+                        Instagram: 'Ig', 
+                        TikTok: 'Tk'
+                      };
+                      
+                      const platformIconColors = {
+                        LinkedIn: 'bg-blue-100 text-blue-600',
+                        Instagram: 'bg-pink-100 text-pink-600',
+                        TikTok: 'bg-purple-100 text-purple-600'
+                      };
+                      
+                      const platformTextColors = {
+                        LinkedIn: 'text-blue-900',
+                        Instagram: 'text-pink-900',
+                        TikTok: 'text-purple-900'
+                      };
+                      
+                      const platformMessageColors = {
+                        LinkedIn: 'text-blue-700',
+                        Instagram: 'text-pink-700',
+                        TikTok: 'text-purple-700'
+                      };
+                      
+                      return (
+                        <div key={platform} className={`bg-white/70 p-6 rounded-xl border-2 ${platformColors[platform as keyof typeof platformColors] || 'border-gray-100 bg-gray-50'}`}>
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${platformIconColors[platform as keyof typeof platformIconColors] || 'bg-gray-100 text-gray-600'}`}>
+                              <span className="font-bold text-sm">{platformIcons[platform as keyof typeof platformIcons] || platform.charAt(0)}</span>
+                            </div>
+                            <h4 className={`font-semibold ${platformTextColors[platform as keyof typeof platformTextColors] || 'text-gray-900'}`}>{platform}</h4>
+                          </div>
+                          <p className={`text-sm leading-relaxed ${platformMessageColors[platform as keyof typeof platformMessageColors] || 'text-gray-700'}`}>
+                            {message}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
-                  
-                  <div className="bg-white/70 p-6 rounded-xl border border-pink-100">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
-                        <span className="text-pink-600 font-bold text-sm">Ig</span>
-                      </div>
-                      <h4 className="font-semibold text-pink-900">Instagram</h4>
-                    </div>
-                    <p className="text-sm text-pink-700 leading-relaxed">
-                      {strategy.competitors[3].message_differentiator.instagram_variation}
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white/70 p-6 rounded-xl border border-purple-100">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <span className="text-purple-600 font-bold text-sm">Tk</span>
-                      </div>
-                      <h4 className="font-semibold text-purple-900">TikTok</h4>
-                    </div>
-                    <p className="text-sm text-purple-700 leading-relaxed">
-                      {strategy.competitors[3].message_differentiator.tiktok_variation}
-                    </p>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           )}
 
           {/* Funnel Strategies */}
-          {strategy.competitors?.[3]?.strategies && (
+          {strategy.strategies && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
@@ -318,7 +339,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
               </CardHeader>
               <CardContent>
                 <div className="grid gap-6">
-                  {Object.entries(strategy.competitors[3].strategies).map(([phase, details]: [string, any], index) => {
+                  {Object.entries(strategy.strategies).map(([phase, details]: [string, any], index) => {
                     const phaseColors = {
                       awareness: 'from-yellow-400 to-orange-500',
                       consideration: 'from-blue-400 to-cyan-500', 
@@ -345,7 +366,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
                                   {phaseNames[phase as keyof typeof phaseNames] || phase}
                                 </h4>
                                 <Badge variant="secondary" className="mt-1">
-                                  {details.timeline} plazo
+                                  {details.timeline}
                                 </Badge>
                               </div>
                             </div>
@@ -362,7 +383,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
                             </div>
                             <div>
                               <h5 className="font-semibold text-sm text-green-600 mb-2">KPI Objetivo</h5>
-                              <p className="text-sm bg-green-50 px-3 py-2 rounded-lg">{details.kpi}</p>
+                              <p className="text-sm bg-green-50 px-3 py-2 rounded-lg">{details.main_kpi}</p>
                             </div>
                           </div>
                           
@@ -387,7 +408,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
           )}
 
           {/* Content Plan */}
-          {strategy.competitors?.[3]?.content_plan && (
+          {strategy.content_plan && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
@@ -400,7 +421,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {Object.entries(strategy.competitors[3].content_plan).map(([platform, config]: [string, any]) => {
+                  {Object.entries(strategy.content_plan).map(([platform, config]: [string, any]) => {
                     const platformColors = {
                       LinkedIn: 'border-blue-200 bg-blue-50',
                       Instagram: 'border-pink-200 bg-pink-50', 
@@ -465,7 +486,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
           )}
 
           {/* KPIs */}
-          {strategy.competitors?.[3]?.kpis?.goals && (
+          {strategy.kpis_goals && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
@@ -478,14 +499,14 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {strategy.competitors[3].kpis.goals.map((goal: any, idx: number) => {
+                  {strategy.kpis_goals.map((goal: any, idx: number) => {
                     const kpiIcons = {
                       'Alcance': '🎯',
                       'Impresiones': '👀', 
                       'CTR': '🖱️',
                       'Leads': '🚀',
                       'Conversion Rate': '💰',
-                      'CAC Estimado': '💵'
+                      'CAC estimado': '💵'
                     };
                     
                     return (
@@ -496,7 +517,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
                           </div>
                           <h4 className="font-bold text-lg mb-2 text-gray-800">{goal.kpi}</h4>
                           <div className="bg-primary/10 px-4 py-3 rounded-lg">
-                            <p className="text-2xl font-bold text-primary">{goal.target}</p>
+                            <p className="text-lg font-bold text-primary">{goal.goal}</p>
                           </div>
                         </div>
                       </div>
@@ -508,7 +529,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
           )}
 
           {/* Competitors Analysis */}
-          {strategy.competitors && strategy.competitors.length > 3 && (
+          {strategy.competitors && strategy.competitors.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
@@ -521,7 +542,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
               </CardHeader>
               <CardContent>
                 <div className="grid gap-6">
-                  {strategy.competitors.slice(0, 3).map((competitor: any, idx: number) => (
+                  {strategy.competitors.map((competitor: any, idx: number) => (
                     <div key={idx} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-4">
@@ -541,7 +562,7 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
                       
                       <div className="bg-gray-50 p-4 rounded-lg mb-4">
                         <h5 className="font-semibold text-sm text-gray-600 mb-2">Tácticas Digitales</h5>
-                        <p className="text-sm text-gray-700">{competitor.digital_tactics}</p>
+                        <p className="text-sm text-gray-700">{competitor.digital_tactics_summary}</p>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -566,11 +587,11 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
                           <h5 className="font-semibold text-blue-800 mb-3">📊 Benchmarks de Redes Sociales</h5>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {Object.entries(competitor.benchmarks).map(([platform, data]: [string, any]) => (
-                              platform !== 'source' && (
+                              platform !== 'sources' && (
                                 <div key={platform} className="bg-white p-3 rounded-lg border">
                                   <h6 className="font-medium text-sm text-gray-700 capitalize">{platform}</h6>
                                   <p className="text-xs text-gray-600">{data.frequency}</p>
-                                  <p className="text-xs text-blue-600 font-medium">Engagement: {data.engagement}</p>
+                                  <p className="text-xs text-blue-600 font-medium">Engagement: {data.engagement_rate}</p>
                                 </div>
                               )
                             ))}

@@ -103,12 +103,27 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
         }
       };
 
+      console.log('📅 Enviando datos para calendario:', calendarInput);
+      
       const { data, error } = await supabase.functions.invoke('marketing-hub-content-calendar', {
         body: { input: calendarInput }
       });
 
-      if (error) throw error;
+      console.log('📅 Respuesta de función calendar:', { data, error });
 
+      if (error) {
+        console.error('❌ Error en función calendar:', error);
+        throw error;
+      }
+
+      if (!data) {
+        console.error('❌ No se recibieron datos de la función calendar');
+        throw new Error('No se recibieron datos del calendario');
+      }
+
+      console.log('📅 Estructura de data recibida:', Object.keys(data));
+      console.log('📅 Calendario contenido:', data.calendario_contenido);
+      
       setCalendar(data);
       setEditedCalendar(data.calendario_contenido || []);
       

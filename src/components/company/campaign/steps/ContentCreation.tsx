@@ -111,6 +111,9 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
   };
 
   const createTextContent = async (calendarItem: any) => {
+    // Create Basic Auth credentials for N8N
+    const credentials = btoa(`${process.env.REACT_APP_N8N_AUTH_USER || 'admin'}:${process.env.REACT_APP_N8N_AUTH_PASS || 'password'}`);
+    
     const { data, error } = await supabase.functions.invoke('marketing-hub-post-creator', {
       body: {
         input: {
@@ -118,6 +121,9 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
           buyer_persona_objetivo: campaignData.audience?.buyer_personas?.[0] || {},
           calendario_item: calendarItem
         }
+      },
+      headers: {
+        'Authorization': `Basic ${credentials}`
       }
     });
 
@@ -126,6 +132,9 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
   };
 
   const createImageContent = async (calendarItem: any) => {
+    // Create Basic Auth credentials for N8N
+    const credentials = btoa(`${process.env.REACT_APP_N8N_AUTH_USER || 'admin'}:${process.env.REACT_APP_N8N_AUTH_PASS || 'password'}`);
+    
     const { data, error } = await supabase.functions.invoke('marketing-hub-image-creator', {
       body: {
         input: {
@@ -135,6 +144,9 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
           },
           calendario_item: calendarItem
         }
+      },
+      headers: {
+        'Authorization': `Basic ${credentials}`
       }
     });
 
@@ -143,12 +155,18 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
   };
 
   const createVideoContent = async (calendarItem: any) => {
+    // Create Basic Auth credentials for N8N
+    const credentials = btoa(`${process.env.REACT_APP_N8N_AUTH_USER || 'admin'}:${process.env.REACT_APP_N8N_AUTH_PASS || 'password'}`);
+    
     const { data, error } = await supabase.functions.invoke('marketing-hub-reel-creator', {
       body: {
         input: {
           concepto_visual: calendarItem.tema_concepto,
           calendario_item: calendarItem
         }
+      },
+      headers: {
+        'Authorization': `Basic ${credentials}`
       }
     });
 

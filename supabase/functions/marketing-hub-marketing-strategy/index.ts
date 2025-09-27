@@ -112,15 +112,30 @@ serve(async (req) => {
 
     console.log('Company found:', companyMember.company_id);
 
-    // Get company data including social networks, industry, country and location
+    // Get company data including social networks, industry, country
     const { data: companyData, error: companyDataError } = await supabase
       .from('companies')
-      .select('name, industry_sector, country, location, facebook_url, twitter_url, linkedin_url, instagram_url, youtube_url, tiktok_url')
+      .select('name, industry_sector, country, facebook_url, twitter_url, linkedin_url, instagram_url, youtube_url, tiktok_url')
       .eq('id', companyMember.company_id)
       .single();
 
     if (companyDataError) {
       console.error('Error getting company data:', companyDataError);
+    } else {
+      console.log('Company data retrieved:', JSON.stringify(companyData, null, 2));
+    }
+
+    // Get company audiences data for geographic_locations and job_titles
+    const { data: companyAudiences, error: audiencesError } = await supabase
+      .from('company_audiences')
+      .select('geographic_locations, job_titles, interests, age_ranges, pain_points, motivations, goals, challenges')
+      .eq('company_id', companyMember.company_id)
+      .eq('is_active', true);
+
+    if (audiencesError) {
+      console.error('Error getting company audiences:', audiencesError);
+    } else {
+      console.log('Company audiences retrieved:', JSON.stringify(companyAudiences, null, 2));
     }
 
     // Get company strategy to obtain propuesta_valor
@@ -195,7 +210,7 @@ serve(async (req) => {
     const processedInput = {
       nombre_empresa: input.nombre_empresa,
       pais: companyData?.country || 'No especificado',
-      ubicacion: companyData?.location || 'No especificado',
+      ubicacion: companyData?.country || 'No especificado',
       industria: companyData?.industry_sector || 'No especificado',
       objetivo_de_negocio: input.objetivo_de_negocio,
       propuesta_de_valor: propuestaValor,
@@ -214,9 +229,18 @@ serve(async (req) => {
           ...persona,
           demograficos: {
             ...persona.demograficos,
-            ubicacion: companyData?.location || 'No especificado'
+            ubicacion: companyData?.country || 'No especificado'
           }
-        })) || []
+        })) || [],
+        // Include company audiences data
+        geographic_locations: companyAudiences?.[0]?.geographic_locations || {},
+        job_titles: companyAudiences?.[0]?.job_titles || {},
+        interests: companyAudiences?.[0]?.interests || {},
+        age_ranges: companyAudiences?.[0]?.age_ranges || {},
+        pain_points: companyAudiences?.[0]?.pain_points || [],
+        motivations: companyAudiences?.[0]?.motivations || [],
+        goals: companyAudiences?.[0]?.goals || [],
+        challenges: companyAudiences?.[0]?.challenges || []
       },
       objetivo_campana: input.objetivo_campana || 'No especificado',
       hallazgos_analisis: {

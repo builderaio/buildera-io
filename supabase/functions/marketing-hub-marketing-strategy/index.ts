@@ -112,10 +112,10 @@ serve(async (req) => {
 
     console.log('Company found:', companyMember.company_id);
 
-    // Get company data including social networks, industry, and country
+    // Get company data including social networks, industry, country and location
     const { data: companyData, error: companyDataError } = await supabase
       .from('companies')
-      .select('name, industry_sector, country, facebook_url, twitter_url, linkedin_url, instagram_url, youtube_url, tiktok_url')
+      .select('name, industry_sector, country, location, facebook_url, twitter_url, linkedin_url, instagram_url, youtube_url, tiktok_url')
       .eq('id', companyMember.company_id)
       .single();
 
@@ -195,6 +195,7 @@ serve(async (req) => {
     const processedInput = {
       nombre_empresa: input.nombre_empresa,
       pais: companyData?.country || input.pais || 'No especificado',
+      ubicacion: companyData?.location || companyData?.country || 'No especificado',
       industria: companyData?.industry_sector || 'No especificado',
       objetivo_de_negocio: input.objetivo_de_negocio,
       propuesta_de_valor: propuestaValor,
@@ -207,7 +208,16 @@ serve(async (req) => {
         youtube: companyData?.youtube_url || null,
         tiktok: companyData?.tiktok_url || null
       },
-      audiencia_objetivo: input.audiencia_objetivo || { buyer_personas: [] },
+      audiencia_objetivo: {
+        ...input.audiencia_objetivo,
+        buyer_personas: input.audiencia_objetivo?.buyer_personas?.map((persona: any) => ({
+          ...persona,
+          demograficos: {
+            ...persona.demograficos,
+            ubicacion: companyData?.location || companyData?.country || persona.demograficos?.ubicacion || 'No especificado'
+          }
+        })) || []
+      },
       objetivo_campana: input.objetivo_campana || 'No especificado',
       hallazgos_analisis: {
         insights_audiencia: contentInsights || [],

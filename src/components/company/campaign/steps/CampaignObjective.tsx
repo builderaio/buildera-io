@@ -362,12 +362,12 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
                   
                   <div className="mt-3 flex items-center justify-between">
                     <Badge 
-                      variant={objective.priority === 'high' ? 'destructive' : 
-                             objective.priority === 'medium' ? 'default' : 'secondary'}
+                      variant={objective.priority === 1 ? 'destructive' : 
+                             objective.priority === 2 ? 'default' : 'secondary'}
                       className="text-xs"
                     >
-                      Prioridad {objective.priority === 'high' ? 'Alta' : 
-                                objective.priority === 'medium' ? 'Media' : 'Baja'}
+                      Prioridad {objective.priority === 1 ? 'Alta' : 
+                                objective.priority === 2 ? 'Media' : 'Baja'}
                     </Badge>
                     
                     <div className="text-xs text-muted-foreground">

@@ -226,79 +226,78 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
       {/* Generated Strategy */}
       {strategy && (
         <div className="space-y-6">
-          {/* Strategy Overview Card */}
-          <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-violet-50">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-purple-800">
-                  <CheckCircle className="h-5 w-5" />
-                  Estrategia de Marketing Completa
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="flex items-center gap-2"
-                >
-                  <Edit3 className="h-4 w-4" />
-                  {isEditing ? 'Vista Previa' : 'Editar'}
-                </Button>
+          {/* Strategy Success Header */}
+          <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
+              <CardTitle className="text-2xl text-green-800">
+                ¡Tu Estrategia está Lista! 🚀
+              </CardTitle>
+              <p className="text-green-600 text-lg">
+                Hemos creado una estrategia de marketing personalizada basada en tu audiencia y objetivos
+              </p>
             </CardHeader>
-            <CardContent>
-              {isEditing ? (
-                <div>
-                  <Label htmlFor="strategy-edit">Personaliza tu Estrategia</Label>
-                  <Textarea
-                    id="strategy-edit"
-                    value={editedStrategy}
-                    onChange={(e) => setEditedStrategy(e.target.value)}
-                    className="mt-2 min-h-[400px] font-mono text-sm"
-                    placeholder="Edita tu estrategia aquí..."
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Personaliza la estrategia según tus necesidades específicas
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-white p-6 rounded-lg">
-                  <div className="prose prose-sm max-w-none">
-                    <pre className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {editedStrategy}
-                    </pre>
-                  </div>
-                </div>
-              )}
-            </CardContent>
           </Card>
 
           {/* Message Differentiator */}
           {strategy.competitors?.[3]?.message_differentiator && (
-            <Card>
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
-                  Diferenciador Principal
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <Target className="h-6 w-6 text-primary" />
+                  </div>
+                  Mensaje Diferenciador Principal
                 </CardTitle>
+                <p className="text-muted-foreground">Tu propuesta única de valor para cada plataforma</p>
               </CardHeader>
               <CardContent>
-                <div className="bg-primary/5 p-4 rounded-lg">
-                  <h4 className="font-semibold text-lg mb-2">
-                    {strategy.competitors[3].message_differentiator.core}
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">LinkedIn</p>
-                      <p className="text-sm">{strategy.competitors[3].message_differentiator.linkedin_variation}</p>
+                <div className="text-center mb-6">
+                  <div className="bg-white/50 backdrop-blur p-6 rounded-xl border">
+                    <h3 className="text-2xl font-bold text-primary mb-2">
+                      "{strategy.competitors[3].message_differentiator.core}"
+                    </h3>
+                    <p className="text-muted-foreground">Mensaje central de tu estrategia</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-white/70 p-6 rounded-xl border border-blue-100">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-bold text-sm">Li</span>
+                      </div>
+                      <h4 className="font-semibold text-blue-900">LinkedIn</h4>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Instagram</p>
-                      <p className="text-sm">{strategy.competitors[3].message_differentiator.instagram_variation}</p>
+                    <p className="text-sm text-blue-700 leading-relaxed">
+                      {strategy.competitors[3].message_differentiator.linkedin_variation}
+                    </p>
+                  </div>
+                  
+                  <div className="bg-white/70 p-6 rounded-xl border border-pink-100">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
+                        <span className="text-pink-600 font-bold text-sm">Ig</span>
+                      </div>
+                      <h4 className="font-semibold text-pink-900">Instagram</h4>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">TikTok</p>
-                      <p className="text-sm">{strategy.competitors[3].message_differentiator.tiktok_variation}</p>
+                    <p className="text-sm text-pink-700 leading-relaxed">
+                      {strategy.competitors[3].message_differentiator.instagram_variation}
+                    </p>
+                  </div>
+                  
+                  <div className="bg-white/70 p-6 rounded-xl border border-purple-100">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span className="text-purple-600 font-bold text-sm">Tk</span>
+                      </div>
+                      <h4 className="font-semibold text-purple-900">TikTok</h4>
                     </div>
+                    <p className="text-sm text-purple-700 leading-relaxed">
+                      {strategy.competitors[3].message_differentiator.tiktok_variation}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -309,34 +308,79 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
           {strategy.competitors?.[3]?.strategies && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  Estrategias por Funnel
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="h-6 w-6 text-white" />
+                  </div>
+                  Estrategias por Etapa del Funnel
                 </CardTitle>
+                <p className="text-muted-foreground">Plan de acción para cada fase del customer journey</p>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4">
-                  {Object.entries(strategy.competitors[3].strategies).map(([phase, details]: [string, any]) => (
-                    <div key={phase} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <h4 className="font-semibold capitalize text-lg">{phase}</h4>
-                        <Badge variant="outline">{details.timeline}</Badge>
-                      </div>
-                      <p className="text-muted-foreground mb-3">{details.objective}</p>
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Canal Principal: {details.main_channel}</p>
-                        <p className="text-sm font-medium">KPI: {details.kpi}</p>
-                        <div>
-                          <p className="text-sm font-medium mb-1">Tácticas:</p>
-                          <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                            {details.tactics?.map((tactic: string, idx: number) => (
-                              <li key={idx}>{tactic}</li>
-                            ))}
-                          </ul>
+                <div className="grid gap-6">
+                  {Object.entries(strategy.competitors[3].strategies).map(([phase, details]: [string, any], index) => {
+                    const phaseColors = {
+                      awareness: 'from-yellow-400 to-orange-500',
+                      consideration: 'from-blue-400 to-cyan-500', 
+                      conversion: 'from-green-400 to-emerald-500',
+                      loyalty: 'from-purple-400 to-pink-500'
+                    };
+                    const phaseNames = {
+                      awareness: 'Reconocimiento',
+                      consideration: 'Consideración',
+                      conversion: 'Conversión',
+                      loyalty: 'Fidelización'
+                    };
+                    
+                    return (
+                      <div key={phase} className="relative">
+                        <div className="bg-white border-2 border-gray-100 rounded-xl p-6 hover:shadow-lg transition-shadow">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-4">
+                              <div className={`w-12 h-12 bg-gradient-to-r ${phaseColors[phase as keyof typeof phaseColors] || 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center text-white font-bold text-lg`}>
+                                {index + 1}
+                              </div>
+                              <div>
+                                <h4 className="text-xl font-bold capitalize">
+                                  {phaseNames[phase as keyof typeof phaseNames] || phase}
+                                </h4>
+                                <Badge variant="secondary" className="mt-1">
+                                  {details.timeline} plazo
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                            <p className="text-gray-700 font-medium">{details.objective}</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <h5 className="font-semibold text-sm text-primary mb-2">Canal Principal</h5>
+                              <p className="text-sm bg-primary/10 px-3 py-2 rounded-lg">{details.main_channel}</p>
+                            </div>
+                            <div>
+                              <h5 className="font-semibold text-sm text-green-600 mb-2">KPI Objetivo</h5>
+                              <p className="text-sm bg-green-50 px-3 py-2 rounded-lg">{details.kpi}</p>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h5 className="font-semibold text-sm mb-3">Tácticas Específicas:</h5>
+                            <div className="grid gap-2">
+                              {details.tactics?.map((tactic: string, idx: number) => (
+                                <div key={idx} className="flex items-start gap-3">
+                                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                                  <p className="text-sm text-gray-700">{tactic}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -346,34 +390,75 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
           {strategy.competitors?.[3]?.content_plan && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
+                    <Lightbulb className="h-6 w-6 text-white" />
+                  </div>
                   Plan de Contenido por Plataforma
                 </CardTitle>
+                <p className="text-muted-foreground">Estrategia específica para cada red social</p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(strategy.competitors[3].content_plan).map(([platform, config]: [string, any]) => (
-                    <div key={platform} className="border rounded-lg p-4">
-                      <h4 className="font-semibold capitalize mb-3">{platform}</h4>
-                      <div className="space-y-2 text-sm">
-                        <p><span className="font-medium">Frecuencia:</span> {config.frequency}</p>
-                        <p><span className="font-medium">Tono:</span> {config.tone}</p>
-                        <p><span className="font-medium">CTA:</span> {config.cta}</p>
-                        <div>
-                          <p className="font-medium mb-1">Formatos:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {config.formats?.map((format: string, idx: number) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {format}
-                              </Badge>
-                            ))}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {Object.entries(strategy.competitors[3].content_plan).map(([platform, config]: [string, any]) => {
+                    const platformColors = {
+                      LinkedIn: 'border-blue-200 bg-blue-50',
+                      Instagram: 'border-pink-200 bg-pink-50', 
+                      TikTok: 'border-purple-200 bg-purple-50',
+                      Email: 'border-green-200 bg-green-50',
+                      Web: 'border-orange-200 bg-orange-50'
+                    };
+                    
+                    const platformIcons = {
+                      LinkedIn: '💼',
+                      Instagram: '📸',
+                      TikTok: '🎵',
+                      Email: '📧',
+                      Web: '🌐'
+                    };
+                    
+                    return (
+                      <div key={platform} className={`rounded-xl border-2 p-6 ${platformColors[platform as keyof typeof platformColors] || 'border-gray-200 bg-gray-50'}`}>
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="text-2xl">{platformIcons[platform as keyof typeof platformIcons] || '📱'}</span>
+                          <h4 className="text-xl font-bold capitalize">{platform}</h4>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div className="bg-white/70 p-3 rounded-lg">
+                            <h5 className="font-medium text-sm text-gray-600 mb-1">Frecuencia</h5>
+                            <p className="font-semibold">{config.frequency}</p>
+                          </div>
+                          
+                          <div className="bg-white/70 p-3 rounded-lg">
+                            <h5 className="font-medium text-sm text-gray-600 mb-1">Tono de Comunicación</h5>
+                            <p className="font-semibold">{config.tone}</p>
+                          </div>
+                          
+                          <div className="bg-white/70 p-3 rounded-lg">
+                            <h5 className="font-medium text-sm text-gray-600 mb-1">Call to Action</h5>
+                            <p className="font-semibold text-primary">"{config.cta}"</p>
+                          </div>
+                          
+                          <div className="bg-white/70 p-3 rounded-lg">
+                            <h5 className="font-medium text-sm text-gray-600 mb-2">Formatos de Contenido</h5>
+                            <div className="flex flex-wrap gap-2">
+                              {config.formats?.map((format: string, idx: number) => (
+                                <Badge key={idx} variant="secondary" className="text-xs">
+                                  {format}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="bg-white/70 p-3 rounded-lg">
+                            <h5 className="font-medium text-sm text-gray-600 mb-1">Justificación</h5>
+                            <p className="text-xs text-gray-600 leading-relaxed">{config.justification}</p>
                           </div>
                         </div>
-                        <p className="text-muted-foreground text-xs">{config.justification}</p>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -383,19 +468,40 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
           {strategy.competitors?.[3]?.kpis?.goals && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  KPIs y Objetivos
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="h-6 w-6 text-white" />
+                  </div>
+                  KPIs y Objetivos Medibles
                 </CardTitle>
+                <p className="text-muted-foreground">Métricas clave para medir el éxito de tu campaña</p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {strategy.competitors[3].kpis.goals.map((goal: any, idx: number) => (
-                    <div key={idx} className="bg-primary/5 p-4 rounded-lg">
-                      <h4 className="font-semibold">{goal.kpi}</h4>
-                      <p className="text-lg font-bold text-primary">{goal.target}</p>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {strategy.competitors[3].kpis.goals.map((goal: any, idx: number) => {
+                    const kpiIcons = {
+                      'Alcance': '🎯',
+                      'Impresiones': '👀', 
+                      'CTR': '🖱️',
+                      'Leads': '🚀',
+                      'Conversion Rate': '💰',
+                      'CAC Estimado': '💵'
+                    };
+                    
+                    return (
+                      <div key={idx} className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-100 p-6 rounded-xl hover:shadow-lg transition-all">
+                        <div className="text-center">
+                          <div className="text-3xl mb-3">
+                            {kpiIcons[goal.kpi as keyof typeof kpiIcons] || '📊'}
+                          </div>
+                          <h4 className="font-bold text-lg mb-2 text-gray-800">{goal.kpi}</h4>
+                          <div className="bg-primary/10 px-4 py-3 rounded-lg">
+                            <p className="text-2xl font-bold text-primary">{goal.target}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -405,44 +511,67 @@ ${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([plat
           {strategy.competitors && strategy.competitors.length > 3 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg flex items-center justify-center">
+                    <Target className="h-6 w-6 text-white" />
+                  </div>
                   Análisis de Competencia
                 </CardTitle>
+                <p className="text-muted-foreground">Conoce a tu competencia y sus estrategias digitales</p>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4">
+                <div className="grid gap-6">
                   {strategy.competitors.slice(0, 3).map((competitor: any, idx: number) => (
-                    <div key={idx} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-semibold">{competitor.name}</h4>
-                          <a href={competitor.url} target="_blank" rel="noopener noreferrer" 
-                             className="text-primary text-sm hover:underline">
-                            {competitor.url}
-                          </a>
+                    <div key={idx} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                            {idx + 1}
+                          </div>
+                          <div>
+                            <h4 className="text-xl font-bold text-gray-800">{competitor.name}</h4>
+                            <a href={competitor.url} target="_blank" rel="noopener noreferrer" 
+                               className="text-primary text-sm hover:underline flex items-center gap-1">
+                              <span>🌐</span>
+                              {competitor.url}
+                            </a>
+                          </div>
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-3">{competitor.digital_tactics}</p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-green-600">Fortalezas:</p>
-                          <p className="text-sm">{competitor.strengths}</p>
+                      
+                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h5 className="font-semibold text-sm text-gray-600 mb-2">Tácticas Digitales</h5>
+                        <p className="text-sm text-gray-700">{competitor.digital_tactics}</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-green-600">✅</span>
+                            <h5 className="font-semibold text-green-800">Fortalezas</h5>
+                          </div>
+                          <p className="text-sm text-green-700">{competitor.strengths}</p>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-red-600">Debilidades:</p>
-                          <p className="text-sm">{competitor.weaknesses}</p>
+                        <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-red-600">⚠️</span>
+                            <h5 className="font-semibold text-red-800">Debilidades</h5>
+                          </div>
+                          <p className="text-sm text-red-700">{competitor.weaknesses}</p>
                         </div>
                       </div>
+                      
                       {competitor.benchmarks && (
-                        <div className="mt-3 pt-3 border-t">
-                          <p className="text-sm font-medium mb-2">Benchmarks:</p>
-                          <div className="flex flex-wrap gap-2">
+                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                          <h5 className="font-semibold text-blue-800 mb-3">📊 Benchmarks de Redes Sociales</h5>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {Object.entries(competitor.benchmarks).map(([platform, data]: [string, any]) => (
                               platform !== 'source' && (
-                                <Badge key={platform} variant="outline" className="text-xs">
-                                  {platform}: {data.frequency} - {data.engagement}
-                                </Badge>
+                                <div key={platform} className="bg-white p-3 rounded-lg border">
+                                  <h6 className="font-medium text-sm text-gray-700 capitalize">{platform}</h6>
+                                  <p className="text-xs text-gray-600">{data.frequency}</p>
+                                  <p className="text-xs text-blue-600 font-medium">Engagement: {data.engagement}</p>
+                                </div>
                               )
                             ))}
                           </div>

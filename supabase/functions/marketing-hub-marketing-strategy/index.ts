@@ -194,19 +194,19 @@ serve(async (req) => {
     // Set defaults for optional fields with real propuesta_valor and enhanced data
     const processedInput = {
       nombre_empresa: input.nombre_empresa,
-      pais: companyData?.country || input.pais || 'No especificado',
-      ubicacion: companyData?.location || companyData?.country || 'No especificado',
+      pais: companyData?.country || 'No especificado',
+      ubicacion: companyData?.location || 'No especificado',
       industria: companyData?.industry_sector || 'No especificado',
       objetivo_de_negocio: input.objetivo_de_negocio,
       propuesta_de_valor: propuestaValor,
       redes_sociales_habilitadas: redesSocialesHabilitadas,
       redes_sociales_urls: {
-        facebook: companyData?.facebook_url || null,
-        twitter: companyData?.twitter_url || null,
-        linkedin: companyData?.linkedin_url || null,
-        instagram: companyData?.instagram_url || null,
-        youtube: companyData?.youtube_url || null,
-        tiktok: companyData?.tiktok_url || null
+        facebook: companyData?.facebook_url || 'No tiene',
+        twitter: companyData?.twitter_url || 'No tiene',
+        linkedin: companyData?.linkedin_url || 'No tiene',
+        instagram: companyData?.instagram_url || 'No tiene',
+        youtube: companyData?.youtube_url || 'No tiene',
+        tiktok: companyData?.tiktok_url || 'No tiene'
       },
       audiencia_objetivo: {
         ...input.audiencia_objetivo,
@@ -214,7 +214,7 @@ serve(async (req) => {
           ...persona,
           demograficos: {
             ...persona.demograficos,
-            ubicacion: companyData?.location || companyData?.country || persona.demograficos?.ubicacion || 'No especificado'
+            ubicacion: companyData?.location || 'No especificado'
           }
         })) || []
       },

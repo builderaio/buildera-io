@@ -108,14 +108,27 @@ serve(async (req) => {
 
     if (!n8nResponse.ok) {
       console.error('N8N API Error:', n8nResponse.status, n8nResponse.statusText);
-      const errorText = await n8nResponse.text();
-      console.error('N8N Error Response:', errorText);
-      throw new Error(`N8N API error: ${n8nResponse.status} - ${errorText}`);
+      // Do not throw here; continue to fallback handling below
     }
 
-    const n8nResult = await n8nResponse.json();
-    console.log('N8N API Response received:', n8nResult);
-
+    let n8nResult: any = null;
+    let rawText = '';
+    try {
+      rawText = await n8nResponse.text();
+      if (!rawText || rawText.trim().length === 0) {
+        console.warn('N8N returned empty body, proceeding with fallback.');
+      } else {
+        try {
+          n8nResult = JSON.parse(rawText);
+        } catch (parseErr) {
+          console.warn('Failed to parse N8N JSON. Content-Type:', n8nResponse.headers.get('content-type'));
+          console.warn('Raw N8N body (first 500 chars):', rawText.slice(0, 500));
+        }
+      }
+    } catch (readErr) {
+      console.error('Error reading N8N response body:', readErr);
+    }
+    console.log('N8N API Response received:', n8nResult ?? '[empty]');
     // Extract calendar data from N8N response
     let calendario_contenido = [];
     

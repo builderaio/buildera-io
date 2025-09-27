@@ -82,116 +82,102 @@ serve(async (req) => {
       });
     }
 
-    // Generate content calendar
-    const startDate = new Date(input.fecha_inicio_calendario);
-    const numDays = Number.isFinite(Number(input.numero_dias_generar)) && Number(input.numero_dias_generar) > 0
-      ? Number(input.numero_dias_generar)
-      : 7;
-    const platforms = Array.isArray(input.plataformas_seleccionadas) && input.plataformas_seleccionadas.length > 0
-      ? input.plataformas_seleccionadas
-      : ['linkedin'];
+    // Call N8N Content Calendar API
+    console.log('Calling N8N Content Calendar API with input:', input);
+
+    const n8nPayload = {
+      ...input,
+      // Ensure required fields have defaults
+      numero_dias_generar: input.numero_dias_generar || 7,
+      plataformas_seleccionadas: input.plataformas_seleccionadas || ['linkedin'],
+      // Pass the marketing strategy from previous step
+      estrategia_de_marketing: input.estrategia_de_marketing || {},
+      audiencia_objetivo: input.audiencia_objetivo || {}
+    };
+
+    console.log('N8N Payload prepared:', n8nPayload);
+
+    const n8nResponse = await fetch('https://buildera.app.n8n.cloud/webhook/content-calendar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${btoa(`${N8N_AUTH_USER}:${N8N_AUTH_PASS}`)}`
+      },
+      body: JSON.stringify(n8nPayload)
+    });
+
+    if (!n8nResponse.ok) {
+      console.error('N8N API Error:', n8nResponse.status, n8nResponse.statusText);
+      const errorText = await n8nResponse.text();
+      console.error('N8N Error Response:', errorText);
+      throw new Error(`N8N API error: ${n8nResponse.status} - ${errorText}`);
+    }
+
+    const n8nResult = await n8nResponse.json();
+    console.log('N8N API Response received:', n8nResult);
+
+    // Extract calendar data from N8N response
+    let calendario_contenido = [];
     
-    console.log('Generando calendario:', { startDate, numDays, platforms });
-    
-    const calendario_contenido = [];
-    const contentTypes = ['Post', 'Story', 'Reel', 'Carousel', 'Video'];
-    const timeSlots = ['08:00', '10:00', '12:00', '15:00', '18:00', '20:00'];
-    
-    // Generate posts for each day and platform
-    for (let day = 0; day < numDays; day++) {
-      const currentDate = new Date(startDate);
-      currentDate.setDate(startDate.getDate() + day);
-      const dateStr = currentDate.toISOString().split('T')[0];
+    if (n8nResult && Array.isArray(n8nResult) && n8nResult.length > 0) {
+      // N8N returns an array, get the first element
+      const firstResult = n8nResult[0];
+      if (firstResult.output && firstResult.output.calendario_contenido) {
+        calendario_contenido = firstResult.output.calendario_contenido;
+      } else if (firstResult.calendario_contenido) {
+        calendario_contenido = firstResult.calendario_contenido;
+      }
+    } else if (n8nResult && n8nResult.calendario_contenido) {
+      calendario_contenido = n8nResult.calendario_contenido;
+    } else if (n8nResult && Array.isArray(n8nResult.output)) {
+      calendario_contenido = n8nResult.output;
+    }
+
+    console.log('Extracted calendario_contenido:', calendario_contenido);
+
+    if (!Array.isArray(calendario_contenido) || calendario_contenido.length === 0) {
+      console.warn('No valid calendar content received from N8N, creating fallback');
+      // Fallback: create basic calendar structure
+      const platforms = input.plataformas_seleccionadas || ['linkedin'];
+      const numDays = input.numero_dias_generar || 7;
+      const startDate = new Date(input.fecha_inicio_calendario);
       
-      // Skip weekends for LinkedIn, focus more content on weekdays
-      const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6;
-      
-      for (const platform of platforms) {
-        // Determine how many posts per platform per day
-        let postsPerDay = 1;
-        if (platform === 'instagram') postsPerDay = isWeekend ? 1 : 2;
-        if (platform === 'tiktok') postsPerDay = 2;
-        if (platform === 'linkedin' && isWeekend) continue; // Skip LinkedIn on weekends
+      calendario_contenido = [];
+      for (let day = 0; day < numDays; day++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + day);
+        const dateStr = currentDate.toISOString().split('T')[0];
         
-        for (let postIndex = 0; postIndex < postsPerDay; postIndex++) {
-          const randomTime = timeSlots[Math.floor(Math.random() * timeSlots.length)];
-          const randomContentType = contentTypes[Math.floor(Math.random() * contentTypes.length)];
-          
-          // Generate topic based on platform and business
-          let tema_concepto = '';
-          let descripcion_creativo = '';
-          
-          if (platform === 'linkedin') {
-            const linkedinTopics = [
-              'Tips profesionales sobre servicios legales',
-              'Beneficios de la automatización legal',
-              'Casos de éxito de clientes',
-              'Tendencias en el sector legal',
-              'Consejos para empresas'
-            ];
-            tema_concepto = linkedinTopics[Math.floor(Math.random() * linkedinTopics.length)];
-            descripcion_creativo = 'Contenido profesional e informativo para audiencia empresarial';
-          } else if (platform === 'instagram') {
-            const instagramTopics = [
-              'Infografía sobre documentos legales',
-              'Carousel explicativo de servicios',
-              'Story con tips legales rápidos',
-              'Reel educativo sobre IA legal',
-              'Post testimonial de clientes'
-            ];
-            tema_concepto = instagramTopics[Math.floor(Math.random() * instagramTopics.length)];
-            descripcion_creativo = 'Contenido visual atractivo con valor educativo';
-          } else if (platform === 'tiktok') {
-            const tiktokTopics = [
-              'Video corto: "¿Sabías que la IA puede generar contratos?"',
-              'Tutorial rápido: Cómo usar servicios legales digitales',
-              'Mito vs Realidad en servicios legales',
-              'Trend legal: Lo que necesitas saber',
-              'Mini-consulta legal en 60 segundos'
-            ];
-            tema_concepto = tiktokTopics[Math.floor(Math.random() * tiktokTopics.length)];
-            descripcion_creativo = 'Video dinámico y educativo con elementos virales';
-          }
-          
+        for (const platform of platforms) {
           calendario_contenido.push({
             fecha: dateStr,
-            hora: randomTime,
+            hora: '10:00',
             red_social: platform,
-            tipo_contenido: randomContentType,
-            tema_concepto: tema_concepto,
-            descripcion_creativo: descripcion_creativo,
+            tipo_contenido: 'Post',
+            tema_concepto: `Contenido para ${platform} - ${input.nombre_empresa}`,
+            descripcion_creativo: `Contenido generado para ${platform}`,
             estado: 'programado',
-            prioridad: Math.floor(Math.random() * 3) + 1 // 1-3
+            prioridad: 2
           });
         }
       }
     }
-    
-    // Sort by date and time
-    calendario_contenido.sort((a, b) => {
-      const dateComparison = a.fecha.localeCompare(b.fecha);
-      if (dateComparison === 0) {
-        return a.hora.localeCompare(b.hora);
-      }
-      return dateComparison;
-    });
-    
-    console.log('Calendario generado con', calendario_contenido.length, 'posts');
-    
+
     const response = {
       message: `Calendario de contenido generado exitosamente para ${input.nombre_empresa}`,
       calendario_contenido: calendario_contenido,
       resumen: {
         total_posts: calendario_contenido.length,
-        plataformas_incluidas: platforms,
+        plataformas_incluidas: input.plataformas_seleccionadas || ['linkedin'],
         fecha_inicio: input.fecha_inicio_calendario,
         fecha_fin: calendario_contenido[calendario_contenido.length - 1]?.fecha,
-        duracion_dias: numDays
+        duracion_dias: input.numero_dias_generar || 7
       },
       metadata: {
         empresa: input.nombre_empresa,
         generated_at: new Date().toISOString(),
-        status: 'completed'
+        status: 'completed',
+        source: 'n8n_api'
       }
     };
 

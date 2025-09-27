@@ -34,7 +34,14 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
   console.log('🔍 MarketingStrategy render - strategy:', strategy, 'generating:', generating, 'campaignData:', campaignData);
 
   const generateStrategy = async () => {
+    console.log('🚀 Starting strategy generation');
+    console.log('📋 Campaign data:', campaignData);
+    
     if (!campaignData.company || !campaignData.audience) {
+      console.error('❌ Missing required data:', { 
+        hasCompany: !!campaignData.company, 
+        hasAudience: !!campaignData.audience 
+      });
       toast({
         title: "Datos insuficientes",
         description: "Necesitamos la información de empresa y audiencia para generar la estrategia",
@@ -44,6 +51,7 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
     }
 
     setGenerating(true);
+    
     try {
       const strategyInput = {
         ...campaignData.company,
@@ -70,9 +78,14 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
       let processedStrategy = data;
       if (Array.isArray(data) && data.length > 0 && data[0].output) {
         processedStrategy = data[0].output;
+        console.log('🔄 Extracted strategy from N8N array format');
       }
 
-      console.log('🔄 Processed strategy:', processedStrategy);
+      console.log('✅ Processed strategy:', processedStrategy);
+      
+      if (!processedStrategy || Object.keys(processedStrategy).length === 0) {
+        throw new Error('La estrategia recibida está vacía');
+      }
       
       setStrategy(processedStrategy);
       
@@ -93,10 +106,9 @@ ${Object.entries(processedStrategy.content_plan || {}).map(([platform, config]: 
   `• ${platform}: ${config.frequency} - ${config.tone}`).join('\n')}` 
         : JSON.stringify(processedStrategy, null, 2);
 
-      console.log('📝 Strategy text created:', strategyText);
       setEditedStrategy(strategyText);
       
-      console.log('✅ Strategy state updated successfully');
+      console.log('✅ Strategy state updated successfully, strategy keys:', Object.keys(processedStrategy));
       
       toast({
         title: "¡Estrategia generada!",
@@ -104,12 +116,14 @@ ${Object.entries(processedStrategy.content_plan || {}).map(([platform, config]: 
       });
     } catch (error: any) {
       console.error('💥 Error generating strategy:', error);
+      setStrategy(null); // Reset strategy on error
       toast({
         title: "Error al generar estrategia",
-        description: error.message || "No se pudo generar la estrategia",
+        description: error.message || "No se pudo generar la estrategia. Por favor, intenta de nuevo.",
         variant: "destructive"
       });
     } finally {
+      console.log('🏁 Strategy generation finished, setting generating=false');
       setGenerating(false);
     }
   };
@@ -147,43 +161,8 @@ ${Object.entries(processedStrategy.content_plan || {}).map(([platform, config]: 
 
   const canProceed = strategy && !generating;
 
-  // Debug temporal para ver el estado
-  if (generating) {
-    console.log('🔄 Component is in generating state');
-  }
-  
-  if (strategy) {
-    console.log('✅ Strategy exists, should show content');
-  } else {
-    console.log('❌ No strategy, will show generate button');
-  }
-
   return (
     <div className="space-y-6">
-      {/* Debugging temporal */}
-      {generating && (
-        <Card className="border-yellow-200 bg-yellow-50">
-          <CardContent className="py-4">
-            <p className="text-yellow-800">⏳ Generando estrategia... Debug: generating={generating.toString()}</p>
-          </CardContent>
-        </Card>
-      )}
-      
-      {strategy && (
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="py-4">
-            <p className="text-green-800">✅ Debug: Strategy loaded - core_message={strategy.core_message ? 'exists' : 'missing'}</p>
-          </CardContent>
-        </Card>
-      )}
-      
-      {!strategy && !generating && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="py-4">
-            <p className="text-blue-800">ℹ️ Debug: No strategy, showing generate button</p>
-          </CardContent>
-        </Card>
-      )}
       {/* Header */}
       <Card className="bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200">
         <CardHeader>
@@ -244,8 +223,8 @@ ${Object.entries(processedStrategy.content_plan || {}).map(([platform, config]: 
         </CardContent>
       </Card>
 
-      {/* Generate Strategy */}
-      {!strategy && (
+      {/* Generate Strategy or Loading */}
+      {!strategy && !generating && (
         <Card>
           <CardContent className="py-12 text-center">
             <div className="max-w-md mx-auto space-y-4">
@@ -258,22 +237,42 @@ ${Object.entries(processedStrategy.content_plan || {}).map(([platform, config]: 
               </p>
               <Button 
                 onClick={generateStrategy}
-                disabled={generating || loading}
+                disabled={loading}
                 className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700"
                 size="lg"
               >
-                {generating ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Generando Estrategia...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-5 h-5 mr-2" />
-                    Generar Estrategia con IA
-                  </>
-                )}
+                <Zap className="w-5 h-5 mr-2" />
+                Generar Estrategia con IA
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading State */}
+      {generating && (
+        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <CardContent className="py-16 text-center">
+            <div className="max-w-md mx-auto space-y-6">
+              <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
+                <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-semibold text-blue-900">Generando tu Estrategia...</h3>
+                <p className="text-blue-700 text-lg">
+                  Nuestro algoritmo está analizando tu audiencia y creando una estrategia personalizada
+                </p>
+              </div>
+              <div className="bg-white/50 backdrop-blur p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-pulse flex space-x-1">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  </div>
+                  <span className="text-blue-600 font-medium ml-3">Esto puede tomar unos segundos...</span>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

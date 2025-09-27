@@ -345,25 +345,26 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
               {editedCalendar.map((item: any, index: number) => {
                 const platformConfig = getPlatform(item.red_social);
                 const IconComponent = platformConfig?.icon || Calendar;
+                const hora = item.hora_publicacion || item.hora || '10:00';
                 
                 return (
-                  <Card key={index} className="bg-white">
+                  <Card key={index} className="bg-white border-l-4 border-l-primary/30 hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded ${platformConfig?.bgColor || 'bg-gray-500'} text-white`}>
-                          <IconComponent className="h-4 w-4" />
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-lg ${platformConfig?.bgColor || 'bg-gray-500'} text-white shadow-lg`}>
+                          <IconComponent className="h-5 w-5" />
                         </div>
                         <div className="flex-1 space-y-3">
                           {isEditing ? (
                             <>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <div>
-                                  <Label className="text-xs">Plataforma</Label>
+                                  <Label className="text-xs font-medium">Plataforma</Label>
                                   <Select
                                     value={item.red_social}
                                     onValueChange={(value) => updateCalendarItem(index, 'red_social', value)}
                                   >
-                                    <SelectTrigger className="h-8 text-sm">
+                                    <SelectTrigger className="h-9 text-sm">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -376,21 +377,21 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
                                   </Select>
                                 </div>
                                 <div>
-                                  <Label className="text-xs">Fecha</Label>
+                                  <Label className="text-xs font-medium">Fecha</Label>
                                   <Input
                                     type="date"
                                     value={item.fecha}
                                     onChange={(e) => updateCalendarItem(index, 'fecha', e.target.value)}
-                                    className="h-8 text-sm"
+                                    className="h-9 text-sm"
                                   />
                                 </div>
                                 <div>
-                                  <Label className="text-xs">Hora</Label>
+                                  <Label className="text-xs font-medium">Hora</Label>
                                   <Select
-                                    value={item.hora}
-                                    onValueChange={(value) => updateCalendarItem(index, 'hora', value)}
+                                    value={hora}
+                                    onValueChange={(value) => updateCalendarItem(index, 'hora_publicacion', value)}
                                   >
-                                    <SelectTrigger className="h-8 text-sm">
+                                    <SelectTrigger className="h-9 text-sm">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -403,40 +404,88 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
                                   </Select>
                                 </div>
                               </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-xs font-medium">Título/Gancho</Label>
+                                  <Input
+                                    value={item.titulo_gancho || item.tema_concepto}
+                                    onChange={(e) => updateCalendarItem(index, 'titulo_gancho', e.target.value)}
+                                    className="text-sm"
+                                    placeholder="Título llamativo..."
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-xs font-medium">Tipo de Contenido</Label>
+                                  <Input
+                                    value={item.tipo_contenido}
+                                    onChange={(e) => updateCalendarItem(index, 'tipo_contenido', e.target.value)}
+                                    className="text-sm"
+                                  />
+                                </div>
+                              </div>
                               <div>
-                                <Label className="text-xs">Concepto/Tema</Label>
-                                <Input
-                                  value={item.tema_concepto}
-                                  onChange={(e) => updateCalendarItem(index, 'tema_concepto', e.target.value)}
-                                  className="text-sm"
+                                <Label className="text-xs font-medium">Copy/Mensaje</Label>
+                                <textarea
+                                  value={item.copy_mensaje || ''}
+                                  onChange={(e) => updateCalendarItem(index, 'copy_mensaje', e.target.value)}
+                                  className="w-full p-2 text-sm border rounded-md resize-none"
+                                  rows={3}
+                                  placeholder="Texto del post..."
                                 />
                               </div>
                             </>
                           ) : (
                             <>
+                              {/* Header con fecha y hora */}
                               <div className="flex items-center justify-between">
-                                <h4 className="font-medium text-sm">
-                                  {item.tema_concepto}
-                                </h4>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-3">
+                                  <Badge variant="outline" className="text-xs font-medium bg-primary/5">
+                                    {platformConfig?.name || item.red_social}
+                                  </Badge>
+                                  {item.categoria_enfoque && (
+                                    <Badge variant="secondary" className="text-xs capitalize">
+                                      {item.categoria_enfoque}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
                                   <Calendar className="h-3 w-3" />
                                   {item.fecha}
-                                  <Clock className="h-3 w-3 ml-2" />
-                                  {item.hora}
+                                  <Clock className="h-3 w-3 ml-1" />
+                                  {hora}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {item.tipo_contenido}
-                                </Badge>
-                                <Badge variant="secondary" className="text-xs">
-                                  {platformConfig?.name || item.red_social}
+
+                              {/* Título principal */}
+                              <div>
+                                <h4 className="font-semibold text-base text-foreground leading-tight">
+                                  {item.titulo_gancho || item.tema_concepto}
+                                </h4>
+                                {item.tema_concepto && item.titulo_gancho && item.tema_concepto !== item.titulo_gancho && (
+                                  <p className="text-sm text-muted-foreground mt-1">{item.tema_concepto}</p>
+                                )}
+                              </div>
+
+                              {/* Copy del mensaje */}
+                              {item.copy_mensaje && (
+                                <div className="bg-muted/30 p-3 rounded-lg border-l-2 border-l-primary/50">
+                                  <p className="text-sm text-foreground italic">"{item.copy_mensaje}"</p>
+                                </div>
+                              )}
+
+                              {/* Tipo de contenido y descripción creativa */}
+                              <div className="flex flex-wrap gap-2">
+                                <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                                  📝 {item.tipo_contenido}
                                 </Badge>
                               </div>
+
+                              {/* Descripción del creativo */}
                               {item.descripcion_creativo && (
-                                <p className="text-xs text-muted-foreground">
-                                  {item.descripcion_creativo}
-                                </p>
+                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg">
+                                  <p className="text-xs text-blue-800 font-medium mb-1">💡 Concepto Creativo:</p>
+                                  <p className="text-sm text-blue-700">{item.descripcion_creativo}</p>
+                                </div>
                               )}
                             </>
                           )}

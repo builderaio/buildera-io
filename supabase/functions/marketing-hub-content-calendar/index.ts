@@ -135,11 +135,17 @@ serve(async (req) => {
     if (n8nResult && Array.isArray(n8nResult) && n8nResult.length > 0) {
       // N8N returns an array, get the first element
       const firstResult = n8nResult[0];
-      if (firstResult.output && firstResult.output.calendario_contenido) {
+      if (firstResult.output && firstResult.output.calendario_editorial) {
+        calendario_contenido = firstResult.output.calendario_editorial;
+      } else if (firstResult.output && firstResult.output.calendario_contenido) {
         calendario_contenido = firstResult.output.calendario_contenido;
+      } else if (firstResult.calendario_editorial) {
+        calendario_contenido = firstResult.calendario_editorial;
       } else if (firstResult.calendario_contenido) {
         calendario_contenido = firstResult.calendario_contenido;
       }
+    } else if (n8nResult && n8nResult.calendario_editorial) {
+      calendario_contenido = n8nResult.calendario_editorial;
     } else if (n8nResult && n8nResult.calendario_contenido) {
       calendario_contenido = n8nResult.calendario_contenido;
     } else if (n8nResult && Array.isArray(n8nResult.output)) {

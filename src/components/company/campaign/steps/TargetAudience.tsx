@@ -23,15 +23,53 @@ import {
 interface TargetAudienceProps {
   campaignData: any;
   onComplete: (data: any) => void;
+  onDataChange?: (data: any) => void;
   loading: boolean;
   companyData?: any;
 }
 
-export const TargetAudience = ({ campaignData, onComplete, loading, companyData }: TargetAudienceProps) => {
+export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading, companyData }: TargetAudienceProps) => {
   const [existingAudiences, setExistingAudiences] = useState([]);
   const [selectedAudiences, setSelectedAudiences] = useState(campaignData.audiences || []);
   const [loadingAudiences, setLoadingAudiences] = useState(true);
   const { toast } = useToast();
+
+  // Set up auto-save function for when user navigates away
+  useEffect(() => {
+    const saveCurrentData = () => {
+      if (selectedAudiences.length > 0 && onDataChange) {
+        const buyerPersonas = selectedAudiences.map(audience => ({
+          id: audience.id,
+          nombre_ficticio: audience.name,
+          descripcion: audience.description,
+          demograficos: {
+            edad: audience.age_ranges ? Object.keys(audience.age_ranges)[0] : '',
+            ubicacion: audience.geographic_locations ? Object.keys(audience.geographic_locations)[0] : '',
+            plataforma_preferida: audience.platform_preferences ? Object.keys(audience.platform_preferences)[0] : ''
+          },
+          intereses: audience.interests || [],
+          comportamientos: audience.behaviors || []
+        }));
+
+        const audienceData = {
+          selected_audiences: selectedAudiences,
+          buyer_personas: buyerPersonas,
+          audience_count: selectedAudiences.length
+        };
+
+        onDataChange(audienceData);
+      }
+    };
+
+    // Set global save function
+    (window as any).savePendingCampaignData = saveCurrentData;
+
+    // Cleanup on unmount
+    return () => {
+      saveCurrentData();
+      delete (window as any).savePendingCampaignData;
+    };
+  }, [selectedAudiences, onDataChange]);
 
   // Load existing audiences
   useEffect(() => {

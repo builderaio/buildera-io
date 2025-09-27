@@ -291,7 +291,17 @@ export const CampaignWizard = () => {
 
   const prevStep = () => {
     if (state.currentStep > 1) {
+      // Auto-save current step data before navigating backwards
+      savePendingStepData();
       setState(prev => ({ ...prev, currentStep: prev.currentStep - 1 }));
+    }
+  };
+
+  const savePendingStepData = () => {
+    // This will be called by child components when they have pending data to save
+    const globalSave = (window as any).savePendingCampaignData;
+    if (globalSave && typeof globalSave === 'function') {
+      globalSave();
     }
   };
 
@@ -307,6 +317,38 @@ export const CampaignWizard = () => {
     const stepProps = {
       campaignData,
       onComplete: handleStepComplete,
+      onDataChange: (stepData: any) => {
+        // Update campaign data in real-time as user makes changes
+        setCampaignData(prev => {
+          const updated = { ...prev };
+          
+          switch(state.currentStep) {
+            case 1:
+              updated.objective = { ...updated.objective, ...stepData };
+              break;
+            case 2:
+              updated.audience = stepData;
+              break;
+            case 3:
+              updated.strategy = stepData;
+              break;
+            case 4:
+              updated.calendar = stepData;
+              break;
+            case 5:
+              updated.content = stepData;
+              break;
+            case 6:
+              updated.schedule = stepData;
+              break;
+            case 7:
+              updated.measurements = stepData;
+              break;
+          }
+          
+          return updated;
+        });
+      },
       loading: loading || isProcessing || companyLoading,
       companyData: primaryCompany
     };

@@ -6,34 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const N8N_AUTH_USER = Deno.env.get('N8N_AUTH_USER');
-const N8N_AUTH_PASS = Deno.env.get('N8N_AUTH_PASS');
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Basic auth verification
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Basic ')) {
-      return new Response(JSON.stringify({ error: 'Basic authentication required' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const credentials = atob(authHeader.slice(6));
-    const [username, password] = credentials.split(':');
-    
-    if (username !== N8N_AUTH_USER || password !== N8N_AUTH_PASS) {
-      return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
     const { input } = await req.json();
     
     console.log('Marketing Hub Post Creator Request:', input);

@@ -31,6 +31,8 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
 
+  console.log('🔍 MarketingStrategy render - strategy:', strategy, 'generating:', generating, 'campaignData:', campaignData);
+
   const generateStrategy = async () => {
     if (!campaignData.company || !campaignData.audience) {
       toast({
@@ -51,13 +53,18 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         }
       };
 
+      console.log('📤 Sending strategy input:', strategyInput);
+
       const { data, error } = await supabase.functions.invoke('marketing-hub-marketing-strategy', {
         body: { input: strategyInput }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Strategy generation error:', error);
+        throw error;
+      }
 
-      console.log('Strategy data received:', data);
+      console.log('📥 Raw strategy data received:', data);
       
       // Procesar la respuesta de N8N correctamente
       let processedStrategy = data;
@@ -65,6 +72,8 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         processedStrategy = data[0].output;
       }
 
+      console.log('🔄 Processed strategy:', processedStrategy);
+      
       setStrategy(processedStrategy);
       
       // Crear un resumen editable de la estrategia basado en la nueva estructura
@@ -84,14 +93,17 @@ ${Object.entries(processedStrategy.content_plan || {}).map(([platform, config]: 
   `• ${platform}: ${config.frequency} - ${config.tone}`).join('\n')}` 
         : JSON.stringify(processedStrategy, null, 2);
 
+      console.log('📝 Strategy text created:', strategyText);
       setEditedStrategy(strategyText);
+      
+      console.log('✅ Strategy state updated successfully');
       
       toast({
         title: "¡Estrategia generada!",
         description: "Tu estrategia de marketing personalizada está lista",
       });
     } catch (error: any) {
-      console.error('Error generating strategy:', error);
+      console.error('💥 Error generating strategy:', error);
       toast({
         title: "Error al generar estrategia",
         description: error.message || "No se pudo generar la estrategia",
@@ -135,8 +147,43 @@ ${Object.entries(processedStrategy.content_plan || {}).map(([platform, config]: 
 
   const canProceed = strategy && !generating;
 
+  // Debug temporal para ver el estado
+  if (generating) {
+    console.log('🔄 Component is in generating state');
+  }
+  
+  if (strategy) {
+    console.log('✅ Strategy exists, should show content');
+  } else {
+    console.log('❌ No strategy, will show generate button');
+  }
+
   return (
     <div className="space-y-6">
+      {/* Debugging temporal */}
+      {generating && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="py-4">
+            <p className="text-yellow-800">⏳ Generando estrategia... Debug: generating={generating.toString()}</p>
+          </CardContent>
+        </Card>
+      )}
+      
+      {strategy && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="py-4">
+            <p className="text-green-800">✅ Debug: Strategy loaded - core_message={strategy.core_message ? 'exists' : 'missing'}</p>
+          </CardContent>
+        </Card>
+      )}
+      
+      {!strategy && !generating && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="py-4">
+            <p className="text-blue-800">ℹ️ Debug: No strategy, showing generate button</p>
+          </CardContent>
+        </Card>
+      )}
       {/* Header */}
       <Card className="bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200">
         <CardHeader>

@@ -128,17 +128,32 @@ export const useMarketingDataPersistence = () => {
   const storeMarketingStrategyData = async (functionOutput: any, campaignId: string) => {
     setIsProcessing(true);
     try {
-      // Extract strategy data from function output
-      const strategyData = functionOutput.data || functionOutput;
+      // Extract strategy data from function output - handle N8N response structure
+      let strategyData = functionOutput;
+      if (Array.isArray(functionOutput) && functionOutput.length > 0 && functionOutput[0].output) {
+        strategyData = functionOutput[0].output;
+      }
+
+      // Extract comprehensive strategy information
+      const competitors = strategyData.competitors || [];
+      const mainStrategy = competitors.length > 3 ? competitors[3] : {};
 
       const { data: strategy, error: strategyError } = await supabase
         .from('marketing_strategies')
         .insert({
           campaign_id: campaignId,
-          unified_message: strategyData.mensaje_unificado || strategyData.unified_message,
-          competitive_analysis: strategyData.analisis_competitivo || strategyData.competitive_analysis || [],
-          marketing_funnel: strategyData.embudo_marketing || strategyData.marketing_funnel || {},
-          content_plan: strategyData.plan_contenidos || strategyData.content_plan || {}
+          unified_message: mainStrategy.message_differentiator?.core || 'Estrategia personalizada generada con IA',
+          competitive_analysis: competitors.slice(0, 3) || [], // Store competitor analysis
+          marketing_funnel: mainStrategy.strategies || {}, // Store funnel strategies
+          content_plan: {
+            platform_plans: mainStrategy.content_plan || {},
+            editorial_calendar: mainStrategy.editorial_calendar || [],
+            kpis: mainStrategy.kpis || {},
+            execution_plan: mainStrategy.execution_plan || {},
+            budget_estimation: mainStrategy.execution_plan?.budget_estimation || {},
+            message_differentiator: mainStrategy.message_differentiator || {},
+            full_strategy_data: strategyData // Store complete response for reference
+          }
         })
         .select()
         .single();
@@ -153,7 +168,7 @@ export const useMarketingDataPersistence = () => {
 
       toast({
         title: "Estrategia de marketing guardada",
-        description: "La estrategia ha sido almacenada correctamente",
+        description: "La estrategia completa ha sido almacenada correctamente",
       });
 
       return strategy.id;
@@ -174,22 +189,33 @@ export const useMarketingDataPersistence = () => {
   const storeContentCalendarData = async (functionOutput: any, strategyId: string) => {
     setIsProcessing(true);
     try {
-      const calendarData = functionOutput.data || functionOutput;
-      const posts = calendarData.calendario || calendarData.calendar || [];
+      // Extract calendar data from strategy output - handle N8N response structure
+      let calendarData = functionOutput;
+      if (Array.isArray(functionOutput) && functionOutput.length > 0 && functionOutput[0].output) {
+        calendarData = functionOutput[0].output;
+      }
 
-      if (posts.length > 0) {
-        const postsToInsert = posts.map((post: any) => ({
+      // Get editorial calendar from the strategy
+      const editorialCalendar = calendarData.competitors?.[3]?.editorial_calendar || 
+                               calendarData.editorial_calendar || 
+                               calendarData.calendario || 
+                               calendarData.calendar || 
+                               [];
+
+      if (editorialCalendar.length > 0) {
+        const postsToInsert = editorialCalendar.map((post: any) => ({
           strategy_id: strategyId,
-          publish_date: post.fecha || post.publish_date || post.date,
-          publish_time: post.hora || post.publish_time || post.time,
-          social_network: post.red_social || post.social_network || post.platform,
+          publish_date: post.date || post.fecha || post.publish_date,
+          publish_time: post.time || post.hora || post.publish_time || '12:00',
+          social_network: post.channel || post.red_social || post.social_network || post.platform,
           content_details: {
-            tipo_contenido: post.tipo_contenido || post.content_type,
-            categoria_enfoque: post.categoria_enfoque || post.focus_category,
-            tema_concepto: post.tema_concepto || post.theme_concept,
-            titulo_gancho: post.titulo_gancho || post.hook_title,
-            copy_mensaje: post.copy_mensaje || post.copy_message,
-            descripcion_creativo: post.descripcion_creativo || post.creative_description
+            format: post.format || post.formato || post.content_type,
+            title: post.title || post.titulo || post.hook_title,
+            cta: post.cta || post.call_to_action,
+            responsible: post.responsible || post.responsable,
+            tema_concepto: post.theme_concept || post.tema_concepto,
+            copy_mensaje: post.copy_message || post.copy_mensaje,
+            descripcion_creativo: post.creative_description || post.descripcion_creativo
           }
         }));
 
@@ -215,7 +241,7 @@ export const useMarketingDataPersistence = () => {
 
         toast({
           title: "Calendario de contenido guardado",
-          description: `${posts.length} publicaciones programadas`,
+          description: `${editorialCalendar.length} publicaciones programadas`,
         });
       }
 

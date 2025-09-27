@@ -25,7 +25,7 @@ interface MarketingStrategyProps {
 }
 
 export const MarketingStrategy = ({ campaignData, onComplete, loading }: MarketingStrategyProps) => {
-  const [strategy, setStrategy] = useState(null);
+  const [strategy, setStrategy] = useState<any>(null);
   const [editedStrategy, setEditedStrategy] = useState('');
   const [generating, setGenerating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -57,18 +57,37 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
 
       if (error) throw error;
 
-      setStrategy(data);
-      setEditedStrategy(
-        typeof data.estrategia === 'string' 
-          ? data.estrategia 
-          : JSON.stringify(data.estrategia, null, 2)
-      );
+      console.log('Strategy data received:', data);
+      
+      // Procesar la respuesta de N8N correctamente
+      let processedStrategy = data;
+      if (Array.isArray(data) && data.length > 0 && data[0].output) {
+        processedStrategy = data[0].output;
+      }
+
+      setStrategy(processedStrategy);
+      
+      // Crear un resumen editable de la estrategia
+      const strategyText = processedStrategy.competitors?.[3]?.message_differentiator ? 
+        `DIFERENCIADOR PRINCIPAL: ${processedStrategy.competitors[3].message_differentiator.core}
+
+ESTRATEGIAS POR FUNNEL:
+${Object.entries(processedStrategy.competitors[3].strategies || {}).map(([key, value]: [string, any]) => 
+  `• ${key.toUpperCase()}: ${value.objective}`).join('\n')}
+
+CANALES PRINCIPALES:
+${Object.entries(processedStrategy.competitors[3].content_plan || {}).map(([platform, config]: [string, any]) => 
+  `• ${platform}: ${config.frequency} - ${config.tone}`).join('\n')}` 
+        : JSON.stringify(processedStrategy, null, 2);
+
+      setEditedStrategy(strategyText);
       
       toast({
         title: "¡Estrategia generada!",
         description: "Tu estrategia de marketing personalizada está lista",
       });
     } catch (error: any) {
+      console.error('Error generating strategy:', error);
       toast({
         title: "Error al generar estrategia",
         description: error.message || "No se pudo generar la estrategia",
@@ -91,13 +110,15 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
 
     const strategyData = {
       strategy: strategy,
-      tactics: strategy.funnel_tactics || [],
+      competitors: strategy.competitors || [],
+      content_plan: strategy.competitors?.[3]?.content_plan || {},
+      editorial_calendar: strategy.competitors?.[3]?.editorial_calendar || [],
+      kpis: strategy.competitors?.[3]?.kpis || {},
+      execution_plan: strategy.competitors?.[3]?.execution_plan || {},
+      message_differentiator: strategy.competitors?.[3]?.message_differentiator || {},
+      funnel_strategies: strategy.competitors?.[3]?.strategies || {},
       edited_strategy: isEditing ? editedStrategy : undefined,
-      final_strategy: isEditing ? editedStrategy : (
-        typeof strategy.estrategia === 'string' 
-          ? strategy.estrategia 
-          : JSON.stringify(strategy.estrategia, null, 2)
-      )
+      final_strategy: isEditing ? editedStrategy : strategy
     };
 
     onComplete(strategyData);
@@ -204,27 +225,27 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
 
       {/* Generated Strategy */}
       {strategy && (
-        <Card className="border-purple-200 bg-purple-50/50">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-purple-800">
-                <CheckCircle className="h-5 w-5" />
-                Estrategia Generada
-              </CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center gap-2"
-              >
-                <Edit3 className="h-4 w-4" />
-                {isEditing ? 'Vista Previa' : 'Editar'}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Strategy Content */}
-            <div>
+        <div className="space-y-6">
+          {/* Strategy Overview Card */}
+          <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-violet-50">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-purple-800">
+                  <CheckCircle className="h-5 w-5" />
+                  Estrategia de Marketing Completa
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="flex items-center gap-2"
+                >
+                  <Edit3 className="h-4 w-4" />
+                  {isEditing ? 'Vista Previa' : 'Editar'}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
               {isEditing ? (
                 <div>
                   <Label htmlFor="strategy-edit">Personaliza tu Estrategia</Label>
@@ -243,45 +264,197 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
                 <div className="bg-white p-6 rounded-lg">
                   <div className="prose prose-sm max-w-none">
                     <pre className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {isEditing ? editedStrategy : (
-                        typeof strategy.estrategia === 'string' 
-                          ? strategy.estrategia 
-                          : JSON.stringify(strategy.estrategia, null, 2)
-                      )}
+                      {editedStrategy}
                     </pre>
                   </div>
                 </div>
               )}
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Key Tactics */}
-            {strategy.funnel_tactics && (
-              <div>
-                <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+          {/* Message Differentiator */}
+          {strategy.competitors?.[3]?.message_differentiator && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  Diferenciador Principal
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-primary/5 p-4 rounded-lg">
+                  <h4 className="font-semibold text-lg mb-2">
+                    {strategy.competitors[3].message_differentiator.core}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">LinkedIn</p>
+                      <p className="text-sm">{strategy.competitors[3].message_differentiator.linkedin_variation}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Instagram</p>
+                      <p className="text-sm">{strategy.competitors[3].message_differentiator.instagram_variation}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">TikTok</p>
+                      <p className="text-sm">{strategy.competitors[3].message_differentiator.tiktok_variation}</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Funnel Strategies */}
+          {strategy.competitors?.[3]?.strategies && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  Tácticas del Funnel
-                </h4>
-                <div className="grid gap-3">
-                  {strategy.funnel_tactics.slice(0, 5).map((tactic: any, index: number) => (
-                    <div key={index} className="bg-white p-4 rounded-lg border">
-                      <div className="flex items-start gap-3">
-                        <div className="bg-primary/10 p-1 rounded">
-                          <Lightbulb className="h-4 w-4 text-primary" />
-                        </div>
+                  Estrategias por Funnel
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  {Object.entries(strategy.competitors[3].strategies).map(([phase, details]: [string, any]) => (
+                    <div key={phase} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <h4 className="font-semibold capitalize text-lg">{phase}</h4>
+                        <Badge variant="outline">{details.timeline}</Badge>
+                      </div>
+                      <p className="text-muted-foreground mb-3">{details.objective}</p>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Canal Principal: {details.main_channel}</p>
+                        <p className="text-sm font-medium">KPI: {details.kpi}</p>
                         <div>
-                          <h5 className="font-medium">{tactic.fase || `Táctica ${index + 1}`}</h5>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {tactic.descripcion || tactic}
-                          </p>
+                          <p className="text-sm font-medium mb-1">Tácticas:</p>
+                          <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                            {details.tactics?.map((tactic: string, idx: number) => (
+                              <li key={idx}>{tactic}</li>
+                            ))}
+                          </ul>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Content Plan */}
+          {strategy.competitors?.[3]?.content_plan && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5 text-primary" />
+                  Plan de Contenido por Plataforma
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries(strategy.competitors[3].content_plan).map(([platform, config]: [string, any]) => (
+                    <div key={platform} className="border rounded-lg p-4">
+                      <h4 className="font-semibold capitalize mb-3">{platform}</h4>
+                      <div className="space-y-2 text-sm">
+                        <p><span className="font-medium">Frecuencia:</span> {config.frequency}</p>
+                        <p><span className="font-medium">Tono:</span> {config.tone}</p>
+                        <p><span className="font-medium">CTA:</span> {config.cta}</p>
+                        <div>
+                          <p className="font-medium mb-1">Formatos:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {config.formats?.map((format: string, idx: number) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {format}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-muted-foreground text-xs">{config.justification}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* KPIs */}
+          {strategy.competitors?.[3]?.kpis?.goals && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  KPIs y Objetivos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {strategy.competitors[3].kpis.goals.map((goal: any, idx: number) => (
+                    <div key={idx} className="bg-primary/5 p-4 rounded-lg">
+                      <h4 className="font-semibold">{goal.kpi}</h4>
+                      <p className="text-lg font-bold text-primary">{goal.target}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Competitors Analysis */}
+          {strategy.competitors && strategy.competitors.length > 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  Análisis de Competencia
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  {strategy.competitors.slice(0, 3).map((competitor: any, idx: number) => (
+                    <div key={idx} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold">{competitor.name}</h4>
+                          <a href={competitor.url} target="_blank" rel="noopener noreferrer" 
+                             className="text-primary text-sm hover:underline">
+                            {competitor.url}
+                          </a>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">{competitor.digital_tactics}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-green-600">Fortalezas:</p>
+                          <p className="text-sm">{competitor.strengths}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-red-600">Debilidades:</p>
+                          <p className="text-sm">{competitor.weaknesses}</p>
+                        </div>
+                      </div>
+                      {competitor.benchmarks && (
+                        <div className="mt-3 pt-3 border-t">
+                          <p className="text-sm font-medium mb-2">Benchmarks:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(competitor.benchmarks).map(([platform, data]: [string, any]) => (
+                              platform !== 'source' && (
+                                <Badge key={platform} variant="outline" className="text-xs">
+                                  {platform}: {data.frequency} - {data.engagement}
+                                </Badge>
+                              )
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Complete Button */}

@@ -632,15 +632,22 @@ ${Object.entries(processedStrategy.content_plan || {}).map(([platform, config]: 
                         <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
                           <h5 className="font-semibold text-blue-800 mb-3">📊 Benchmarks de Redes Sociales</h5>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {Object.entries(competitor.benchmarks).map(([platform, data]: [string, any]) => (
-                              platform !== 'sources' && (
-                                <div key={platform} className="bg-white p-3 rounded-lg border">
+                            {Object.entries(competitor.benchmarks)
+                              .filter(([platform]) => platform !== 'sources')
+                              .map(([platform, data]: [string, any]) => (
+                                <div key={`${competitor.name}-${platform}`} className="bg-white p-3 rounded-lg border">
                                   <h6 className="font-medium text-sm text-gray-700 capitalize">{platform}</h6>
-                                  <p className="text-xs text-gray-600">{data.frequency}</p>
-                                  <p className="text-xs text-blue-600 font-medium">Engagement: {data.engagement_rate}</p>
+                                  <p className="text-xs text-gray-600">
+                                    {typeof data === 'string' ? data : data?.frequency || 'No disponible'}
+                                  </p>
+                                  {data?.engagement_rate && (
+                                    <p className="text-xs text-blue-600 font-medium">
+                                      Engagement: {data.engagement_rate}
+                                    </p>
+                                  )}
                                 </div>
-                              )
-                            ))}
+                              ))
+                            }
                           </div>
                         </div>
                       )}

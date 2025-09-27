@@ -112,6 +112,17 @@ serve(async (req) => {
 
     console.log('Company found:', companyMember.company_id);
 
+    // Get company data including social networks, industry, and country
+    const { data: companyData, error: companyDataError } = await supabase
+      .from('companies')
+      .select('name, industry_sector, country, facebook_url, twitter_url, linkedin_url, instagram_url, youtube_url, tiktok_url')
+      .eq('id', companyMember.company_id)
+      .single();
+
+    if (companyDataError) {
+      console.error('Error getting company data:', companyDataError);
+    }
+
     // Get company strategy to obtain propuesta_valor
     const { data: companyStrategy, error: strategyError } = await supabase
       .from('company_strategy')
@@ -128,14 +139,81 @@ serve(async (req) => {
       console.log('No company strategy found or no propuesta_valor, using default');
     }
 
-    // Set defaults for optional fields with real propuesta_valor
+    // Get content analysis findings
+    const { data: contentInsights } = await supabase
+      .from('audience_insights')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    const { data: marketingInsights } = await supabase
+      .from('marketing_insights')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    const { data: contentRecommendations } = await supabase
+      .from('content_recommendations')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    // Get social media connections to determine active networks
+    const { data: linkedinConnection } = await supabase
+      .from('linkedin_connections')
+      .select('is_active')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .limit(1);
+
+    const { data: facebookConnection } = await supabase
+      .from('facebook_instagram_connections')
+      .select('is_active')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .limit(1);
+
+    const { data: tiktokConnection } = await supabase
+      .from('tiktok_connections')
+      .select('is_active')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .limit(1);
+
+    // Build active social networks array
+    const redesSocialesHabilitadas = [];
+    if (linkedinConnection && linkedinConnection.length > 0) redesSocialesHabilitadas.push('linkedin');
+    if (facebookConnection && facebookConnection.length > 0) redesSocialesHabilitadas.push('facebook', 'instagram');
+    if (tiktokConnection && tiktokConnection.length > 0) redesSocialesHabilitadas.push('tiktok');
+
+    console.log('Active social networks:', redesSocialesHabilitadas);
+
+    // Set defaults for optional fields with real propuesta_valor and enhanced data
     const processedInput = {
       nombre_empresa: input.nombre_empresa,
-      pais: input.pais || 'No especificado',
+      pais: companyData?.country || input.pais || 'No especificado',
+      industria: companyData?.industry_sector || 'No especificado',
       objetivo_de_negocio: input.objetivo_de_negocio,
       propuesta_de_valor: propuestaValor,
+      redes_sociales_habilitadas: redesSocialesHabilitadas,
+      redes_sociales_urls: {
+        facebook: companyData?.facebook_url || null,
+        twitter: companyData?.twitter_url || null,
+        linkedin: companyData?.linkedin_url || null,
+        instagram: companyData?.instagram_url || null,
+        youtube: companyData?.youtube_url || null,
+        tiktok: companyData?.tiktok_url || null
+      },
       audiencia_objetivo: input.audiencia_objetivo || { buyer_personas: [] },
-      objetivo_campana: input.objetivo_campana || 'No especificado'
+      objetivo_campana: input.objetivo_campana || 'No especificado',
+      hallazgos_analisis: {
+        insights_audiencia: contentInsights || [],
+        insights_marketing: marketingInsights || [],
+        recomendaciones_contenido: contentRecommendations || []
+      }
     };
 
     console.log('Processed input with real propuesta_valor:', JSON.stringify(processedInput, null, 2));

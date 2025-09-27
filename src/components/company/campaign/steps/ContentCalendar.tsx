@@ -98,12 +98,14 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
         audiencia_objetivo: {
           buyer_personas: campaignData.audience?.buyer_personas || []
         },
-        estrategia_de_marketing: {
-          funnel_tactics: campaignData.strategy?.funnel_tactics || []
-        }
+        // Pasar toda la estrategia de marketing generada en el paso anterior
+        estrategia_de_marketing: campaignData.strategy?.strategy || campaignData.strategy || {}
       };
 
       console.log('📅 Enviando datos para calendario:', calendarInput);
+      console.log('🔍 Debug - estrategia completa:', campaignData.strategy);
+      console.log('🔍 Debug - strategy.strategy:', campaignData.strategy?.strategy);
+      console.log('🔍 Debug - estrategia enviada:', calendarInput.estrategia_de_marketing);
       
       const { data, error } = await supabase.functions.invoke('marketing-hub-content-calendar', {
         body: { input: calendarInput }

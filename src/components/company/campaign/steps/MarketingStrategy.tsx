@@ -63,13 +63,23 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
 
       console.log('📤 Sending strategy input:', strategyInput);
 
+      // Use AbortController to guard against hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const res = await fetch('https://buildera.app.n8n.cloud/webhook/marketing-strategy', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(strategyInput)
+        body: JSON.stringify(strategyInput),
+        mode: 'cors',
+        credentials: 'omit',
+        cache: 'no-store',
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (!res.ok) {
         console.error('❌ Webhook error status:', res.status, res.statusText);
@@ -225,10 +235,18 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
     } catch (error: any) {
       console.error('💥 Error generating strategy:', error);
       setStrategy(null); // Reset strategy on error
+
+      let description = error?.message || 'No se pudo generar la estrategia. Por favor, intenta de nuevo.';
+      if (error?.name === 'AbortError') {
+        description = 'Tiempo de espera agotado al contactar el webhook (30s). Intenta nuevamente.';
+      } else if (typeof error?.message === 'string' && error.message.includes('Failed to fetch')) {
+        description = 'No se pudo conectar con el webhook. Verifica que el endpoint permita CORS y esté disponible.';
+      }
+
       toast({
-        title: "Error al generar estrategia",
-        description: error.message || "No se pudo generar la estrategia. Por favor, intenta de nuevo.",
-        variant: "destructive"
+        title: 'Error al generar estrategia',
+        description,
+        variant: 'destructive'
       });
     } finally {
       console.log('🏁 Strategy generation finished, setting generating=false');

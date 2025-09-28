@@ -46,6 +46,18 @@ export const ContentEnhancementDialog = ({
   const contentType = contentItem?.calendar_item?.tipo_contenido?.toLowerCase() || '';
   const needsImage = contentType.includes('imagen') || contentType.includes('carrusel') || contentType.includes('historia');
   const needsVideo = contentType.includes('video') || contentType.includes('reel');
+  
+  // Determinar el tipo de contenido específico sugerido
+  const getSuggestedContentType = () => {
+    if (contentType.includes('video')) return { type: 'video', label: 'Video', icon: Video };
+    if (contentType.includes('reel')) return { type: 'video', label: 'Reel', icon: Video };
+    if (contentType.includes('imagen')) return { type: 'image', label: 'Imagen', icon: ImageIcon };
+    if (contentType.includes('carrusel')) return { type: 'image', label: 'Carrusel de imágenes', icon: ImageIcon };
+    if (contentType.includes('historia')) return { type: 'image', label: 'Historia/Story', icon: ImageIcon };
+    return { type: 'image', label: 'Contenido visual', icon: ImageIcon };
+  };
+  
+  const suggestedContent = getSuggestedContentType();
 
   const generateImageWithAI = async () => {
     setGeneratingImage(true);
@@ -232,24 +244,30 @@ export const ContentEnhancementDialog = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Completar Contenido - {contentItem?.calendar_item?.tema_concepto}
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              {needsImage && "Este contenido necesita una imagen. "}
-              {needsVideo && "Este contenido necesita un video. "}
-              Elige cómo quieres completarlo.
-            </p>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Completar Contenido - {contentItem?.calendar_item?.tema_concepto}
+          </DialogTitle>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">{contentItem?.calendar_item?.red_social}</Badge>
+              <Badge variant="secondary">{contentItem?.calendar_item?.tipo_contenido}</Badge>
+            </div>
+            <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+              <suggestedContent.icon className="h-5 w-5 text-primary" />
+              <div>
+                <p className="font-medium text-sm">Contenido sugerido: {suggestedContent.label}</p>
+                <p className="text-sm text-muted-foreground">
+                  Según tu calendario, este post necesita un {suggestedContent.label.toLowerCase()} para completarse.
+                </p>
+              </div>
+            </div>
+          </div>
           </DialogHeader>
 
           {/* Generated content preview */}
           <Card className="bg-muted/30">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline">{contentItem?.calendar_item?.red_social}</Badge>
-                <Badge variant="secondary">{contentItem?.calendar_item?.tipo_contenido}</Badge>
-              </div>
               <p className="text-sm font-medium mb-2">{contentItem?.calendar_item?.tema_concepto}</p>
               <p className="text-sm text-muted-foreground line-clamp-3">
                 {contentItem?.content?.texto_final || contentItem?.content?.generatedText || 'Contenido generado'}
@@ -274,51 +292,99 @@ export const ContentEnhancementDialog = ({
             </TabsList>
 
             <TabsContent value="ai" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(needsImage || !needsVideo) && (
-                  <Card className="cursor-pointer transition-all hover:shadow-md">
-                    <CardContent className="p-6 text-center">
-                      <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <ImageIcon className="h-8 w-8 text-primary" />
-                      </div>
-                      <h3 className="font-semibold mb-2">Generar Imagen</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Crea una imagen perfecta para tu contenido usando IA
-                      </p>
-                      <Button 
-                        onClick={generateImageWithAI}
-                        disabled={generatingImage}
-                        className="w-full"
-                      >
-                        {generatingImage ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ImageIcon className="h-4 w-4 mr-2" />}
-                        {generatingImage ? 'Generando...' : 'Generar Imagen'}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
+              {/* Recommended option based on content type */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span className="text-sm font-medium text-primary">Recomendado para este contenido</span>
+                </div>
+                <Card className={`border-2 transition-all hover:shadow-md ${
+                  suggestedContent.type === 'image' ? 'border-primary/30 bg-primary/5' : 'border-red-500/30 bg-red-50'
+                }`}>
+                  <CardContent className="p-6 text-center">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+                      suggestedContent.type === 'image' ? 'bg-primary/10' : 'bg-red-500/10'
+                    }`}>
+                      <suggestedContent.icon className={`h-8 w-8 ${
+                        suggestedContent.type === 'image' ? 'text-primary' : 'text-red-600'
+                      }`} />
+                    </div>
+                    <h3 className="font-semibold mb-2">
+                      Generar {suggestedContent.label}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {suggestedContent.type === 'image' 
+                        ? `Crea una ${suggestedContent.label.toLowerCase()} perfecta para tu ${contentItem?.calendar_item?.tipo_contenido} usando IA`
+                        : `Crea un ${suggestedContent.label.toLowerCase()} dinámico para tu ${contentItem?.calendar_item?.tipo_contenido} usando IA`
+                      }
+                    </p>
+                    <Button 
+                      onClick={suggestedContent.type === 'image' ? generateImageWithAI : generateVideoWithAI}
+                      disabled={suggestedContent.type === 'image' ? generatingImage : generatingVideo}
+                      className="w-full"
+                      size="lg"
+                    >
+                      {(suggestedContent.type === 'image' ? generatingImage : generatingVideo) ? 
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : 
+                        <suggestedContent.icon className="h-4 w-4 mr-2" />
+                      }
+                      {(suggestedContent.type === 'image' ? generatingImage : generatingVideo) ? 
+                        'Generando...' : 
+                        `Generar ${suggestedContent.label}`
+                      }
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
 
-                {(needsVideo || !needsImage) && (
-                  <Card className="cursor-pointer transition-all hover:shadow-md">
-                    <CardContent className="p-6 text-center">
-                      <div className="bg-red-500/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Video className="h-8 w-8 text-red-600" />
-                      </div>
-                      <h3 className="font-semibold mb-2">Generar Video</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Crea un video dinámico para tu contenido usando IA
-                      </p>
-                      <Button 
-                        onClick={generateVideoWithAI}
-                        disabled={generatingVideo}
-                        className="w-full"
-                        variant="secondary"
-                      >
-                        {generatingVideo ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
-                        {generatingVideo ? 'Generando...' : 'Generar Video'}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
+              {/* Alternative options */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm font-medium text-muted-foreground">Otras opciones disponibles</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {suggestedContent.type !== 'image' && (
+                    <Card className="cursor-pointer transition-all hover:shadow-md opacity-75">
+                      <CardContent className="p-4 text-center">
+                        <div className="bg-primary/10 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <ImageIcon className="h-6 w-6 text-primary" />
+                        </div>
+                        <h3 className="font-medium mb-2 text-sm">Generar Imagen</h3>
+                        <Button 
+                          onClick={generateImageWithAI}
+                          disabled={generatingImage}
+                          className="w-full"
+                          variant="outline"
+                          size="sm"
+                        >
+                          {generatingImage ? <Loader2 className="h-3 w-3 mr-2 animate-spin" /> : <ImageIcon className="h-3 w-3 mr-2" />}
+                          {generatingImage ? 'Generando...' : 'Generar'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {suggestedContent.type !== 'video' && (
+                    <Card className="cursor-pointer transition-all hover:shadow-md opacity-75">
+                      <CardContent className="p-4 text-center">
+                        <div className="bg-red-500/10 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <Video className="h-6 w-6 text-red-600" />
+                        </div>
+                        <h3 className="font-medium mb-2 text-sm">Generar Video</h3>
+                        <Button 
+                          onClick={generateVideoWithAI}
+                          disabled={generatingVideo}
+                          className="w-full"
+                          variant="outline"
+                          size="sm"
+                        >
+                          {generatingVideo ? <Loader2 className="h-3 w-3 mr-2 animate-spin" /> : <Play className="h-3 w-3 mr-2" />}
+                          {generatingVideo ? 'Generando...' : 'Generar'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </div>
             </TabsContent>
 
@@ -330,7 +396,8 @@ export const ContentEnhancementDialog = ({
                   </div>
                   <h3 className="font-semibold mb-2">Biblioteca de Contenido</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Selecciona una imagen o video de tu biblioteca existente
+                    Selecciona {suggestedContent.type === 'image' ? 'una imagen' : 'un video'} de tu biblioteca existente
+                    {suggestedContent.type === 'image' ? ' (recomendado para este tipo de contenido)' : ' (recomendado para este tipo de contenido)'}
                   </p>
                   <Button 
                     onClick={() => setShowImageSelector(true)}
@@ -352,7 +419,8 @@ export const ContentEnhancementDialog = ({
                   </div>
                   <h3 className="font-semibold mb-2">Subir Archivo</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Sube una imagen o video desde tu computador (máx. 10MB)
+                    Sube {suggestedContent.type === 'image' ? 'una imagen' : 'un video'} desde tu computador (máx. 10MB)
+                    {suggestedContent.type === 'image' ? ' - Recomendado: JPG, PNG para este contenido' : ' - Recomendado: MP4, MOV para este contenido'}
                   </p>
                   <div className="space-y-2">
                     <input

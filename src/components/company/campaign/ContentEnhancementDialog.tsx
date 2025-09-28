@@ -62,6 +62,12 @@ export const ContentEnhancementDialog = ({
   const generateImageWithAI = async () => {
     setGeneratingImage(true);
     try {
+      // Get current user ID
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error('Usuario no autenticado');
+      }
+
       const { data, error } = await supabase.functions.invoke('marketing-hub-image-creator', {
         body: {
           input: {
@@ -79,7 +85,7 @@ export const ContentEnhancementDialog = ({
 
       // Save to content library
       await supabase.from('content_library').insert({
-        user_id: profile.user_id,
+        user_id: currentUser.id,
         title: `Imagen - ${contentItem.calendar_item.tema_concepto}`,
         description: contentItem.content?.texto_final?.substring(0, 200) || '',
         file_url: data.image_url,
@@ -108,6 +114,12 @@ export const ContentEnhancementDialog = ({
   const generateVideoWithAI = async () => {
     setGeneratingVideo(true);
     try {
+      // Get current user ID
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error('Usuario no autenticado');
+      }
+
       const contentType = contentItem?.calendar_item?.tipo_contenido?.toLowerCase() || '';
       
       // Determine which function to use based on content type
@@ -133,7 +145,7 @@ export const ContentEnhancementDialog = ({
 
       // Save to content library  
       await supabase.from('content_library').insert({
-        user_id: profile.user_id,
+        user_id: currentUser.id,
         title: `Video - ${contentItem.calendar_item.tema_concepto}`,
         description: contentItem.content?.texto_final?.substring(0, 200) || '',
         file_url: data.video_url,
@@ -189,11 +201,11 @@ export const ContentEnhancementDialog = ({
     setUploadingFile(true);
     try {
       // Get current user ID for folder structure
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuario no autenticado');
+      const { data: { user: uploadUser } } = await supabase.auth.getUser();
+      if (!uploadUser) throw new Error('Usuario no autenticado');
 
       // Upload to Supabase Storage with user-specific folder structure
-      const fileName = `${user.id}/campaign-content/${Date.now()}-${file.name}`;
+      const fileName = `${uploadUser.id}/campaign-content/${Date.now()}-${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('content-files')
         .upload(fileName, file);
@@ -207,7 +219,7 @@ export const ContentEnhancementDialog = ({
 
       // Save to content library
       await supabase.from('content_library').insert({
-        user_id: profile.user_id,
+        user_id: uploadUser.id,
         title: `${isImage ? 'Imagen' : 'Video'} - ${contentItem.calendar_item.tema_concepto}`,
         description: contentItem.content?.texto_final?.substring(0, 200) || '',
         file_url: publicUrl,

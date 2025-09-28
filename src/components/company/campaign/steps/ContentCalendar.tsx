@@ -139,11 +139,23 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
         description: "Tu calendario de contenido está listo para revisar",
       });
     } catch (error: any) {
-      toast({
-        title: "Error al generar calendario",
-        description: error.message || "No se pudo generar el calendario",
-        variant: "destructive"
-      });
+      console.error('❌ Error completo en generateCalendar:', error);
+      
+      // Handle specific N8N API errors with retry option
+      if (error.details && error.canRetry) {
+        toast({
+          title: error.message || "Error al generar calendario",
+          description: error.details + " Puedes intentar de nuevo.",
+          variant: "destructive",
+          duration: 6000, // Longer duration for retry message
+        });
+      } else {
+        toast({
+          title: "Error al generar calendario",
+          description: "Error de conexión con la API de generación. Por favor, inténtalo de nuevo.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setGenerating(false);
     }
@@ -323,7 +335,12 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
             {generating ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Generando Calendario...
+                Generando Calendario con IA...
+              </>
+            ) : calendar ? (
+              <>
+                <RefreshCw className="w-5 h-5 mr-2" />
+                Regenerar Calendario con IA
               </>
             ) : (
               <>
@@ -332,6 +349,15 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
               </>
             )}
           </Button>
+          
+          {!calendar && (
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-700">
+                <span className="font-medium">💡 Nota:</span> El calendario se genera usando IA avanzada. 
+                Si hay algún error, puedes intentar de nuevo hasta obtener el resultado deseado.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

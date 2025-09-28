@@ -237,41 +237,38 @@ serve(async (req) => {
     console.log('Extracted calendario_contenido:', calendario_contenido);
 
     if (!Array.isArray(calendario_contenido) || calendario_contenido.length === 0) {
-      console.warn('No valid calendar content received from N8N, creating fallback aligned with funnel strategies');
-      // Fallback: create funnel-aligned calendar structure
-      const platforms = input.plataformas_seleccionadas || ['linkedin'];
-      const numDays = input.numero_dias_generar || 7;
-      const startDate = new Date(input.fecha_inicio_calendario);
-      const funnelStages = ['awareness', 'consideration', 'conversion', 'loyalty'];
+      console.error('❌ No valid calendar content received from N8N API');
       
-      calendario_contenido = [];
-      for (let day = 0; day < numDays; day++) {
-        const currentDate = new Date(startDate);
-        currentDate.setDate(startDate.getDate() + day);
-        const dateStr = currentDate.toISOString().split('T')[0];
-        
-        // Distribute content across funnel stages
-        const funnelStage = funnelStages[day % funnelStages.length];
-        const stageName = funnelStage.charAt(0).toUpperCase() + funnelStage.slice(1);
-        
-        for (const platform of platforms) {
-          calendario_contenido.push({
-            fecha: dateStr,
-            hora_publicacion: '10:00',
-            red_social: platform,
-            tipo_contenido: 'Post',
-            categoria_enfoque: funnelStage,
-            etapa_funnel: funnelStage,
-            funnel_stage: funnelStage, // Add the funnel_stage field
-            tema_concepto: `${stageName}: Contenido para ${platform} - ${input.nombre_empresa}`,
-            descripcion_creativo: `Contenido de ${funnelStage} generado para ${platform}`,
-            titulo_gancho: `${stageName} - ${input.nombre_empresa}`,
-            copy_mensaje: `Contenido estratégico para la etapa de ${funnelStage} en ${platform}`,
-            estado: 'programado',
-            prioridad: 2
-          });
+      // Determine the specific error message based on what happened
+      let errorMessage = 'Error al generar calendario de contenido';
+      let errorDetails = 'No se pudo obtener contenido válido de la API de generación';
+      
+      if (!n8nResponse.ok) {
+        if (n8nResponse.status === 524) {
+          errorMessage = 'Timeout de la API de generación';
+          errorDetails = 'La generación del calendario tomó demasiado tiempo. Por favor, inténtalo de nuevo.';
+        } else {
+          errorMessage = `Error de API (${n8nResponse.status})`;
+          errorDetails = `Error ${n8nResponse.status}: ${n8nResponse.statusText || 'Error del servidor'}`;
         }
+      } else if (!rawText || rawText.trim().length === 0) {
+        errorMessage = 'Respuesta vacía de la API';
+        errorDetails = 'La API de generación no devolvió contenido. Por favor, inténtalo de nuevo.';
+      } else {
+        errorMessage = 'Error al procesar la respuesta';
+        errorDetails = 'La respuesta de la API no tiene el formato esperado. Por favor, inténtalo de nuevo.';
       }
+      
+      return new Response(JSON.stringify({ 
+        error: errorMessage,
+        details: errorDetails,
+        canRetry: true,
+        n8nStatus: n8nResponse.status,
+        hasContent: !!rawText && rawText.trim().length > 0
+      }), {
+        status: 422, // Unprocessable Entity - indicates that retry might work
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Validate and enhance calendar items with funnel alignment

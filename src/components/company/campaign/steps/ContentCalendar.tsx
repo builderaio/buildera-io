@@ -125,12 +125,14 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
       }
 
       console.log('📅 Estructura de data recibida:', Object.keys(data));
-      console.log('📅 Calendario contenido:', data.calendario_contenido);
+      console.log('📅 Calendario editorial:', data.calendario_editorial);
       console.log('📊 Distribución funnel:', data.resumen?.distribucion_funnel);
       console.log('🎯 Alineación estratégica:', data.resumen?.alineacion_estrategica);
       
-      setCalendar(data);
-      setEditedCalendar(data.calendario_contenido || []);
+      // Handle the actual API response structure
+      const calendarItems = data.calendario_editorial || data.output?.calendario_editorial || [];
+      setCalendar({ ...data, calendario_editorial: calendarItems });
+      setEditedCalendar(calendarItems);
       
       toast({
         title: "¡Calendario generado!",
@@ -167,9 +169,9 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
 
     const calendarData = {
       calendar: calendar,
-      calendar_items: isEditing ? editedCalendar : (calendar.calendario_contenido || []),
+      calendar_items: isEditing ? editedCalendar : (calendar.calendario_editorial || []),
       edited_calendar: isEditing ? editedCalendar : undefined,
-      final_calendar: isEditing ? editedCalendar : (calendar.calendario_contenido || []),
+      final_calendar: isEditing ? editedCalendar : (calendar.calendario_editorial || []),
       selected_platforms: selectedPlatforms,
       duration: parseInt(duration),
       start_date: startDate
@@ -457,26 +459,27 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
                                       </SelectContent>
                                     </Select>
                                   </div>
-                                  <div>
-                                    <Label className="text-xs font-medium">Etapa Funnel</Label>
-                                    <Select
-                                      value={item.etapa_funnel || item.categoria_enfoque || 'awareness'}
-                                      onValueChange={(value) => {
-                                        updateCalendarItem(index, 'etapa_funnel', value);
-                                        updateCalendarItem(index, 'categoria_enfoque', value);
-                                      }}
-                                    >
-                                      <SelectTrigger className="h-9 text-sm">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="awareness">Conciencia</SelectItem>
-                                        <SelectItem value="consideration">Consideración</SelectItem>
-                                        <SelectItem value="conversion">Conversión</SelectItem>
-                                        <SelectItem value="loyalty">Lealtad</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
+                                   <div>
+                                     <Label className="text-xs font-medium">Etapa Funnel</Label>
+                                     <Select
+                                       value={item.funnel_stage || item.etapa_funnel || item.categoria_enfoque || 'awareness'}
+                                       onValueChange={(value) => {
+                                         updateCalendarItem(index, 'funnel_stage', value);
+                                         updateCalendarItem(index, 'etapa_funnel', value);
+                                         updateCalendarItem(index, 'categoria_enfoque', value);
+                                       }}
+                                     >
+                                       <SelectTrigger className="h-9 text-sm">
+                                         <SelectValue />
+                                       </SelectTrigger>
+                                       <SelectContent>
+                                         <SelectItem value="awareness">Conciencia</SelectItem>
+                                         <SelectItem value="consideration">Consideración</SelectItem>
+                                         <SelectItem value="conversion">Conversión</SelectItem>
+                                         <SelectItem value="loyalty">Lealtad</SelectItem>
+                                       </SelectContent>
+                                     </Select>
+                                   </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <div>
@@ -518,9 +521,9 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
                                   <Badge variant="outline" className="text-xs">
                                     {item.fecha} • {hora}
                                   </Badge>
-                                  <Badge className={`text-xs ${getFunnelStageColor(item.etapa_funnel || item.categoria_enfoque)}`}>
-                                    🎯 {getFunnelStageName(item.etapa_funnel || item.categoria_enfoque)}
-                                  </Badge>
+                                   <Badge className={`text-xs ${getFunnelStageColor(item.funnel_stage || item.etapa_funnel || item.categoria_enfoque)}`}>
+                                     🎯 {getFunnelStageName(item.funnel_stage || item.etapa_funnel || item.categoria_enfoque)}
+                                   </Badge>
                                   <Badge variant="outline" className="text-xs">
                                     {item.tipo_contenido}
                                   </Badge>

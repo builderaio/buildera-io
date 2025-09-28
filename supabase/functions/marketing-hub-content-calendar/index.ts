@@ -257,11 +257,12 @@ serve(async (req) => {
         for (const platform of platforms) {
           calendario_contenido.push({
             fecha: dateStr,
-            hora: '10:00',
+            hora_publicacion: '10:00',
             red_social: platform,
             tipo_contenido: 'Post',
             categoria_enfoque: funnelStage,
             etapa_funnel: funnelStage,
+            funnel_stage: funnelStage, // Add the funnel_stage field
             tema_concepto: `${stageName}: Contenido para ${platform} - ${input.nombre_empresa}`,
             descripcion_creativo: `Contenido de ${funnelStage} generado para ${platform}`,
             titulo_gancho: `${stageName} - ${input.nombre_empresa}`,
@@ -276,23 +277,25 @@ serve(async (req) => {
     // Validate and enhance calendar items with funnel alignment
     calendario_contenido = calendario_contenido.map((item: any, index: number) => {
       // Ensure each item has funnel stage information
-      if (!item.etapa_funnel && !item.categoria_enfoque) {
+      if (!item.funnel_stage && !item.etapa_funnel && !item.categoria_enfoque) {
         const funnelStages = ['awareness', 'consideration', 'conversion', 'loyalty'];
-        item.etapa_funnel = funnelStages[index % funnelStages.length];
-        item.categoria_enfoque = item.etapa_funnel;
+        item.funnel_stage = funnelStages[index % funnelStages.length];
+        item.etapa_funnel = item.funnel_stage;
+        item.categoria_enfoque = item.funnel_stage;
       }
       
-      // Ensure consistent structure
+      // Ensure consistent structure with funnel_stage as primary field
       return {
         ...item,
-        etapa_funnel: item.etapa_funnel || item.categoria_enfoque || 'awareness',
-        categoria_enfoque: item.categoria_enfoque || item.etapa_funnel || 'awareness'
+        funnel_stage: item.funnel_stage || item.etapa_funnel || item.categoria_enfoque || 'awareness',
+        etapa_funnel: item.etapa_funnel || item.funnel_stage || item.categoria_enfoque || 'awareness',
+        categoria_enfoque: item.categoria_enfoque || item.funnel_stage || item.etapa_funnel || 'awareness'
       };
     });
 
-    // Generate funnel distribution summary
+    // Generate funnel distribution summary using funnel_stage field
     const funnelDistribution = calendario_contenido.reduce((acc: any, item: any) => {
-      const stage = item.etapa_funnel || item.categoria_enfoque || 'unknown';
+      const stage = item.funnel_stage || item.etapa_funnel || item.categoria_enfoque || 'unknown';
       acc[stage] = (acc[stage] || 0) + 1;
       return acc;
     }, {});
@@ -301,7 +304,7 @@ serve(async (req) => {
 
     const response = {
       message: `Calendario de contenido generado exitosamente para ${input.nombre_empresa}`,
-      calendario_contenido: calendario_contenido,
+      calendario_editorial: calendario_contenido, // Changed from calendario_contenido to match API response
       resumen: {
         total_posts: calendario_contenido.length,
         plataformas_incluidas: input.plataformas_seleccionadas || ['linkedin'],

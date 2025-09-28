@@ -43,8 +43,15 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
   const [scheduledItems, setScheduledItems] = useState([]);
   const { toast } = useToast();
 
+  // Debug logging and better data access
+  console.log('ContentScheduling - campaignData:', campaignData);
+  console.log('ContentScheduling - campaignData.content:', campaignData.content);
+  
   const createdContent = campaignData.content?.created_content || [];
   const totalItems = createdContent.length;
+  
+  console.log('ContentScheduling - createdContent:', createdContent);
+  console.log('ContentScheduling - totalItems:', totalItems);
 
   const scheduleAllContent = async () => {
     if (totalItems === 0) {
@@ -129,7 +136,22 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
     return platforms;
   };
 
+  const getContentByPlatform = () => {
+    const platforms = {};
+    createdContent.forEach(item => {
+      const platform = item.calendar_item?.red_social;
+      if (platform && !platforms[platform]) {
+        platforms[platform] = 0;
+      }
+      if (platform) {
+        platforms[platform]++;
+      }
+    });
+    return platforms;
+  };
+
   const scheduledByPlatform = getScheduledByPlatform();
+  const contentByPlatform = getContentByPlatform();
   const canProceed = scheduledItems.length > 0;
 
   return (
@@ -230,8 +252,9 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
             </div>
           ) : (
             <div className="space-y-4">
+              {/* Show content overview by platform */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {Object.entries(scheduledByPlatform).map(([platform, count]) => {
+                {Object.entries(contentByPlatform).map(([platform, count]) => {
                   const platformConfig = getPlatform(platform);
                   if (!platformConfig) return null;
                   
@@ -247,6 +270,31 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
                     </div>
                   );
                 })}
+              </div>
+              
+              {/* Content items preview */}
+              <div className="mt-4">
+                <h4 className="text-sm font-medium mb-3 text-muted-foreground">Vista previa del contenido:</h4>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {createdContent.slice(0, 5).map((item, index) => (
+                    <div key={index} className="flex items-center gap-3 p-2 bg-muted/50 rounded text-sm">
+                      <Badge variant="secondary" className="text-xs">
+                        {item.calendar_item?.red_social || 'Sin plataforma'}
+                      </Badge>
+                      <span className="flex-1 truncate">
+                        {item.calendar_item?.tema_concepto || 'Sin título'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {item.calendar_item?.fecha || 'Sin fecha'}
+                      </span>
+                    </div>
+                  ))}
+                  {createdContent.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center pt-2">
+                      +{createdContent.length - 5} contenidos más
+                    </p>
+                  )}
+                </div>
               </div>
 
               {scheduledItems.length === 0 ? (

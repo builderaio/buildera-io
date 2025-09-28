@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ContentEnhancementDialog } from '../ContentEnhancementDialog';
+import { SocialMediaPreview } from '../SocialMediaPreview';
 import { 
   PenTool,
   Image,
@@ -46,6 +47,10 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
   const [creating, setCreating] = useState(false);
   const [currentlyCreating, setCurrentlyCreating] = useState<string | null>(null);
   const [enhancementDialog, setEnhancementDialog] = useState<{
+    isOpen: boolean;
+    item: ContentItem | null;
+  }>({ isOpen: false, item: null });
+  const [previewDialog, setPreviewDialog] = useState<{
     isOpen: boolean;
     item: ContentItem | null;
   }>({ isOpen: false, item: null });
@@ -183,6 +188,10 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
 
   const handleEnhanceContent = (item: ContentItem) => {
     setEnhancementDialog({ isOpen: true, item });
+  };
+
+  const handlePreviewContent = (item: ContentItem) => {
+    setPreviewDialog({ isOpen: true, item });
   };
 
   const handleMediaAdded = (mediaUrl: string, mediaType: 'image' | 'video') => {
@@ -467,9 +476,13 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
                                  <Plus className="h-4 w-4 mr-1" />
                                  Agregar Media
                                </Button>
-                               <Button variant="ghost" size="sm">
-                                 <Eye className="h-4 w-4" />
-                               </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handlePreviewContent(item)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
                              </>
                            )}
                            {item.status === 'enhanced' && (
@@ -487,9 +500,13 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
                                    )}
                                  </div>
                                )}
-                               <Button variant="ghost" size="sm">
-                                 <Eye className="h-4 w-4" />
-                               </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handlePreviewContent(item)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
                              </>
                            )}
                            {item.status === 'error' && (
@@ -525,6 +542,13 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
         contentItem={enhancementDialog.item}
         profile={{ user_id: campaignData.user_id }}
         onMediaAdded={handleMediaAdded}
+      />
+
+      {/* Social Media Preview Dialog */}
+      <SocialMediaPreview
+        isOpen={previewDialog.isOpen}
+        onClose={() => setPreviewDialog({ isOpen: false, item: null })}
+        contentItem={previewDialog.item}
       />
     </div>
   );

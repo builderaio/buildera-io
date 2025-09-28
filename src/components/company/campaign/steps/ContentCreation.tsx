@@ -15,7 +15,9 @@ import {
   Loader2,
   Sparkles,
   Download,
-  Eye
+  Eye,
+  Square,
+  CheckSquare
 } from 'lucide-react';
 
 interface ContentCreationProps {
@@ -34,6 +36,7 @@ interface ContentItem {
 
 export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCreationProps) => {
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
   const [currentlyCreating, setCurrentlyCreating] = useState<string | null>(null);
   const { toast } = useToast();
@@ -46,16 +49,28 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
         status: 'pending'
       }));
       setContentItems(items);
+      // Select all items by default
+      setSelectedItems(new Set(items.map(item => item.id)));
     }
   }, [campaignData.calendar]);
 
-  const createAllContent = async () => {
+  const createSelectedContent = async () => {
+    if (selectedItems.size === 0) {
+      toast({
+        title: "Selecciona contenido",
+        description: "Debes seleccionar al menos un contenido para generar",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setCreating(true);
     const updatedItems = [...contentItems];
+    const itemsToCreate = updatedItems.filter(item => selectedItems.has(item.id));
 
     try {
-      for (let i = 0; i < updatedItems.length; i++) {
-        const item = updatedItems[i];
+      for (let i = 0; i < itemsToCreate.length; i++) {
+        const item = itemsToCreate[i];
         
         setCurrentlyCreating(item.id);
         setContentItems([...updatedItems]);
@@ -88,14 +103,14 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
         setContentItems([...updatedItems]);
         
         // Small delay between content creation
-        if (i < updatedItems.length - 1) {
+        if (i < itemsToCreate.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
 
       toast({
         title: "¡Contenido creado!",
-        description: "Todo el contenido de tu campaña ha sido generado",
+        description: `${itemsToCreate.length} contenidos han sido generados exitosamente`,
       });
 
     } catch (error: any) {
@@ -193,6 +208,26 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
     return 'bg-blue-500';
   };
 
+  const toggleItemSelection = (itemId: string) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === contentItems.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(contentItems.map(item => item.id)));
+    }
+  };
+
   const completedCount = contentItems.filter(item => item.status === 'completed').length;
   const progress = contentItems.length > 0 ? (completedCount / contentItems.length) * 100 : 0;
   const canProceed = completedCount > 0;
@@ -257,32 +292,67 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
                   <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
                     <Sparkles className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold">¿Listo para crear contenido?</h3>
-                  <p className="text-muted-foreground">
-                    Generaremos automáticamente todo el contenido según tu calendario estratégico
-                  </p>
-                  <Button 
-                    onClick={createAllContent}
-                    disabled={creating || loading}
-                    className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700"
-                    size="lg"
-                  >
-                    <Play className="w-5 h-5 mr-2" />
-                    Crear Todo el Contenido
-                  </Button>
+                   <h3 className="text-xl font-semibold">¿Listo para crear contenido?</h3>
+                   <p className="text-muted-foreground">
+                     Selecciona qué contenidos quieres generar ({selectedItems.size} de {contentItems.length} seleccionados)
+                   </p>
+                   <div className="flex gap-2">
+                     <Button 
+                       variant="outline"
+                       onClick={toggleSelectAll}
+                       disabled={creating || loading}
+                       size="sm"
+                     >
+                       {selectedItems.size === contentItems.length ? 'Deseleccionar Todo' : 'Seleccionar Todo'}
+                     </Button>
+                     <Button 
+                       onClick={createSelectedContent}
+                       disabled={creating || loading || selectedItems.size === 0}
+                       className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700"
+                       size="lg"
+                     >
+                       <Play className="w-5 h-5 mr-2" />
+                       Crear Contenido Seleccionado ({selectedItems.size})
+                     </Button>
+                   </div>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Content Items List */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <PenTool className="h-5 w-5 text-primary" />
-                Contenido de la Campaña
-              </CardTitle>
-            </CardHeader>
+           {/* Content Items List */}
+           <Card>
+             <CardHeader>
+               <CardTitle className="flex items-center justify-between">
+                 <span className="flex items-center gap-2">
+                   <PenTool className="h-5 w-5 text-primary" />
+                   Contenido de la Campaña
+                 </span>
+                 <div className="flex items-center gap-2">
+                   <Badge variant="outline" className="text-xs">
+                     {selectedItems.size} de {contentItems.length} seleccionados
+                   </Badge>
+                   <Button
+                     variant="ghost"
+                     size="sm"
+                     onClick={toggleSelectAll}
+                     className="text-xs"
+                   >
+                     {selectedItems.size === contentItems.length ? (
+                       <>
+                         <CheckSquare className="h-3 w-3 mr-1" />
+                         Deseleccionar
+                       </>
+                     ) : (
+                       <>
+                         <Square className="h-3 w-3 mr-1" />
+                         Seleccionar
+                       </>
+                     )}
+                   </Button>
+                 </div>
+               </CardTitle>
+             </CardHeader>
             <CardContent>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {contentItems.map((item) => {
@@ -296,11 +366,22 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
                       className={`p-4 border rounded-lg transition-all ${
                         isCurrentlyCreating ? 'border-primary bg-primary/5 shadow-md' : 'border-border'
                       }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded ${contentColor} text-white`}>
-                          <ContentIcon className="h-4 w-4" />
-                        </div>
+                     >
+                       <div className="flex items-center gap-3">
+                         <button
+                           onClick={() => toggleItemSelection(item.id)}
+                           disabled={creating}
+                           className="flex-shrink-0 p-1 hover:bg-gray-100 rounded transition-colors"
+                         >
+                           {selectedItems.has(item.id) ? (
+                             <CheckSquare className="h-5 w-5 text-primary" />
+                           ) : (
+                             <Square className="h-5 w-5 text-muted-foreground" />
+                           )}
+                         </button>
+                         <div className={`p-2 rounded ${contentColor} text-white`}>
+                           <ContentIcon className="h-4 w-4" />
+                         </div>
                         <div className="flex-1">
                           <h4 className="font-medium text-sm">
                             {item.calendar_item.tema_concepto}

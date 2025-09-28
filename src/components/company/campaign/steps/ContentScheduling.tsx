@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -67,35 +68,134 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
     const scheduled = [];
 
     try {
+      // Get user and company info for Upload-Post integration
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      // Get company username for Upload-Post
+      const { data: socialAccountData } = await supabase
+        .from('social_accounts')
+        .select('company_username')
+        .eq('user_id', user.id)
+        .eq('platform', 'upload_post_profile')
+        .limit(1);
+
+      const companyUsername = socialAccountData?.[0]?.company_username;
+      if (!companyUsername) {
+        throw new Error("Perfil de Upload-Post no configurado. Configura tus conexiones sociales primero.");
+      }
+
       for (let i = 0; i < createdContent.length; i++) {
         const contentItem = createdContent[i];
         
-        // Simulate scheduling process
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        const scheduledItem = {
-          id: `scheduled-${i}`,
-          platform: contentItem.calendar_item.red_social,
-          content: contentItem.content,
-          calendar_item: contentItem.calendar_item,
-          scheduled_time: `${contentItem.calendar_item.fecha}T${contentItem.calendar_item.hora}:00`,
-          status: 'scheduled',
-          auto_publish: schedulingSettings.autoPublish
-        };
+        try {
+          // Format scheduled date properly for Upload-Post API
+          const { fecha, hora_publicacion } = contentItem.calendar_item;
+          const scheduledDateTime = new Date(`${fecha}T${hora_publicacion || '09:00'}:00`);
+          
+          if (isNaN(scheduledDateTime.getTime())) {
+            throw new Error(`Fecha inválida para el contenido ${i + 1}: ${fecha} ${hora_publicacion}`);
+          }
 
-        scheduled.push(scheduledItem);
-        setScheduledItems([...scheduled]);
+          // Determine post type and extract media URLs
+          let postType = 'text';
+          let mediaUrls = [];
+          
+          if (contentItem.content?.image_urls?.length > 0) {
+            postType = 'photo';
+            mediaUrls = contentItem.content.image_urls;
+          } else if (contentItem.content?.video_url) {
+            postType = 'video';
+            mediaUrls = [contentItem.content.video_url];
+          }
+
+          // Schedule the post via Upload-Post API
+          const { data: result, error } = await supabase.functions.invoke('upload-post-manager', {
+            body: {
+              action: 'post_content',
+              data: {
+                companyUsername,
+                platforms: [contentItem.calendar_item.red_social],
+                title: contentItem.calendar_item.titulo_gancho || contentItem.calendar_item.tema_concepto,
+                content: contentItem.content?.copy_mensaje || contentItem.calendar_item.copy_mensaje,
+                mediaUrls,
+                postType,
+                scheduledDate: scheduledDateTime.toISOString(),
+                async_upload: true
+              }
+            }
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          const scheduledItem = {
+            id: result?.job_id || `scheduled-${i}`,
+            job_id: result?.job_id,
+            platform: contentItem.calendar_item.red_social,
+            content: contentItem.content,
+            calendar_item: contentItem.calendar_item,
+            scheduled_time: scheduledDateTime.toISOString(),
+            status: 'scheduled',
+            auto_publish: schedulingSettings.autoPublish,
+            upload_post_result: result
+          };
+
+          scheduled.push(scheduledItem);
+          setScheduledItems([...scheduled]);
+
+          toast({
+            title: `Contenido ${i + 1} programado`,
+            description: `Programado para ${scheduledDateTime.toLocaleDateString('es-ES')} a las ${scheduledDateTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
+          });
+
+        } catch (itemError: any) {
+          console.error(`Error scheduling item ${i}:`, itemError);
+          toast({
+            title: `Error en contenido ${i + 1}`,
+            description: itemError.message || "Error al programar este contenido",
+            variant: "destructive"
+          });
+          
+          // Add failed item to list for visibility
+          const failedItem = {
+            id: `failed-${i}`,
+            platform: contentItem.calendar_item.red_social,
+            content: contentItem.content,
+            calendar_item: contentItem.calendar_item,
+            scheduled_time: `${contentItem.calendar_item.fecha}T${contentItem.calendar_item.hora_publicacion || '09:00'}:00`,
+            status: 'failed',
+            error: itemError.message
+          };
+          scheduled.push(failedItem);
+          setScheduledItems([...scheduled]);
+        }
       }
 
-      toast({
-        title: "¡Contenido programado!",
-        description: `${totalItems} publicaciones programadas exitosamente`,
-      });
+      const successCount = scheduled.filter(item => item.status === 'scheduled').length;
+      const failedCount = scheduled.filter(item => item.status === 'failed').length;
+
+      if (successCount > 0) {
+        toast({
+          title: "¡Programación completada!",
+          description: `${successCount} publicaciones programadas exitosamente${failedCount > 0 ? ` (${failedCount} fallaron)` : ''}`,
+        });
+      } else if (failedCount > 0) {
+        toast({
+          title: "Error en programación",
+          description: `No se pudo programar ningún contenido (${failedCount} errores)`,
+          variant: "destructive"
+        });
+      }
 
     } catch (error: any) {
+      console.error('Error in scheduleAllContent:', error);
       toast({
         title: "Error en programación",
-        description: (error as any)?.message || "No se pudo programar el contenido",
+        description: error?.message || "No se pudo programar el contenido",
         variant: "destructive"
       });
     } finally {
@@ -362,22 +462,41 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
                         {item.calendar_item.tema_concepto}
                       </h4>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(item.scheduled_time).toLocaleString('es-ES', {
-                          weekday: 'short',
-                          month: 'short', 
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        {(() => {
+                          try {
+                            const date = new Date(item.scheduled_time);
+                            return isNaN(date.getTime()) ? 
+                              'Fecha inválida' : 
+                              date.toLocaleString('es-ES', {
+                                weekday: 'short',
+                                month: 'short', 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              });
+                          } catch {
+                            return 'Fecha inválida';
+                          }
+                        })()}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">
                         {platformConfig?.name || item.platform}
                       </Badge>
-                      <Badge className="bg-blue-100 text-blue-800 text-xs">
-                        Programado
-                      </Badge>
+                      {item.status === 'scheduled' ? (
+                        <Badge className="bg-blue-100 text-blue-800 text-xs">
+                          Programado
+                        </Badge>
+                      ) : item.status === 'failed' ? (
+                        <Badge className="bg-red-100 text-red-800 text-xs">
+                          Error
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-green-100 text-green-800 text-xs">
+                          {item.status}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 );

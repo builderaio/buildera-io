@@ -226,17 +226,25 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffHours = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60));
-    
-    if (diffHours < 0) {
-      return `Hace ${Math.abs(diffHours)}h`;
-    } else if (diffHours < 24) {
-      return `En ${diffHours}h`;
-    } else {
-      const diffDays = Math.floor(diffHours / 24);
-      return `En ${diffDays}d`;
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Fecha inválida';
+      }
+      
+      const now = new Date();
+      const diffHours = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60));
+      
+      if (diffHours < 0) {
+        return `Hace ${Math.abs(diffHours)}h`;
+      } else if (diffHours < 24) {
+        return `En ${diffHours}h`;
+      } else {
+        const diffDays = Math.floor(diffHours / 24);
+        return `En ${diffDays}d`;
+      }
+    } catch {
+      return 'Fecha inválida';
     }
   };
 
@@ -311,7 +319,14 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
                             <div>
                               <h4 className="font-semibold">{post.title}</h4>
                               <p className="text-sm text-muted-foreground">
-                                {formatDate(post.scheduled_date)} • {new Date(post.scheduled_date).toLocaleString()}
+                                {formatDate(post.scheduled_date)} • {(() => {
+                                  try {
+                                    const date = new Date(post.scheduled_date);
+                                    return isNaN(date.getTime()) ? 'Fecha inválida' : date.toLocaleString('es-ES');
+                                  } catch {
+                                    return 'Fecha inválida';
+                                  }
+                                })()}
                               </p>
                             </div>
                           </div>

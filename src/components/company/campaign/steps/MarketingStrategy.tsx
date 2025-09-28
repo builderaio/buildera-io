@@ -81,34 +81,61 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         console.log('🔄 Extracted strategy from N8N array format');
       }
 
-      console.log('✅ Processed strategy:', processedStrategy);
+      // Normalizar estructura para evitar errores en renderizado
+      const normalizeStrategy = (raw: any) => {
+        const s: any = { ...(raw || {}) };
+        // message_variants como objeto { Platform: message }
+        if (Array.isArray(s.message_variants)) {
+          s.message_variants = s.message_variants.reduce((acc: Record<string, string>, item: any) => {
+            const platform = item?.platform || item?.plataforma || item?.canal;
+            const msg = item?.message || item?.mensaje || '';
+            if (platform && typeof msg === 'string') acc[platform] = msg;
+            return acc;
+          }, {} as Record<string, string>);
+        }
+        if (!s.message_variants || typeof s.message_variants !== 'object') {
+          s.message_variants = {};
+        }
+        // Asegurar arrays
+        s.editorial_calendar = Array.isArray(s.editorial_calendar) ? s.editorial_calendar : [];
+        s.competitors = Array.isArray(s.competitors) ? s.competitors : [];
+        // Asegurar objetos
+        s.strategies = s.strategies && typeof s.strategies === 'object' ? s.strategies : {};
+        s.content_plan = s.content_plan && typeof s.content_plan === 'object' ? s.content_plan : {};
+        s.kpis_goals = s.kpis_goals && typeof s.kpis_goals === 'object' ? s.kpis_goals : {};
+        return s;
+      };
+
+      const normalized = normalizeStrategy(processedStrategy);
+
+      console.log('✅ Processed strategy (normalized):', normalized);
       
-      if (!processedStrategy || Object.keys(processedStrategy).length === 0) {
+      if (!normalized || Object.keys(normalized).length === 0) {
         throw new Error('La estrategia recibida está vacía');
       }
       
-      setStrategy(processedStrategy);
+      setStrategy(normalized);
       
       // Crear un resumen editable de la estrategia basado en la nueva estructura
-      const strategyText = processedStrategy.core_message ? 
-        `MENSAJE PRINCIPAL: ${processedStrategy.core_message}
+      const strategyText = normalized.core_message ? 
+        `MENSAJE PRINCIPAL: ${normalized.core_message}
 
 VARIACIONES POR PLATAFORMA:
-${Object.entries(processedStrategy.message_variants || {}).map(([platform, message]: [string, any]) => 
+${Object.entries(normalized.message_variants || {}).map(([platform, message]: [string, any]) => 
   `• ${platform.toUpperCase()}: ${message}`).join('\n')}
 
 ESTRATEGIAS POR FUNNEL:
-${Object.entries(processedStrategy.strategies || {}).map(([key, value]: [string, any]) => 
+${Object.entries(normalized.strategies || {}).map(([key, value]: [string, any]) => 
   `• ${key.toUpperCase()}: ${value.objective}`).join('\n')}
 
 PLAN DE CONTENIDO:
-${Object.entries(processedStrategy.content_plan || {}).map(([platform, config]: [string, any]) => 
+${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string, any]) => 
   `• ${platform}: ${config.frequency} - ${config.tone}`).join('\n')}` 
-        : JSON.stringify(processedStrategy, null, 2);
+        : JSON.stringify(normalized, null, 2);
 
       setEditedStrategy(strategyText);
       
-      console.log('✅ Strategy state updated successfully, strategy keys:', Object.keys(processedStrategy));
+      console.log('✅ Strategy state updated successfully, strategy keys:', Object.keys(normalized));
       
       toast({
         title: "¡Estrategia generada!",

@@ -188,8 +188,12 @@ export const ContentEnhancementDialog = ({
 
     setUploadingFile(true);
     try {
-      // Upload to Supabase Storage
-      const fileName = `campaign-content/${Date.now()}-${file.name}`;
+      // Get current user ID for folder structure
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuario no autenticado');
+
+      // Upload to Supabase Storage with user-specific folder structure
+      const fileName = `${user.id}/campaign-content/${Date.now()}-${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('content-files')
         .upload(fileName, file);
@@ -217,11 +221,25 @@ export const ContentEnhancementDialog = ({
         title: "¡Archivo subido!",
         description: `Tu ${isImage ? 'imagen' : 'video'} ha sido subido y guardado en la biblioteca`
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading file:', error);
+      
+      let errorMessage = "No se pudo subir el archivo. Intenta de nuevo.";
+      
+      // Provide more specific error messages
+      if (error.message?.includes('not found')) {
+        errorMessage = "Error de configuración del almacenamiento. Contacta soporte.";
+      } else if (error.message?.includes('policy')) {
+        errorMessage = "Sin permisos para subir archivos. Verifica tu sesión.";
+      } else if (error.message?.includes('size')) {
+        errorMessage = "El archivo es muy grande. Máximo 10MB permitido.";
+      } else if (error.message?.includes('Usuario no autenticado')) {
+        errorMessage = "Sesión expirada. Por favor, inicia sesión nuevamente.";
+      }
+      
       toast({
         title: "Error",
-        description: "No se pudo subir el archivo. Intenta de nuevo.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

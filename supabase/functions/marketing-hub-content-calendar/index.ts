@@ -64,6 +64,14 @@ serve(async (req) => {
     
     console.log('Marketing Hub Content Calendar Request:', input);
 
+    // Get user ID from JWT for authenticated requests
+    let userId: string | null = null;
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id || null;
+    }
+
     // Validate minimally required fields (allow optional/empty fields like pais)
     const errors: string[] = [];
     const nombreEmpresaOk = typeof input?.nombre_empresa === 'string' && input.nombre_empresa.trim().length > 0;
@@ -80,6 +88,49 @@ serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+    }
+
+    // Enrich company_branding data from database if user is authenticated
+    let enrichedCompanyBranding = input.company_branding || {};
+    
+    if (userId) {
+      console.log('Fetching company branding data for user:', userId);
+      try {
+        const { data: brandingData, error: brandingError } = await supabase
+          .from('company_branding')
+          .select(`
+            primary_color,
+            secondary_color,
+            complementary_color_1,
+            complementary_color_2,
+            visual_identity,
+            brand_voice,
+            visual_synthesis,
+            full_brand_data,
+            color_justifications
+          `)
+          .eq('company_id', (
+            await supabase
+              .from('company_members')
+              .select('company_id')
+              .eq('user_id', userId)
+              .eq('is_primary', true)
+              .single()
+          ).data?.company_id || '')
+          .single();
+
+        if (brandingData && !brandingError) {
+          enrichedCompanyBranding = {
+            ...enrichedCompanyBranding,
+            ...brandingData
+          };
+          console.log('✅ Company branding data enriched successfully');
+        } else {
+          console.warn('⚠️ No company branding data found:', brandingError?.message);
+        }
+      } catch (error) {
+        console.error('Error fetching company branding:', error);
+      }
     }
 
     // Call N8N Content Calendar API
@@ -100,6 +151,8 @@ serve(async (req) => {
 
     const n8nPayload = {
       ...input,
+      // Enrich with database company_branding data
+      company_branding: enrichedCompanyBranding,
       // Ensure required fields have defaults
       numero_dias_generar: input.numero_dias_generar || 7,
       plataformas_seleccionadas: input.plataformas_seleccionadas || ['linkedin'],

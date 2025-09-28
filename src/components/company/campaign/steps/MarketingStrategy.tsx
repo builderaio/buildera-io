@@ -99,10 +99,36 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         // Asegurar arrays
         s.editorial_calendar = Array.isArray(s.editorial_calendar) ? s.editorial_calendar : [];
         s.competitors = Array.isArray(s.competitors) ? s.competitors : [];
+        // Normalizar strategies (aceptar funnel_strategies)
+        s.strategies = (s.strategies && typeof s.strategies === 'object')
+          ? s.strategies
+          : (s.funnel_strategies && typeof s.funnel_strategies === 'object') ? s.funnel_strategies : {};
         // Asegurar objetos
-        s.strategies = s.strategies && typeof s.strategies === 'object' ? s.strategies : {};
         s.content_plan = s.content_plan && typeof s.content_plan === 'object' ? s.content_plan : {};
-        s.kpis_goals = s.kpis_goals && typeof s.kpis_goals === 'object' ? s.kpis_goals : {};
+        // Normalizar KPIs a arreglo para evitar fallos en render
+        if (Array.isArray(s.kpis_goals)) {
+          // ok
+        } else if (s.kpis_goals && typeof s.kpis_goals === 'object') {
+          const labels: Record<string, string> = {
+            reach: 'Alcance',
+            impressions: 'Impresiones',
+            ctr: 'CTR',
+            leads: 'Leads',
+            conversion_rate: 'Tasa de conversión',
+            cac: 'CAC estimado'
+          };
+          s.kpis_goals = Object.entries(s.kpis_goals).map(([k, v]) => ({
+            kpi: labels[k] || k,
+            goal: String(v)
+          }));
+        } else {
+          s.kpis_goals = [];
+        }
+        // Fallbacks de competidores
+        s.competitors = s.competitors.map((c: any) => ({
+          ...c,
+          digital_tactics_summary: c?.digital_tactics_summary || c?.tactics || ''
+        }));
         return s;
       };
 

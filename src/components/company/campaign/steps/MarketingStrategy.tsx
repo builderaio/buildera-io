@@ -117,10 +117,16 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         s.editorial_calendar = Array.isArray(s.editorial_calendar) ? s.editorial_calendar : [];
         s.competitors = Array.isArray(s.competitors) ? s.competitors : [];
 
-        // Normalizar strategies (aceptar funnel_strategies)
-        s.strategies = (s.strategies && typeof s.strategies === 'object')
-          ? s.strategies
-          : (s.funnel_strategies && typeof s.funnel_strategies === 'object') ? s.funnel_strategies : {};
+        // Normalizar strategies_by_funnel_stage (prioridad sobre strategies y funnel_strategies)
+        if (s.strategies_by_funnel_stage && typeof s.strategies_by_funnel_stage === 'object') {
+          s.strategies = s.strategies_by_funnel_stage;
+        } else if (s.strategies && typeof s.strategies === 'object') {
+          // mantener strategies existente
+        } else if (s.funnel_strategies && typeof s.funnel_strategies === 'object') {
+          s.strategies = s.funnel_strategies;
+        } else {
+          s.strategies = {};
+        }
 
         // Asegurar objetos
         s.content_plan = s.content_plan && typeof s.content_plan === 'object' ? s.content_plan : {};
@@ -130,10 +136,28 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
           return acc;
         }, {} as Record<string, any>);
 
-        // Normalizar KPIs a arreglo para evitar fallos en render
-        if (Array.isArray(s.kpis_goals)) {
-          // ok
+        // Normalizar KPIs y Goals correctamente desde kpis_and_goals
+        if (s.kpis_and_goals && typeof s.kpis_and_goals === 'object') {
+          if (s.kpis_and_goals.kpis && s.kpis_and_goals.goals) {
+            // Formato: { kpis: ["Alcance", "CTR"], goals: ["Aumentar alcance 30%", "Mejorar CTR 5%"] }
+            const kpis = Array.isArray(s.kpis_and_goals.kpis) ? s.kpis_and_goals.kpis : [];
+            const goals = Array.isArray(s.kpis_and_goals.goals) ? s.kpis_and_goals.goals : [];
+            
+            s.kpis_goals = kpis.map((kpi: string, index: number) => ({
+              kpi: kpi,
+              goal: goals[index] || 'Meta no definida'
+            }));
+          } else {
+            // Fallback: tratar kpis_and_goals como objeto directo
+            s.kpis_goals = Object.entries(s.kpis_and_goals).map(([k, v]) => ({
+              kpi: String(k),
+              goal: String(v)
+            }));
+          }
+        } else if (Array.isArray(s.kpis_goals)) {
+          // mantener kpis_goals existente si ya es array
         } else if (s.kpis_goals && typeof s.kpis_goals === 'object') {
+          // Formato anterior
           const labels: Record<string, string> = {
             reach: 'Alcance',
             impressions: 'Impresiones',
@@ -153,6 +177,9 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         } else {
           s.kpis_goals = [];
         }
+
+        // Normalizar risks_assumptions
+        s.risks_assumptions = Array.isArray(s.risks_assumptions) ? s.risks_assumptions : [];
 
         // Fallbacks de competidores
         s.competitors = s.competitors.map((c: any) => ({
@@ -202,7 +229,15 @@ ${Object.entries(normalized.message_variants || {}).map(([platform, message]: [s
 
 ESTRATEGIAS POR FUNNEL:
 ${Object.entries(normalized.strategies || {}).map(([key, value]: [string, any]) => 
-  `• ${key.toUpperCase()}: ${value.objective}`).join('\n')}
+  `• ${key.toUpperCase()}: ${value.objective || value}`).join('\n')}
+
+KPIS Y OBJETIVOS:
+${(normalized.kpis_goals || []).map((kpi: any) => 
+  `• ${kpi.kpi}: ${kpi.goal}`).join('\n')}
+
+RIESGOS Y ASUNCIONES:
+${(normalized.risks_assumptions || []).map((risk: string, idx: number) => 
+  `${idx + 1}. ${risk}`).join('\n')}
 
 PLAN DE CONTENIDO:
 ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string, any]) => 
@@ -256,6 +291,7 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
       editorial_calendar: strategy.editorial_calendar || [],
       kpis: strategy.kpis_goals || [],
       execution_plan: strategy.execution_plan || {},
+      risks_assumptions: strategy.risks_assumptions || [],
       message_differentiator: {
         core: strategy.core_message || '',
         linkedin_variation: strategy.message_variants?.LinkedIn || '',
@@ -680,6 +716,35 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
                       </div>
                     );
                   })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Risk Assumptions */}
+          {strategy.risks_assumptions && strategy.risks_assumptions.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-xl">⚠️</span>
+                  </div>
+                  Riesgos y Asunciones
+                </CardTitle>
+                <p className="text-muted-foreground">Consideraciones importantes para el éxito de la estrategia</p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  {strategy.risks_assumptions.map((assumption: string, idx: number) => (
+                    <div key={idx} className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-amber-600 font-bold text-sm">{idx + 1}</span>
+                        </div>
+                        <p className="text-amber-800 text-sm leading-relaxed">{assumption}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

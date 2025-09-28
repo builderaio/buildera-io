@@ -15,11 +15,15 @@ import {
   Repeat2,
   Send,
   Eye,
-  Users
+  Users,
+  Download,
+  Plus
 } from 'lucide-react';
 import { getPlatform, getPlatformColor } from '@/lib/socialPlatforms';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { saveImageToContentLibrary } from '@/utils/contentLibraryHelper';
 
 interface SocialMediaPreviewProps {
   isOpen: boolean;
@@ -31,6 +35,9 @@ interface SocialMediaPreviewProps {
 export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfile }: SocialMediaPreviewProps) => {
   const [companyData, setCompanyData] = useState<any>(null);
   const [socialAccounts, setSocialAccounts] = useState<any>({});
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   if (!contentItem) return null;
 
@@ -145,6 +152,173 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
   };
 
   const mockUser = getUserData();
+
+  // Download content as image
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      // Create a canvas to render the preview content
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('No se pudo crear el canvas');
+      }
+
+      // Set canvas size based on platform
+      let width = 400;
+      let height = 400;
+      
+      if (platform === 'instagram' || platform === 'ig') {
+        width = 1080;
+        height = 1080;
+      } else if (platform === 'facebook' || platform === 'fb') {
+        width = 1200;
+        height = 630;
+      } else if (platform === 'linkedin' || platform === 'li') {
+        width = 1200;
+        height = 627;
+      } else if (platform === 'tiktok' || platform === 'tt') {
+        width = 1080;
+        height = 1920;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // Fill background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+
+      // Draw platform color header
+      if (platformInfo?.officialColor) {
+        ctx.fillStyle = platformInfo.officialColor;
+        ctx.fillRect(0, 0, width, 80);
+      }
+
+      // Draw text content
+      if (contentText) {
+        ctx.fillStyle = '#000000';
+        ctx.font = '16px Arial, sans-serif';
+        ctx.textAlign = 'left';
+        
+        // Split text into lines to fit canvas
+        const maxWidth = width - 40;
+        const lineHeight = 24;
+        const words = contentText.split(' ');
+        let lines = [];
+        let currentLine = '';
+        
+        words.forEach(word => {
+          const testLine = currentLine + (currentLine ? ' ' : '') + word;
+          const metrics = ctx.measureText(testLine);
+          
+          if (metrics.width < maxWidth) {
+            currentLine = testLine;
+          } else {
+            lines.push(currentLine);
+            currentLine = word;
+          }
+        });
+        
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+
+        // Draw text lines
+        lines.forEach((line, index) => {
+          ctx.fillText(line, 20, 120 + (index * lineHeight));
+        });
+      }
+
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${platform}-preview-${Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          toast({
+            title: "Descarga completada",
+            description: "El contenido se ha descargado exitosamente",
+          });
+        }
+      }, 'image/png');
+      
+    } catch (error) {
+      console.error('Error downloading content:', error);
+      toast({
+        title: "Error en la descarga",
+        description: "No se pudo descargar el contenido",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Save content to library
+  const handleSaveToLibrary = async () => {
+    if (!companyProfile?.user_id) {
+      toast({
+        title: "Error",
+        description: "No se pudo identificar el usuario",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const title = contentItem.calendar_item?.tema_concepto || `Post de ${platform}`;
+      const description = contentText || contentItem.calendar_item?.descripcion_creativo || `Contenido para ${platform}`;
+      
+      // If there's media, use it; otherwise use the dummy image
+      const imageUrl = contentItem.media?.url || dummyImage;
+      
+      const success = await saveImageToContentLibrary({
+        userId: companyProfile.user_id,
+        title,
+        description,
+        imageUrl,
+        contentText,
+        platform: platform || 'general',
+        metrics: {
+          likes: 0,
+          comments: 0,
+          shares: 0,
+          views: 0
+        }
+      });
+
+      if (success) {
+        toast({
+          title: "¡Guardado exitosamente!",
+          description: "El contenido se ha agregado a tu biblioteca",
+        });
+      } else {
+        toast({
+          title: "Contenido ya existe",
+          description: "Este contenido ya está en tu biblioteca",
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error saving to library:', error);
+      toast({
+        title: "Error al guardar",
+        description: "No se pudo guardar el contenido en la biblioteca",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const renderInstagramPreview = () => (
     <Card className="w-full max-w-md mx-auto bg-white">
@@ -598,6 +772,22 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
             Cerrar
           </Button>
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleDownload}
+              disabled={isDownloading}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {isDownloading ? 'Descargando...' : 'Descargar'}
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleSaveToLibrary}
+              disabled={isSaving}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {isSaving ? 'Guardando...' : 'Agregar a biblioteca'}
+            </Button>
             <Button variant="outline">
               <Eye className="h-4 w-4 mr-2" />
               Vista completa

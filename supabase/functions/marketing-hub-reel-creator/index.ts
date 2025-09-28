@@ -1,13 +1,18 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const N8N_AUTH_USER = Deno.env.get('N8N_AUTH_USER');
 const N8N_AUTH_PASS = Deno.env.get('N8N_AUTH_PASS');
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,20 +20,20 @@ serve(async (req) => {
   }
 
   try {
-    // Basic auth verification
+    // JWT auth verification (like other marketing-hub functions)
     const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Basic ')) {
-      return new Response(JSON.stringify({ error: 'Basic authentication required' }), {
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Authorization header required' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const credentials = atob(authHeader.slice(6));
-    const [username, password] = credentials.split(':');
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
-    if (username !== N8N_AUTH_USER || password !== N8N_AUTH_PASS) {
-      return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid user token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });

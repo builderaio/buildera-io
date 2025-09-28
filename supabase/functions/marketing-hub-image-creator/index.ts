@@ -49,7 +49,29 @@ serve(async (req) => {
     const body = await req.json();
     console.log('📝 Datos recibidos:', body);
 
-    const { prompt, user_id, content_id, platform } = body;
+    // Handle both old format (prompt) and new format (input.calendario_item)
+    let prompt, user_id, content_id, platform;
+    
+    if (body.input) {
+      // New format from ContentEnhancementDialog
+      const { input } = body;
+      const calendarioItem = input.calendario_item;
+      const identidadVisual = input.identidad_visual;
+      
+      // Generate prompt from calendar item
+      prompt = `${calendarioItem.tema_concepto} - ${calendarioItem.descripcion_creativo || calendarioItem.copy_mensaje}`;
+      platform = calendarioItem.red_social;
+      user_id = body.user_id;
+      content_id = body.content_id;
+      
+      console.log('📝 Generated prompt from calendar item:', prompt);
+    } else {
+      // Old format for backward compatibility
+      prompt = body.prompt;
+      user_id = body.user_id;
+      content_id = body.content_id;
+      platform = body.platform;
+    }
 
     // Use authenticated user ID if not provided in body
     const authenticatedUserId = user_id || user.id;

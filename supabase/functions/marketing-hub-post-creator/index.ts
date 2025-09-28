@@ -75,6 +75,42 @@ serve(async (req) => {
       }
     }
 
+    // Get user ID from token if available (for company branding lookup)
+    let userId: string | null = null;
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id || null;
+    }
+
+    // Fetch company branding data if user is authenticated
+    let companyBrandingData: any = null;
+    if (userId) {
+      console.log('🎨 Fetching company branding data for user:', userId);
+      
+      // Get user's primary company
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('primary_company_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (profile?.primary_company_id) {
+        const { data: branding, error: brandingError } = await supabase
+          .from('company_branding')
+          .select('*')
+          .eq('company_id', profile.primary_company_id)
+          .maybeSingle();
+          
+        if (!brandingError && branding) {
+          companyBrandingData = branding;
+          console.log('✅ Company branding data found:', Object.keys(branding));
+        } else {
+          console.log('⚠️ No company branding found or error:', brandingError?.message);
+        }
+      }
+    }
+
     // Extract post title from calendario_item for response message
     const postTitle = input.calendario_item.tema_concepto || input.calendario_item.titulo_gancho || 'contenido solicitado';
     
@@ -86,7 +122,19 @@ serve(async (req) => {
       // Ensure required fields have defaults
       tono_de_la_marca: input.tono_de_la_marca || "Profesional y amigable",
       buyer_persona_objetivo: input.buyer_persona_objetivo || {},
-      calendario_item: input.calendario_item || {}
+      calendario_item: input.calendario_item || {},
+      // Include complete company branding data
+      company_branding: companyBrandingData || {
+        primary_color: null,
+        secondary_color: null,
+        complementary_color_1: null,
+        complementary_color_2: null,
+        brand_voice: {},
+        visual_identity: null,
+        visual_synthesis: {},
+        full_brand_data: {},
+        color_justifications: {}
+      }
     };
 
     console.log('N8N Payload prepared:', n8nPayload);
@@ -125,6 +173,7 @@ serve(async (req) => {
         tono: input.tono_de_la_marca,
         persona: input.buyer_persona_objetivo,
         item: input.calendario_item,
+        company_branding: companyBrandingData,
         timestamp: new Date().toISOString(),
         status: 'processing'
       }

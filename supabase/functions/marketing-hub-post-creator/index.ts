@@ -88,7 +88,9 @@ serve(async (req) => {
     if (userId) {
       console.log('🎨 Fetching company branding data for user:', userId);
       
-      // Get user's primary company
+      let companyId: string | null = null;
+      
+      // First, try to get primary company from profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('primary_company_id')
@@ -96,18 +98,41 @@ serve(async (req) => {
         .maybeSingle();
 
       if (profile?.primary_company_id) {
+        companyId = profile.primary_company_id;
+        console.log('📋 Found primary company from profile:', companyId);
+      } else {
+        // If no primary company in profile, check company_members table
+        console.log('📋 No primary company in profile, checking company_members...');
+        const { data: membership } = await supabase
+          .from('company_members')
+          .select('company_id')
+          .eq('user_id', userId)
+          .eq('is_primary', true)
+          .maybeSingle();
+          
+        if (membership?.company_id) {
+          companyId = membership.company_id;
+          console.log('📋 Found primary company from membership:', companyId);
+        }
+      }
+
+      // Fetch branding data if we found a company
+      if (companyId) {
         const { data: branding, error: brandingError } = await supabase
           .from('company_branding')
           .select('*')
-          .eq('company_id', profile.primary_company_id)
+          .eq('company_id', companyId)
           .maybeSingle();
           
         if (!brandingError && branding) {
           companyBrandingData = branding;
-          console.log('✅ Company branding data found:', Object.keys(branding));
+          console.log('✅ Company branding data found for company:', companyId);
+          console.log('🎨 Branding fields:', Object.keys(branding));
         } else {
-          console.log('⚠️ No company branding found or error:', brandingError?.message);
+          console.log('⚠️ No company branding found or error for company:', companyId, brandingError?.message);
         }
+      } else {
+        console.log('⚠️ No company found for user:', userId);
       }
     }
 

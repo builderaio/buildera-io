@@ -122,6 +122,8 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
 
           if (contentType === 'image' || contentType === 'imagen') {
             content = await createImageContent(item.calendar_item);
+          } else if (contentType === 'carrusel' || contentType === 'carousel') {
+            content = await createCarouselContent(item.calendar_item);
           } else if (contentType === 'video' || contentType === 'reel') {
             content = await createVideoContent(item.calendar_item);
           } else {
@@ -207,6 +209,95 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
     return data;
   };
 
+  // Extract number of images from creative description
+  const extractImageCount = (description: string): number => {
+    // Look for patterns like "6 imágenes", "serie de 5", "5 slides", etc.
+    const patterns = [
+      /(\d+)\s*(?:imágenes?|imagenes?|slides?|diapositivas?)/i,
+      /serie\s+de\s+(\d+)/i,
+      /(?:compuesta?\s+por\s+|con\s+)?(\d+)\s*(?:partes?|elementos?)/i
+    ];
+
+    for (const pattern of patterns) {
+      const match = description.match(pattern);
+      if (match && match[1]) {
+        const count = parseInt(match[1]);
+        return Math.min(Math.max(count, 1), 10); // Limit between 1-10 images
+      }
+    }
+
+    return 6; // Default for carousels if not specified
+  };
+
+  const createCarouselContent = async (calendarItem: any) => {
+    const imageCount = extractImageCount(calendarItem.descripcion_creativo || '');
+    const images = [];
+    
+    toast({
+      title: "Generando carrusel",
+      description: `Creando ${imageCount} imágenes para el carrusel...`,
+    });
+
+    // Generate text content first
+    const textContent = await createTextContent(calendarItem);
+    
+    // Generate multiple images
+    for (let i = 1; i <= imageCount; i++) {
+      try {
+        // Create modified calendar item for each image
+        const imageCalendarItem = {
+          ...calendarItem,
+          tema_concepto: `${calendarItem.tema_concepto} - Imagen ${i} de ${imageCount}`,
+          descripcion_creativo: `${calendarItem.descripcion_creativo} - Imagen número ${i} del carrusel`
+        };
+
+        const { data, error } = await supabase.functions.invoke('marketing-hub-image-creator', {
+          body: {
+            input: {
+              identidad_visual: {
+                paleta_de_colores: { primario: "#0D0D2B", acento: "#3D52D5" },
+                estilo_imagenes: "Moderno y profesional"
+              },
+              calendario_item: imageCalendarItem,
+              image_number: i,
+              total_images: imageCount
+            }
+          }
+        });
+
+        if (error) {
+          console.error(`Error creating image ${i}:`, error);
+          continue;
+        }
+
+        // Handle the response format from image creator
+        if (data && typeof data === 'string') {
+          images.push({
+            url: data,
+            position: i,
+            title: `Imagen ${i}`,
+            description: `Imagen ${i} de ${imageCount} del carrusel`
+          });
+        }
+
+        // Small delay between image generations
+        if (i < imageCount) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+      } catch (error) {
+        console.error(`Error generating image ${i}:`, error);
+      }
+    }
+
+    return {
+      ...textContent,
+      carousel_images: images,
+      image_count: imageCount,
+      content_type: 'carousel'
+    };
+  };
+
   const createVideoContent = async (calendarItem: any) => {
     const { data, error } = await supabase.functions.invoke('marketing-hub-video-creator', {
       body: {
@@ -277,6 +368,9 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
     if (typeStr.includes('image') || typeStr.includes('imagen')) {
       return Image;
     }
+    if (typeStr.includes('carrusel') || typeStr.includes('carousel')) {
+      return Image; // Could use a different icon like LayoutGrid if available
+    }
     if (typeStr.includes('video') || typeStr.includes('reel')) {
       return Video;
     }
@@ -287,6 +381,9 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
     const typeStr = type?.toLowerCase() || '';
     if (typeStr.includes('image') || typeStr.includes('imagen')) {
       return 'bg-green-500';
+    }
+    if (typeStr.includes('carrusel') || typeStr.includes('carousel')) {
+      return 'bg-purple-500';
     }
     if (typeStr.includes('video') || typeStr.includes('reel')) {
       return 'bg-red-500';

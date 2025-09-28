@@ -17,7 +17,9 @@ import {
   Eye,
   Users,
   Download,
-  Plus
+  Plus,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { getPlatform, getPlatformColor } from '@/lib/socialPlatforms';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,6 +39,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
   const [socialAccounts, setSocialAccounts] = useState<any>({});
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { toast } = useToast();
 
   if (!contentItem) return null;
@@ -47,6 +50,12 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
   const mediaUrl = contentItem.media?.url;
   const mediaType = contentItem.media?.type;
   const hashtags = contentItem.content?.hashtags || [];
+  
+  // Handle carousel content
+  const isCarousel = contentItem.content?.content_type === 'carousel' || 
+                     contentItem.calendar_item?.tipo_contenido?.toLowerCase().includes('carrusel');
+  const carouselImages = contentItem.content?.carousel_images || [];
+  const hasCarouselImages = isCarousel && carouselImages.length > 0;
   
   // Get suggested publication time
   const suggestedTime = contentItem.calendar_item?.hora || '12:00';
@@ -341,16 +350,69 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
 
         {/* Media */}
         <div className="relative aspect-square bg-gray-100">
-          {mediaUrl ? (
-            mediaType === 'image' ? (
-              <img src={mediaUrl} alt="Post" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-black flex items-center justify-center">
-                <Play className="h-12 w-12 text-white" />
-              </div>
-            )
+          {hasCarouselImages ? (
+            // Carousel view
+            <div className="relative w-full h-full">
+              <img 
+                src={carouselImages[currentImageIndex]?.url || dummyImage} 
+                alt={`Carousel image ${currentImageIndex + 1}`} 
+                className="w-full h-full object-cover" 
+              />
+              
+              {/* Carousel navigation */}
+              {carouselImages.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentImageIndex(prev => 
+                      prev > 0 ? prev - 1 : carouselImages.length - 1
+                    )}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  
+                  <button
+                    onClick={() => setCurrentImageIndex(prev => 
+                      prev < carouselImages.length - 1 ? prev + 1 : 0
+                    )}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  
+                  {/* Dots indicator */}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                    {carouselImages.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentImageIndex(index)}
+                        className={`w-2 h-2 rounded-full ${
+                          currentImageIndex === index ? 'bg-white' : 'bg-white/50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Image counter */}
+                  <div className="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded-full text-xs">
+                    {currentImageIndex + 1}/{carouselImages.length}
+                  </div>
+                </>
+              )}
+            </div>
           ) : (
-            <img src={dummyImage} alt="Preview" className="w-full h-full object-cover" />
+            // Single image view
+            mediaUrl ? (
+              mediaType === 'image' ? (
+                <img src={mediaUrl} alt="Post" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-black flex items-center justify-center">
+                  <Play className="h-12 w-12 text-white" />
+                </div>
+              )
+            ) : (
+              <img src={dummyImage} alt="Preview" className="w-full h-full object-cover" />
+            )
           )}
         </div>
 
@@ -732,7 +794,12 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
               <div className="flex items-center gap-2">
                 <Badge variant="outline">{contentItem.calendar_item?.red_social}</Badge>
                 <Badge variant="secondary">{contentItem.calendar_item?.tipo_contenido}</Badge>
-                {mediaType && (
+                {hasCarouselImages && (
+                  <Badge className="bg-purple-100 text-purple-800">
+                    Carrusel con {carouselImages.length} imágenes
+                  </Badge>
+                )}
+                {mediaType && !hasCarouselImages && (
                   <Badge className="bg-purple-100 text-purple-800">
                     Con {mediaType === 'image' ? 'imagen' : 'video'}
                   </Badge>
@@ -749,6 +816,32 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
               <h4 className="font-medium mb-2">Texto del post</h4>
               <div className="bg-muted/30 p-3 rounded-lg">
                 <p className="text-sm whitespace-pre-wrap">{contentText}</p>
+              </div>
+            </div>
+          )}
+
+          {hasCarouselImages && (
+            <div>
+              <h4 className="font-medium mb-2">Imágenes del carrusel</h4>
+              <div className="grid grid-cols-3 gap-2">
+                {carouselImages.map((image, index) => (
+                  <div 
+                    key={index}
+                    className={`relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer border-2 transition-colors ${
+                      currentImageIndex === index ? 'border-primary' : 'border-transparent'
+                    }`}
+                    onClick={() => setCurrentImageIndex(index)}
+                  >
+                    <img 
+                      src={image.url} 
+                      alt={image.title || `Imagen ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-1 right-1 bg-black/50 text-white text-xs px-1 rounded">
+                      {index + 1}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}

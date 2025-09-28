@@ -117,8 +117,17 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         s.editorial_calendar = Array.isArray(s.editorial_calendar) ? s.editorial_calendar : [];
         s.competitors = Array.isArray(s.competitors) ? s.competitors : [];
 
-        // Normalizar strategies_by_funnel_stage (prioridad sobre strategies y funnel_strategies)
-        if (s.strategies_by_funnel_stage && typeof s.strategies_by_funnel_stage === 'object') {
+        // Normalizar strategies - convertir array a objeto usando funnel_stage como key
+        if (Array.isArray(s.strategies)) {
+          const strategiesObj: Record<string, any> = {};
+          s.strategies.forEach((strategy: any) => {
+            const stage = (strategy.funnel_stage || '').toLowerCase();
+            if (stage) {
+              strategiesObj[stage] = strategy;
+            }
+          });
+          s.strategies = strategiesObj;
+        } else if (s.strategies_by_funnel_stage && typeof s.strategies_by_funnel_stage === 'object') {
           s.strategies = s.strategies_by_funnel_stage;
         } else if (s.strategies && typeof s.strategies === 'object') {
           // mantener strategies existente
@@ -128,16 +137,34 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
           s.strategies = {};
         }
 
-        // Asegurar objetos
-        s.content_plan = s.content_plan && typeof s.content_plan === 'object' ? s.content_plan : {};
-        // Canonicalizar claves del plan de contenido
-        s.content_plan = Object.entries(s.content_plan).reduce((acc: Record<string, any>, [k, v]) => {
-          acc[canon(k)] = v;
-          return acc;
-        }, {} as Record<string, any>);
+        // Normalizar content_plan - convertir array a objeto usando channel como key
+        if (Array.isArray(s.content_plan)) {
+          const planObj: Record<string, any> = {};
+          s.content_plan.forEach((plan: any) => {
+            const channel = canon(plan.channel || '');
+            if (channel) {
+              planObj[channel] = plan;
+            }
+          });
+          s.content_plan = planObj;
+        } else if (s.content_plan && typeof s.content_plan === 'object') {
+          // Canonicalizar claves del plan de contenido
+          s.content_plan = Object.entries(s.content_plan).reduce((acc: Record<string, any>, [k, v]) => {
+            acc[canon(k)] = v;
+            return acc;
+          }, {} as Record<string, any>);
+        } else {
+          s.content_plan = {};
+        }
 
-        // Normalizar KPIs y Goals correctamente desde kpis_and_goals
-        if (s.kpis_and_goals && typeof s.kpis_and_goals === 'object') {
+        // Normalizar KPIs - prioridad: kpis array > kpis_and_goals > kpis_goals
+        if (Array.isArray(s.kpis)) {
+          // Nuevo formato: array de objetos con name y goal
+          s.kpis_goals = s.kpis.map((kpi: any) => ({
+            kpi: kpi.name || String(kpi),
+            goal: kpi.goal || 'Meta no definida'
+          }));
+        } else if (s.kpis_and_goals && typeof s.kpis_and_goals === 'object') {
           if (s.kpis_and_goals.kpis && s.kpis_and_goals.goals) {
             // Formato: { kpis: ["Alcance", "CTR"], goals: ["Aumentar alcance 30%", "Mejorar CTR 5%"] }
             const kpis = Array.isArray(s.kpis_and_goals.kpis) ? s.kpis_and_goals.kpis : [];
@@ -181,10 +208,14 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         // Normalizar risks_assumptions
         s.risks_assumptions = Array.isArray(s.risks_assumptions) ? s.risks_assumptions : [];
 
-        // Fallbacks de competidores
+        // Normalizar competidores
         s.competitors = s.competitors.map((c: any) => ({
           ...c,
-          digital_tactics_summary: c?.digital_tactics_summary || c?.tactics || ''
+          digital_tactics_summary: c?.digital_tactics_summary || c?.digital_tactics || c?.tactics || '',
+          // Convertir benchmarks string a objeto para compatibilidad
+          benchmarks: typeof c.benchmarks === 'string' 
+            ? { descripcion: c.benchmarks }
+            : (c.benchmarks || {})
         }));
 
         // Normalizar y deduplicar calendario editorial
@@ -807,24 +838,30 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
                       {competitor.benchmarks && (
                         <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
                           <h5 className="font-semibold text-blue-800 mb-3">📊 Benchmarks de Redes Sociales</h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {Object.entries(competitor.benchmarks)
-                              .filter(([platform]) => platform !== 'sources')
-                              .map(([platform, data]: [string, any]) => (
-                                <div key={`${competitor.name}-${platform}`} className="bg-white p-3 rounded-lg border">
-                                  <h6 className="font-medium text-sm text-gray-700 capitalize">{platform}</h6>
-                                  <p className="text-xs text-gray-600">
-                                    {typeof data === 'string' ? data : data?.frequency || 'No disponible'}
-                                  </p>
-                                  {data?.engagement_rate && (
-                                    <p className="text-xs text-blue-600 font-medium">
-                                      Engagement: {data.engagement_rate}
+                          {typeof competitor.benchmarks === 'string' ? (
+                            <div className="bg-white p-3 rounded-lg border">
+                              <p className="text-sm text-gray-700">{competitor.benchmarks}</p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {Object.entries(competitor.benchmarks)
+                                .filter(([platform]) => platform !== 'sources')
+                                .map(([platform, data]: [string, any]) => (
+                                  <div key={`${competitor.name}-${platform}`} className="bg-white p-3 rounded-lg border">
+                                    <h6 className="font-medium text-sm text-gray-700 capitalize">{platform}</h6>
+                                    <p className="text-xs text-gray-600">
+                                      {typeof data === 'string' ? data : data?.frequency || 'No disponible'}
                                     </p>
-                                  )}
-                                </div>
-                              ))
-                            }
-                          </div>
+                                    {data?.engagement_rate && (
+                                      <p className="text-xs text-blue-600 font-medium">
+                                        Engagement: {data.engagement_rate}
+                                      </p>
+                                    )}
+                                  </div>
+                                ))
+                              }
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

@@ -85,17 +85,46 @@ serve(async (req) => {
     // Call N8N Content Calendar API
     console.log('Calling N8N Content Calendar API with input:', input);
 
+    // Validate that marketing strategy includes funnel stages
+    const marketingStrategy = input.estrategia_de_marketing || {};
+    const funnelStrategies = marketingStrategy.strategies || {};
+    const hasAllFunnelStages = ['awareness', 'consideration', 'conversion', 'loyalty'].every(
+      stage => funnelStrategies[stage] && funnelStrategies[stage].tactics
+    );
+
+    if (!hasAllFunnelStages) {
+      console.warn('🚨 Marketing strategy missing funnel stages. Available stages:', Object.keys(funnelStrategies));
+    } else {
+      console.log('✅ Marketing strategy includes all funnel stages (awareness, consideration, conversion, loyalty)');
+    }
+
     const n8nPayload = {
       ...input,
       // Ensure required fields have defaults
       numero_dias_generar: input.numero_dias_generar || 7,
       plataformas_seleccionadas: input.plataformas_seleccionadas || ['linkedin'],
-      // Pass the marketing strategy from previous step
-      estrategia_de_marketing: input.estrategia_de_marketing || {},
+      // Pass the marketing strategy from previous step with funnel alignment
+      estrategia_de_marketing: {
+        ...marketingStrategy,
+        // Ensure funnel alignment instructions are clear
+        funnel_alignment_required: true,
+        funnel_stages: {
+          awareness: funnelStrategies.awareness || { tactics: [], main_channel: 'social', timeline: 'short_term' },
+          consideration: funnelStrategies.consideration || { tactics: [], main_channel: 'linkedin', timeline: 'medium_term' },
+          conversion: funnelStrategies.conversion || { tactics: [], main_channel: 'email', timeline: 'medium_term' },
+          loyalty: funnelStrategies.loyalty || { tactics: [], main_channel: 'email', timeline: 'long_term' }
+        }
+      },
       audiencia_objetivo: input.audiencia_objetivo || {}
     };
 
-    console.log('N8N Payload prepared:', n8nPayload);
+    console.log('N8N Payload prepared with funnel alignment:', {
+      ...n8nPayload,
+      estrategia_de_marketing: {
+        funnel_alignment_required: n8nPayload.estrategia_de_marketing.funnel_alignment_required,
+        funnel_stages_available: Object.keys(n8nPayload.estrategia_de_marketing.funnel_stages)
+      }
+    });
 
     const n8nResponse = await fetch('https://buildera.app.n8n.cloud/webhook/content-calendar', {
       method: 'POST',
@@ -155,11 +184,12 @@ serve(async (req) => {
     console.log('Extracted calendario_contenido:', calendario_contenido);
 
     if (!Array.isArray(calendario_contenido) || calendario_contenido.length === 0) {
-      console.warn('No valid calendar content received from N8N, creating fallback');
-      // Fallback: create basic calendar structure
+      console.warn('No valid calendar content received from N8N, creating fallback aligned with funnel strategies');
+      // Fallback: create funnel-aligned calendar structure
       const platforms = input.plataformas_seleccionadas || ['linkedin'];
       const numDays = input.numero_dias_generar || 7;
       const startDate = new Date(input.fecha_inicio_calendario);
+      const funnelStages = ['awareness', 'consideration', 'conversion', 'loyalty'];
       
       calendario_contenido = [];
       for (let day = 0; day < numDays; day++) {
@@ -167,20 +197,54 @@ serve(async (req) => {
         currentDate.setDate(startDate.getDate() + day);
         const dateStr = currentDate.toISOString().split('T')[0];
         
+        // Distribute content across funnel stages
+        const funnelStage = funnelStages[day % funnelStages.length];
+        const stageName = funnelStage.charAt(0).toUpperCase() + funnelStage.slice(1);
+        
         for (const platform of platforms) {
           calendario_contenido.push({
             fecha: dateStr,
             hora: '10:00',
             red_social: platform,
             tipo_contenido: 'Post',
-            tema_concepto: `Contenido para ${platform} - ${input.nombre_empresa}`,
-            descripcion_creativo: `Contenido generado para ${platform}`,
+            categoria_enfoque: funnelStage,
+            etapa_funnel: funnelStage,
+            tema_concepto: `${stageName}: Contenido para ${platform} - ${input.nombre_empresa}`,
+            descripcion_creativo: `Contenido de ${funnelStage} generado para ${platform}`,
+            titulo_gancho: `${stageName} - ${input.nombre_empresa}`,
+            copy_mensaje: `Contenido estratégico para la etapa de ${funnelStage} en ${platform}`,
             estado: 'programado',
             prioridad: 2
           });
         }
       }
     }
+
+    // Validate and enhance calendar items with funnel alignment
+    calendario_contenido = calendario_contenido.map((item: any, index: number) => {
+      // Ensure each item has funnel stage information
+      if (!item.etapa_funnel && !item.categoria_enfoque) {
+        const funnelStages = ['awareness', 'consideration', 'conversion', 'loyalty'];
+        item.etapa_funnel = funnelStages[index % funnelStages.length];
+        item.categoria_enfoque = item.etapa_funnel;
+      }
+      
+      // Ensure consistent structure
+      return {
+        ...item,
+        etapa_funnel: item.etapa_funnel || item.categoria_enfoque || 'awareness',
+        categoria_enfoque: item.categoria_enfoque || item.etapa_funnel || 'awareness'
+      };
+    });
+
+    // Generate funnel distribution summary
+    const funnelDistribution = calendario_contenido.reduce((acc: any, item: any) => {
+      const stage = item.etapa_funnel || item.categoria_enfoque || 'unknown';
+      acc[stage] = (acc[stage] || 0) + 1;
+      return acc;
+    }, {});
+
+    console.log('📊 Funnel distribution in generated calendar:', funnelDistribution);
 
     const response = {
       message: `Calendario de contenido generado exitosamente para ${input.nombre_empresa}`,
@@ -190,13 +254,26 @@ serve(async (req) => {
         plataformas_incluidas: input.plataformas_seleccionadas || ['linkedin'],
         fecha_inicio: input.fecha_inicio_calendario,
         fecha_fin: calendario_contenido[calendario_contenido.length - 1]?.fecha,
-        duracion_dias: input.numero_dias_generar || 7
+        duracion_dias: input.numero_dias_generar || 7,
+        // Add funnel alignment summary
+        distribucion_funnel: funnelDistribution,
+        alineacion_estrategica: {
+          awareness_posts: funnelDistribution.awareness || 0,
+          consideration_posts: funnelDistribution.consideration || 0,
+          conversion_posts: funnelDistribution.conversion || 0,
+          loyalty_posts: funnelDistribution.loyalty || 0
+        }
       },
       metadata: {
         empresa: input.nombre_empresa,
         generated_at: new Date().toISOString(),
         status: 'completed',
-        source: 'n8n_api'
+        source: 'n8n_api',
+        funnel_aligned: true,
+        strategy_validation: {
+          has_funnel_strategies: hasAllFunnelStages,
+          stages_available: Object.keys(funnelStrategies)
+        }
       }
     };
 

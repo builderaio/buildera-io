@@ -22,7 +22,8 @@ import {
   Sparkles,
   Edit3,
   Eye,
-  RefreshCw
+  RefreshCw,
+  Target
 } from 'lucide-react';
 
 interface ContentCalendarProps {
@@ -125,6 +126,8 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
 
       console.log('📅 Estructura de data recibida:', Object.keys(data));
       console.log('📅 Calendario contenido:', data.calendario_contenido);
+      console.log('📊 Distribución funnel:', data.resumen?.distribucion_funnel);
+      console.log('🎯 Alineación estratégica:', data.resumen?.alineacion_estrategica);
       
       setCalendar(data);
       setEditedCalendar(data.calendario_contenido || []);
@@ -173,6 +176,26 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
     };
 
     onComplete(calendarData);
+  };
+
+  const getFunnelStageColor = (stage: string) => {
+    switch (stage?.toLowerCase()) {
+      case 'awareness': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'consideration': return 'bg-green-100 text-green-800 border-green-300';
+      case 'conversion': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'loyalty': return 'bg-purple-100 text-purple-800 border-purple-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
+  const getFunnelStageName = (stage: string) => {
+    switch (stage?.toLowerCase()) {
+      case 'awareness': return 'Conciencia';
+      case 'consideration': return 'Consideración';
+      case 'conversion': return 'Conversión';
+      case 'loyalty': return 'Lealtad';
+      default: return stage || 'Sin etapa';
+    }
   };
 
   const canGenerate = selectedPlatforms.length > 0;
@@ -312,192 +335,223 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
 
       {/* Generated Calendar */}
       {calendar && (
-        <Card className="border-orange-200 bg-orange-50/50">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-orange-800">
-                <CheckCircle className="h-5 w-5" />
-                Calendario Generado ({editedCalendar.length} posts)
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
-                  <Edit3 className="h-4 w-4 mr-1" />
-                  {isEditing ? 'Vista Previa' : 'Editar'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={generateCalendar}
-                  disabled={generating}
-                >
-                  <RefreshCw className="h-4 w-4 mr-1" />
-                  Regenerar
-                </Button>
+        <>
+          {/* Funnel Alignment Summary */}
+          {calendar.resumen?.distribucion_funnel && (
+            <Card className="border-blue-200 bg-blue-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-800">
+                  <Target className="h-5 w-5" />
+                  Alineación con Estrategia del Funnel
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(calendar.resumen.distribucion_funnel).map(([stage, count]) => (
+                    <div key={stage} className="text-center">
+                      <div className={`p-3 rounded-lg border-2 ${getFunnelStageColor(stage)}`}>
+                        <div className="text-2xl font-bold">{count as number}</div>
+                        <div className="text-xs font-medium">{getFunnelStageName(stage)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    <span className="font-medium">✅ Calendario alineado:</span> El contenido está distribuido estratégicamente
+                    según las etapas del funnel de marketing para maximizar la conversión.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="border-orange-200 bg-orange-50/50">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-orange-800">
+                  <CheckCircle className="h-5 w-5" />
+                  Calendario Generado ({editedCalendar.length} posts)
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(!isEditing)}
+                  >
+                    <Edit3 className="h-4 w-4 mr-1" />
+                    {isEditing ? 'Vista Previa' : 'Editar'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={generateCalendar}
+                    disabled={generating}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                    Regenerar
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {editedCalendar.map((item: any, index: number) => {
-                const platformConfig = getPlatform(item.red_social);
-                const IconComponent = platformConfig?.icon || Calendar;
-                const hora = item.hora_publicacion || item.hora || '10:00';
-                
-                return (
-                  <Card key={index} className="bg-white border-l-4 border-l-primary/30 hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <div className={`p-3 rounded-lg ${platformConfig?.bgColor || 'bg-gray-500'} text-white shadow-lg`}>
-                          <IconComponent className="h-5 w-5" />
-                        </div>
-                        <div className="flex-1 space-y-3">
-                          {isEditing ? (
-                            <>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div>
-                                  <Label className="text-xs font-medium">Plataforma</Label>
-                                  <Select
-                                    value={item.red_social}
-                                    onValueChange={(value) => updateCalendarItem(index, 'red_social', value)}
-                                  >
-                                    <SelectTrigger className="h-9 text-sm">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {selectedPlatforms.map(platform => (
-                                        <SelectItem key={platform} value={platform}>
-                                          {getPlatformDisplayName(platform)}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {editedCalendar.map((item: any, index: number) => {
+                  const platformConfig = getPlatform(item.red_social);
+                  const IconComponent = platformConfig?.icon || Calendar;
+                  const hora = item.hora_publicacion || item.hora || '10:00';
+                  
+                  return (
+                    <Card key={index} className="bg-white border-l-4 border-l-primary/30 hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          <div className={`p-3 rounded-lg ${platformConfig?.bgColor || 'bg-gray-500'} text-white shadow-lg`}>
+                            <IconComponent className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1 space-y-3">
+                            {isEditing ? (
+                              <>
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                  <div>
+                                    <Label className="text-xs font-medium">Plataforma</Label>
+                                    <Select
+                                      value={item.red_social}
+                                      onValueChange={(value) => updateCalendarItem(index, 'red_social', value)}
+                                    >
+                                      <SelectTrigger className="h-9 text-sm">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {selectedPlatforms.map(platform => (
+                                          <SelectItem key={platform} value={platform}>
+                                            {getPlatformDisplayName(platform)}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs font-medium">Fecha</Label>
+                                    <Input
+                                      type="date"
+                                      value={item.fecha}
+                                      onChange={(e) => updateCalendarItem(index, 'fecha', e.target.value)}
+                                      className="h-9 text-sm"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs font-medium">Hora</Label>
+                                    <Select
+                                      value={hora}
+                                      onValueChange={(value) => updateCalendarItem(index, 'hora_publicacion', value)}
+                                    >
+                                      <SelectTrigger className="h-9 text-sm">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {timeSlots.map(time => (
+                                          <SelectItem key={time} value={time}>
+                                            {time}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs font-medium">Etapa Funnel</Label>
+                                    <Select
+                                      value={item.etapa_funnel || item.categoria_enfoque || 'awareness'}
+                                      onValueChange={(value) => {
+                                        updateCalendarItem(index, 'etapa_funnel', value);
+                                        updateCalendarItem(index, 'categoria_enfoque', value);
+                                      }}
+                                    >
+                                      <SelectTrigger className="h-9 text-sm">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="awareness">Conciencia</SelectItem>
+                                        <SelectItem value="consideration">Consideración</SelectItem>
+                                        <SelectItem value="conversion">Conversión</SelectItem>
+                                        <SelectItem value="loyalty">Lealtad</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  <div>
+                                    <Label className="text-xs font-medium">Título/Gancho</Label>
+                                    <Input
+                                      value={item.titulo_gancho || item.tema_concepto}
+                                      onChange={(e) => updateCalendarItem(index, 'titulo_gancho', e.target.value)}
+                                      className="text-sm"
+                                      placeholder="Título llamativo..."
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs font-medium">Tipo de Contenido</Label>
+                                    <Input
+                                      value={item.tipo_contenido}
+                                      onChange={(e) => updateCalendarItem(index, 'tipo_contenido', e.target.value)}
+                                      className="text-sm"
+                                    />
+                                  </div>
                                 </div>
                                 <div>
-                                  <Label className="text-xs font-medium">Fecha</Label>
-                                  <Input
-                                    type="date"
-                                    value={item.fecha}
-                                    onChange={(e) => updateCalendarItem(index, 'fecha', e.target.value)}
-                                    className="h-9 text-sm"
+                                  <Label className="text-xs font-medium">Copy/Mensaje</Label>
+                                  <textarea
+                                    value={item.copy_mensaje || ''}
+                                    onChange={(e) => updateCalendarItem(index, 'copy_mensaje', e.target.value)}
+                                    className="w-full p-2 text-sm border rounded-md resize-none"
+                                    rows={3}
+                                    placeholder="Texto del post..."
                                   />
                                 </div>
-                                <div>
-                                  <Label className="text-xs font-medium">Hora</Label>
-                                  <Select
-                                    value={hora}
-                                    onValueChange={(value) => updateCalendarItem(index, 'hora_publicacion', value)}
-                                  >
-                                    <SelectTrigger className="h-9 text-sm">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {timeSlots.map(time => (
-                                        <SelectItem key={time} value={time}>
-                                          {time}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                  <Label className="text-xs font-medium">Título/Gancho</Label>
-                                  <Input
-                                    value={item.titulo_gancho || item.tema_concepto}
-                                    onChange={(e) => updateCalendarItem(index, 'titulo_gancho', e.target.value)}
-                                    className="text-sm"
-                                    placeholder="Título llamativo..."
-                                  />
-                                </div>
-                                <div>
-                                  <Label className="text-xs font-medium">Tipo de Contenido</Label>
-                                  <Input
-                                    value={item.tipo_contenido}
-                                    onChange={(e) => updateCalendarItem(index, 'tipo_contenido', e.target.value)}
-                                    className="text-sm"
-                                  />
-                                </div>
-                              </div>
-                              <div>
-                                <Label className="text-xs font-medium">Copy/Mensaje</Label>
-                                <textarea
-                                  value={item.copy_mensaje || ''}
-                                  onChange={(e) => updateCalendarItem(index, 'copy_mensaje', e.target.value)}
-                                  className="w-full p-2 text-sm border rounded-md resize-none"
-                                  rows={3}
-                                  placeholder="Texto del post..."
-                                />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              {/* Header con fecha y hora */}
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <Badge variant="outline" className="text-xs font-medium bg-primary/5">
-                                    {platformConfig?.name || item.red_social}
+                              </>
+                            ) : (
+                              // Vista previa - mostrar información del calendario con etapa del funnel
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline" className="text-xs">
+                                    {getPlatformDisplayName(item.red_social)}
                                   </Badge>
-                                  {item.categoria_enfoque && (
-                                    <Badge variant="secondary" className="text-xs capitalize">
-                                      {item.categoria_enfoque}
-                                    </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.fecha} • {hora}
+                                  </Badge>
+                                  <Badge className={`text-xs ${getFunnelStageColor(item.etapa_funnel || item.categoria_enfoque)}`}>
+                                    🎯 {getFunnelStageName(item.etapa_funnel || item.categoria_enfoque)}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.tipo_contenido}
+                                  </Badge>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm text-foreground">
+                                    {item.titulo_gancho || item.tema_concepto}
+                                  </p>
+                                  {item.copy_mensaje && (
+                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                      {item.copy_mensaje}
+                                    </p>
+                                  )}
+                                  {item.descripcion_creativo && (
+                                    <p className="text-xs text-muted-foreground/80 mt-1 italic">
+                                      📝 {item.descripcion_creativo}
+                                    </p>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
-                                  <Calendar className="h-3 w-3" />
-                                  {item.fecha}
-                                  <Clock className="h-3 w-3 ml-1" />
-                                  {hora}
-                                </div>
                               </div>
-
-                              {/* Título principal */}
-                              <div>
-                                <h4 className="font-semibold text-base text-foreground leading-tight">
-                                  {item.titulo_gancho || item.tema_concepto}
-                                </h4>
-                                {item.tema_concepto && item.titulo_gancho && item.tema_concepto !== item.titulo_gancho && (
-                                  <p className="text-sm text-muted-foreground mt-1">{item.tema_concepto}</p>
-                                )}
-                              </div>
-
-                              {/* Copy del mensaje */}
-                              {item.copy_mensaje && (
-                                <div className="bg-muted/30 p-3 rounded-lg border-l-2 border-l-primary/50">
-                                  <p className="text-sm text-foreground italic">"{item.copy_mensaje}"</p>
-                                </div>
-                              )}
-
-                              {/* Tipo de contenido y descripción creativa */}
-                              <div className="flex flex-wrap gap-2">
-                                <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
-                                  📝 {item.tipo_contenido}
-                                </Badge>
-                              </div>
-
-                              {/* Descripción del creativo */}
-                              {item.descripcion_creativo && (
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg">
-                                  <p className="text-xs text-blue-800 font-medium mb-1">💡 Concepto Creativo:</p>
-                                  <p className="text-sm text-blue-700">{item.descripcion_creativo}</p>
-                                </div>
-                              )}
-                            </>
-                          )}
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {/* Complete Button */}

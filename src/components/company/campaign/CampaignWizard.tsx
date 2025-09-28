@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useMarketingDataPersistence } from '@/hooks/useMarketingDataPersistence';
 import { useCompanyManagement } from '@/hooks/useCompanyManagement';
+import { useCampaignDrafts } from '@/hooks/useCampaignDrafts';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Target, 
@@ -62,6 +63,7 @@ interface CampaignState {
   campaignId?: string;
   strategyId?: string;
   calendarId?: string;
+  draftId?: string;
 }
 
 const steps = [
@@ -116,27 +118,54 @@ const steps = [
   }
 ];
 
-export const CampaignWizard = () => {
+interface CampaignWizardProps {
+  initialData?: any;
+  initialStep?: string;
+  draftId?: string;
+}
+
+export const CampaignWizard = ({ 
+  initialData, 
+  initialStep, 
+  draftId 
+}: CampaignWizardProps = {}) => {
+  const getInitialStep = () => {
+    if (!initialStep) return 1;
+    const stepMap: Record<string, number> = {
+      'objective': 1,
+      'audience': 2, 
+      'strategy': 3,
+      'calendar': 4,
+      'content': 5,
+      'schedule': 6,
+      'measurement': 7
+    };
+    return stepMap[initialStep] || 1;
+  };
+
   const [state, setState] = useState<CampaignState>({
-    currentStep: 1,
-    completedSteps: []
+    currentStep: getInitialStep(),
+    completedSteps: initialData ? Array.from({ length: getInitialStep() - 1 }, (_, i) => i + 1) : [],
+    draftId: draftId
   });
   
-  const [campaignData, setCampaignData] = useState<CampaignData>({
-    objective: {
-      goal: '',
-      target_metrics: {},
-      timeline: ''
-    },
-    company: {
-      nombre_empresa: '',
-      pais: '',
-      objetivo_de_negocio: '',
-      propuesta_de_valor: '',
-      url_sitio_web: '',
-      redes_sociales_activas: []
+  const [campaignData, setCampaignData] = useState<CampaignData>(
+    initialData || {
+      objective: {
+        goal: '',
+        target_metrics: {},
+        timeline: ''
+      },
+      company: {
+        nombre_empresa: '',
+        pais: '',
+        objetivo_de_negocio: '',
+        propuesta_de_valor: '',
+        url_sitio_web: '',
+        redes_sociales_activas: []
+      }
     }
-  });
+  );
 
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState(null);
@@ -150,6 +179,11 @@ export const CampaignWizard = () => {
     storeContentCalendarData,
     isProcessing 
   } = useMarketingDataPersistence();
+  const { 
+    saveDraft, 
+    completeDraft, 
+    saving: draftSaving 
+  } = useCampaignDrafts();
 
   // Populate with real company data when available
   useEffect(() => {
@@ -209,41 +243,53 @@ export const CampaignWizard = () => {
     const currentStep = steps.find(s => s.id === state.currentStep);
     
     // Update campaign data based on step
-    setCampaignData(prev => {
-      const updated = { ...prev };
-      
-      switch(state.currentStep) {
-        case 1:
-          updated.objective = { ...updated.objective, ...stepData };
-          break;
-        case 2:
-          updated.audience = stepData;
-          // Store target audience data in database
-          if (stepData?.company && stepData?.analysis) {
-            storeTargetAudienceData(stepData.company, stepData.analysis?.buyer_personas || []);
-          }
-          break;
-        case 3:
-          updated.strategy = stepData;
-          // Store strategy data and save strategy ID for future steps (handled below)
-          break;
-        case 4:
-          updated.calendar = stepData;
-          // Store calendar data (handled below)
-          break;
-        case 5:
-          updated.content = stepData;
-          break;
-        case 6:
-          updated.schedule = stepData;
-          break;
-        case 7:
-          updated.measurements = stepData;
-          break;
-      }
-      
-      return updated;
-    });
+    const updatedCampaignData = { ...campaignData };
+    
+    switch(state.currentStep) {
+      case 1:
+        updatedCampaignData.objective = { ...updatedCampaignData.objective, ...stepData };
+        break;
+      case 2:
+        updatedCampaignData.audience = stepData;
+        // Store target audience data in database
+        if (stepData?.company && stepData?.analysis) {
+          storeTargetAudienceData(stepData.company, stepData.analysis?.buyer_personas || []);
+        }
+        break;
+      case 3:
+        updatedCampaignData.strategy = stepData;
+        break;
+      case 4:
+        updatedCampaignData.calendar = stepData;
+        break;
+      case 5:
+        updatedCampaignData.content = stepData;
+        break;
+      case 6:
+        updatedCampaignData.schedule = stepData;
+        break;
+      case 7:
+        updatedCampaignData.measurements = stepData;
+        // Complete the draft when reaching the final step
+        if (state.draftId) {
+          await completeDraft(state.draftId);
+        }
+        break;
+    }
+    
+    setCampaignData(updatedCampaignData);
+
+    // Auto-save draft progress
+    const stepNames = ['objective', 'audience', 'strategy', 'calendar', 'content', 'schedule', 'measurement'];
+    const draftId = await saveDraft(
+      updatedCampaignData, 
+      stepNames[state.currentStep - 1], 
+      state.draftId
+    );
+    
+    if (draftId && !state.draftId) {
+      setState(prev => ({ ...prev, draftId }));
+    }
 
     // Handle async operations outside of setState
     try {
@@ -349,7 +395,7 @@ export const CampaignWizard = () => {
           return updated;
         });
       },
-      loading: loading || isProcessing || companyLoading,
+      loading: loading || isProcessing || companyLoading || draftSaving,
       companyData: primaryCompany
     };
 

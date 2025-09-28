@@ -27,6 +27,7 @@ import {
   HelpCircle,
   Rocket
 } from "lucide-react";
+import { CampaignDashboard } from './campaign/CampaignDashboard';
 import SocialMediaHub from './SocialMediaHub';
 import MarketingMetrics from './MarketingMetrics';
 import ContentGenerator from './ContentGenerator';
@@ -943,7 +944,12 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
 
         {/* Campaña IA como primera tab */}
         <TabsContent value="campaign-wizard" className="space-y-6">
-          <MarketingHubOrchestrator />
+          <CampaignDashboard />
+        </TabsContent>
+
+        {/* Campaign Wizard Tab */}
+        <TabsContent value="campaign-wizard" className="space-y-6">
+          <CampaignDashboard />
         </TabsContent>
 
         <TabsContent value="overview" className="space-y-6">

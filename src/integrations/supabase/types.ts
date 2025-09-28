@@ -4297,24 +4297,39 @@ export type Database = {
           business_objective: string
           company_name: string
           created_at: string
+          current_step: string | null
+          draft_data: Json | null
           id: string
+          is_draft: boolean | null
+          last_saved_at: string | null
           status: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           business_objective: string
           company_name: string
           created_at?: string
+          current_step?: string | null
+          draft_data?: Json | null
           id?: string
+          is_draft?: boolean | null
+          last_saved_at?: string | null
           status?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           business_objective?: string
           company_name?: string
           created_at?: string
+          current_step?: string | null
+          draft_data?: Json | null
           id?: string
+          is_draft?: boolean | null
+          last_saved_at?: string | null
           status?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []

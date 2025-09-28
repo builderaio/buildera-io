@@ -174,6 +174,12 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
     });
 
     if (error) throw error;
+    
+    // Extract the content from the response array format
+    if (data && Array.isArray(data) && data.length > 0 && data[0].output) {
+      return data[0].output;
+    }
+    
     return data;
   };
 
@@ -191,11 +197,18 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
     });
 
     if (error) throw error;
+    
+    // Handle the response format from image creator
+    if (data && typeof data === 'string') {
+      // If it returns a URL directly
+      return { image_url: data, generatedText: `Imagen para: ${calendarItem.tema_concepto}` };
+    }
+    
     return data;
   };
 
   const createVideoContent = async (calendarItem: any) => {
-    const { data, error } = await supabase.functions.invoke('marketing-hub-reel-creator', {
+    const { data, error } = await supabase.functions.invoke('marketing-hub-video-creator', {
       body: {
         input: {
           concepto_visual: calendarItem.tema_concepto,
@@ -205,6 +218,12 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
     });
 
     if (error) throw error;
+    
+    // Handle the response format from video creator
+    if (data && Array.isArray(data) && data.length > 0 && data[0].output) {
+      return data[0].output;
+    }
+    
     return data;
   };
 

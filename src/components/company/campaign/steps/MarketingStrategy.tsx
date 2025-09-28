@@ -63,30 +63,15 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
 
       console.log('📤 Sending strategy input:', strategyInput);
 
-      // Use AbortController to guard against hanging requests
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-      const res = await fetch('https://buildera.app.n8n.cloud/webhook/marketing-strategy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(strategyInput),
-        mode: 'cors',
-        credentials: 'omit',
-        cache: 'no-store',
-        signal: controller.signal
+      // Llamar función Edge (proxy) para evitar problemas de CORS y manejar auth opcional
+      const { data, error } = await supabase.functions.invoke('marketing-strategy-proxy', {
+        body: { input: strategyInput }
       });
-      clearTimeout(timeoutId);
 
-      if (!res.ok) {
-        console.error('❌ Webhook error status:', res.status, res.statusText);
-        throw new Error(`Error del webhook (${res.status}): ${res.statusText}`);
+      if (error) {
+        console.error('❌ Edge function error:', error);
+        throw new Error(error.message || 'Error al contactar el webhook');
       }
-
-      const data = await res.json();
 
       console.log('📥 Raw strategy data received:', data);
       

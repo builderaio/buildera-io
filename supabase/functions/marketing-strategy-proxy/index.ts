@@ -49,6 +49,7 @@ serve(async (req: Request): Promise<Response> => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
+    console.log('➡️ Forwarding to N8N webhook', { url: N8N_URL });
     const res = await fetch(N8N_URL, {
       method: 'POST',
       headers,
@@ -57,6 +58,8 @@ serve(async (req: Request): Promise<Response> => {
     });
 
     clearTimeout(timeout);
+
+    console.log('⬅️ N8N response', { status: res.status, statusText: res.statusText });
 
     const contentType = res.headers.get('content-type') || '';
     const raw = await res.text();
@@ -70,27 +73,28 @@ serve(async (req: Request): Promise<Response> => {
 
     if (!res.ok) {
       return new Response(JSON.stringify({
-        error: 'Webhook error',
+        ok: false,
         status: res.status,
         statusText: res.statusText,
         body
       }), {
-        status: res.status,
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    return new Response(JSON.stringify(body), {
+    return new Response(JSON.stringify({ ok: true, data: body }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (e: any) {
     const isAbort = e?.name === 'AbortError';
     return new Response(JSON.stringify({
+      ok: false,
       error: isAbort ? 'timeout' : 'unexpected',
       message: String(e?.message || e)
     }), {
-      status: 500,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }

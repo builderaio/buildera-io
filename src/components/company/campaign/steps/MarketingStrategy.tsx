@@ -73,12 +73,20 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         throw new Error(error.message || 'Error al contactar el webhook');
       }
 
-      console.log('📥 Raw strategy data received:', data);
+      const payload: any = data;
+      if (payload?.ok === false) {
+        console.error('❌ Webhook returned non-2xx:', payload);
+        throw new Error(`Webhook (${payload.status}): ${payload.statusText || payload.error || 'Error desconocido'}`);
+      }
+
+      const n8nData = payload?.ok ? payload.data : payload;
+
+      console.log('📥 Raw strategy data received:', n8nData);
       
       // Procesar la respuesta de N8N correctamente
-      let processedStrategy = data;
-      if (Array.isArray(data) && data.length > 0 && data[0].output) {
-        processedStrategy = data[0].output;
+      let processedStrategy = n8nData;
+      if (Array.isArray(n8nData) && n8nData.length > 0 && n8nData[0].output) {
+        processedStrategy = n8nData[0].output;
         console.log('🔄 Extracted strategy from N8N array format');
       }
 

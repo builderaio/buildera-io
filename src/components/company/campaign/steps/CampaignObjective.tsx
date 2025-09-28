@@ -73,19 +73,11 @@ const objectiveTypes = [
   }
 ];
 
-const timeframes = [
-  { value: '1-month', label: '1 Mes' },
-  { value: '3-months', label: '3 Meses' },
-  { value: '6-months', label: '6 Meses' },
-  { value: '1-year', label: '1 Año' }
-];
 
 export const CampaignObjective = ({ campaignData, onComplete, loading, companyData }: CampaignObjectiveProps) => {
   const [selectedObjective, setSelectedObjective] = useState(campaignData.objective?.type || '');
   const [campaignName, setCampaignName] = useState(campaignData.objective?.name || '');
   const [description, setDescription] = useState(campaignData.objective?.description || '');
-  const [timeline, setTimeline] = useState(campaignData.objective?.timeline || '');
-  const [budget, setBudget] = useState(campaignData.objective?.budget || '');
   const [targetMetrics, setTargetMetrics] = useState(campaignData.objective?.target_metrics || {});
   const [companyObjectives, setCompanyObjectives] = useState([]);
   const [loadingObjectives, setLoadingObjectives] = useState(true);
@@ -132,7 +124,7 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
   };
 
   const handleSubmit = () => {
-    if (!selectedObjective || !campaignName || !timeline) return;
+    if (!selectedObjective || !campaignName) return;
 
     const selectedCompanyObjectives = companyObjectives.filter(obj => 
       targetMetrics.selectedObjectives?.includes(obj.id)
@@ -142,8 +134,6 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
       type: selectedObjective,
       name: campaignName,
       description,
-      timeline,
-      budget: budget ? parseFloat(budget) : undefined,
       target_metrics: targetMetrics,
       company_objectives: selectedCompanyObjectives,
       selected_objectives_ids: targetMetrics.selectedObjectives || [],
@@ -153,7 +143,7 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
     onComplete(objectiveData);
   };
 
-  const canProceed = selectedObjective && campaignName.trim() && timeline;
+  const canProceed = selectedObjective && campaignName.trim();
 
   return (
     <div className="space-y-6">
@@ -202,35 +192,6 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="timeline">Duración *</Label>
-              <Select value={timeline} onValueChange={setTimeline}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecciona duración" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeframes.map(tf => (
-                    <SelectItem key={tf.value} value={tf.value}>
-                      {tf.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="budget">Presupuesto (USD)</Label>
-              <Input
-                id="budget"
-                type="number"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                placeholder="1000"
-                className="mt-1"
-              />
-            </div>
-          </div>
         </CardContent>
       </Card>
 

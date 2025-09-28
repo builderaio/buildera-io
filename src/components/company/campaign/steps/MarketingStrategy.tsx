@@ -63,14 +63,20 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
 
       console.log('📤 Sending strategy input:', strategyInput);
 
-      const { data, error } = await supabase.functions.invoke('marketing-hub-marketing-strategy', {
-        body: { input: strategyInput }
+      const res = await fetch('https://buildera.app.n8n.cloud/webhook/marketing-strategy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(strategyInput)
       });
 
-      if (error) {
-        console.error('❌ Strategy generation error:', error);
-        throw error;
+      if (!res.ok) {
+        console.error('❌ Webhook error status:', res.status, res.statusText);
+        throw new Error(`Error del webhook (${res.status}): ${res.statusText}`);
       }
+
+      const data = await res.json();
 
       console.log('📥 Raw strategy data received:', data);
       
@@ -81,30 +87,54 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         console.log('🔄 Extracted strategy from N8N array format');
       }
 
-      // Normalizar estructura para evitar errores en renderizado
       const normalizeStrategy = (raw: any) => {
         const s: any = { ...(raw || {}) };
+
+        // Canonicalizar nombres de plataformas para evitar duplicados (p. ej. linkedin vs LinkedIn)
+        const canon = (p: string) => {
+          const k = (p || '').toLowerCase();
+          if (k === 'linkedin' || k === 'linked in') return 'LinkedIn';
+          if (k === 'instagram') return 'Instagram';
+          if (k === 'tiktok' || k === 'tik tok') return 'TikTok';
+          if (k === 'email' || k === 'correo' || k === 'mail') return 'Email';
+          if (k === 'web' || k === 'website' || k === 'sitio' || k === 'site') return 'Web';
+          return p || '';
+        };
+
         // message_variants como objeto { Platform: message }
         if (Array.isArray(s.message_variants)) {
           s.message_variants = s.message_variants.reduce((acc: Record<string, string>, item: any) => {
             const platform = item?.platform || item?.plataforma || item?.canal;
             const msg = item?.message || item?.mensaje || '';
-            if (platform && typeof msg === 'string') acc[platform] = msg;
+            if (platform && typeof msg === 'string') acc[canon(platform)] = msg;
             return acc;
           }, {} as Record<string, string>);
-        }
-        if (!s.message_variants || typeof s.message_variants !== 'object') {
+        } else if (s.message_variants && typeof s.message_variants === 'object') {
+          s.message_variants = Object.entries(s.message_variants).reduce((acc: Record<string, string>, [k, v]) => {
+            acc[canon(k)] = typeof v === 'string' ? v : String(v);
+            return acc;
+          }, {} as Record<string, string>);
+        } else {
           s.message_variants = {};
         }
+
         // Asegurar arrays
         s.editorial_calendar = Array.isArray(s.editorial_calendar) ? s.editorial_calendar : [];
         s.competitors = Array.isArray(s.competitors) ? s.competitors : [];
+
         // Normalizar strategies (aceptar funnel_strategies)
         s.strategies = (s.strategies && typeof s.strategies === 'object')
           ? s.strategies
           : (s.funnel_strategies && typeof s.funnel_strategies === 'object') ? s.funnel_strategies : {};
+
         // Asegurar objetos
         s.content_plan = s.content_plan && typeof s.content_plan === 'object' ? s.content_plan : {};
+        // Canonicalizar claves del plan de contenido
+        s.content_plan = Object.entries(s.content_plan).reduce((acc: Record<string, any>, [k, v]) => {
+          acc[canon(k)] = v;
+          return acc;
+        }, {} as Record<string, any>);
+
         // Normalizar KPIs a arreglo para evitar fallos en render
         if (Array.isArray(s.kpis_goals)) {
           // ok
@@ -115,20 +145,45 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
             ctr: 'CTR',
             leads: 'Leads',
             conversion_rate: 'Tasa de conversión',
+            'conversion rate': 'Tasa de conversión',
             cac: 'CAC estimado'
           };
-          s.kpis_goals = Object.entries(s.kpis_goals).map(([k, v]) => ({
-            kpi: labels[k] || k,
-            goal: String(v)
-          }));
+          s.kpis_goals = Object.entries(s.kpis_goals).map(([k, v]) => {
+            const key = typeof k === 'string' ? k.toLowerCase() : String(k);
+            return {
+              kpi: labels[key] || (k as string),
+              goal: String(v)
+            };
+          });
         } else {
           s.kpis_goals = [];
         }
+
         // Fallbacks de competidores
         s.competitors = s.competitors.map((c: any) => ({
           ...c,
           digital_tactics_summary: c?.digital_tactics_summary || c?.tactics || ''
         }));
+
+        // Normalizar y deduplicar calendario editorial
+        if (Array.isArray(s.editorial_calendar)) {
+          s.editorial_calendar = s.editorial_calendar.map((item: any) => ({
+            ...item,
+            channel: canon(item?.channel || item?.red_social || item?.canal || ''),
+            format: item?.format || item?.tipo_contenido || item?.tipo || '',
+            title: item?.title || item?.titulo_gancho || item?.tema_concepto || '',
+            cta: item?.cta || item?.call_to_action || item?.llamado_accion || '',
+            date: item?.date || item?.fecha || ''
+          }));
+          const seen = new Set<string>();
+          s.editorial_calendar = s.editorial_calendar.filter((it: any) => {
+            const key = [it.date, it.channel, it.title].join('|').toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+        }
+
         return s;
       };
 

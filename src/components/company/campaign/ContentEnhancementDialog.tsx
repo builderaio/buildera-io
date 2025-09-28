@@ -276,15 +276,34 @@ export const ContentEnhancementDialog = ({
           </div>
           </DialogHeader>
 
-          {/* Generated content preview */}
-          <Card className="bg-muted/30">
-            <CardContent className="p-4">
-              <p className="text-sm font-medium mb-2">{contentItem?.calendar_item?.tema_concepto}</p>
-              <p className="text-sm text-muted-foreground line-clamp-3">
-                {contentItem?.content?.texto_final || contentItem?.content?.generatedText || 'Contenido generado'}
-              </p>
-            </CardContent>
-          </Card>
+          {/* Content requirements and description */}
+          <div className="space-y-3">
+            {contentItem?.calendar_item?.descripcion_creativo && (
+              <Card className="border-amber-200 bg-amber-50">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                      <p className="text-sm font-medium text-amber-800 mb-1">Descripción Creativa Requerida:</p>
+                      <p className="text-sm text-amber-700">
+                        {contentItem.calendar_item.descripcion_creativo}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Generated content preview */}
+            <Card className="bg-muted/30">
+              <CardContent className="p-4">
+                <p className="text-sm font-medium mb-2">{contentItem?.calendar_item?.tema_concepto}</p>
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                  {contentItem?.content?.texto_final || contentItem?.content?.generatedText || 'Contenido generado'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">

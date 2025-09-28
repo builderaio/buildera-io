@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { ContentEnhancementDialog } from '../ContentEnhancementDialog';
 import { 
   PenTool,
   Image,
@@ -17,7 +18,8 @@ import {
   Download,
   Eye,
   Square,
-  CheckSquare
+  CheckSquare,
+  Plus
 } from 'lucide-react';
 
 interface ContentCreationProps {
@@ -29,8 +31,12 @@ interface ContentCreationProps {
 interface ContentItem {
   id: string;
   calendar_item: any;
-  status: 'pending' | 'creating' | 'completed' | 'error';
+  status: 'pending' | 'creating' | 'completed' | 'enhanced' | 'error';
   content?: any;
+  media?: {
+    url: string;
+    type: 'image' | 'video';
+  };
   error?: string;
 }
 
@@ -39,6 +45,10 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
   const [currentlyCreating, setCurrentlyCreating] = useState<string | null>(null);
+  const [enhancementDialog, setEnhancementDialog] = useState<{
+    isOpen: boolean;
+    item: ContentItem | null;
+  }>({ isOpen: false, item: null });
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -171,12 +181,38 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
     return data;
   };
 
+  const handleEnhanceContent = (item: ContentItem) => {
+    setEnhancementDialog({ isOpen: true, item });
+  };
+
+  const handleMediaAdded = (mediaUrl: string, mediaType: 'image' | 'video') => {
+    if (enhancementDialog.item) {
+      const updatedItems = contentItems.map(item => 
+        item.id === enhancementDialog.item!.id 
+          ? { 
+              ...item, 
+              status: 'enhanced' as const,
+              media: { url: mediaUrl, type: mediaType }
+            }
+          : item
+      );
+      setContentItems(updatedItems);
+      setEnhancementDialog({ isOpen: false, item: null });
+      
+      toast({
+        title: "¡Contenido mejorado!",
+        description: `Se agregó ${mediaType === 'image' ? 'imagen' : 'video'} al contenido`
+      });
+    }
+  };
+
   const handleComplete = () => {
     const completedContent = contentItems
-      .filter(item => item.status === 'completed')
+      .filter(item => item.status === 'completed' || item.status === 'enhanced')
       .map(item => ({
         calendar_item: item.calendar_item,
-        content: item.content
+        content: item.content,
+        media: item.media
       }));
 
     onComplete({
@@ -228,7 +264,8 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
     }
   };
 
-  const completedCount = contentItems.filter(item => item.status === 'completed').length;
+  const completedCount = contentItems.filter(item => item.status === 'completed' || item.status === 'enhanced').length;
+  const enhancedCount = contentItems.filter(item => item.status === 'enhanced').length;
   const progress = contentItems.length > 0 ? (completedCount / contentItems.length) * 100 : 0;
   const canProceed = completedCount > 0;
 
@@ -265,7 +302,14 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
             <Progress value={progress} className="h-3 mb-4" />
             <div className="flex items-center justify-between text-sm text-muted-foreground">
               <span>{Math.round(progress)}% completado</span>
-              <span>{contentItems.length} contenidos programados</span>
+              <div className="flex items-center gap-4">
+                {enhancedCount > 0 && (
+                  <span className="text-purple-600 font-medium">
+                    {enhancedCount} mejorado{enhancedCount !== 1 ? 's' : ''}
+                  </span>
+                )}
+                <span>{contentItems.length} contenidos programados</span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -398,31 +442,60 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {item.status === 'pending' && (
-                            <Badge variant="secondary">Pendiente</Badge>
-                          )}
-                          {item.status === 'creating' && (
-                            <Badge className="bg-blue-100 text-blue-800 animate-pulse">
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                              Creando...
-                            </Badge>
-                          )}
-                          {item.status === 'completed' && (
-                            <>
-                              <Badge className="bg-green-100 text-green-800">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Completado
-                              </Badge>
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                          {item.status === 'error' && (
-                            <Badge variant="destructive">Error</Badge>
-                          )}
-                        </div>
+                         <div className="flex items-center gap-2">
+                           {item.status === 'pending' && (
+                             <Badge variant="secondary">Pendiente</Badge>
+                           )}
+                           {item.status === 'creating' && (
+                             <Badge className="bg-blue-100 text-blue-800 animate-pulse">
+                               <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                               Creando...
+                             </Badge>
+                           )}
+                           {item.status === 'completed' && (
+                             <>
+                               <Badge className="bg-green-100 text-green-800">
+                                 <CheckCircle2 className="w-3 h-3 mr-1" />
+                                 Completado
+                               </Badge>
+                               <Button 
+                                 variant="outline" 
+                                 size="sm"
+                                 onClick={() => handleEnhanceContent(item)}
+                                 className="border-primary/30 text-primary hover:bg-primary/10"
+                               >
+                                 <Plus className="h-4 w-4 mr-1" />
+                                 Agregar Media
+                               </Button>
+                               <Button variant="ghost" size="sm">
+                                 <Eye className="h-4 w-4" />
+                               </Button>
+                             </>
+                           )}
+                           {item.status === 'enhanced' && (
+                             <>
+                               <Badge className="bg-purple-100 text-purple-800">
+                                 <Sparkles className="w-3 h-3 mr-1" />
+                                 Mejorado
+                               </Badge>
+                               {item.media && (
+                                 <div className="flex items-center gap-1">
+                                   {item.media.type === 'image' ? (
+                                     <Image className="h-4 w-4 text-green-600" />
+                                   ) : (
+                                     <Video className="h-4 w-4 text-red-600" />
+                                   )}
+                                 </div>
+                               )}
+                               <Button variant="ghost" size="sm">
+                                 <Eye className="h-4 w-4" />
+                               </Button>
+                             </>
+                           )}
+                           {item.status === 'error' && (
+                             <Badge variant="destructive">Error</Badge>
+                           )}
+                         </div>
                       </div>
                     </div>
                   );
@@ -444,6 +517,15 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
           {loading ? 'Guardando...' : 'Continuar con Programación'}
         </Button>
       </div>
+
+      {/* Content Enhancement Dialog */}
+      <ContentEnhancementDialog
+        isOpen={enhancementDialog.isOpen}
+        onClose={() => setEnhancementDialog({ isOpen: false, item: null })}
+        contentItem={enhancementDialog.item}
+        profile={{ user_id: campaignData.user_id }}
+        onMediaAdded={handleMediaAdded}
+      />
     </div>
   );
 };

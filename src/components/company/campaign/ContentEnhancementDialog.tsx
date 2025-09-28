@@ -108,10 +108,21 @@ export const ContentEnhancementDialog = ({
   const generateVideoWithAI = async () => {
     setGeneratingVideo(true);
     try {
-      const { data, error } = await supabase.functions.invoke('marketing-hub-reel-creator', {
+      const contentType = contentItem?.calendar_item?.tipo_contenido?.toLowerCase() || '';
+      
+      // Determine which function to use based on content type
+      let functionName = 'marketing-hub-video-creator';
+      if (contentType.includes('reel')) {
+        functionName = 'marketing-hub-reel-creator';
+      }
+
+      const { data, error } = await supabase.functions.invoke(functionName, {
         body: {
           input: {
-            concepto_visual: contentItem.calendar_item.tema_concepto,
+            identidad_visual: {
+              paleta_de_colores: { primario: "#0D0D2B", acento: "#3D52D5" },
+              estilo_imagenes: "Moderno y profesional"
+            },
             calendario_item: contentItem.calendar_item,
             content_text: contentItem.content?.texto_final || contentItem.content?.generatedText
           }

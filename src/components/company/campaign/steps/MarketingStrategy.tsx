@@ -65,7 +65,7 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
 
       // Llamar función Edge (proxy) para evitar problemas de CORS y manejar auth opcional
       const { data, error } = await supabase.functions.invoke('marketing-strategy-proxy', {
-        body: { input: strategyInput }
+        body: strategyInput
       });
 
       if (error) {
@@ -73,20 +73,20 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
         throw new Error(error.message || 'Error al contactar el webhook');
       }
 
-      const payload: any = data;
-      if (payload?.ok === false) {
-        console.error('❌ Webhook returned non-2xx:', payload);
-        throw new Error(`Webhook (${payload.status}): ${payload.statusText || payload.error || 'Error desconocido'}`);
+      // Verificar si el proxy devolvió un error
+      if (data?.ok === false) {
+        console.error('❌ N8N webhook error:', data);
+        throw new Error(`Error del webhook (${data.status}): ${data.statusText || data.error || 'Error desconocido'}`);
       }
 
-      const n8nData = payload?.ok ? payload.data : payload;
-
-      console.log('📥 Raw strategy data received:', n8nData);
+      // Extraer los datos del proxy
+      const strategyData = data?.ok ? data.data : data;
+      console.log('📥 Raw strategy data received:', strategyData);
       
       // Procesar la respuesta de N8N correctamente
-      let processedStrategy = n8nData;
-      if (Array.isArray(n8nData) && n8nData.length > 0 && n8nData[0].output) {
-        processedStrategy = n8nData[0].output;
+      let processedStrategy = strategyData;
+      if (Array.isArray(strategyData) && strategyData.length > 0 && strategyData[0].output) {
+        processedStrategy = strategyData[0].output;
         console.log('🔄 Extracted strategy from N8N array format');
       }
 

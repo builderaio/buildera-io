@@ -31,10 +31,7 @@ serve(async (req: Request): Promise<Response> => {
       payload = {};
     }
 
-    // Accept direct object or { input: ... }
-    const input = (payload && typeof payload === 'object' && 'input' in payload)
-      ? (payload as any).input
-      : payload;
+    console.log('📤 Received payload:', payload);
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -53,7 +50,7 @@ serve(async (req: Request): Promise<Response> => {
     const res = await fetch(N8N_URL, {
       method: 'POST',
       headers,
-      body: JSON.stringify(input ?? {}),
+      body: JSON.stringify(payload ?? {}),
       signal: controller.signal
     });
 

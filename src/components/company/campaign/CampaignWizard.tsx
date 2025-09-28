@@ -109,10 +109,10 @@ const steps = [
   },
   {
     id: 7,
-    title: 'Medición y Análisis',
-    description: 'Mide el impacto de tu campaña',
+    title: 'Resumen Final',
+    description: 'Revisa tu campaña creada',
     icon: BarChart3,
-    color: 'text-teal-600'
+    color: 'text-green-600'
   }
 ];
 

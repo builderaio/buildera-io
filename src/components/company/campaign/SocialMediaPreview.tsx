@@ -18,14 +18,20 @@ import {
   Users
 } from 'lucide-react';
 import { getPlatform, getPlatformColor } from '@/lib/socialPlatforms';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
 
 interface SocialMediaPreviewProps {
   isOpen: boolean;
   onClose: () => void;
   contentItem: any;
+  companyProfile?: any;
 }
 
-export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMediaPreviewProps) => {
+export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfile }: SocialMediaPreviewProps) => {
+  const [companyData, setCompanyData] = useState<any>(null);
+  const [socialAccounts, setSocialAccounts] = useState<any>({});
+
   if (!contentItem) return null;
 
   const platform = contentItem.calendar_item?.red_social?.toLowerCase();
@@ -34,14 +40,111 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
   const mediaUrl = contentItem.media?.url;
   const mediaType = contentItem.media?.type;
   const hashtags = contentItem.content?.hashtags || [];
+  
+  // Get suggested publication time
+  const suggestedTime = contentItem.calendar_item?.hora || '12:00';
+  
+  // Dummy image for preview when no media exists
+  const dummyImage = "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=400&fit=crop";
 
-  // Mock user data for preview
-  const mockUser = {
-    name: "Tu Empresa",
-    username: "@tuempresa",
-    avatar: "/lovable-uploads/df793eae-f9ea-4291-9de2-ecf01e5005d5.png",
-    verified: true
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      if (!companyProfile?.primary_company_id) return;
+
+      try {
+        // Get company info
+        const { data: company } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', companyProfile.primary_company_id)
+          .single();
+
+        setCompanyData(company);
+
+        // Get social connections
+        const connections: any = {};
+        
+        // LinkedIn
+        const { data: linkedinData } = await supabase
+          .from('linkedin_connections')
+          .select('*')
+          .eq('user_id', companyProfile.user_id)
+          .maybeSingle();
+        
+        if (linkedinData) connections.linkedin = linkedinData;
+
+        // Facebook/Instagram
+        const { data: facebookData } = await supabase
+          .from('facebook_instagram_connections')
+          .select('*')
+          .eq('user_id', companyProfile.user_id)
+          .maybeSingle();
+        
+        if (facebookData) {
+          connections.facebook = facebookData;
+          connections.instagram = facebookData;
+        }
+
+        // TikTok
+        const { data: tiktokData } = await supabase
+          .from('tiktok_connections')
+          .select('*')
+          .eq('user_id', companyProfile.user_id)
+          .maybeSingle();
+        
+        if (tiktokData) connections.tiktok = tiktokData;
+
+        setSocialAccounts(connections);
+      } catch (error) {
+        console.error('Error fetching company data:', error);
+      }
+    };
+
+    fetchCompanyData();
+  }, [companyProfile]);
+
+  // Get user data based on platform and company
+  const getUserData = () => {
+    const companyName = companyData?.name || companyProfile?.company_name || "Tu Empresa";
+    const companyLogo = companyData?.logo_url || companyProfile?.avatar_url || "/lovable-uploads/df793eae-f9ea-4291-9de2-ecf01e5005d5.png";
+    
+    let username = "@tuempresa";
+    
+    // Get platform-specific username
+    switch (platform) {
+      case 'linkedin':
+      case 'li':
+        username = socialAccounts.linkedin?.company_name || companyName;
+        break;
+      case 'instagram':
+      case 'ig':
+        username = socialAccounts.instagram?.instagram_username ? `@${socialAccounts.instagram.instagram_username}` : "@tuempresa";
+        break;
+      case 'facebook':
+      case 'fb':
+        username = socialAccounts.facebook?.facebook_page_name || companyName;
+        break;
+      case 'tiktok':
+      case 'tt':
+        username = socialAccounts.tiktok?.tiktok_username ? `@${socialAccounts.tiktok.tiktok_username}` : "@tuempresa";
+        break;
+      case 'youtube':
+      case 'yt':
+        username = companyName;
+        break;
+      default:
+        username = "@tuempresa";
+    }
+
+    return {
+      name: companyName,
+      username: username,
+      avatar: companyLogo,
+      verified: true
+    };
   };
+
+  const mockUser = getUserData();
 
   const renderInstagramPreview = () => (
     <Card className="w-full max-w-md mx-auto bg-white">
@@ -63,17 +166,19 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
         </div>
 
         {/* Media */}
-        {mediaUrl && (
-          <div className="relative aspect-square bg-gray-100">
-            {mediaType === 'image' ? (
+        <div className="relative aspect-square bg-gray-100">
+          {mediaUrl ? (
+            mediaType === 'image' ? (
               <img src={mediaUrl} alt="Post" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-black flex items-center justify-center">
                 <Play className="h-12 w-12 text-white" />
               </div>
-            )}
-          </div>
-        )}
+            )
+          ) : (
+            <img src={dummyImage} alt="Preview" className="w-full h-full object-cover" />
+          )}
+        </div>
 
         {/* Actions */}
         <div className="p-3">
@@ -105,7 +210,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
           </div>
 
           {/* Time */}
-          <p className="text-xs text-gray-500 mt-2">hace 2 horas</p>
+          <p className="text-xs text-gray-500 mt-2">Programado para las {suggestedTime}</p>
         </div>
       </CardContent>
     </Card>
@@ -130,7 +235,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
               )}
             </div>
             <p className="text-xs text-gray-600">CEO en {mockUser.name}</p>
-            <p className="text-xs text-gray-500">hace 2h • 🌐</p>
+            <p className="text-xs text-gray-500">Programado para {suggestedTime} • 🌐</p>
           </div>
           <Button variant="ghost" size="sm">
             <MoreHorizontal className="h-4 w-4" />
@@ -152,17 +257,19 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
         </div>
 
         {/* Media */}
-        {mediaUrl && (
-          <div className="relative aspect-video bg-gray-100">
-            {mediaType === 'image' ? (
+        <div className="relative aspect-video bg-gray-100">
+          {mediaUrl ? (
+            mediaType === 'image' ? (
               <img src={mediaUrl} alt="Post" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-black flex items-center justify-center">
                 <Play className="h-12 w-12 text-white" />
               </div>
-            )}
-          </div>
-        )}
+            )
+          ) : (
+            <img src={dummyImage} alt="Preview" className="w-full h-full object-cover" />
+          )}
+        </div>
 
         {/* Actions */}
         <div className="flex items-center justify-between px-4 py-3 border-t">
@@ -214,7 +321,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
                 )}
               </div>
               <div className="flex items-center gap-1 text-xs text-gray-500">
-                <span>hace 2 horas</span>
+                <span>Programado para {suggestedTime}</span>
                 <span>•</span>
                 <Users className="h-3 w-3" />
               </div>
@@ -240,17 +347,19 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
         </div>
 
         {/* Media */}
-        {mediaUrl && (
-          <div className="relative aspect-video bg-gray-100">
-            {mediaType === 'image' ? (
+        <div className="relative aspect-video bg-gray-100">
+          {mediaUrl ? (
+            mediaType === 'image' ? (
               <img src={mediaUrl} alt="Post" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-black flex items-center justify-center">
                 <Play className="h-12 w-12 text-white" />
               </div>
-            )}
-          </div>
-        )}
+            )
+          ) : (
+            <img src={dummyImage} alt="Preview" className="w-full h-full object-cover" />
+          )}
+        </div>
 
         {/* Actions */}
         <div className="flex items-center justify-between px-4 py-3 border-t">
@@ -285,9 +394,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
               <img src={mediaUrl} alt="Post" className="w-full h-full object-cover" />
             )
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-              <Play className="h-16 w-16 text-white" />
-            </div>
+            <img src={dummyImage} alt="Preview" className="w-full h-full object-cover" />
           )}
         </div>
 
@@ -358,9 +465,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
               <img src={mediaUrl} alt="Video thumbnail" className="w-full h-full object-cover" />
             )
           ) : (
-            <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-              <Play className="h-16 w-16 text-white" />
-            </div>
+            <img src={dummyImage} alt="Preview" className="w-full h-full object-cover" />
           )}
           <div className="absolute bottom-2 right-2 bg-black/80 text-white px-1 text-xs rounded">
             10:23
@@ -383,7 +488,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
                 {mockUser.verified && <span>✓</span>}
               </div>
               <div className="text-xs text-gray-600">
-                1.2K visualizaciones • hace 2 horas
+                1.2K visualizaciones • Programado para {suggestedTime}
               </div>
             </div>
             <Button variant="ghost" size="sm">
@@ -460,7 +565,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem }: SocialMedia
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                📅 {contentItem.calendar_item?.fecha} • 🕒 {contentItem.calendar_item?.hora}
+                📅 {contentItem.calendar_item?.fecha} • 🕒 {suggestedTime}
               </p>
             </div>
           </div>

@@ -46,6 +46,7 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
   const [currentlyCreating, setCurrentlyCreating] = useState<string | null>(null);
+  const [companyProfile, setCompanyProfile] = useState<any>(null);
   const [enhancementDialog, setEnhancementDialog] = useState<{
     isOpen: boolean;
     item: ContentItem | null;
@@ -55,6 +56,27 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
     item: ContentItem | null;
   }>({ isOpen: false, item: null });
   const { toast } = useToast();
+
+  // Fetch company profile
+  React.useEffect(() => {
+    const fetchCompanyProfile = async () => {
+      if (!campaignData.user_id) return;
+
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*, companies!profiles_primary_company_id_fkey(*)')
+          .eq('user_id', campaignData.user_id)
+          .single();
+
+        setCompanyProfile(profile);
+      } catch (error) {
+        console.error('Error fetching company profile:', error);
+      }
+    };
+
+    fetchCompanyProfile();
+  }, [campaignData.user_id]);
 
   React.useEffect(() => {
     if (campaignData.calendar?.final_calendar) {
@@ -549,6 +571,7 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
         isOpen={previewDialog.isOpen}
         onClose={() => setPreviewDialog({ isOpen: false, item: null })}
         contentItem={previewDialog.item}
+        companyProfile={companyProfile}
       />
     </div>
   );

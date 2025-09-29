@@ -151,8 +151,10 @@ const AgentMarketplace = () => {
     { value: 'all', label: 'Todos' },
     { value: 'marketing', label: 'Marketing' },
     { value: 'analytics', label: 'Analytics' },
-    { value: 'research', label: 'Research' },
-    { value: 'automation', label: 'Automation' },
+    { value: 'sales', label: 'Ventas' },
+    { value: 'customer_service', label: 'Atención al Cliente' },
+    { value: 'operations', label: 'Operaciones' },
+    { value: 'ecommerce', label: 'E-commerce' },
     { value: 'general', label: 'General' },
   ];
 
@@ -160,8 +162,10 @@ const AgentMarketplace = () => {
     const colors: Record<string, string> = {
       'marketing': 'bg-blue-100 text-blue-800',
       'analytics': 'bg-green-100 text-green-800',
-      'research': 'bg-purple-100 text-purple-800',
-      'automation': 'bg-orange-100 text-orange-800',
+      'sales': 'bg-purple-100 text-purple-800',
+      'customer_service': 'bg-orange-100 text-orange-800',
+      'operations': 'bg-cyan-100 text-cyan-800',
+      'ecommerce': 'bg-pink-100 text-pink-800',
       'general': 'bg-gray-100 text-gray-800',
     };
     return colors[category] || colors.general;

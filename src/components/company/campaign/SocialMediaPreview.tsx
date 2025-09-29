@@ -42,7 +42,14 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { toast } = useToast();
 
-  if (!contentItem) return null;
+  // Debug logging to see what's being passed
+  console.log('SocialMediaPreview - contentItem:', contentItem);
+  console.log('SocialMediaPreview - companyProfile:', companyProfile);
+
+  if (!contentItem) {
+    console.log('SocialMediaPreview - No contentItem provided');
+    return null;
+  }
 
   const platform = contentItem.calendar_item?.red_social?.toLowerCase();
   const platformInfo = getPlatform(platform || '');

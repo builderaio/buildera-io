@@ -20,7 +20,10 @@ import {
   Music,
   Facebook,
   Twitter,
-  Youtube
+  Youtube,
+  RefreshCw,
+  AlertCircle,
+  X
 } from 'lucide-react';
 
 interface ContentSchedulingProps {
@@ -42,6 +45,7 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
   
   const [scheduling, setScheduling] = useState(false);
   const [scheduledItems, setScheduledItems] = useState([]);
+  const [retrying, setRetrying] = useState(false);
   const { toast } = useToast();
 
   // Debug logging and better data access
@@ -201,6 +205,158 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
     } finally {
       setScheduling(false);
     }
+  };
+
+  const retryFailedContent = async () => {
+    const failedItems = scheduledItems.filter(item => item.status === 'failed');
+    
+    if (failedItems.length === 0) {
+      toast({
+        title: "No hay contenido para reintentar",
+        description: "Todas las publicaciones están programadas correctamente",
+      });
+      return;
+    }
+
+    setRetrying(true);
+    let retriedCount = 0;
+    let successCount = 0;
+
+    try {
+      // Get user and company info
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      const { data: socialAccountData } = await supabase
+        .from('social_accounts')
+        .select('company_username')
+        .eq('user_id', user.id)
+        .eq('platform', 'upload_post_profile')
+        .limit(1);
+
+      const companyUsername = socialAccountData?.[0]?.company_username;
+      if (!companyUsername) {
+        throw new Error("Perfil de Upload-Post no configurado");
+      }
+
+      const updatedItems = [...scheduledItems];
+
+      for (const failedItem of failedItems) {
+        retriedCount++;
+        
+        try {
+          // Format scheduled date properly
+          const scheduledDateTime = new Date(failedItem.scheduled_time);
+          
+          if (isNaN(scheduledDateTime.getTime())) {
+            throw new Error(`Fecha inválida: ${failedItem.scheduled_time}`);
+          }
+
+          // Determine post type and extract media URLs
+          let postType = 'text';
+          let mediaUrls = [];
+          
+          if (failedItem.content?.image_urls?.length > 0) {
+            postType = 'photo';
+            mediaUrls = failedItem.content.image_urls;
+          } else if (failedItem.content?.video_url) {
+            postType = 'video';
+            mediaUrls = [failedItem.content.video_url];
+          }
+
+          // Retry scheduling the post
+          const { data: result, error } = await supabase.functions.invoke('upload-post-manager', {
+            body: {
+              action: 'post_content',
+              data: {
+                companyUsername,
+                platforms: [failedItem.platform],
+                title: failedItem.calendar_item.titulo_gancho || failedItem.calendar_item.tema_concepto,
+                content: failedItem.content?.copy_mensaje || failedItem.calendar_item.copy_mensaje,
+                mediaUrls,
+                postType,
+                scheduledDate: scheduledDateTime.toISOString(),
+                async_upload: true
+              }
+            }
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          // Update the item as successfully scheduled
+          const itemIndex = updatedItems.findIndex(item => item.id === failedItem.id);
+          if (itemIndex !== -1) {
+            updatedItems[itemIndex] = {
+              ...updatedItems[itemIndex],
+              status: 'scheduled',
+              job_id: result?.job_id,
+              upload_post_result: result,
+              error: undefined,
+              retry_count: (updatedItems[itemIndex].retry_count || 0) + 1
+            };
+          }
+
+          successCount++;
+
+          toast({
+            title: `Reintento exitoso`,
+            description: `Contenido para ${failedItem.platform} programado correctamente`,
+          });
+
+        } catch (retryError: any) {
+          console.error(`Error retrying item ${failedItem.id}:`, retryError);
+          
+          // Update the error message for this item
+          const itemIndex = updatedItems.findIndex(item => item.id === failedItem.id);
+          if (itemIndex !== -1) {
+            updatedItems[itemIndex] = {
+              ...updatedItems[itemIndex],
+              error: retryError.message,
+              retry_count: (updatedItems[itemIndex].retry_count || 0) + 1
+            };
+          }
+
+          toast({
+            title: `Error en reintento`,
+            description: `${failedItem.platform}: ${retryError.message}`,
+            variant: "destructive"
+          });
+        }
+      }
+
+      setScheduledItems(updatedItems);
+
+      if (successCount > 0) {
+        toast({
+          title: "¡Reintento completado!",
+          description: `${successCount} de ${retriedCount} publicaciones programadas exitosamente`,
+        });
+      }
+
+    } catch (error: any) {
+      console.error('Error in retryFailedContent:', error);
+      toast({
+        title: "Error en reintento",
+        description: error?.message || "No se pudo reintentar el contenido",
+        variant: "destructive"
+      });
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  const removeFailedItem = (itemId: string) => {
+    const updatedItems = scheduledItems.filter(item => item.id !== itemId);
+    setScheduledItems(updatedItems);
+    
+    toast({
+      title: "Contenido removido",
+      description: "El contenido fallido ha sido removido de la lista",
+    });
   };
 
   const handleComplete = () => {
@@ -441,12 +597,51 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
       {scheduledItems.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Play className="h-5 w-5 text-primary" />
-              Contenido Programado
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Play className="h-5 w-5 text-primary" />
+                Contenido Programado
+              </CardTitle>
+              {scheduledItems.some(item => item.status === 'failed') && (
+                <Button
+                  onClick={retryFailedContent}
+                  disabled={retrying}
+                  variant="outline"
+                  size="sm"
+                  className="border-orange-200 text-orange-700 hover:bg-orange-50"
+                >
+                  {retrying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Reintentando...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Reintentar Fallidos
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
+            {/* Failed Items Summary */}
+            {scheduledItems.some(item => item.status === 'failed') && (
+              <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <h4 className="text-sm font-medium text-orange-800">
+                    Publicaciones con Errores
+                  </h4>
+                </div>
+                <p className="text-xs text-orange-700">
+                  {scheduledItems.filter(item => item.status === 'failed').length} publicaciones fallaron. 
+                  Puedes reintentarlas o revisar los errores individualmente.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {scheduledItems.slice(0, 10).map((item: any) => {
                 const platformConfig = getPlatform(item.platform);
@@ -479,6 +674,16 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
                           }
                         })()}
                       </p>
+                      {item.status === 'failed' && item.error && (
+                        <p className="text-xs text-red-600 mt-1 truncate" title={item.error}>
+                          Error: {item.error}
+                        </p>
+                      )}
+                      {item.retry_count && item.retry_count > 0 && (
+                        <p className="text-xs text-blue-600 mt-1">
+                          Reintentos: {item.retry_count}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">
@@ -489,9 +694,20 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
                           Programado
                         </Badge>
                       ) : item.status === 'failed' ? (
-                        <Badge className="bg-red-100 text-red-800 text-xs">
-                          Error
-                        </Badge>
+                        <>
+                          <Badge className="bg-red-100 text-red-800 text-xs">
+                            Error
+                          </Badge>
+                          <Button
+                            onClick={() => removeFailedItem(item.id)}
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-red-600 hover:text-red-800 hover:bg-red-50"
+                            title="Remover este contenido fallido"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </>
                       ) : (
                         <Badge className="bg-green-100 text-green-800 text-xs">
                           {item.status}

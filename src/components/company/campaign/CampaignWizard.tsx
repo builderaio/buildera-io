@@ -274,6 +274,15 @@ export const CampaignWizard = ({
         if (state.draftId) {
           await completeDraft(state.draftId);
         }
+        // Show success message and redirect
+        setTimeout(() => {
+          toast({
+            title: "¡Campaña creada exitosamente!",
+            description: "Tu campaña ha sido guardada y está lista para su ejecución.",
+          });
+          // Navigate back to campaign dashboard after a delay
+          window.location.href = '/company-dashboard';
+        }, 2000);
         break;
     }
     
@@ -332,6 +341,15 @@ export const CampaignWizard = ({
   const nextStep = () => {
     if (state.currentStep < steps.length) {
       setState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }));
+    } else {
+      // If we're at the last step, redirect to dashboard
+      toast({
+        title: "¡Campaña completada!",
+        description: "Redirigiendo al dashboard...",
+      });
+      setTimeout(() => {
+        window.location.href = '/company-dashboard';
+      }, 1500);
     }
   };
 
@@ -574,14 +592,14 @@ export const CampaignWizard = ({
 
           <Button 
             onClick={nextStep}
-            disabled={state.currentStep === steps.length || !isStepCompleted(state.currentStep) || loading || isProcessing}
+            disabled={!isStepCompleted(state.currentStep) || loading || isProcessing}
             className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 disabled:hover:scale-100 ${
               state.currentStep === steps.length 
                 ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600' 
                 : 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70'
             }`}
           >
-            {state.currentStep === steps.length ? 'Finalizar' : 'Siguiente'}
+            {state.currentStep === steps.length ? 'Finalizar Campaña' : 'Siguiente'}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

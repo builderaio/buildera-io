@@ -38,11 +38,16 @@ export const CampaignMeasurement = ({ campaignData, onComplete, loading }: Campa
       if (!user) return;
 
       // Verificar si el usuario está en el tour guiado
-      const { data: tourStatus } = await supabase
+      const { data: tourStatus, error: tourError } = await supabase
         .from('user_guided_tour')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      if (tourError) {
+        console.error('Error fetching tour status:', tourError);
+        return;
+      }
 
       if (tourStatus && !tourStatus.tour_completed) {
         const currentCompletedSteps = tourStatus.completed_steps || [];
@@ -54,7 +59,7 @@ export const CampaignMeasurement = ({ campaignData, onComplete, loading }: Campa
           const nextStep = Math.max(...newCompletedSteps) + 1;
           const allCompleted = newCompletedSteps.length === 9; // Total de pasos
 
-          await supabase
+          const { error: updateError } = await supabase
             .from('user_guided_tour')
             .update({
               current_step: allCompleted ? 9 : nextStep,
@@ -65,6 +70,11 @@ export const CampaignMeasurement = ({ campaignData, onComplete, loading }: Campa
             })
             .eq('user_id', user.id);
 
+          if (updateError) {
+            console.error('Error updating tour status:', updateError);
+            return;
+          }
+
           toast({
             title: "¡Paso del tour completado!",
             description: "Has completado exitosamente la creación de campañas. El tour continuará con el siguiente paso.",
@@ -73,6 +83,7 @@ export const CampaignMeasurement = ({ campaignData, onComplete, loading }: Campa
       }
     } catch (error) {
       console.error('Error completing guided tour step:', error);
+      // No mostrar error al usuario para evitar confusión
     }
   };
   
@@ -80,8 +91,10 @@ export const CampaignMeasurement = ({ campaignData, onComplete, loading }: Campa
     setCompletingTour(true);
     
     try {
-      // Completar el paso del tour guiado si corresponde
-      await completeGuidedTourStep();
+      // Completar el paso del tour guiado si corresponde (sin await para evitar bloqueos)
+      completeGuidedTourStep().catch(error => {
+        console.error('Tour step completion failed:', error);
+      });
 
       const summaryData = {
         campaign_status: 'created',
@@ -102,7 +115,14 @@ export const CampaignMeasurement = ({ campaignData, onComplete, loading }: Campa
         ]
       };
 
+      // Llamar onComplete para avanzar al siguiente paso o finalizar
       onComplete(summaryData);
+      
+      toast({
+        title: "¡Campaña finalizada!",
+        description: "Tu campaña ha sido creada exitosamente",
+      });
+
     } catch (error) {
       console.error('Error completing campaign:', error);
       toast({

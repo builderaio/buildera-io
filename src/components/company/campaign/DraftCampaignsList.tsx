@@ -120,7 +120,7 @@ export const DraftCampaignsList = ({
                     
                     <div className="flex-1">
                       <h4 className="font-semibold text-base mb-1">
-                        {draft.company_name}
+                        {draft.draft_data?.objective?.name || draft.company_name}
                       </h4>
                       <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                         {draft.business_objective}

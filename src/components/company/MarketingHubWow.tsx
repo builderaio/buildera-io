@@ -234,64 +234,167 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   const loadRealMetrics = async () => {
     try {
-      const [insightsRes, actionablesRes, postsRes, campaignsRes] = await Promise.all([
-        supabase.from('marketing_insights').select('*').eq('user_id', userId),
+      // Get current and previous period data for real trend calculations
+      const now = new Date();
+      const currentPeriodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
+      const previousPeriodStart = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000); // 30-60 days ago
+      
+      const [
+        currentInsights, previousInsights,
+        currentPosts, previousPosts,
+        campaignsRes, actionsRes,
+        audiencesRes, socialAccountsRes
+      ] = await Promise.all([
+        // Current period insights
+        supabase.from('marketing_insights').select('*')
+          .eq('user_id', userId)
+          .gte('created_at', currentPeriodStart.toISOString()),
+        // Previous period insights  
+        supabase.from('marketing_insights').select('*')
+          .eq('user_id', userId)
+          .gte('created_at', previousPeriodStart.toISOString())
+          .lt('created_at', currentPeriodStart.toISOString()),
+        // Current period posts (all platforms)
+        Promise.all([
+          supabase.from('linkedin_posts').select('likes_count, comments_count, created_at').eq('user_id', userId).gte('created_at', currentPeriodStart.toISOString()),
+          supabase.from('instagram_posts').select('like_count, comment_count, created_at').eq('user_id', userId).gte('created_at', currentPeriodStart.toISOString()),
+          supabase.from('facebook_posts').select('likes_count, comments_count, created_at').eq('user_id', userId).gte('created_at', currentPeriodStart.toISOString()),
+          supabase.from('tiktok_posts').select('digg_count, comment_count, created_at').eq('user_id', userId).gte('created_at', currentPeriodStart.toISOString())
+        ]),
+        // Previous period posts
+        Promise.all([
+          supabase.from('linkedin_posts').select('likes_count, comments_count, created_at').eq('user_id', userId).gte('created_at', previousPeriodStart.toISOString()).lt('created_at', currentPeriodStart.toISOString()),
+          supabase.from('instagram_posts').select('like_count, comment_count, created_at').eq('user_id', userId).gte('created_at', previousPeriodStart.toISOString()).lt('created_at', currentPeriodStart.toISOString()),
+          supabase.from('facebook_posts').select('likes_count, comments_count, created_at').eq('user_id', userId).gte('created_at', previousPeriodStart.toISOString()).lt('created_at', currentPeriodStart.toISOString()),
+          supabase.from('tiktok_posts').select('digg_count, comment_count, created_at').eq('user_id', userId).gte('created_at', previousPeriodStart.toISOString()).lt('created_at', currentPeriodStart.toISOString())
+        ]),
+        // Active campaigns
+        supabase.from('marketing_campaigns').select('*').eq('user_id', userId).in('status', ['active', 'running']),
+        // Completed actions
         supabase.from('marketing_actionables').select('status').eq('user_id', userId).eq('status', 'completed'),
-        supabase.from('linkedin_posts').select('likes_count, comments_count').eq('user_id', userId),
-        supabase.from('marketing_insights').select('*').eq('user_id', userId)
+        // Audiences
+        supabase.from('company_audiences').select('*').eq('user_id', userId),
+        // Social connections
+        supabase.from('social_accounts').select('platform, is_connected').eq('user_id', userId).eq('is_connected', true)
       ]);
 
-      const totalInsights = insightsRes.data?.length || 0;
-      const completedActions = actionablesRes.data?.length || 0;
-      const posts = postsRes.data || [];
-      const campaigns = campaignsRes.data?.length || 0;
+      // Calculate current metrics
+      const totalInsights = currentInsights.data?.length || 0;
+      const previousTotalInsights = previousInsights.data?.length || 0;
+      const insightsGrowth = previousTotalInsights > 0 ? 
+        ((totalInsights - previousTotalInsights) / previousTotalInsights * 100).toFixed(1) : 
+        totalInsights > 0 ? '100' : '0';
 
-      const totalLikes = posts.reduce((sum, post) => sum + (post.likes_count || 0), 0);
-      const totalComments = posts.reduce((sum, post) => sum + (post.comments_count || 0), 0);
-      const totalEngagement = totalLikes + totalComments;
+      // Calculate engagement from all platforms
+      const calculateEngagement = (platformPosts: any[]) => {
+        return platformPosts.reduce((total, posts) => {
+          return total + (posts.data || []).reduce((sum: number, post: any) => {
+            const likes = post.likes_count || post.like_count || post.digg_count || 0;
+            const comments = post.comments_count || post.comment_count || 0;
+            return sum + likes + comments;
+          }, 0);
+        }, 0);
+      };
+
+      const currentEngagement = calculateEngagement(currentPosts);
+      const previousEngagement = calculateEngagement(previousPosts);
+      const engagementGrowth = previousEngagement > 0 ? 
+        ((currentEngagement - previousEngagement) / previousEngagement * 100).toFixed(1) : 
+        currentEngagement > 0 ? '100' : '0';
+
+      const activeCampaigns = campaignsRes.data?.length || 0;
+      const completedActions = actionsRes.data?.length || 0;
+      const totalAudiences = audiencesRes.data?.length || 0;
+      const connectedPlatforms = socialAccountsRes.data?.length || 0;
+
+      // Calculate automation score based on real data
+      const automationScore = totalInsights > 0 ? 
+        Math.round((completedActions / totalInsights) * 100) : 0;
+
+      const insightsGrowthNum = parseFloat(insightsGrowth);
+      const engagementGrowthNum = parseFloat(engagementGrowth);
 
       const metrics: QuickStat[] = [
         {
           label: "Insights Generados",
           value: totalInsights.toString(),
-          change: totalInsights > 0 ? `+${Math.min(totalInsights, 15)}` : "0",
-          trend: "up",
+          change: `${insightsGrowthNum >= 0 ? '+' : ''}${insightsGrowth}%`,
+          trend: insightsGrowthNum > 0 ? "up" : insightsGrowthNum < 0 ? "down" : "neutral",
           icon: Brain,
           color: "text-purple-600",
-          description: "Análisis inteligentes generados"
+          description: "Análisis inteligentes generados este mes"
         },
         {
           label: "Engagement Total",
-          value: formatNumber(totalEngagement),
-          change: totalEngagement > 0 ? "+12.5%" : "0%",
-          trend: totalEngagement > 0 ? "up" : "neutral",
+          value: formatNumber(currentEngagement),
+          change: `${engagementGrowthNum >= 0 ? '+' : ''}${engagementGrowth}%`,
+          trend: engagementGrowthNum > 0 ? "up" : engagementGrowthNum < 0 ? "down" : "neutral",
           icon: Heart,
           color: "text-pink-600",
           description: "Interacciones en todas las plataformas"
         },
         {
           label: "Campañas Activas",
-          value: campaigns.toString(),
-          change: campaigns > 0 ? `+${campaigns}` : "0",
-          trend: campaigns > 0 ? "up" : "neutral",
+          value: activeCampaigns.toString(),
+          change: activeCampaigns > 0 ? `${activeCampaigns} en curso` : "Sin campañas",
+          trend: activeCampaigns > 0 ? "up" : "neutral",
           icon: Rocket,
           color: "text-blue-600",
           description: "Campañas de marketing en ejecución"
         },
         {
           label: "Score de Automatización",
-          value: `${Math.round(completedActions / Math.max(totalInsights, 1) * 100)}%`,
-          change: completedActions > 0 ? "+15%" : "0%",
-          trend: completedActions > 0 ? "up" : "neutral",
+          value: `${automationScore}%`,
+          change: completedActions > 0 ? `${completedActions} acciones` : "Sin acciones",
+          trend: automationScore > 70 ? "up" : automationScore > 30 ? "neutral" : "down",
           icon: Zap,
           color: "text-green-600",
-          description: "Eficiencia de automatización"
+          description: "Eficiencia de automatización IA"
         }
       ];
 
       setRealMetrics(metrics);
     } catch (error) {
       console.error('Error loading metrics:', error);
+      // Set empty state instead of hardcoded values
+      setRealMetrics([
+        {
+          label: "Insights Generados",
+          value: "0",
+          change: "Iniciando análisis",
+          trend: "neutral",
+          icon: Brain,
+          color: "text-purple-600",
+          description: "Conecta tus redes para generar insights"
+        },
+        {
+          label: "Engagement Total", 
+          value: "0",
+          change: "Sin datos disponibles",
+          trend: "neutral",
+          icon: Heart,
+          color: "text-pink-600",
+          description: "Conecta tus redes sociales"
+        },
+        {
+          label: "Campañas Activas",
+          value: "0", 
+          change: "Crea tu primera campaña",
+          trend: "neutral",
+          icon: Rocket,
+          color: "text-blue-600",
+          description: "Inicia tu estrategia de marketing"
+        },
+        {
+          label: "Score de Automatización",
+          value: "0%",
+          change: "Configura automatización",
+          trend: "neutral", 
+          icon: Zap,
+          color: "text-green-600",
+          description: "Optimiza con IA"
+        }
+      ]);
     }
   };
 
@@ -360,16 +463,19 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const loadPlatformStats = async () => {
     try {
       const [instagramRes, linkedinRes, facebookRes, tiktokRes] = await Promise.all([
-        supabase.from('instagram_posts').select('like_count, comment_count, reach').eq('user_id', userId),
-        supabase.from('linkedin_posts').select('likes_count, comments_count').eq('user_id', userId),
-        supabase.from('facebook_posts').select('likes_count, comments_count, reach').eq('user_id', userId),
-        supabase.from('tiktok_posts').select('digg_count, comment_count, play_count').eq('user_id', userId)
+        supabase.from('instagram_posts').select('like_count, comment_count, reach, created_at').eq('user_id', userId),
+        supabase.from('linkedin_posts').select('likes_count, comments_count, impressions, created_at').eq('user_id', userId),
+        supabase.from('facebook_posts').select('likes_count, comments_count, reach, created_at').eq('user_id', userId),
+        supabase.from('tiktok_posts').select('digg_count, comment_count, play_count, created_at').eq('user_id', userId)
       ]);
 
       const calculateStats = (posts: any[], likeField: string, commentField: string, reachField?: string) => {
+        if (!posts || posts.length === 0) return { posts: 0, engagement: 0, reach: 0 };
+        
         const totalLikes = posts.reduce((sum, post) => sum + (post[likeField] || 0), 0);
         const totalComments = posts.reduce((sum, post) => sum + (post[commentField] || 0), 0);
         const totalReach = reachField ? posts.reduce((sum, post) => sum + (post[reachField] || 0), 0) : 0;
+        
         return {
           posts: posts.length,
           engagement: totalLikes + totalComments,
@@ -377,26 +483,38 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         };
       };
 
+      const instagramStats = calculateStats(instagramRes.data || [], 'like_count', 'comment_count', 'reach');
+      const linkedinStats = calculateStats(linkedinRes.data || [], 'likes_count', 'comments_count', 'impressions');
+      const facebookStats = calculateStats(facebookRes.data || [], 'likes_count', 'comments_count', 'reach');
+      const tiktokStats = calculateStats(tiktokRes.data || [], 'digg_count', 'comment_count', 'play_count');
+
       setPlatformStats({
         instagram: {
-          ...calculateStats(instagramRes.data || [], 'like_count', 'comment_count', 'reach'),
-          followers: 0
+          ...instagramStats,
+          followers: 0 // Will be populated when Instagram API data is available
         },
         linkedin: {
-          ...calculateStats(linkedinRes.data || [], 'likes_count', 'comments_count'),
-          connections: 0
+          ...linkedinStats,
+          connections: 0 // Will be populated when LinkedIn API data is available
         },
         facebook: {
-          ...calculateStats(facebookRes.data || [], 'likes_count', 'comments_count', 'reach'),
-          likes: 0
+          ...facebookStats,
+          likes: 0 // Will be populated when Facebook API data is available
         },
         tiktok: {
-          ...calculateStats(tiktokRes.data || [], 'digg_count', 'comment_count', 'play_count'),
-          views: tiktokRes.data?.reduce((sum, post) => sum + (post.play_count || 0), 0) || 0
+          ...tiktokStats,
+          views: tiktokStats.reach || 0
         }
       });
     } catch (error) {
       console.error('Error loading platform stats:', error);
+      // Set empty stats for error state
+      setPlatformStats({
+        instagram: { posts: 0, followers: 0, engagement: 0 },
+        linkedin: { posts: 0, connections: 0, engagement: 0 },
+        facebook: { posts: 0, likes: 0, engagement: 0 },
+        tiktok: { posts: 0, views: 0, engagement: 0 }
+      });
     }
   };
 

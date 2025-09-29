@@ -942,11 +942,6 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
           </TabsTrigger>
         </TabsList>
 
-        {/* Campaña IA como primera tab */}
-        <TabsContent value="campaign-wizard" className="space-y-6">
-          <CampaignDashboard />
-        </TabsContent>
-
         {/* Campaign Wizard Tab */}
         <TabsContent value="campaign-wizard" className="space-y-6">
           <CampaignDashboard />

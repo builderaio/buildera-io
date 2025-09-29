@@ -58,6 +58,20 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
   console.log('ContentScheduling - createdContent:', createdContent);
   console.log('ContentScheduling - totalItems:', totalItems);
 
+  // Platform compatibility validation
+  const validatePlatformCompatibility = (platform: string, postType: string) => {
+    const supportedPlatforms = {
+      text: ['linkedin', 'twitter', 'facebook', 'threads', 'reddit'],
+      photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'twitter', 'threads', 'pinterest'],
+      video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'twitter', 'threads', 'pinterest']
+    };
+
+    // Normalize platform names (convert twitter to x for text and photo posts)
+    const normalizedPlatform = platform === 'twitter' && postType !== 'video' ? 'x' : platform;
+    
+    return supportedPlatforms[postType as keyof typeof supportedPlatforms]?.includes(normalizedPlatform);
+  };
+
   const scheduleAllContent = async () => {
     if (totalItems === 0) {
       toast({
@@ -113,6 +127,14 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
           } else if (contentItem.content?.video_url) {
             postType = 'video';
             mediaUrls = [contentItem.content.video_url];
+          }
+
+          // Validate platform compatibility before scheduling
+          const platform = contentItem.calendar_item.red_social;
+          if (!validatePlatformCompatibility(platform, postType)) {
+            const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
+            const postTypeName = postType === 'text' ? 'texto' : postType === 'photo' ? 'foto' : 'video';
+            throw new Error(`${platformName} no soporta publicaciones de ${postTypeName}. Revisa el contenido del calendario.`);
           }
 
           // Schedule the post via Upload-Post API
@@ -264,6 +286,14 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
           } else if (failedItem.content?.video_url) {
             postType = 'video';
             mediaUrls = [failedItem.content.video_url];
+          }
+
+          // Validate platform compatibility before retry
+          const platform = failedItem.platform;
+          if (!validatePlatformCompatibility(platform, postType)) {
+            const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
+            const postTypeName = postType === 'text' ? 'texto' : postType === 'photo' ? 'foto' : 'video';
+            throw new Error(`${platformName} no soporta publicaciones de ${postTypeName}. Esta plataforma no es compatible con este tipo de contenido.`);
           }
 
           // Retry scheduling the post

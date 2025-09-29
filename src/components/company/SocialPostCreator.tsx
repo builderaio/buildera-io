@@ -160,6 +160,70 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
     setMediaUrls(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Platform compatibility validation
+  const validatePlatformCompatibility = () => {
+    const supportedPlatforms = {
+      text: ['linkedin', 'twitter', 'facebook', 'threads', 'reddit'],
+      photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'twitter', 'threads', 'pinterest'],
+      video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'twitter', 'threads', 'pinterest']
+    };
+
+    const unsupportedPlatforms = selectedPlatforms.filter(platform => 
+      !supportedPlatforms[postType as keyof typeof supportedPlatforms]?.includes(platform)
+    );
+
+    if (unsupportedPlatforms.length > 0) {
+      const platformNames = unsupportedPlatforms.map(p => {
+        switch(p) {
+          case 'instagram': return 'Instagram';
+          case 'tiktok': return 'TikTok';
+          case 'linkedin': return 'LinkedIn';
+          case 'facebook': return 'Facebook';
+          case 'twitter': return 'X (Twitter)';
+          case 'threads': return 'Threads';
+          case 'reddit': return 'Reddit';
+          case 'pinterest': return 'Pinterest';
+          case 'youtube': return 'YouTube';
+          default: return p;
+        }
+      }).join(', ');
+      
+      const supportedNames = supportedPlatforms[postType as keyof typeof supportedPlatforms]?.map(p => {
+        switch(p) {
+          case 'instagram': return 'Instagram';
+          case 'tiktok': return 'TikTok';
+          case 'linkedin': return 'LinkedIn';
+          case 'facebook': return 'Facebook';
+          case 'twitter': return 'X (Twitter)';
+          case 'threads': return 'Threads';
+          case 'reddit': return 'Reddit';
+          case 'pinterest': return 'Pinterest';
+          case 'youtube': return 'YouTube';
+          default: return p;
+        }
+      }).join(', ');
+
+      const postTypeNames = {
+        text: 'texto',
+        photo: 'foto',
+        video: 'video'
+      };
+
+      let suggestion = '';
+      if (unsupportedPlatforms.includes('instagram') || unsupportedPlatforms.includes('tiktok')) {
+        suggestion = ' Instagram y TikTok solo soportan fotos y videos. Considera cambiar el tipo de publicación a "Foto" y agregar una imagen con tu texto.';
+      }
+
+      toast({
+        title: "Plataformas incompatibles",
+        description: `${platformNames} no soporta publicaciones de ${postTypeNames[postType as keyof typeof postTypeNames]}. Para publicaciones de ${postTypeNames[postType as keyof typeof postTypeNames]}, puedes usar: ${supportedNames}.${suggestion}`,
+        variant: "destructive"
+      });
+      return false;
+    }
+    return true;
+  };
+
   const validateForm = () => {
     if (!title.trim()) {
       toast({
@@ -176,6 +240,11 @@ export const SocialPostCreator = ({ profile, onPostCreated }: SocialPostCreatorP
         description: "Seleccione al menos una plataforma",
         variant: "destructive"
       });
+      return false;
+    }
+
+    // Validate platform compatibility
+    if (!validatePlatformCompatibility()) {
       return false;
     }
 

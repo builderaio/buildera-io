@@ -48,6 +48,11 @@ import AgentMarketplace from "./pages/AgentMarketplace";
 import CompanyAgents from "./pages/CompanyAgents";
 import CompanyAgentView from "./pages/CompanyAgentView";
 import AgentConfigWizard from "./pages/AgentConfigWizard";
+import DeveloperPortal from "./pages/DeveloperPortal";
+import WhiteLabelDashboard from "./pages/WhiteLabelDashboard";
+import AgentFlowBuilder from "./pages/AgentFlowBuilder";
+import WhiteLabelMarketplace from "./pages/WhiteLabelMarketplace";
+import CompanyWhiteLabelAgents from "./pages/CompanyWhiteLabelAgents";
 
 import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
@@ -210,6 +215,16 @@ const App = () => {
                   <AdminEmailSystem />
                 </AdminProtectedRoute>
               } />
+              
+              {/* WhiteLabel Agent Builder Portal Routes */}
+              <Route path="/whitelabel" element={<DeveloperPortal />} />
+              <Route path="/whitelabel/dashboard" element={<WhiteLabelDashboard />} />
+              <Route path="/whitelabel/agent-builder" element={<AgentFlowBuilder />} />
+              <Route path="/whitelabel/agent-builder/:id" element={<AgentFlowBuilder />} />
+              <Route path="/whitelabel/marketplace" element={<WhiteLabelMarketplace />} />
+              
+              {/* Company WhiteLabel Integration */}
+              <Route path="/company/whitelabel-agents" element={<CompanyWhiteLabelAgents />} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

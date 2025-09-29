@@ -2671,6 +2671,66 @@ export type Database = {
         }
         Relationships: []
       }
+      developer_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          company_name: string | null
+          created_at: string | null
+          developer_name: string
+          github_url: string | null
+          id: string
+          linkedin_url: string | null
+          specialties: string[] | null
+          tier: string | null
+          total_agents_created: number | null
+          total_deployments: number | null
+          total_revenue: number | null
+          updated_at: string | null
+          user_id: string
+          verified: boolean | null
+          website_url: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          developer_name: string
+          github_url?: string | null
+          id?: string
+          linkedin_url?: string | null
+          specialties?: string[] | null
+          tier?: string | null
+          total_agents_created?: number | null
+          total_deployments?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+          user_id: string
+          verified?: boolean | null
+          website_url?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          developer_name?: string
+          github_url?: string | null
+          id?: string
+          linkedin_url?: string | null
+          specialties?: string[] | null
+          tier?: string | null
+          total_agents_created?: number | null
+          total_deployments?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+          user_id?: string
+          verified?: boolean | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       email_attachments: {
         Row: {
           created_at: string
@@ -3326,6 +3386,85 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      flow_connections: {
+        Row: {
+          condition_config: Json | null
+          created_at: string | null
+          id: string
+          source_handle: string | null
+          source_node_id: string
+          target_handle: string | null
+          target_node_id: string
+          template_id: string
+        }
+        Insert: {
+          condition_config?: Json | null
+          created_at?: string | null
+          id?: string
+          source_handle?: string | null
+          source_node_id: string
+          target_handle?: string | null
+          target_node_id: string
+          template_id: string
+        }
+        Update: {
+          condition_config?: Json | null
+          created_at?: string | null
+          id?: string
+          source_handle?: string | null
+          source_node_id?: string
+          target_handle?: string | null
+          target_node_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_connections_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabel_agent_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flow_nodes: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          id: string
+          node_id: string
+          node_type: string
+          position: Json
+          template_id: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          node_id: string
+          node_type: string
+          position: Json
+          template_id: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          node_id?: string
+          node_type?: string
+          position?: Json
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_nodes_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabel_agent_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       followers_location_analysis: {
         Row: {
@@ -6109,6 +6248,384 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      whitelabel_agent_templates: {
+        Row: {
+          ai_capabilities: Json | null
+          average_rating: number | null
+          banner_image_url: string | null
+          base_price: number | null
+          category: string
+          created_at: string | null
+          customization_options: Json | null
+          demo_url: string | null
+          description: string | null
+          developer_id: string
+          documentation_url: string | null
+          flow_definition: Json
+          icon: string | null
+          id: string
+          integration_config: Json | null
+          is_featured: boolean | null
+          is_published: boolean | null
+          knowledge_base_config: Json | null
+          pricing_model: string | null
+          revenue_share_percentage: number | null
+          tags: string[] | null
+          template_name: string
+          total_deployments: number | null
+          total_ratings: number | null
+          updated_at: string | null
+          version: string | null
+        }
+        Insert: {
+          ai_capabilities?: Json | null
+          average_rating?: number | null
+          banner_image_url?: string | null
+          base_price?: number | null
+          category: string
+          created_at?: string | null
+          customization_options?: Json | null
+          demo_url?: string | null
+          description?: string | null
+          developer_id: string
+          documentation_url?: string | null
+          flow_definition?: Json
+          icon?: string | null
+          id?: string
+          integration_config?: Json | null
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          knowledge_base_config?: Json | null
+          pricing_model?: string | null
+          revenue_share_percentage?: number | null
+          tags?: string[] | null
+          template_name: string
+          total_deployments?: number | null
+          total_ratings?: number | null
+          updated_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          ai_capabilities?: Json | null
+          average_rating?: number | null
+          banner_image_url?: string | null
+          base_price?: number | null
+          category?: string
+          created_at?: string | null
+          customization_options?: Json | null
+          demo_url?: string | null
+          description?: string | null
+          developer_id?: string
+          documentation_url?: string | null
+          flow_definition?: Json
+          icon?: string | null
+          id?: string
+          integration_config?: Json | null
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          knowledge_base_config?: Json | null
+          pricing_model?: string | null
+          revenue_share_percentage?: number | null
+          tags?: string[] | null
+          template_name?: string
+          total_deployments?: number | null
+          total_ratings?: number | null
+          updated_at?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whitelabel_agent_templates_developer_id_fkey"
+            columns: ["developer_id"]
+            isOneToOne: false
+            referencedRelation: "developer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whitelabel_analytics: {
+        Row: {
+          deployment_id: string
+          id: string
+          metadata: Json | null
+          metric_type: string
+          metric_value: number
+          period_end: string | null
+          period_start: string | null
+          recorded_at: string | null
+        }
+        Insert: {
+          deployment_id: string
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          metric_value: number
+          period_end?: string | null
+          period_start?: string | null
+          recorded_at?: string | null
+        }
+        Update: {
+          deployment_id?: string
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          metric_value?: number
+          period_end?: string | null
+          period_start?: string | null
+          recorded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whitelabel_analytics_deployment_id_fkey"
+            columns: ["deployment_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabel_deployments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whitelabel_deployments: {
+        Row: {
+          agent_config: Json | null
+          api_key: string | null
+          billing_config: Json | null
+          branding_config: Json | null
+          company_id: string
+          created_at: string | null
+          custom_domain: string | null
+          deployment_name: string
+          deployment_url: string | null
+          id: string
+          integration_settings: Json | null
+          last_activity_at: string | null
+          status: string | null
+          template_id: string
+          updated_at: string | null
+          usage_stats: Json | null
+        }
+        Insert: {
+          agent_config?: Json | null
+          api_key?: string | null
+          billing_config?: Json | null
+          branding_config?: Json | null
+          company_id: string
+          created_at?: string | null
+          custom_domain?: string | null
+          deployment_name: string
+          deployment_url?: string | null
+          id?: string
+          integration_settings?: Json | null
+          last_activity_at?: string | null
+          status?: string | null
+          template_id: string
+          updated_at?: string | null
+          usage_stats?: Json | null
+        }
+        Update: {
+          agent_config?: Json | null
+          api_key?: string | null
+          billing_config?: Json | null
+          branding_config?: Json | null
+          company_id?: string
+          created_at?: string | null
+          custom_domain?: string | null
+          deployment_name?: string
+          deployment_url?: string | null
+          id?: string
+          integration_settings?: Json | null
+          last_activity_at?: string | null
+          status?: string | null
+          template_id?: string
+          updated_at?: string | null
+          usage_stats?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whitelabel_deployments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whitelabel_deployments_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabel_agent_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whitelabel_knowledge_bases: {
+        Row: {
+          chunk_overlap: number | null
+          chunk_size: number | null
+          created_at: string | null
+          description: string | null
+          embeddings_model: string | null
+          id: string
+          last_updated_at: string | null
+          name: string
+          processing_config: Json | null
+          source_config: Json
+          status: string | null
+          template_id: string
+          total_chunks: number | null
+          type: string
+        }
+        Insert: {
+          chunk_overlap?: number | null
+          chunk_size?: number | null
+          created_at?: string | null
+          description?: string | null
+          embeddings_model?: string | null
+          id?: string
+          last_updated_at?: string | null
+          name: string
+          processing_config?: Json | null
+          source_config?: Json
+          status?: string | null
+          template_id: string
+          total_chunks?: number | null
+          type: string
+        }
+        Update: {
+          chunk_overlap?: number | null
+          chunk_size?: number | null
+          created_at?: string | null
+          description?: string | null
+          embeddings_model?: string | null
+          id?: string
+          last_updated_at?: string | null
+          name?: string
+          processing_config?: Json | null
+          source_config?: Json
+          status?: string | null
+          template_id?: string
+          total_chunks?: number | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whitelabel_knowledge_bases_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabel_agent_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whitelabel_revenue: {
+        Row: {
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string | null
+          deployment_id: string
+          developer_id: string
+          developer_share: number
+          id: string
+          platform_share: number
+          revenue_amount: number
+          status: string | null
+          transaction_type: string
+        }
+        Insert: {
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          deployment_id: string
+          developer_id: string
+          developer_share: number
+          id?: string
+          platform_share: number
+          revenue_amount: number
+          status?: string | null
+          transaction_type: string
+        }
+        Update: {
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string | null
+          deployment_id?: string
+          developer_id?: string
+          developer_share?: number
+          id?: string
+          platform_share?: number
+          revenue_amount?: number
+          status?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whitelabel_revenue_deployment_id_fkey"
+            columns: ["deployment_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabel_deployments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whitelabel_revenue_developer_id_fkey"
+            columns: ["developer_id"]
+            isOneToOne: false
+            referencedRelation: "developer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whitelabel_reviews: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          ease_of_use_rating: number | null
+          features_rating: number | null
+          id: string
+          is_public: boolean | null
+          rating: number
+          review_text: string | null
+          support_rating: number | null
+          template_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          ease_of_use_rating?: number | null
+          features_rating?: number | null
+          id?: string
+          is_public?: boolean | null
+          rating: number
+          review_text?: string | null
+          support_rating?: number | null
+          template_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          ease_of_use_rating?: number | null
+          features_rating?: number | null
+          id?: string
+          is_public?: boolean | null
+          rating?: number
+          review_text?: string | null
+          support_rating?: number | null
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whitelabel_reviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whitelabel_reviews_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabel_agent_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       widget_configurations: {
         Row: {

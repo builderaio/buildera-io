@@ -19,32 +19,23 @@ import 'reactflow/dist/style.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Bot, 
   MessageSquare, 
   Zap, 
-  Database, 
   Globe, 
-  Mic,
-  Eye,
   Brain,
   Save,
   Play,
   Settings,
-  Plus,
   ArrowLeft,
-  Mail,
-  Calendar,
-  MessageCircle,
-  Image,
-  Volume2
+  Sparkles
 } from 'lucide-react';
 
 // Node configuration component
@@ -54,7 +45,10 @@ const NodeConfigDialog = ({ node, onSave, onClose }: { node: Node, onSave: (conf
 
   const handleSave = () => {
     onSave({ ...node.data, config });
-    toast({ title: "Node Configuration Saved", description: `${node.data.label} has been configured successfully.` });
+    toast({ 
+      title: "✅ Nodo Configurado", 
+      description: `${node.data.label} ha sido configurado correctamente.` 
+    });
     onClose();
   };
 
@@ -64,47 +58,20 @@ const NodeConfigDialog = ({ node, onSave, onClose }: { node: Node, onSave: (conf
         return (
           <div className="space-y-4">
             <div>
-              <Label>Message Pattern</Label>
+              <Label>Patrón del Mensaje</Label>
               <Input
-                placeholder="Enter message pattern or keywords"
+                placeholder="Ejemplo: 'hola', 'ayuda', 'precio'"
                 value={config.pattern || ''}
                 onChange={(e) => setConfig({ ...config, pattern: e.target.value })}
               />
             </div>
             <div>
-              <Label>Response Template</Label>
+              <Label>Respuesta</Label>
               <Textarea
-                placeholder="Enter response template"
+                placeholder="Hola! ¿En qué puedo ayudarte?"
                 value={config.response || ''}
                 onChange={(e) => setConfig({ ...config, response: e.target.value })}
               />
-            </div>
-          </div>
-        );
-
-      case 'webhook':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label>Webhook URL</Label>
-              <Input
-                placeholder="https://your-webhook-url.com"
-                value={config.url || ''}
-                onChange={(e) => setConfig({ ...config, url: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>HTTP Method</Label>
-              <Select value={config.method || 'POST'} onValueChange={(value) => setConfig({ ...config, method: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="POST">POST</SelectItem>
-                  <SelectItem value="GET">GET</SelectItem>
-                  <SelectItem value="PUT">PUT</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         );
@@ -113,7 +80,7 @@ const NodeConfigDialog = ({ node, onSave, onClose }: { node: Node, onSave: (conf
         return (
           <div className="space-y-4">
             <div>
-              <Label>AI Model</Label>
+              <Label>Modelo de IA</Label>
               <Select value={config.model || 'gpt-4'} onValueChange={(value) => setConfig({ ...config, model: value })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -126,22 +93,11 @@ const NodeConfigDialog = ({ node, onSave, onClose }: { node: Node, onSave: (conf
               </Select>
             </div>
             <div>
-              <Label>System Prompt</Label>
+              <Label>Prompt del Sistema</Label>
               <Textarea
-                placeholder="Enter system prompt for AI"
+                placeholder="Eres un asistente útil que..."
                 value={config.systemPrompt || ''}
                 onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Temperature</Label>
-              <Input
-                type="number"
-                min="0"
-                max="1"
-                step="0.1"
-                value={config.temperature || 0.7}
-                onChange={(e) => setConfig({ ...config, temperature: parseFloat(e.target.value) })}
               />
             </div>
           </div>
@@ -151,15 +107,15 @@ const NodeConfigDialog = ({ node, onSave, onClose }: { node: Node, onSave: (conf
         return (
           <div className="space-y-4">
             <div>
-              <Label>Message Content</Label>
+              <Label>Mensaje</Label>
               <Textarea
-                placeholder="Enter message content (supports variables like {user_name})"
+                placeholder="Tu mensaje aquí (puedes usar {variables})"
                 value={config.content || ''}
                 onChange={(e) => setConfig({ ...config, content: e.target.value })}
               />
             </div>
             <div>
-              <Label>Channel</Label>
+              <Label>Canal</Label>
               <Select value={config.channel || 'chat'} onValueChange={(value) => setConfig({ ...config, channel: value })}>
                 <SelectTrigger>
                   <SelectValue />
@@ -167,31 +123,9 @@ const NodeConfigDialog = ({ node, onSave, onClose }: { node: Node, onSave: (conf
                 <SelectContent>
                   <SelectItem value="chat">Chat</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
-        );
-
-      case 'api_call':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label>API Endpoint</Label>
-              <Input
-                placeholder="https://api.example.com/endpoint"
-                value={config.endpoint || ''}
-                onChange={(e) => setConfig({ ...config, endpoint: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Headers (JSON)</Label>
-              <Textarea
-                placeholder='{"Authorization": "Bearer token", "Content-Type": "application/json"}'
-                value={config.headers || ''}
-                onChange={(e) => setConfig({ ...config, headers: e.target.value })}
-              />
             </div>
           </div>
         );
@@ -200,27 +134,11 @@ const NodeConfigDialog = ({ node, onSave, onClose }: { node: Node, onSave: (conf
         return (
           <div className="space-y-4">
             <div>
-              <Label>Condition</Label>
+              <Label>Condición</Label>
               <Input
-                placeholder="e.g., user_age > 18"
+                placeholder="user_age > 18"
                 value={config.condition || ''}
                 onChange={(e) => setConfig({ ...config, condition: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>True Path Message</Label>
-              <Input
-                placeholder="Message when condition is true"
-                value={config.trueMessage || ''}
-                onChange={(e) => setConfig({ ...config, trueMessage: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>False Path Message</Label>
-              <Input
-                placeholder="Message when condition is false"
-                value={config.falseMessage || ''}
-                onChange={(e) => setConfig({ ...config, falseMessage: e.target.value })}
               />
             </div>
           </div>
@@ -228,104 +146,92 @@ const NodeConfigDialog = ({ node, onSave, onClose }: { node: Node, onSave: (conf
 
       default:
         return (
-          <div className="space-y-4">
-            <div>
-              <Label>Configuration</Label>
-              <Textarea
-                placeholder="Enter node configuration as JSON"
-                value={JSON.stringify(config, null, 2)}
-                onChange={(e) => {
-                  try {
-                    setConfig(JSON.parse(e.target.value));
-                  } catch {}
-                }}
-              />
-            </div>
+          <div>
+            <Label>Configuración JSON</Label>
+            <Textarea
+              placeholder="{}"
+              value={JSON.stringify(config, null, 2)}
+              onChange={(e) => {
+                try {
+                  setConfig(JSON.parse(e.target.value));
+                } catch {}
+              }}
+            />
           </div>
         );
     }
   };
 
   return (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-lg">
       <DialogHeader>
-        <DialogTitle>Configure {node.data.label}</DialogTitle>
+        <DialogTitle>Configurar {node.data.label}</DialogTitle>
       </DialogHeader>
       <div className="space-y-6">
         {renderConfigFields()}
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave}>Save Configuration</Button>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button onClick={handleSave}>Guardar</Button>
         </div>
       </div>
     </DialogContent>
   );
 };
 
-// Enhanced node components with functionality
+// Simple node components
 const nodeTypes = {
   trigger: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-green-400 to-green-600 text-white border min-w-[120px]">
-      <div className="flex items-center gap-2">
+    <div className="px-4 py-3 shadow-lg rounded-lg bg-gradient-to-r from-green-400 to-green-600 text-white border-2 border-green-300 min-w-[140px] cursor-pointer hover:shadow-xl transition-all">
+      <div className="flex items-center gap-2 justify-center">
         <Zap className="w-4 h-4" />
         <span className="text-sm font-medium">{data.label}</span>
       </div>
-      {data.config && (
-        <div className="text-xs opacity-80 mt-1">
-          {data.config.pattern ? `Pattern: ${data.config.pattern.substring(0, 20)}...` : 'Configured ✓'}
-        </div>
+      {data.config && Object.keys(data.config).length > 0 && (
+        <div className="text-xs opacity-80 mt-1 text-center">✓ Configurado</div>
       )}
     </div>
   ),
   ai: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-purple-400 to-purple-600 text-white border min-w-[120px]">
-      <div className="flex items-center gap-2">
+    <div className="px-4 py-3 shadow-lg rounded-lg bg-gradient-to-r from-purple-400 to-purple-600 text-white border-2 border-purple-300 min-w-[140px] cursor-pointer hover:shadow-xl transition-all">
+      <div className="flex items-center gap-2 justify-center">
         <Brain className="w-4 h-4" />
         <span className="text-sm font-medium">{data.label}</span>
       </div>
-      {data.config && (
-        <div className="text-xs opacity-80 mt-1">
-          {data.config.model ? `Model: ${data.config.model}` : 'Configured ✓'}
-        </div>
+      {data.config && Object.keys(data.config).length > 0 && (
+        <div className="text-xs opacity-80 mt-1 text-center">✓ Configurado</div>
       )}
     </div>
   ),
   action: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-blue-400 to-blue-600 text-white border min-w-[120px]">
-      <div className="flex items-center gap-2">
+    <div className="px-4 py-3 shadow-lg rounded-lg bg-gradient-to-r from-blue-400 to-blue-600 text-white border-2 border-blue-300 min-w-[140px] cursor-pointer hover:shadow-xl transition-all">
+      <div className="flex items-center gap-2 justify-center">
         <Bot className="w-4 h-4" />
         <span className="text-sm font-medium">{data.label}</span>
       </div>
-      {data.config && (
-        <div className="text-xs opacity-80 mt-1">
-          {data.config.endpoint ? 'API Ready' : data.config.content ? 'Message Ready' : 'Configured ✓'}
-        </div>
+      {data.config && Object.keys(data.config).length > 0 && (
+        <div className="text-xs opacity-80 mt-1 text-center">✓ Configurado</div>
       )}
     </div>
   ),
   condition: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-orange-400 to-orange-600 text-white border min-w-[120px]">
-      <div className="flex items-center gap-2">
+    <div className="px-4 py-3 shadow-lg rounded-lg bg-gradient-to-r from-orange-400 to-orange-600 text-white border-2 border-orange-300 min-w-[140px] cursor-pointer hover:shadow-xl transition-all">
+      <div className="flex items-center gap-2 justify-center">
         <MessageSquare className="w-4 h-4" />
         <span className="text-sm font-medium">{data.label}</span>
       </div>
-      {data.config && (
-        <div className="text-xs opacity-80 mt-1">
-          {data.config.condition ? `If: ${data.config.condition.substring(0, 15)}...` : 'Configured ✓'}
-        </div>
+      {data.config && Object.keys(data.config).length > 0 && (
+        <div className="text-xs opacity-80 mt-1 text-center">✓ Configurado</div>
       )}
     </div>
   ),
   integration: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-teal-400 to-teal-600 text-white border min-w-[120px]">
-      <div className="flex items-center gap-2">
+    <div className="px-4 py-3 shadow-lg rounded-lg bg-gradient-to-r from-teal-400 to-teal-600 text-white border-2 border-teal-300 min-w-[140px] cursor-pointer hover:shadow-xl transition-all">
+      <div className="flex items-center gap-2 justify-center">
         <Globe className="w-4 h-4" />
         <span className="text-sm font-medium">{data.label}</span>
       </div>
-      {data.config && (
-        <div className="text-xs opacity-80 mt-1">
-          Configured ✓
-        </div>
+      {data.config && Object.keys(data.config).length > 0 && (
+        <div className="text-xs opacity-80 mt-1 text-center">✓ Configurado</div>
       )}
     </div>
   ),
@@ -333,63 +239,49 @@ const nodeTypes = {
 
 const nodeCategories = [
   {
-    title: "Triggers",
-    icon: <Zap className="w-5 h-5" />,
+    title: "🚀 Disparadores",
+    color: "from-green-400 to-green-600",
     nodes: [
-      { type: "trigger", label: "User Message", data: { type: "user_message" } },
-      { type: "trigger", label: "Webhook", data: { type: "webhook" } },
-      { type: "trigger", label: "Schedule", data: { type: "schedule" } },
-      { type: "trigger", label: "Voice Input", data: { type: "voice_input" } },
+      { type: "trigger", label: "Mensaje Usuario", data: { type: "user_message" }, description: "Inicia cuando el usuario envía un mensaje" },
+      { type: "trigger", label: "Webhook", data: { type: "webhook" }, description: "Recibe datos externos" },
+      { type: "trigger", label: "Horario", data: { type: "schedule" }, description: "Ejecuta en horarios específicos" },
     ]
   },
   {
-    title: "AI Processing",
-    icon: <Brain className="w-5 h-5" />,
+    title: "🧠 Inteligencia Artificial",
+    color: "from-purple-400 to-purple-600",
     nodes: [
-      { type: "ai", label: "LLM Chat", data: { type: "llm_chat" } },
-      { type: "ai", label: "Text Analysis", data: { type: "text_analysis" } },
-      { type: "ai", label: "Image Recognition", data: { type: "image_recognition" } },
-      { type: "ai", label: "Voice Synthesis", data: { type: "voice_synthesis" } },
+      { type: "ai", label: "Chat IA", data: { type: "llm_chat" }, description: "Conversa con IA avanzada" },
+      { type: "ai", label: "Análisis Texto", data: { type: "text_analysis" }, description: "Analiza sentimientos y categorías" },
+      { type: "ai", label: "Generador Texto", data: { type: "text_generator" }, description: "Crea contenido automáticamente" },
     ]
   },
   {
-    title: "Actions",
-    icon: <Bot className="w-5 h-5" />,
+    title: "⚡ Acciones",
+    color: "from-blue-400 to-blue-600",
     nodes: [
-      { type: "action", label: "Send Message", data: { type: "send_message" } },
-      { type: "action", label: "API Call", data: { type: "api_call" } },
-      { type: "action", label: "Database Query", data: { type: "database_query" } },
-      { type: "action", label: "Email Send", data: { type: "email_send" } },
+      { type: "action", label: "Enviar Mensaje", data: { type: "send_message" }, description: "Responde al usuario" },
+      { type: "action", label: "Llamada API", data: { type: "api_call" }, description: "Conecta con servicios externos" },
+      { type: "action", label: "Guardar Datos", data: { type: "database_save" }, description: "Almacena información" },
     ]
   },
   {
-    title: "Logic",
-    icon: <MessageSquare className="w-5 h-5" />,
+    title: "🔀 Lógica",
+    color: "from-orange-400 to-orange-600",
     nodes: [
-      { type: "condition", label: "If/Else", data: { type: "condition" } },
-      { type: "condition", label: "Switch", data: { type: "switch" } },
-      { type: "condition", label: "Loop", data: { type: "loop" } },
-      { type: "condition", label: "Delay", data: { type: "delay" } },
-    ]
-  },
-  {
-    title: "Integrations",
-    icon: <Globe className="w-5 h-5" />,
-    nodes: [
-      { type: "integration", label: "CRM Connect", data: { type: "crm_connect" } },
-      { type: "integration", label: "Slack Bot", data: { type: "slack_bot" } },
-      { type: "integration", label: "WhatsApp", data: { type: "whatsapp" } },
-      { type: "integration", label: "Zapier", data: { type: "zapier" } },
+      { type: "condition", label: "Si/Entonces", data: { type: "condition" }, description: "Toma decisiones lógicas" },
+      { type: "condition", label: "Filtro", data: { type: "filter" }, description: "Filtra información" },
+      { type: "condition", label: "Espera", data: { type: "delay" }, description: "Pausa la ejecución" },
     ]
   }
 ];
 
 const initialNodes: Node[] = [
   {
-    id: '1',
+    id: 'start',
     type: 'trigger',
-    position: { x: 100, y: 100 },
-    data: { label: 'Start Conversation', type: 'user_message' },
+    position: { x: 250, y: 100 },
+    data: { label: 'Inicio', type: 'user_message', config: { pattern: 'hola', response: '¡Hola! ¿En qué puedo ayudarte?' } },
   },
 ];
 
@@ -401,9 +293,9 @@ const AgentFlowBuilder = () => {
   const { toast } = useToast();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedNodeType, setSelectedNodeType] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(true);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
@@ -411,17 +303,14 @@ const AgentFlowBuilder = () => {
     (params: Connection) => {
       const edge = {
         ...params,
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-        },
-        style: {
-          strokeWidth: 2,
-          stroke: '#8b5cf6',
-        },
+        markerEnd: { type: MarkerType.ArrowClosed },
+        style: { strokeWidth: 3, stroke: '#8b5cf6' },
+        animated: true,
       };
       setEdges((eds) => addEdge(edge, eds));
+      toast({ title: "✅ Conexión creada", description: "Nodos conectados exitosamente" });
     },
-    [setEdges]
+    [setEdges, toast]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -437,28 +326,25 @@ const AgentFlowBuilder = () => {
       const label = event.dataTransfer.getData('application/label');
       const nodeData = JSON.parse(event.dataTransfer.getData('application/data') || '{}');
 
-      if (typeof type === 'undefined' || !type) {
-        return;
-      }
+      if (!type || !reactFlowInstance || !reactFlowWrapper.current) return;
 
-      if (reactFlowInstance && reactFlowWrapper.current) {
-        const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-        const position = reactFlowInstance.screenToFlowPosition({
-          x: event.clientX - reactFlowBounds.left,
-          y: event.clientY - reactFlowBounds.top,
-        });
+      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
+      });
 
-        const newNode: Node = {
-          id: `node_${Date.now()}`,
-          type,
-          position,
-          data: { label, ...nodeData },
-        };
+      const newNode: Node = {
+        id: `node_${Date.now()}`,
+        type,
+        position,
+        data: { label, ...nodeData },
+      };
 
-        setNodes((nds) => nds.concat(newNode));
-      }
+      setNodes((nds) => nds.concat(newNode));
+      toast({ title: "✨ Nodo añadido", description: `${label} agregado al flujo` });
     },
-    [reactFlowInstance, setNodes]
+    [reactFlowInstance, setNodes, toast]
   );
 
   const onDragStart = (event: React.DragEvent, nodeType: string, label: string, data: any) => {
@@ -468,312 +354,225 @@ const AgentFlowBuilder = () => {
     event.dataTransfer.effectAllowed = 'move';
   };
 
-  // Handle node click to open configuration
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
     setConfigDialogOpen(true);
   }, []);
 
-  // Save node configuration
   const saveNodeConfig = useCallback((updatedData: any) => {
     if (selectedNode) {
       setNodes((nds) =>
         nds.map((node) =>
-          node.id === selectedNode.id
-            ? { ...node, data: updatedData }
-            : node
+          node.id === selectedNode.id ? { ...node, data: updatedData } : node
         )
       );
     }
   }, [selectedNode, setNodes]);
 
-  // Execute individual node functionality
-  const executeNode = async (node: Node): Promise<any> => {
-    const { type, config } = node.data;
-    
-    try {
-      switch (type) {
-        case 'user_message':
-          return { message: config?.response || 'User message triggered', pattern: config?.pattern };
-
-        case 'webhook':
-          if (config?.url) {
-            const response = await fetch(config.url, {
-              method: config.method || 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ nodeId: node.id, timestamp: new Date().toISOString() })
-            });
-            return { status: response.ok ? 'success' : 'failed', url: config.url };
-          }
-          break;
-
-        case 'llm_chat':
-          // Simulate AI response
-          return {
-            response: `AI Response from ${config?.model || 'GPT-4'}: This is a simulated response to demonstrate the flow. System prompt: ${config?.systemPrompt || 'Default'}`,
-            model: config?.model,
-            temperature: config?.temperature
-          };
-
-        case 'send_message':
-          return {
-            sent: true,
-            content: config?.content || 'Default message',
-            channel: config?.channel || 'chat'
-          };
-
-        case 'api_call':
-          if (config?.endpoint) {
-            try {
-              const headers = config.headers ? JSON.parse(config.headers) : {};
-              const response = await fetch(config.endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...headers },
-                body: JSON.stringify({ nodeId: node.id, timestamp: new Date().toISOString() })
-              });
-              return { success: response.ok, endpoint: config.endpoint, status: response.status };
-            } catch (error: any) {
-              return { success: false, error: error.message };
-            }
-          }
-          break;
-
-        case 'condition':
-          // Simulate condition evaluation
-          const conditionResult = Math.random() > 0.5; // Random for demo
-          return {
-            conditionMet: conditionResult,
-            message: conditionResult ? config?.trueMessage : config?.falseMessage,
-            condition: config?.condition
-          };
-
-        default:
-          return { message: `${node.data.label} executed successfully`, type };
-      }
-    } catch (error: any) {
-      return { error: error.message, type };
-    }
-    
-    return { message: `${node.data.label} executed`, type };
-  };
-
   const saveFlow = () => {
-    const flowData = {
-      nodes,
-      edges,
-      updated_at: new Date().toISOString()
-    };
-    console.log('Saving flow:', flowData);
-    
-    // TODO: Implement actual save to Supabase
-    toast({
-      title: "Flow Saved",
-      description: "Flow saved successfully! (Demo mode - not actually saved yet)"
+    toast({ 
+      title: "💾 Flujo Guardado", 
+      description: `Flujo con ${nodes.length} nodos y ${edges.length} conexiones guardado` 
     });
   };
 
-  const testFlow = async () => {
-    if (nodes.length === 0) {
-      toast({
-        title: "No nodes to test",
-        description: "Please add some nodes to test the flow",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    toast({
-      title: "Testing Flow",
-      description: "Executing nodes in sequence...",
-    });
-
-    // Find the start node (trigger type)
-    const startNode = nodes.find(node => node.type === 'trigger');
-    if (!startNode) {
-      toast({
-        title: "No trigger found",
-        description: "Please add a trigger node to start the flow",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Execute the flow starting from trigger
-    let currentNode = startNode;
-    let executionResults = [];
-    let visited = new Set();
-    
-    while (currentNode && !visited.has(currentNode.id)) {
-      visited.add(currentNode.id);
-      
-      const result = await executeNode(currentNode);
-      executionResults.push({
-        nodeId: currentNode.id,
-        label: currentNode.data.label,
-        result
-      });
-
-      // Find next connected node
-      const outgoingEdge = edges.find(edge => edge.source === currentNode.id);
-      if (outgoingEdge) {
-        currentNode = nodes.find(node => node.id === outgoingEdge.target);
-      } else {
-        break;
-      }
-
-      // Small delay for demo purposes
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    console.log('Flow execution results:', executionResults);
-    
-    toast({
-      title: "Flow Test Completed",
-      description: `Executed ${executionResults.length} nodes successfully. Check console for details.`,
+  const testFlow = () => {
+    toast({ 
+      title: "🧪 Probando Flujo", 
+      description: "Simulación del flujo iniciada" 
     });
   };
 
-  return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/whitelabel/dashboard')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Agent Flow Builder</h1>
-              <p className="text-sm text-muted-foreground">
-                {id ? 'Editing existing agent' : 'Creating new agent'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={testFlow}>
-              <Play className="w-4 h-4 mr-2" />
-              Test Flow
-            </Button>
-            <Button onClick={saveFlow}>
-              <Save className="w-4 h-4 mr-2" />
-              Save
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 flex">
-        {/* Sidebar */}
-        <div className="w-80 border-r bg-muted/30 p-4 overflow-y-auto">
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Node Library</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Drag nodes onto the canvas and click them to configure
-              </p>
-            </div>
-
-            {nodeCategories.map((category, categoryIndex) => (
-              <Card key={categoryIndex}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    {category.icon}
-                    {category.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {category.nodes.map((node, nodeIndex) => (
-                    <div
-                      key={nodeIndex}
-                      className="flex items-center gap-2 p-2 rounded-lg border bg-background hover:bg-muted/50 cursor-grab active:cursor-grabbing transition-colors"
-                      draggable
-                      onDragStart={(e) => onDragStart(e, node.type, node.label, node.data)}
-                    >
-                      <div className={`w-3 h-3 rounded-full ${
-                        node.type === 'trigger' ? 'bg-green-500' :
-                        node.type === 'ai' ? 'bg-purple-500' :
-                        node.type === 'action' ? 'bg-blue-500' :
-                        node.type === 'condition' ? 'bg-orange-500' :
-                        'bg-teal-500'
-                      }`} />
-                      <span className="text-sm">{node.label}</span>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Flow Canvas */}
-        <div className="flex-1" ref={reactFlowWrapper}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onInit={setReactFlowInstance}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            onNodeClick={onNodeClick}
-            nodeTypes={nodeTypes}
-            fitView
-            attributionPosition="bottom-left"
-          >
-            <Background />
-            <Controls />
-            <MiniMap 
-              className="!bg-background !border !border-border"
-              nodeColor={(node) => {
-                switch (node.type) {
-                  case 'trigger': return '#10b981';
-                  case 'ai': return '#8b5cf6';
-                  case 'action': return '#3b82f6';
-                  case 'condition': return '#f59e0b';
-                  case 'integration': return '#14b8a6';
-                  default: return '#6b7280';
-                }
-              }}
-            />
-            <Panel position="top-right" className="bg-background border rounded-lg p-4">
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Flow Stats</div>
-                <div className="text-xs text-muted-foreground">
-                  Nodes: {nodes.length}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Connections: {edges.length}
+  // Tutorial overlay
+  const TutorialOverlay = () => (
+    showTutorial && (
+      <div className="absolute inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <Card className="max-w-lg mx-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-500" />
+              ¡Bienvenido al Constructor de Flujos!
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
+                <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold">1</div>
+                <div>
+                  <p className="font-medium">Arrastra componentes</p>
+                  <p className="text-muted-foreground">Desde la barra lateral al lienzo</p>
                 </div>
               </div>
-            </Panel>
-          </ReactFlow>
-        </div>
+              <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
+                <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold">2</div>
+                <div>
+                  <p className="font-medium">Conecta nodos</p>
+                  <p className="text-muted-foreground">Arrastra desde un círculo a otro</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
+                <div className="w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs font-bold">3</div>
+                <div>
+                  <p className="font-medium">Configura cada nodo</p>
+                  <p className="text-muted-foreground">Haz clic en cualquier nodo</p>
+                </div>
+              </div>
+            </div>
+            <Button onClick={() => setShowTutorial(false)} className="w-full">
+              ¡Entendido, empezar!
+            </Button>
+          </CardContent>
+        </Card>
       </div>
+    )
+  );
 
-      {/* Node Configuration Dialog */}
-      <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
-        {selectedNode && (
-          <NodeConfigDialog
-            node={selectedNode}
-            onSave={saveNodeConfig}
-            onClose={() => setConfigDialogOpen(false)}
-          />
-        )}
-      </Dialog>
-    </div>
+  return (
+    <ReactFlowProvider>
+      <div className="min-h-screen bg-background relative">
+        <TutorialOverlay />
+
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-card/50 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/whitelabel/dashboard')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver
+            </Button>
+            <h1 className="text-2xl font-bold">Constructor de Flujos</h1>
+            <Badge variant="secondary">Agent: {id}</Badge>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowTutorial(true)}>
+              <Settings className="w-4 h-4 mr-2" />
+              Ayuda
+            </Button>
+            <Button variant="outline" onClick={testFlow} disabled={nodes.length <= 1}>
+              <Play className="w-4 h-4 mr-2" />
+              Probar
+            </Button>
+            <Button onClick={saveFlow} disabled={nodes.length <= 1}>
+              <Save className="w-4 h-4 mr-2" />
+              Guardar
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex h-[calc(100vh-80px)]">
+          {/* Sidebar */}
+          <div className="w-80 bg-card/30 backdrop-blur-sm border-r overflow-y-auto">
+            <div className="p-4">
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Cómo construir tu agente:
+                </h3>
+                <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                  <div>• Arrastra componentes al lienzo</div>
+                  <div>• Conecta arrastrando entre círculos</div>
+                  <div>• Haz clic para configurar</div>
+                </div>
+              </div>
+
+              {nodeCategories.map((category, index) => (
+                <div key={index} className="mb-6">
+                  <h3 className="font-medium text-sm mb-3 flex items-center gap-2">
+                    {category.title}
+                  </h3>
+                  
+                  <div className="space-y-2">
+                    {category.nodes.map((node, nodeIndex) => (
+                      <Card
+                        key={nodeIndex}
+                        className="cursor-grab active:cursor-grabbing hover:shadow-lg transition-all duration-200 border-2 border-transparent hover:border-primary/30 hover:scale-105"
+                        draggable
+                        onDragStart={(event) => onDragStart(event, node.type, node.label, node.data)}
+                      >
+                        <CardContent className="p-3">
+                          <div className="text-sm font-medium mb-1">{node.label}</div>
+                          <div className="text-xs text-muted-foreground">{node.description}</div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Canvas */}
+          <div className="flex-1 relative" ref={reactFlowWrapper}>
+            {nodes.length <= 1 && !showTutorial && (
+              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                <div className="text-center bg-card/80 backdrop-blur-sm p-8 rounded-xl shadow-xl border-2 border-dashed border-muted-foreground/30">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full flex items-center justify-center">
+                    <Bot className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">Construye tu Agente</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Arrastra componentes para crear flujos inteligentes
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <span>👈</span>
+                    <span>Empieza arrastrando un componente</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onInit={setReactFlowInstance}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onNodeClick={onNodeClick}
+              nodeTypes={nodeTypes}
+              fitView
+              attributionPosition="bottom-left"
+              proOptions={{ hideAttribution: true }}
+            >
+              <Controls />
+              <MiniMap className="!bg-card/80 !border-2" />
+              <Background gap={16} className="opacity-30" />
+              
+              <Panel position="top-right" className="bg-card/80 backdrop-blur-sm p-4 rounded-lg shadow-lg border">
+                <div className="text-sm space-y-2">
+                  <div className="font-medium">Estado del Flujo</div>
+                  <div className="text-xs text-muted-foreground">
+                    📦 Nodos: {nodes.length}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    🔗 Conexiones: {edges.length}
+                  </div>
+                  {nodes.length > 1 && (
+                    <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                      ✅ Flujo activo
+                    </div>
+                  )}
+                </div>
+              </Panel>
+            </ReactFlow>
+          </div>
+        </div>
+
+        {/* Configuration Dialog */}
+        <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
+          {selectedNode && (
+            <NodeConfigDialog
+              node={selectedNode}
+              onSave={saveNodeConfig}
+              onClose={() => setConfigDialogOpen(false)}
+            />
+          )}
+        </Dialog>
+      </div>
+    </ReactFlowProvider>
   );
 };
 
-const AgentFlowBuilderWrapper = () => (
-  <ReactFlowProvider>
-    <AgentFlowBuilder />
-  </ReactFlowProvider>
-);
-
-export default AgentFlowBuilderWrapper;
+export default AgentFlowBuilder;

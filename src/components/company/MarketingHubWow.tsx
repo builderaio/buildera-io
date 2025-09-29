@@ -146,7 +146,29 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   });
 
   const { toast } = useToast();
-  const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
+  
+  // Get the authenticated user ID directly
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Initialize userId from auth
+  useEffect(() => {
+    const initializeUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const authUserId = user?.id;
+      const profileUserId = profile?.user_id;
+      
+      console.log('🔍 Auth User ID:', authUserId);
+      console.log('🔍 Profile User ID:', profileUserId);
+      console.log('🔍 Profile prop:', profile);
+      
+      // Use profile user_id if available, fallback to auth user id
+      const finalUserId = profileUserId || authUserId;
+      setUserId(finalUserId);
+      console.log('🔍 Final userId set to:', finalUserId);
+    };
+    
+    initializeUserId();
+  }, [profile]);
 
   useEffect(() => {
     let active = true;
@@ -462,12 +484,21 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   const loadPlatformStats = async () => {
     try {
+      console.log('🔍 Loading platform stats for userId:', userId);
+      
       const [instagramRes, linkedinRes, facebookRes, tiktokRes] = await Promise.all([
         supabase.from('instagram_posts').select('like_count, comment_count, reach, created_at').eq('user_id', userId),
         supabase.from('linkedin_posts').select('likes_count, comments_count, impressions, created_at').eq('user_id', userId),
         supabase.from('facebook_posts').select('likes_count, comments_count, reach, created_at').eq('user_id', userId),
         supabase.from('tiktok_posts').select('digg_count, comment_count, play_count, created_at').eq('user_id', userId)
       ]);
+
+      console.log('📊 Platform data results:', {
+        instagram: instagramRes.data?.length || 0,
+        linkedin: linkedinRes.data?.length || 0,
+        facebook: facebookRes.data?.length || 0,
+        tiktok: tiktokRes.data?.length || 0
+      });
 
       const calculateStats = (posts: any[], likeField: string, commentField: string, reachField?: string) => {
         if (!posts || posts.length === 0) return { posts: 0, engagement: 0, reach: 0 };

@@ -568,7 +568,22 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
   const platformsToSend = filterPlatformsByPostType(platforms, postType);
   
   if (platformsToSend.length === 0) {
-    throw new Error(`No valid platforms for ${postType} post. Original platforms: ${platforms.join(', ')}`);
+    const supportedPlatforms = {
+      text: ['LinkedIn', 'X (Twitter)', 'Facebook', 'Threads', 'Reddit'],
+      photo: ['TikTok', 'Instagram', 'LinkedIn', 'Facebook', 'X (Twitter)', 'Threads', 'Pinterest'],
+      video: ['TikTok', 'Instagram', 'LinkedIn', 'YouTube', 'Facebook', 'Twitter', 'Threads', 'Pinterest']
+    };
+    
+    const unsupportedPlatforms = platforms.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(', ');
+    const supportedList = supportedPlatforms[postType as keyof typeof supportedPlatforms]?.join(', ') || 'None';
+    
+    throw new Error(
+      `${unsupportedPlatforms} no soporta publicaciones de ${postType}. ` +
+      `Para publicaciones de ${postType}, puedes usar: ${supportedList}. ` +
+      `Sugerencia: ${platforms.includes('instagram') || platforms.includes('tiktok') ? 
+        'Instagram y TikTok solo soportan fotos y videos. Considera cambiar el tipo de publicación a "Foto" y agregar una imagen con tu texto.' : 
+        'Selecciona una plataforma compatible para este tipo de contenido.'}`
+    );
   }
 
   try {

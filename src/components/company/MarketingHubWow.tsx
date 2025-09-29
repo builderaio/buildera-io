@@ -74,6 +74,7 @@ interface WorkflowState {
 
 const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedPlatform, setSelectedPlatform] = useState("all");
   
   // Set initial tab from URL ?tab=
   useEffect(() => {
@@ -517,8 +518,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <AdvancedAILoader 
-          message="Inicializando Marketing Hub..."
-          subMessage="Cargando datos de tu ecosistema de marketing"
+          isVisible={true}
+          currentStep={2}
+          totalSteps={6}
+          stepTitle="Inicializando Marketing Hub..."
+          stepDescription="Cargando datos de tu ecosistema de marketing"
         />
       </div>
     );
@@ -707,7 +711,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         </TabsContent>
 
         <TabsContent value="create" className="space-y-6">
-          <ContentCreatorTab profile={profile} />
+          <ContentCreatorTab 
+            profile={profile} 
+            topPosts={recentActivity || []}
+            selectedPlatform={selectedPlatform}
+          />
         </TabsContent>
 
         <TabsContent value="analyze" className="space-y-6">

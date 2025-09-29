@@ -57,7 +57,7 @@ interface QuickStat {
 }
 
 const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
-  const [activeTab, setActiveTab] = useState("campaign-wizard");
+  const [activeTab, setActiveTab] = useState("overview");
   const [socialConnections, setSocialConnections] = useState({
     linkedin: false,
     instagram: false,
@@ -120,6 +120,7 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const campaignWizardParam = urlParams.get('campaign_wizard');
+    const tab = urlParams.get('tab');
     
     if (campaignWizardParam === 'true') {
       console.log('🎯 Detectado parámetro campaign_wizard, activando tab campaign-wizard');
@@ -128,6 +129,12 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
       urlParams.delete('campaign_wizard');
       const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
       window.history.replaceState({}, '', newUrl);
+    } else if (tab) {
+      // Allow navigation to specific tabs via URL
+      const allowedTabs = ['overview', 'social', 'campaign-wizard', 'content', 'analytics', 'calendar', 'advanced', 'orchestrator'];
+      if (allowedTabs.includes(tab)) {
+        setActiveTab(tab);
+      }
     }
   }, [profile?.user_id]); // Re-run when profile changes (component re-mounts)
 
@@ -158,16 +165,17 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
     };
   }, []);
 
-  // Auto-redirect to social tab if no connections are available (but respect campaign_wizard parameter)
+  // Auto-redirect to social tab if no connections are available (but respect campaign_wizard and dashboard)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const campaignWizardParam = urlParams.get('campaign_wizard');
+    const tab = urlParams.get('tab');
     
-    // Don't redirect to social if campaign_wizard is active
-    if (campaignWizardParam === 'true') return;
+    // Don't redirect if campaign_wizard is active or if user specifically chose overview
+    if (campaignWizardParam === 'true' || tab === 'overview' || activeTab === "overview") return;
     
     const hasConnections = Object.values(socialConnections).some(Boolean);
-    if (!hasConnections && activeTab !== "social" && activeTab !== "campaign-wizard") {
+    if (!hasConnections && activeTab !== "social" && activeTab !== "campaign-wizard" && activeTab !== "overview") {
       console.log('🔄 No hay redes conectadas, cambiando al tab social...');
       setActiveTab("social");
     }
@@ -942,205 +950,12 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
           </TabsTrigger>
         </TabsList>
 
-        {/* Campaign Wizard Tab */}
-        <TabsContent value="campaign-wizard" className="space-y-6">
-          <CampaignDashboard />
+        <TabsContent value="overview" className="space-y-6">
+          <MarketingHubWow profile={profile} />
         </TabsContent>
 
-        <TabsContent value="overview" className="space-y-6">
-          {/* Quick Stats */}
-          {renderQuickStats()}
-
-          {/* Key Actions Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Content Creation Quick Access */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5 text-primary" />
-                  Acciones Rápidas
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Herramientas más utilizadas para contenido y análisis
-                </p>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button
-                  onClick={() => setActiveTab("content")}
-                  className="h-20 flex flex-col gap-2 bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                >
-                  <Sparkles className="h-6 w-6" />
-                  <div className="text-center">
-                    <div className="font-medium">Crear Contenido</div>
-                    <div className="text-xs opacity-90">IA + Biblioteca</div>
-                  </div>
-                </Button>
-                
-                <Button
-                  onClick={() => setActiveTab("analytics")}
-                  variant="outline"
-                  className="h-20 flex flex-col gap-2 border-2 hover:bg-orange-50 hover:border-orange-300"
-                >
-                  <BarChart3 className="h-6 w-6 text-orange-600" />
-                  <div className="text-center">
-                    <div className="font-medium">Ver Analytics</div>
-                    <div className="text-xs text-muted-foreground">Métricas en tiempo real</div>
-                  </div>
-                </Button>
-                
-                <Button
-                  onClick={() => setActiveTab("calendar")}
-                  variant="outline"
-                  className="h-20 flex flex-col gap-2 border-2 hover:bg-green-50 hover:border-green-300"
-                >
-                  <Calendar className="h-6 w-6 text-green-600" />
-                  <div className="text-center">
-                    <div className="font-medium">Programar Posts</div>
-                    <div className="text-xs text-muted-foreground">Calendario inteligente</div>
-                  </div>
-                </Button>
-                
-                <Button
-                  onClick={() => setActiveTab("social")}
-                  variant="outline"
-                  className="h-20 flex flex-col gap-2 border-2 hover:bg-cyan-50 hover:border-cyan-300"
-                >
-                  <Network className="h-6 w-6 text-cyan-600" />
-                  <div className="text-center">
-                    <div className="font-medium">Conectar Redes</div>
-                    <div className="text-xs text-muted-foreground">Sincronizar datos</div>
-                  </div>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Connection Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Estado de Conexiones</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(socialConnections).map(([platform, connected]) => (
-                  <div key={platform} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-gray-300'}`} />
-                      <span className="text-sm capitalize">{platform}</span>
-                    </div>
-                    {connected ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setActiveTab("social")}
-                        className="text-xs"
-                      >
-                        Conectar
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Activity & Upcoming Posts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center justify-between">
-                  Actividad Reciente
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setActiveTab("analytics")}
-                  >
-                    Ver todo
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {recentActivity.length > 0 ? (
-                  recentActivity.slice(0, 3).map((activity, index) => {
-                    const IconComponent = activity.icon;
-                    return (
-                      <div key={index} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                        <IconComponent className={`h-5 w-5 ${activity.iconColor}`} />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{activity.title}</p>
-                          <p className="text-xs text-muted-foreground">{activity.time}</p>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-6">
-                    <Eye className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">No hay actividad reciente</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => setActiveTab("social")}
-                    >
-                      Conectar redes sociales
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center justify-between">
-                  Próximas Publicaciones
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setActiveTab("calendar")}
-                  >
-                    Ver calendario
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {upcomingPosts.length > 0 ? (
-                  <>
-                    {upcomingPosts.slice(0, 3).map((post, index) => {
-                      const IconComponent = post.icon;
-                      return (
-                        <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                          <IconComponent className={`h-5 w-5 ${post.iconColor}`} />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{post.title}</p>
-                            <p className="text-xs text-muted-foreground">{post.time}</p>
-                          </div>
-                          {post.platform && (
-                            <Badge variant="outline" className="text-xs capitalize">
-                              {post.platform}
-                            </Badge>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </>
-                ) : (
-                  <div className="text-center py-6">
-                    <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">No hay publicaciones programadas</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={() => setActiveTab("content")}
-                    >
-                      Crear contenido
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+        <TabsContent value="campaign-wizard" className="space-y-6">
+          <CampaignDashboard />
         </TabsContent>
 
         <TabsContent value="social" className="space-y-6">
@@ -1189,8 +1004,8 @@ const MarketingHub = ({ profile, onNavigate }: MarketingHubProps) => {
           <AdvancedMarketingDashboard profile={profile} />
         </TabsContent>
 
-        <TabsContent value="data" className="space-y-6">
-          <MarketingDataPersistenceManager />
+        <TabsContent value="orchestrator" className="space-y-6">
+          <MarketingHubOrchestrator />
         </TabsContent>
       </Tabs>
     </div>

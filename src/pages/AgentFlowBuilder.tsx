@@ -189,13 +189,13 @@ const AgentFlowBuilder = () => {
 
       if (reactFlowInstance && reactFlowWrapper.current) {
         const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-        const position = reactFlowInstance.project({
+        const position = reactFlowInstance.screenToFlowPosition({
           x: event.clientX - reactFlowBounds.left,
           y: event.clientY - reactFlowBounds.top,
         });
 
         const newNode: Node = {
-          id: `${nodes.length + 1}`,
+          id: `node_${Date.now()}`,
           type,
           position,
           data: { label, ...nodeData },
@@ -204,7 +204,7 @@ const AgentFlowBuilder = () => {
         setNodes((nds) => nds.concat(newNode));
       }
     },
-    [reactFlowInstance, nodes.length, setNodes]
+    [reactFlowInstance, setNodes]
   );
 
   const onDragStart = (event: React.DragEvent, nodeType: string, label: string, data: any) => {
@@ -218,14 +218,22 @@ const AgentFlowBuilder = () => {
     const flowData = {
       nodes,
       edges,
+      updated_at: new Date().toISOString()
     };
     console.log('Saving flow:', flowData);
-    // Here you would save to Supabase
+    
+    // TODO: Implement actual save to Supabase
+    alert('Flow saved successfully! (Demo mode - not actually saved yet)');
   };
 
   const testFlow = () => {
-    console.log('Testing flow with current configuration');
-    // Here you would test the flow
+    if (nodes.length === 0) {
+      alert('Please add some nodes to test the flow');
+      return;
+    }
+    
+    console.log('Testing flow with current configuration:', { nodes, edges });
+    alert('Flow test initiated! Check console for details (Demo mode)');
   };
 
   return (

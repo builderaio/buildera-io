@@ -263,7 +263,7 @@ const WhiteLabelAnalytics = () => {
                     outerRadius={150}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={(props: any) => `${props.name} ${(props.percent * 100).toFixed(0)}%`}
                   >
                     {platformData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />

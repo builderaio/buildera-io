@@ -20,6 +20,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Bot, 
   MessageSquare, 
@@ -33,49 +39,294 @@ import {
   Play,
   Settings,
   Plus,
-  ArrowLeft
+  ArrowLeft,
+  Mail,
+  Calendar,
+  MessageCircle,
+  Image,
+  Volume2
 } from 'lucide-react';
 
-// Node types for the flow builder
+// Node configuration component
+const NodeConfigDialog = ({ node, onSave, onClose }: { node: Node, onSave: (config: any) => void, onClose: () => void }) => {
+  const [config, setConfig] = useState(node.data.config || {});
+  const { toast } = useToast();
+
+  const handleSave = () => {
+    onSave({ ...node.data, config });
+    toast({ title: "Node Configuration Saved", description: `${node.data.label} has been configured successfully.` });
+    onClose();
+  };
+
+  const renderConfigFields = () => {
+    switch (node.data.type) {
+      case 'user_message':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Message Pattern</Label>
+              <Input
+                placeholder="Enter message pattern or keywords"
+                value={config.pattern || ''}
+                onChange={(e) => setConfig({ ...config, pattern: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Response Template</Label>
+              <Textarea
+                placeholder="Enter response template"
+                value={config.response || ''}
+                onChange={(e) => setConfig({ ...config, response: e.target.value })}
+              />
+            </div>
+          </div>
+        );
+
+      case 'webhook':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Webhook URL</Label>
+              <Input
+                placeholder="https://your-webhook-url.com"
+                value={config.url || ''}
+                onChange={(e) => setConfig({ ...config, url: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>HTTP Method</Label>
+              <Select value={config.method || 'POST'} onValueChange={(value) => setConfig({ ...config, method: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="POST">POST</SelectItem>
+                  <SelectItem value="GET">GET</SelectItem>
+                  <SelectItem value="PUT">PUT</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'llm_chat':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>AI Model</Label>
+              <Select value={config.model || 'gpt-4'} onValueChange={(value) => setConfig({ ...config, model: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4">GPT-4</SelectItem>
+                  <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                  <SelectItem value="claude-3">Claude 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>System Prompt</Label>
+              <Textarea
+                placeholder="Enter system prompt for AI"
+                value={config.systemPrompt || ''}
+                onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Temperature</Label>
+              <Input
+                type="number"
+                min="0"
+                max="1"
+                step="0.1"
+                value={config.temperature || 0.7}
+                onChange={(e) => setConfig({ ...config, temperature: parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+        );
+
+      case 'send_message':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Message Content</Label>
+              <Textarea
+                placeholder="Enter message content (supports variables like {user_name})"
+                value={config.content || ''}
+                onChange={(e) => setConfig({ ...config, content: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Channel</Label>
+              <Select value={config.channel || 'chat'} onValueChange={(value) => setConfig({ ...config, channel: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="chat">Chat</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'api_call':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>API Endpoint</Label>
+              <Input
+                placeholder="https://api.example.com/endpoint"
+                value={config.endpoint || ''}
+                onChange={(e) => setConfig({ ...config, endpoint: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Headers (JSON)</Label>
+              <Textarea
+                placeholder='{"Authorization": "Bearer token", "Content-Type": "application/json"}'
+                value={config.headers || ''}
+                onChange={(e) => setConfig({ ...config, headers: e.target.value })}
+              />
+            </div>
+          </div>
+        );
+
+      case 'condition':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Condition</Label>
+              <Input
+                placeholder="e.g., user_age > 18"
+                value={config.condition || ''}
+                onChange={(e) => setConfig({ ...config, condition: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>True Path Message</Label>
+              <Input
+                placeholder="Message when condition is true"
+                value={config.trueMessage || ''}
+                onChange={(e) => setConfig({ ...config, trueMessage: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>False Path Message</Label>
+              <Input
+                placeholder="Message when condition is false"
+                value={config.falseMessage || ''}
+                onChange={(e) => setConfig({ ...config, falseMessage: e.target.value })}
+              />
+            </div>
+          </div>
+        );
+
+      default:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label>Configuration</Label>
+              <Textarea
+                placeholder="Enter node configuration as JSON"
+                value={JSON.stringify(config, null, 2)}
+                onChange={(e) => {
+                  try {
+                    setConfig(JSON.parse(e.target.value));
+                  } catch {}
+                }}
+              />
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>Configure {node.data.label}</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-6">
+        {renderConfigFields()}
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave}>Save Configuration</Button>
+        </div>
+      </div>
+    </DialogContent>
+  );
+};
+
+// Enhanced node components with functionality
 const nodeTypes = {
   trigger: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-green-400 to-green-600 text-white border">
+    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-green-400 to-green-600 text-white border min-w-[120px]">
       <div className="flex items-center gap-2">
         <Zap className="w-4 h-4" />
         <span className="text-sm font-medium">{data.label}</span>
       </div>
+      {data.config && (
+        <div className="text-xs opacity-80 mt-1">
+          {data.config.pattern ? `Pattern: ${data.config.pattern.substring(0, 20)}...` : 'Configured ✓'}
+        </div>
+      )}
     </div>
   ),
   ai: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-purple-400 to-purple-600 text-white border">
+    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-purple-400 to-purple-600 text-white border min-w-[120px]">
       <div className="flex items-center gap-2">
         <Brain className="w-4 h-4" />
         <span className="text-sm font-medium">{data.label}</span>
       </div>
+      {data.config && (
+        <div className="text-xs opacity-80 mt-1">
+          {data.config.model ? `Model: ${data.config.model}` : 'Configured ✓'}
+        </div>
+      )}
     </div>
   ),
   action: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-blue-400 to-blue-600 text-white border">
+    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-blue-400 to-blue-600 text-white border min-w-[120px]">
       <div className="flex items-center gap-2">
         <Bot className="w-4 h-4" />
         <span className="text-sm font-medium">{data.label}</span>
       </div>
+      {data.config && (
+        <div className="text-xs opacity-80 mt-1">
+          {data.config.endpoint ? 'API Ready' : data.config.content ? 'Message Ready' : 'Configured ✓'}
+        </div>
+      )}
     </div>
   ),
   condition: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-orange-400 to-orange-600 text-white border">
+    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-orange-400 to-orange-600 text-white border min-w-[120px]">
       <div className="flex items-center gap-2">
         <MessageSquare className="w-4 h-4" />
         <span className="text-sm font-medium">{data.label}</span>
       </div>
+      {data.config && (
+        <div className="text-xs opacity-80 mt-1">
+          {data.config.condition ? `If: ${data.config.condition.substring(0, 15)}...` : 'Configured ✓'}
+        </div>
+      )}
     </div>
   ),
   integration: ({ data }: { data: any }) => (
-    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-teal-400 to-teal-600 text-white border">
+    <div className="px-4 py-2 shadow-lg rounded-lg bg-gradient-to-r from-teal-400 to-teal-600 text-white border min-w-[120px]">
       <div className="flex items-center gap-2">
         <Globe className="w-4 h-4" />
         <span className="text-sm font-medium">{data.label}</span>
       </div>
+      {data.config && (
+        <div className="text-xs opacity-80 mt-1">
+          Configured ✓
+        </div>
+      )}
     </div>
   ),
 };
@@ -147,9 +398,12 @@ const initialEdges: Edge[] = [];
 const AgentFlowBuilder = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeType, setSelectedNodeType] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
@@ -214,6 +468,95 @@ const AgentFlowBuilder = () => {
     event.dataTransfer.effectAllowed = 'move';
   };
 
+  // Handle node click to open configuration
+  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    setSelectedNode(node);
+    setConfigDialogOpen(true);
+  }, []);
+
+  // Save node configuration
+  const saveNodeConfig = useCallback((updatedData: any) => {
+    if (selectedNode) {
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === selectedNode.id
+            ? { ...node, data: updatedData }
+            : node
+        )
+      );
+    }
+  }, [selectedNode, setNodes]);
+
+  // Execute individual node functionality
+  const executeNode = async (node: Node): Promise<any> => {
+    const { type, config } = node.data;
+    
+    try {
+      switch (type) {
+        case 'user_message':
+          return { message: config?.response || 'User message triggered', pattern: config?.pattern };
+
+        case 'webhook':
+          if (config?.url) {
+            const response = await fetch(config.url, {
+              method: config.method || 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ nodeId: node.id, timestamp: new Date().toISOString() })
+            });
+            return { status: response.ok ? 'success' : 'failed', url: config.url };
+          }
+          break;
+
+        case 'llm_chat':
+          // Simulate AI response
+          return {
+            response: `AI Response from ${config?.model || 'GPT-4'}: This is a simulated response to demonstrate the flow. System prompt: ${config?.systemPrompt || 'Default'}`,
+            model: config?.model,
+            temperature: config?.temperature
+          };
+
+        case 'send_message':
+          return {
+            sent: true,
+            content: config?.content || 'Default message',
+            channel: config?.channel || 'chat'
+          };
+
+        case 'api_call':
+          if (config?.endpoint) {
+            try {
+              const headers = config.headers ? JSON.parse(config.headers) : {};
+              const response = await fetch(config.endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...headers },
+                body: JSON.stringify({ nodeId: node.id, timestamp: new Date().toISOString() })
+              });
+              return { success: response.ok, endpoint: config.endpoint, status: response.status };
+            } catch (error: any) {
+              return { success: false, error: error.message };
+            }
+          }
+          break;
+
+        case 'condition':
+          // Simulate condition evaluation
+          const conditionResult = Math.random() > 0.5; // Random for demo
+          return {
+            conditionMet: conditionResult,
+            message: conditionResult ? config?.trueMessage : config?.falseMessage,
+            condition: config?.condition
+          };
+
+        default:
+          return { message: `${node.data.label} executed successfully`, type };
+      }
+    } catch (error: any) {
+      return { error: error.message, type };
+    }
+    
+    return { message: `${node.data.label} executed`, type };
+  };
+
   const saveFlow = () => {
     const flowData = {
       nodes,
@@ -223,17 +566,71 @@ const AgentFlowBuilder = () => {
     console.log('Saving flow:', flowData);
     
     // TODO: Implement actual save to Supabase
-    alert('Flow saved successfully! (Demo mode - not actually saved yet)');
+    toast({
+      title: "Flow Saved",
+      description: "Flow saved successfully! (Demo mode - not actually saved yet)"
+    });
   };
 
-  const testFlow = () => {
+  const testFlow = async () => {
     if (nodes.length === 0) {
-      alert('Please add some nodes to test the flow');
+      toast({
+        title: "No nodes to test",
+        description: "Please add some nodes to test the flow",
+        variant: "destructive"
+      });
       return;
     }
     
-    console.log('Testing flow with current configuration:', { nodes, edges });
-    alert('Flow test initiated! Check console for details (Demo mode)');
+    toast({
+      title: "Testing Flow",
+      description: "Executing nodes in sequence...",
+    });
+
+    // Find the start node (trigger type)
+    const startNode = nodes.find(node => node.type === 'trigger');
+    if (!startNode) {
+      toast({
+        title: "No trigger found",
+        description: "Please add a trigger node to start the flow",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Execute the flow starting from trigger
+    let currentNode = startNode;
+    let executionResults = [];
+    let visited = new Set();
+    
+    while (currentNode && !visited.has(currentNode.id)) {
+      visited.add(currentNode.id);
+      
+      const result = await executeNode(currentNode);
+      executionResults.push({
+        nodeId: currentNode.id,
+        label: currentNode.data.label,
+        result
+      });
+
+      // Find next connected node
+      const outgoingEdge = edges.find(edge => edge.source === currentNode.id);
+      if (outgoingEdge) {
+        currentNode = nodes.find(node => node.id === outgoingEdge.target);
+      } else {
+        break;
+      }
+
+      // Small delay for demo purposes
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    console.log('Flow execution results:', executionResults);
+    
+    toast({
+      title: "Flow Test Completed",
+      description: `Executed ${executionResults.length} nodes successfully. Check console for details.`,
+    });
   };
 
   return (
@@ -277,7 +674,7 @@ const AgentFlowBuilder = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Node Library</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Drag nodes onto the canvas to build your agent flow
+                Drag nodes onto the canvas and click them to configure
               </p>
             </div>
 
@@ -324,6 +721,7 @@ const AgentFlowBuilder = () => {
             onInit={setReactFlowInstance}
             onDrop={onDrop}
             onDragOver={onDragOver}
+            onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             fitView
             attributionPosition="bottom-left"
@@ -357,6 +755,17 @@ const AgentFlowBuilder = () => {
           </ReactFlow>
         </div>
       </div>
+
+      {/* Node Configuration Dialog */}
+      <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
+        {selectedNode && (
+          <NodeConfigDialog
+            node={selectedNode}
+            onSave={saveNodeConfig}
+            onClose={() => setConfigDialogOpen(false)}
+          />
+        )}
+      </Dialog>
     </div>
   );
 };

@@ -85,9 +85,24 @@ export const UploadHistory = ({ profile }: UploadHistoryProps) => {
   }, [userId, currentPage]);
 
   const loadHistory = async () => {
+    if (!userId) return;
+    
     try {
       setLoading(true);
 
+      // Initialize profile first to ensure we have the company username
+      const initResponse = await supabase.functions.invoke('upload-post-manager', {
+        body: { 
+          action: 'init_profile', 
+          data: {} 
+        }
+      });
+
+      if (!initResponse.data?.success) {
+        throw new Error('Error al inicializar perfil');
+      }
+
+      // Get history with the initialized profile
       const { data, error } = await supabase.functions.invoke('upload-post-manager', {
         body: { 
           action: 'get_upload_history', 

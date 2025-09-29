@@ -53,6 +53,12 @@ import WhiteLabelDashboard from "./pages/WhiteLabelDashboard";
 import AgentFlowBuilder from "./pages/AgentFlowBuilder";
 import WhiteLabelMarketplace from "./pages/WhiteLabelMarketplace";
 import CompanyWhiteLabelAgents from "./pages/CompanyWhiteLabelAgents";
+import WhiteLabelAnalytics from "./pages/WhiteLabelAnalytics";
+import WhiteLabelRevenue from "./pages/WhiteLabelRevenue";
+import WhiteLabelKnowledgeBase from "./pages/WhiteLabelKnowledgeBase";
+import WhiteLabelVoiceVision from "./pages/WhiteLabelVoiceVision";
+import WhiteLabelAPIGenerator from "./pages/WhiteLabelAPIGenerator";
+import WhiteLabelABTesting from "./pages/WhiteLabelABTesting";
 
 import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";

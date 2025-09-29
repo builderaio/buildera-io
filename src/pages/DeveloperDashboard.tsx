@@ -236,9 +236,13 @@ const DeveloperDashboard = () => {
                     <Code className="h-6 w-6" />
                     <span>Nuevo Proyecto</span>
                   </Button>
-                  <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-auto p-4 flex-col space-y-2"
+                    onClick={() => window.location.href = '/marketplace/agents'}
+                  >
                     <Bot className="h-6 w-6" />
-                    <span>Crear Agent</span>
+                    <span>Marketplace de Agentes</span>
                   </Button>
                   <Button variant="outline" className="h-auto p-4 flex-col space-y-2">
                     <Zap className="h-6 w-6" />

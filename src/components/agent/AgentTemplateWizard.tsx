@@ -73,16 +73,22 @@ const capabilities = [
 ];
 
 const integrations = [
-  'WhatsApp Business',
-  'Slack',
-  'Discord',
-  'Teams',
-  'Zendesk',
-  'Salesforce',
-  'HubSpot',
-  'Zapier',
-  'API REST',
-  'Webhooks'
+  'Widget de Chat Web',
+  'API REST Personalizada',
+  'Webhook Endpoints',
+  'Dashboard Widget',
+  'Email Automation',
+  'SMS Notifications',
+  'Analytics Tracking',
+  'Knowledge Base Integration',
+  'File Upload Handler',
+  'Form Processor',
+  'Calendar Integration',
+  'PDF Generator',
+  'Report Builder',
+  'Data Export API',
+  'Real-time Notifications',
+  'User Authentication API'
 ];
 
 export function AgentTemplateWizard() {

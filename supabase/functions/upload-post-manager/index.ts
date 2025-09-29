@@ -525,6 +525,37 @@ async function updateLinkedInPage(supabaseClient: any, userId: string, data: any
   return { success: true };
 }
 
+// Platform filtering based on Upload-Post API restrictions
+function filterPlatformsByPostType(platforms: string[], postType: string): string[] {
+  const supportedPlatforms = {
+    text: ['linkedin', 'x', 'facebook', 'threads', 'reddit'],
+    photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'x', 'threads', 'pinterest'],
+    video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'twitter', 'threads', 'pinterest']
+  };
+
+  // Convert twitter to x for text and photo posts
+  const normalizedPlatforms = platforms.map((p: string) => {
+    if (p === 'twitter') {
+      return (postType === 'video') ? 'twitter' : 'x';
+    }
+    return p;
+  });
+
+  // Filter platforms based on post type support
+  const validPlatforms = normalizedPlatforms.filter((platform: string) => {
+    return supportedPlatforms[postType as keyof typeof supportedPlatforms]?.includes(platform);
+  });
+
+  console.log(`🔍 Platform filtering for ${postType}:`, {
+    original: platforms,
+    normalized: normalizedPlatforms,
+    filtered: validPlatforms,
+    supported: supportedPlatforms[postType as keyof typeof supportedPlatforms]
+  });
+
+  return validPlatforms;
+}
+
 async function postContent(supabaseClient: any, userId: string, apiKey: string, data: any) {
   const { companyUsername, platforms, title, content, mediaUrls, postType, scheduledDate, async_upload } = data;
   
@@ -533,13 +564,17 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     mediaCount: mediaUrls?.length || 0, scheduledDate, async_upload
   });
 
+  // Filter platforms based on post type and API restrictions
+  const platformsToSend = filterPlatformsByPostType(platforms, postType);
+  
+  if (platformsToSend.length === 0) {
+    throw new Error(`No valid platforms for ${postType} post. Original platforms: ${platforms.join(', ')}`);
+  }
+
   try {
     let response;
     const formData = new FormData();
     formData.append('user', companyUsername);
-    const platformsToSend = (postType === 'text' || postType === 'photo')
-      ? platforms.map((p: string) => p === 'twitter' ? 'x' : p)
-      : platforms;
     
     platformsToSend.forEach((platform: string) => {
       formData.append('platform[]', platform);

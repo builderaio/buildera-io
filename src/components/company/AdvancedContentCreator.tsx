@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Brain, Sparkles, Trash2, RefreshCw, Image, Video, Copy, Download, Share2, Plus, Lightbulb } from "lucide-react";
+import { Brain, Sparkles, Trash2, RefreshCw, Image, Video, Copy, Download, Share2, Plus, Lightbulb, Eye } from "lucide-react";
 import ContentCreationLoader from "@/components/ui/content-creation-loader";
 import { motion, AnimatePresence } from "framer-motion";
 import InsightPublisher from "./InsightPublisher";
@@ -802,13 +802,39 @@ function InsightCard({
                 )}
                 
                 {content.media_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(content.media_url, '_blank')}
-                  >
-                    <Download className="h-3 w-3" />
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(content.media_url, '_blank')}
+                      title="Ver contenido"
+                    >
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(content.media_url);
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `contenido-${content.id}.${content.content_type === 'video' ? 'mp4' : 'jpg'}`;
+                          document.body.appendChild(a);
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                          document.body.removeChild(a);
+                        } catch (error) {
+                          console.error('Error downloading content:', error);
+                        }
+                      }}
+                      title="Descargar contenido"
+                    >
+                      <Download className="h-3 w-3" />
+                    </Button>
+                  </>
                 )}
               </div>
             </motion.div>

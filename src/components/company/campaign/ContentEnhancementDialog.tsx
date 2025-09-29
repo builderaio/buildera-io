@@ -83,16 +83,31 @@ export const ContentEnhancementDialog = ({
 
       if (error) throw error;
 
-      // Save to content library
-      await supabase.from('content_library').insert({
-        user_id: currentUser.id,
-        title: `Imagen - ${contentItem.calendar_item.tema_concepto}`,
-        description: contentItem.content?.texto_final?.substring(0, 200) || '',
-        file_url: data.image_url,
-        file_type: 'image',
-        platform: contentItem.calendar_item.red_social,
-        tags: contentItem.content?.hashtags || []
-      });
+      // Save to content library with improved error handling
+      try {
+        const { error: saveError } = await supabase.from('content_recommendations').insert({
+          user_id: currentUser.id,
+          title: `Imagen AI - ${contentItem.calendar_item.tema_concepto}`,
+          description: contentItem.content?.texto_final?.substring(0, 200) || '',
+          recommendation_type: 'post_template',
+          status: 'template',
+          platform: contentItem.calendar_item.red_social,
+          suggested_content: {
+            content_text: contentItem.content?.texto_final || contentItem.content?.generatedText || '',
+            image_url: data.image_url,
+            metrics: {}
+          },
+          tags: contentItem.content?.hashtags || []
+        });
+
+        if (saveError) {
+          console.error('Error saving to library:', saveError);
+        } else {
+          console.log('✅ Image automatically saved to library');
+        }
+      } catch (saveError) {
+        console.error('Error saving to content library:', saveError);
+      }
 
       setGeneratedMedia({ url: data.image_url, type: 'image' });
       toast({
@@ -143,16 +158,31 @@ export const ContentEnhancementDialog = ({
 
       if (error) throw error;
 
-      // Save to content library  
-      await supabase.from('content_library').insert({
-        user_id: currentUser.id,
-        title: `Video - ${contentItem.calendar_item.tema_concepto}`,
-        description: contentItem.content?.texto_final?.substring(0, 200) || '',
-        file_url: data.video_url,
-        file_type: 'video',
-        platform: contentItem.calendar_item.red_social,
-        tags: contentItem.content?.hashtags || []
-      });
+      // Save to content library with improved error handling
+      try {
+        const { error: saveError } = await supabase.from('content_recommendations').insert({
+          user_id: currentUser.id,
+          title: `Video AI - ${contentItem.calendar_item.tema_concepto}`,
+          description: contentItem.content?.texto_final?.substring(0, 200) || '',
+          recommendation_type: 'post_template', 
+          status: 'template',
+          platform: contentItem.calendar_item.red_social,
+          suggested_content: {
+            content_text: contentItem.content?.texto_final || contentItem.content?.generatedText || '',
+            image_url: data.video_url,
+            metrics: {}
+          },
+          tags: contentItem.content?.hashtags || []
+        });
+
+        if (saveError) {
+          console.error('Error saving video to library:', saveError);
+        } else {
+          console.log('✅ Video automatically saved to library');
+        }
+      } catch (saveError) {
+        console.error('Error saving video to content library:', saveError);
+      }
 
       setGeneratedMedia({ url: data.video_url, type: 'video' });
       toast({
@@ -217,16 +247,32 @@ export const ContentEnhancementDialog = ({
         .from('content-files')
         .getPublicUrl(fileName);
 
-      // Save to content library
-      await supabase.from('content_library').insert({
-        user_id: uploadUser.id,
-        title: `${isImage ? 'Imagen' : 'Video'} - ${contentItem.calendar_item.tema_concepto}`,
-        description: contentItem.content?.texto_final?.substring(0, 200) || '',
-        file_url: publicUrl,
-        file_type: isImage ? 'image' : 'video',
-        platform: contentItem.calendar_item.red_social,
-        tags: contentItem.content?.hashtags || []
-      });
+      // Save to content library with improved error handling
+      try {
+        const fileType = isImage ? 'image' : 'video';
+        const { error: saveError } = await supabase.from('content_recommendations').insert({
+          user_id: uploadUser.id,
+          title: `${isImage ? 'Imagen' : 'Video'} subida - ${contentItem.calendar_item.tema_concepto}`,
+          description: contentItem.content?.texto_final?.substring(0, 200) || '',
+          recommendation_type: 'post_template',
+          status: 'template',
+          platform: contentItem.calendar_item.red_social,
+          suggested_content: {
+            content_text: contentItem.content?.texto_final || contentItem.content?.generatedText || '',
+            image_url: publicUrl,
+            metrics: {}
+          },
+          tags: contentItem.content?.hashtags || []
+        });
+
+        if (saveError) {
+          console.error('Error saving uploaded file to library:', saveError);
+        } else {
+          console.log('✅ Uploaded file automatically saved to library');
+        }
+      } catch (saveError) {
+        console.error('Error saving uploaded file to content library:', saveError);
+      }
 
       setGeneratedMedia({ url: publicUrl, type: isImage ? 'image' : 'video' });
       toast({
@@ -540,10 +586,39 @@ export const ContentEnhancementDialog = ({
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => window.open(generatedMedia.url, '_blank')}
+                      title="Ver contenido"
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(generatedMedia.url);
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `${contentItem?.calendar_item?.tema_concepto || 'contenido'}.${generatedMedia.type === 'image' ? 'jpg' : 'mp4'}`;
+                          document.body.appendChild(a);
+                          a.click();
+                          window.URL.revokeObjectURL(url);
+                          document.body.removeChild(a);
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "No se pudo descargar el archivo",
+                            variant: "destructive"
+                          });
+                        }
+                      }}
+                      title="Descargar contenido"
+                    >
                       <Download className="h-4 w-4" />
                     </Button>
                   </div>

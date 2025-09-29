@@ -172,7 +172,7 @@ export function AgentTemplateWizard() {
 
       toast({
         title: "🎉 Agente Creado",
-        description: "Tu plantilla de agente ha sido creada y está lista para ser usada por empresas."
+        description: "Tu plantilla de agente ha sido creada y está lista para ser desplegada por empresas."
       });
 
       navigate('/whitelabel/dashboard');

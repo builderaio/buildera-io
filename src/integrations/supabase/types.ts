@@ -80,6 +80,53 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_api_endpoints: {
+        Row: {
+          api_key: string
+          auth_required: boolean | null
+          cors_enabled: boolean | null
+          created_at: string | null
+          deployment_id: string
+          endpoint_type: string
+          endpoint_url: string
+          id: string
+          rate_limit: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          api_key: string
+          auth_required?: boolean | null
+          cors_enabled?: boolean | null
+          created_at?: string | null
+          deployment_id: string
+          endpoint_type: string
+          endpoint_url: string
+          id?: string
+          rate_limit?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          api_key?: string
+          auth_required?: boolean | null
+          cors_enabled?: boolean | null
+          created_at?: string | null
+          deployment_id?: string
+          endpoint_type?: string
+          endpoint_url?: string
+          id?: string
+          rate_limit?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_api_endpoints_deployment_id_fkey"
+            columns: ["deployment_id"]
+            isOneToOne: false
+            referencedRelation: "agent_deployments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_categories: {
         Row: {
           color: string | null
@@ -147,6 +194,59 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_deployments: {
+        Row: {
+          api_endpoint_url: string | null
+          company_id: string
+          created_at: string | null
+          custom_configuration: Json | null
+          deployment_name: string
+          id: string
+          last_used_at: string | null
+          monthly_usage_count: number | null
+          status: string | null
+          template_id: string
+          updated_at: string | null
+          widget_embed_code: string | null
+        }
+        Insert: {
+          api_endpoint_url?: string | null
+          company_id: string
+          created_at?: string | null
+          custom_configuration?: Json | null
+          deployment_name: string
+          id?: string
+          last_used_at?: string | null
+          monthly_usage_count?: number | null
+          status?: string | null
+          template_id: string
+          updated_at?: string | null
+          widget_embed_code?: string | null
+        }
+        Update: {
+          api_endpoint_url?: string | null
+          company_id?: string
+          created_at?: string | null
+          custom_configuration?: Json | null
+          deployment_name?: string
+          id?: string
+          last_used_at?: string | null
+          monthly_usage_count?: number | null
+          status?: string | null
+          template_id?: string
+          updated_at?: string | null
+          widget_embed_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_deployments_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabel_agent_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -4710,6 +4810,69 @@ export type Database = {
             columns: ["primary_company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      revenue_tracking: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          deployment_id: string
+          developer_id: string
+          developer_share: number | null
+          id: string
+          payment_status: string | null
+          platform_share: number | null
+          revenue_amount: number | null
+          template_id: string
+          total_usage_count: number | null
+          usage_period_end: string
+          usage_period_start: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          deployment_id: string
+          developer_id: string
+          developer_share?: number | null
+          id?: string
+          payment_status?: string | null
+          platform_share?: number | null
+          revenue_amount?: number | null
+          template_id: string
+          total_usage_count?: number | null
+          usage_period_end: string
+          usage_period_start: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          deployment_id?: string
+          developer_id?: string
+          developer_share?: number | null
+          id?: string
+          payment_status?: string | null
+          platform_share?: number | null
+          revenue_amount?: number | null
+          template_id?: string
+          total_usage_count?: number | null
+          usage_period_end?: string
+          usage_period_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_tracking_deployment_id_fkey"
+            columns: ["deployment_id"]
+            isOneToOne: false
+            referencedRelation: "agent_deployments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "revenue_tracking_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whitelabel_agent_templates"
             referencedColumns: ["id"]
           },
         ]

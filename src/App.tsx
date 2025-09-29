@@ -145,6 +145,7 @@ const App = () => {
                   <Route path="/whitelabel/voice-vision" element={<WhiteLabelVoiceVision />} />
                   <Route path="/whitelabel/api-docs/:templateId" element={<WhiteLabelAPIGenerator />} />
                   <Route path="/whitelabel/ab-testing" element={<WhiteLabelABTesting />} />
+                  <Route path="/whitelabel/dashboard" element={<WhiteLabelDashboard />} />
                 </Route>
                 
                 {/* Admin Routes */}

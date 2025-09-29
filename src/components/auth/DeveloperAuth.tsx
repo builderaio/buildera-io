@@ -57,7 +57,19 @@ const DeveloperAuth = ({ mode, onModeChange }: DeveloperAuthProps) => {
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes('weak_password') || error.message.includes('Password should contain')) {
+            toast({
+              title: "Contraseña muy débil",
+              description: "La contraseña debe contener al menos una letra minúscula, una mayúscula y un número.",
+              variant: "destructive",
+            });
+          } else {
+            throw error;
+          }
+          setLoading(false);
+          return;
+        }
 
         toast({
           title: "¡Registro exitoso!",
@@ -219,6 +231,11 @@ const DeveloperAuth = ({ mode, onModeChange }: DeveloperAuthProps) => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+          {mode === "signup" && (
+            <p className="text-xs text-muted-foreground">
+              Debe contener al menos una letra minúscula, una mayúscula y un número
+            </p>
+          )}
         </div>
         
         {mode === "signup" && (

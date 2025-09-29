@@ -41,10 +41,33 @@ const DeveloperAuth = ({ mode, onModeChange }: DeveloperAuthProps) => {
           setLoading(false);
           return;
         }
-        // Para registro, los desarrolladores ahora van directamente a su dashboard después del social auth
-        // El trigger de la base de datos creará su perfil automáticamente
-        navigate(`/waitlist?type=developer&email=${encodeURIComponent(email)}&name=${encodeURIComponent(fullName)}`);
-        return;
+        // Registro directo de desarrolladores
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              user_type: 'developer',
+              github_url: githubUrl,
+              skills: skills.split(',').map(s => s.trim()),
+              experience_years: parseInt(experienceYears) || 0
+            },
+            emailRedirectTo: `${window.location.origin}/auth/callback`
+          }
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "¡Registro exitoso!",
+          description: "Verifica tu email para activar tu cuenta de desarrollador.",
+        });
+
+        // Redirigir al dashboard después del registro
+        setTimeout(() => {
+          navigate('/whitelabel/dashboard');
+        }, 2000);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,

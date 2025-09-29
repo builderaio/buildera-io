@@ -149,6 +149,46 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     loadTourProgress();
   }, [userId]);
 
+  // Auto-save tour state when step changes
+  useEffect(() => {
+    if (isActive && userId) {
+      saveTourState();
+    }
+  }, [currentStep, completedSteps, isActive, userId]);
+
+  // Save tour state when component unmounts (user navigates away)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isActive && userId) {
+        // Use sendBeacon for better reliability on page unload
+        const tourData = {
+          user_id: userId,
+          current_step: currentStep,
+          completed_steps: completedSteps,
+          tour_completed: completedSteps.length === steps.length,
+          updated_at: new Date().toISOString()
+        };
+        
+        // Fallback to synchronous save for page unload
+        try {
+          navigator.sendBeacon('/api/save-tour-state', JSON.stringify(tourData));
+        } catch (e) {
+          // If sendBeacon fails, try synchronous save as last resort
+          saveTourState();
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (isActive && userId) {
+        saveTourState();
+      }
+    };
+  }, [isActive, userId, currentStep, completedSteps]);
+
   // Cargar conteo de conexiones para mostrar "X/8 plataformas conectadas" en el paso 2
   useEffect(() => {
     if (!userId || !isActive) return;
@@ -180,8 +220,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         setCompletedSteps(tourStatus.completed_steps || []);
         setCurrentStep(tourStatus.current_step || 1);
         setIsActive(!tourStatus.tour_completed);
+        console.log('📖 Tour progress loaded:', {
+          currentStep: tourStatus.current_step,
+          completedSteps: tourStatus.completed_steps,
+          isActive: !tourStatus.tour_completed
+        });
       } else {
-        // Verificar si necesita tour (completó onboarding recientemente)
+        // Check if user needs tour (completed onboarding recently OR has incomplete tour)
         const { data: onboarding } = await supabase
           .from('user_onboarding_status')
           .select('onboarding_completed_at')
@@ -193,7 +238,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           const now = new Date();
           const hoursDiff = (now.getTime() - completedDate.getTime()) / (1000 * 3600);
           
-          if (hoursDiff <= 48) {
+          // Start tour for recent onboarding (within 7 days instead of 48 hours for better UX)
+          if (hoursDiff <= 168) { // 7 days
             setIsActive(true);
             startTour();
           }
@@ -203,6 +249,33 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       console.error('Error loading tour progress:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveTourState = async () => {
+    if (!userId || !isActive) return;
+
+    try {
+      await supabase
+        .from('user_guided_tour')
+        .upsert({
+          user_id: userId,
+          current_step: currentStep,
+          completed_steps: completedSteps,
+          tour_completed: completedSteps.length === steps.length,
+          updated_at: new Date().toISOString(),
+          ...(completedSteps.length === steps.length && { 
+            tour_completed_at: new Date().toISOString() 
+          })
+        });
+
+      console.log('💾 Tour state saved:', {
+        currentStep,
+        completedSteps,
+        isCompleted: completedSteps.length === steps.length
+      });
+    } catch (error) {
+      console.error('Error saving tour state:', error);
     }
   };
 
@@ -241,6 +314,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       setCompletedSteps(finalCompletedSteps);
       setCurrentStep(nextStep);
 
+      // Save state immediately after step completion
       await supabase
         .from('user_guided_tour')
         .upsert({
@@ -252,19 +326,28 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           ...(allCompleted && { tour_completed_at: new Date().toISOString() })
         });
 
+      console.log('✅ Step completed and saved:', {
+        stepId,
+        currentStep: allCompleted ? Math.max(...finalCompletedSteps) : nextStep,
+        completedSteps: finalCompletedSteps,
+        allCompleted
+      });
+
       if (allCompleted) {
         setIsActive(false);
-        // Toast removido para evitar bloqueo de botones
-      } else if (stepId === 1) {
-        // Toast removido para evitar bloqueo de botones
-      } else if (stepId === 3) {
-        // Toast removido para evitar bloqueo de botones
-      } else {
-        // Toast removido para evitar bloqueo de botones
+        toast({
+          title: "¡Tour completado! 🎉",
+          description: "Has completado todos los pasos del tour de Era. ¡Excelente trabajo!",
+        });
       }
 
     } catch (error) {
       console.error('Error completing step:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar el progreso del tour. Inténtalo de nuevo.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -276,13 +359,44 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           user_id: userId,
           tour_completed: true,
           tour_skipped: true,
-          tour_completed_at: new Date().toISOString()
+          tour_completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         });
 
       setIsActive(false);
-      // Toast removido para evitar bloqueo de botones
+      toast({
+        title: "Tour omitido",
+        description: "Puedes reiniciar el tour en cualquier momento desde el botón Era.",
+      });
     } catch (error) {
       console.error('Error skipping tour:', error);
+    }
+  };
+
+  const restartTour = async () => {
+    try {
+      await supabase
+        .from('user_guided_tour')
+        .upsert({
+          user_id: userId,
+          current_step: 1,
+          completed_steps: [],
+          tour_completed: false,
+          tour_skipped: false,
+          tour_started_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      setIsActive(true);
+      setCurrentStep(1);
+      setCompletedSteps([]);
+      
+      toast({
+        title: "Tour reiniciado",
+        description: "¡Empecemos de nuevo con el tour de Era!",
+      });
+    } catch (error) {
+      console.error('Error restarting tour:', error);
     }
   };
 
@@ -329,9 +443,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           }}
         >
           <Button
-            onClick={startTour}
+            onClick={restartTour}
             className="relative rounded-full w-16 h-16 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-xl hover:shadow-2xl transition-all duration-300"
             size="icon"
+            title="Reiniciar tour de Era"
           >
             <motion.div
               animate={{ scale: [1, 1.1, 1] }}

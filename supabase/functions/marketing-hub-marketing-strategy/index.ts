@@ -281,6 +281,72 @@ serve(async (req) => {
     const webhookResult = await webhookResponse.json();
     console.log('N8N webhook response:', JSON.stringify(webhookResult, null, 2));
 
+    // Store competitive intelligence if competitors data is available
+    if (webhookResult && webhookResult[0]?.output?.competitors) {
+      try {
+        const competitors = webhookResult[0].output.competitors;
+        const strategy = webhookResult[0].output;
+        
+        // Create competitive intelligence record
+        const { data: intelligence, error: intelligenceError } = await supabase
+          .from('competitive_intelligence')
+          .insert({
+            user_id: user.id,
+            company_sector: companyData?.industry_sector || 'General',
+            target_market: companyData?.country || 'No especificado',
+            analysis_data: {
+              company_info: {
+                name: input.nombre_empresa,
+                sector: companyData?.industry_sector,
+                target_market: companyData?.country
+              },
+              competitors: competitors,
+              strategy_summary: {
+                core_message: strategy.core_message,
+                strategies: strategy.strategies
+              },
+              sources: strategy.sources || []
+            },
+            ai_generated: true,
+            session_id: `marketing-strategy-${Date.now()}`
+          })
+          .select()
+          .single();
+
+        if (intelligenceError) {
+          console.error('Error creating competitive intelligence:', intelligenceError);
+        } else if (intelligence) {
+          // Store each competitor profile
+          for (const competitor of competitors) {
+            await supabase
+              .from('competitor_profiles')
+              .insert({
+                analysis_id: intelligence.id,
+                competitor_name: competitor.name,
+                competitor_url: competitor.url,
+                competitor_type: 'direct', // Default type
+                competitive_threat_score: 7, // Default medium-high threat
+                strengths: Array.isArray(competitor.strengths) 
+                  ? competitor.strengths 
+                  : [competitor.strengths || ''],
+                weaknesses: Array.isArray(competitor.weaknesses)
+                  ? competitor.weaknesses
+                  : [competitor.weaknesses || ''],
+                analysis_data: {
+                  digital_tactics: competitor.digital_tactics,
+                  sources: competitor.sources || [],
+                  detected_from: 'marketing_strategy_generation'
+                }
+              });
+          }
+          console.log('Competitive intelligence saved successfully');
+        }
+      } catch (ciError) {
+        console.error('Error saving competitive intelligence:', ciError);
+        // Don't fail the entire request if competitive intelligence saving fails
+      }
+    }
+
     return new Response(JSON.stringify(webhookResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

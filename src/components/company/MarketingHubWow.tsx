@@ -29,7 +29,6 @@ import { UploadHistory } from './UploadHistory';
 import MarketingHubOrchestrator from './MarketingHubOrchestrator';
 import AudienciasManager from './AudienciasManager';
 import { ContentAnalysisDashboard } from './ContentAnalysisDashboard';
-import AdvancedMarketingDashboard from './AdvancedMarketingDashboard';
 import { CampaignDashboard } from './campaign/CampaignDashboard';
 
 interface MarketingHubWowProps {

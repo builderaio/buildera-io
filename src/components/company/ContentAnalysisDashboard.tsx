@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import ContentLibraryTab from "./ContentLibraryTab";
 import ContentCreatorTab from "./ContentCreatorTab";
 import InsightsRenderer from "./InsightsRenderer";

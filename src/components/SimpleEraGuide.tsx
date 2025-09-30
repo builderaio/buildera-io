@@ -30,6 +30,7 @@ interface GuideStep {
   title: string;
   description: string;
   target_section: string;
+  tab?: string;
   completed: boolean;
   icon?: any;
   actionText?: string;
@@ -58,6 +59,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       title: "Conectar Redes Sociales",
       description: "Conecta LinkedIn, Instagram y otras redes sociales",
       target_section: "marketing-hub",
+      tab: "configuracion",
       completed: false,
       icon: Zap,
       actionText: "Conectar redes",
@@ -68,6 +70,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       title: "Configurar URLs de Redes",
       description: "Actualiza las URLs de los perfiles de las redes que conectaste (sección Conexiones de Redes Sociales)",
       target_section: "marketing-hub",
+      tab: "configuracion",
       completed: false,
       icon: Settings,
       actionText: "Configurar URLs",
@@ -330,6 +333,15 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         allCompleted
       });
 
+      // Navegar al siguiente paso si tiene tab específico y estamos en la misma sección
+      if (!allCompleted) {
+        const nextStepData = steps.find(s => s.id === nextStep);
+        if (nextStepData?.tab && nextStepData.target_section === currentSection) {
+          console.log('🎯 Navegando al tab del siguiente paso:', nextStepData.tab);
+          onNavigate(nextStepData.target_section, { tab: nextStepData.tab });
+        }
+      }
+
       if (allCompleted) {
         setIsActive(false);
         toast({
@@ -399,7 +411,21 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
 
   const nextIncompleteStep = steps.find(step => !completedSteps.includes(step.id));
   const progressPercentage = (completedSteps.length / steps.length) * 100;
-  const isCurrentSectionRelevant = nextIncompleteStep?.target_section === currentSection;
+  
+  // Verificar si estamos en la sección correcta Y tab correcto (si aplica)
+  const isCurrentSectionRelevant = (() => {
+    if (!nextIncompleteStep) return false;
+    const isSameSection = nextIncompleteStep.target_section === currentSection;
+    
+    // Si el paso tiene un tab específico, verificar que estemos en ese tab
+    if (nextIncompleteStep.tab) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentTab = urlParams.get('tab');
+      return isSameSection && currentTab === nextIncompleteStep.tab;
+    }
+    
+    return isSameSection;
+  })();
   
   // Verificar si el paso 1 (conectar redes) puede completarse usando el mismo conteo que Conexiones de Redes Sociales
   const canCompleteNetworkStep = async () => {
@@ -679,6 +705,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                         <Button
                           onClick={() => {
                             console.log('🎯 Navegando a sección:', nextIncompleteStep.target_section);
+                            // Si tiene tab específico, navegar con ese parámetro
+                            const navParams = nextIncompleteStep.tab ? { tab: nextIncompleteStep.tab } : undefined;
+                            
                             // Si es el paso 3 (analizar audiencia), navegar al audiencias manager
                             if (nextIncompleteStep.id === 3) {
                               onNavigate("audiencias-manager");
@@ -691,7 +720,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                               // Para crear campañas, ir al marketing hub en el tab de campañas
                               onNavigate("marketing-hub", { tab: "campaigns" });
                             } else {
-                              onNavigate(nextIncompleteStep.target_section);
+                              onNavigate(nextIncompleteStep.target_section, navParams);
                             }
                           }}
                           size="sm"

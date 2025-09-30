@@ -487,8 +487,8 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       
       const [instagramRes, linkedinRes, facebookRes, tiktokRes] = await Promise.all([
         supabase.from('instagram_posts').select('like_count, comment_count, reach, created_at').eq('user_id', userId),
-        supabase.from('linkedin_posts').select('likes_count, comments_count, impressions, created_at').eq('user_id', userId),
-        supabase.from('facebook_posts').select('likes_count, comments_count, reach, created_at').eq('user_id', userId),
+        supabase.from('linkedin_posts').select('likes_count, comments_count, views_count, created_at').eq('user_id', userId),
+        supabase.from('facebook_posts').select('likes_count, comments_count, created_at').eq('user_id', userId),
         supabase.from('tiktok_posts').select('digg_count, comment_count, play_count, created_at').eq('user_id', userId)
       ]);
 
@@ -514,8 +514,8 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       };
 
       const instagramStats = calculateStats(instagramRes.data || [], 'like_count', 'comment_count', 'reach');
-      const linkedinStats = calculateStats(linkedinRes.data || [], 'likes_count', 'comments_count', 'impressions');
-      const facebookStats = calculateStats(facebookRes.data || [], 'likes_count', 'comments_count', 'reach');
+      const linkedinStats = calculateStats(linkedinRes.data || [], 'likes_count', 'comments_count', 'views_count');
+      const facebookStats = calculateStats(facebookRes.data || [], 'likes_count', 'comments_count');
       const tiktokStats = calculateStats(tiktokRes.data || [], 'digg_count', 'comment_count', 'play_count');
 
       setPlatformStats({
@@ -768,44 +768,46 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 </CardHeader>
                 <CardContent className="p-6">
                   <div className="space-y-4">
-                    {Object.entries(platformStats).map(([platform, stats]) => {
-                      const platformInfo = getPlatformInfo(platform as keyof typeof platformStats);
-                      const engagementRate = stats.posts > 0 ? (stats.engagement / stats.posts).toFixed(1) : '0';
-                      return (
-                        <div key={platform} className="relative overflow-hidden p-4 bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-lg">
-                                {platformInfo.icon}
+                    {Object.entries(platformStats)
+                      .filter(([platform]) => (socialConnections as any)[platform as keyof typeof socialConnections])
+                      .map(([platform, stats]) => {
+                        const platformInfo = getPlatformInfo(platform as keyof typeof platformStats);
+                        const engagementRate = stats.posts > 0 ? (stats.engagement / stats.posts).toFixed(1) : '0';
+                        return (
+                          <div key={platform} className="relative overflow-hidden p-4 bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-lg">
+                                  {platformInfo.icon}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-gray-900">{platformInfo.name}</p>
+                                  <p className="text-sm text-gray-500">{stats.posts} publicaciones</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-semibold text-gray-900">{platformInfo.name}</p>
-                                <p className="text-sm text-gray-500">{stats.posts} publicaciones</p>
+                              <div className="text-right">
+                                <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                                  {formatNumber(stats.engagement)}
+                                </p>
+                                <p className="text-xs text-gray-500">total engagement</p>
+                                {stats.posts > 0 && (
+                                  <p className="text-xs font-medium text-blue-600">{engagementRate} avg/post</p>
+                                )}
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                                {formatNumber(stats.engagement)}
-                              </p>
-                              <p className="text-xs text-gray-500">total engagement</p>
-                              {stats.posts > 0 && (
-                                <p className="text-xs font-medium text-blue-600">{engagementRate} avg/post</p>
-                              )}
-                            </div>
+                            {stats.posts > 0 && (
+                              <div className="mt-3">
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div 
+                                    className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${Math.min((stats.engagement / 1000) * 100, 100)}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          {stats.posts > 0 && (
-                            <div className="mt-3">
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div 
-                                  className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
-                                  style={{ width: `${Math.min((stats.engagement / 1000) * 100, 100)}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </CardContent>
               </Card>

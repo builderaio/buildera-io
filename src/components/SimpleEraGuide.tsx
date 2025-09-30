@@ -107,7 +107,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       id: 6,
       title: "Crear Campañas",
       description: "Diseña campañas de marketing efectivas como paso final",
-      target_section: "campaign-wizard",
+      target_section: "marketing-hub",
       completed: false,
       icon: Megaphone,
       actionText: "Crear campaña",
@@ -691,8 +691,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                               // Para crear audiencias, ir directo a la vista de creación
                               onNavigate("audiencias-manager", { audience_view: "create" });
                             } else if (nextIncompleteStep.id === 6) {
-                              // Para crear campañas, ir directo al campaign wizard
-                              onNavigate("campaign-wizard");
+                              // Para crear campañas, ir al marketing hub en el tab de campañas
+                              onNavigate("marketing-hub", { tab: "campaigns" });
                             } else {
                               onNavigate(nextIncompleteStep.target_section);
                             }

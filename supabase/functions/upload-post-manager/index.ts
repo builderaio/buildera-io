@@ -753,8 +753,9 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
 
     const result = await response.json();
     
-    // Guardar en base de datos local
+    // Guardar en ambas tablas de base de datos local
     if (result.job_id) {
+      // Guardar en scheduled_social_posts (tabla legacy)
       await supabaseClient
         .from('scheduled_social_posts')
         .insert({
@@ -769,6 +770,34 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
           scheduled_date: scheduledDate || new Date().toISOString(),
           upload_post_response: result,
         });
+      
+      // Guardar en scheduled_posts (para el calendario de contenido)
+      if (scheduledDate) {
+        const contentData = {
+          text: content || title,
+          mediaUrls: mediaUrls || [],
+          title: title,
+          job_id: result.job_id
+        };
+        
+        // Insertar un registro por plataforma
+        for (const platform of platforms) {
+          try {
+            await supabaseClient
+              .from('scheduled_posts')
+              .insert({
+                user_id: userId,
+                company_page_id: companyUsername,
+                platform: platform,
+                content: contentData,
+                scheduled_for: scheduledDate,
+                status: 'scheduled'
+              });
+          } catch (insertError) {
+            console.warn(`Could not insert into scheduled_posts for ${platform}:`, insertError);
+          }
+        }
+      }
     }
 
     return result;

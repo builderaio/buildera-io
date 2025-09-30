@@ -30,6 +30,7 @@ import MarketingHubOrchestrator from './MarketingHubOrchestrator';
 import AudienciasManager from './AudienciasManager';
 import { ContentAnalysisDashboard } from './ContentAnalysisDashboard';
 import { CampaignDashboard } from './campaign/CampaignDashboard';
+import ContentCalendar from './ContentCalendar';
 
 interface MarketingHubWowProps {
   profile: any;
@@ -710,7 +711,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7 lg:w-fit lg:grid-cols-7 mb-6">
+        <TabsList className="grid w-full grid-cols-8 lg:w-fit lg:grid-cols-8 mb-6">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -726,6 +727,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           <TabsTrigger value="campaigns" className="flex items-center gap-2">
             <Rocket className="w-4 h-4" />
             <span className="hidden sm:inline">Campañas</span>
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            <span className="hidden sm:inline">Calendario</span>
           </TabsTrigger>
           <TabsTrigger value="content" className="flex items-center gap-2">
             <PenTool className="w-4 h-4" />
@@ -887,6 +892,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
         <TabsContent value="campaigns" className="space-y-6">
           <CampaignDashboard />
+        </TabsContent>
+
+        <TabsContent value="calendar" className="space-y-6">
+          <ContentCalendar profile={profile} />
         </TabsContent>
 
         <TabsContent value="content" className="space-y-6">

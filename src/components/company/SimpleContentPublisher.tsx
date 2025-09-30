@@ -306,6 +306,26 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
       if (error) throw error;
 
       console.log('Successfully published via edge function:', data);
+      
+      // Guardar en scheduled_posts para el calendario
+      if (publishMode === 'scheduled' && scheduledISO) {
+        try {
+          const contentData = typeof editingContent === 'string' ? editingContent : JSON.stringify(editingContent);
+          await supabase
+            .from('scheduled_posts')
+            .insert({
+              user_id: profile.user_id,
+              company_page_id: companyUsername,
+              platform: selectedPlatforms[0], // Primary platform
+              content: { text: contentData, mediaUrls, title },
+              scheduled_for: scheduledISO,
+              status: 'scheduled'
+            });
+        } catch (schedError) {
+          console.warn('Error saving to scheduled_posts:', schedError);
+        }
+      }
+      
       toast({
         title: publishMode === 'immediate' ? '¡Publicado!' : '¡Programado!',
         description: `Contenido ${publishMode === 'immediate' ? 'publicado' : 'programado'} en ${selectedPlatforms.length} plataforma(s)`,
@@ -314,19 +334,29 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
       // Close dialog and navigate to posts tab
       onClose();
       
-      // Navigate to posts tab in marketing hub
-      setTimeout(() => {
-        const contentTab = document.querySelector('[data-value="content"]');
-        if (contentTab) {
-          (contentTab as HTMLElement).click();
-          setTimeout(() => {
-            const postsTab = document.querySelector('[data-value="post"]');
-            if (postsTab) {
-              (postsTab as HTMLElement).click();
-            }
-          }, 100);
-        }
-      }, 500);
+      // Navigate to calendar tab if scheduled
+      if (publishMode === 'scheduled') {
+        setTimeout(() => {
+          const calendarTab = document.querySelector('[data-value="calendar"]');
+          if (calendarTab) {
+            (calendarTab as HTMLElement).click();
+          }
+        }, 500);
+      } else {
+        // Navigate to content tab for immediate posts
+        setTimeout(() => {
+          const contentTab = document.querySelector('[data-value="content"]');
+          if (contentTab) {
+            (contentTab as HTMLElement).click();
+            setTimeout(() => {
+              const postsTab = document.querySelector('[data-value="post"]');
+              if (postsTab) {
+                (postsTab as HTMLElement).click();
+              }
+            }, 100);
+          }
+        }, 500);
+      }
     } catch (error: any) {
       console.error('Error publishing content:', error);
       toast({

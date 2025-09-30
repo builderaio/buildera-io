@@ -1,58 +1,54 @@
 import { useState, useEffect } from "react";
-import { Activity, Clock, Users, Zap, Store, UserCheck, Bot, TrendingUp, Sparkles, Target, ArrowRight, Eye, Heart, AlertTriangle, CheckCircle2, Calendar, MessageCircle, Network } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Sparkles, Target, TrendingUp, Users, Zap, BookOpen, 
+  Store, UserCheck, Network, Brain, BarChart3, Calendar,
+  ArrowRight, Trophy, Rocket, Star, Eye, Heart, MessageCircle,
+  Share2, Clock, CheckCircle2, AlertTriangle, Building2
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import CampaignWizardQuickAccess from './CampaignWizardQuickAccess';
+import { useNavigate } from "react-router-dom";
 
 interface MandoCentralProps {
   profile: any;
   onNavigate?: (view: string) => void;
 }
 
-interface MarketingKPI {
-  title: string;
-  value: string;
-  change: string;
-  trend: 'up' | 'down' | 'neutral';
-  icon: any;
-  color: string;
-  priority: 'high' | 'medium' | 'low';
-}
-
-interface QuickWin {
+interface DashboardSection {
   id: string;
   title: string;
   description: string;
-  impact: string;
-  urgency: 'urgent' | 'high' | 'medium';
+  icon: any;
+  gradient: string;
+  metrics: {
+    label: string;
+    value: string | number;
+    trend?: string;
+  }[];
   action: string;
-  onClick: () => void;
-  icon: any;
-  color: string;
-}
-
-interface GrowthOpportunity {
-  id: string;
-  title: string;
-  description: string;
-  potential_impact: string;
-  effort_level: 'low' | 'medium' | 'high';
-  data_source: string;
-  onClick: () => void;
+  view: string;
+  badge?: string;
+  progress?: number;
 }
 
 const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
-  console.log('🎯 MandoCentral component rendered with profile:', profile);
-  const [marketingKPIs, setMarketingKPIs] = useState<MarketingKPI[]>([]);
-  const [quickWins, setQuickWins] = useState<QuickWin[]>([]);
-  const [growthOpportunities, setGrowthOpportunities] = useState<GrowthOpportunity[]>([]);
-  const [alerts, setAlerts] = useState([]);
+  const [sections, setSections] = useState<DashboardSection[]>([]);
   const [loading, setLoading] = useState(true);
+  const [companyData, setCompanyData] = useState<any>(null);
+  const [stats, setStats] = useState({
+    totalReach: 0,
+    totalEngagement: 0,
+    contentGenerated: 0,
+    audiencesCreated: 0,
+    expertsAvailable: 0,
+    activeCampaigns: 0
+  });
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (profile?.user_id) {
@@ -63,12 +59,197 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        loadMarketingKPIs(),
-        loadQuickWins(),
-        loadGrowthOpportunities(),
-        loadAlerts()
+      // Cargar datos de la empresa
+      const { data: company } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('created_by', profile.user_id)
+        .single();
+      
+      setCompanyData(company);
+
+      // Cargar métricas de diferentes secciones
+      const [
+        socialConnections,
+        contentRecommendations,
+        audiences,
+        campaigns,
+        insights,
+        experts
+      ] = await Promise.all([
+        // Conexiones sociales
+        Promise.all([
+          supabase.from('linkedin_connections').select('id').eq('user_id', profile.user_id),
+          supabase.from('facebook_instagram_connections').select('id').eq('user_id', profile.user_id),
+          supabase.from('tiktok_connections').select('id').eq('user_id', profile.user_id)
+        ]),
+        // Contenido generado
+        supabase.from('content_recommendations').select('id, status').eq('user_id', profile.user_id),
+        // Audiencias
+        supabase.from('company_audiences').select('id').eq('user_id', profile.user_id),
+        // Campañas
+        supabase.from('marketing_campaigns').select('id, status').eq('user_id', profile.user_id),
+        // Insights
+        supabase.from('audience_insights').select('id').eq('user_id', profile.user_id),
+        // Expertos disponibles
+        supabase.from('experts').select('id').eq('is_available', true).limit(10)
       ]);
+
+      const connectionsCount = socialConnections.reduce((acc, conn) => acc + (conn.data?.length || 0), 0);
+      
+      setStats({
+        totalReach: 0, // Se calculará con datos reales
+        totalEngagement: 0,
+        contentGenerated: contentRecommendations.data?.length || 0,
+        audiencesCreated: audiences.data?.length || 0,
+        expertsAvailable: experts.data?.length || 0,
+        activeCampaigns: campaigns.data?.filter(c => c.status === 'active').length || 0
+      });
+
+      // Construir secciones del dashboard
+      const dashboardSections: DashboardSection[] = [
+        {
+          id: 'adn-empresa',
+          title: 'ADN del Negocio',
+          description: 'Define la identidad, valores y estrategia de tu negocio',
+          icon: Building2,
+          gradient: 'from-blue-500 via-blue-600 to-indigo-600',
+          metrics: [
+            { label: 'Perfil completado', value: company ? '100%' : '0%' },
+            { label: 'Objetivos definidos', value: company?.description ? 'Sí' : 'No' }
+          ],
+          action: 'Configurar ADN',
+          view: 'adn-empresa',
+          badge: company ? 'Configurado' : 'Pendiente',
+          progress: company ? 100 : 0
+        },
+        {
+          id: 'marketing-hub',
+          title: 'Marketing Hub',
+          description: 'Crea, programa y publica contenido en todas tus redes sociales',
+          icon: Rocket,
+          gradient: 'from-purple-500 via-pink-500 to-rose-500',
+          metrics: [
+            { label: 'Contenido generado', value: stats.contentGenerated, trend: '+12%' },
+            { label: 'Redes conectadas', value: connectionsCount },
+            { label: 'Campañas activas', value: stats.activeCampaigns }
+          ],
+          action: 'Ir al Hub',
+          view: 'marketing-hub',
+          badge: 'Popular',
+          progress: 75
+        },
+        {
+          id: 'audiencias',
+          title: 'Audiencias',
+          description: 'Analiza y segmenta tu audiencia para contenido personalizado',
+          icon: Users,
+          gradient: 'from-cyan-500 via-teal-500 to-emerald-500',
+          metrics: [
+            { label: 'Audiencias creadas', value: stats.audiencesCreated },
+            { label: 'Insights generados', value: insights.data?.length || 0 },
+            { label: 'Segmentación', value: 'Avanzada' }
+          ],
+          action: 'Gestionar Audiencias',
+          view: 'audiencias-manager',
+          progress: 60
+        },
+        {
+          id: 'inteligencia',
+          title: 'Inteligencia Competitiva',
+          description: 'Monitorea competidores y tendencias del mercado',
+          icon: Brain,
+          gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
+          metrics: [
+            { label: 'Análisis realizados', value: '0', trend: 'Nuevo' },
+            { label: 'Competidores', value: '0' },
+            { label: 'Tendencias', value: 'Disponibles' }
+          ],
+          action: 'Ver Análisis',
+          view: 'inteligencia-competitiva',
+          badge: 'IA',
+          progress: 0
+        },
+        {
+          id: 'analytics',
+          title: 'Analytics de Contenido',
+          description: 'Mide el rendimiento de tu contenido en tiempo real',
+          icon: BarChart3,
+          gradient: 'from-orange-500 via-amber-500 to-yellow-500',
+          metrics: [
+            { label: 'Alcance total', value: formatNumber(stats.totalReach) },
+            { label: 'Engagement', value: formatNumber(stats.totalEngagement), trend: '+8%' },
+            { label: 'Tasa conversión', value: '0%' }
+          ],
+          action: 'Ver Métricas',
+          view: 'content-analysis-dashboard',
+          progress: 40
+        },
+        {
+          id: 'academia',
+          title: 'Academia Buildera',
+          description: 'Aprende estrategias de marketing digital con IA',
+          icon: BookOpen,
+          gradient: 'from-green-500 via-emerald-500 to-teal-500',
+          metrics: [
+            { label: 'Cursos disponibles', value: '50+' },
+            { label: 'Certificaciones', value: '12' },
+            { label: 'Progreso', value: '0%' }
+          ],
+          action: 'Comenzar a Aprender',
+          view: 'academia-buildera',
+          badge: 'Nuevo',
+          progress: 0
+        },
+        {
+          id: 'expertos',
+          title: 'Red de Expertos',
+          description: 'Conecta con especialistas en marketing y negocios',
+          icon: UserCheck,
+          gradient: 'from-red-500 via-rose-500 to-pink-500',
+          metrics: [
+            { label: 'Expertos disponibles', value: stats.expertsAvailable },
+            { label: 'Consultas', value: '0' },
+            { label: 'Rating promedio', value: '4.8⭐' }
+          ],
+          action: 'Ver Expertos',
+          view: 'expertos',
+          progress: 0
+        },
+        {
+          id: 'marketplace',
+          title: 'Marketplace',
+          description: 'Descubre agentes IA y herramientas para tu negocio',
+          icon: Store,
+          gradient: 'from-indigo-500 via-blue-500 to-sky-500',
+          metrics: [
+            { label: 'Agentes disponibles', value: '100+' },
+            { label: 'Mis agentes', value: '0' },
+            { label: 'Categorías', value: '12' }
+          ],
+          action: 'Explorar',
+          view: 'marketplace',
+          badge: 'Destacado',
+          progress: 0
+        },
+        {
+          id: 'base-conocimiento',
+          title: 'Base de Conocimiento',
+          description: 'Centraliza y organiza toda la información de tu negocio',
+          icon: Network,
+          gradient: 'from-slate-500 via-gray-600 to-zinc-600',
+          metrics: [
+            { label: 'Documentos', value: '0' },
+            { label: 'Categorías', value: '0' },
+            { label: 'Último update', value: 'Nunca' }
+          ],
+          action: 'Gestionar Archivos',
+          view: 'base-conocimiento',
+          progress: 0
+        }
+      ];
+
+      setSections(dashboardSections);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast({
@@ -81,632 +262,231 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
     }
   };
 
-  const loadMarketingKPIs = async () => {
-    try {
-      // Obtener datos reales del marketing hub
-      const [instagramPosts, tiktokPosts, insights, actionables] = await Promise.all([
-        supabase
-          .from('instagram_posts')
-          .select('like_count, comment_count, reach, impressions, posted_at')
-          .eq('user_id', profile.user_id)
-          .gte('posted_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
-        
-        supabase
-          .from('tiktok_posts')
-          .select('digg_count, comment_count, play_count, posted_at')
-          .eq('user_id', profile.user_id)
-          .gte('posted_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
-        
-        supabase
-          .from('marketing_insights')
-          .select('*')
-          .eq('user_id', profile.user_id),
-        
-        supabase
-          .from('marketing_actionables')
-          .select('*')
-          .eq('user_id', profile.user_id)
-      ]);
-
-      const instagramData = instagramPosts.data || [];
-      const tiktokData = tiktokPosts.data || [];
-      const insightsData = insights.data || [];
-      const actionablesData = actionables.data || [];
-
-      // Calcular métricas reales
-      const totalReach = instagramData.reduce((sum, post) => sum + (post.reach || post.impressions || 0), 0) +
-                        tiktokData.reduce((sum, post) => sum + (post.play_count || 0), 0);
-      
-      const totalEngagement = instagramData.reduce((sum, post) => sum + (post.like_count || 0) + (post.comment_count || 0), 0) +
-                             tiktokData.reduce((sum, post) => sum + (post.digg_count || 0) + (post.comment_count || 0), 0);
-      
-      const completedActions = actionablesData.filter(a => a.status === 'completed').length;
-      const totalActions = actionablesData.length;
-      const automationScore = totalActions > 0 ? (completedActions / totalActions * 100).toFixed(1) : '0';
-
-      const kpis: MarketingKPI[] = [
-        {
-          title: "Alcance Total",
-          value: formatNumber(totalReach),
-          change: `${instagramData.length + tiktokData.length} posts este mes`,
-          trend: totalReach > 0 ? 'up' : 'neutral',
-          icon: Eye,
-          color: "bg-primary/10 text-primary",
-          priority: 'high'
-        },
-        {
-          title: "Engagement",
-          value: formatNumber(totalEngagement),
-          change: `${Math.round((totalEngagement / Math.max(totalReach, 1)) * 100 * 100) / 100}% rate`,
-          trend: totalEngagement > 100 ? 'up' : 'neutral',
-          icon: Heart,
-          color: "bg-pink-100 text-pink-600",
-          priority: 'high'
-        },
-        {
-          title: "Insights Generados",
-          value: insightsData.length.toString(),
-          change: `${insightsData.filter(i => new Date(i.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length} esta semana`,
-          trend: insightsData.length > 0 ? 'up' : 'neutral',
-          icon: Sparkles,
-          color: "bg-purple-100 text-purple-600",
-          priority: 'medium'
-        },
-        {
-          title: "Automatización",
-          value: `${automationScore}%`,
-          change: `${completedActions}/${totalActions} acciones`,
-          trend: parseFloat(automationScore) > 70 ? 'up' : parseFloat(automationScore) > 40 ? 'neutral' : 'down',
-          icon: Zap,
-          color: "bg-green-100 text-green-600",
-          priority: 'medium'
-        }
-      ];
-
-      setMarketingKPIs(kpis);
-    } catch (error) {
-      console.error('Error loading marketing KPIs:', error);
-      // KPIs por defecto si hay error
-      setMarketingKPIs([
-        {
-          title: "Conecta Marketing",
-          value: "0",
-          change: "Configurar ahora",
-          trend: 'neutral',
-          icon: Target,
-          color: "bg-primary/10 text-primary",
-          priority: 'high'
-        }
-      ]);
-    }
-  };
-
-  const loadQuickWins = async () => {
-    try {
-      const [socialConnections, recommendations, calendar] = await Promise.all([
-        // Verificar conexiones sociales
-        Promise.all([
-          supabase.from('linkedin_connections').select('id').eq('user_id', profile.user_id).limit(1),
-          supabase.from('facebook_instagram_connections').select('id').eq('user_id', profile.user_id).limit(1),
-          supabase.from('tiktok_connections').select('id').eq('user_id', profile.user_id).limit(1)
-        ]),
-        
-        // Obtener recomendaciones de contenido
-        supabase
-          .from('content_recommendations')
-          .select('*')
-          .eq('user_id', profile.user_id)
-          .eq('status', 'active')
-          .limit(3),
-        
-        // Verificar posts programados
-        supabase
-          .from('social_media_calendar')
-          .select('*')
-          .eq('user_id', profile.user_id)
-          .gte('scheduled_at', new Date().toISOString())
-          .limit(1)
-      ]);
-
-      const [linkedinConn, facebookConn, tiktokConn] = socialConnections;
-      const hasConnections = (linkedinConn.data?.length || 0) + (facebookConn.data?.length || 0) + (tiktokConn.data?.length || 0) > 0;
-      const hasRecommendations = (recommendations.data?.length || 0) > 0;
-      const hasScheduledPosts = (calendar.data?.length || 0) > 0;
-
-      const wins: QuickWin[] = [];
-
-      // Quick Win 1: Conectar redes sociales
-      if (!hasConnections) {
-        wins.push({
-          id: 'connect-social',
-          title: 'Conectar Redes Sociales',
-          description: 'Activa la sincronización automática de LinkedIn, Instagram y TikTok',
-          impact: '+300% automatización',
-          urgency: 'urgent',
-          action: 'Conectar ahora',
-          onClick: () => onNavigate?.('marketing-hub'),
-          icon: Network,
-          color: 'bg-blue-100 text-blue-600'
-        });
-      }
-
-      // Quick Win 2: Implementar recomendaciones
-      if (hasRecommendations) {
-        wins.push({
-          id: 'implement-recommendations',
-          title: 'Aplicar Recomendaciones IA',
-          description: `Tienes ${recommendations.data?.length} recomendaciones listas para implementar`,
-          impact: '+150% engagement',
-          urgency: 'high',
-          action: 'Ver recomendaciones',
-          onClick: () => onNavigate?.('marketing-hub'),
-          icon: CheckCircle2,
-          color: 'bg-green-100 text-green-600'
-        });
-      }
-
-      // Quick Win 3: Programar contenido
-      if (hasConnections && !hasScheduledPosts) {
-        wins.push({
-          id: 'schedule-content',
-          title: 'Programar Contenido',
-          description: 'Crea tu calendario de contenido automático para la próxima semana',
-          impact: '+200% consistencia',
-          urgency: 'high',
-          action: 'Programar posts',
-          onClick: () => onNavigate?.('marketing-hub'),
-          icon: Calendar,
-          color: 'bg-purple-100 text-purple-600'
-        });
-      }
-
-      // Quick Win por defecto: Generar contenido
-      if (wins.length === 0) {
-        wins.push({
-          id: 'generate-content',
-          title: 'Generar Contenido IA',
-          description: 'Crea posts personalizados para tus redes sociales en segundos',
-          impact: '+500% velocidad',
-          urgency: 'medium',
-          action: 'Generar contenido',
-          onClick: () => onNavigate?.('marketing-hub'),
-          icon: Sparkles,
-          color: 'bg-yellow-100 text-yellow-600'
-        });
-      }
-
-      setQuickWins(wins.slice(0, 3)); // Máximo 3 quick wins
-    } catch (error) {
-      console.error('Error loading quick wins:', error);
-    }
-  };
-
-  const loadGrowthOpportunities = async () => {
-    try {
-      const { data: recommendations } = await supabase
-        .from('content_recommendations')
-        .select('*')
-        .eq('user_id', profile.user_id)
-        .order('confidence_score', { ascending: false })
-        .limit(5);
-
-      const opportunities: GrowthOpportunity[] = [];
-
-      recommendations?.forEach((rec, index) => {
-        opportunities.push({
-          id: rec.id,
-          title: rec.title,
-          description: rec.description,
-          potential_impact: `+${Math.round(rec.confidence_score * 100)}% mejora`,
-          effort_level: index < 2 ? 'low' : index < 4 ? 'medium' : 'high',
-          data_source: rec.platform,
-          onClick: () => {
-            // Marcar como implementada
-            supabase
-              .from('content_recommendations')
-              .update({ status: 'implemented' })
-              .eq('id', rec.id);
-            onNavigate?.('marketing-hub');
-          }
-        });
-      });
-
-      // Oportunidades por defecto si no hay datos
-      if (opportunities.length === 0) {
-        opportunities.push(
-          {
-            id: 'default-1',
-            title: 'Análisis de Audiencia',
-            description: 'Descubre las preferencias y comportamientos de tu audiencia para crear contenido más efectivo',
-            potential_impact: '+85% engagement',
-            effort_level: 'low',
-            data_source: 'IA Analytics',
-            onClick: () => onNavigate?.('inteligencia-competitiva')
-          },
-          {
-            id: 'default-2',
-            title: 'Optimización de Horarios',
-            description: 'Identifica los mejores momentos para publicar según tu audiencia',
-            potential_impact: '+60% alcance',
-            effort_level: 'low',
-            data_source: 'Datos históricos',
-            onClick: () => onNavigate?.('marketing-hub')
-          }
-        );
-      }
-
-      setGrowthOpportunities(opportunities);
-    } catch (error) {
-      console.error('Error loading growth opportunities:', error);
-    }
-  };
-
-  const loadAlerts = async () => {
-    try {
-      const { data: dashboardAlerts } = await supabase
-        .from('dashboard_alerts')
-        .select('*')
-        .eq('user_id', profile.user_id)
-        .eq('is_read', false)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      setAlerts(dashboardAlerts || []);
-    } catch (error) {
-      console.error('Error loading alerts:', error);
-    }
-  };
-
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num.toString();
   };
 
-  const handleNavigateToWizard = () => {
-    // Navegar al Marketing Hub con la tab de campaign-wizard activa
-    window.location.href = '/company-dashboard?view=marketing-hub&tab=campaign-wizard';
+  const handleNavigate = (view: string) => {
+    if (onNavigate) {
+      onNavigate(view);
+    } else {
+      navigate(`/company-dashboard?view=${view}`);
+    }
   };
 
-  return (
-    <div className="space-y-6 md:space-y-8">
-      <header className="mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground">Mando Central</h1>
-        <p className="text-base md:text-lg text-muted-foreground">
-          ¡Bienvenido, {profile?.full_name?.split(' ')[0] || "Usuario"}! Desde aquí puedes ver todo lo que está pasando en tu negocio y tomar las mejores decisiones para crecer.
-        </p>
-      </header>
-
-      {/* Campaign Wizard Quick Access - Prominente al inicio */}
-      <CampaignWizardQuickAccess onNavigateToWizard={handleNavigateToWizard} />
-
-      {/* Hero Dashboard - Prioritized KPIs */}
-      <section className="mb-8">
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
-                  <div className="h-8 bg-muted rounded w-1/2 mb-2"></div>
-                  <div className="h-3 bg-muted rounded w-full"></div>
-                </CardContent>
-              </Card>
-            ))}
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-t-primary animate-spin"></div>
           </div>
-        ) : (
-          <>
-            {/* Critical Alerts */}
-            {alerts.length > 0 && (
-              <div className="mb-6 space-y-3">
-                {alerts.slice(0, 2).map((alert: any) => (
-                  <Alert key={alert.id} className="border-orange-200 bg-orange-50">
-                    <AlertTriangle className="h-4 w-4 text-orange-600" />
-                    <AlertDescription className="text-orange-800">
-                      <strong>{alert.title}</strong> - {alert.description}
-                    </AlertDescription>
-                  </Alert>
-                ))}
-              </div>
-            )}
+          <p className="text-muted-foreground">Cargando tu dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
-            {/* Hero KPIs */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
-                  <TrendingUp className="h-4 w-4 text-white" />
-                </div>
-                Dashboard Inteligente
-              </h2>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {marketingKPIs.map((kpi, index) => {
-                  const Icon = kpi.icon;
-                  const isHighPriority = kpi.priority === 'high';
-                  
-                  return (
-                    <Card key={index} className={`group hover:shadow-lg transition-all duration-300 ${
-                      isHighPriority ? 'ring-2 ring-primary/20 shadow-lg' : ''
-                    }`}>
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className={`p-3 rounded-xl ${kpi.color} group-hover:scale-110 transition-transform duration-300`}>
-                            <Icon className="w-6 h-6" />
-                          </div>
-                          {isHighPriority && (
-                            <Badge variant="default" className="bg-primary/10 text-primary border-primary/20">
-                              Crítico
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-muted-foreground">{kpi.title}</p>
-                          <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
-                          <div className={`flex items-center text-sm ${
-                            kpi.trend === "up" ? "text-green-600" : 
-                            kpi.trend === "down" ? "text-red-600" : "text-muted-foreground"
-                          }`}>
-                            {kpi.trend === "up" && "↗ "}
-                            {kpi.trend === "down" && "↘ "}
-                            <span>{kpi.change}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+  return (
+    <div className="space-y-8 pb-12">
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-primary/80 p-8 md:p-12 shadow-2xl">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC41IiBvcGFjaXR5PSIwLjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <Trophy className="w-6 h-6 text-white" />
+            </div>
+            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+              Mando Central
+            </Badge>
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
+            ¡Bienvenido, {profile?.full_name?.split(' ')[0] || "Usuario"}! 🚀
+          </h1>
+          <p className="text-lg md:text-xl text-white/90 max-w-3xl">
+            Tu centro de comando para gestionar todo tu ecosistema de marketing digital con el poder de la IA
+          </p>
+          
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Eye className="w-4 h-4 text-white/80" />
+                <span className="text-sm text-white/80">Alcance</span>
               </div>
+              <p className="text-2xl font-bold text-white">{formatNumber(stats.totalReach)}</p>
             </div>
-          </>
-        )}
-      </section>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Heart className="w-4 h-4 text-white/80" />
+                <span className="text-sm text-white/80">Engagement</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{formatNumber(stats.totalEngagement)}</p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-white/80" />
+                <span className="text-sm text-white/80">Contenido</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{stats.contentGenerated}</p>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="w-4 h-4 text-white/80" />
+                <span className="text-sm text-white/80">Campañas</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{stats.activeCampaigns}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Quick Wins Section - Apple Progressive Disclosure */}
-      <section className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center">
-              <Zap className="h-4 w-4 text-white" />
-            </div>
-            Acciones Inmediatas
-          </h2>
-          <Badge variant="outline" className="text-green-600 border-green-200">
-            {quickWins.length} oportunidades
+      {/* Main Sections Grid */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl md:text-3xl font-bold">Tu Ecosistema Digital</h2>
+          <Badge variant="outline" className="hidden md:flex">
+            {sections.length} Herramientas disponibles
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {quickWins.map((win, index) => {
-            const Icon = win.icon;
-            const urgencyColors = {
-              urgent: 'border-red-200 bg-red-50 hover:bg-red-100',
-              high: 'border-orange-200 bg-orange-50 hover:bg-orange-100',
-              medium: 'border-blue-200 bg-blue-50 hover:bg-blue-100'
-            };
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sections.map((section, index) => {
+            const Icon = section.icon;
+            
             return (
               <Card 
-                key={win.id} 
-                className={`cursor-pointer transition-all duration-300 hover:shadow-lg group ${urgencyColors[win.urgency]}`}
-                onClick={win.onClick}
+                key={section.id}
+                className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border-2"
+                onClick={() => handleNavigate(section.view)}
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                  animation: 'fadeInUp 0.5s ease-out forwards'
+                }}
               >
-                <CardContent className="p-6">
+                {/* Gradient Background */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${section.gradient} opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                
+                <CardHeader className="relative pb-4">
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 rounded-xl ${win.color} group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className="w-6 h-6" />
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${section.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className="w-7 h-7 text-white" />
                     </div>
-                    <Badge 
-                      variant={win.urgency === 'urgent' ? 'destructive' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {win.urgency === 'urgent' ? 'Urgente' : win.urgency === 'high' ? 'Alto' : 'Medio'}
-                    </Badge>
+                    
+                    {section.badge && (
+                      <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                        {section.badge}
+                      </Badge>
+                    )}
                   </div>
                   
+                  <CardTitle className="text-xl mb-2 group-hover:text-primary transition-colors">
+                    {section.title}
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    {section.description}
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent className="relative space-y-4">
+                  {/* Metrics */}
                   <div className="space-y-3">
-                    <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {win.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {win.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-green-600 border-green-200">
-                        {win.impact}
-                      </Badge>
-                      <div className="flex items-center text-primary group-hover:translate-x-1 transition-transform">
-                        <span className="text-sm font-medium">{win.action}</span>
-                        <ArrowRight className="w-4 h-4 ml-1" />
+                    {section.metrics.map((metric, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">{metric.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-foreground">{metric.value}</span>
+                          {metric.trend && (
+                            <Badge variant="outline" className="text-xs bg-green-50 text-green-600 border-green-200">
+                              {metric.trend}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
+
+                  {/* Progress Bar */}
+                  {section.progress !== undefined && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Progreso</span>
+                        <span className="font-medium">{section.progress}%</span>
+                      </div>
+                      <Progress value={section.progress} className="h-2" />
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  <Button 
+                    className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNavigate(section.view);
+                    }}
+                  >
+                    <span>{section.action}</span>
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
                 </CardContent>
+
+                {/* Hover Effect Border */}
+                <div className={`absolute inset-0 rounded-lg bg-gradient-to-br ${section.gradient} opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none`}></div>
               </Card>
             );
           })}
         </div>
-      </section>
+      </div>
 
-      {/* Growth Opportunities - Apple Contextual Info */}
-      <section className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
-              <Target className="h-4 w-4 text-white" />
-            </div>
-            Oportunidades de Crecimiento
-          </h2>
-          <Button 
-            variant="outline" 
-            onClick={() => onNavigate?.('marketing-hub')}
-            className="text-purple-600 border-purple-200 hover:bg-purple-50"
-          >
-            Ver todas las oportunidades
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {growthOpportunities.slice(0, 4).map((opportunity, index) => {
-            const effortColors = {
-              low: 'bg-green-100 text-green-700 border-green-200',
-              medium: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-              high: 'bg-red-100 text-red-700 border-red-200'
-            };
-
-            return (
-              <Card 
-                key={opportunity.id} 
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 group border-purple-100 hover:border-purple-200"
-                onClick={opportunity.onClick}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground mb-2 group-hover:text-purple-600 transition-colors">
-                        {opportunity.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {opportunity.description}
-                      </p>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-purple-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-purple-100 text-purple-700 border-purple-200">
-                        {opportunity.potential_impact}
-                      </Badge>
-                      <Badge variant="outline" className={effortColors[opportunity.effort_level]}>
-                        {opportunity.effort_level === 'low' ? 'Fácil' : 
-                         opportunity.effort_level === 'medium' ? 'Medio' : 'Alto'} esfuerzo
-                      </Badge>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {opportunity.data_source}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Marketplace Section */}
-      <section className="mb-6 md:mb-8">
-        <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">Herramientas que te van a encantar</h2>
-        <div className="bg-card p-6 rounded-lg shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <p className="text-muted-foreground">
-              Descubre asistentes inteligentes especializados para cada área de tu negocio.
-            </p>
-            <button 
-              onClick={() => onNavigate?.('marketplace')}
-              className="flex items-center text-primary hover:text-accent transition-colors"
-            >
-              <Store className="w-5 h-5 mr-2" />
-              <span>Ver Marketplace Completo</span>
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div 
-              onClick={() => onNavigate?.('mis-agentes')}
-              className="bg-primary/5 p-4 rounded-lg cursor-pointer hover:bg-primary/10 transition-colors group"
-            >
-              <div className="flex items-center mb-2">
-                <Bot className="w-5 h-5 text-primary mr-2" />
-                <h3 className="font-semibold text-primary">Mis Agentes</h3>
-                <ArrowRight className="w-4 h-4 ml-auto text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+      {/* Quick Actions Banner */}
+      <Card className="bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-primary/20">
+        <CardContent className="p-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                <Zap className="w-6 h-6 text-primary" />
               </div>
-              <p className="text-2xl font-bold">0</p>
-              <p className="text-sm text-muted-foreground">Agentes contratados</p>
+              <div>
+                <h3 className="text-xl font-bold mb-1">¿Listo para impulsar tu negocio?</h3>
+                <p className="text-muted-foreground">Comienza creando tu primera campaña de marketing con IA</p>
+              </div>
             </div>
-            <div 
-              onClick={() => onNavigate?.('marketplace')}
-              className="bg-secondary/5 p-4 rounded-lg cursor-pointer hover:bg-secondary/10 transition-colors group"
+            
+            <Button 
+              size="lg"
+              className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
+              onClick={() => handleNavigate('marketing-hub')}
             >
-              <div className="flex items-center mb-2">
-                <Store className="w-5 h-5 text-secondary mr-2" />
-                <h3 className="font-semibold text-secondary">Marketplace</h3>
-                <ArrowRight className="w-4 h-4 ml-auto text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-              <p className="text-2xl font-bold">15</p>
-              <p className="text-sm text-muted-foreground">Agentes disponibles</p>
-            </div>
-            <div className="bg-accent/20 p-4 rounded-lg">
-              <div className="flex items-center mb-2">
-                <UserCheck className="w-5 h-5 text-accent-foreground mr-2" />
-                <h3 className="font-semibold text-accent-foreground">Categorías</h3>
-              </div>
-              <p className="text-2xl font-bold">8</p>
-              <p className="text-sm text-muted-foreground">Especializaciones</p>
-            </div>
+              <Rocket className="w-5 h-5 mr-2" />
+              Crear Campaña
+            </Button>
           </div>
+        </CardContent>
+      </Card>
 
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Roles Empresariales Soportados</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                { role: "CEO/Dirección", agents: 3, color: "bg-red-100 text-red-800" },
-                { role: "Marketing", agents: 5, color: "bg-purple-100 text-purple-800" },
-                { role: "Ventas", agents: 4, color: "bg-blue-100 text-blue-800" },
-                { role: "Finanzas", agents: 3, color: "bg-green-100 text-green-800" },
-                { role: "RRHH", agents: 3, color: "bg-yellow-100 text-yellow-800" },
-                { role: "Operaciones", agents: 4, color: "bg-orange-100 text-orange-800" },
-                { role: "IT/Desarrollo", agents: 3, color: "bg-cyan-100 text-cyan-800" },
-                { role: "Atención Cliente", agents: 5, color: "bg-pink-100 text-pink-800" }
-              ].map((item, index) => (
-                <div 
-                  key={index} 
-                  onClick={() => onNavigate?.('marketplace')}
-                  className="bg-muted p-3 rounded-lg hover:bg-muted/80 transition-colors cursor-pointer group"
-                >
-                  <div className={`inline-flex items-center justify-between w-full px-2 py-1 rounded-full text-xs font-medium mb-1 ${item.color}`}>
-                    <span>{item.role}</span>
-                    <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                  <p className="text-sm font-semibold">{item.agents} agentes</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* AI Insights Section */}
-      <section>
-        <h2 className="text-xl md:text-2xl font-bold text-primary mb-4">Ideas para hacer crecer tu negocio</h2>
-        <div className="bg-card p-6 rounded-lg shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <p className="text-muted-foreground">
-              Oportunidades y recomendaciones personalizadas que hemos preparado para ti.
-            </p>
-            <button className="flex items-center text-primary hover:text-accent transition-colors">
-              <Zap className="w-5 h-5 mr-2" />
-              <span>Generar nuevos insights</span>
-            </button>
-          </div>
-          <div className="space-y-4">
-            <div className="bg-primary/5 p-4 rounded-lg border-l-4 border-primary">
-              <p className="font-bold text-primary">Oportunidad de Contenido</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                El 25% de las búsquedas en su sitio se relacionan con "políticas de garantía". 
-                Considere crear un Agente FAQ o una página dedicada para reducir consultas de soporte.
-              </p>
-            </div>
-            <div className="bg-secondary/5 p-4 rounded-lg border-l-4 border-secondary">
-              <p className="font-bold text-secondary">Optimización de Ventas</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Hemos detectado que los clientes que compran el Producto A, a menudo compran el Producto B dos semanas después. 
-                Sugerimos un Agente de Email Marketing para una campaña de cross-selling.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Add keyframes for animations */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };

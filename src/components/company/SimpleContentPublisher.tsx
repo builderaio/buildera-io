@@ -67,70 +67,98 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
     try {
       const accounts: SocialAccount[] = [];
 
-      // Fetch Facebook/Instagram connections
-      const { data: fbData } = await supabase
-        .from('facebook_instagram_connections')
-        .select('*')
+      // 1) Prefer unified social_accounts table
+      const { data: unified, error: unifiedError } = await supabase
+        .from('social_accounts')
+        .select('platform, platform_display_name, is_connected, company_username, facebook_page_id, linkedin_page_id, platform_username')
         .eq('user_id', profile.user_id)
-        .single();
+        .eq('is_connected', true)
+        .neq('platform', 'upload_post_profile');
 
-      if (fbData) {
-        if (fbData.facebook_user_id) {
-          const userData = fbData.user_data as any;
+      if (unifiedError) {
+        console.warn('social_accounts query error:', unifiedError);
+      }
+
+      if (unified && unified.length > 0) {
+        unified.forEach((row: any) => {
           accounts.push({
-            platform: 'facebook',
-            platform_display_name: 'Facebook',
+            platform: row.platform,
+            platform_display_name: row.platform_display_name || row.platform,
             is_connected: true,
-            company_username: userData?.name || 'Mi Página',
-            page_id: fbData.facebook_user_id,
-            page_name: userData?.name,
+            company_username: row.company_username || row.platform_username || 'mi_cuenta',
+            page_id: row.facebook_page_id || row.linkedin_page_id || undefined,
+            page_name: row.platform_username || undefined,
+          });
+        });
+      }
+
+      // 2) Fallback to legacy connection tables if nothing found
+      if (accounts.length === 0) {
+        // Facebook/Instagram legacy
+        const { data: fbData } = await supabase
+          .from('facebook_instagram_connections')
+          .select('*')
+          .eq('user_id', profile.user_id)
+          .maybeSingle();
+
+        if (fbData) {
+          if (fbData.facebook_user_id) {
+            const userData = fbData.user_data as any;
+            accounts.push({
+              platform: 'facebook',
+              platform_display_name: 'Facebook',
+              is_connected: true,
+              company_username: userData?.name || 'Mi Página',
+              page_id: fbData.facebook_user_id,
+              page_name: userData?.name,
+            });
+          }
+          // Instagram could be added here if needed
+        }
+
+        // LinkedIn legacy
+        const { data: linkedinData } = await supabase
+          .from('linkedin_connections')
+          .select('*')
+          .eq('user_id', profile.user_id)
+          .maybeSingle();
+
+        if (linkedinData && linkedinData.company_page_id) {
+          accounts.push({
+            platform: 'linkedin',
+            platform_display_name: 'LinkedIn',
+            is_connected: true,
+            company_username: linkedinData.company_page_name || 'Mi Perfil',
+            page_id: linkedinData.company_page_id,
+            page_name: linkedinData.company_page_name,
           });
         }
-        // Instagram support can be added here if needed
-      }
 
-      // Fetch LinkedIn connections
-      const { data: linkedinData } = await supabase
-        .from('linkedin_connections')
-        .select('*')
-        .eq('user_id', profile.user_id)
-        .single();
+        // TikTok legacy
+        const { data: tiktokData } = await supabase
+          .from('tiktok_connections')
+          .select('*')
+          .eq('user_id', profile.user_id)
+          .maybeSingle();
 
-      if (linkedinData && linkedinData.company_page_id) {
-        accounts.push({
-          platform: 'linkedin',
-          platform_display_name: 'LinkedIn',
-          is_connected: true,
-          company_username: linkedinData.company_page_name || 'Mi Perfil',
-          page_id: linkedinData.company_page_id,
-          page_name: linkedinData.company_page_name,
-        });
-      }
-
-      // Fetch TikTok connections
-      const { data: tiktokData } = await supabase
-        .from('tiktok_connections')
-        .select('*')
-        .eq('user_id', profile.user_id)
-        .single();
-
-      if (tiktokData?.access_token) {
-        const userData = tiktokData.user_data as any;
-        accounts.push({
-          platform: 'tiktok',
-          platform_display_name: 'TikTok',
-          is_connected: true,
-          company_username: userData?.display_name || '@mitiktok',
-        });
+        if (tiktokData?.access_token) {
+          const userData = tiktokData.user_data as any;
+          accounts.push({
+            platform: 'tiktok',
+            platform_display_name: 'TikTok',
+            is_connected: true,
+            company_username: userData?.display_name || '@mitiktok',
+          });
+        }
       }
 
       setSocialAccounts(accounts);
     } catch (error) {
       console.error('Error fetching social accounts:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar las cuentas sociales",
-        variant: "destructive"
+        title: 'Error',
+        description: 'No se pudieron cargar las cuentas sociales',
+        variant: 'destructive'
       });
     }
   };

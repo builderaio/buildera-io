@@ -391,15 +391,30 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
       const hasData = platformData && typeof platformData === 'object';
       const isConnected = !!(hasData && (platformData.username || platformData.display_name || platformData.social_images));
 
-      // Upsert one row per plataforma
-        // Preparar metadata - si hay display_name, usarlo como selected_page_name para LinkedIn y Facebook
-        const metadata = hasData ? { 
-          ...platformData,
-          ...(platformData.display_name && (platform === 'linkedin' || platform === 'facebook') ? 
-            { selected_page_name: platformData.display_name } : {})
-        } : {};
+      // Obtener la fila existente para preservar selected_page_name
+      const { data: existingRow } = await supabaseClient
+        .from('social_accounts')
+        .select('metadata, linkedin_page_id, facebook_page_id')
+        .eq('user_id', userId)
+        .eq('platform', platform)
+        .single();
 
-        const { error } = await supabaseClient
+      // Preparar metadata - preservar selected_page_name si ya existe
+      const metadata = hasData ? { 
+        ...platformData,
+        // Solo actualizar selected_page_name si no existe o si no hay página seleccionada
+        ...((platform === 'linkedin' || platform === 'facebook') && 
+            !existingRow?.metadata?.selected_page_name &&
+            !(platform === 'linkedin' ? existingRow?.linkedin_page_id : existingRow?.facebook_page_id) &&
+            platformData.display_name ? 
+          { selected_page_name: platformData.display_name } : 
+          // Preservar el selected_page_name existente
+          existingRow?.metadata?.selected_page_name ? 
+            { selected_page_name: existingRow.metadata.selected_page_name } : 
+            {})
+      } : {};
+
+      const { error } = await supabaseClient
         .from('social_accounts')
         .upsert({
           user_id: userId,

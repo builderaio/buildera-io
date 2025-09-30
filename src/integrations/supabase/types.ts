@@ -5017,6 +5017,7 @@ export type Database = {
           id: string
           is_connected: boolean | null
           last_sync_at: string | null
+          linkedin_page_id: string | null
           metadata: Json | null
           platform: string
           platform_display_name: string | null
@@ -5035,6 +5036,7 @@ export type Database = {
           id?: string
           is_connected?: boolean | null
           last_sync_at?: string | null
+          linkedin_page_id?: string | null
           metadata?: Json | null
           platform: string
           platform_display_name?: string | null
@@ -5053,6 +5055,7 @@ export type Database = {
           id?: string
           is_connected?: boolean | null
           last_sync_at?: string | null
+          linkedin_page_id?: string | null
           metadata?: Json | null
           platform?: string
           platform_display_name?: string | null

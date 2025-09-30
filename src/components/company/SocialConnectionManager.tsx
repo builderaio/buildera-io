@@ -35,6 +35,7 @@ interface SocialAccount {
   platform_display_name?: string;
   is_connected: boolean;
   facebook_page_id?: string;
+  linkedin_page_id?: string;
   connected_at?: string;
   last_sync_at?: string;
   metadata?: any;
@@ -437,10 +438,17 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     if (!selectedFacebookPage || !companyUsername) return;
 
     try {
+      // Encontrar el nombre de la página seleccionada
+      const selectedPage = facebookPages.find(page => page.id === selectedFacebookPage);
+      
       const { data, error } = await supabase.functions.invoke('upload-post-manager', {
         body: { 
           action: 'update_facebook_page', 
-          data: { companyUsername, facebookPageId: selectedFacebookPage } 
+          data: { 
+            companyUsername, 
+            facebookPageId: selectedFacebookPage,
+            facebookPageName: selectedPage?.name
+          } 
         }
       });
 
@@ -451,7 +459,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       
       toast({
         title: "✅ Página seleccionada",
-        description: "Página de Facebook configurada exitosamente",
+        description: `Página de Facebook "${selectedPage?.name}" configurada exitosamente`,
       });
     } catch (error) {
       console.error('Error selecting Facebook page:', error);
@@ -507,10 +515,17 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     if (!selectedLinkedinPage || !companyUsername) return;
 
     try {
+      // Encontrar el nombre de la página seleccionada
+      const selectedPage = linkedinPages.find(page => page.id === selectedLinkedinPage);
+      
       const { data, error } = await supabase.functions.invoke('upload-post-manager', {
         body: { 
           action: 'update_linkedin_page', 
-          data: { companyUsername, linkedinPageId: selectedLinkedinPage } 
+          data: { 
+            companyUsername, 
+            linkedinPageId: selectedLinkedinPage,
+            linkedinPageName: selectedPage?.name
+          } 
         }
       });
 
@@ -521,7 +536,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       
       toast({
         title: "✅ Página seleccionada",
-        description: "Página de LinkedIn configurada exitosamente",
+        description: `Página de LinkedIn "${selectedPage?.name}" configurada exitosamente`,
       });
     } catch (error) {
       console.error('Error selecting LinkedIn page:', error);
@@ -637,7 +652,11 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                     <div>
                       <h4 className="font-semibold text-sm">{config.name}</h4>
                       <p className="text-xs text-muted-foreground">
-                        {accountInfo?.platform_display_name || accountInfo?.platform_username || 'No conectado'}
+                        {platform === 'facebook' && accountInfo?.facebook_page_id ? 
+                          `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.facebook_page_id}` :
+                         platform === 'linkedin' && accountInfo?.linkedin_page_id ?
+                          `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.linkedin_page_id}` :
+                         accountInfo?.platform_display_name || accountInfo?.platform_username || 'No conectado'}
                       </p>
                     </div>
                   </div>

@@ -500,11 +500,31 @@ async function getPinterestBoards(supabaseClient: any, userId: string, apiKey: s
 }
 
 async function updateFacebookPage(supabaseClient: any, userId: string, data: any) {
-  const { companyUsername, facebookPageId } = data;
+  const { companyUsername, facebookPageId, facebookPageName } = data;
+
+  const updateData: any = { 
+    facebook_page_id: facebookPageId,
+  };
+  
+  // Actualizar metadata con el nombre de la página si se proporciona
+  if (facebookPageName) {
+    const { data: currentData } = await supabaseClient
+      .from('social_accounts')
+      .select('metadata')
+      .eq('user_id', userId)
+      .eq('platform', 'facebook')
+      .eq('company_username', companyUsername)
+      .single();
+    
+    updateData.metadata = {
+      ...(currentData?.metadata || {}),
+      selected_page_name: facebookPageName
+    };
+  }
 
   await supabaseClient
     .from('social_accounts')
-    .update({ facebook_page_id: facebookPageId })
+    .update(updateData)
     .eq('user_id', userId)
     .eq('platform', 'facebook')
     .eq('company_username', companyUsername);
@@ -513,11 +533,31 @@ async function updateFacebookPage(supabaseClient: any, userId: string, data: any
 }
 
 async function updateLinkedInPage(supabaseClient: any, userId: string, data: any) {
-  const { companyUsername, linkedinPageId } = data;
+  const { companyUsername, linkedinPageId, linkedinPageName } = data;
+
+  const updateData: any = { 
+    linkedin_page_id: linkedinPageId,
+  };
+  
+  // Actualizar metadata con el nombre de la página si se proporciona
+  if (linkedinPageName) {
+    const { data: currentData } = await supabaseClient
+      .from('social_accounts')
+      .select('metadata')
+      .eq('user_id', userId)
+      .eq('platform', 'linkedin')
+      .eq('company_username', companyUsername)
+      .single();
+    
+    updateData.metadata = {
+      ...(currentData?.metadata || {}),
+      selected_page_name: linkedinPageName
+    };
+  }
 
   await supabaseClient
     .from('social_accounts')
-    .update({ linkedin_page_id: linkedinPageId })
+    .update(updateData)
     .eq('user_id', userId)
     .eq('platform', 'linkedin')
     .eq('company_username', companyUsername);
@@ -564,6 +604,21 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     mediaCount: mediaUrls?.length || 0, scheduledDate, async_upload
   });
 
+  // Obtener Platform-Specific Parameters (IDs de páginas)
+  const { data: socialAccounts } = await supabaseClient
+    .from('social_accounts')
+    .select('platform, facebook_page_id, linkedin_page_id')
+    .eq('user_id', userId)
+    .in('platform', ['facebook', 'linkedin']);
+  
+  const facebookAccount = socialAccounts?.find((acc: any) => acc.platform === 'facebook');
+  const linkedinAccount = socialAccounts?.find((acc: any) => acc.platform === 'linkedin');
+  
+  console.log('📱 Platform-Specific Parameters:', {
+    facebook_page_id: facebookAccount?.facebook_page_id,
+    linkedin_page_id: linkedinAccount?.linkedin_page_id
+  });
+
   // Filter platforms based on post type and API restrictions
   const platformsToSend = filterPlatformsByPostType(platforms, postType);
   
@@ -590,6 +645,17 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     let response;
     const formData = new FormData();
     formData.append('user', companyUsername);
+    
+    // Agregar Platform-Specific Parameters según la documentación de Upload-Post
+    if (platformsToSend.includes('facebook') && facebookAccount?.facebook_page_id) {
+      formData.append('facebook_page_id', facebookAccount.facebook_page_id);
+      console.log('✅ Added Facebook Page ID:', facebookAccount.facebook_page_id);
+    }
+    
+    if (platformsToSend.includes('linkedin') && linkedinAccount?.linkedin_page_id) {
+      formData.append('linkedin_page_id', linkedinAccount.linkedin_page_id);
+      console.log('✅ Added LinkedIn Page ID:', linkedinAccount.linkedin_page_id);
+    }
     
     platformsToSend.forEach((platform: string) => {
       formData.append('platform[]', platform);

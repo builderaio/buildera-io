@@ -131,6 +131,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       title: "Paso 8: Generar Contenido con IA",
       description: "Crea tu primer contenido optimizado usando la IA de Era. Selecciona el tipo de contenido, plataforma y tono. Era generará publicaciones listas para usar.",
       target_section: "marketing-hub",
+      tab: "create",
       completed: false,
       icon: Sparkles,
       actionText: "Crear Contenido",

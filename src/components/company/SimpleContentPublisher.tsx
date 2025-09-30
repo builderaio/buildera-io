@@ -9,16 +9,19 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X, Calendar, Image } from "lucide-react";
+import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X, Calendar, Image, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import ContentImageSelector from "./ContentImageSelector";
 import { SmartLoader } from "@/components/ui/smart-loader";
+import { getPlatformIcon, getPlatformColor, getPlatform } from "@/lib/socialPlatforms";
 
 interface SocialAccount {
   platform: string;
   platform_display_name: string;
   is_connected: boolean;
   company_username: string;
+  page_id?: string;
+  page_name?: string;
 }
 
 interface SimpleContent {
@@ -46,6 +49,7 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
   const [scheduledTime, setScheduledTime] = useState('');
   const [showImageSelector, setShowImageSelector] = useState(false);
   const [selectedContentImage, setSelectedContentImage] = useState<string>('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   // Fetch social accounts when dialog opens
   useEffect(() => {
@@ -61,14 +65,66 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
 
   const fetchSocialAccounts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('social_accounts')
-        .select('platform, platform_display_name, is_connected, company_username')
-        .eq('user_id', profile.user_id)
-        .eq('is_connected', true);
+      const accounts: SocialAccount[] = [];
 
-      if (error) throw error;
-      setSocialAccounts(data || []);
+      // Fetch Facebook/Instagram connections
+      const { data: fbData } = await supabase
+        .from('facebook_instagram_connections')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .single();
+
+      if (fbData) {
+        if (fbData.facebook_user_id) {
+          const userData = fbData.user_data as any;
+          accounts.push({
+            platform: 'facebook',
+            platform_display_name: 'Facebook',
+            is_connected: true,
+            company_username: userData?.name || 'Mi Página',
+            page_id: fbData.facebook_user_id,
+            page_name: userData?.name,
+          });
+        }
+        // Instagram support can be added here if needed
+      }
+
+      // Fetch LinkedIn connections
+      const { data: linkedinData } = await supabase
+        .from('linkedin_connections')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .single();
+
+      if (linkedinData && linkedinData.company_page_id) {
+        accounts.push({
+          platform: 'linkedin',
+          platform_display_name: 'LinkedIn',
+          is_connected: true,
+          company_username: linkedinData.company_page_name || 'Mi Perfil',
+          page_id: linkedinData.company_page_id,
+          page_name: linkedinData.company_page_name,
+        });
+      }
+
+      // Fetch TikTok connections
+      const { data: tiktokData } = await supabase
+        .from('tiktok_connections')
+        .select('*')
+        .eq('user_id', profile.user_id)
+        .single();
+
+      if (tiktokData?.access_token) {
+        const userData = tiktokData.user_data as any;
+        accounts.push({
+          platform: 'tiktok',
+          platform_display_name: 'TikTok',
+          is_connected: true,
+          company_username: userData?.display_name || '@mitiktok',
+        });
+      }
+
+      setSocialAccounts(accounts);
     } catch (error) {
       console.error('Error fetching social accounts:', error);
       toast({
@@ -93,6 +149,47 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
       title: "Contenido actualizado",
       description: "Los cambios han sido guardados"
     });
+  };
+
+  const handleGenerateImage = async () => {
+    if (!editingContent) {
+      toast({
+        title: "Error",
+        description: "No hay contenido para generar la imagen",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingImage(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("marketing-hub-image-creator", {
+        body: {
+          prompt: editingContent,
+          imageType: "post",
+          aspectRatio: "1:1",
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.imageUrl) {
+        setSelectedContentImage(data.imageUrl);
+        toast({
+          title: "¡Imagen generada!",
+          description: "La imagen ha sido generada con IA exitosamente",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating image:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo generar la imagen",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingImage(false);
+    }
   };
 
   const handlePublish = async () => {
@@ -265,6 +362,15 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
                       <Save className="h-4 w-4 mr-2" />
                       Guardar
                     </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={handleGenerateImage}
+                      disabled={isGeneratingImage}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {isGeneratingImage ? "Generando..." : "Generar con IA"}
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => {
                       setEditingContent(content.content);
                       setIsEditing(false);
@@ -384,28 +490,46 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  {socialAccounts.map((account) => (
-                    <div
-                      key={account.platform}
-                      className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
-                      onClick={() => handlePlatformToggle(account.platform)}
-                    >
-                      <Checkbox
-                        checked={selectedPlatforms.includes(account.platform)}
-                        onChange={() => handlePlatformToggle(account.platform)}
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <Badge className={`text-white ${getPlatformBadgeColor(account.platform)}`}>
-                            {account.platform_display_name}
-                          </Badge>
+                  {socialAccounts.map((account) => {
+                    const PlatformIcon = getPlatformIcon(account.platform);
+                    const platformInfo = getPlatform(account.platform);
+                    const platformColor = getPlatformColor(account.platform);
+                    
+                    return (
+                      <div
+                        key={account.platform}
+                        className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                        onClick={() => handlePlatformToggle(account.platform)}
+                      >
+                        <Checkbox
+                          checked={selectedPlatforms.includes(account.platform)}
+                          onChange={() => handlePlatformToggle(account.platform)}
+                        />
+                        <PlatformIcon 
+                          className="h-5 w-5 flex-shrink-0" 
+                          style={{ color: platformColor }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              className="text-white border-0"
+                              style={{ backgroundColor: platformColor }}
+                            >
+                              {platformInfo?.name || account.platform_display_name}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 truncate">
+                            @{account.company_username}
+                          </p>
+                          {account.page_name && (account.platform === 'facebook' || account.platform === 'linkedin') && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              Página: {account.page_name}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          @{account.company_username}
-                        </p>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

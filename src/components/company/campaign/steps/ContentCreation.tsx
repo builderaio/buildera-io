@@ -683,12 +683,14 @@ export const ContentCreation = ({ campaignData, onComplete, loading }: ContentCr
       />
 
       {/* Social Media Preview Dialog */}
-      <SocialMediaPreview
-        isOpen={previewDialog.isOpen}
-        onClose={() => setPreviewDialog({ isOpen: false, item: null })}
-        contentItem={previewDialog.item}
-        companyProfile={companyProfile}
-      />
+      {previewDialog.item && (
+        <SocialMediaPreview
+          isOpen={previewDialog.isOpen}
+          onClose={() => setPreviewDialog({ isOpen: false, item: null })}
+          contentItem={previewDialog.item}
+          companyProfile={companyProfile}
+        />
+      )}
     </div>
   );
 };

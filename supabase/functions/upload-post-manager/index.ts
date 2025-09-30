@@ -392,7 +392,14 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
       const isConnected = !!(hasData && (platformData.username || platformData.display_name || platformData.social_images));
 
       // Upsert one row per plataforma
-      const { error } = await supabaseClient
+        // Preparar metadata - si hay display_name, usarlo como selected_page_name para LinkedIn y Facebook
+        const metadata = hasData ? { 
+          ...platformData,
+          ...(platformData.display_name && (platform === 'linkedin' || platform === 'facebook') ? 
+            { selected_page_name: platformData.display_name } : {})
+        } : {};
+
+        const { error } = await supabaseClient
         .from('social_accounts')
         .upsert({
           user_id: userId,
@@ -402,7 +409,7 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
           platform_username: hasData ? (platformData.username ?? null) : null,
           platform_display_name: hasData ? (platformData.display_name ?? null) : null,
           is_connected: isConnected,
-          metadata: hasData ? platformData : {},
+          metadata,
           connected_at: isConnected ? new Date().toISOString() : null,
           last_sync_at: new Date().toISOString(),
         }, {

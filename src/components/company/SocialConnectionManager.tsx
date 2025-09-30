@@ -653,9 +653,9 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                       <h4 className="font-semibold text-sm">{config.name}</h4>
                       <p className="text-xs text-muted-foreground">
                         {platform === 'facebook' && accountInfo?.facebook_page_id ? 
-                          `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.facebook_page_id}` :
+                          `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.facebook_page_id}` :
                          platform === 'linkedin' && accountInfo?.linkedin_page_id ?
-                          `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.linkedin_page_id}` :
+                          `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.linkedin_page_id}` :
                          accountInfo?.platform_display_name || accountInfo?.platform_username || 'No conectado'}
                       </p>
                     </div>

@@ -109,13 +109,33 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
         const contentItem = createdContent[i];
         
         try {
-          // Format scheduled date properly for Upload-Post API
+          // Format scheduled date properly for Upload-Post API with timezone correction
           const { fecha, hora_publicacion } = contentItem.calendar_item;
-          const scheduledDateTime = new Date(`${fecha}T${hora_publicacion || '09:00'}:00`);
+          
+          // Parse the date and time
+          let scheduledDateTime = new Date(`${fecha}T${hora_publicacion || '09:00'}:00`);
           
           if (isNaN(scheduledDateTime.getTime())) {
             throw new Error(`Fecha inválida para el contenido ${i + 1}: ${fecha} ${hora_publicacion}`);
           }
+          
+          // Ensure the scheduled date is at least 1 day in the future (24 hours + 1 hour buffer)
+          const minScheduledDate = new Date();
+          minScheduledDate.setHours(minScheduledDate.getHours() + 25); // 25 hours to ensure we're past "tomorrow"
+          
+          if (scheduledDateTime <= minScheduledDate) {
+            // If the date is in the past or too close, schedule it for tomorrow at the same time
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(parseInt(hora_publicacion?.split(':')[0] || '09'), 
+                             parseInt(hora_publicacion?.split(':')[1] || '00'), 0, 0);
+            scheduledDateTime = tomorrow;
+            
+            console.log(`⏰ Adjusted schedule time for content ${i + 1} to tomorrow:`, scheduledDateTime.toISOString());
+          }
+          
+          // Convert to ISO string for Upload-Post API (UTC)
+          const scheduledDateISO = scheduledDateTime.toISOString();
 
           // Determine post type and extract media URLs
           let postType = 'text';
@@ -148,7 +168,7 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
                 content: contentItem.content?.copy_mensaje || contentItem.calendar_item.copy_mensaje,
                 mediaUrls,
                 postType,
-                scheduledDate: scheduledDateTime.toISOString(),
+                scheduledDate: scheduledDateISO,
                 async_upload: true
               }
             }
@@ -164,7 +184,7 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
             platform: contentItem.calendar_item.red_social,
             content: contentItem.content,
             calendar_item: contentItem.calendar_item,
-            scheduled_time: scheduledDateTime.toISOString(),
+            scheduled_time: scheduledDateISO,
             status: 'scheduled',
             auto_publish: schedulingSettings.autoPublish,
             upload_post_result: result
@@ -173,9 +193,22 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
           scheduled.push(scheduledItem);
           setScheduledItems([...scheduled]);
 
+          // Format date display in local timezone
+          const displayDate = scheduledDateTime.toLocaleDateString('es-ES', { 
+            weekday: 'short', 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+          });
+          const displayTime = scheduledDateTime.toLocaleTimeString('es-ES', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          });
+
           toast({
             title: `Contenido ${i + 1} programado`,
-            description: `Programado para ${scheduledDateTime.toLocaleDateString('es-ES')} a las ${scheduledDateTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`,
+            description: `Programado para ${displayDate} a las ${displayTime}`,
           });
 
         } catch (itemError: any) {
@@ -269,12 +302,28 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
         retriedCount++;
         
         try {
-          // Format scheduled date properly
-          const scheduledDateTime = new Date(failedItem.scheduled_time);
+          // Format scheduled date properly with timezone correction
+          let scheduledDateTime = new Date(failedItem.scheduled_time);
           
           if (isNaN(scheduledDateTime.getTime())) {
             throw new Error(`Fecha inválida: ${failedItem.scheduled_time}`);
           }
+          
+          // Ensure the scheduled date is at least 1 day in the future for retry
+          const minScheduledDate = new Date();
+          minScheduledDate.setHours(minScheduledDate.getHours() + 25);
+          
+          if (scheduledDateTime <= minScheduledDate) {
+            // Reschedule for tomorrow at the same time
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(scheduledDateTime.getHours(), scheduledDateTime.getMinutes(), 0, 0);
+            scheduledDateTime = tomorrow;
+            
+            console.log(`⏰ Adjusted retry schedule time to tomorrow:`, scheduledDateTime.toISOString());
+          }
+          
+          const scheduledDateISO = scheduledDateTime.toISOString();
 
           // Determine post type and extract media URLs
           let postType = 'text';
@@ -307,7 +356,7 @@ export const ContentScheduling = ({ campaignData, onComplete, loading }: Content
                 content: failedItem.content?.copy_mensaje || failedItem.calendar_item.copy_mensaje,
                 mediaUrls,
                 postType,
-                scheduledDate: scheduledDateTime.toISOString(),
+                scheduledDate: scheduledDateISO,
                 async_upload: true
               }
             }

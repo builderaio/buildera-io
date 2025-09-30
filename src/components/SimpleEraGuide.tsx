@@ -56,94 +56,94 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const steps: GuideStep[] = [
     {
       id: 1,
-      title: "Conectar Redes Sociales",
-      description: "Conecta LinkedIn, Instagram y otras redes sociales",
+      title: "Paso 1: Conectar Redes Sociales",
+      description: "Conecta al menos una red social (LinkedIn, Instagram, Facebook, TikTok) usando el botón 'Conectar' en esta página. Una vez conectada, presiona 'Verificar conexión' para continuar.",
       target_section: "marketing-hub",
       tab: "configuracion",
       completed: false,
       icon: Zap,
-      actionText: "Conectar redes",
+      actionText: "Ir a Configuración",
       color: "from-green-500 to-green-600"
     },
     {
       id: 2,
-      title: "Configurar URLs de Redes",
-      description: "Actualiza las URLs de los perfiles de las redes que conectaste (sección Conexiones de Redes Sociales)",
+      title: "Paso 2: Configurar URLs de Redes",
+      description: "Agrega las URLs públicas de tus perfiles sociales conectados en la sección 'Conexiones de Redes Sociales'. Esto permite que Era analice tu contenido. Presiona 'Marcar completado' cuando termines.",
       target_section: "marketing-hub",
       tab: "configuracion",
       completed: false,
       icon: Settings,
-      actionText: "Configurar URLs",
+      actionText: "Ir a Configuración",
       color: "from-purple-500 to-purple-600"
     },
     {
       id: 3,
-      title: "Analizar Audiencias",
-      description: "Descubre insights sobre tu audiencia actual",
+      title: "Paso 3: Analizar Audiencias",
+      description: "Usa la herramienta de análisis para descubrir insights sobre tu audiencia actual: demografía, intereses y comportamientos. Presiona el botón para iniciar el análisis con IA.",
       target_section: "audiencias-manager",
       completed: false,
       icon: BarChart3,
-      actionText: "Analizar audiencia",
+      actionText: "Ir a Audiencias",
       color: "from-orange-500 to-orange-600"
     },
     {
       id: 4,
-      title: "Analizar Contenido",
-      description: "Evalúa el rendimiento de tu contenido actual",
+      title: "Paso 4: Analizar Contenido",
+      description: "Evalúa el rendimiento de tu contenido existente. Era identificará qué tipo de publicaciones funcionan mejor para optimizar tu estrategia. Espera a que se complete el análisis.",
       target_section: "content-analysis-dashboard",
       completed: false,
       icon: FileText,
-      actionText: "Analizar contenido",
+      actionText: "Analizar Contenido",
       color: "from-cyan-500 to-cyan-600"
     },
     {
       id: 5,
-      title: "Crear Audiencia por Red",
-      description: "Define segmentos específicos de audiencia para cada red social",
+      title: "Paso 5: Crear Segmentos de Audiencia",
+      description: "Define audiencias específicas por red social según los insights obtenidos. Esto permitirá personalizar tu contenido para cada plataforma y audiencia.",
       target_section: "audiencias-manager",
       completed: false,
       icon: Users,
-      actionText: "Crear audiencias",
+      actionText: "Crear Audiencias",
       color: "from-pink-500 to-pink-600"
     },
     {
       id: 6,
-      title: "Crear Campañas",
-      description: "Diseña campañas de marketing efectivas como paso final",
+      title: "Paso 6: Crear tu Primera Campaña",
+      description: "Diseña una campaña de marketing completa usando el asistente. Define objetivos, audiencia, estrategia y contenido. Era te guiará en cada paso del proceso.",
       target_section: "marketing-hub",
       completed: false,
       icon: Megaphone,
-      actionText: "Crear campaña",
+      actionText: "Ir a Campañas",
       color: "from-red-500 to-red-600"
     },
     {
       id: 7,
-      title: "Actualizar Información Empresarial",
-      description: "Completa el perfil de tu empresa para personalizar la experiencia",
+      title: "Paso 7: Completar Perfil Empresarial",
+      description: "Actualiza la información de tu empresa (misión, valores, productos/servicios) en la sección ADN Empresa. Esto ayuda a Era a personalizar mejor sus recomendaciones.",
       target_section: "adn-empresa",
       completed: false,
       icon: Settings,
-      actionText: "Completar perfil",
+      actionText: "Ir a ADN Empresa",
       color: "from-blue-500 to-blue-600"
     },
     {
       id: 8,
-      title: "Crear Contenido",
-      description: "Genera contenido optimizado con IA",
+      title: "Paso 8: Generar Contenido con IA",
+      description: "Crea tu primer contenido optimizado usando la IA de Era. Selecciona el tipo de contenido, plataforma y tono. Era generará publicaciones listas para usar.",
       target_section: "marketing-hub",
       completed: false,
       icon: Sparkles,
-      actionText: "Crear contenido",
+      actionText: "Crear Contenido",
       color: "from-yellow-500 to-yellow-600"
     },
     {
       id: 9,
-      title: "Contratar Agentes",
-      description: "Amplía tus capacidades con agentes especializados",
+      title: "Paso 9: Explorar Agentes Especializados",
+      description: "Visita el Marketplace para descubrir agentes especializados que pueden ampliar las capacidades de tu negocio: ventas, atención al cliente, análisis, y más.",
       target_section: "marketplace",
       completed: false,
       icon: ShoppingCart,
-      actionText: "Ver marketplace",
+      actionText: "Ver Marketplace",
       color: "from-indigo-500 to-indigo-600"
     }
   ] as (GuideStep & { icon: any; actionText: string; color: string })[];
@@ -345,16 +345,16 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       if (allCompleted) {
         setIsActive(false);
         toast({
-          title: "¡Tour completado! 🎉",
-          description: "Has completado todos los pasos del tour de Era. ¡Excelente trabajo!",
+          title: "¡Tour completado exitosamente! 🎉",
+          description: "Has dominado todas las funciones principales de Buildera. Era está lista para asistirte en todo momento.",
         });
       }
 
     } catch (error) {
       console.error('Error completing step:', error);
       toast({
-        title: "Error",
-        description: "No se pudo guardar el progreso del tour. Inténtalo de nuevo.",
+        title: "Error al guardar progreso",
+        description: "No se pudo guardar tu progreso. Por favor, verifica tu conexión e inténtalo nuevamente.",
         variant: "destructive"
       });
     }
@@ -374,8 +374,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
 
       setIsActive(false);
       toast({
-        title: "Tour omitido",
-        description: "Puedes reiniciar el tour en cualquier momento desde el botón Era.",
+        title: "Tour completado",
+        description: "Puedes reactivar el tour guiado en cualquier momento presionando el botón Era (círculo morado) en la esquina inferior derecha.",
       });
     } catch (error) {
       console.error('Error skipping tour:', error);
@@ -402,7 +402,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       
       toast({
         title: "Tour reiniciado",
-        description: "¡Empecemos de nuevo con el tour de Era!",
+        description: "El tour guiado ha sido reiniciado desde el principio. ¡Comencemos!",
       });
     } catch (error) {
       console.error('Error restarting tour:', error);
@@ -638,7 +638,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Progreso del Tour</span>
                   <Badge variant="secondary" className="text-xs">
-                    {completedSteps.length}/{steps.length}
+                    Paso {completedSteps.length + 1} de {steps.length}
                   </Badge>
                 </div>
                 <motion.div
@@ -673,9 +673,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                         {nextIncompleteStep.description}
                       </p>
                       {nextIncompleteStep.id === 1 && (
-                        <p className="text-sm">
-                          {connectedCount}/{TOTAL_PLATFORMS} plataformas conectadas
-                        </p>
+                        <div className="text-sm bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                          <p className="font-medium text-blue-900 mb-1">Estado de conexiones:</p>
+                          <p className="text-blue-700">{connectedCount} de {TOTAL_PLATFORMS} plataformas conectadas</p>
+                          {connectedCount === 0 && (
+                            <p className="text-xs text-blue-600 mt-1">Conecta al menos una red para continuar</p>
+                          )}
+                        </div>
                       )}
 
                       <motion.div 
@@ -688,7 +692,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                           variant={isCurrentSectionRelevant ? "default" : "outline"}
                           className={isCurrentSectionRelevant ? "bg-green-100 text-green-800 border-green-300" : ""}
                         >
-                          {isCurrentSectionRelevant ? "✓ Sección actual" : "📍 Ir a sección"}
+                          {isCurrentSectionRelevant ? "✓ Ya estás en la sección correcta" : "📍 Necesitas ir a otra sección"}
                         </Badge>
                       </motion.div>
                     </div>
@@ -742,7 +746,11 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                             if (nextIncompleteStep.id === 1) {
                               const canComplete = await canCompleteNetworkStep();
                               if (!canComplete) {
-                                // Toast removido para evitar bloqueo - simplemente no continuar
+                                toast({
+                                  title: "Conecta al menos una red social",
+                                  description: "Para continuar, presiona el botón 'Conectar' en una de las plataformas disponibles (LinkedIn, Instagram, Facebook o TikTok).",
+                                  variant: "destructive"
+                                });
                                 return;
                               }
                             }
@@ -752,7 +760,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                           className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium"
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
-                          {nextIncompleteStep.id === 1 ? "Verificar conexión" : "Marcar completado"}
+                          {nextIncompleteStep.id === 1 ? "Verificar y continuar" : "Marcar como completado"}
                         </Button>
                       </motion.div>
                     )}
@@ -786,7 +794,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                   </motion.div>
                   <h4 className="font-bold text-xl mb-2">¡Felicitaciones! 🎉</h4>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Has completado el tour guiado. Ahora dominas Buildera y Era está lista para asistirte.
+                    Has completado exitosamente el tour guiado de Buildera. Ahora conoces las funciones principales de la plataforma y Era está lista para asistirte en cualquier momento.
                   </p>
                   <Button
                     onClick={skipTour}
@@ -794,7 +802,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                     className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white"
                   >
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Activar Era como Asistente
+                    Comenzar a usar Buildera
                   </Button>
                 </motion.div>
               )}

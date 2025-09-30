@@ -56,7 +56,17 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const steps: GuideStep[] = [
     {
       id: 1,
-      title: "Paso 1: Conectar Redes Sociales",
+      title: "Paso 1: Completar Perfil Empresarial",
+      description: "Actualiza la información de tu empresa (misión, valores, productos/servicios) en la sección ADN Empresa. Esto ayuda a Era a personalizar mejor sus recomendaciones.",
+      target_section: "adn-empresa",
+      completed: false,
+      icon: Settings,
+      actionText: "Ir a ADN Empresa",
+      color: "from-blue-500 to-blue-600"
+    },
+    {
+      id: 2,
+      title: "Paso 2: Conectar Redes Sociales",
       description: "Conecta al menos una red social (LinkedIn, Instagram, Facebook, TikTok) usando el botón 'Conectar' en esta página. Una vez conectada, presiona 'Verificar conexión' para continuar.",
       target_section: "marketing-hub",
       tab: "configuracion",
@@ -66,8 +76,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       color: "from-green-500 to-green-600"
     },
     {
-      id: 2,
-      title: "Paso 2: Configurar URLs de Redes",
+      id: 3,
+      title: "Paso 3: Configurar URLs de Redes",
       description: "Agrega las URLs públicas de tus perfiles sociales conectados en la sección 'Conexiones de Redes Sociales'. Esto permite que Era analice tu contenido. Presiona 'Marcar completado' cuando termines.",
       target_section: "marketing-hub",
       tab: "configuracion",
@@ -77,8 +87,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       color: "from-purple-500 to-purple-600"
     },
     {
-      id: 3,
-      title: "Paso 3: Analizar Audiencias",
+      id: 4,
+      title: "Paso 4: Analizar Audiencias",
       description: "Usa la herramienta de análisis para descubrir insights sobre tu audiencia actual: demografía, intereses y comportamientos. Presiona el botón para iniciar el análisis con IA.",
       target_section: "audiencias-manager",
       completed: false,
@@ -87,8 +97,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       color: "from-orange-500 to-orange-600"
     },
     {
-      id: 4,
-      title: "Paso 4: Analizar Contenido",
+      id: 5,
+      title: "Paso 5: Analizar Contenido",
       description: "Evalúa el rendimiento de tu contenido existente. Era identificará qué tipo de publicaciones funcionan mejor para optimizar tu estrategia. Espera a que se complete el análisis.",
       target_section: "content-analysis-dashboard",
       completed: false,
@@ -97,8 +107,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       color: "from-cyan-500 to-cyan-600"
     },
     {
-      id: 5,
-      title: "Paso 5: Crear Segmentos de Audiencia",
+      id: 6,
+      title: "Paso 6: Crear Segmentos de Audiencia",
       description: "Define audiencias específicas por red social según los insights obtenidos. Esto permitirá personalizar tu contenido para cada plataforma y audiencia.",
       target_section: "audiencias-manager",
       completed: false,
@@ -107,24 +117,14 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       color: "from-pink-500 to-pink-600"
     },
     {
-      id: 6,
-      title: "Paso 6: Crear tu Primera Campaña",
+      id: 7,
+      title: "Paso 7: Crear tu Primera Campaña",
       description: "Diseña una campaña de marketing completa usando el asistente. Define objetivos, audiencia, estrategia y contenido. Era te guiará en cada paso del proceso.",
       target_section: "marketing-hub",
       completed: false,
       icon: Megaphone,
       actionText: "Ir a Campañas",
       color: "from-red-500 to-red-600"
-    },
-    {
-      id: 7,
-      title: "Paso 7: Completar Perfil Empresarial",
-      description: "Actualiza la información de tu empresa (misión, valores, productos/servicios) en la sección ADN Empresa. Esto ayuda a Era a personalizar mejor sus recomendaciones.",
-      target_section: "adn-empresa",
-      completed: false,
-      icon: Settings,
-      actionText: "Ir a ADN Empresa",
-      color: "from-blue-500 to-blue-600"
     },
     {
       id: 8,
@@ -427,9 +427,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     return isSameSection;
   })();
   
-  // Verificar si el paso 1 (conectar redes) puede completarse usando el mismo conteo que Conexiones de Redes Sociales
+  // Verificar si el paso 2 (conectar redes) puede completarse usando el mismo conteo que Conexiones de Redes Sociales
   const canCompleteNetworkStep = async () => {
-    if (nextIncompleteStep?.id !== 1) return true;
+    if (nextIncompleteStep?.id !== 2) return true;
     try {
       const { data, error } = await supabase
         .from('social_accounts')

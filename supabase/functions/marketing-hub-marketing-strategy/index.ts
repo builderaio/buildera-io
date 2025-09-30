@@ -292,23 +292,16 @@ serve(async (req) => {
           .from('competitive_intelligence')
           .insert({
             user_id: user.id,
-            company_sector: companyData?.industry_sector || 'General',
+            industry_sector: companyData?.industry_sector || 'General',
             target_market: companyData?.country || 'No especificado',
-            analysis_data: {
-              company_info: {
-                name: input.nombre_empresa,
-                sector: companyData?.industry_sector,
-                target_market: companyData?.country
-              },
-              competitors: competitors,
-              strategy_summary: {
-                core_message: strategy.core_message,
-                strategies: strategy.strategies
-              },
-              sources: strategy.sources || []
-            },
-            ai_generated: true,
-            session_id: `marketing-strategy-${Date.now()}`
+            analysis_session_id: `marketing-strategy-${Date.now()}`,
+            analysis_status: 'completed',
+            data_sources: strategy.sources || [],
+            ai_discovered_competitors: competitors,
+            marketing_strategies_analysis: {
+              core_message: strategy.core_message,
+              strategies: strategy.strategies
+            }
           })
           .select()
           .single();
@@ -322,9 +315,8 @@ serve(async (req) => {
               .from('competitor_profiles')
               .insert({
                 analysis_id: intelligence.id,
-                competitor_name: competitor.name,
-                competitor_url: competitor.url,
-                competitor_type: 'direct', // Default type
+                company_name: competitor.name,
+                website_url: competitor.url,
                 competitive_threat_score: 7, // Default medium-high threat
                 strengths: Array.isArray(competitor.strengths) 
                   ? competitor.strengths 
@@ -332,11 +324,10 @@ serve(async (req) => {
                 weaknesses: Array.isArray(competitor.weaknesses)
                   ? competitor.weaknesses
                   : [competitor.weaknesses || ''],
-                analysis_data: {
-                  digital_tactics: competitor.digital_tactics,
-                  sources: competitor.sources || [],
-                  detected_from: 'marketing_strategy_generation'
-                }
+                data_sources: competitor.sources || [],
+                content_strategy: competitor.digital_tactics 
+                  ? { digital_tactics: competitor.digital_tactics } 
+                  : null,
               });
           }
           console.log('Competitive intelligence saved successfully');

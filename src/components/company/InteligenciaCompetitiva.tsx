@@ -24,9 +24,8 @@ interface Competitor {
 interface CompetitiveAnalysis {
   id: string;
   created_at: string;
-  company_sector: string;
-  target_market: string;
-  analysis_data: any;
+  industry_sector?: string | null;
+  target_market?: string | null;
 }
 
 const InteligenciaCompetitiva = () => {
@@ -58,11 +57,18 @@ const InteligenciaCompetitiva = () => {
 
       if (analysesError) throw analysesError;
 
-      setAnalyses(analysesData || []);
+      const mappedAnalyses: CompetitiveAnalysis[] = (analysesData || []).map((a: any) => ({
+        id: a.id,
+        created_at: a.created_at,
+        industry_sector: a.industry_sector,
+        target_market: a.target_market,
+      }));
+
+      setAnalyses(mappedAnalyses);
 
       // Load all competitor profiles from analyses
-      if (analysesData && analysesData.length > 0) {
-        const analysisIds = analysesData.map(a => a.id);
+      if (mappedAnalyses.length > 0) {
+        const analysisIds = mappedAnalyses.map(a => a.id);
         const { data: profilesData, error: profilesError } = await supabase
           .from('competitor_profiles')
           .select('*')
@@ -71,20 +77,21 @@ const InteligenciaCompetitiva = () => {
         if (profilesError) throw profilesError;
 
         const competitorsMap = new Map<string, Competitor>();
-        profilesData?.forEach(profile => {
-          const key = profile.competitor_name.toLowerCase();
+        (profilesData || []).forEach((profile: any) => {
+          const key = (profile.company_name || '').toLowerCase();
+          if (!key) return;
           if (!competitorsMap.has(key) || 
               (competitorsMap.get(key)?.threat_score || 0) < (profile.competitive_threat_score || 0)) {
             competitorsMap.set(key, {
               id: profile.id,
-              name: profile.competitor_name,
-              url: profile.competitor_url,
-              status: "Analizado",
-              strengths: profile.strengths,
-              weaknesses: profile.weaknesses,
-              digital_tactics: profile.analysis_data?.digital_tactics,
-              threat_score: profile.competitive_threat_score,
-              analysis_data: profile.analysis_data
+              name: profile.company_name,
+              url: profile.website_url || undefined,
+              status: 'Analizado',
+              strengths: profile.strengths || [],
+              weaknesses: profile.weaknesses || [],
+              digital_tactics: (profile.content_strategy as any)?.digital_tactics,
+              threat_score: profile.competitive_threat_score || undefined,
+              analysis_data: { sources: profile.data_sources || [] }
             });
           }
         });

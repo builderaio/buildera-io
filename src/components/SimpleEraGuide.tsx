@@ -692,7 +692,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                               onNavigate("audiencias-manager", { audience_view: "create" });
                             } else if (nextIncompleteStep.id === 6) {
                               // Para crear campañas, ir directo al campaign wizard
-                              onNavigate("marketing-hub", { tab: "campaigns" });
+                              onNavigate("campaign-wizard");
                             } else {
                               onNavigate(nextIncompleteStep.target_section);
                             }

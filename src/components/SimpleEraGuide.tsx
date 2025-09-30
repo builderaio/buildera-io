@@ -712,8 +712,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                             // Si tiene tab específico, navegar con ese parámetro
                             const navParams = nextIncompleteStep.tab ? { tab: nextIncompleteStep.tab } : undefined;
                             
-                            // Si es el paso 3 (analizar audiencia), navegar al audiencias manager
-                            if (nextIncompleteStep.id === 3) {
+                            // Si es el paso 1 o 2 (conectar redes / configurar URLs), ir a marketing-hub con tab configuracion
+                            if (nextIncompleteStep.id === 1 || nextIncompleteStep.id === 2) {
+                              onNavigate("marketing-hub", { tab: "configuracion" });
+                            } else if (nextIncompleteStep.id === 3) {
                               onNavigate("audiencias-manager");
                             } else if (nextIncompleteStep.id === 4) {
                               onNavigate("content-analysis-dashboard");

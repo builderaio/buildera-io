@@ -51,20 +51,31 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('🎯 MandoCentral useEffect - profile:', profile);
     if (profile?.user_id) {
       loadDashboardData();
+    } else {
+      console.warn('⚠️ No profile or user_id found, setting loading to false');
+      setLoading(false);
     }
   }, [profile?.user_id]);
 
   const loadDashboardData = async () => {
+    console.log('🚀 Starting loadDashboardData for user:', profile?.user_id);
     setLoading(true);
     try {
       // Cargar datos de la empresa
-      const { data: company } = await supabase
+      const { data: company, error: companyError } = await supabase
         .from('companies')
         .select('*')
         .eq('created_by', profile.user_id)
-        .single();
+        .maybeSingle();
+      
+      if (companyError) {
+        console.error('❌ Error loading company:', companyError);
+      }
+      
+      console.log('✅ Company data loaded:', company);
       
       setCompanyData(company);
 
@@ -96,6 +107,14 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       ]);
 
       const connectionsCount = socialConnections.reduce((acc, conn) => acc + (conn.data?.length || 0), 0);
+      
+      console.log('📊 Stats calculated:', {
+        contentGenerated: contentRecommendations.data?.length || 0,
+        audiencesCreated: audiences.data?.length || 0,
+        expertsAvailable: experts.data?.length || 0,
+        activeCampaigns: campaigns.data?.filter(c => c.status === 'active').length || 0,
+        connectionsCount
+      });
       
       setStats({
         totalReach: 0, // Se calculará con datos reales
@@ -250,14 +269,52 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       ];
 
       setSections(dashboardSections);
+      console.log('✅ Dashboard sections created:', dashboardSections.length);
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error('❌ Error loading dashboard data:', error);
       toast({
         title: "Error",
         description: "No se pudieron cargar algunos datos del dashboard",
         variant: "destructive",
       });
+      
+      // Cargar secciones por defecto aunque haya error
+      const defaultSections: DashboardSection[] = [
+        {
+          id: 'adn-empresa',
+          title: 'ADN del Negocio',
+          description: 'Define la identidad, valores y estrategia de tu negocio',
+          icon: Building2,
+          gradient: 'from-blue-500 via-blue-600 to-indigo-600',
+          metrics: [
+            { label: 'Perfil completado', value: '0%' },
+            { label: 'Objetivos definidos', value: 'No' }
+          ],
+          action: 'Configurar ADN',
+          view: 'adn-empresa',
+          badge: 'Pendiente',
+          progress: 0
+        },
+        {
+          id: 'marketing-hub',
+          title: 'Marketing Hub',
+          description: 'Crea, programa y publica contenido en todas tus redes sociales',
+          icon: Rocket,
+          gradient: 'from-purple-500 via-pink-500 to-rose-500',
+          metrics: [
+            { label: 'Contenido generado', value: 0 },
+            { label: 'Redes conectadas', value: 0 },
+            { label: 'Campañas activas', value: 0 }
+          ],
+          action: 'Ir al Hub',
+          view: 'marketing-hub',
+          badge: 'Popular',
+          progress: 0
+        }
+      ];
+      setSections(defaultSections);
     } finally {
+      console.log('✅ Loading complete, setting loading to false');
       setLoading(false);
     }
   };

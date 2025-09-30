@@ -112,14 +112,65 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
   const generateAIInsights = async () => {
     setLoadingInsights(true);
     const steps = [
+      "Cargando información de tu empresa...",
       "Analizando tu audiencia...",
       "Identificando patrones de contenido...", 
       "Generando insights personalizados...",
-      "Creando ideas específicas...",
+      "Creando ideas específicas para tu negocio...",
       "Guardando insights..."
     ];
     
     try {
+      // Validate user has a company
+      console.log('🔍 Verificando información de empresa para usuario:', profile.user_id);
+      
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('primary_company_id')
+        .eq('user_id', profile.user_id)
+        .single();
+      
+      if (profileError) {
+        console.error('Error obteniendo perfil:', profileError);
+        throw new Error('No se pudo obtener tu información de perfil');
+      }
+      
+      if (!profileData?.primary_company_id) {
+        toast({
+          title: "⚠️ Empresa no configurada",
+          description: "Por favor completa la información de tu empresa en el ADN Empresarial primero",
+          variant: "destructive"
+        });
+        setLoadingInsights(false);
+        return;
+      }
+      
+      console.log('✅ Empresa encontrada:', profileData.primary_company_id);
+      
+      // Get company data to verify
+      const { data: companyData, error: companyError } = await supabase
+        .from('companies')
+        .select('name, industry_sector, description')
+        .eq('id', profileData.primary_company_id)
+        .single();
+        
+      if (companyError || !companyData) {
+        console.error('Error obteniendo empresa:', companyError);
+        toast({
+          title: "⚠️ Información incompleta",
+          description: "Tu empresa necesita más información. Por favor completa el ADN Empresarial",
+          variant: "destructive"
+        });
+        setLoadingInsights(false);
+        return;
+      }
+      
+      console.log('📊 Contexto de empresa:', {
+        nombre: companyData.name,
+        industria: companyData.industry_sector,
+        descripcion: companyData.description?.substring(0, 100)
+      });
+      
       // Simulate step progression
       for (let i = 0; i < steps.length; i++) {
         setCurrentLoadingStep(steps[i]);
@@ -134,6 +185,13 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
         platform: post.platform,
         type: post.type
       }));
+      
+      console.log('📤 Enviando solicitud con contexto:', {
+        user_id: profile.user_id,
+        company: companyData.name,
+        platform: selectedPlatform,
+        posts_count: topPostsContext.length
+      });
 
       const { data, error } = await supabase.functions.invoke('content-insights-generator', {
         body: {

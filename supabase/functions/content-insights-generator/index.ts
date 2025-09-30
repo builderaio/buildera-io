@@ -162,35 +162,79 @@ serve(async (req) => {
 
     console.log('Generated context for insights:', JSON.stringify(context, null, 2));
 
-    const systemPrompt = `Eres un experto en marketing digital y generación de contenido. Tu trabajo es analizar la información de la empresa, audiencia y contenido histórico para generar insights y ideas de contenido específicas y accionables.
+    // Build detailed context description
+    let contextDescription = '';
+    
+    if (context.company) {
+      contextDescription += `\n📊 CONTEXTO DE LA EMPRESA:
+Nombre: ${context.company.name || 'No especificado'}
+Industria: ${context.company.industry || 'No especificada'}
+Descripción: ${context.company.description || 'No disponible'}
+Tamaño: ${context.company.size || 'No especificado'}
+Sitio web: ${context.company.website || 'No disponible'}\n`;
+    }
+    
+    if (context.audiences && context.audiences.length > 0) {
+      contextDescription += `\n👥 AUDIENCIAS DEFINIDAS (${context.audiences.length}):`;
+      context.audiences.forEach((aud: any, idx: number) => {
+        contextDescription += `\n${idx + 1}. ${aud.name || 'Sin nombre'}`;
+        if (aud.description) contextDescription += `\n   - ${aud.description}`;
+        if (aud.pain_points && aud.pain_points.length > 0) {
+          contextDescription += `\n   - Pain points: ${JSON.stringify(aud.pain_points)}`;
+        }
+        if (aud.goals && aud.goals.length > 0) {
+          contextDescription += `\n   - Objetivos: ${JSON.stringify(aud.goals)}`;
+        }
+      });
+      contextDescription += '\n';
+    }
+    
+    if (context.recent_posts && context.recent_posts.length > 0) {
+      contextDescription += `\n📱 POSTS RECIENTES ANALIZADOS (${context.recent_posts.length}):\n`;
+      context.recent_posts.slice(0, 5).forEach((post: any, idx: number) => {
+        contextDescription += `${idx + 1}. [${post.platform}] ${post.text?.substring(0, 100) || 'Sin texto'}... (${post.likes} likes, ${post.comments} comments)\n`;
+      });
+    }
 
-INSTRUCCIONES:
-1. Analiza la industria, audiencia y contenido previo para identificar patrones y oportunidades
-2. Genera ideas de contenido específicas que resuenen con la audiencia identificada
-3. Incluye formatos variados (posts, videos, carruseles, stories, etc.)
-4. Proporciona hashtags relevantes y timing sugerido
-5. Enfócate en tendencias actuales de la industria
-6. Considera los dolor points y objetivos de la audiencia
+    console.log('Context description prepared:', contextDescription);
+
+    const systemPrompt = `Eres un experto en marketing digital y generación de contenido. DEBES analizar profundamente el contexto de la empresa proporcionado y generar insights ESPECÍFICOS para esa empresa, su industria y su audiencia.
+
+INSTRUCCIONES CRÍTICAS:
+1. **OBLIGATORIO**: Usa el nombre de la empresa, su industria y descripción en tus recomendaciones
+2. **OBLIGATORIO**: Si hay audiencias definidas, genera contenido específico para sus pain points y objetivos
+3. Si hay posts recientes, identifica qué funcionó mejor y por qué
+4. Genera ideas de contenido que sean ÚNICAMENTE relevantes para esta empresa e industria específica
+5. NO generes ideas genéricas - cada idea debe ser personalizada al contexto dado
+6. Incluye formatos variados (posts, videos, carruseles, stories, reels)
+7. Proporciona hashtags específicos de la industria
 
 FORMATO DE RESPUESTA:
-Genera exactamente 6 insights/ideas organizados en las siguientes categorías:
+Genera exactamente 6 elementos organizados así:
 
 **📊 INSIGHTS DE AUDIENCIA**
-- 2 insights sobre comportamiento y preferencias de tu audiencia basados en los datos
+**Título**: [Nombre del insight sobre comportamiento]
+**Estrategia**: [Descripción del insight basado en los datos de la empresa y audiencia]
 
-**💡 IDEAS DE CONTENIDO**  
-- 4 ideas específicas de contenido con formato, tema y estrategia
+**Título**: [Segundo insight]
+**Estrategia**: [Descripción del segundo insight]
 
-Para cada idea de contenido incluye:
-- Título/tema
-- Formato sugerido (post, video, carrusel, etc.)
-- Plataforma recomendada
-- 3-5 hashtags específicos
-- Hora/día sugerido para publicar
+**💡 IDEAS DE CONTENIDO**
 
-Sé específico, creativo y enfócate en generar valor real para la audiencia.`;
+**Título**: [Título específico relacionado con la empresa/industria]
+**Formato sugerido**: [post/video/carrusel/story/reel]
+**Plataforma recomendada**: [instagram/linkedin/tiktok/facebook]
+**Hashtags**: #hashtag1 #hashtag2 #hashtag3
+**Hora/día sugerido para publicar**: [Ej: Lunes 10:00 AM]
+**Estrategia**: [Por qué esta idea es relevante para esta empresa específica]
 
-    const userPrompt = `Empresa (opcional):\n${JSON.stringify(context.company, null, 2)}\n\nAudiencias (opcional):\n${JSON.stringify(context.audiences, null, 2)}\n\nInsights de audiencia (opcional):\n${JSON.stringify(context.audience_insights, null, 2)}\n\nPublicaciones recientes o top_posts:\n${JSON.stringify(context.recent_posts, null, 2)}\n`;
+[Repite el formato anterior para 3 ideas más de contenido]
+
+RECUERDA: Cada idea DEBE mencionar o relacionarse directamente con la empresa, su industria o su audiencia específica.`;
+
+    const userPrompt = `${contextDescription}
+
+Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empresa y su contexto. NO generes contenido genérico.`;
 
 
 

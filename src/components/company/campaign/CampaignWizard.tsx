@@ -590,18 +590,8 @@ export const CampaignWizard = ({
             </span>
           </div>
 
-          <Button 
-            onClick={nextStep}
-            disabled={!isStepCompleted(state.currentStep) || loading || isProcessing}
-            className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 disabled:hover:scale-100 ${
-              state.currentStep === steps.length 
-                ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600' 
-                : 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70'
-            }`}
-          >
-            {state.currentStep === steps.length ? 'Finalizar Campaña' : 'Siguiente'}
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          {/* Spacer to balance the layout */}
+          <div className="w-[100px]"></div>
         </div>
       </div>
     </div>

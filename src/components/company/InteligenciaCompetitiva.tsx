@@ -384,7 +384,7 @@ const InteligenciaCompetitiva = () => {
                 <div className="space-y-3">
                   {analyses.map((analysis) => (
                     <div key={analysis.id} className="p-3 bg-muted/50 rounded-lg">
-                      <p className="font-medium">{analysis.company_sector}</p>
+                      <p className="font-medium">{analysis.industry_sector}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(analysis.created_at).toLocaleDateString('es-ES', {
                           year: 'numeric',

@@ -180,42 +180,71 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
 
   return (
     <div className="space-y-6">
-      {/* Upgrade to Advanced Creator */}
-      <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-purple-700">
-            <Brain className="h-5 w-5" />
-            Content Studio IA - Versión Avanzada
-          </CardTitle>
-          <p className="text-sm text-purple-600">
-            Crea, guarda y gestiona insights personalizados con generación multimedia automática
-          </p>
-        </CardHeader>
-        <CardContent>
+      {/* Advanced Content Creator */}
+      {showAdvancedCreator ? (
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm text-purple-600">
-                <Target className="h-4 w-4" />
-                <span>Insights persistentes y organizados</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-purple-600">
-                <Sparkles className="h-4 w-4" />
-                <span>Generación automática de imágenes y videos</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-purple-600">
-                <TrendingUp className="h-4 w-4" />
-                <span>Gestión completa de contenido multimedia</span>
-              </div>
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Brain className="h-6 w-6 text-purple-600" />
+                Content Studio IA - Versión Avanzada
+              </h2>
+              <p className="text-muted-foreground">
+                Crea, guarda y gestiona insights personalizados con generación multimedia automática
+              </p>
             </div>
-            <Button 
-              onClick={() => setShowAdvancedCreator(true)}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            <Button
+              variant="outline"
+              onClick={() => setShowAdvancedCreator(false)}
             >
-              Probar Ahora <ArrowRight className="h-4 w-4 ml-2" />
+              Volver al creador simple
             </Button>
           </div>
-        </CardContent>
-      </Card>
+          
+          <AdvancedContentCreator
+            profile={profile}
+            topPosts={topPosts}
+            selectedPlatform={selectedPlatform}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Upgrade to Advanced Creator */}
+          <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-purple-700">
+                <Brain className="h-5 w-5" />
+                Content Studio IA - Versión Avanzada
+              </CardTitle>
+              <p className="text-sm text-purple-600">
+                Crea, guarda y gestiona insights personalizados con generación multimedia automática
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-purple-600">
+                    <Target className="h-4 w-4" />
+                    <span>Insights persistentes y organizados</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-purple-600">
+                    <Sparkles className="h-4 w-4" />
+                    <span>Generación automática de imágenes y videos</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-purple-600">
+                    <TrendingUp className="h-4 w-4" />
+                    <span>Gestión completa de contenido multimedia</span>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => setShowAdvancedCreator(true)}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                >
+                  Probar Ahora <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
       {/* Simple Content Creator */}
       <Card>
@@ -405,6 +434,8 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
             </div>
           </CardContent>
         </Card>
+      )}
+        </>
       )}
 
       {/* Era Optimization Dialog */}

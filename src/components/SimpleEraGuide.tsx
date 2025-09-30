@@ -159,23 +159,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   // Save tour state when component unmounts (user navigates away)
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (isActive && userId) {
-        // Use sendBeacon for better reliability on page unload
-        const tourData = {
-          user_id: userId,
-          current_step: currentStep,
-          completed_steps: completedSteps,
-          tour_completed: completedSteps.length === steps.length,
-          updated_at: new Date().toISOString()
-        };
-        
-        // Fallback to synchronous save for page unload
-        try {
-          navigator.sendBeacon('/api/save-tour-state', JSON.stringify(tourData));
-        } catch (e) {
-          // If sendBeacon fails, try synchronous save as last resort
-          saveTourState();
-        }
+      if (userId) {
+        // Forzar guardado en beforeunload
+        saveTourState(true);
       }
     };
 
@@ -183,8 +169,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      if (isActive && userId) {
-        saveTourState();
+      // Siempre guardar al desmontar el componente, incluso si el tour no está activo
+      if (userId) {
+        console.log('🔄 Saving tour state on unmount...');
+        saveTourState(true);
       }
     };
   }, [isActive, userId, currentStep, completedSteps]);
@@ -252,30 +240,39 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     }
   };
 
-  const saveTourState = async () => {
-    if (!userId || !isActive) return;
+  const saveTourState = async (forceSave: boolean = false) => {
+    // Si no está activo y no es un guardado forzado, no guardar
+    if (!userId || (!isActive && !forceSave)) return;
 
     try {
-      await supabase
+      const stateToSave = {
+        user_id: userId,
+        current_step: currentStep,
+        completed_steps: completedSteps,
+        tour_completed: completedSteps.length === steps.length,
+        updated_at: new Date().toISOString(),
+        ...(completedSteps.length === steps.length && { 
+          tour_completed_at: new Date().toISOString() 
+        })
+      };
+
+      const { error } = await supabase
         .from('user_guided_tour')
-        .upsert({
-          user_id: userId,
-          current_step: currentStep,
-          completed_steps: completedSteps,
-          tour_completed: completedSteps.length === steps.length,
-          updated_at: new Date().toISOString(),
-          ...(completedSteps.length === steps.length && { 
-            tour_completed_at: new Date().toISOString() 
-          })
+        .upsert(stateToSave, {
+          onConflict: 'user_id'
         });
 
-      console.log('💾 Tour state saved:', {
-        currentStep,
-        completedSteps,
-        isCompleted: completedSteps.length === steps.length
-      });
+      if (error) {
+        console.error('❌ Error saving tour state:', error);
+      } else {
+        console.log('💾 Tour state saved:', {
+          currentStep,
+          completedSteps,
+          isCompleted: completedSteps.length === steps.length
+        });
+      }
     } catch (error) {
-      console.error('Error saving tour state:', error);
+      console.error('❌ Exception saving tour state:', error);
     }
   };
 

@@ -1,20 +1,59 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Users, Briefcase, TrendingUp } from "lucide-react";
-import { TeamCreationWizard } from "@/components/ai-workforce/TeamCreationWizard";
-import { TeamsList } from "@/components/ai-workforce/TeamsList";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Rocket, Target, CheckCircle2 } from "lucide-react";
+import { MissionCatalog } from "@/components/ai-workforce/MissionCatalog";
+import { MissionLauncher } from "@/components/ai-workforce/MissionLauncher";
+import { ActiveMissions } from "@/components/ai-workforce/ActiveMissions";
+import { MissionResults } from "@/components/ai-workforce/MissionResults";
+
+type ViewState = "catalog" | "launcher" | "missions" | "results";
+
+interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  agentRole: string;
+  agentId: string;
+  area: string;
+}
+
+interface Task {
+  id: string;
+  task_name: string;
+  task_description: string;
+  status: string;
+  output_data: any;
+  completed_at: string | null;
+}
 
 const AIWorkforce = () => {
-  const navigate = useNavigate();
-  const [showWizard, setShowWizard] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [view, setView] = useState<ViewState>("catalog");
+  const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
-  const handleTeamCreated = () => {
-    setShowWizard(false);
-    setRefreshKey(prev => prev + 1);
+  const handleSelectMission = (mission: Mission) => {
+    setSelectedMission(mission);
+    setView("launcher");
+  };
+
+  const handleLaunchMission = () => {
+    setView("missions");
+  };
+
+  const handleViewResults = (task: Task) => {
+    setSelectedTask(task);
+    setView("results");
+  };
+
+  const handleBackToCatalog = () => {
+    setView("catalog");
+    setSelectedMission(null);
+  };
+
+  const handleBackToMissions = () => {
+    setView("missions");
+    setSelectedTask(null);
   };
 
   return (
@@ -25,73 +64,80 @@ const AIWorkforce = () => {
         {/* Hero Section */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-            🤖 Fábrica de Equipos de IA
+            🎯 Centro de Mando de Agentes
           </h1>
           <p className="text-xl text-muted-foreground mb-6">
-            Crea equipos de agentes de IA especializados para impulsar tu negocio
+            Asigna misiones a tus agentes de IA y recibe resultados accionables
           </p>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Equipos Activos</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">0</div>
-                <p className="text-xs text-muted-foreground">
-                  Listos para trabajar
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Agentes Disponibles</CardTitle>
-                <Briefcase className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Misiones Disponibles</CardTitle>
+                <Rocket className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">6</div>
                 <p className="text-xs text-muted-foreground">
-                  Roles especializados
+                  Listas para ejecutar
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Productividad</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Agentes Activos</CardTitle>
+                <Target className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">+250%</div>
+                <div className="text-2xl font-bold">12</div>
                 <p className="text-xs text-muted-foreground">
-                  vs. trabajo manual
+                  Especializados disponibles
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Tareas Completadas</CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">0</div>
+                <p className="text-xs text-muted-foreground">
+                  Este mes
                 </p>
               </CardContent>
             </Card>
           </div>
-
-          <Button
-            size="lg"
-            onClick={() => setShowWizard(true)}
-            className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Crear Nuevo Equipo de IA
-          </Button>
         </div>
 
-        {/* Teams List */}
-        <TeamsList key={refreshKey} />
+        {/* Dynamic Content */}
+        <div className="mt-8">
+          {view === "catalog" && (
+            <MissionCatalog onSelectMission={handleSelectMission} />
+          )}
 
-        {/* Team Creation Wizard Dialog */}
-        <TeamCreationWizard
-          open={showWizard}
-          onOpenChange={setShowWizard}
-          onTeamCreated={handleTeamCreated}
-        />
+          {view === "launcher" && selectedMission && (
+            <MissionLauncher 
+              mission={selectedMission}
+              onBack={handleBackToCatalog}
+              onLaunch={handleLaunchMission}
+            />
+          )}
+
+          {view === "missions" && (
+            <ActiveMissions onViewResults={handleViewResults} />
+          )}
+
+          {view === "results" && selectedTask && (
+            <MissionResults 
+              task={selectedTask}
+              onBack={handleBackToMissions}
+            />
+          )}
+        </div>
       </main>
     </div>
   );

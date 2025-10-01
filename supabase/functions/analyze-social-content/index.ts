@@ -335,10 +335,25 @@ Deno.serve(async (req) => {
           }
         }
 
+        // Map platform codes to full names
+        const platformMapping: Record<string, string> = {
+          'INST': 'instagram',
+          'TT': 'tiktok',
+          'LI': 'linkedin',
+          'FB': 'facebook',
+          'instagram': 'instagram',
+          'tiktok': 'tiktok',
+          'linkedin': 'linkedin',
+          'facebook': 'facebook'
+        };
+
+        const platformCode = analysis.social_type || analysis.platform || 'instagram';
+        const platformStr = platformMapping[platformCode] || platformCode.toLowerCase();
+
         // Store content analysis results
         const contentAnalysisData = {
           user_id: user.id,
-          platform: analysis.social_type || 'instagram',
+          platform: platformStr,
           cid: cid,
           analysis_period_start: fromDate.toISOString(),
           analysis_period_end: toDate.toISOString(),
@@ -350,7 +365,6 @@ Deno.serve(async (req) => {
         };
 
         // Upsert manually without requiring a DB unique constraint
-        const platformStr = analysis.social_type || 'instagram';
         const { data: existingRow } = await supabaseClient
           .from('social_content_analysis')
           .select('id')

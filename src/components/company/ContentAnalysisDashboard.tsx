@@ -142,7 +142,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
       console.log('Consultando social_analysis para user_id:', currentUserId);
 
-      // Load existing social accounts - check connected accounts first
+      // Load existing social accounts - attempt to read, but don't block if it fails
       const { data: socialAccounts, error: socialError } = await supabase
         .from('social_accounts')
         .select('platform, platform_display_name, is_connected, metadata')
@@ -151,26 +151,14 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         .neq('platform', 'upload_post_profile');
 
       if (socialError) {
-        console.error('Error al consultar social_analysis:', socialError);
-        toast({
-          title: "Error de consulta",
-          description: "Error al consultar los análisis de audiencias.",
-          variant: "destructive"
-        });
-        setLoading(false);
-        return;
+        console.warn('No se pudo cargar social_accounts, continuando sin bloquear:', socialError.message);
       }
 
-      // Always set social accounts data, even if no analysis exists yet
+      // Set social accounts data if available (may be empty)
       setAnalysisData(prevData => ({
         ...prevData,
         socialAccounts: socialAccounts || []
       }));
-
-      if (!socialAccounts?.length) {
-        setLoading(false);
-        return; // Just exit without showing error toast - let the empty state handle it
-      }
 
       // Load existing analysis data from database
       const [retrospectiveRes, activityRes, contentRes] = await Promise.all([
@@ -195,6 +183,20 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         activity: activityRes.data || [],
         content: contentRes.data || []
       }));
+
+      // If no social accounts loaded but we do have analysis data, derive platforms from results
+      if ((!socialAccounts || socialAccounts.length === 0)) {
+        const platformsFromContent = Array.from(new Set((contentRes.data || []).map((a: any) => a.platform).filter(Boolean)));
+        const derivedAccounts = platformsFromContent.map((p: string) => ({
+          platform: p,
+          platform_display_name: p,
+          is_connected: false,
+          metadata: null
+        }));
+        if (derivedAccounts.length > 0) {
+          setAnalysisData(prev => ({ ...prev, socialAccounts: derivedAccounts }));
+        }
+      }
 
       // Extract posts from content analysis
       const allPosts: any[] = [];

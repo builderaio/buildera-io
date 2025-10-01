@@ -276,26 +276,50 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       const { data, error } = await supabase.functions.invoke('analyze-social-content');
       
       if (error) {
+        console.error('Edge function error:', error);
         throw error;
       }
+
+      console.log('Content analysis response:', data);
 
       // Reload data after analysis
       await loadExistingData();
 
-      if (data && !data.error) {
-        toast({
-          title: "Análisis de posts completado",
-          description: "Se ha completado el análisis de contenido de sus publicaciones.",
-        });
+      // Check if any content was actually analyzed
+      if (data && data.results) {
+        const analyzedCount = data.results.filter((r: any) => r.posts_count > 0).length;
+        
+        if (analyzedCount > 0) {
+          toast({
+            title: "Análisis completado",
+            description: `Se analizaron ${analyzedCount} redes sociales con éxito.`,
+          });
+        } else {
+          toast({
+            title: "Sin contenido para analizar",
+            description: "No se encontraron publicaciones en sus redes sociales conectadas. La API externa puede estar limitada temporalmente. Intente nuevamente en unos minutos.",
+            variant: "default"
+          });
+        }
+      } else if (data && data.error) {
+        throw new Error(data.error);
       } else {
-        throw new Error(data?.error || 'Error en el análisis de contenido');
+        toast({
+          title: "Análisis sin resultados",
+          description: "No se pudieron obtener datos de sus redes sociales. Esto puede deberse a límites de la API externa. Intente nuevamente en unos minutos.",
+          variant: "default"
+        });
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error triggering content analysis:', error);
+      const isRateLimit = error?.message?.includes('429') || error?.message?.includes('rate limit');
+      
       toast({
-        title: "Error en el análisis de posts",
-        description: "No se pudo completar el análisis de contenido. La API puede estar temporalmente limitada.",
+        title: isRateLimit ? "Límite de API alcanzado" : "Error en el análisis",
+        description: isRateLimit 
+          ? "La API externa de Instagram/TikTok ha alcanzado su límite de solicitudes. Por favor, intente nuevamente en 5-10 minutos."
+          : "No se pudo completar el análisis de contenido. Por favor, intente nuevamente.",
         variant: "destructive"
       });
     } finally {
@@ -1291,8 +1315,38 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         </div>
       </div>
 
+      {/* Empty State */}
+      {analysisData.content.length === 0 && analysisData.socialAccounts.length > 0 && !loading && (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No hay análisis de contenido disponible</h3>
+            <p className="text-muted-foreground text-center max-w-md mb-6">
+              Haga clic en "Analizar Posts" para obtener insights sobre el rendimiento de sus publicaciones en redes sociales.
+            </p>
+            <Button onClick={triggerContentOnlyAnalysis} disabled={loading}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Analizar Contenido Ahora
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No Social Accounts State */}
+      {analysisData.socialAccounts.length === 0 && !loading && (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Globe className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No hay redes sociales conectadas</h3>
+            <p className="text-muted-foreground text-center max-w-md mb-6">
+              Primero debe conectar sus redes sociales para poder analizar su contenido.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Performance Overview */}
-      {renderPerformanceOverview()}
+      {analysisData.content.length > 0 && renderPerformanceOverview()}
 
       {/* Analysis Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

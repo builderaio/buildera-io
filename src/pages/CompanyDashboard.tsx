@@ -20,6 +20,7 @@ import Expertos from "@/components/company/Expertos";
 import Configuracion from "@/components/company/Configuracion";
 import AudienciasManager from "@/components/company/AudienciasManager";
 import { ContentAnalysisDashboard } from "@/components/company/ContentAnalysisDashboard";
+import AIWorkforce from "@/pages/AIWorkforce";
 
 import UserProfile from "./UserProfile";
 import CompanyAgents from "./CompanyAgents";
@@ -343,6 +344,8 @@ const CompanyDashboard = () => {
         return <Configuracion profile={profile} />;
       case "marketplace":
         return <Marketplace />;
+      case "ai-workforce":
+        return <AIWorkforce />;
       case "mis-agentes":
         return <CompanyAgents />;
       case "profile":

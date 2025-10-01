@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Header from "@/components/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Rocket, Target, CheckCircle2 } from "lucide-react";
 import { MissionCatalog } from "@/components/ai-workforce/MissionCatalog";
@@ -57,10 +56,8 @@ const AIWorkforce = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
+    <div className="w-full">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { Building, Bot, Store, Bell, Search, GraduationCap, Users, Settings, User, LogOut, Activity } from 'lucide-react';
+import { Building, Bot, Store, Bell, Search, GraduationCap, Users, Settings, User, LogOut, Activity, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -345,7 +345,11 @@ const CompanyLayout = ({
   }, {
     category: "Agentes IA",
     icon: "🤖",
-    items: [{ id: "mis-agentes", label: "Mis Agentes", icon: Bot, description: "Gestionar agentes creados", priority: "medium" }, { id: "marketplace", label: "Marketplace", icon: Store, description: "Descubrir nuevos agentes", priority: "medium" }]
+    items: [
+      { id: "ai-workforce", label: "Centro de Mando de Agentes", icon: Target, description: "Misiones y equipos de IA", priority: "high" },
+      { id: "mis-agentes", label: "Mis Agentes", icon: Bot, description: "Gestionar agentes creados", priority: "medium" }, 
+      { id: "marketplace", label: "Marketplace", icon: Store, description: "Descubrir nuevos agentes", priority: "medium" }
+    ]
   }, {
     category: "Aprendizaje",
     icon: "🎓",

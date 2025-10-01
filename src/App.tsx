@@ -67,6 +67,8 @@ import WhiteLabelAPIGenerator from "./pages/WhiteLabelAPIGenerator";
 import WhiteLabelABTesting from "./pages/WhiteLabelABTesting";
 import WhiteLabelDashboard from "./pages/WhiteLabelDashboard";
 import WhiteLabelMarketplace from "./pages/WhiteLabelMarketplace";
+import AIWorkforce from "./pages/AIWorkforce";
+import AdminAIWorkforce from "./pages/AdminAIWorkforce";
 
 const queryClient = new QueryClient();
 
@@ -146,6 +148,7 @@ const App = () => {
                   <Route path="/whitelabel/api-docs/:templateId" element={<WhiteLabelAPIGenerator />} />
                   <Route path="/whitelabel/ab-testing" element={<WhiteLabelABTesting />} />
                   <Route path="/whitelabel/dashboard" element={<WhiteLabelDashboard />} />
+                  <Route path="/ai-workforce" element={<AIWorkforce />} />
                 </Route>
                 
                 {/* Admin Routes */}
@@ -233,6 +236,11 @@ const App = () => {
                 <Route path="/admin/email-system" element={
                   <AdminProtectedRoute>
                     <AdminEmailSystem />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/ai-workforce" element={
+                  <AdminProtectedRoute>
+                    <AdminAIWorkforce />
                   </AdminProtectedRoute>
                 } />
 

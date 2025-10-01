@@ -1147,6 +1147,227 @@ export type Database = {
           },
         ]
       }
+      ai_workforce_agents: {
+        Row: {
+          avatar_icon: string | null
+          avatar_url: string | null
+          average_sfia_level: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          execution_resource_id: string | null
+          execution_type: string | null
+          id: string
+          input_parameters: Json | null
+          internal_id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          key_skills_summary: string[] | null
+          primary_function: string | null
+          role_name: string
+          sfia_skills: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_icon?: string | null
+          avatar_url?: string | null
+          average_sfia_level?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          execution_resource_id?: string | null
+          execution_type?: string | null
+          id?: string
+          input_parameters?: Json | null
+          internal_id: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          key_skills_summary?: string[] | null
+          primary_function?: string | null
+          role_name: string
+          sfia_skills?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_icon?: string | null
+          avatar_url?: string | null
+          average_sfia_level?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          execution_resource_id?: string | null
+          execution_type?: string | null
+          id?: string
+          input_parameters?: Json | null
+          internal_id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          key_skills_summary?: string[] | null
+          primary_function?: string | null
+          role_name?: string
+          sfia_skills?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ai_workforce_team_members: {
+        Row: {
+          agent_id: string
+          assigned_at: string | null
+          id: string
+          last_active_at: string | null
+          role_in_team: string | null
+          tasks_completed: number | null
+          team_id: string
+        }
+        Insert: {
+          agent_id: string
+          assigned_at?: string | null
+          id?: string
+          last_active_at?: string | null
+          role_in_team?: string | null
+          tasks_completed?: number | null
+          team_id: string
+        }
+        Update: {
+          agent_id?: string
+          assigned_at?: string | null
+          id?: string
+          last_active_at?: string | null
+          role_in_team?: string | null
+          tasks_completed?: number | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_team_members_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_workforce_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_team_tasks: {
+        Row: {
+          agent_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          execution_log: Json | null
+          id: string
+          input_data: Json | null
+          output_data: Json | null
+          started_at: string | null
+          status: string | null
+          task_description: string | null
+          task_name: string
+          task_type: string | null
+          team_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          execution_log?: Json | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          started_at?: string | null
+          status?: string | null
+          task_description?: string | null
+          task_name: string
+          task_type?: string | null
+          team_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          execution_log?: Json | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          started_at?: string | null
+          status?: string | null
+          task_description?: string | null
+          task_name?: string
+          task_type?: string | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_team_tasks_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_workforce_team_tasks_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workforce_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workforce_teams: {
+        Row: {
+          activated_at: string | null
+          company_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          mission_objective: string
+          mission_type: string | null
+          status: string | null
+          team_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string | null
+          company_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          mission_objective: string
+          mission_type?: string | null
+          status?: string | null
+          team_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          activated_at?: string | null
+          company_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          mission_objective?: string
+          mission_type?: string | null
+          status?: string | null
+          team_name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workforce_teams_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audience_analysis: {
         Row: {
           analysis_data: Json
@@ -5003,6 +5224,63 @@ export type Database = {
           risk_level?: string | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      sfia_skills: {
+        Row: {
+          category: string
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          level_1_description: string | null
+          level_2_description: string | null
+          level_3_description: string | null
+          level_4_description: string | null
+          level_5_description: string | null
+          level_6_description: string | null
+          level_7_description: string | null
+          name: string
+          subcategory: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level_1_description?: string | null
+          level_2_description?: string | null
+          level_3_description?: string | null
+          level_4_description?: string | null
+          level_5_description?: string | null
+          level_6_description?: string | null
+          level_7_description?: string | null
+          name: string
+          subcategory?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          level_1_description?: string | null
+          level_2_description?: string | null
+          level_3_description?: string | null
+          level_4_description?: string | null
+          level_5_description?: string | null
+          level_6_description?: string | null
+          level_7_description?: string | null
+          name?: string
+          subcategory?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }

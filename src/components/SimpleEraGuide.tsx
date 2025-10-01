@@ -712,23 +712,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                             console.log('🎯 Navegando a sección:', nextIncompleteStep.target_section);
                             // Si tiene tab específico, navegar con ese parámetro
                             const navParams = nextIncompleteStep.tab ? { tab: nextIncompleteStep.tab } : undefined;
-                            
-                            // Si es el paso 1 o 2 (conectar redes / configurar URLs), ir a marketing-hub con tab configuracion
-                            if (nextIncompleteStep.id === 1 || nextIncompleteStep.id === 2) {
-                              onNavigate("marketing-hub", { tab: "configuracion" });
-                            } else if (nextIncompleteStep.id === 3) {
-                              onNavigate("audiencias-manager");
-                            } else if (nextIncompleteStep.id === 4) {
-                              onNavigate("content-analysis-dashboard");
-                            } else if (nextIncompleteStep.id === 5) {
-                              // Para crear audiencias, ir directo a la vista de creación
-                              onNavigate("audiencias-manager", { audience_view: "create" });
-                            } else if (nextIncompleteStep.id === 6) {
-                              // Para crear campañas, ir al marketing hub en el tab de campañas
-                              onNavigate("marketing-hub", { tab: "campaigns" });
-                            } else {
-                              onNavigate(nextIncompleteStep.target_section, navParams);
-                            }
+                            onNavigate(nextIncompleteStep.target_section, navParams);
                           }}
                           size="sm"
                           className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-medium"

@@ -121,6 +121,7 @@ const ResponsiveLayout = () => {
     if (path.includes('/base-conocimiento')) return 'base-conocimiento';
     if (path.includes('/marketing-hub')) return 'marketing-hub';
     if (path.includes('/inteligencia-competitiva')) return 'inteligencia-competitiva';
+    if (path.includes('/ai-workforce')) return 'ai-workforce';
     if (path.includes('/academia-buildera')) return 'academia-buildera';
     if (path.includes('/expertos')) return 'expertos';
     if (path.includes('/configuracion')) return 'configuracion';
@@ -135,6 +136,7 @@ const ResponsiveLayout = () => {
       'marketplace': '/marketplace/agents',
       'marketing-hub': '/company-dashboard/marketing-hub',
       'inteligencia-competitiva': '/company-dashboard/inteligencia-competitiva',
+      'ai-workforce': '/company-dashboard/ai-workforce',
       'academia-buildera': '/company-dashboard/academia-buildera',
       'expertos': '/company-dashboard/expertos',
       'configuracion': '/company-dashboard/configuracion',

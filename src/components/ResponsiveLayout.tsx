@@ -136,7 +136,7 @@ const ResponsiveLayout = () => {
       'marketplace': '/marketplace/agents',
       'marketing-hub': '/company-dashboard/marketing-hub',
       'inteligencia-competitiva': '/company-dashboard/inteligencia-competitiva',
-      'ai-workforce': '/company-dashboard/ai-workforce',
+      'ai-workforce': '/company-dashboard?view=ai-workforce',
       'academia-buildera': '/company-dashboard/academia-buildera',
       'expertos': '/company-dashboard/expertos',
       'configuracion': '/company-dashboard/configuracion',

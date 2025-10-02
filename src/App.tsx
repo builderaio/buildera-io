@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthenticatedLayout from "./components/AuthenticatedLayout";
 import OnboardingRedirect from "./components/OnboardingRedirect";
 import OnboardingOrchestrator from "./components/OnboardingOrchestrator";
@@ -125,6 +125,7 @@ const App = () => {
                 {/* Authenticated Routes with Layout */}
                 <Route element={<ResponsiveLayout />}>
                   <Route path="/company-dashboard" element={<CompanyDashboard />} />
+                  <Route path="/company-dashboard/ai-workforce" element={<Navigate to="/company-dashboard?view=ai-workforce" replace />} />
                   <Route path="/expert-dashboard" element={<ExpertDashboard />} />
                   <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
                   <Route path="/profile" element={<UserProfile />} />

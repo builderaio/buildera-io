@@ -32,9 +32,16 @@ export const AgentEditor = ({ agentId, onSave, onCancel }: AgentEditorProps) => 
     primary_function: "",
     key_skills_summary: [] as string[],
     sfia_skills: [] as SfiaSkill[],
-    execution_type: "edge_function",
+    execution_type: "openai_response",
     execution_resource_id: "",
     is_active: true,
+    // OpenAI Response API specific fields
+    model: "gpt-5-mini-2025-08-07",
+    instructions: "",
+    use_file_search: false,
+    use_web_search: false,
+    use_reasoning: false,
+    tools: [] as any[],
   });
   const [newSkillSummary, setNewSkillSummary] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,6 +63,7 @@ export const AgentEditor = ({ agentId, onSave, onCancel }: AgentEditorProps) => 
 
       if (error) throw error;
 
+      const inputParams = (data.input_parameters as any) || {};
       setFormData({
         internal_id: data.internal_id,
         role_name: data.role_name,
@@ -64,9 +72,15 @@ export const AgentEditor = ({ agentId, onSave, onCancel }: AgentEditorProps) => 
         primary_function: data.primary_function || "",
         key_skills_summary: data.key_skills_summary || [],
         sfia_skills: (data.sfia_skills as any) || [],
-        execution_type: data.execution_type || "edge_function",
+        execution_type: data.execution_type || "openai_response",
         execution_resource_id: data.execution_resource_id || "",
         is_active: data.is_active,
+        model: inputParams.model || "gpt-5-mini-2025-08-07",
+        instructions: inputParams.instructions || "",
+        use_file_search: inputParams.use_file_search || false,
+        use_web_search: inputParams.use_web_search || false,
+        use_reasoning: inputParams.use_reasoning || false,
+        tools: inputParams.tools || [],
       });
     } catch (error) {
       console.error("Error loading agent:", error);
@@ -135,6 +149,14 @@ export const AgentEditor = ({ agentId, onSave, onCancel }: AgentEditorProps) => 
         execution_resource_id: formData.execution_resource_id,
         is_active: formData.is_active,
         created_by: user.id,
+        input_parameters: {
+          model: formData.model,
+          instructions: formData.instructions,
+          use_file_search: formData.use_file_search,
+          use_web_search: formData.use_web_search,
+          use_reasoning: formData.use_reasoning,
+          tools: formData.tools,
+        }
       };
 
       if (agentId) {
@@ -309,34 +331,113 @@ export const AgentEditor = ({ agentId, onSave, onCancel }: AgentEditorProps) => 
 
       <Card>
         <CardHeader>
-          <CardTitle>Configuración Técnica</CardTitle>
+          <CardTitle>Configuración de OpenAI Response API</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="execution_type">Tipo de Ejecución</Label>
+            <Label htmlFor="model">Modelo</Label>
             <Select
-              value={formData.execution_type}
-              onValueChange={(value) => setFormData({ ...formData, execution_type: value })}
+              value={formData.model}
+              onValueChange={(value) => setFormData({ ...formData, model: value })}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="edge_function">Edge Function</SelectItem>
-                <SelectItem value="n8n_workflow">Workflow n8n</SelectItem>
-                <SelectItem value="ai_chain">Cadena de Prompts IA</SelectItem>
-                <SelectItem value="api_endpoint">API Endpoint Externo</SelectItem>
+                <SelectItem value="gpt-5-2025-08-07">GPT-5 (Flagship)</SelectItem>
+                <SelectItem value="gpt-5-mini-2025-08-07">GPT-5 Mini (Recomendado)</SelectItem>
+                <SelectItem value="gpt-5-nano-2025-08-07">GPT-5 Nano (Rápido)</SelectItem>
+                <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1</SelectItem>
+                <SelectItem value="o3-2025-04-16">O3 (Reasoning)</SelectItem>
+                <SelectItem value="o4-mini-2025-04-16">O4 Mini (Fast Reasoning)</SelectItem>
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Modelo base para este agente
+            </p>
           </div>
 
           <div>
-            <Label htmlFor="execution_resource_id">ID/URL del Recurso</Label>
-            <Input
-              id="execution_resource_id"
-              value={formData.execution_resource_id}
-              onChange={(e) => setFormData({ ...formData, execution_resource_id: e.target.value })}
-              placeholder="https://api.example.com/webhook o function-name"
+            <Label htmlFor="instructions">Instructions (System Prompt)</Label>
+            <Textarea
+              id="instructions"
+              value={formData.instructions}
+              onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+              placeholder="Eres un agente especializado en..."
+              rows={6}
+              required
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Prompt base que define el comportamiento del agente
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>File Search</Label>
+                <p className="text-xs text-muted-foreground">
+                  Permite al agente buscar en archivos subidos
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.use_file_search}
+                onChange={(e) => setFormData({ ...formData, use_file_search: e.target.checked })}
+                className="h-4 w-4"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Web Search</Label>
+                <p className="text-xs text-muted-foreground">
+                  Permite al agente buscar información en línea
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.use_web_search}
+                onChange={(e) => setFormData({ ...formData, use_web_search: e.target.checked })}
+                className="h-4 w-4"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Reasoning</Label>
+                <p className="text-xs text-muted-foreground">
+                  Usa capacidades de razonamiento avanzado (solo O3/O4)
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.use_reasoning}
+                onChange={(e) => setFormData({ ...formData, use_reasoning: e.target.checked })}
+                className="h-4 w-4"
+                disabled={!formData.model.startsWith('o')}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Custom Tools/Functions</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Define funciones personalizadas en Python para el agente
+            </p>
+            <Textarea
+              value={JSON.stringify(formData.tools, null, 2)}
+              onChange={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  setFormData({ ...formData, tools: parsed });
+                } catch (error) {
+                  // Invalid JSON, ignore
+                }
+              }}
+              placeholder='[{"type": "function", "function": {...}}]'
+              rows={8}
+              className="font-mono text-xs"
             />
           </div>
         </CardContent>

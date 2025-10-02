@@ -93,6 +93,9 @@ verify_jwt = true
 [functions.deploy-workforce-agent]
 verify_jwt = true
 
+[functions.create-response-agent]
+verify_jwt = true
+
 [functions.execute-workforce-mission]
 verify_jwt = true
 

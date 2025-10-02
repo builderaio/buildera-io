@@ -79,6 +79,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       group: "Agentes",
       items: [
         { icon: Brain, label: "Plantillas de Agentes", path: "/admin/agent-templates" },
+        { icon: Brain, label: "Taller del Ingeniero", path: "/admin/ai-workforce" },
       ]
     },
     {

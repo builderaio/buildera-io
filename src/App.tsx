@@ -69,6 +69,7 @@ import WhiteLabelDashboard from "./pages/WhiteLabelDashboard";
 import WhiteLabelMarketplace from "./pages/WhiteLabelMarketplace";
 import AIWorkforce from "./pages/AIWorkforce";
 import AdminAIWorkforce from "./pages/AdminAIWorkforce";
+import AgentInstanceView from "./pages/AgentInstanceView";
 
 const queryClient = new QueryClient();
 
@@ -150,6 +151,7 @@ const App = () => {
                   <Route path="/whitelabel/ab-testing" element={<WhiteLabelABTesting />} />
                   <Route path="/whitelabel/dashboard" element={<WhiteLabelDashboard />} />
                   <Route path="/ai-workforce" element={<AIWorkforce />} />
+                  <Route path="/ai-workforce/:agentId" element={<AgentInstanceView />} />
                 </Route>
                 
                 {/* Admin Routes */}

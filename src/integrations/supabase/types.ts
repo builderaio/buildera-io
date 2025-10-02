@@ -80,6 +80,44 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_analytics: {
+        Row: {
+          agent_instance_id: string
+          channel_type: string
+          id: string
+          metadata: Json | null
+          metric_type: string
+          metric_value: number | null
+          recorded_at: string | null
+        }
+        Insert: {
+          agent_instance_id: string
+          channel_type: string
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          metric_value?: number | null
+          recorded_at?: string | null
+        }
+        Update: {
+          agent_instance_id?: string
+          channel_type?: string
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          metric_value?: number | null
+          recorded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_analytics_agent_instance_id_fkey"
+            columns: ["agent_instance_id"]
+            isOneToOne: false
+            referencedRelation: "agent_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_api_endpoints: {
         Row: {
           api_key: string
@@ -154,6 +192,50 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_channels: {
+        Row: {
+          access_token: string | null
+          agent_instance_id: string
+          channel_config: Json | null
+          channel_type: string
+          created_at: string | null
+          endpoint_url: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          agent_instance_id: string
+          channel_config?: Json | null
+          channel_type: string
+          created_at?: string | null
+          endpoint_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          agent_instance_id?: string
+          channel_config?: Json | null
+          channel_type?: string
+          created_at?: string | null
+          endpoint_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_channels_agent_instance_id_fkey"
+            columns: ["agent_instance_id"]
+            isOneToOne: false
+            referencedRelation: "agent_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_conversations: {
         Row: {
           agent_id: string | null
@@ -194,6 +276,81 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_deployment_instances: {
+        Row: {
+          access_credentials: Json | null
+          agent_instance_id: string
+          api_documentation: string | null
+          api_url: string | null
+          branding_config: Json | null
+          chat_url: string | null
+          company_id: string
+          created_at: string | null
+          dashboard_url: string | null
+          deployment_config: Json | null
+          deployment_name: string
+          email_address: string | null
+          id: string
+          status: string | null
+          updated_at: string | null
+          widget_embed_code: string | null
+          widget_url: string | null
+        }
+        Insert: {
+          access_credentials?: Json | null
+          agent_instance_id: string
+          api_documentation?: string | null
+          api_url?: string | null
+          branding_config?: Json | null
+          chat_url?: string | null
+          company_id: string
+          created_at?: string | null
+          dashboard_url?: string | null
+          deployment_config?: Json | null
+          deployment_name: string
+          email_address?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+          widget_embed_code?: string | null
+          widget_url?: string | null
+        }
+        Update: {
+          access_credentials?: Json | null
+          agent_instance_id?: string
+          api_documentation?: string | null
+          api_url?: string | null
+          branding_config?: Json | null
+          chat_url?: string | null
+          company_id?: string
+          created_at?: string | null
+          dashboard_url?: string | null
+          deployment_config?: Json | null
+          deployment_name?: string
+          email_address?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+          widget_embed_code?: string | null
+          widget_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_deployment_instances_agent_instance_id_fkey"
+            columns: ["agent_instance_id"]
+            isOneToOne: false
+            referencedRelation: "agent_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_deployment_instances_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -4334,6 +4491,50 @@ export type Database = {
           video_view_count?: number | null
         }
         Relationships: []
+      }
+      integration_configurations: {
+        Row: {
+          agent_instance_id: string
+          config_data: Json
+          created_at: string | null
+          credentials: Json | null
+          id: string
+          integration_type: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_instance_id: string
+          config_data?: Json
+          created_at?: string | null
+          credentials?: Json | null
+          id?: string
+          integration_type: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_instance_id?: string
+          config_data?: Json
+          created_at?: string | null
+          credentials?: Json | null
+          id?: string
+          integration_type?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_configurations_agent_instance_id_fkey"
+            columns: ["agent_instance_id"]
+            isOneToOne: false
+            referencedRelation: "agent_instances"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       learning_badges: {
         Row: {

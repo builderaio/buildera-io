@@ -99,3 +99,9 @@ verify_jwt = true
 [functions.execute-workforce-mission]
 verify_jwt = true
 
+[functions.deploy-agent-instance]
+verify_jwt = false
+
+[functions.agent-chat-proxy]
+verify_jwt = false
+

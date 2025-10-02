@@ -5,6 +5,7 @@ import { MissionCatalog } from "@/components/ai-workforce/MissionCatalog";
 import { MissionLauncher } from "@/components/ai-workforce/MissionLauncher";
 import { ActiveMissions } from "@/components/ai-workforce/ActiveMissions";
 import { MissionResults } from "@/components/ai-workforce/MissionResults";
+import { AgentDeploymentManager } from "@/components/ai-workforce/AgentDeploymentManager";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 

@@ -308,6 +308,7 @@ const CompanyLayout = ({
       'adn-empresa': '/company-dashboard?view=adn-empresa',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
       'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
+      'ai-workforce': '/company-dashboard?view=ai-workforce',
       'academia-buildera': '/company-dashboard?view=academia-buildera',
       'expertos': '/company-dashboard?view=expertos',
       'configuracion': '/company-dashboard?view=configuracion',

@@ -53,16 +53,26 @@ export const MissionLauncher = ({ mission, onBack, onLaunch }: MissionLauncherPr
       // Get or create a default team
       let { data: teams } = await supabase
         .from("ai_workforce_teams")
-        .select("id")
+        .select("id, company_id")
         .eq("user_id", user.id)
         .limit(1);
 
       let teamId;
+      let companyId;
       if (!teams || teams.length === 0) {
+        // Get user's primary company
+        const { data: membership } = await supabase
+          .from("company_members")
+          .select("company_id")
+          .eq("user_id", user.id)
+          .eq("is_primary", true)
+          .single();
+
         const { data: newTeam, error: teamError } = await supabase
           .from("ai_workforce_teams")
           .insert({
             user_id: user.id,
+            company_id: membership?.company_id,
             team_name: "Equipo Principal",
             mission_objective: "Misiones automáticas",
             mission_type: "automated"
@@ -72,8 +82,10 @@ export const MissionLauncher = ({ mission, onBack, onLaunch }: MissionLauncherPr
 
         if (teamError) throw teamError;
         teamId = newTeam.id;
+        companyId = newTeam.company_id;
       } else {
         teamId = teams[0].id;
+        companyId = teams[0].company_id;
       }
 
       // Create the mission task
@@ -81,7 +93,7 @@ export const MissionLauncher = ({ mission, onBack, onLaunch }: MissionLauncherPr
         .from("ai_workforce_team_tasks")
         .insert({
           team_id: teamId,
-          agent_id: null, // Will be assigned based on mission type
+          agent_id: null, // Will be assigned by the execution function
           task_name: mission.title,
           task_description: mission.description,
           task_type: mission.id,
@@ -95,8 +107,33 @@ export const MissionLauncher = ({ mission, onBack, onLaunch }: MissionLauncherPr
 
       toast({
         title: "🚀 Misión Iniciada",
-        description: "Tu agente de IA está trabajando en la misión",
+        description: "Preparando tu agente especializado...",
       });
+
+      // Execute the mission using OpenAI Assistants
+      const { data: executionResult, error: executionError } = await supabase.functions.invoke(
+        'execute-workforce-mission',
+        {
+          body: { 
+            task_id: task.id, 
+            user_id: user.id,
+            company_id: companyId
+          }
+        }
+      );
+
+      if (executionError) {
+        console.error("Execution error:", executionError);
+        toast({
+          title: "Advertencia",
+          description: "La misión se creó pero la ejecución está en segundo plano",
+        });
+      } else if (executionResult?.success) {
+        toast({
+          title: "✅ Misión en Progreso",
+          description: "El agente está ejecutando tu misión",
+        });
+      }
 
       onLaunch(task.id);
     } catch (error) {

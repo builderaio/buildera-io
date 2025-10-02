@@ -90,3 +90,9 @@ verify_jwt = true
 [functions.content-insights-generator]
 verify_jwt = true
 
+[functions.deploy-workforce-agent]
+verify_jwt = true
+
+[functions.execute-workforce-mission]
+verify_jwt = true
+

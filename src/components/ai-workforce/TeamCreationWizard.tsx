@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ChevronLeft } from "lucide-react";
+import { ChevronRight, ChevronLeft, Sparkles } from "lucide-react";
 import { StepMission } from "./wizard/StepMission";
 import { StepRoles } from "./wizard/StepRoles";
 import { StepReview } from "./wizard/StepReview";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { TeamCelebration } from "./TeamCelebration";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TeamCreationWizardProps {
   open: boolean;
@@ -24,6 +26,7 @@ export const TeamCreationWizard = ({ open, onOpenChange, onTeamCreated }: TeamCr
   });
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const handleNext = () => {
     if (step === 1 && !teamData.teamName) {
@@ -99,13 +102,8 @@ export const TeamCreationWizard = ({ open, onOpenChange, onTeamCreated }: TeamCr
 
       if (membersError) throw membersError;
 
-      toast({
-        title: "¡Equipo creado!",
-        description: `Tu equipo "${teamData.teamName}" está listo para trabajar`,
-      });
-
-      onTeamCreated();
-      resetWizard();
+      // Show celebration instead of simple toast
+      setShowCelebration(true);
     } catch (error) {
       console.error("Error creating team:", error);
       toast({
@@ -139,62 +137,129 @@ export const TeamCreationWizard = ({ open, onOpenChange, onTeamCreated }: TeamCr
     return missions[type] || "";
   };
 
+  const handleCelebrationComplete = () => {
+    setShowCelebration(false);
+    onTeamCreated();
+    resetWizard();
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">
-            Crear Nuevo Equipo de IA - Paso {step} de 3
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <Sparkles className="h-6 w-6 text-primary" />
+              Crear Nuevo Equipo de IA - Paso {step} de 3
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="py-6">
-          {step === 1 && (
-            <StepMission
-              teamData={teamData}
-              setTeamData={setTeamData}
-            />
-          )}
-          {step === 2 && (
-            <StepRoles
-              selectedAgents={teamData.selectedAgents}
-              onAgentsChange={(agents) => setTeamData({ ...teamData, selectedAgents: agents })}
-            />
-          )}
-          {step === 3 && (
-            <StepReview
-              teamData={teamData}
-            />
-          )}
-        </div>
+          <div className="py-6">
+            <AnimatePresence mode="wait">
+              {step === 1 && (
+                <motion.div
+                  key="step1"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <StepMission
+                    teamData={teamData}
+                    setTeamData={setTeamData}
+                  />
+                </motion.div>
+              )}
+              {step === 2 && (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <StepRoles
+                    selectedAgents={teamData.selectedAgents}
+                    onAgentsChange={(agents) => setTeamData({ ...teamData, selectedAgents: agents })}
+                  />
+                </motion.div>
+              )}
+              {step === 3 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <StepReview
+                    teamData={teamData}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-        <div className="flex justify-between pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={step === 1}
-          >
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Atrás
-          </Button>
-
-          {step < 3 ? (
-            <Button onClick={handleNext}>
-              Siguiente
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          ) : (
+          <div className="flex justify-between pt-4 border-t">
             <Button
-              onClick={handleCreateTeam}
-              disabled={isSubmitting}
-              className="bg-gradient-to-r from-primary to-purple-600"
+              variant="outline"
+              onClick={handleBack}
+              disabled={step === 1}
             >
-              {isSubmitting ? "Creando..." : "Crear Equipo"}
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Atrás
             </Button>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+
+            {step < 3 ? (
+              <Button onClick={handleNext} className="bg-gradient-to-r from-primary to-purple-600">
+                Siguiente
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleCreateTeam}
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 relative overflow-hidden group"
+              >
+                <motion.div
+                  className="absolute inset-0 bg-white/20"
+                  initial={{ x: "-100%" }}
+                  whileHover={{ x: "100%" }}
+                  transition={{ duration: 0.5 }}
+                />
+                <Sparkles className="mr-2 h-4 w-4" />
+                {isSubmitting ? "Creando tu equipo..." : "🚀 Activar Equipo"}
+              </Button>
+            )}
+          </div>
+
+          {/* Progress indicator */}
+          <div className="flex justify-center gap-2 pt-4">
+            {[1, 2, 3].map((s) => (
+              <motion.div
+                key={s}
+                className={`h-2 rounded-full transition-all ${
+                  s === step ? "w-8 bg-primary" : s < step ? "w-2 bg-green-500" : "w-2 bg-muted"
+                }`}
+                initial={false}
+                animate={{
+                  scale: s === step ? 1.2 : 1,
+                }}
+              />
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {showCelebration && (
+        <TeamCelebration
+          teamName={teamData.teamName}
+          agentCount={teamData.selectedAgents.length}
+          onComplete={handleCelebrationComplete}
+        />
+      )}
+    </>
   );
 };
 

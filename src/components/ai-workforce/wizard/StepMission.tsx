@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Rocket, PenTool, TrendingUp, Search, Users2, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface StepMissionProps {
   teamData: {
@@ -55,8 +56,13 @@ const missionTemplates = [
 export const StepMission = ({ teamData, setTeamData }: StepMissionProps) => {
   return (
     <div className="space-y-6">
-      <div>
-        <Label htmlFor="teamName" className="text-lg font-semibold">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Label htmlFor="teamName" className="text-lg font-semibold flex items-center gap-2">
+          <Users2 className="h-5 w-5 text-primary" />
           Nombre del Equipo
         </Label>
         <Input
@@ -64,52 +70,76 @@ export const StepMission = ({ teamData, setTeamData }: StepMissionProps) => {
           placeholder="Ej: Lanzamiento Nuevo Producto Q4"
           value={teamData.teamName}
           onChange={(e) => setTeamData({ ...teamData, teamName: e.target.value })}
-          className="mt-2"
+          className="mt-2 text-lg"
         />
-      </div>
+      </motion.div>
 
-      <div>
-        <Label className="text-lg font-semibold mb-4 block">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <Label className="text-lg font-semibold mb-4 block flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary" />
           ¿Cuál es el objetivo principal de este equipo?
         </Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {missionTemplates.map((template) => {
+          {missionTemplates.map((template, idx) => {
             const Icon = template.icon;
+            const isSelected = teamData.missionType === template.id;
             return (
-              <Card
+              <motion.div
                 key={template.id}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  teamData.missionType === template.id
-                    ? "ring-2 ring-primary"
-                    : ""
-                }`}
-                onClick={() => {
-                  setTeamData({
-                    ...teamData,
-                    missionType: template.id,
-                    customMission: template.id === "custom" ? teamData.customMission : "",
-                  });
-                }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 + idx * 0.05 }}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Icon className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                    <div>
-                      <h3 className="font-semibold mb-1">{template.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {template.description}
-                      </p>
+                <Card
+                  className={`cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
+                    isSelected
+                      ? "ring-2 ring-primary shadow-lg bg-primary/5"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setTeamData({
+                      ...teamData,
+                      missionType: template.id,
+                      customMission: template.id === "custom" ? teamData.customMission : "",
+                    });
+                  }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <motion.div
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                          isSelected ? "bg-primary/20" : "bg-primary/10"
+                        }`}
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <Icon className={`h-6 w-6 ${isSelected ? "text-primary" : "text-primary/70"}`} />
+                      </motion.div>
+                      <div>
+                        <h3 className="font-semibold mb-1">{template.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {template.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
             );
           })}
         </div>
-      </div>
+      </motion.div>
 
       {teamData.missionType === "custom" && (
-        <div>
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          transition={{ duration: 0.3 }}
+        >
           <Label htmlFor="customMission" className="text-base font-semibold">
             Describe tu objetivo personalizado
           </Label>
@@ -122,7 +152,7 @@ export const StepMission = ({ teamData, setTeamData }: StepMissionProps) => {
             }
             className="mt-2 min-h-[100px]"
           />
-        </div>
+        </motion.div>
       )}
     </div>
   );

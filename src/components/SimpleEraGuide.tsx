@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStepVerifications } from '@/hooks/useStepVerifications';
+import confetti from 'canvas-confetti';
 import { 
   Bot, 
   ArrowRight, 
@@ -21,7 +22,12 @@ import {
   Megaphone,
   ShoppingCart,
   Loader2,
-  Save
+  Save,
+  ChevronDown,
+  Maximize2,
+  Clock,
+  Pause,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -38,9 +44,9 @@ import {
 interface GuideStep {
   id: number;
   title: string;
-  what: string; // QUÉ harás
-  why: string;  // POR QUÉ es importante
-  how: string;  // CÓMO hacerlo
+  what: string;
+  why: string;
+  how: string;
   target_section: string;
   tab?: string;
   completed: boolean;
@@ -70,6 +76,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
   const [recoveryData, setRecoveryData] = useState<any>(null);
+  
+  // 🆕 Nuevos estados para mejoras
+  const [autoMinimized, setAutoMinimized] = useState(false);
+  const [temporarilyHidden, setTemporarilyHidden] = useState(false);
+  const [compactMode, setCompactMode] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [showPeek, setShowPeek] = useState(false);
   
   const autoSaveIntervalRef = useRef<NodeJS.Timeout>();
   const verifications = useStepVerifications(userId);
@@ -206,14 +219,14 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     }
   ];
 
-  // Auto-save cada 30 segundos
+  // 🆕 Auto-save cada 30 segundos con indicador visual
   useEffect(() => {
     if (!isActive || !userId) return;
 
     autoSaveIntervalRef.current = setInterval(() => {
       console.log('💾 Auto-guardando progreso del tour...');
       saveTourState(true);
-    }, 30000); // 30 segundos
+    }, 30000);
 
     return () => {
       if (autoSaveIntervalRef.current) {
@@ -222,7 +235,89 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     };
   }, [isActive, userId, currentStep, completedSteps]);
 
-  // Guardar antes de navegar
+  // 🆕 Cargar preferencias de localStorage
+  useEffect(() => {
+    const savedMinimized = localStorage.getItem('simple-era-guide-minimized');
+    const savedCompactMode = localStorage.getItem('simple-era-guide-compact');
+    const pausedUntil = localStorage.getItem('simple-era-guide-paused-until');
+    
+    if (savedMinimized === 'true') {
+      setIsMinimized(true);
+    }
+    if (savedCompactMode === 'true') {
+      setCompactMode(true);
+    }
+    if (pausedUntil) {
+      const pauseDate = new Date(pausedUntil);
+      if (pauseDate > new Date()) {
+        setTemporarilyHidden(true);
+      } else {
+        localStorage.removeItem('simple-era-guide-paused-until');
+      }
+    }
+  }, []);
+  
+  // 🆕 Auto-minimizar en secciones críticas
+  useEffect(() => {
+    const criticalSections = ['adn-empresa', 'marketing-hub', 'content-creation'];
+    const shouldAutoMinimize = criticalSections.includes(currentSection);
+    
+    if (shouldAutoMinimize && !isMinimized && isActive) {
+      setAutoMinimized(true);
+      setIsMinimized(true);
+      toast({
+        title: "Guía minimizada",
+        description: "La guía se minimizó para que trabajes cómodamente. Máximiza cuando necesites ayuda.",
+        duration: 4000
+      });
+    }
+  }, [currentSection, isMinimized, isActive]);
+  
+  // 🆕 Animación de peek cuando está minimizado
+  useEffect(() => {
+    if (!isMinimized || !isActive) return;
+    
+    const peekInterval = setInterval(() => {
+      setShowPeek(true);
+      setTimeout(() => setShowPeek(false), 3000);
+    }, 120000); // Cada 2 minutos
+    
+    return () => clearInterval(peekInterval);
+  }, [isMinimized, isActive]);
+  
+  // 🆕 Atajos de teclado
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isActive) return;
+      
+      // Esc: Minimizar guía
+      if (e.key === 'Escape' && !isMinimized) {
+        handleMinimize();
+      }
+      
+      // Shift + G: Toggle guía
+      if (e.shiftKey && e.key === 'G') {
+        if (isMinimized) {
+          handleMaximize();
+        } else {
+          handleMinimize();
+        }
+      }
+      
+      // Flecha derecha: Siguiente paso (si está completado)
+      if (e.key === 'ArrowRight' && !isMinimized) {
+        const currentStepCompleted = completedSteps.includes(currentStep);
+        if (currentStepCompleted && currentStep < steps.length) {
+          setCurrentStep(currentStep + 1);
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isActive, isMinimized, currentStep, completedSteps]);
+
+  // Guardar antes de desmontar
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (userId) {
@@ -258,22 +353,18 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         const hasProgress = (tourStatus.completed_steps?.length || 0) > 0;
         const isCompleted = tourStatus.tour_completed;
 
-        // Si hay progreso pero no está completado, mostrar diálogo de recuperación
         if (hasProgress && !isCompleted) {
           setRecoveryData(tourStatus);
           setShowRecoveryDialog(true);
         } else if (isCompleted) {
-          // Tour completado, no activar
           setIsActive(false);
         } else {
-          // Sin progreso, verificar si es nuevo usuario
           await checkIfNewUser();
         }
 
         setCompletedSteps(tourStatus.completed_steps || []);
         setCurrentStep(tourStatus.current_step || 1);
       } else {
-        // Sin registro, verificar si es nuevo usuario
         await checkIfNewUser();
       }
     } catch (error) {
@@ -296,10 +387,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         const now = new Date();
         const hoursDiff = (now.getTime() - completedDate.getTime()) / (1000 * 3600);
         
-        // Mostrar bienvenida para usuarios recientes (dentro de 7 días)
         if (hoursDiff <= 168) {
           setShowWelcome(true);
-          setIsActive(false); // No activar hasta que acepte la bienvenida
+          setIsActive(false);
         }
       }
     } catch (error) {
@@ -348,6 +438,61 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         });
       }
     }
+  };
+
+  // 🆕 Funciones mejoradas
+  const handleTemporaryHide = () => {
+    setTemporarilyHidden(true);
+    toast({
+      title: "Guía oculta temporalmente",
+      description: "La guía reaparecerá en 5 minutos.",
+      duration: 3000
+    });
+    
+    setTimeout(() => {
+      setTemporarilyHidden(false);
+      setIsMinimized(true);
+    }, 300000); // 5 minutos
+  };
+  
+  const handlePauseTour = async () => {
+    const pauseUntil = new Date();
+    pauseUntil.setHours(pauseUntil.getHours() + 24);
+    
+    localStorage.setItem('simple-era-guide-paused-until', pauseUntil.toISOString());
+    setTemporarilyHidden(true);
+    
+    toast({
+      title: "Tour pausado por 24 horas",
+      description: "Puedes reactivarlo cuando quieras desde el menú.",
+      duration: 4000
+    });
+  };
+  
+  const toggleCompactMode = () => {
+    const newCompactMode = !compactMode;
+    setCompactMode(newCompactMode);
+    localStorage.setItem('simple-era-guide-compact', newCompactMode.toString());
+  };
+  
+  const handleMinimize = () => {
+    setIsMinimized(true);
+    setAutoMinimized(false);
+    localStorage.setItem('simple-era-guide-minimized', 'true');
+  };
+  
+  const handleMaximize = () => {
+    setIsMinimized(false);
+    setAutoMinimized(false);
+    localStorage.setItem('simple-era-guide-minimized', 'false');
+  };
+  
+  const triggerCelebration = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
   };
 
   const startTour = async () => {
@@ -408,7 +553,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           isComplete = await verifications.verifyContentGenerated();
           break;
         case 9:
-          // Paso manual (visita al marketplace)
           isComplete = true;
           break;
         default:
@@ -427,7 +571,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const completeStep = async (stepId: number) => {
     if (completedSteps.includes(stepId)) return;
 
-    // Para pasos con verificación automática, verificar primero
     const step = steps.find(s => s.id === stepId);
     if (step && !step.requiresManualCompletion) {
       const isComplete = await verifyStepCompletion(stepId);
@@ -452,7 +595,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
 
       await saveTourState(true);
 
-      // Navegar al siguiente paso si tiene tab específico
+      // 🆕 Celebración con confetti
+      triggerCelebration();
+
       if (!allCompleted) {
         const nextStepData = steps.find(s => s.id === nextStep);
         if (nextStepData?.tab && nextStepData.target_section === currentSection) {
@@ -461,6 +606,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       }
 
       if (allCompleted) {
+        // 🆕 Gran celebración final
+        confetti({
+          particleCount: 200,
+          spread: 100,
+          origin: { y: 0.6 }
+        });
+        
         setIsActive(false);
         toast({
           title: "¡Felicitaciones! 🎉",
@@ -525,558 +677,399 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       
       toast({
         title: "Tour reiniciado",
-        description: "El tour ha sido reiniciado desde el principio.",
+        description: "Comenzarás desde el paso 1.",
       });
     } catch (error) {
       console.error('Error restarting tour:', error);
     }
   };
 
-  const handleRecoverTour = () => {
+  const handleRecoverTour = async () => {
     if (recoveryData) {
+      setCurrentStep(recoveryData.current_step);
       setCompletedSteps(recoveryData.completed_steps || []);
-      setCurrentStep(recoveryData.current_step || 1);
       setIsActive(true);
       setShowRecoveryDialog(false);
       
       toast({
         title: "Tour recuperado",
-        description: `Continuando desde el paso ${recoveryData.current_step}.`,
+        description: `Continuarás desde el paso ${recoveryData.current_step}.`,
       });
     }
   };
 
-  const handleRestartFromRecovery = () => {
+  const handleRestartFromRecovery = async () => {
     setShowRecoveryDialog(false);
-    restartTour();
+    await restartTour();
   };
 
-  const nextIncompleteStep = steps.find(step => !completedSteps.includes(step.id));
-  const progressPercentage = (completedSteps.length / steps.length) * 100;
-  
-  const isCurrentSectionRelevant = (() => {
-    if (!nextIncompleteStep) return false;
-    const isSameSection = nextIncompleteStep.target_section === currentSection;
-    
-    if (nextIncompleteStep.tab) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const currentTab = urlParams.get('tab');
-      return isSameSection && currentTab === nextIncompleteStep.tab;
+  // 🆕 Función para obtener clases de posicionamiento dinámico
+  const getPositionClass = () => {
+    if (isMinimized) {
+      return 'bottom-6 right-6 w-auto';
     }
     
-    return isSameSection;
-  })();
-
-  // Formato de última guardada
-  const getLastSavedText = () => {
-    if (!lastSaved) return null;
-    const seconds = Math.floor((new Date().getTime() - lastSaved.getTime()) / 1000);
-    if (seconds < 60) return `hace ${seconds}s`;
-    const minutes = Math.floor(seconds / 60);
-    return `hace ${minutes}m`;
+    // En móvil, ocupar todo el ancho inferior
+    if (window.innerWidth < 768) {
+      return 'bottom-0 left-0 right-0 rounded-t-xl rounded-b-none w-full';
+    }
+    
+    // En desktop, modo compacto
+    if (compactMode) {
+      return 'bottom-6 right-6 w-64';
+    }
+    
+    // En desktop normal, centrado inferior
+    return 'bottom-6 left-1/2 transform -translate-x-1/2 w-96 max-w-[90vw]';
   };
 
-  if (loading) return null;
-
-  // Diálogo de bienvenida
-  if (showWelcome) {
+  if (loading) {
     return (
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        >
-          <motion.div
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 20 }}
-          >
-            <Card className="max-w-2xl w-full shadow-2xl">
-              <CardContent className="p-8">
-                <motion.div
-                  className="flex justify-center mb-6"
-                  animate={{ 
-                    y: [0, -10, 0],
-                    scale: [1, 1.05, 1]
-                  }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <div className="relative">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
-                      <Bot className="w-12 h-12 text-white" />
-                    </div>
-                    <motion.div
-                      animate={{ rotate: [0, 360] }}
-                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                      className="absolute -top-2 -right-2"
-                    >
-                      <Sparkles className="w-8 h-8 text-yellow-400" />
-                    </motion.div>
-                  </div>
-                </motion.div>
-
-                <h2 className="text-3xl font-bold text-center mb-4">
-                  ¡Bienvenido a Buildera! 🚀
-                </h2>
-
-                <p className="text-lg text-center text-muted-foreground mb-6">
-                  <strong>Era</strong> es tu asistente empresarial con IA. Este tour de <strong>9 pasos (5-10 minutos)</strong> te guiará para configurar tu plataforma y obtener el máximo valor desde el primer día.
-                </p>
-
-                <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 mb-6">
-                  <p className="font-semibold mb-3 text-center">Al finalizar podrás:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                      <span className="text-sm">Generar contenido con IA</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                      <span className="text-sm">Analizar audiencias</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                      <span className="text-sm">Crear campañas automatizadas</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                      <span className="text-sm">Optimizar tu estrategia</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <Button
-                    onClick={startTour}
-                    className="flex-1 h-12 text-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-                  >
-                    <Sparkles className="w-5 h-5 mr-2" />
-                    Comenzar Tour
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setShowWelcome(false);
-                      skipTour();
-                    }}
-                    variant="outline"
-                    className="flex-1 h-12 text-lg"
-                  >
-                    Saltar
-                  </Button>
-                </div>
-
-                <p className="text-xs text-center text-muted-foreground mt-4">
-                  Podrás reactivar el tour en cualquier momento
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </motion.div>
-      </AnimatePresence>
+      <Card className={`fixed shadow-2xl border-primary/20 z-50 ${getPositionClass()}`}>
+        <div className="p-6 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-primary mr-3" />
+          <span className="text-sm text-muted-foreground">Cargando guía...</span>
+        </div>
+      </Card>
     );
   }
 
-  // Diálogo de recuperación
-  if (showRecoveryDialog) {
+  // 🆕 Si está temporalmente oculto, no renderizar
+  if (temporarilyHidden) {
+    return null;
+  }
+
+  // 🎯 MINIMIZED STATE: Botón flotante con peek
+  if (isMinimized) {
+    const currentStepData = steps[currentStep - 1];
     return (
-      <AlertDialog open={showRecoveryDialog} onOpenChange={setShowRecoveryDialog}>
+      <>
+        {showPeek && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <Card className="fixed bottom-20 right-6 w-72 shadow-2xl border-primary/20 z-50 p-4">
+              <div className="flex items-start gap-3">
+                <Sparkles className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Siguiente paso:</p>
+                  <p className="text-sm font-semibold">{currentStepData.title}</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+        <Button
+          onClick={handleMaximize}
+          className="fixed bottom-6 right-6 rounded-full shadow-2xl hover:scale-110 transition-all z-50 h-14 px-6 group"
+          size="lg"
+        >
+          <currentStepData.icon className="w-5 h-5 mr-2" />
+          <span className="font-medium">Guía de Era</span>
+          <span className="ml-2 text-xs bg-primary-foreground/20 px-2 py-1 rounded-full">
+            {completedSteps.length}/{steps.length}
+          </span>
+          <Maximize2 className="w-4 h-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </Button>
+      </>
+    );
+  }
+
+  // 🎯 ACTIVE TOUR STATE: Card principal con overlay
+  const currentStepData = steps[currentStep - 1];
+  const isStepCompleted = completedSteps.includes(currentStep);
+  const progressPercentage = (completedSteps.length / steps.length) * 100;
+
+  return (
+    <>
+      {/* 🆕 Overlay semitransparente opcional */}
+      {showOverlay && (
+        <div 
+          className="fixed inset-0 bg-black/10 backdrop-blur-[2px] z-40 animate-fade-in"
+          onClick={handleMinimize}
+        />
+      )}
+      
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ duration: 0.2 }}
+      >
+        <Card className={`fixed shadow-2xl border-primary/20 backdrop-blur-xl z-50 max-h-[85vh] overflow-y-auto ${getPositionClass()}`}>
+          <div className="p-6 space-y-4">
+            {/* Header con controles mejorados */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="font-bold text-lg">Guía de Era</h3>
+              </div>
+              <div className="flex items-center gap-1">
+                {/* 🆕 Modo compacto toggle (solo desktop) */}
+                {window.innerWidth >= 768 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={toggleCompactMode}
+                    className="h-8 w-8 p-0"
+                    title={compactMode ? "Modo normal" : "Modo compacto"}
+                  >
+                    <ChevronRight className={`w-4 h-4 transition-transform ${compactMode ? 'rotate-180' : ''}`} />
+                  </Button>
+                )}
+                
+                {/* 🆕 Ocultar temporalmente */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleTemporaryHide}
+                  className="h-8 w-8 p-0"
+                  title="Ocultar por 5 minutos"
+                >
+                  <Clock className="w-4 h-4" />
+                </Button>
+                
+                {/* 🆕 Minimizar mejorado */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleMinimize}
+                  className="h-8 px-2 gap-1"
+                  title="Minimizar (Esc)"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                  <span className="text-xs hidden md:inline">Minimizar</span>
+                </Button>
+                
+                {/* Cerrar/Skip */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSkipConfirm(true)}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* 🆕 Indicador de último guardado */}
+            {lastSaved && !compactMode && (
+              <p className="text-[10px] text-muted-foreground text-right -mt-2 mb-2">
+                Último guardado: {new Date(lastSaved).toLocaleTimeString()}
+              </p>
+            )}
+
+            <Progress value={progressPercentage} className="h-2" />
+            {!compactMode && (
+              <p className="text-xs text-muted-foreground text-center">
+                Paso {currentStep} de {steps.length} • {completedSteps.length} completados
+              </p>
+            )}
+
+            {/* Contenido del paso actual */}
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className={`p-2 rounded-lg bg-gradient-to-br ${currentStepData.color}`}>
+                  <currentStepData.icon className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-base mb-1">{currentStepData.title}</h4>
+                  {!compactMode && (
+                    <div className="text-sm text-muted-foreground space-y-2">
+                      <p><strong>QUÉ:</strong> {currentStepData.what}</p>
+                      <p><strong>POR QUÉ:</strong> {currentStepData.why}</p>
+                      <p><strong>CÓMO:</strong> {currentStepData.how}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Botones de acción unificados */}
+              <div className="flex gap-2 pt-2">
+                {currentStepData.target_section && onNavigate && (
+                  <Button
+                    onClick={() => {
+                      onNavigate(currentStepData.target_section!, currentStepData.tab ? { tab: currentStepData.tab } : undefined);
+                      // Auto-minimizar al navegar
+                      setTimeout(() => handleMinimize(), 500);
+                    }}
+                    className="flex-1"
+                    variant="default"
+                  >
+                    {currentStepData.actionText}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                )}
+                
+                {isStepCompleted ? (
+                  <Button
+                    variant="outline"
+                    disabled
+                    className="flex-1 border-green-500 text-green-500"
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Completado
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => completeStep(currentStep)}
+                    variant="outline"
+                    disabled={verifying}
+                    className="flex-1"
+                  >
+                    {verifying ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Verificando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        {currentStepData.verificationText}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+              
+              {/* 🆕 Botón de pausar tour */}
+              {!compactMode && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handlePauseTour}
+                  className="w-full mt-2 text-xs"
+                >
+                  <Pause className="w-3 h-3 mr-1" />
+                  Pausar tour por hoy
+                </Button>
+              )}
+            </div>
+            
+            {/* 🆕 Atajos de teclado (solo desktop y no compacto) */}
+            {!compactMode && window.innerWidth >= 768 && (
+              <div className="pt-3 border-t border-border/50">
+                <p className="text-[10px] text-muted-foreground text-center">
+                  <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]">Esc</kbd> minimizar • 
+                  <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] ml-1">Shift+G</kbd> toggle •
+                  <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] ml-1">→</kbd> siguiente
+                </p>
+              </div>
+            )}
+
+            {/* Navegación entre pasos */}
+            {!compactMode && (
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+                  disabled={currentStep === 1}
+                  className="flex-1"
+                >
+                  Anterior
+                </Button>
+                <span className="text-xs text-muted-foreground px-2">
+                  {currentStep}/{steps.length}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentStep(Math.min(steps.length, currentStep + 1))}
+                  disabled={currentStep === steps.length}
+                  className="flex-1"
+                >
+                  Siguiente
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+      </motion.div>
+
+      {/* Welcome Dialog */}
+      <AlertDialog open={showWelcome} onOpenChange={setShowWelcome}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Tienes un tour en progreso</AlertDialogTitle>
-            <AlertDialogDescription>
-              Encontramos que habías avanzado hasta el paso {recoveryData?.current_step || 1} de {steps.length}.
-              ¿Quieres continuar desde donde lo dejaste o reiniciar desde el principio?
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Bot className="w-6 h-6 text-primary" />
+              ¡Bienvenido a Buildera!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>Soy <strong>Era</strong>, tu asistente de IA. Estoy aquí para guiarte en la configuración inicial de la plataforma.</p>
+              
+              <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                <p className="font-medium text-foreground">Con este tour aprenderás a:</p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Configurar el ADN de tu negocio</li>
+                  <li>Conectar tus redes sociales</li>
+                  <li>Analizar tu audiencia actual</li>
+                  <li>Crear campañas de marketing efectivas</li>
+                  <li>Generar contenido con IA</li>
+                </ul>
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                ⏱️ Tiempo estimado: 15-20 minutos • Puedes pausar en cualquier momento
+              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleRestartFromRecovery}>
-              Reiniciar
+            <AlertDialogCancel onClick={() => setShowWelcome(false)}>
+              Explorar por mi cuenta
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleRecoverTour}>
-              Continuar
+            <AlertDialogAction onClick={startTour}>
+              Comenzar tour guiado
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    );
-  }
 
-  if (!isActive) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8, y: 100 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="fixed bottom-6 right-6 z-50"
-      >
-        <motion.div
-          animate={{ 
-            y: [0, -8, 0],
-            rotate: [0, 5, -5, 0]
-          }}
-          transition={{ 
-            duration: 3,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        >
-          <Button
-            onClick={restartTour}
-            className="relative rounded-full w-16 h-16 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-xl hover:shadow-2xl transition-all duration-300"
-            size="icon"
-            title="Reiniciar tour de Era"
-          >
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Bot className="w-8 h-8 text-white" />
-            </motion.div>
-            <motion.div
-              className="absolute -top-2 -right-2"
-              animate={{ 
-                scale: [1, 1.2, 1],
-                rotate: [0, 180, 360]
-              }}
-              transition={{ duration: 4, repeat: Infinity }}
-            >
-              <Sparkles className="w-5 h-5 text-yellow-300" />
-            </motion.div>
-            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-              <motion.div
-                className="text-xs font-bold text-white bg-black/20 px-2 py-1 rounded-full"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                Era
-              </motion.div>
-            </div>
-          </Button>
-        </motion.div>
-      </motion.div>
-    );
-  }
+      {/* Recovery Dialog */}
+      <AlertDialog open={showRecoveryDialog} onOpenChange={setShowRecoveryDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Save className="w-6 h-6 text-primary" />
+              Progreso detectado
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Detectamos que dejaste el tour en el paso {recoveryData?.current_step} con {recoveryData?.completed_steps?.length || 0} pasos completados.
+              <br /><br />
+              ¿Deseas continuar donde lo dejaste o reiniciar desde el principio?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleRestartFromRecovery}>
+              Reiniciar desde el inicio
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleRecoverTour}>
+              Continuar donde lo dejé
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-  return (
-    <>
-      {/* Diálogo de confirmación de saltar */}
+      {/* Skip Confirmation Dialog */}
       <AlertDialog open={showSkipConfirm} onOpenChange={setShowSkipConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Saltar el tour?</AlertDialogTitle>
             <AlertDialogDescription>
-              Si saltas ahora, perderás el progreso del tour guiado. Podrás reactivarlo después, pero comenzarás desde el principio.
-              ¿Estás seguro que quieres saltar?
+              Puedes reactivar la guía de Era en cualquier momento. Tu progreso actual se guardará.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={skipTour} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction onClick={skipTour}>
               Sí, saltar tour
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 50 }}
-          className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${
-            isMinimized ? 'w-16 h-16' : 'w-96'
-          }`}
-        >
-          {isMinimized ? (
-            <motion.div
-              animate={{ 
-                y: [0, -5, 0],
-                scale: [1, 1.05, 1]
-              }}
-              transition={{ 
-                duration: 2.5,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            >
-              <Button
-                onClick={() => setIsMinimized(false)}
-                className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden"
-                size="icon"
-              >
-                <motion.div
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                />
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  <Bot className="w-8 h-8 text-white relative z-10" />
-                </motion.div>
-                <motion.div
-                  className="absolute -top-1 -right-1 z-20"
-                  animate={{ 
-                    scale: [1, 1.3, 1],
-                    rotate: [0, 180, 360]
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  <Sparkles className="w-4 h-4 text-yellow-300" />
-                </motion.div>
-                {completedSteps.length > 0 && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-2 -left-2 z-20"
-                  >
-                    <Badge className="bg-green-500 text-white text-xs font-bold">
-                      {completedSteps.length}/{steps.length}
-                    </Badge>
-                  </motion.div>
-                )}
-                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-10">
-                  <motion.div
-                    className="text-xs font-bold text-white bg-black/30 px-2 py-1 rounded-full"
-                    animate={{ opacity: [0.7, 1, 0.7] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    Era
-                  </motion.div>
-                </div>
-              </Button>
-            </motion.div>
-          ) : (
-            <Card className="shadow-xl border bg-gradient-to-br from-background to-background/95 backdrop-blur-sm">
-              <CardContent className="p-6">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <motion.div 
-                      className="relative"
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center relative overflow-hidden">
-                        <motion.div
-                          animate={{ rotate: [0, 360] }}
-                          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                        />
-                        <Bot className="w-7 h-7 text-white relative z-10" />
-                      </div>
-                      <motion.div
-                        animate={{ 
-                          scale: [1, 1.2, 1],
-                          rotate: [0, 180, 360]
-                        }}
-                        transition={{ duration: 4, repeat: Infinity }}
-                        className="absolute -top-1 -right-1"
-                      >
-                        <Sparkles className="w-4 h-4 text-yellow-400" />
-                      </motion.div>
-                    </motion.div>
-                    <div>
-                      <motion.h3 
-                        className="font-bold text-lg"
-                        animate={{ opacity: [0.8, 1, 0.8] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        Era - Tour Guiado
-                      </motion.h3>
-                      <p className="text-xs text-muted-foreground">Tu Asistente Empresarial</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {lastSaved && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Save className="w-3 h-3" />
-                        <span>{getLastSavedText()}</span>
-                      </div>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsMinimized(true)}
-                      className="h-8 w-8 hover:bg-primary/10"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowSkipConfirm(true)}
-                      className="h-8 w-8 hover:bg-destructive/10"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Progress */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Progreso del Tour</span>
-                    <Badge variant="secondary" className="text-xs">
-                      Paso {completedSteps.length + 1} de {steps.length}
-                    </Badge>
-                  </div>
-                  <motion.div
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    style={{ originX: 0 }}
-                  >
-                    <Progress value={progressPercentage} className="h-3" />
-                  </motion.div>
-                </div>
-
-                {/* Current Step */}
-                {nextIncompleteStep && (
-                  <motion.div 
-                    className="space-y-4"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <div className="flex items-start gap-4">
-                      <motion.div 
-                        className={`w-12 h-12 rounded-xl bg-gradient-to-r ${nextIncompleteStep.color} flex items-center justify-center flex-shrink-0 shadow-lg`}
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <nextIncompleteStep.icon className="w-6 h-6 text-white" />
-                      </motion.div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-base mb-2">{nextIncompleteStep.title}</h4>
-                        
-                        <div className="space-y-2 text-sm mb-3">
-                          <div className="bg-muted/50 rounded-lg p-3">
-                            <p className="font-semibold mb-1">¿Qué harás?</p>
-                            <p className="text-muted-foreground">{nextIncompleteStep.what}</p>
-                          </div>
-                          <div className="bg-primary/5 rounded-lg p-3">
-                            <p className="font-semibold mb-1">¿Por qué es importante?</p>
-                            <p className="text-muted-foreground">{nextIncompleteStep.why}</p>
-                          </div>
-                          <div className="bg-muted/50 rounded-lg p-3">
-                            <p className="font-semibold mb-1">¿Cómo hacerlo?</p>
-                            <p className="text-muted-foreground">{nextIncompleteStep.how}</p>
-                          </div>
-                        </div>
-
-                        <motion.div 
-                          className="flex items-center gap-2 mb-4"
-                          initial={{ scale: 0.9 }}
-                          animate={{ scale: 1 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <Badge 
-                            variant={isCurrentSectionRelevant ? "default" : "outline"}
-                            className={isCurrentSectionRelevant ? "bg-green-100 text-green-800 border-green-300" : ""}
-                          >
-                            {isCurrentSectionRelevant ? "✓ Ya estás en la sección correcta" : "📍 Necesitas ir a otra sección"}
-                          </Badge>
-                        </motion.div>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-3">
-                      {!isCurrentSectionRelevant ? (
-                        <motion.div
-                          className="flex-1"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Button
-                            onClick={() => {
-                              const navParams = nextIncompleteStep.tab ? { tab: nextIncompleteStep.tab } : undefined;
-                              onNavigate(nextIncompleteStep.target_section, navParams);
-                            }}
-                            size="sm"
-                            className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-medium"
-                          >
-                            <ArrowRight className="w-4 h-4 mr-2" />
-                            {nextIncompleteStep.actionText} →
-                          </Button>
-                        </motion.div>
-                      ) : (
-                        <motion.div
-                          className="flex-1"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Button
-                            onClick={() => completeStep(nextIncompleteStep.id)}
-                            size="sm"
-                            disabled={verifying}
-                            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium"
-                          >
-                            {verifying ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Verificando...
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle2 className="w-4 h-4 mr-2" />
-                                {nextIncompleteStep.verificationText}
-                              </>
-                            )}
-                          </Button>
-                        </motion.div>
-                      )}
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowSkipConfirm(true)}
-                        className="hover:bg-destructive/10"
-                        title="Saltar tour"
-                      >
-                        Saltar
-                      </Button>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Completed */}
-                {completedSteps.length === steps.length && (
-                  <motion.div 
-                    className="text-center py-6"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <motion.div 
-                      className="w-20 h-20 rounded-full bg-gradient-to-r from-green-400 to-green-500 flex items-center justify-center mx-auto mb-4"
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <CheckCircle2 className="w-10 h-10 text-white" />
-                    </motion.div>
-                    <h4 className="font-bold text-xl mb-2">¡Felicitaciones! 🎉</h4>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Has completado exitosamente el tour de Buildera. Ahora conoces todas las funciones principales y Era está lista para asistirte en cualquier momento.
-                    </p>
-                    <Button
-                      onClick={skipTour}
-                      size="sm"
-                      className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Comenzar a usar Buildera
-                    </Button>
-                  </motion.div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </motion.div>
-      </AnimatePresence>
     </>
   );
 };

@@ -1,4 +1,5 @@
 import { Instagram, Linkedin, Facebook } from "lucide-react";
+import { FaTiktok } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
@@ -83,12 +84,20 @@ const Footer = () => {
                 <Linkedin className="w-6 h-6" />
               </a>
               <a 
-                href="https://www.facebook.com/profile.php?id=61576657727180" 
+                href="https://www.facebook.com/builderaai" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-smooth"
               >
                 <Facebook className="w-6 h-6" />
+              </a>
+              <a 
+                href="http://www.tiktok.com/@buildera_ai" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-smooth"
+              >
+                <FaTiktok className="w-6 h-6" />
               </a>
             </div>
           </div>

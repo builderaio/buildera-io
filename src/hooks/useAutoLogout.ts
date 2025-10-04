@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutos en millisegundos
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutos en millisegundos (aumentado para evitar logouts prematuros)
 
 export const useAutoLogout = () => {
   const { toast } = useToast();
@@ -23,6 +23,16 @@ export const useAutoLogout = () => {
 
   const handleLogout = async () => {
     try {
+      console.log('⏰ Auto-logout por inactividad iniciado');
+      
+      // Verificar si realmente hay una sesión antes de hacer logout
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.log('⚠️ No hay sesión activa, cancelando auto-logout');
+        return;
+      }
+
       // Limpiar estado de autenticación
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
@@ -43,8 +53,11 @@ export const useAutoLogout = () => {
       window.location.href = '/auth';
     } catch (error) {
       console.error('Error during auto logout:', error);
-      // Forzar redirección incluso si hay error
-      window.location.href = '/auth';
+      // Solo redirigir si hay error crítico
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/auth';
+      }
     }
   };
 

@@ -47,15 +47,17 @@ const ResponsiveLayout = () => {
   }, [navigate]);
   const checkAuth = async () => {
     try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      if (!user) {
+      // Verificar sesión con más tiempo de espera para logins sociales
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session || !session.user) {
+        console.log('❌ No hay sesión activa, redirigiendo a /auth');
         navigate('/auth');
         return;
       }
+
+      const user = session.user;
+      
       // Primero obtenemos el perfil del usuario
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -85,7 +87,7 @@ const ResponsiveLayout = () => {
         company_name: companyMember?.companies?.name || profileData.company_name || 'Mi Empresa'
       };
       
-      console.log('📊 Profile loaded with company name:', profileWithCompanyName.company_name);
+      console.log('✅ Sesión verificada - Profile loaded with company name:', profileWithCompanyName.company_name);
       setProfile(profileWithCompanyName);
     } catch (error) {
       console.error('Error checking auth:', error);

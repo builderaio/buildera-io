@@ -137,24 +137,28 @@ const SocialCallback = () => {
         // Reglas de redirección inmediatas post OAuth
         // 1) Si no hay user_type en perfil o es company sin empresa -> ir a complete-profile
         if (!profile.user_type || (profile.user_type === 'company' && !hasCompany)) {
+          await new Promise(resolve => setTimeout(resolve, 500));
           const qs = !profile.user_type && userType ? `?user_type=${encodeURIComponent(userType)}` : '';
-          window.location.href = `/complete-profile${qs}`;
+          navigate(`/complete-profile${qs}`, { replace: true });
           return;
         }
 
         // 2) Si ya está completamente configurado, redirigir al dashboard correspondiente
+        // IMPORTANTE: Esperar 500ms para que la sesión se guarde completamente en localStorage
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         switch (profile.user_type) {
           case 'company':
-            window.location.href = '/company-dashboard';
+            navigate('/company-dashboard', { replace: true });
             return;
           case 'developer':
-            window.location.href = '/developer-dashboard';
+            navigate('/developer-dashboard', { replace: true });
             return;
           case 'expert':
-            window.location.href = '/expert-dashboard';
+            navigate('/expert-dashboard', { replace: true });
             return;
           default:
-            window.location.href = '/complete-profile';
+            navigate('/complete-profile', { replace: true });
             return;
         }
 

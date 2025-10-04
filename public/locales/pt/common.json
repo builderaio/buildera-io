@@ -1,0 +1,73 @@
+{
+  "header": {
+    "home": "Início",
+    "whyBuildera": "Por que Buildera",
+    "ecosystem": "Ecossistema",
+    "cases": "Casos",
+    "contact": "Contato",
+    "login": "Entrar",
+    "getStarted": "Começar"
+  },
+  "footer": {
+    "company": "Empresa",
+    "about": "Sobre",
+    "careers": "Carreiras",
+    "contact": "Contato",
+    "product": "Produto",
+    "features": "Recursos",
+    "pricing": "Preços",
+    "security": "Segurança",
+    "legal": "Legal",
+    "privacy": "Privacidade",
+    "terms": "Termos",
+    "cookies": "Cookies",
+    "allRightsReserved": "Todos os direitos reservados"
+  },
+  "actions": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "create": "Criar",
+    "update": "Atualizar",
+    "refresh": "Atualizar",
+    "view": "Ver",
+    "download": "Baixar",
+    "upload": "Enviar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "close": "Fechar",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "finish": "Finalizar"
+  },
+  "status": {
+    "loading": "Carregando...",
+    "saving": "Salvando...",
+    "deleting": "Excluindo...",
+    "updating": "Atualizando...",
+    "processing": "Processando...",
+    "success": "Sucesso",
+    "error": "Erro",
+    "warning": "Aviso",
+    "info": "Informação"
+  },
+  "messages": {
+    "noData": "Nenhum dado disponível",
+    "tryAgain": "Por favor, tente novamente",
+    "somethingWrong": "Algo deu errado",
+    "saveSuccess": "Salvo com sucesso",
+    "deleteSuccess": "Excluído com sucesso",
+    "updateSuccess": "Atualizado com sucesso",
+    "confirmDelete": "Tem certeza de que deseja excluir isso?",
+    "unsavedChanges": "Você tem alterações não salvas"
+  },
+  "languages": {
+    "spanish": "Español",
+    "english": "English",
+    "portuguese": "Português"
+  }
+}

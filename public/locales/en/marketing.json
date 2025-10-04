@@ -1,0 +1,31 @@
+{
+  "audiences": {
+    "title": "Audience Management",
+    "generate": "Generate AI Audiences",
+    "analyzing": "Analyzing audiences...",
+    "noData": "No audience data available",
+    "error": "Error loading audiences",
+    "generateSuccess": "Audiences generated successfully",
+    "analyzeAll": "Analyze all networks",
+    "analyzing": "Analyzing...",
+    "completeAnalysis": "Analysis completed",
+    "errorAnalyzing": "Error analyzing audiences"
+  },
+  "content": {
+    "analysis": "Content Analysis",
+    "triggerAnalysis": "Start Analysis",
+    "analyzingContent": "Analyzing social media content...",
+    "insightsGenerated": "Insights generated successfully",
+    "errorGenerating": "Error generating insights",
+    "existingAnalysis": "Recent analysis already exists",
+    "noContent": "No content to analyze"
+  },
+  "socialMedia": {
+    "analytics": "Social Media Analytics",
+    "runAnalysis": "Run Analysis",
+    "analyzing": "Analyzing social media data...",
+    "errorLoading": "Error loading analytics",
+    "noData": "No data available",
+    "basicInsights": "Basic insights generated"
+  }
+}

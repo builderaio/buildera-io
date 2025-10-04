@@ -1,0 +1,31 @@
+{
+  "audiences": {
+    "title": "Gestão de Audiências",
+    "generate": "Gerar Audiências com IA",
+    "analyzing": "Analisando audiências...",
+    "noData": "Nenhum dado de audiência disponível",
+    "error": "Erro ao carregar audiências",
+    "generateSuccess": "Audiências geradas com sucesso",
+    "analyzeAll": "Analisar todas as redes",
+    "analyzing": "Analisando...",
+    "completeAnalysis": "Análise concluída",
+    "errorAnalyzing": "Erro ao analisar audiências"
+  },
+  "content": {
+    "analysis": "Análise de Conteúdo",
+    "triggerAnalysis": "Iniciar Análise",
+    "analyzingContent": "Analisando conteúdo de redes sociais...",
+    "insightsGenerated": "Insights gerados com sucesso",
+    "errorGenerating": "Erro ao gerar insights",
+    "existingAnalysis": "Já existe uma análise recente",
+    "noContent": "Nenhum conteúdo para analisar"
+  },
+  "socialMedia": {
+    "analytics": "Análises de Redes Sociais",
+    "runAnalysis": "Executar Análise",
+    "analyzing": "Analisando dados de redes sociais...",
+    "errorLoading": "Erro ao carregar análises",
+    "noData": "Nenhum dado disponível",
+    "basicInsights": "Insights básicos gerados"
+  }
+}

@@ -129,6 +129,7 @@ const App = () => {
                 <Route element={<ResponsiveLayout />}>
                   <Route path="/company-dashboard" element={<CompanyDashboard />} />
                   <Route path="/company-dashboard/ai-workforce" element={<Navigate to="/company-dashboard?view=ai-workforce" replace />} />
+                  <Route path="/company-dashboard/adn-empresa" element={<Navigate to="/company-dashboard?view=adn-empresa" replace />} />
                   <Route path="/expert-dashboard" element={<ExpertDashboard />} />
                   <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
                   <Route path="/profile" element={<UserProfile />} />

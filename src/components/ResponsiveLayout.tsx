@@ -47,29 +47,44 @@ const ResponsiveLayout = () => {
   }, [navigate]);
   const checkAuth = async () => {
     try {
-      // Verificar sesión con más tiempo de espera para logins sociales
-      const { data: { session } } = await supabase.auth.getSession();
+      // Intentar obtener sesión con reintentos (evita expulsión tras OAuth)
+      let session = null as any;
+      for (let i = 0; i < 6; i++) {
+        const { data: { session: s } } = await supabase.auth.getSession();
+        session = s;
+        if (session?.user) break;
+        await new Promise(r => setTimeout(r, 500));
+      }
       
       if (!session || !session.user) {
-        console.log('❌ No hay sesión activa, redirigiendo a /auth');
+        console.log('❌ No hay sesión activa tras reintentos, redirigiendo a /auth');
         navigate('/auth');
         return;
       }
 
       const user = session.user;
       
-      // Primero obtenemos el perfil del usuario
+      // Obtener perfil de forma tolerante (puede no existir inmediatamente tras OAuth)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       if (profileError) {
-        throw profileError;
+        console.error('⚠️ Error obteniendo perfil, continuando con fallback:', profileError);
       }
       
-      // Luego obtenemos el nombre de la empresa del usuario desde company_members
+      // Fallback mínimo si el perfil aún no existe
+      const baseProfile: any = profileData ?? {
+        user_id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+        user_type: user.app_metadata?.provider === 'email' ? 'company' : null,
+        company_name: 'Mi Empresa'
+      };
+      
+      // Obtener nombre de empresa principal si existe
       const { data: companyMember } = await supabase
         .from('company_members')
         .select(`
@@ -79,12 +94,11 @@ const ResponsiveLayout = () => {
         `)
         .eq('user_id', user.id)
         .eq('is_primary', true)
-        .single();
+        .maybeSingle();
       
-      // Asignar el nombre de la empresa desde la relación o usar el company_name del perfil como fallback
       const profileWithCompanyName = {
-        ...profileData,
-        company_name: companyMember?.companies?.name || profileData.company_name || 'Mi Empresa'
+        ...baseProfile,
+        company_name: companyMember?.companies?.name || baseProfile.company_name || 'Mi Empresa'
       };
       
       console.log('✅ Sesión verificada - Profile loaded with company name:', profileWithCompanyName.company_name);

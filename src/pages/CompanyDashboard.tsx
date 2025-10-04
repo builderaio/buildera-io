@@ -44,9 +44,16 @@ const CompanyDashboard = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Intentar obtener sesión con reintentos (evita expulsión tras OAuth)
+      let session = null as any;
+      for (let i = 0; i < 5; i++) {
+        const { data: { session: s } } = await supabase.auth.getSession();
+        session = s;
+        if (session?.user) break;
+        await new Promise(r => setTimeout(r, 500));
+      }
       
-      if (!session) {
+      if (!session || !session.user) {
         navigate('/auth');
         return;
       }

@@ -389,7 +389,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         await checkIfNewUser();
       }
     } catch (error) {
-      console.error('Error loading tour progress:', error);
+      console.error('Error cargando progreso del tour:', error);
     } finally {
       setLoading(false);
     }
@@ -414,7 +414,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         }
       }
     } catch (error) {
-      console.error('Error checking new user:', error);
+      console.error('Error verificando nuevo usuario:', error);
     }
   };
 
@@ -450,7 +450,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         });
       }
     } catch (error) {
-      console.error('Error saving tour state:', error);
+      console.error('Error guardando estado del tour:', error);
       if (!silent) {
         toast({
           title: "Error al guardar",

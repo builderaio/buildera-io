@@ -25,7 +25,7 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
       if (error) throw error;
       setSavedContent(data || []);
     } catch (error) {
-      console.error('Error loading saved content:', error);
+      console.error('Error cargando contenido guardado:', error);
     }
   };
 
@@ -45,7 +45,7 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
       toast({ title: "Contenido eliminado", description: "El contenido se ha eliminado de tu biblioteca" });
       loadSavedContent();
     } catch (error) {
-      console.error('Error deleting content:', error);
+      console.error('Error eliminando contenido:', error);
       toast({ title: "Error", description: "No se pudo eliminar el contenido", variant: "destructive" });
     }
   };

@@ -144,35 +144,35 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
 
       // Verificar errores y mostrar información detallada
       if (insightsRes.error) {
-        console.error('Error loading insights:', insightsRes.error);
+      console.error('Error cargando insights:', insightsRes.error);
         throw insightsRes.error;
       }
       if (actionablesRes.error) {
-        console.error('Error loading actionables:', actionablesRes.error);
+      console.error('Error cargando acciones:', actionablesRes.error);
         throw actionablesRes.error;
       }
       if (instagramRes.error) {
-        console.error('Error loading Instagram posts:', instagramRes.error);
+      console.error('Error cargando posts de Instagram:', instagramRes.error);
         throw instagramRes.error;
       }
       if (linkedinPostsRes.error) {
-        console.warn('LinkedIn posts not available:', linkedinPostsRes.error);
+        console.warn('Posts de LinkedIn no disponibles:', linkedinPostsRes.error);
       }
       if (linkedinConnectionRes.error) {
-        console.warn('LinkedIn connection not available');
+        console.warn('Conexión de LinkedIn no disponible');
       }
       if (tiktokRes.error) {
-        console.error('Error loading TikTok posts:', tiktokRes.error);
-        console.warn('TikTok posts not available');
+        console.error('Error cargando posts de TikTok:', tiktokRes.error);
+        console.warn('Posts de TikTok no disponibles');
       }
       if (facebookPostsRes.error) {
-        console.warn('Facebook posts not available:', facebookPostsRes.error);
+        console.warn('Posts de Facebook no disponibles:', facebookPostsRes.error);
       }
       if (facebookConnectionRes.error) {
-        console.warn('Facebook connection not available');
+        console.warn('Conexión de Facebook no disponible');
       }
       if (analyticsRes.error) {
-        console.error('Error loading analytics:', analyticsRes.error);
+        console.error('Error cargando analíticas:', analyticsRes.error);
         throw analyticsRes.error;
       }
 
@@ -222,7 +222,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       generatePlatformStats(data);
 
     } catch (error: any) {
-      console.error('Error loading analytics data:', error);
+      console.error('Error cargando datos de analítica:', error);
       toast({
         title: "Error cargando datos",
         description: `No se pudieron cargar los datos: ${error.message}`,
@@ -341,7 +341,7 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       const userId = profile.user_id;
       
       if (!userId) {
-        throw new Error('User ID no encontrado');
+        throw new Error('ID de usuario no encontrado');
       }
 
       const insights = [];

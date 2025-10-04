@@ -390,10 +390,10 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           description: `Se analizaron ${data.data?.length || 0} perfiles exitosamente`,
         });
       } else {
-        throw new Error(data.error || 'Failed to analyze URLs');
+        throw new Error(data.error || 'Error al analizar URLs');
       }
     } catch (error) {
-      console.error('Error analyzing social URLs:', error);
+      console.error('Error analizando URLs de redes sociales:', error);
       toast({
         title: "Error en el Análisis",
         description: "No se pudieron analizar las redes sociales",
@@ -451,10 +451,10 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           description: `Se analizaron ${data.results?.length || urlsToAnalyze.length} redes sociales exitosamente`,
         });
       } else {
-        throw new Error(data.error || 'Failed to analyze audience stats');
+        throw new Error(data.error || 'Error al analizar estadísticas de audiencia');
       }
     } catch (error) {
-      console.error('Error analyzing all networks:', error);
+      console.error('Error analizando todas las redes:', error);
       toast({
         title: "Error en el Análisis",
         description: "No se pudieron analizar las audiencias. Intenta de nuevo.",

@@ -226,7 +226,7 @@ export const CampaignWizard = ({
         description: `Se generaron ${data.campañas_recomendadas?.length || 0} campañas personalizadas`,
       });
     } catch (error: any) {
-      console.error('Error generating AI campaigns:', error);
+      console.error('Error generando campañas con IA:', error);
       toast({
         title: "Error",
         description: error.message || "No se pudieron generar las campañas con IA",

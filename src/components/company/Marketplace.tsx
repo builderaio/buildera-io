@@ -143,7 +143,7 @@ const Marketplace: React.FC = () => {
         setUserAgents([]);
       }
     } catch (error) {
-      console.error('Error loading marketplace data:', error);
+      console.error('Error cargando datos del marketplace:', error);
       toast({
         title: "Error",
         description: "Error cargando el marketplace de agentes",
@@ -214,7 +214,7 @@ const Marketplace: React.FC = () => {
       window.location.href = `/marketplace/agents/${agentId}/configure`;
       
     } catch (error: any) {
-      console.error('Error checking agent:', error);
+      console.error('Error verificando agente:', error);
       toast({
         title: "Error",
         description: "Error verificando el agente",
@@ -234,7 +234,7 @@ const Marketplace: React.FC = () => {
 
       await loadData();
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      console.error('Error alternando favorito:', error);
     }
   };
 

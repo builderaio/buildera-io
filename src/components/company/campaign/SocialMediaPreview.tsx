@@ -267,7 +267,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
       }, 'image/png');
       
     } catch (error) {
-      console.error('Error downloading content:', error);
+      console.error('Error descargando contenido:', error);
       toast({
         title: "Error en la descarga",
         description: "No se pudo descargar el contenido",
@@ -325,7 +325,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
       }
       
     } catch (error) {
-      console.error('Error saving to library:', error);
+      console.error('Error guardando en biblioteca:', error);
       toast({
         title: "Error al guardar",
         description: "No se pudo guardar el contenido en la biblioteca",

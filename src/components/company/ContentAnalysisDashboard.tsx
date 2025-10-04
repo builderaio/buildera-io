@@ -314,15 +314,15 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       } else if (data && data.error) {
         throw new Error(data.error);
       } else {
-        toast({
-          title: "Análisis sin resultados",
-          description: "No se pudieron obtener datos de sus redes sociales. Esto puede deberse a límites de la API externa. Intente nuevamente en unos minutos.",
-          variant: "default"
-        });
+      toast({
+        title: "Análisis sin resultados",
+        description: "No se pudieron obtener datos de sus redes sociales. Esto puede deberse a límites de la API externa. Intente nuevamente en unos minutos.",
+        variant: "default"
+      });
       }
 
     } catch (error: any) {
-      console.error('Error triggering content analysis:', error);
+      console.error('Error ejecutando análisis de contenido:', error);
       const isRateLimit = error?.message?.includes('429') || error?.message?.includes('rate limit');
       
       toast({
@@ -387,7 +387,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       }
 
     } catch (error) {
-      console.error('Error triggering analysis:', error);
+      console.error('Error ejecutando análisis:', error);
       toast({
         title: "Error en el análisis",
         description: "Hubo un error al ejecutar el análisis de contenido. Algunos servicios pueden estar temporalmente limitados.",

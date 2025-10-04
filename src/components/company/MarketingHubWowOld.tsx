@@ -611,7 +611,7 @@ const MarketingHubWow = ({
         console.warn('Error recargando métricas, continuando...', error);
       }
     } catch (error: any) {
-      console.error('❌ Error creating intelligent campaign:', error);
+      console.error('❌ Error creando campaña inteligente:', error);
       toast({
         title: "Error en la campaña",
         description: `No se pudo completar la campaña inteligente: ${error.message || 'Error desconocido'}`,

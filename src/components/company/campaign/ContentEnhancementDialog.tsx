@@ -115,7 +115,7 @@ export const ContentEnhancementDialog = ({
         description: "Tu imagen ha sido creada y guardada en la biblioteca"
       });
     } catch (error) {
-      console.error('Error generating image:', error);
+      console.error('Error generando imagen:', error);
       toast({
         title: "Error",
         description: "No se pudo generar la imagen. Intenta de nuevo.",
@@ -190,7 +190,7 @@ export const ContentEnhancementDialog = ({
         description: "Tu video ha sido creado y guardado en la biblioteca"
       });
     } catch (error) {
-      console.error('Error generating video:', error);
+      console.error('Error generando video:', error);
       toast({
         title: "Error", 
         description: "No se pudo generar el video. Intenta de nuevo.",
@@ -280,7 +280,7 @@ export const ContentEnhancementDialog = ({
         description: `Tu ${isImage ? 'imagen' : 'video'} ha sido subido y guardado en la biblioteca`
       });
     } catch (error: any) {
-      console.error('Error uploading file:', error);
+      console.error('Error subiendo archivo:', error);
       
       let errorMessage = "No se pudo subir el archivo. Intenta de nuevo.";
       

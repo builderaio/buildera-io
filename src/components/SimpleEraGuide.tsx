@@ -397,6 +397,17 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
 
   const checkIfNewUser = async () => {
     try {
+      // 🔍 Verificar si está en proceso de onboarding activo
+      const urlParams = new URLSearchParams(window.location.search);
+      const isInOnboardingProcess = urlParams.get('view') === 'onboarding' || 
+                                     urlParams.get('first_login') === 'true';
+      
+      if (isInOnboardingProcess) {
+        console.log('🚫 Usuario en proceso de onboarding, SimpleEraGuide no se mostrará');
+        setIsActive(false);
+        return;
+      }
+
       const { data: onboarding } = await supabase
         .from('user_onboarding_status')
         .select('onboarding_completed_at')
@@ -408,9 +419,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         const now = new Date();
         const hoursDiff = (now.getTime() - completedDate.getTime()) / (1000 * 3600);
         
-        if (hoursDiff <= 168) {
+        // Solo mostrar si completó onboarding hace menos de 7 días Y está en adn-empresa con parámetro
+        const onboardingJustCompleted = urlParams.get('onboarding_completed') === 'true';
+        
+        if (hoursDiff <= 168 && onboardingJustCompleted) {
+          console.log('✅ Mostrando SimpleEraGuide - onboarding completado recientemente');
           setShowWelcome(true);
-          setIsActive(false);
+          setIsActive(false); // No activar el tour automáticamente, solo mostrar bienvenida
         }
       }
     } catch (error) {

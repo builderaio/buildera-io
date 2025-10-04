@@ -403,7 +403,7 @@ const CompanyDashboard = () => {
       )}
       
       {/* Guía de Era para experiencia paso a paso */}
-      {user && !shouldShowOnboarding && (
+      {user && !shouldShowOnboarding && activeView !== 'onboarding' && (
         <SimpleEraGuide
           userId={user.id}
           currentSection={activeView}

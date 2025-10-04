@@ -1,19 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useStepVerifications } from '@/hooks/useStepVerifications';
 import { 
   Bot, 
   ArrowRight, 
   CheckCircle2, 
-  Target, 
   X, 
-  SkipForward,
   Sparkles,
-  RefreshCw,
   MessageCircle,
   Zap,
   Settings,
@@ -21,20 +19,36 @@ import {
   Users,
   FileText,
   Megaphone,
-  ShoppingCart
+  ShoppingCart,
+  Loader2,
+  Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface GuideStep {
   id: number;
   title: string;
-  description: string;
+  what: string; // QUÉ harás
+  why: string;  // POR QUÉ es importante
+  how: string;  // CÓMO hacerlo
   target_section: string;
   tab?: string;
   completed: boolean;
-  icon?: any;
-  actionText?: string;
-  color?: string;
+  icon: any;
+  actionText: string;
+  verificationText: string;
+  color: string;
+  requiresManualCompletion?: boolean;
 }
 
 interface SimpleEraGuideProps {
@@ -45,126 +59,173 @@ interface SimpleEraGuideProps {
 
 const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuideProps) => {
   const { toast } = useToast();
+  const [showWelcome, setShowWelcome] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-  const [connectedCount, setConnectedCount] = useState(0);
-  const TOTAL_PLATFORMS = 8;
+  const [verifying, setVerifying] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false);
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
+  const [recoveryData, setRecoveryData] = useState<any>(null);
+  
+  const autoSaveIntervalRef = useRef<NodeJS.Timeout>();
+  const verifications = useStepVerifications(userId);
 
   const steps: GuideStep[] = [
     {
       id: 1,
-      title: "Paso 1: Completar Perfil Empresarial",
-      description: "Actualiza la información de tu empresa (misión, valores, productos/servicios) en la sección ADN Empresa. Esto ayuda a Era a personalizar mejor sus recomendaciones.",
+      title: "Completa el ADN de tu Empresa",
+      what: "Configura la información esencial de tu negocio.",
+      why: "Esto permite que Era personalice todo el contenido y estrategias según tu identidad de marca única.",
+      how: "Ve a ADN Empresa y completa tu misión, valores y productos/servicios. Sin esto, las recomendaciones serán genéricas.",
       target_section: "adn-empresa",
       completed: false,
       icon: Settings,
       actionText: "Ir a ADN Empresa",
-      color: "from-blue-500 to-blue-600"
+      verificationText: "Verificar completado",
+      color: "from-blue-500 to-blue-600",
+      requiresManualCompletion: false
     },
     {
       id: 2,
-      title: "Paso 2: Conectar Redes Sociales",
-      description: "Conecta al menos una red social (LinkedIn, Instagram, Facebook, TikTok) usando el botón 'Conectar' en esta página. Una vez conectada, presiona 'Verificar conexión' para continuar.",
+      title: "Conecta tus Redes Sociales",
+      what: "Vincula al menos una red social (LinkedIn, Instagram, Facebook o TikTok).",
+      why: "Esto permite que Era analice tu audiencia actual, rendimiento de contenido y cree publicaciones optimizadas.",
+      how: "Ve a Configuración en Marketing Hub y presiona 'Conectar' en al menos una plataforma. Recomendamos conectar todas las que uses.",
       target_section: "marketing-hub",
       tab: "configuracion",
       completed: false,
       icon: Zap,
       actionText: "Ir a Configuración",
-      color: "from-green-500 to-green-600"
+      verificationText: "Verificar conexión",
+      color: "from-green-500 to-green-600",
+      requiresManualCompletion: false
     },
     {
       id: 3,
-      title: "Paso 3: Configurar URLs de Redes",
-      description: "Agrega las URLs públicas de tus perfiles sociales conectados en la sección 'Conexiones de Redes Sociales'. Esto permite que Era analice tu contenido. Presiona 'Marcar completado' cuando termines.",
+      title: "Configura URLs de tus Perfiles",
+      what: "Agrega las URLs públicas de tus perfiles en redes sociales.",
+      why: "Esto permite que Era analice tu contenido publicado y genere insights precisos sobre tu estrategia actual.",
+      how: "En Configuración → Conexiones de Redes Sociales, agrega las URLs de tus perfiles conectados.",
       target_section: "marketing-hub",
       tab: "configuracion",
       completed: false,
-      icon: Settings,
+      icon: MessageCircle,
       actionText: "Ir a Configuración",
-      color: "from-purple-500 to-purple-600"
+      verificationText: "Verificar URLs",
+      color: "from-purple-500 to-purple-600",
+      requiresManualCompletion: false
     },
     {
       id: 4,
-      title: "Paso 4: Analizar Audiencias",
-      description: "Usa la herramienta de análisis para descubrir insights sobre tu audiencia actual: demografía, intereses y comportamientos. Presiona el botón para iniciar el análisis con IA.",
+      title: "Analiza tu Audiencia",
+      what: "Descubre quién conforma tu audiencia actual.",
+      why: "Conocer demografía, intereses y comportamientos te permite crear contenido que realmente resuene con tu público.",
+      how: "Ve a Audiencias y presiona 'Analizar con IA'. Era procesará tus datos y generará insights detallados.",
       target_section: "audiencias-manager",
       completed: false,
       icon: BarChart3,
       actionText: "Ir a Audiencias",
-      color: "from-orange-500 to-orange-600"
+      verificationText: "Verificar análisis",
+      color: "from-orange-500 to-orange-600",
+      requiresManualCompletion: false
     },
     {
       id: 5,
-      title: "Paso 5: Analizar Contenido",
-      description: "Evalúa el rendimiento de tu contenido existente. Era identificará qué tipo de publicaciones funcionan mejor para optimizar tu estrategia. Espera a que se complete el análisis.",
+      title: "Evalúa tu Contenido Existente",
+      what: "Analiza el rendimiento de tus publicaciones anteriores.",
+      why: "Identifica qué tipo de contenido funciona mejor para optimizar tu estrategia futura y aumentar el engagement.",
+      how: "Ve a Análisis de Contenido e inicia el análisis. Era evaluará tus posts y te mostrará qué formatos y temas resonan más.",
       target_section: "content-analysis-dashboard",
       completed: false,
       icon: FileText,
-      actionText: "Analizar Contenido",
-      color: "from-cyan-500 to-cyan-600"
+      actionText: "Ir a Análisis de Contenido",
+      verificationText: "Verificar análisis",
+      color: "from-cyan-500 to-cyan-600",
+      requiresManualCompletion: false
     },
     {
       id: 6,
-      title: "Paso 6: Crear Segmentos de Audiencia",
-      description: "Define audiencias específicas por red social según los insights obtenidos. Esto permitirá personalizar tu contenido para cada plataforma y audiencia.",
+      title: "Crea Segmentos de Audiencia",
+      what: "Define buyer personas específicos por red social.",
+      why: "Cada plataforma tiene diferentes audiencias. Personalizar tu mensaje por segmento aumenta la efectividad de tus campañas.",
+      how: "En Audiencias, crea personas basados en los insights obtenidos. Define demografía, intereses y comportamientos específicos.",
       target_section: "audiencias-manager",
       completed: false,
       icon: Users,
-      actionText: "Crear Audiencias",
-      color: "from-pink-500 to-pink-600"
+      actionText: "Ir a Audiencias",
+      verificationText: "Verificar segmentos",
+      color: "from-pink-500 to-pink-600",
+      requiresManualCompletion: false
     },
     {
       id: 7,
-      title: "Paso 7: Crear tu Primera Campaña",
-      description: "Diseña una campaña de marketing completa usando el asistente. Define objetivos, audiencia, estrategia y contenido. Era te guiará en cada paso del proceso.",
+      title: "Diseña tu Primera Campaña",
+      what: "Crea una campaña de marketing completa guiada por Era.",
+      why: "Las campañas estructuradas generan mejores resultados que publicaciones aisladas. Era te ayudará a definir objetivos claros.",
+      how: "Ve a Marketing Hub → Campañas y usa el asistente. Define objetivos, audiencia, estrategia y calendario de contenido.",
       target_section: "marketing-hub",
       completed: false,
       icon: Megaphone,
       actionText: "Ir a Campañas",
-      color: "from-red-500 to-red-600"
+      verificationText: "✓ Completé este paso",
+      color: "from-red-500 to-red-600",
+      requiresManualCompletion: false
     },
     {
       id: 8,
-      title: "Paso 8: Generar Contenido con IA",
-      description: "Crea tu primer contenido optimizado usando la IA de Era. Selecciona el tipo de contenido, plataforma y tono. Era generará publicaciones listas para usar.",
+      title: "Genera tu Primer Contenido con IA",
+      what: "Crea publicaciones optimizadas usando la IA de Era.",
+      why: "Ahorra tiempo y genera contenido profesional adaptado a cada plataforma y audiencia específica.",
+      how: "Ve a Marketing Hub → Crear y selecciona el tipo de contenido. Era generará publicaciones listas para programar o publicar.",
       target_section: "marketing-hub",
       tab: "create",
       completed: false,
       icon: Sparkles,
-      actionText: "Crear Contenido",
-      color: "from-yellow-500 to-yellow-600"
+      actionText: "Ir a Crear Contenido",
+      verificationText: "Verificar contenido",
+      color: "from-yellow-500 to-yellow-600",
+      requiresManualCompletion: false
     },
     {
       id: 9,
-      title: "Paso 9: Explorar Agentes Especializados",
-      description: "Visita el Marketplace para descubrir agentes especializados que pueden ampliar las capacidades de tu negocio: ventas, atención al cliente, análisis, y más.",
+      title: "Explora el Marketplace de Agentes",
+      what: "Descubre agentes especializados para tu negocio.",
+      why: "Amplía las capacidades de tu empresa con agentes de IA para ventas, atención al cliente, análisis y más.",
+      how: "Visita el Marketplace y explora los agentes disponibles. Encuentra soluciones específicas para tus necesidades.",
       target_section: "marketplace",
       completed: false,
       icon: ShoppingCart,
-      actionText: "Ver Marketplace",
-      color: "from-indigo-500 to-indigo-600"
+      actionText: "Ir al Marketplace",
+      verificationText: "✓ Completé este paso",
+      color: "from-indigo-500 to-indigo-600",
+      requiresManualCompletion: true
     }
-  ] as (GuideStep & { icon: any; actionText: string; color: string })[];
+  ];
 
+  // Auto-save cada 30 segundos
   useEffect(() => {
-    loadTourProgress();
-  }, [userId]);
+    if (!isActive || !userId) return;
 
-  // Auto-save tour state when step changes
-  useEffect(() => {
-    if (isActive && userId) {
-      saveTourState();
-    }
-  }, [currentStep, completedSteps, isActive, userId]);
+    autoSaveIntervalRef.current = setInterval(() => {
+      console.log('💾 Auto-guardando progreso del tour...');
+      saveTourState(true);
+    }, 30000); // 30 segundos
 
-  // Save tour state when component unmounts (user navigates away)
+    return () => {
+      if (autoSaveIntervalRef.current) {
+        clearInterval(autoSaveIntervalRef.current);
+      }
+    };
+  }, [isActive, userId, currentStep, completedSteps]);
+
+  // Guardar antes de navegar
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (userId) {
-        // Forzar guardado en beforeunload
         saveTourState(true);
       }
     };
@@ -173,30 +234,15 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      // Siempre guardar al desmontar el componente, incluso si el tour no está activo
       if (userId) {
-        console.log('🔄 Saving tour state on unmount...');
         saveTourState(true);
       }
     };
-  }, [isActive, userId, currentStep, completedSteps]);
+  }, [userId, currentStep, completedSteps]);
 
-  // Cargar conteo de conexiones para mostrar "X/8 plataformas conectadas" en el paso 2
   useEffect(() => {
-    if (!userId || !isActive) return;
-    (async () => {
-      try {
-        const { data } = await supabase
-          .from('social_accounts')
-          .select('platform, is_connected')
-          .eq('user_id', userId);
-        const count = (data || []).filter(acc => acc.is_connected && (acc as any).platform !== 'upload_post_profile').length;
-        setConnectedCount(count);
-      } catch (e) {
-        console.warn('No se pudo cargar el conteo de conexiones:', e);
-      }
-    })();
-  }, [userId, isActive, currentStep]);
+    loadTourProgress();
+  }, [userId]);
 
   const loadTourProgress = async () => {
     if (!userId) return;
@@ -209,33 +255,26 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         .maybeSingle();
 
       if (tourStatus) {
+        const hasProgress = (tourStatus.completed_steps?.length || 0) > 0;
+        const isCompleted = tourStatus.tour_completed;
+
+        // Si hay progreso pero no está completado, mostrar diálogo de recuperación
+        if (hasProgress && !isCompleted) {
+          setRecoveryData(tourStatus);
+          setShowRecoveryDialog(true);
+        } else if (isCompleted) {
+          // Tour completado, no activar
+          setIsActive(false);
+        } else {
+          // Sin progreso, verificar si es nuevo usuario
+          await checkIfNewUser();
+        }
+
         setCompletedSteps(tourStatus.completed_steps || []);
         setCurrentStep(tourStatus.current_step || 1);
-        setIsActive(!tourStatus.tour_completed);
-        console.log('📖 Tour progress loaded:', {
-          currentStep: tourStatus.current_step,
-          completedSteps: tourStatus.completed_steps,
-          isActive: !tourStatus.tour_completed
-        });
       } else {
-        // Check if user needs tour (completed onboarding recently OR has incomplete tour)
-        const { data: onboarding } = await supabase
-          .from('user_onboarding_status')
-          .select('onboarding_completed_at')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (onboarding?.onboarding_completed_at) {
-          const completedDate = new Date(onboarding.onboarding_completed_at);
-          const now = new Date();
-          const hoursDiff = (now.getTime() - completedDate.getTime()) / (1000 * 3600);
-          
-          // Start tour for recent onboarding (within 7 days instead of 48 hours for better UX)
-          if (hoursDiff <= 168) { // 7 days
-            setIsActive(true);
-            startTour();
-          }
-        }
+        // Sin registro, verificar si es nuevo usuario
+        await checkIfNewUser();
       }
     } catch (error) {
       console.error('Error loading tour progress:', error);
@@ -244,9 +283,32 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     }
   };
 
-  const saveTourState = async (forceSave: boolean = false) => {
-    // Si no está activo y no es un guardado forzado, no guardar
-    if (!userId || (!isActive && !forceSave)) return;
+  const checkIfNewUser = async () => {
+    try {
+      const { data: onboarding } = await supabase
+        .from('user_onboarding_status')
+        .select('onboarding_completed_at')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (onboarding?.onboarding_completed_at) {
+        const completedDate = new Date(onboarding.onboarding_completed_at);
+        const now = new Date();
+        const hoursDiff = (now.getTime() - completedDate.getTime()) / (1000 * 3600);
+        
+        // Mostrar bienvenida para usuarios recientes (dentro de 7 días)
+        if (hoursDiff <= 168) {
+          setShowWelcome(true);
+          setIsActive(false); // No activar hasta que acepte la bienvenida
+        }
+      }
+    } catch (error) {
+      console.error('Error checking new user:', error);
+    }
+  };
+
+  const saveTourState = async (silent: boolean = false) => {
+    if (!userId) return;
 
     try {
       const stateToSave = {
@@ -266,17 +328,25 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           onConflict: 'user_id'
         });
 
-      if (error) {
-        console.error('❌ Error saving tour state:', error);
-      } else {
-        console.log('💾 Tour state saved:', {
-          currentStep,
-          completedSteps,
-          isCompleted: completedSteps.length === steps.length
+      if (error) throw error;
+
+      setLastSaved(new Date());
+      
+      if (!silent) {
+        toast({
+          title: "✓ Progreso guardado",
+          description: "Tu avance en el tour ha sido guardado correctamente.",
         });
       }
     } catch (error) {
-      console.error('❌ Exception saving tour state:', error);
+      console.error('Error saving tour state:', error);
+      if (!silent) {
+        toast({
+          title: "Error al guardar",
+          description: "No se pudo guardar tu progreso. Verifica tu conexión.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -295,50 +365,97 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       setIsActive(true);
       setCurrentStep(1);
       setCompletedSteps([]);
+      setShowWelcome(false);
+      
+      toast({
+        title: "🚀 Tour iniciado",
+        description: "¡Comencemos! Era te guiará paso a paso.",
+      });
     } catch (error) {
       console.error('Error starting tour:', error);
+    }
+  };
+
+  const verifyStepCompletion = async (stepId: number): Promise<boolean> => {
+    setVerifying(true);
+    
+    try {
+      let isComplete = false;
+
+      switch(stepId) {
+        case 1:
+          isComplete = await verifications.verifyCompanyProfile();
+          break;
+        case 2:
+          isComplete = await verifications.verifySocialConnections();
+          break;
+        case 3:
+          isComplete = await verifications.verifySocialURLs();
+          break;
+        case 4:
+          isComplete = await verifications.verifyAudienceAnalysis();
+          break;
+        case 5:
+          isComplete = await verifications.verifyContentAnalysis();
+          break;
+        case 6:
+          isComplete = await verifications.verifyBuyerPersonas();
+          break;
+        case 7:
+          isComplete = await verifications.verifyCampaignCreated();
+          break;
+        case 8:
+          isComplete = await verifications.verifyContentGenerated();
+          break;
+        case 9:
+          // Paso manual (visita al marketplace)
+          isComplete = true;
+          break;
+        default:
+          isComplete = false;
+      }
+
+      return isComplete;
+    } catch (error) {
+      console.error('Error verifying step:', error);
+      return false;
+    } finally {
+      setVerifying(false);
     }
   };
 
   const completeStep = async (stepId: number) => {
     if (completedSteps.includes(stepId)) return;
 
+    // Para pasos con verificación automática, verificar primero
+    const step = steps.find(s => s.id === stepId);
+    if (step && !step.requiresManualCompletion) {
+      const isComplete = await verifyStepCompletion(stepId);
+      
+      if (!isComplete) {
+        toast({
+          title: "Paso incompleto",
+          description: `Completa las acciones requeridas para este paso antes de continuar.`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     try {
       const newCompletedSteps = [...completedSteps, stepId];
-      
-      // Solo completar el paso actual, sin lógica especial
-      let finalCompletedSteps = newCompletedSteps;
-      
-      const nextStep = Math.max(...finalCompletedSteps) + 1;
-      const allCompleted = finalCompletedSteps.length === steps.length;
+      const nextStep = Math.max(...newCompletedSteps) + 1;
+      const allCompleted = newCompletedSteps.length === steps.length;
 
-      setCompletedSteps(finalCompletedSteps);
+      setCompletedSteps(newCompletedSteps);
       setCurrentStep(nextStep);
 
-      // Save state immediately after step completion
-      await supabase
-        .from('user_guided_tour')
-        .upsert({
-          user_id: userId,
-          current_step: allCompleted ? Math.max(...finalCompletedSteps) : nextStep,
-          completed_steps: finalCompletedSteps,
-          tour_completed: allCompleted,
-          updated_at: new Date().toISOString(),
-          ...(allCompleted && { tour_completed_at: new Date().toISOString() })
-        });
+      await saveTourState(true);
 
-      console.log('✅ Step completed and saved:', {
-        stepId,
-        currentStep: allCompleted ? Math.max(...finalCompletedSteps) : nextStep,
-        completedSteps: finalCompletedSteps,
-        allCompleted
-      });
-
-      // Navegar al siguiente paso si tiene tab específico y estamos en la misma sección
+      // Navegar al siguiente paso si tiene tab específico
       if (!allCompleted) {
         const nextStepData = steps.find(s => s.id === nextStep);
         if (nextStepData?.tab && nextStepData.target_section === currentSection) {
-          console.log('🎯 Navegando al tab del siguiente paso:', nextStepData.tab);
           onNavigate(nextStepData.target_section, { tab: nextStepData.tab });
         }
       }
@@ -346,21 +463,19 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       if (allCompleted) {
         setIsActive(false);
         toast({
-          title: "¡Tour completado exitosamente! 🎉",
-          description: "Has dominado todas las funciones principales de Buildera. Era está lista para asistirte en todo momento.",
+          title: "¡Felicitaciones! 🎉",
+          description: "Has completado el tour de Buildera. Era está lista para asistirte.",
         });
         
-        // Disparar evento para activar el CoachMark
         window.dispatchEvent(new CustomEvent('simple-era-guide-completed'));
+      } else {
+        toast({
+          title: "✓ Paso completado",
+          description: `Paso ${stepId} de ${steps.length} completado.`,
+        });
       }
-
     } catch (error) {
       console.error('Error completing step:', error);
-      toast({
-        title: "Error al guardar progreso",
-        description: "No se pudo guardar tu progreso. Por favor, verifica tu conexión e inténtalo nuevamente.",
-        variant: "destructive"
-      });
     }
   };
 
@@ -377,12 +492,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         });
 
       setIsActive(false);
+      setShowSkipConfirm(false);
+      
       toast({
-        title: "Tour completado",
-        description: "Puedes reactivar el tour guiado en cualquier momento presionando el botón Era (círculo morado) en la esquina inferior derecha.",
+        title: "Tour omitido",
+        description: "Puedes reactivarlo en cualquier momento con el botón Era.",
       });
       
-      // Disparar evento para activar el CoachMark incluso si se salta el tour
       window.dispatchEvent(new CustomEvent('simple-era-guide-completed'));
     } catch (error) {
       console.error('Error skipping tour:', error);
@@ -409,22 +525,39 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       
       toast({
         title: "Tour reiniciado",
-        description: "El tour guiado ha sido reiniciado desde el principio. ¡Comencemos!",
+        description: "El tour ha sido reiniciado desde el principio.",
       });
     } catch (error) {
       console.error('Error restarting tour:', error);
     }
   };
 
+  const handleRecoverTour = () => {
+    if (recoveryData) {
+      setCompletedSteps(recoveryData.completed_steps || []);
+      setCurrentStep(recoveryData.current_step || 1);
+      setIsActive(true);
+      setShowRecoveryDialog(false);
+      
+      toast({
+        title: "Tour recuperado",
+        description: `Continuando desde el paso ${recoveryData.current_step}.`,
+      });
+    }
+  };
+
+  const handleRestartFromRecovery = () => {
+    setShowRecoveryDialog(false);
+    restartTour();
+  };
+
   const nextIncompleteStep = steps.find(step => !completedSteps.includes(step.id));
   const progressPercentage = (completedSteps.length / steps.length) * 100;
   
-  // Verificar si estamos en la sección correcta Y tab correcto (si aplica)
   const isCurrentSectionRelevant = (() => {
     if (!nextIncompleteStep) return false;
     const isSameSection = nextIncompleteStep.target_section === currentSection;
     
-    // Si el paso tiene un tab específico, verificar que estemos en ese tab
     if (nextIncompleteStep.tab) {
       const urlParams = new URLSearchParams(window.location.search);
       const currentTab = urlParams.get('tab');
@@ -433,26 +566,142 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     
     return isSameSection;
   })();
-  
-  // Verificar si el paso 2 (conectar redes) puede completarse usando el mismo conteo que Conexiones de Redes Sociales
-  const canCompleteNetworkStep = async () => {
-    if (nextIncompleteStep?.id !== 2) return true;
-    try {
-      const { data, error } = await supabase
-        .from('social_accounts')
-        .select('platform, is_connected')
-        .eq('user_id', userId);
-      if (error) throw error as any;
-      const count = (data || []).filter(acc => acc.is_connected && (acc as any).platform !== 'upload_post_profile').length;
-      setConnectedCount(count);
-      console.log('🔍 Conteo de conexiones (tour):', { connected: count, total: TOTAL_PLATFORMS });
-      return count > 0;
-    } catch (error) {
-      console.error('Error checking network connections:', error);
-      return false;
-    }
+
+  // Formato de última guardada
+  const getLastSavedText = () => {
+    if (!lastSaved) return null;
+    const seconds = Math.floor((new Date().getTime() - lastSaved.getTime()) / 1000);
+    if (seconds < 60) return `hace ${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    return `hace ${minutes}m`;
   };
+
   if (loading) return null;
+
+  // Diálogo de bienvenida
+  if (showWelcome) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+          >
+            <Card className="max-w-2xl w-full shadow-2xl">
+              <CardContent className="p-8">
+                <motion.div
+                  className="flex justify-center mb-6"
+                  animate={{ 
+                    y: [0, -10, 0],
+                    scale: [1, 1.05, 1]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center">
+                      <Bot className="w-12 h-12 text-white" />
+                    </div>
+                    <motion.div
+                      animate={{ rotate: [0, 360] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                      className="absolute -top-2 -right-2"
+                    >
+                      <Sparkles className="w-8 h-8 text-yellow-400" />
+                    </motion.div>
+                  </div>
+                </motion.div>
+
+                <h2 className="text-3xl font-bold text-center mb-4">
+                  ¡Bienvenido a Buildera! 🚀
+                </h2>
+
+                <p className="text-lg text-center text-muted-foreground mb-6">
+                  <strong>Era</strong> es tu asistente empresarial con IA. Este tour de <strong>9 pasos (5-10 minutos)</strong> te guiará para configurar tu plataforma y obtener el máximo valor desde el primer día.
+                </p>
+
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 mb-6">
+                  <p className="font-semibold mb-3 text-center">Al finalizar podrás:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      <span className="text-sm">Generar contenido con IA</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      <span className="text-sm">Analizar audiencias</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      <span className="text-sm">Crear campañas automatizadas</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      <span className="text-sm">Optimizar tu estrategia</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button
+                    onClick={startTour}
+                    className="flex-1 h-12 text-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  >
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Comenzar Tour
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowWelcome(false);
+                      skipTour();
+                    }}
+                    variant="outline"
+                    className="flex-1 h-12 text-lg"
+                  >
+                    Saltar
+                  </Button>
+                </div>
+
+                <p className="text-xs text-center text-muted-foreground mt-4">
+                  Podrás reactivar el tour en cualquier momento
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  // Diálogo de recuperación
+  if (showRecoveryDialog) {
+    return (
+      <AlertDialog open={showRecoveryDialog} onOpenChange={setShowRecoveryDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tienes un tour en progreso</AlertDialogTitle>
+            <AlertDialogDescription>
+              Encontramos que habías avanzado hasta el paso {recoveryData?.current_step || 1} de {steps.length}.
+              ¿Quieres continuar desde donde lo dejaste o reiniciar desde el principio?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleRestartFromRecovery}>
+              Reiniciar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleRecoverTour}>
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
 
   if (!isActive) {
     return (
@@ -510,300 +759,325 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   }
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 50 }}
-        className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${
-          isMinimized ? 'w-16 h-16' : 'w-96'
-        }`}
-      >
-        {isMinimized ? (
-          <motion.div
-            animate={{ 
-              y: [0, -5, 0],
-              scale: [1, 1.05, 1]
-            }}
-            transition={{ 
-              duration: 2.5,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          >
-            <Button
-              onClick={() => setIsMinimized(false)}
-              className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden"
-              size="icon"
+    <>
+      {/* Diálogo de confirmación de saltar */}
+      <AlertDialog open={showSkipConfirm} onOpenChange={setShowSkipConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Saltar el tour?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Si saltas ahora, perderás el progreso del tour guiado. Podrás reactivarlo después, pero comenzarás desde el principio.
+              ¿Estás seguro que quieres saltar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={skipTour} className="bg-destructive hover:bg-destructive/90">
+              Sí, saltar tour
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className={`fixed bottom-6 right-6 z-50 transition-all duration-300 ${
+            isMinimized ? 'w-16 h-16' : 'w-96'
+          }`}
+        >
+          {isMinimized ? (
+            <motion.div
+              animate={{ 
+                y: [0, -5, 0],
+                scale: [1, 1.05, 1]
+              }}
+              transition={{ 
+                duration: 2.5,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
             >
-              <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-              />
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 3, repeat: Infinity }}
+              <Button
+                onClick={() => setIsMinimized(false)}
+                className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden"
+                size="icon"
               >
-                <Bot className="w-8 h-8 text-white relative z-10" />
-              </motion.div>
-              <motion.div
-                className="absolute -top-1 -right-1 z-20"
-                animate={{ 
-                  scale: [1, 1.3, 1],
-                  rotate: [0, 180, 360]
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                <Sparkles className="w-4 h-4 text-yellow-300" />
-              </motion.div>
-              {completedSteps.length > 0 && (
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-2 -left-2 z-20"
-                >
-                  <Badge className="bg-green-500 text-white text-xs font-bold">
-                    {completedSteps.length}/{steps.length}
-                  </Badge>
-                </motion.div>
-              )}
-              <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-10">
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                />
                 <motion.div
-                  className="text-xs font-bold text-white bg-black/30 px-2 py-1 rounded-full"
-                  animate={{ opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 3, repeat: Infinity }}
                 >
-                  Era
+                  <Bot className="w-8 h-8 text-white relative z-10" />
                 </motion.div>
-              </div>
-            </Button>
-          </motion.div>
-        ) : (
-          <Card className="shadow-xl border bg-gradient-to-br from-background to-background/95 backdrop-blur-sm">
-            <CardContent className="p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <motion.div 
-                    className="relative"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 3, repeat: Infinity }}
+                <motion.div
+                  className="absolute -top-1 -right-1 z-20"
+                  animate={{ 
+                    scale: [1, 1.3, 1],
+                    rotate: [0, 180, 360]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <Sparkles className="w-4 h-4 text-yellow-300" />
+                </motion.div>
+                {completedSteps.length > 0 && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-2 -left-2 z-20"
                   >
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center relative overflow-hidden">
-                      <motion.div
-                        animate={{ rotate: [0, 360] }}
-                        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                      />
-                      <Bot className="w-7 h-7 text-white relative z-10" />
-                    </div>
-                    <motion.div
-                      animate={{ 
-                        scale: [1, 1.2, 1],
-                        rotate: [0, 180, 360]
-                      }}
-                      transition={{ duration: 4, repeat: Infinity }}
-                      className="absolute -top-1 -right-1"
-                    >
-                      <Sparkles className="w-4 h-4 text-yellow-400" />
-                    </motion.div>
+                    <Badge className="bg-green-500 text-white text-xs font-bold">
+                      {completedSteps.length}/{steps.length}
+                    </Badge>
                   </motion.div>
-                  <div>
-                    <motion.h3 
-                      className="font-bold text-lg"
-                      animate={{ opacity: [0.8, 1, 0.8] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      Era
-                    </motion.h3>
-                    <p className="text-sm text-muted-foreground">Tu Asistente Empresarial</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsMinimized(true)}
-                    className="h-8 w-8 hover:bg-primary/10"
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={skipTour}
-                    className="h-8 w-8 hover:bg-destructive/10"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Progress */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Progreso del Tour</span>
-                  <Badge variant="secondary" className="text-xs">
-                    Paso {completedSteps.length + 1} de {steps.length}
-                  </Badge>
-                </div>
-                <motion.div
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  style={{ originX: 0 }}
-                >
-                  <Progress value={progressPercentage} className="h-3" />
-                </motion.div>
-              </div>
-
-              {/* Current Step */}
-              {nextIncompleteStep && (
-                <motion.div 
-                  className="space-y-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="flex items-start gap-4">
-                    <motion.div 
-                      className={`w-12 h-12 rounded-xl bg-gradient-to-r ${nextIncompleteStep.color} flex items-center justify-center flex-shrink-0 shadow-lg`}
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <nextIncompleteStep.icon className="w-6 h-6 text-white" />
-                    </motion.div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-base mb-2">{nextIncompleteStep.title}</h4>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {nextIncompleteStep.description}
-                      </p>
-                      {nextIncompleteStep.id === 1 && (
-                        <div className="text-sm bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                          <p className="font-medium text-blue-900 mb-1">Estado de conexiones:</p>
-                          <p className="text-blue-700">{connectedCount} de {TOTAL_PLATFORMS} plataformas conectadas</p>
-                          {connectedCount === 0 && (
-                            <p className="text-xs text-blue-600 mt-1">Conecta al menos una red para continuar</p>
-                          )}
-                        </div>
-                      )}
-
-                      <motion.div 
-                        className="flex items-center gap-2 mb-4"
-                        initial={{ scale: 0.9 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <Badge 
-                          variant={isCurrentSectionRelevant ? "default" : "outline"}
-                          className={isCurrentSectionRelevant ? "bg-green-100 text-green-800 border-green-300" : ""}
-                        >
-                          {isCurrentSectionRelevant ? "✓ Ya estás en la sección correcta" : "📍 Necesitas ir a otra sección"}
-                        </Badge>
-                      </motion.div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-3">
-                    {!isCurrentSectionRelevant ? (
-                      <motion.div
-                        className="flex-1"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Button
-                          onClick={() => {
-                            console.log('🎯 Navegando a sección:', nextIncompleteStep.target_section);
-                            // Si tiene tab específico, navegar con ese parámetro
-                            const navParams = nextIncompleteStep.tab ? { tab: nextIncompleteStep.tab } : undefined;
-                            onNavigate(nextIncompleteStep.target_section, navParams);
-                          }}
-                          size="sm"
-                          className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-medium"
-                        >
-                          <ArrowRight className="w-4 h-4 mr-2" />
-                          {nextIncompleteStep.actionText}
-                        </Button>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        className="flex-1"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Button
-                          onClick={async () => {
-                            // Verificar si es el paso de conectar redes
-                            if (nextIncompleteStep.id === 1) {
-                              const canComplete = await canCompleteNetworkStep();
-                              if (!canComplete) {
-                                toast({
-                                  title: "Conecta al menos una red social",
-                                  description: "Para continuar, presiona el botón 'Conectar' en una de las plataformas disponibles (LinkedIn, Instagram, Facebook o TikTok).",
-                                  variant: "destructive"
-                                });
-                                return;
-                              }
-                            }
-                            completeStep(nextIncompleteStep.id);
-                          }}
-                          size="sm"
-                          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium"
-                        >
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          {nextIncompleteStep.id === 1 ? "Verificar y continuar" : "Marcar como completado"}
-                        </Button>
-                      </motion.div>
-                    )}
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={skipTour}
-                      className="hover:bg-destructive/10"
-                    >
-                      <SkipForward className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Completed */}
-              {completedSteps.length === steps.length && (
-                <motion.div 
-                  className="text-center py-6"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <motion.div 
-                    className="w-20 h-20 rounded-full bg-gradient-to-r from-green-400 to-green-500 flex items-center justify-center mx-auto mb-4"
-                    animate={{ scale: [1, 1.1, 1] }}
+                )}
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-10">
+                  <motion.div
+                    className="text-xs font-bold text-white bg-black/30 px-2 py-1 rounded-full"
+                    animate={{ opacity: [0.7, 1, 0.7] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <CheckCircle2 className="w-10 h-10 text-white" />
+                    Era
                   </motion.div>
-                  <h4 className="font-bold text-xl mb-2">¡Felicitaciones! 🎉</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Has completado exitosamente el tour guiado de Buildera. Ahora conoces las funciones principales de la plataforma y Era está lista para asistirte en cualquier momento.
-                  </p>
-                  <Button
-                    onClick={skipTour}
-                    size="sm"
-                    className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white"
+                </div>
+              </Button>
+            </motion.div>
+          ) : (
+            <Card className="shadow-xl border bg-gradient-to-br from-background to-background/95 backdrop-blur-sm">
+              <CardContent className="p-6">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <motion.div 
+                      className="relative"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-purple-600 flex items-center justify-center relative overflow-hidden">
+                        <motion.div
+                          animate={{ rotate: [0, 360] }}
+                          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                        />
+                        <Bot className="w-7 h-7 text-white relative z-10" />
+                      </div>
+                      <motion.div
+                        animate={{ 
+                          scale: [1, 1.2, 1],
+                          rotate: [0, 180, 360]
+                        }}
+                        transition={{ duration: 4, repeat: Infinity }}
+                        className="absolute -top-1 -right-1"
+                      >
+                        <Sparkles className="w-4 h-4 text-yellow-400" />
+                      </motion.div>
+                    </motion.div>
+                    <div>
+                      <motion.h3 
+                        className="font-bold text-lg"
+                        animate={{ opacity: [0.8, 1, 0.8] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        Era - Tour Guiado
+                      </motion.h3>
+                      <p className="text-xs text-muted-foreground">Tu Asistente Empresarial</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {lastSaved && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Save className="w-3 h-3" />
+                        <span>{getLastSavedText()}</span>
+                      </div>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsMinimized(true)}
+                      className="h-8 w-8 hover:bg-primary/10"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowSkipConfirm(true)}
+                      className="h-8 w-8 hover:bg-destructive/10"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Progress */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Progreso del Tour</span>
+                    <Badge variant="secondary" className="text-xs">
+                      Paso {completedSteps.length + 1} de {steps.length}
+                    </Badge>
+                  </div>
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    style={{ originX: 0 }}
                   >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Comenzar a usar Buildera
-                  </Button>
-                </motion.div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </motion.div>
-    </AnimatePresence>
+                    <Progress value={progressPercentage} className="h-3" />
+                  </motion.div>
+                </div>
+
+                {/* Current Step */}
+                {nextIncompleteStep && (
+                  <motion.div 
+                    className="space-y-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <motion.div 
+                        className={`w-12 h-12 rounded-xl bg-gradient-to-r ${nextIncompleteStep.color} flex items-center justify-center flex-shrink-0 shadow-lg`}
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <nextIncompleteStep.icon className="w-6 h-6 text-white" />
+                      </motion.div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-base mb-2">{nextIncompleteStep.title}</h4>
+                        
+                        <div className="space-y-2 text-sm mb-3">
+                          <div className="bg-muted/50 rounded-lg p-3">
+                            <p className="font-semibold mb-1">¿Qué harás?</p>
+                            <p className="text-muted-foreground">{nextIncompleteStep.what}</p>
+                          </div>
+                          <div className="bg-primary/5 rounded-lg p-3">
+                            <p className="font-semibold mb-1">¿Por qué es importante?</p>
+                            <p className="text-muted-foreground">{nextIncompleteStep.why}</p>
+                          </div>
+                          <div className="bg-muted/50 rounded-lg p-3">
+                            <p className="font-semibold mb-1">¿Cómo hacerlo?</p>
+                            <p className="text-muted-foreground">{nextIncompleteStep.how}</p>
+                          </div>
+                        </div>
+
+                        <motion.div 
+                          className="flex items-center gap-2 mb-4"
+                          initial={{ scale: 0.9 }}
+                          animate={{ scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <Badge 
+                            variant={isCurrentSectionRelevant ? "default" : "outline"}
+                            className={isCurrentSectionRelevant ? "bg-green-100 text-green-800 border-green-300" : ""}
+                          >
+                            {isCurrentSectionRelevant ? "✓ Ya estás en la sección correcta" : "📍 Necesitas ir a otra sección"}
+                          </Badge>
+                        </motion.div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3">
+                      {!isCurrentSectionRelevant ? (
+                        <motion.div
+                          className="flex-1"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Button
+                            onClick={() => {
+                              const navParams = nextIncompleteStep.tab ? { tab: nextIncompleteStep.tab } : undefined;
+                              onNavigate(nextIncompleteStep.target_section, navParams);
+                            }}
+                            size="sm"
+                            className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-medium"
+                          >
+                            <ArrowRight className="w-4 h-4 mr-2" />
+                            {nextIncompleteStep.actionText} →
+                          </Button>
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          className="flex-1"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Button
+                            onClick={() => completeStep(nextIncompleteStep.id)}
+                            size="sm"
+                            disabled={verifying}
+                            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium"
+                          >
+                            {verifying ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Verificando...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                {nextIncompleteStep.verificationText}
+                              </>
+                            )}
+                          </Button>
+                        </motion.div>
+                      )}
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSkipConfirm(true)}
+                        className="hover:bg-destructive/10"
+                        title="Saltar tour"
+                      >
+                        Saltar
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Completed */}
+                {completedSteps.length === steps.length && (
+                  <motion.div 
+                    className="text-center py-6"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <motion.div 
+                      className="w-20 h-20 rounded-full bg-gradient-to-r from-green-400 to-green-500 flex items-center justify-center mx-auto mb-4"
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <CheckCircle2 className="w-10 h-10 text-white" />
+                    </motion.div>
+                    <h4 className="font-bold text-xl mb-2">¡Felicitaciones! 🎉</h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Has completado exitosamente el tour de Buildera. Ahora conoces todas las funciones principales y Era está lista para asistirte en cualquier momento.
+                    </p>
+                    <Button
+                      onClick={skipTour}
+                      size="sm"
+                      className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Comenzar a usar Buildera
+                    </Button>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </>
   );
 };
 

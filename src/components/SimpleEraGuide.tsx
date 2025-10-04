@@ -78,6 +78,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
   const [recoveryData, setRecoveryData] = useState<any>(null);
+  const [showTourBadge, setShowTourBadge] = useState(false); // 🆕 Badge de tour disponible
   
   // 🆕 Nuevos estados para mejoras
   const [autoMinimized, setAutoMinimized] = useState(false);
@@ -238,6 +239,31 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     };
   }, [isActive, userId, currentStep, completedSteps]);
 
+  // 🆕 Guardar y restaurar estado en localStorage para persistencia entre recargas
+  useEffect(() => {
+    if (isActive && userId) {
+      localStorage.setItem('simple-era-guide-active', 'true');
+      localStorage.setItem('simple-era-guide-current-step', currentStep.toString());
+      console.log('💾 [SimpleEraGuide] Guardando estado en localStorage', { isActive, currentStep });
+    } else if (!isActive && userId) {
+      localStorage.removeItem('simple-era-guide-active');
+    }
+  }, [isActive, currentStep, userId]);
+
+  // 🆕 Al cargar, verificar localStorage para restaurar estado
+  useEffect(() => {
+    if (!isActive && !loading && userId) {
+      const wasActive = localStorage.getItem('simple-era-guide-active') === 'true';
+      const savedStep = parseInt(localStorage.getItem('simple-era-guide-current-step') || '1');
+      
+      if (wasActive) {
+        setIsActive(true);
+        setCurrentStep(savedStep);
+        console.log('🔄 [SimpleEraGuide] Restaurando desde localStorage', { savedStep });
+      }
+    }
+  }, [loading, userId]);
+  
   // 🆕 Cargar preferencias de localStorage
   useEffect(() => {
     const savedMinimized = localStorage.getItem('simple-era-guide-minimized');
@@ -423,9 +449,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         const onboardingJustCompleted = urlParams.get('onboarding_completed') === 'true';
         
         if (hoursDiff <= 168 && onboardingJustCompleted) {
-          console.log('✅ Mostrando SimpleEraGuide - onboarding completado recientemente');
+          console.log('✅ [SimpleEraGuide] Onboarding completado recientemente - auto-activando tour');
           setShowWelcome(true);
-          setIsActive(false); // No activar el tour automáticamente, solo mostrar bienvenida
+          setIsActive(true); // 🆕 CAMBIO: Activar tour automáticamente después del onboarding
         }
       }
     } catch (error) {
@@ -547,6 +573,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       setCurrentStep(1);
       setCompletedSteps([]);
       setShowWelcome(false);
+      setShowTourBadge(false); // 🆕 Ocultar badge al iniciar tour
       
       toast({
         title: "🚀 Tour iniciado",
@@ -773,6 +800,32 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   // 🆕 Si está temporalmente oculto, no renderizar
   if (temporarilyHidden) {
     return null;
+  }
+  
+  // 🆕 Badge flotante de "Tour Disponible" cuando se cierra el welcome sin iniciar
+  if (showTourBadge && !isActive) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="fixed bottom-6 right-6 z-50"
+      >
+        <Button
+          onClick={() => {
+            setShowTourBadge(false);
+            setShowWelcome(true);
+          }}
+          className="rounded-full shadow-2xl hover:scale-110 transition-all h-14 px-6 group bg-gradient-to-r from-primary to-primary/80"
+          size="lg"
+        >
+          <Sparkles className="w-5 h-5 mr-2 animate-pulse" />
+          <span className="font-medium">Iniciar Tour de Era</span>
+          <Badge className="ml-2 bg-primary-foreground/20 hover:bg-primary-foreground/30">
+            {steps.length} pasos
+          </Badge>
+        </Button>
+      </motion.div>
+    );
   }
 
   // 🎯 MINIMIZED STATE: Botón flotante con peek
@@ -1091,7 +1144,17 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowWelcome(false)}>
+            <AlertDialogCancel onClick={() => {
+              setShowWelcome(false);
+              if (!isActive) {
+                setShowTourBadge(true);
+                toast({
+                  title: "Tour disponible",
+                  description: "Puedes iniciar el tour en cualquier momento desde el botón flotante.",
+                  duration: 5000
+                });
+              }
+            }}>
               Explorar por mi cuenta
             </AlertDialogCancel>
             <AlertDialogAction onClick={startTour}>

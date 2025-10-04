@@ -381,9 +381,15 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       // Disparar evento personalizado para notificar que se completó el onboarding
       window.dispatchEvent(new CustomEvent('onboarding-completed'));
       
-      // Navigate to ADN Empresa with flag to show coachmark
+      // Navigate to ADN Empresa with flag to show coachmark (usar navigate en lugar de window.location.href)
+      console.log('🚀 [OnboardingOrchestrator] Redirigiendo a ADN Empresa', {
+        userId: user.id,
+        method: 'navigate',
+        url: '/company-dashboard?view=adn-empresa&onboarding_completed=true'
+      });
+      
       setTimeout(() => {
-        window.location.href = '/company-dashboard?view=adn-empresa&onboarding_completed=true';
+        navigate('/company-dashboard?view=adn-empresa&onboarding_completed=true', { replace: true });
       }, 1500);
 
     } catch (error) {
@@ -395,9 +401,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       });
       
       // Even if there's an error, try to redirect to ADN Empresa
-      console.log('🚀 Redirección de emergencia a ADN Empresa...');
+      console.log('🚀 [OnboardingOrchestrator] Redirección de emergencia a ADN Empresa...');
       setTimeout(() => {
-        window.location.href = '/company-dashboard?view=adn-empresa&onboarding_completed=true';
+        navigate('/company-dashboard?view=adn-empresa&onboarding_completed=true', { replace: true });
       }, 1000);
     }
   };

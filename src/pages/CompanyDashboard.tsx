@@ -79,11 +79,10 @@ const CompanyDashboard = () => {
         setActiveView('adn-empresa');
         setShouldShowOnboarding(false);
         
-        // Si viene de completar onboarding, NO activar coachmark aún
-        // El coachmark se activará después de que el usuario complete el SimpleEraGuide
-        if (onboardingCompletedParam === 'true') {
-          console.log('🎯 Onboarding completado, el coachmark se mostrará después del SimpleEraGuide');
-        }
+        console.log('🎯 [CompanyDashboard] Llegada a ADN Empresa', {
+          onboardingCompletedParam,
+          userId: session.user.id
+        });
         
         // Cargar el perfil para asegurar que ADNEmpresa pueda obtener datos de la BD
         const { data: profileData } = await supabase
@@ -91,12 +90,41 @@ const CompanyDashboard = () => {
           .select('*')
           .eq('user_id', session.user.id)
           .maybeSingle();
+        
         if (profileData) {
           setProfile(profileData);
         } else {
           // Fallback mínimo para disparar el cargue por user_id en el hijo
           setProfile({ user_id: session.user.id, email: session.user.email });
         }
+        
+        // 🆕 NUEVO: Verificar si debe mostrar SimpleEraGuide automáticamente
+        const { data: guideTour } = await supabase
+          .from('user_guided_tour')
+          .select('tour_completed')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        // Si NO ha completado el tour Y viene de onboarding, forzar parámetro
+        if (!guideTour?.tour_completed && onboardingCompletedParam !== 'true') {
+          const { data: onboarding } = await supabase
+            .from('user_onboarding_status')
+            .select('onboarding_completed_at')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+            
+          if (onboarding?.onboarding_completed_at) {
+            const completedDate = new Date(onboarding.onboarding_completed_at);
+            const hoursDiff = (new Date().getTime() - completedDate.getTime()) / (1000 * 3600);
+            
+            // Si completó hace menos de 7 días, forzar mostrar guía
+            if (hoursDiff <= 168) {
+              console.log('🎯 [CompanyDashboard] Forzando parámetro onboarding_completed para SimpleEraGuide');
+              window.history.replaceState({}, '', '/company-dashboard?view=adn-empresa&onboarding_completed=true');
+            }
+          }
+        }
+        
         setLoading(false);
         return;
       } else if (viewParam) {

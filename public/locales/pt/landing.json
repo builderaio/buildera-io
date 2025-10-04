@@ -1,0 +1,170 @@
+{
+  "hero": {
+    "badge": "Tecnologia empresarial confiável",
+    "title": "Automatize seu negócio",
+    "subtitle": "simples, seguro e escalável",
+    "description": "Especialistas de IA trabalhando para você: menos operação, mais resultados. Você foca no crescimento.",
+    "stats": {
+      "companies": "Empresas confiando",
+      "costReduction": "Redução de custos",
+      "implementation": "Implementação"
+    },
+    "cta": {
+      "start": "Começar agora",
+      "useCases": "Ver casos de uso"
+    },
+    "trust": {
+      "message": "Mais de 500 empresas já automatizaram seus processos com a Buildera",
+      "badge": "Líderes em automação empresarial"
+    }
+  },
+  "values": {
+    "secure": {
+      "title": "Seguro por design",
+      "description": "Seus dados e operações, protegidos"
+    },
+    "scalable": {
+      "title": "Escala sem fricção",
+      "description": "Cresça sem aumentar sua carga"
+    },
+    "flexible": {
+      "title": "Flexível ao seu negócio",
+      "description": "Se adapta à sua forma de trabalhar"
+    }
+  },
+  "problem": {
+    "title": "O problema nas empresas e nossa solução",
+    "subtitle": "Você precisa de resultados sem inflar sua estrutura. Damos a você uma equipe de IA pronta para operar, com segurança, controle e foco em resultados.",
+    "challenges": {
+      "title": "A realidade de muitas empresas",
+      "dispersed": {
+        "title": "Operação dispersa e pouco tempo",
+        "description": "você passa mais tempo operando do que gerando valor."
+      },
+      "expertise": {
+        "title": "Expertise caro ou difícil de conseguir",
+        "description": "especialistas por área elevam custos e complexidade."
+      },
+      "visibility": {
+        "title": "Falta de visibilidade e controle",
+        "description": "decisões sem dados e processos pouco mensuráveis."
+      }
+    },
+    "solution": {
+      "title": "Como a Buildera te ajuda",
+      "specialists": {
+        "title": "Especialistas virtuais por área",
+        "description": "marketing, vendas, serviço, finanças e mais, operando 24/7."
+      },
+      "security": {
+        "title": "Segurança, escalabilidade e flexibilidade",
+        "description": "controles por funções, rastreabilidade e fluxos que se adaptam à sua operação."
+      },
+      "measurable": {
+        "title": "Resultados mensuráveis",
+        "description": "KPIs e relatórios para decidir e otimizar com clareza."
+      }
+    }
+  },
+  "ecosystem": {
+    "title": "Ecossistema que impulsiona seu crescimento",
+    "subtitle": "Empresas, desenvolvedores e especialistas trabalhando juntos para operar com IA de forma simples e efetiva.",
+    "roles": {
+      "companies": "Empresas",
+      "developers": "Desenvolvedores",
+      "experts": "Especialistas"
+    },
+    "companies": {
+      "title": "Empresas",
+      "description": "Operam com agentes de IA feitos sob medida.",
+      "benefits": {
+        "lessOperation": "Menos operação",
+        "moreGrowth": "Mais crescimento",
+        "measurable": "Processos mensuráveis"
+      }
+    },
+    "developers": {
+      "title": "Desenvolvedores",
+      "description": "Criam e escalam agentes prontos para o mercado.",
+      "benefits": {
+        "timeToMarket": "Time-to-market",
+        "reusable": "Templates reutilizáveis",
+        "scalability": "Escalabilidade"
+      }
+    },
+    "experts": {
+      "title": "Especialistas",
+      "description": "Garantem alinhamento estratégico e ético.",
+      "benefits": {
+        "bestPractices": "Boas práticas",
+        "governance": "Governança e controle",
+        "reliable": "Resultados confiáveis"
+      }
+    },
+    "impact": "Resultado: menos operação, mais crescimento — com uma experiência simples e segura."
+  },
+  "useCases": {
+    "title": "Casos de uso",
+    "subtitle": "O que você pode automatizar hoje para reduzir operação e focar no crescimento.",
+    "cases": {
+      "socialMedia": {
+        "title": "Marketing em redes sociais",
+        "description": "Publicações, respostas e calendário automático para Instagram e Facebook.",
+        "features": ["Ideias e copies prontos", "Publicação programada", "Respostas 24/7"]
+      },
+      "customerService": {
+        "title": "Atendimento ao cliente 24/7",
+        "description": "WhatsApp, web ou redes: respostas rápidas, agendamento e acompanhamento.",
+        "features": ["Perguntas frequentes", "Agendamento", "Escalonamento para humano"]
+      },
+      "sales": {
+        "title": "Vendas e prospecção",
+        "description": "Capture leads, qualifique-os e faça acompanhamento sem perder oportunidades.",
+        "features": ["Formulários e chat", "Lead scoring", "Lembretes automáticos"]
+      },
+      "ecommerce": {
+        "title": "E-commerce",
+        "description": "Catálogo, inventário e recomendações para movimentar seus produtos.",
+        "features": ["Sincroniza catálogo", "Promoções por temporada", "Carrinhos recuperados"]
+      },
+      "professionalServices": {
+        "title": "Serviços profissionais",
+        "description": "Agenda, confirmações e lembretes para consultas sem fricções.",
+        "features": ["Reserva online", "Lembretes", "Pesquisas pós-serviço"]
+      },
+      "education": {
+        "title": "Educação e cursos",
+        "description": "Matrículas, acompanhamento e comunicação com estudantes.",
+        "features": ["Inscrição simples", "Onboarding", "Progresso e avisos"]
+      }
+    }
+  },
+  "finalCta": {
+    "title": "Pronto para operar seu negócio com IA segura e escalável?",
+    "description": "Ative especialistas virtuais para marketing, vendas e serviço com segurança empresarial, controle total e resultados reais.",
+    "button": "Ativar minha equipe de especialistas"
+  },
+  "footer": {
+    "brand": {
+      "name": "BUILDERA",
+      "tagline": "Building the New Era.",
+      "copyright": "© 2025 Innoventum S.A.S. Todos os direitos reservados."
+    },
+    "solution": {
+      "title": "Solução",
+      "platform": "Plataforma",
+      "ecosystem": "Ecossistema",
+      "useCases": "Casos de Uso"
+    },
+    "company": {
+      "title": "Empresa",
+      "about": "Sobre Nós",
+      "contact": "Contato",
+      "terms": "Termos de Serviço",
+      "privacy": "Política de Privacidade"
+    },
+    "connect": {
+      "title": "Conectar"
+    }
+  }
+}

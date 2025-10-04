@@ -1,0 +1,170 @@
+{
+  "hero": {
+    "badge": "Tecnología empresarial confiable",
+    "title": "Automatiza tu negocio",
+    "subtitle": "simple, seguro y escalable",
+    "description": "Especialistas de IA que trabajan por ti: menos operación, más resultados. Tú te enfocas en crecer.",
+    "stats": {
+      "companies": "Empresas confiando",
+      "costReduction": "Reducción de costos",
+      "implementation": "Implementación"
+    },
+    "cta": {
+      "start": "Comenzar ahora",
+      "useCases": "Ver casos de uso"
+    },
+    "trust": {
+      "message": "Más de 500 empresas ya han automatizado sus procesos con Buildera",
+      "badge": "Líderes en automatización empresarial"
+    }
+  },
+  "values": {
+    "secure": {
+      "title": "Seguro por diseño",
+      "description": "Tus datos y operaciones, protegidos"
+    },
+    "scalable": {
+      "title": "Escala sin fricción",
+      "description": "Crece sin aumentar tu carga"
+    },
+    "flexible": {
+      "title": "Flexible a tu negocio",
+      "description": "Se adapta a tu forma de trabajar"
+    }
+  },
+  "problem": {
+    "title": "El problema en las empresas y nuestra solución",
+    "subtitle": "Necesitas resultados sin inflar tu estructura. Te damos un equipo de IA listo para operar, con seguridad, control y enfoque en resultados.",
+    "challenges": {
+      "title": "La realidad de muchas empresas",
+      "dispersed": {
+        "title": "Operación dispersa y poco tiempo",
+        "description": "pasas más tiempo operando que generando valor."
+      },
+      "expertise": {
+        "title": "Expertise costoso o difícil de conseguir",
+        "description": "especialistas por área elevan costos y complejidad."
+      },
+      "visibility": {
+        "title": "Falta de visibilidad y control",
+        "description": "decisiones sin datos y procesos poco medibles."
+      }
+    },
+    "solution": {
+      "title": "Cómo te ayuda Buildera",
+      "specialists": {
+        "title": "Especialistas virtuales por área",
+        "description": "marketing, ventas, servicio, finanzas y más, operando 24/7."
+      },
+      "security": {
+        "title": "Seguridad, escalabilidad y flexibilidad",
+        "description": "controles por roles, trazabilidad y flujos que se adaptan a tu operación."
+      },
+      "measurable": {
+        "title": "Resultados medibles",
+        "description": "KPIs y reportes para decidir y optimizar con claridad."
+      }
+    }
+  },
+  "ecosystem": {
+    "title": "Ecosistema que impulsa tu crecimiento",
+    "subtitle": "Empresas, desarrolladores y expertos trabajando juntos para operar con IA de forma simple y efectiva.",
+    "roles": {
+      "companies": "Empresas",
+      "developers": "Desarrolladores",
+      "experts": "Expertos"
+    },
+    "companies": {
+      "title": "Empresas",
+      "description": "Operan con agentes de IA hechos a su medida.",
+      "benefits": {
+        "lessOperation": "Menos operación",
+        "moreGrowth": "Más crecimiento",
+        "measurable": "Procesos medibles"
+      }
+    },
+    "developers": {
+      "title": "Desarrolladores",
+      "description": "Crean y escalan agentes listos para el mercado.",
+      "benefits": {
+        "timeToMarket": "Time‑to‑market",
+        "reusable": "Plantillas reutilizables",
+        "scalability": "Escalabilidad"
+      }
+    },
+    "experts": {
+      "title": "Expertos",
+      "description": "Aseguran alineación estratégica y ética.",
+      "benefits": {
+        "bestPractices": "Buenas prácticas",
+        "governance": "Gobierno y control",
+        "reliable": "Resultados confiables"
+      }
+    },
+    "impact": "Resultado: menos operación, más crecimiento — con una experiencia simple y segura."
+  },
+  "useCases": {
+    "title": "Casos de uso",
+    "subtitle": "Lo que puedes automatizar hoy para reducir operación y enfocarte en crecer.",
+    "cases": {
+      "socialMedia": {
+        "title": "Marketing en redes sociales",
+        "description": "Publicaciones, respuestas y calendario automático para Instagram y Facebook.",
+        "features": ["Ideas y copies listos", "Publicación programada", "Respuestas 24/7"]
+      },
+      "customerService": {
+        "title": "Atención al cliente 24/7",
+        "description": "WhatsApp, web o redes: respuestas rápidas, agenda y seguimiento.",
+        "features": ["Preguntas frecuentes", "Agendamiento", "Escalamiento a humano"]
+      },
+      "sales": {
+        "title": "Ventas y prospección",
+        "description": "Captura leads, califícalos y haz seguimiento sin perder oportunidades.",
+        "features": ["Formularios y chat", "Lead scoring", "Recordatorios automáticos"]
+      },
+      "ecommerce": {
+        "title": "E‑commerce",
+        "description": "Catálogo, inventario y recomendaciones para mover tus productos.",
+        "features": ["Sincroniza catálogo", "Promos por temporada", "Carritos recuperados"]
+      },
+      "professionalServices": {
+        "title": "Servicios profesionales",
+        "description": "Agenda, confirmaciones y recordatorios para citas sin fricciones.",
+        "features": ["Reserva online", "Recordatorios", "Encuestas post‑servicio"]
+      },
+      "education": {
+        "title": "Educación y cursos",
+        "description": "Matrículas, seguimiento y comunicación con estudiantes.",
+        "features": ["Inscripción simple", "Onboarding", "Progreso y avisos"]
+      }
+    }
+  },
+  "finalCta": {
+    "title": "¿Listo para operar tu negocio con IA segura y escalable?",
+    "description": "Activa especialistas virtuales para marketing, ventas y servicio con seguridad empresarial, control total y resultados reales.",
+    "button": "Activar mi equipo de especialistas"
+  },
+  "footer": {
+    "brand": {
+      "name": "BUILDERA",
+      "tagline": "Building the New Era.",
+      "copyright": "© 2025 Innoventum S.A.S. Todos los derechos reservados."
+    },
+    "solution": {
+      "title": "Solución",
+      "platform": "Plataforma",
+      "ecosystem": "Ecosistema",
+      "useCases": "Casos de Uso"
+    },
+    "company": {
+      "title": "Compañía",
+      "about": "Sobre Nosotros",
+      "contact": "Contacto",
+      "terms": "Términos de Servicio",
+      "privacy": "Política de Privacidad"
+    },
+    "connect": {
+      "title": "Conectar"
+    }
+  }
+}

@@ -19,6 +19,7 @@ i18n
     defaultNS: 'common',
     ns: [
       'common',
+      'landing',
       'auth',
       'dashboard',
       'marketing',

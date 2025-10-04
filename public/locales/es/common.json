@@ -69,5 +69,48 @@
     "spanish": "Español",
     "english": "English",
     "portuguese": "Português"
+  },
+  "dashboard": {
+    "mandoCentral": "Mando Central",
+    "adn": "ADN del Negocio",
+    "marketing": "Marketing Hub",
+    "intelligencia": "Inteligencia Competitiva",
+    "audiencias": "Mis Audiencias",
+    "workforce": "Mi Workforce IA",
+    "agents": "Mis Agentes",
+    "knowledge": "Base de Conocimiento",
+    "academy": "Academia Buildera",
+    "marketplace": "Marketplace",
+    "experts": "Expertos",
+    "configuration": "Configuración",
+    "myProfile": "Mi Perfil"
+  },
+  "onboarding": {
+    "title": "Configuración Automática",
+    "subtitle": "Estamos configurando tu perfil empresarial",
+    "step1": {
+      "title": "Obteniendo la información de tu negocio",
+      "description": "Extrayendo datos básicos de tu empresa"
+    },
+    "step2": {
+      "title": "Estructurando tu estrategia de negocio",
+      "description": "Definiendo misión, visión y propuesta de valor"
+    },
+    "step3": {
+      "title": "Analizando tu marca",
+      "description": "Creando tu identidad visual y branding"
+    },
+    "step4": {
+      "title": "Definiendo objetivos de crecimiento",
+      "description": "Estableciendo metas estratégicas para tu empresa"
+    },
+    "step5": {
+      "title": "Creando tu asistente ERA",
+      "description": "Configurando tu copiloto empresarial personalizado"
+    },
+    "retry": "Reintentar paso actual",
+    "continue": "Continuar al Dashboard",
+    "allComplete": "¡Configuración completada!",
+    "allCompleteDesc": "Tu perfil empresarial está listo"
   }
 }

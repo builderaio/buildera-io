@@ -8,6 +8,7 @@ import { CheckCircle, Circle, Loader2, Globe, Target, Palette, TrendingUp, Bot }
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface OnboardingStep {
   id: number;
@@ -32,6 +33,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const [hasError, setHasError] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation(['common']);
 
   // Obtener la URL del sitio web de la empresa al cargar
   useEffect(() => {
@@ -78,40 +80,40 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const [steps, setSteps] = useState<OnboardingStep[]>([
     {
       id: 1,
-      title: "Obteniendo la información de tu negocio",
-      description: "Extrayendo datos básicos de tu empresa",
+      title: t('common:onboarding.step1.title'),
+      description: t('common:onboarding.step1.description'),
       icon: <Globe className="h-5 w-5" />,
       completed: false,
       loading: false
     },
     {
       id: 2,
-      title: "Estructurando tu estrategia de negocio",
-      description: "Definiendo misión, visión y propuesta de valor",
+      title: t('common:onboarding.step2.title'),
+      description: t('common:onboarding.step2.description'),
       icon: <Target className="h-5 w-5" />,
       completed: false,
       loading: false
     },
     {
       id: 3,
-      title: "Analizando tu marca",
-      description: "Creando tu identidad visual y branding",
+      title: t('common:onboarding.step3.title'),
+      description: t('common:onboarding.step3.description'),
       icon: <Palette className="h-5 w-5" />,
       completed: false,
       loading: false
     },
     {
       id: 4,
-      title: "Definiendo objetivos de crecimiento",
-      description: "Estableciendo metas estratégicas para tu empresa",
+      title: t('common:onboarding.step4.title'),
+      description: t('common:onboarding.step4.description'),
       icon: <TrendingUp className="h-5 w-5" />,
       completed: false,
       loading: false
     },
     {
       id: 5,
-      title: "Creando tu asistente ERA",
-      description: "Configurando tu copiloto empresarial personalizado",
+      title: t('common:onboarding.step5.title'),
+      description: t('common:onboarding.step5.description'),
       icon: <Bot className="h-5 w-5" />,
       completed: false,
       loading: false
@@ -543,8 +545,8 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
                           step.loading ? 'secondary' :
                           'outline'
                         }>
-                          {step.completed ? 'Completado' :
-                           step.loading ? 'Procesando...' :
+                         {step.completed ? t('common:onboarding.allComplete') :
+                           step.loading ? t('common:status.processing') :
                            'Pendiente'}
                         </Badge>
                       </div>
@@ -559,10 +561,10 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
                 <CardContent className="p-6 text-center">
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-green-700 mb-2">
-                    ¡Configuración completada!
+                    {t('common:onboarding.allComplete')}
                   </h3>
                   <p className="text-green-600 mb-4">
-                    Tu empresa y asistente ERA están listos. Serás redirigido al dashboard automáticamente.
+                    {t('common:onboarding.allCompleteDesc')}
                   </p>
                   <Button
                     onClick={() => {
@@ -571,7 +573,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
                     }}
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    Ir a ADN Empresa
+                    {t('common:onboarding.continue')}
                   </Button>
                 </CardContent>
               </Card>
@@ -583,7 +585,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
                   onClick={retryCurrentStep}
                   variant="outline"
                 >
-                  Reintentar paso actual
+                  {t('common:onboarding.retry')}
                 </Button>
               </div>
             )}

@@ -69,5 +69,48 @@
     "spanish": "Español",
     "english": "English",
     "portuguese": "Português"
+  },
+  "dashboard": {
+    "mandoCentral": "Command Center",
+    "adn": "Business DNA",
+    "marketing": "Marketing Hub",
+    "intelligencia": "Competitive Intelligence",
+    "audiencias": "My Audiences",
+    "workforce": "My AI Workforce",
+    "agents": "My Agents",
+    "knowledge": "Knowledge Base",
+    "academy": "Buildera Academy",
+    "marketplace": "Marketplace",
+    "experts": "Experts",
+    "configuration": "Configuration",
+    "myProfile": "My Profile"
+  },
+  "onboarding": {
+    "title": "Automatic Setup",
+    "subtitle": "We are configuring your business profile",
+    "step1": {
+      "title": "Getting your business information",
+      "description": "Extracting basic company data"
+    },
+    "step2": {
+      "title": "Structuring your business strategy",
+      "description": "Defining mission, vision and value proposition"
+    },
+    "step3": {
+      "title": "Analyzing your brand",
+      "description": "Creating your visual identity and branding"
+    },
+    "step4": {
+      "title": "Defining growth objectives",
+      "description": "Establishing strategic goals for your company"
+    },
+    "step5": {
+      "title": "Creating your ERA assistant",
+      "description": "Setting up your personalized business copilot"
+    },
+    "retry": "Retry current step",
+    "continue": "Continue to Dashboard",
+    "allComplete": "Setup completed!",
+    "allCompleteDesc": "Your business profile is ready"
   }
 }

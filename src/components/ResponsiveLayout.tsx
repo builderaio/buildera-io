@@ -12,6 +12,7 @@ import { useAutoLogout } from '@/hooks/useAutoLogout';
 import ThemeSelector from '@/components/ThemeSelector';
 import { SmartNotifications } from '@/components/ui/smart-notifications';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from 'react-i18next';
 interface Profile {
   id: string;
   user_id: string;
@@ -230,6 +231,7 @@ const CompanyLayout = ({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
+  const { t } = useTranslation(['common']);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isInOnboarding, setIsInOnboarding] = useState(false);
   
@@ -338,30 +340,30 @@ const CompanyLayout = ({
   const sidebarMenuItems = [{
     category: "Central",
     icon: "🎯",
-    items: [{ id: "mando-central", label: "Dashboard", icon: Activity, description: "Vista general y KPIs", priority: "high" }]
+    items: [{ id: "mando-central", label: t('common:dashboard.mandoCentral'), icon: Activity, description: "Vista general y KPIs", priority: "high" }]
   }, {
     category: "Mi Empresa",
     icon: "🏢",
-    items: [{ id: "adn-empresa", label: "Configuración Empresarial", icon: Building, description: "Datos y configuración", priority: "high" }]
+    items: [{ id: "adn-empresa", label: t('common:dashboard.adn'), icon: Building, description: "Datos y configuración", priority: "high" }]
   }, {
     category: "Marketing & Ventas",
     icon: "📈",
     items: [
-      { id: "marketing-hub", label: "Marketing Hub", icon: Bell, description: "Campañas y automatización", priority: "high" }, 
-      { id: "inteligencia-competitiva", label: "Análisis Competitivo", icon: Search, description: "Inteligencia de mercado", priority: "medium" }
+      { id: "marketing-hub", label: t('common:dashboard.marketing'), icon: Bell, description: "Campañas y automatización", priority: "high" }, 
+      { id: "inteligencia-competitiva", label: t('common:dashboard.intelligencia'), icon: Search, description: "Inteligencia de mercado", priority: "medium" }
     ]
   }, {
     category: "Agentes IA",
     icon: "🤖",
     items: [
-      { id: "ai-workforce", label: "Centro de Mando de Agentes", icon: Target, description: "Misiones y equipos de IA", priority: "high" },
-      { id: "mis-agentes", label: "Mis Agentes", icon: Bot, description: "Gestionar agentes creados", priority: "medium" }, 
-      { id: "marketplace", label: "Marketplace", icon: Store, description: "Descubrir nuevos agentes", priority: "medium" }
+      { id: "ai-workforce", label: t('common:dashboard.workforce'), icon: Target, description: "Misiones y equipos de IA", priority: "high" },
+      { id: "mis-agentes", label: t('common:dashboard.agents'), icon: Bot, description: "Gestionar agentes creados", priority: "medium" }, 
+      { id: "marketplace", label: t('common:dashboard.marketplace'), icon: Store, description: "Descubrir nuevos agentes", priority: "medium" }
     ]
   }, {
     category: "Aprendizaje",
     icon: "🎓",
-    items: [{ id: "academia-buildera", label: "Academia Buildera", icon: GraduationCap, description: "Cursos y certificaciones", priority: "low" }, { id: "expertos", label: "Red de Expertos", icon: Users, description: "Conectar con especialistas", priority: "low" }]
+    items: [{ id: "academia-buildera", label: t('common:dashboard.academy'), icon: GraduationCap, description: "Cursos y certificaciones", priority: "low" }, { id: "expertos", label: t('common:dashboard.experts'), icon: Users, description: "Conectar con especialistas", priority: "low" }]
   }];
 
   const activeView = getActiveView();

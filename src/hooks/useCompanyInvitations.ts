@@ -48,11 +48,11 @@ export const useCompanyInvitations = (companyId: string) => {
             .from('profiles')
             .select('full_name, email, avatar_url')
             .eq('user_id', invitation.inviter_id)
-            .single();
+            .maybeSingle();
 
           return {
             ...invitation,
-            inviter: inviterProfile
+            inviter: inviterProfile || undefined
           } as CompanyInvitation;
         })
       );

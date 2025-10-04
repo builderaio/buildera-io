@@ -77,11 +77,11 @@ const AdminDashboard = () => {
         }
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cargando estadísticas:', error);
       toast({
         title: "Error",
-        description: `No se pudieron cargar las estadísticas: ${error.message}`,
+        description: `No se pudieron cargar las estadísticas: ${error?.message || 'Error desconocido'}`,
         variant: "destructive",
       });
     } finally {

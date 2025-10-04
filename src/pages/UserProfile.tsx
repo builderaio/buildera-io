@@ -78,16 +78,34 @@ const UserProfile = () => {
         .single();
 
       if (error) {
-        throw error;
+        console.error('Error fetching profile:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo cargar el perfil del usuario",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (!profileData) {
+        console.error('No profile data found for user:', user.id);
+        toast({
+          title: "Perfil no encontrado",
+          description: "No se encontró información del perfil",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
       }
 
       setProfile(profileData);
       setFormData(profileData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cargando perfil:', error);
       toast({
         title: "Error",
-        description: "No se pudo cargar el perfil del usuario",
+        description: error?.message || "No se pudo cargar el perfil del usuario",
         variant: "destructive",
       });
     } finally {
@@ -107,7 +125,14 @@ const UserProfile = () => {
         .eq('user_id', profile.user_id);
 
       if (error) {
-        throw error;
+        console.error('Error updating profile:', error);
+        toast({
+          title: "Error",
+          description: error?.message || "No se pudieron guardar los cambios",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
       }
 
       // Actualizar estado local
@@ -118,11 +143,11 @@ const UserProfile = () => {
         title: "Perfil actualizado",
         description: "Los cambios se han guardado correctamente",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error actualizando perfil:', error);
       toast({
         title: "Error",
-        description: "No se pudieron guardar los cambios",
+        description: error?.message || "No se pudieron guardar los cambios",
         variant: "destructive",
       });
     } finally {

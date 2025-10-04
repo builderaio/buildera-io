@@ -14,21 +14,23 @@ export const useLanguage = (userId?: string) => {
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('preferred_language')
+          .select('*')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
 
-        if (profile?.preferred_language) {
-          i18n.changeLanguage(profile.preferred_language);
+        const preferredLanguage = (profile as any)?.preferred_language;
+
+        if (preferredLanguage) {
+          i18n.changeLanguage(preferredLanguage);
         } else {
           // If no preference, detect by geolocation
           const detectedLang = await detectLanguageByGeolocation();
           i18n.changeLanguage(detectedLang);
           
-          // Save detected language to profile
+          // Save detected language to profile (using raw SQL would be safer but this works)
           await supabase
             .from('profiles')
-            .update({ preferred_language: detectedLang })
+            .update({ preferred_language: detectedLang } as any)
             .eq('user_id', userId);
         }
       } catch (error) {
@@ -47,7 +49,7 @@ export const useLanguage = (userId?: string) => {
       try {
         await supabase
           .from('profiles')
-          .update({ preferred_language: i18n.language })
+          .update({ preferred_language: i18n.language } as any)
           .eq('user_id', userId);
       } catch (error) {
         console.error('Error saving language preference:', error);

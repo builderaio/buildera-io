@@ -5163,6 +5163,7 @@ export type Database = {
           linkedin_profile: string | null
           phone: string | null
           position: string | null
+          preferred_language: string | null
           primary_company_id: string | null
           skills: string[] | null
           updated_at: string
@@ -5191,6 +5192,7 @@ export type Database = {
           linkedin_profile?: string | null
           phone?: string | null
           position?: string | null
+          preferred_language?: string | null
           primary_company_id?: string | null
           skills?: string[] | null
           updated_at?: string
@@ -5219,6 +5221,7 @@ export type Database = {
           linkedin_profile?: string | null
           phone?: string | null
           position?: string | null
+          preferred_language?: string | null
           primary_company_id?: string | null
           skills?: string[] | null
           updated_at?: string

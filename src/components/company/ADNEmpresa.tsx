@@ -66,6 +66,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     try {
       setLoading(true);
       console.log('🔍 Starting loadOnboardingData with profile:', profile);
+      console.log('📋 profile.user_id:', profile.user_id);
       
       // Buscar TODAS las empresas del usuario para encontrar datos de onboarding
       console.log('📋 Querying all companies for user_id:', profile.user_id);
@@ -134,27 +135,45 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         objectives: objectivesResult.data?.length || 0
       });
 
+      console.log('📊 Raw data:', {
+        companyData: companyResult.data?.[0],
+        strategyData: strategyResult.data?.[0],
+        brandingData: brandingResult.data?.[0]
+      });
+
       // Establecer datos - tomar los primeros resultados encontrados
       if (companyResult.data && companyResult.data.length > 0) {
         const company = companyResult.data[0];
-        setCompanyData(company); // Tomar la primera empresa
+        console.log('✅ Setting companyData:', company);
+        setCompanyData(company);
         setLastUpdated(new Date(company.updated_at).toLocaleDateString());
+      } else {
+        console.log('❌ No company data found');
       }
       
       if (strategyResult.data && strategyResult.data.length > 0) {
-        setStrategyData(strategyResult.data[0]); // Tomar la primera estrategia encontrada
+        console.log('✅ Setting strategyData:', strategyResult.data[0]);
+        setStrategyData(strategyResult.data[0]);
+      } else {
+        console.log('❌ No strategy data found');
       }
       
       if (brandingResult.data && brandingResult.data.length > 0) {
-        setBrandingData(brandingResult.data[0]); // Tomar el primer branding encontrado
+        console.log('✅ Setting brandingData:', brandingResult.data[0]);
+        setBrandingData(brandingResult.data[0]);
+      } else {
+        console.log('❌ No branding data found');
       }
       
       if (objectivesResult.data && objectivesResult.data.length > 0) {
-        setObjectives(objectivesResult.data); // Todos los objetivos
+        console.log('✅ Setting objectives:', objectivesResult.data);
+        setObjectives(objectivesResult.data);
+      } else {
+        console.log('❌ No objectives found');
       }
 
     } catch (error) {
-      console.error('Error loading onboarding data:', error);
+      console.error('❌ Error loading onboarding data:', error);
       toast({
         title: "Error",
         description: "Error al cargar la información empresarial",
@@ -162,6 +181,12 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       });
     } finally {
       setLoading(false);
+      console.log('🏁 Loading finished. Final state:', {
+        companyData: !!companyData,
+        strategyData: !!strategyData,
+        brandingData: !!brandingData,
+        objectivesCount: objectives.length
+      });
     }
   };
 
@@ -867,36 +892,31 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {strategyData.mision !== undefined && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-purple-800 dark:text-purple-200">Misión</h3>
-                  <EditableField
-                    field="mision"
-                    value={strategyData.mision}
-                    onSave={(value) => saveField('mision', value, 'company_strategy', strategyData.id)}
-                    type="textarea"
-                    placeholder="Define la misión de tu empresa"
-                  />
-                </div>
-              )}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-purple-800 dark:text-purple-200">Misión</h3>
+                <EditableField
+                  field="mision"
+                  value={strategyData.mision || ''}
+                  onSave={(value) => saveField('mision', value, 'company_strategy', strategyData.id)}
+                  type="textarea"
+                  placeholder="Define la misión de tu empresa"
+                />
+              </div>
               
-              {strategyData.vision !== undefined && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-purple-800 dark:text-purple-200">Visión</h3>
-                  <EditableField
-                    field="vision"
-                    value={strategyData.vision}
-                    onSave={(value) => saveField('vision', value, 'company_strategy', strategyData.id)}
-                    type="textarea"
-                    placeholder="Define la visión de tu empresa"
-                  />
-                </div>
-              )}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-purple-800 dark:text-purple-200">Visión</h3>
+                <EditableField
+                  field="vision"
+                  value={strategyData.vision || ''}
+                  onSave={(value) => saveField('vision', value, 'company_strategy', strategyData.id)}
+                  type="textarea"
+                  placeholder="Define la visión de tu empresa"
+                />
+              </div>
               
-              {strategyData.propuesta_valor !== undefined && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-purple-800 dark:text-purple-200">Propuesta de Valor</h3>
-                  <EditableField
+              <div className="space-y-3">
+                <h3 className="font-semibold text-purple-800 dark:text-purple-200">Propuesta de Valor</h3>
+                <EditableField
                     field="propuesta_valor"
                     value={strategyData.propuesta_valor}
                     onSave={(value) => saveField('propuesta_valor', value, 'company_strategy', strategyData.id)}
@@ -904,7 +924,6 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                     placeholder="Describe tu propuesta de valor"
                   />
                 </div>
-              )}
               
               {strategyData.publico_objetivo && (
                 <div className="space-y-3">

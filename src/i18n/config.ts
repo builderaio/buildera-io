@@ -37,7 +37,7 @@ i18n
       escapeValue: false,
     },
     react: {
-      useSuspense: true,
+      useSuspense: false, // Changed to false to avoid Suspense issues
     },
   });
 

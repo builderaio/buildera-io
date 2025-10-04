@@ -1,0 +1,48 @@
+{
+  "contentAnalysis": {
+    "title": "Content Analysis",
+    "performance": "Performance",
+    "posts": "Posts",
+    "insights": "Insights",
+    "topPosts": "Top Posts",
+    "generateInsights": "Generate Insights",
+    "analyzeContent": "Analyze Content",
+    "loading": "Loading data...",
+    "analyzing": "Analyzing social media content...",
+    "error": "Error loading analysis data",
+    "noData": "No data available",
+    "metrics": {
+      "totalFollowers": "Total Followers",
+      "postsPublished": "Published Posts",
+      "avgEngagement": "Average Engagement",
+      "qualityScore": "Quality Score",
+      "platforms": "Platforms"
+    },
+    "messages": {
+      "analysisComplete": "Analysis completed",
+      "analysisStarted": "Starting posts analysis",
+      "contentAnalyzed": "Successfully analyzed {count} social networks",
+      "noContent": "No posts found",
+      "rateLimitReached": "API limit reached"
+    }
+  },
+  "socialMedia": {
+    "title": "Social Media Analytics",
+    "overview": "Overview",
+    "details": "Details",
+    "trends": "Trends",
+    "runAnalysis": "Run Analysis",
+    "generateInsights": "Generate Insights",
+    "loading": "Generating basic insights...",
+    "basicInsights": "Generated basic insights based on your metrics",
+    "error": "Analysis error",
+    "errorLoading": "Error loading data",
+    "platforms": {
+      "instagram": "Instagram",
+      "facebook": "Facebook",
+      "linkedin": "LinkedIn",
+      "tiktok": "TikTok",
+      "twitter": "Twitter"
+    }
+  }
+}

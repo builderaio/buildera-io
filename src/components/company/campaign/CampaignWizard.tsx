@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -129,6 +130,7 @@ export const CampaignWizard = ({
   initialStep, 
   draftId 
 }: CampaignWizardProps = {}) => {
+  const { t } = useTranslation('campaigns');
   const getInitialStep = () => {
     if (!initialStep) return 1;
     const stepMap: Record<string, number> = {
@@ -205,8 +207,8 @@ export const CampaignWizard = ({
   const generateCampaignsWithAI = async () => {
     if (!primaryCompany?.id) {
       toast({
-        title: "Error",
-        description: "No se encontró información de la empresa",
+        title: t('wizard.messages.error'),
+        description: t('wizard.messages.companyNotFound'),
         variant: "destructive"
       });
       return;
@@ -222,14 +224,14 @@ export const CampaignWizard = ({
 
       setAiSuggestions(data);
       toast({
-        title: "¡Campañas generadas!",
-        description: `Se generaron ${data.campañas_recomendadas?.length || 0} campañas personalizadas`,
+        title: t('wizard.messages.aiCampaignsGenerated'),
+        description: t('wizard.messages.aiCampaignsCount', { count: data.campañas_recomendadas?.length || 0 }),
       });
     } catch (error: any) {
       console.error('Error generando campañas con IA:', error);
       toast({
-        title: "Error",
-        description: error.message || "No se pudieron generar las campañas con IA",
+        title: t('wizard.messages.error'),
+        description: error.message || t('wizard.messages.aiError'),
         variant: "destructive"
       });
     } finally {

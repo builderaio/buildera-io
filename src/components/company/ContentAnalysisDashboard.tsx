@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -99,6 +100,7 @@ const PLATFORM_COLORS = {
 const CHART_COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5A2B'];
 
 export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> = ({ profile }) => {
+  const { t } = useTranslation('analytics');
   const [loading, setLoading] = useState(false);
   const [analysisData, setAnalysisData] = useState<ContentAnalysisData>({
     retrospective: [],
@@ -134,8 +136,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       
       if (!currentUserId) {
         toast({
-          title: "Error de usuario",
-          description: "No se pudo identificar el usuario. Por favor, recargue la página.",
+          title: t('common:status.error'),
+          description: t('contentAnalysis.error'),
           variant: "destructive"
         });
         setLoading(false);
@@ -264,8 +266,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     } catch (error) {
       console.error('Error loading analysis data:', error);
       toast({
-        title: "Error",
-        description: "Error al cargar los datos de análisis",
+        title: t('common:status.error'),
+        description: t('contentAnalysis.error'),
         variant: "destructive"
       });
     } finally {

@@ -1,0 +1,57 @@
+{
+  "wizard": {
+    "title": "Campanha Inteligente",
+    "subtitle": "Crie campanhas de marketing que geram resultados reais com o poder da IA",
+    "progress": "Passo {current} de {total} • {percent}% concluído",
+    "steps": {
+      "objective": {
+        "title": "Objetivo de Crescimento",
+        "description": "Defina metas claras para sua campanha"
+      },
+      "audience": {
+        "title": "Público-Alvo",
+        "description": "Identifique seu público ideal"
+      },
+      "strategy": {
+        "title": "Estratégia de Marketing",
+        "description": "Crie uma estratégia personalizada"
+      },
+      "calendar": {
+        "title": "Calendário de Conteúdo",
+        "description": "Programe seu conteúdo estrategicamente"
+      },
+      "content": {
+        "title": "Criação de Conteúdo",
+        "description": "Gere conteúdo atraente"
+      },
+      "schedule": {
+        "title": "Agendamento",
+        "description": "Programe automaticamente"
+      },
+      "measurement": {
+        "title": "Resumo Final",
+        "description": "Revise sua campanha criada"
+      }
+    },
+    "actions": {
+      "next": "Próximo",
+      "previous": "Anterior",
+      "finish": "Finalizar Campanha",
+      "saveDraft": "Salvar Rascunho",
+      "generateWithAI": "Gerar com IA"
+    },
+    "messages": {
+      "stepComplete": "Passo concluído! 🎉",
+      "stepConfigured": "{step} configurado com sucesso",
+      "campaignComplete": "Campanha concluída!",
+      "campaignCreated": "Campanha criada com sucesso!",
+      "campaignSaved": "Sua campanha foi salva e está pronta para execução",
+      "redirecting": "Redirecionando para o painel...",
+      "error": "Erro",
+      "companyNotFound": "Informações da empresa não encontradas",
+      "aiCampaignsGenerated": "Campanhas geradas!",
+      "aiCampaignsCount": "{count} campanhas personalizadas geradas",
+      "aiError": "Não foi possível gerar as campanhas com IA"
+    }
+  }
+}

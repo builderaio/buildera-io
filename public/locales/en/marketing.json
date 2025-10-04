@@ -1,7 +1,10 @@
 {
   "audiences": {
     "title": "Audience Management",
+    "dashboard": "Dashboard",
+    "manager": "Audience Manager",
     "generate": "Generate AI Audiences",
+    "generateWithAI": "Generate with AI",
     "analyzing": "Analyzing audiences...",
     "noData": "No audience data available",
     "error": "Error loading audiences",
@@ -9,7 +12,36 @@
     "analyzeAll": "Analyze all networks",
     "analyzing": "Analyzing...",
     "completeAnalysis": "Analysis completed",
-    "errorAnalyzing": "Error analyzing audiences"
+    "errorAnalyzing": "Error analyzing audiences",
+    "confirmUrls": "Confirm Social Media URLs",
+    "analyzeUrls": "Analyze URLs",
+    "messages": {
+      "aiGenerating": "Generating audiences with AI...",
+      "aiSuccess": "AI Audiences Generated!",
+      "aiCreated": "{count} intelligent audiences created based on your data",
+      "aiError": "Could not generate audiences with AI",
+      "verifyData": "Verify that you have analysis data available",
+      "errorUserData": "User or company data not available",
+      "analysisComplete": "Analysis Completed",
+      "analyzed": "Successfully analyzed {count} profiles",
+      "analysisError": "Could not analyze social networks",
+      "confirmUrl": "Please confirm at least one social media URL",
+      "noUrls": "No configured social media URLs found",
+      "errorCompany": "Company information not found"
+    },
+    "stats": {
+      "totalAudiences": "Total Audiences",
+      "totalReach": "Total Reach",
+      "avgConversion": "Average Conversion",
+      "avgCost": "Acquisition Cost",
+      "lifetimeValue": "Lifetime Value",
+      "highPerforming": "High Performing Segments"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "segments": "Segments",
+      "insights": "Insights"
+    }
   },
   "content": {
     "analysis": "Content Analysis",

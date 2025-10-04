@@ -1,0 +1,57 @@
+{
+  "wizard": {
+    "title": "Smart Campaign",
+    "subtitle": "Create marketing campaigns that generate real results with the power of AI",
+    "progress": "Step {current} of {total} • {percent}% complete",
+    "steps": {
+      "objective": {
+        "title": "Growth Objective",
+        "description": "Define clear goals for your campaign"
+      },
+      "audience": {
+        "title": "Target Audience",
+        "description": "Identify your ideal audience"
+      },
+      "strategy": {
+        "title": "Marketing Strategy",
+        "description": "Create a personalized strategy"
+      },
+      "calendar": {
+        "title": "Content Calendar",
+        "description": "Schedule your content strategically"
+      },
+      "content": {
+        "title": "Content Creation",
+        "description": "Generate engaging content"
+      },
+      "schedule": {
+        "title": "Scheduling",
+        "description": "Schedule automatically"
+      },
+      "measurement": {
+        "title": "Final Summary",
+        "description": "Review your created campaign"
+      }
+    },
+    "actions": {
+      "next": "Next",
+      "previous": "Previous",
+      "finish": "Finish Campaign",
+      "saveDraft": "Save Draft",
+      "generateWithAI": "Generate with AI"
+    },
+    "messages": {
+      "stepComplete": "Step completed! 🎉",
+      "stepConfigured": "{step} successfully configured",
+      "campaignComplete": "Campaign completed!",
+      "campaignCreated": "Campaign created successfully!",
+      "campaignSaved": "Your campaign has been saved and is ready for execution",
+      "redirecting": "Redirecting to dashboard...",
+      "error": "Error",
+      "companyNotFound": "Company information not found",
+      "aiCampaignsGenerated": "Campaigns generated!",
+      "aiCampaignsCount": "{count} personalized campaigns generated",
+      "aiError": "Could not generate campaigns with AI"
+    }
+  }
+}

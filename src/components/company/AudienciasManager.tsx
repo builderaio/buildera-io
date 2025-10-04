@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -120,6 +121,7 @@ interface AudienceSegment {
 
 const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   console.log('🎯 AudienciasManager component rendered with profile:', profile);
+  const { t } = useTranslation('marketing');
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [currentView, setCurrentView] = useState("main");
@@ -276,8 +278,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     } catch (error) {
       console.error('Error loading audiences:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar las audiencias",
+        title: t('common:status.error'),
+        description: t('audiences.error'),
         variant: "destructive"
       });
     } finally {
@@ -288,8 +290,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   const handleGenerateAIAudiences = async () => {
     if (!userId || !companyData?.id) {
       toast({
-        title: "Error",
-        description: "Datos de usuario o empresa no disponibles",
+        title: t('common:status.error'),
+        description: t('audiences.messages.errorUserData'),
         variant: "destructive"
       });
       return;
@@ -318,8 +320,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
         setCurrentView('main');
         
         toast({
-          title: "¡Audiencias Generadas con IA!",
-          description: `Se crearon ${data.generated_count} audiencias inteligentes basadas en tus datos`,
+          title: t('audiences.messages.aiSuccess'),
+          description: t('audiences.messages.aiCreated', { count: data.generated_count }),
         });
       } else {
         throw new Error(data.error || 'No se pudieron generar audiencias');
@@ -328,8 +330,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     } catch (error) {
       console.error('Error generando audiencias con IA:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron generar las audiencias con IA. Verifica que tengas datos de análisis disponibles.",
+        title: t('common:status.error'),
+        description: t('audiences.messages.aiError') + '. ' + t('audiences.messages.verifyData'),
         variant: "destructive"
       });
     } finally {

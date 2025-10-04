@@ -1,21 +1,52 @@
 {
   "audiences": {
     "title": "Gestión de Audiencias",
+    "dashboard": "Panel de Control",
+    "manager": "Gestor de Audiencias",
     "generate": "Generar Audiencias con IA",
+    "generateWithAI": "Generar con IA",
     "analyzing": "Analizando audiencias...",
     "noData": "No hay datos de audiencia disponibles",
-    "error": "Error al cargar audiencias",
-    "generateSuccess": "Audiencias generadas exitosamente",
+    "error": "Error cargando audiencias",
+    "generateSuccess": "Audiencias generadas con éxito",
     "analyzeAll": "Analizar todas las redes",
-    "analyzing": "Analizando...",
     "completeAnalysis": "Análisis completado",
-    "errorAnalyzing": "Error al analizar audiencias"
+    "errorAnalyzing": "Error al analizar audiencias",
+    "confirmUrls": "Confirmar URLs de Redes Sociales",
+    "analyzeUrls": "Analizar URLs",
+    "messages": {
+      "aiGenerating": "Generando audiencias con IA...",
+      "aiSuccess": "¡Audiencias Generadas con IA!",
+      "aiCreated": "Se crearon {count} audiencias inteligentes basadas en tus datos",
+      "aiError": "No se pudieron generar las audiencias con IA",
+      "verifyData": "Verifica que tengas datos de análisis disponibles",
+      "errorUserData": "Datos de usuario o empresa no disponibles",
+      "analysisComplete": "Análisis Completado",
+      "analyzed": "Se analizaron {count} perfiles exitosamente",
+      "analysisError": "No se pudieron analizar las redes sociales",
+      "confirmUrl": "Por favor confirma al menos una URL de red social",
+      "noUrls": "No se encontraron URLs de redes sociales configuradas",
+      "errorCompany": "No se encontró información de la empresa"
+    },
+    "stats": {
+      "totalAudiences": "Total de Audiencias",
+      "totalReach": "Alcance Total",
+      "avgConversion": "Conversión Promedio",
+      "avgCost": "Costo de Adquisición",
+      "lifetimeValue": "Valor de Vida",
+      "highPerforming": "Segmentos de Alto Rendimiento"
+    },
+    "tabs": {
+      "overview": "Resumen",
+      "segments": "Segmentos",
+      "insights": "Insights"
+    }
   },
   "content": {
     "analysis": "Análisis de Contenido",
     "triggerAnalysis": "Iniciar Análisis",
     "analyzingContent": "Analizando contenido de redes sociales...",
-    "insightsGenerated": "Insights generados exitosamente",
+    "insightsGenerated": "Insights generados con suceso",
     "errorGenerating": "Error al generar insights",
     "existingAnalysis": "Ya existe un análisis reciente",
     "noContent": "No hay contenido para analizar"

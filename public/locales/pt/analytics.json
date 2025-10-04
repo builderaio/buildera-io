@@ -1,0 +1,48 @@
+{
+  "contentAnalysis": {
+    "title": "Análise de Conteúdo",
+    "performance": "Desempenho",
+    "posts": "Publicações",
+    "insights": "Insights",
+    "topPosts": "Top Posts",
+    "generateInsights": "Gerar Insights",
+    "analyzeContent": "Analisar Conteúdo",
+    "loading": "Carregando dados...",
+    "analyzing": "Analisando conteúdo de redes sociais...",
+    "error": "Erro ao carregar dados de análise",
+    "noData": "Nenhum dado disponível",
+    "metrics": {
+      "totalFollowers": "Seguidores Totais",
+      "postsPublished": "Posts Publicados",
+      "avgEngagement": "Engagement Médio",
+      "qualityScore": "Pontuação de Qualidade",
+      "platforms": "Plataformas"
+    },
+    "messages": {
+      "analysisComplete": "Análise concluída",
+      "analysisStarted": "Iniciando análise de posts",
+      "contentAnalyzed": "Foram analisadas {count} redes sociais com sucesso",
+      "noContent": "Nenhuma publicação encontrada",
+      "rateLimitReached": "Limite de API alcançado"
+    }
+  },
+  "socialMedia": {
+    "title": "Análises de Redes Sociais",
+    "overview": "Visão Geral",
+    "details": "Detalhes",
+    "trends": "Tendências",
+    "runAnalysis": "Executar Análise",
+    "generateInsights": "Gerar Insights",
+    "loading": "Gerando insights básicos...",
+    "basicInsights": "Foram gerados insights básicos com base nas suas métricas",
+    "error": "Erro na análise",
+    "errorLoading": "Erro ao carregar dados",
+    "platforms": {
+      "instagram": "Instagram",
+      "facebook": "Facebook",
+      "linkedin": "LinkedIn",
+      "tiktok": "TikTok",
+      "twitter": "Twitter"
+    }
+  }
+}

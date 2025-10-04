@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,7 @@ interface PlatformStats {
 }
 
 const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
+  const { t } = useTranslation('analytics');
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({
@@ -224,8 +226,8 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
     } catch (error: any) {
       console.error('Error cargando datos de analítica:', error);
       toast({
-        title: "Error cargando datos",
-        description: `No se pudieron cargar los datos: ${error.message}`,
+        title: t('socialMedia.errorLoading'),
+        description: `${t('socialMedia.errorLoading')}: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -320,13 +322,13 @@ const SocialMediaAnalytics = ({ profile }: SocialMediaAnalyticsProps) => {
       await loadAnalyticsData();
       
       toast({
-        title: "Análisis completado",
-        description: "Se generaron insights básicos basados en tus métricas de redes sociales",
+        title: t('socialMedia.overview'),
+        description: t('socialMedia.basicInsights'),
       });
     } catch (error: any) {
       console.error('Error en análisis:', error);
       toast({
-        title: "Error en el análisis",
+        title: t('socialMedia.error'),
         description: error.message,
         variant: "destructive",
       });

@@ -1,7 +1,10 @@
 {
   "audiences": {
     "title": "Gestão de Audiências",
+    "dashboard": "Painel de Controle",
+    "manager": "Gerenciador de Audiências",
     "generate": "Gerar Audiências com IA",
+    "generateWithAI": "Gerar com IA",
     "analyzing": "Analisando audiências...",
     "noData": "Nenhum dado de audiência disponível",
     "error": "Erro ao carregar audiências",
@@ -9,7 +12,36 @@
     "analyzeAll": "Analisar todas as redes",
     "analyzing": "Analisando...",
     "completeAnalysis": "Análise concluída",
-    "errorAnalyzing": "Erro ao analisar audiências"
+    "errorAnalyzing": "Erro ao analisar audiências",
+    "confirmUrls": "Confirmar URLs de Redes Sociais",
+    "analyzeUrls": "Analisar URLs",
+    "messages": {
+      "aiGenerating": "Gerando audiências com IA...",
+      "aiSuccess": "Audiências Geradas com IA!",
+      "aiCreated": "{count} audiências inteligentes criadas com base nos seus dados",
+      "aiError": "Não foi possível gerar audiências com IA",
+      "verifyData": "Verifique se você tem dados de análise disponíveis",
+      "errorUserData": "Dados de usuário ou empresa não disponíveis",
+      "analysisComplete": "Análise Concluída",
+      "analyzed": "{count} perfis analisados com sucesso",
+      "analysisError": "Não foi possível analisar as redes sociais",
+      "confirmUrl": "Por favor confirme pelo menos uma URL de rede social",
+      "noUrls": "Nenhuma URL de rede social configurada encontrada",
+      "errorCompany": "Informações da empresa não encontradas"
+    },
+    "stats": {
+      "totalAudiences": "Total de Audiências",
+      "totalReach": "Alcance Total",
+      "avgConversion": "Conversão Média",
+      "avgCost": "Custo de Aquisição",
+      "lifetimeValue": "Valor de Vida",
+      "highPerforming": "Segmentos de Alto Desempenho"
+    },
+    "tabs": {
+      "overview": "Visão Geral",
+      "segments": "Segmentos",
+      "insights": "Insights"
+    }
   },
   "content": {
     "analysis": "Análise de Conteúdo",

@@ -1,0 +1,57 @@
+{
+  "wizard": {
+    "title": "Campaña Inteligente",
+    "subtitle": "Crea campañas de marketing que generen resultados reales con el poder de la IA",
+    "progress": "Paso {current} de {total} • {percent}% completado",
+    "steps": {
+      "objective": {
+        "title": "Objetivo de Crecimiento",
+        "description": "Define metas claras para tu campaña"
+      },
+      "audience": {
+        "title": "Audiencia Objetivo",
+        "description": "Identifica tu público ideal"
+      },
+      "strategy": {
+        "title": "Estrategia de Marketing",
+        "description": "Crea una estrategia personalizada"
+      },
+      "calendar": {
+        "title": "Calendario de Contenido",
+        "description": "Programa tu contenido estratégicamente"
+      },
+      "content": {
+        "title": "Creación de Contenido",
+        "description": "Genera contenido atractivo"
+      },
+      "schedule": {
+        "title": "Programación",
+        "description": "Programa automáticamente"
+      },
+      "measurement": {
+        "title": "Resumen Final",
+        "description": "Revisa tu campaña creada"
+      }
+    },
+    "actions": {
+      "next": "Siguiente",
+      "previous": "Anterior",
+      "finish": "Finalizar Campaña",
+      "saveDraft": "Guardar Borrador",
+      "generateWithAI": "Generar con IA"
+    },
+    "messages": {
+      "stepComplete": "¡Paso completado! 🎉",
+      "stepConfigured": "{step} configurado exitosamente",
+      "campaignComplete": "¡Campaña completada!",
+      "campaignCreated": "¡Campaña creada exitosamente!",
+      "campaignSaved": "Tu campaña ha sido guardada y está lista para su ejecución",
+      "redirecting": "Redirigiendo al dashboard...",
+      "error": "Error",
+      "companyNotFound": "No se encontró información de la empresa",
+      "aiCampaignsGenerated": "¡Campañas generadas!",
+      "aiCampaignsCount": "Se generaron {count} campañas personalizadas",
+      "aiError": "No se pudieron generar las campañas con IA"
+    }
+  }
+}

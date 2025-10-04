@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useStepVerifications } from '@/hooks/useStepVerifications';
+import { useAnalysisCache } from '@/hooks/useAnalysisCache';
 import confetti from 'canvas-confetti';
 import { 
   Bot, 
@@ -27,7 +28,8 @@ import {
   Maximize2,
   Clock,
   Pause,
-  ChevronRight
+  ChevronRight,
+  Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -86,6 +88,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   
   const autoSaveIntervalRef = useRef<NodeJS.Timeout>();
   const verifications = useStepVerifications(userId);
+  const cacheData = useAnalysisCache(userId);  // 🆕 Obtener metadata de análisis
 
   const steps: GuideStep[] = [
     {
@@ -338,6 +341,24 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   useEffect(() => {
     loadTourProgress();
   }, [userId]);
+
+  // 🆕 Notificaciones cuando hay datos existentes
+  useEffect(() => {
+    if (cacheData.loading || !isActive || isMinimized) return;
+
+    const showDataNotification = () => {
+      if (currentStep === 4 && cacheData.audienceInsights.exists) {
+        toast({ title: "📊 Datos Existentes", description: `Ya tienes ${cacheData.audienceInsights.count} análisis de audiencia disponible. Puedes actualizarlo.`, duration: 4000 });
+      } else if (currentStep === 5 && cacheData.contentAnalysis.exists) {
+        toast({ title: "📊 Contenido Analizado", description: `Ya tienes ${cacheData.contentAnalysis.count} posts analizados. Puedes actualizar el análisis.`, duration: 4000 });
+      } else if (currentStep === 6 && cacheData.buyerPersonas.exists) {
+        toast({ title: "📊 Audiencias Creadas", description: `Ya tienes ${cacheData.buyerPersonas.count} buyer personas. Puedes revisarlas o crear más.`, duration: 4000 });
+      }
+    };
+
+    const timeoutId = setTimeout(showDataNotification, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [currentStep, cacheData, isActive, isMinimized]);
 
   const loadTourProgress = async () => {
     if (!userId) return;
@@ -877,6 +898,43 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                 </div>
                 <div className="flex-1">
                   <h4 className="font-bold text-base mb-1">{currentStepData.title}</h4>
+                  
+                  {/* 🆕 Preview de datos existentes */}
+                  {!cacheData.loading && (
+                    <div className="mb-2">
+                      {currentStep === 1 && cacheData.companyProfile.exists && (
+                        <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200">
+                          <Eye className="w-3 h-3 mr-1" />
+                          Perfil configurado • {new Date(cacheData.companyProfile.lastUpdate!).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
+                        </Badge>
+                      )}
+                      {currentStep === 2 && cacheData.socialAccounts.exists && (
+                        <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-300 border-green-200">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          {cacheData.socialAccounts.count} red{cacheData.socialAccounts.count !== 1 ? 'es' : ''} conectada{cacheData.socialAccounts.count !== 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                      {currentStep === 4 && cacheData.audienceInsights.exists && (
+                        <Badge variant="outline" className="text-xs bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300 border-orange-200">
+                          <BarChart3 className="w-3 h-3 mr-1" />
+                          {cacheData.audienceInsights.count} análisis • {new Date(cacheData.audienceInsights.lastUpdate!).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
+                        </Badge>
+                      )}
+                      {currentStep === 5 && cacheData.contentAnalysis.exists && (
+                        <Badge variant="outline" className="text-xs bg-cyan-50 dark:bg-cyan-950/20 text-cyan-700 dark:text-cyan-300 border-cyan-200">
+                          <FileText className="w-3 h-3 mr-1" />
+                          {cacheData.contentAnalysis.count} post{cacheData.contentAnalysis.count !== 1 ? 's' : ''} analizado{cacheData.contentAnalysis.count !== 1 ? 's' : ''} • {new Date(cacheData.contentAnalysis.lastUpdate!).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
+                        </Badge>
+                      )}
+                      {currentStep === 6 && cacheData.buyerPersonas.exists && (
+                        <Badge variant="outline" className="text-xs bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 border-purple-200">
+                          <Users className="w-3 h-3 mr-1" />
+                          {cacheData.buyerPersonas.count} buyer persona{cacheData.buyerPersonas.count !== 1 ? 's' : ''} • {new Date(cacheData.buyerPersonas.lastUpdate!).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                  
                   {!compactMode && (
                     <div className="text-sm text-muted-foreground space-y-2">
                       <p><strong>QUÉ:</strong> {currentStepData.what}</p>

@@ -115,6 +115,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const [aiInsights, setAiInsights] = useState<string>('');
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('performance');
+  const [existingPostsCount, setExistingPostsCount] = useState(0);
+  const [lastAnalysisDate, setLastAnalysisDate] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -211,6 +213,12 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       });
       
       setPosts(allPosts);
+      
+      // Update metadata
+      setExistingPostsCount(allPosts.length);
+      if (contentRes.data && contentRes.data.length > 0) {
+        setLastAnalysisDate(contentRes.data[0].created_at);
+      }
       
       // Get top performing posts
       const sortedPosts = [...allPosts].sort((a, b) => {
@@ -1271,7 +1279,57 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   // Content tabs extracted to standalone components: ContentLibraryTab and ContentCreatorTab
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Banner de Estado Existente */}
+      {existingPostsCount > 0 && lastAnalysisDate && (
+        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                    ✓ Análisis de Contenido Existente
+                  </h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    {existingPostsCount} {existingPostsCount === 1 ? 'publicación analizada' : 'publicaciones analizadas'} • 
+                    Última actualización: {new Date(lastAnalysisDate).toLocaleDateString('es', { 
+                      day: 'numeric', 
+                      month: 'long', 
+                      year: 'numeric' 
+                    })}
+                  </p>
+                </div>
+              </div>
+              <Button 
+                onClick={triggerContentOnlyAnalysis}
+                disabled={loading}
+                variant="outline"
+                className="gap-2 border-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Actualizando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4" />
+                    Actualizar Análisis
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="mt-4 flex gap-2 text-xs text-blue-700 dark:text-blue-300">
+              <Eye className="w-4 h-4" />
+              <span>Tu contenido analizado está disponible. Actualiza para obtener datos más recientes.</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header with Controls */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -1312,7 +1370,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Actualizar Análisis
+            {existingPostsCount > 0 ? 'Actualizar' : 'Iniciar'} Análisis
           </Button>
         </div>
       </div>

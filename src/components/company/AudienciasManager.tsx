@@ -158,6 +158,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   });
 
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [existingAnalysisCount, setExistingAnalysisCount] = useState(0);
+  const [lastAnalysisDate, setLastAnalysisDate] = useState<string | null>(null);
 
   // Separate useEffect to listen for URL parameter changes
   useEffect(() => {
@@ -479,6 +481,12 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
 
       if (error) throw error;
 
+      // Actualizar metadatos de análisis existente
+      if (existingAnalyses && existingAnalyses.length > 0) {
+        setExistingAnalysisCount(existingAnalyses.length);
+        setLastAnalysisDate(existingAnalyses[0].created_at);
+      }
+
       // Si hay análisis existentes, configurar el estado para mostrarlos y NO mostrar confirmación
       if (existingAnalyses && existingAnalyses.length > 0) {
         setSocialStats(existingAnalyses);
@@ -488,6 +496,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
         // SOLO si no hay análisis existentes, verificar URLs de empresa para mostrar confirmación
         setSocialStats([]);
         setHasSocialConnections(false);
+        setExistingAnalysisCount(0);
+        setLastAnalysisDate(null);
         
         // Verificar si hay URLs de redes sociales en la empresa para análisis inicial
         if (companyData) {
@@ -645,6 +655,56 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     
     return (
       <div className="space-y-8 animate-fade-in">
+        {/* Banner de Estado Existente */}
+        {existingAnalysisCount > 0 && lastAnalysisDate && (
+          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-green-900 dark:text-green-100 flex items-center gap-2">
+                      ✓ Análisis de Audiencia Existente
+                    </h3>
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      {existingAnalysisCount} {existingAnalysisCount === 1 ? 'red social analizada' : 'redes sociales analizadas'} • 
+                      Última actualización: {new Date(lastAnalysisDate).toLocaleDateString('es', { 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={analyzeAllNetworksWithUrls}
+                  disabled={analyzing}
+                  variant="outline"
+                  className="gap-2 border-green-300 hover:bg-green-100 dark:hover:bg-green-900/40"
+                >
+                  {analyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Actualizando...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4" />
+                      Actualizar Análisis
+                    </>
+                  )}
+                </Button>
+              </div>
+              <div className="mt-4 flex gap-2 text-xs text-green-700 dark:text-green-300">
+                <Eye className="w-4 h-4" />
+                <span>Los datos se muestran a continuación. Puedes actualizarlos para obtener información más reciente.</span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Botones de Análisis */}
         <div className="flex justify-between items-center flex-wrap gap-4">
           <h2 className="text-2xl font-bold">🎯 Análisis de Audiencias</h2>
@@ -663,7 +723,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
               ) : (
                 <>
                   <Target className="h-5 w-5" />
-                  Analizar Todas las Redes
+                  {existingAnalysisCount > 0 ? 'Actualizar Análisis' : 'Analizar Todas las Redes'}
                 </>
               )}
             </Button>

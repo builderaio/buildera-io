@@ -1,4 +1,29 @@
 {
+  "invitations": {
+    "title": "Convites",
+    "sendInvite": "Enviar Convite",
+    "pending": "Pendente",
+    "accepted": "Aceito",
+    "expired": "Expirado",
+    "cancelled": "Cancelado",
+    "admin": "Administrador",
+    "member": "Membro",
+    "inviteEmail": "E-mail do convidado",
+    "selectRole": "Selecionar função",
+    "cancel": "Cancelar",
+    "resend": "Reenviar",
+    "expiresIn": "Expira em {days} dias",
+    "messages": {
+      "inviteSent": "Convite enviado com sucesso",
+      "inviteCancelled": "Convite cancelado",
+      "inviteAccepted": "Convite aceito",
+      "inviteExpired": "Este convite expirou",
+      "alreadyMember": "Este usuário já é membro da empresa",
+      "alreadyInvited": "Já existe um convite pendente para este e-mail",
+      "invalidEmail": "O e-mail inserido não é válido",
+      "insufficientPermissions": "Você não tem permissão para convidar membros"
+    }
+  },
   "audiences": {
     "title": "Gestão de Audiências",
     "dashboard": "Painel de Controle",

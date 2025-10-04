@@ -71,7 +71,15 @@ export const useCompanyManagement = () => {
     try {
       const { data, error } = await supabase
         .from('company_members')
-        .select('*')
+        .select(`
+          *,
+          profile:profiles!user_id(
+            full_name,
+            email,
+            avatar_url,
+            position
+          )
+        `)
         .eq('company_id', companyId);
 
       if (error) {

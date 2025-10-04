@@ -2264,6 +2264,59 @@ export type Database = {
         }
         Relationships: []
       }
+      company_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          company_id: string
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          inviter_id: string
+          role: string
+          status: string
+          token: string
+          updated_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          company_id: string
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          inviter_id: string
+          role?: string
+          status?: string
+          token: string
+          updated_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          company_id?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          inviter_id?: string
+          role?: string
+          status?: string
+          token?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_invitations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_members: {
         Row: {
           company_id: string
@@ -7437,6 +7490,10 @@ export type Database = {
       deactivate_user: {
         Args: { target_user_id: string }
         Returns: boolean
+      }
+      expire_old_invitations: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       extract_hashtags: {
         Args: { caption: string }

@@ -7,8 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCompanyManagement, CompanyMember } from '@/hooks/useCompanyManagement';
+import { useCompanyInvitations } from '@/hooks/useCompanyInvitations';
 import { useToast } from '@/hooks/use-toast';
-import { Users, UserPlus, Mail, MoreHorizontal, Trash2, Crown, Shield, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Users, UserPlus, Mail, MoreHorizontal, Trash2, Crown, Shield, User, Clock, X } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface CompanyMembersDialogProps {
@@ -30,12 +32,20 @@ export const CompanyMembersDialog = ({
   const [loading, setLoading] = useState(false);
   
   const { 
-    addCompanyMember, 
     updateMemberRole, 
     removeCompanyMember,
     fetchCompanyMembers 
   } = useCompanyManagement();
+
+  const {
+    invitations,
+    pendingCount,
+    sendInvitation,
+    cancelInvitation
+  } = useCompanyInvitations(companyId);
+
   const { toast } = useToast();
+  const { t } = useTranslation(['marketing', 'common']);
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -64,8 +74,8 @@ export const CompanyMembersDialog = ({
     
     if (!inviteEmail.trim()) {
       toast({
-        title: "Error",
-        description: "El email es requerido",
+        title: t('common:status.error'),
+        description: t('marketing:invitations.messages.invalidEmail'),
         variant: "destructive",
       });
       return;
@@ -74,26 +84,20 @@ export const CompanyMembersDialog = ({
     setLoading(true);
     
     try {
-      // TODO: Buscar usuario por email y obtener su ID
-      // Por ahora, simulamos que encontramos el usuario
-      toast({
-        title: "Función en desarrollo",
-        description: "La invitación de miembros estará disponible próximamente",
-        variant: "default",
-      });
+      const result = await sendInvitation(inviteEmail, inviteRole);
       
-      setInviteEmail('');
-      setInviteRole('member');
-      setShowInviteForm(false);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo invitar al miembro",
-        variant: "destructive",
-      });
+      if (result.success) {
+        setInviteEmail('');
+        setInviteRole('member');
+        setShowInviteForm(false);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    await cancelInvitation(invitationId);
   };
 
   const handleRoleChange = async (memberId: string, newRole: 'owner' | 'admin' | 'member') => {
@@ -111,7 +115,7 @@ export const CompanyMembersDialog = ({
       }
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('common:status.error'),
         description: error.message || "No se pudo actualizar el rol",
         variant: "destructive",
       });
@@ -133,7 +137,7 @@ export const CompanyMembersDialog = ({
       }
     } catch (error: any) {
       toast({
-        title: "Error", 
+        title: t('common:status.error'), 
         description: error.message || "No se pudo eliminar al miembro",
         variant: "destructive",
       });
@@ -142,7 +146,7 @@ export const CompanyMembersDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -161,14 +165,14 @@ export const CompanyMembersDialog = ({
               className="w-full"
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Invitar Miembro
+              {t('marketing:invitations.sendInvite')}
             </Button>
           )}
 
           {showInviteForm && (
             <form onSubmit={handleInviteMember} className="space-y-4 p-4 border rounded-lg bg-muted/50">
               <div className="space-y-2">
-                <Label htmlFor="invite-email">Email del nuevo miembro</Label>
+                <Label htmlFor="invite-email">{t('marketing:invitations.inviteEmail')}</Label>
                 <Input
                   id="invite-email"
                   type="email"
@@ -180,14 +184,14 @@ export const CompanyMembersDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="invite-role">Rol</Label>
+                <Label htmlFor="invite-role">{t('marketing:invitations.selectRole')}</Label>
                 <Select value={inviteRole} onValueChange={(value: 'admin' | 'member') => setInviteRole(value)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="member">Miembro</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="member">{t('marketing:invitations.member')}</SelectItem>
+                    <SelectItem value="admin">{t('marketing:invitations.admin')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -201,10 +205,50 @@ export const CompanyMembersDialog = ({
                   variant="outline" 
                   onClick={() => setShowInviteForm(false)}
                 >
-                  Cancelar
+                  {t('marketing:invitations.cancel')}
                 </Button>
               </div>
             </form>
+          )}
+
+          {pendingCount > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                {t('marketing:invitations.title')} ({pendingCount})
+              </h4>
+              {invitations.filter(inv => inv.status === 'pending').map(invitation => (
+                <div key={invitation.id} className="flex items-center justify-between p-3 border rounded-lg bg-yellow-50 dark:bg-yellow-900/10">
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-8 w-8 text-yellow-600" />
+                    <div>
+                      <p className="font-medium">{invitation.email}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className="text-xs">
+                          {invitation.role === 'admin' ? t('marketing:invitations.admin') : t('marketing:invitations.member')}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {t('marketing:invitations.pending')}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {t('marketing:invitations.expiresIn', { 
+                            days: Math.ceil((new Date(invitation.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleCancelInvitation(invitation.id)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           )}
 
           <div className="space-y-3">
@@ -218,20 +262,30 @@ export const CompanyMembersDialog = ({
               </div>
             ) : (
               <div className="space-y-2">
-                {members.map((member) => (
+                {members.map((member: any) => (
                   <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
                       <Avatar>
+                        <AvatarImage src={member.profile?.avatar_url} />
                         <AvatarFallback>
-                          {member.user_id.substring(0, 2).toUpperCase()}
+                          {member.profile?.full_name 
+                            ? member.profile.full_name.substring(0, 2).toUpperCase()
+                            : member.user_id.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-medium">Usuario {member.user_id.substring(0, 8)}</p>
+                          <p className="font-medium">
+                            {member.profile?.full_name || `Usuario ${member.user_id.substring(0, 8)}`}
+                          </p>
                           {getRoleIcon(member.role)}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {member.profile?.email && (
+                            <span className="text-xs text-muted-foreground">{member.profile.email}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
                           <Badge variant={getRoleBadgeVariant(member.role)}>
                             {member.role === 'owner' ? 'Propietario' : 
                              member.role === 'admin' ? 'Administrador' : 'Miembro'}

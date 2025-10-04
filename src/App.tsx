@@ -70,6 +70,7 @@ import WhiteLabelMarketplace from "./pages/WhiteLabelMarketplace";
 import AIWorkforce from "./pages/AIWorkforce";
 import AdminAIWorkforce from "./pages/AdminAIWorkforce";
 import AgentInstanceView from "./pages/AgentInstanceView";
+import InviteAccept from "./pages/InviteAccept";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +123,7 @@ const App = () => {
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+                <Route path="/invite/:token" element={<InviteAccept />} />
                 
                 {/* Authenticated Routes with Layout */}
                 <Route element={<ResponsiveLayout />}>

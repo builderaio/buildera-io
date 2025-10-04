@@ -1,4 +1,29 @@
 {
+  "invitations": {
+    "title": "Invitaciones",
+    "sendInvite": "Enviar Invitación",
+    "pending": "Pendiente",
+    "accepted": "Aceptada",
+    "expired": "Expirada",
+    "cancelled": "Cancelada",
+    "admin": "Administrador",
+    "member": "Miembro",
+    "inviteEmail": "Email del invitado",
+    "selectRole": "Seleccionar rol",
+    "cancel": "Cancelar",
+    "resend": "Reenviar",
+    "expiresIn": "Expira en {days} días",
+    "messages": {
+      "inviteSent": "Invitación enviada exitosamente",
+      "inviteCancelled": "Invitación cancelada",
+      "inviteAccepted": "Invitación aceptada",
+      "inviteExpired": "Esta invitación ha expirado",
+      "alreadyMember": "Este usuario ya es miembro de la empresa",
+      "alreadyInvited": "Ya existe una invitación pendiente para este email",
+      "invalidEmail": "El email ingresado no es válido",
+      "insufficientPermissions": "No tienes permisos para invitar miembros"
+    }
+  },
   "audiences": {
     "title": "Gestión de Audiencias",
     "dashboard": "Panel de Control",

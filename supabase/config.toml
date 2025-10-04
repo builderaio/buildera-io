@@ -105,3 +105,10 @@ verify_jwt = false
 [functions.agent-chat-proxy]
 verify_jwt = false
 
+[functions.send-company-invitation]
+verify_jwt = true
+
+[functions.accept-company-invitation]
+verify_jwt = true
+
+

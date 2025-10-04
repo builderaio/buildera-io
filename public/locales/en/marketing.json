@@ -1,4 +1,29 @@
 {
+  "invitations": {
+    "title": "Invitations",
+    "sendInvite": "Send Invitation",
+    "pending": "Pending",
+    "accepted": "Accepted",
+    "expired": "Expired",
+    "cancelled": "Cancelled",
+    "admin": "Administrator",
+    "member": "Member",
+    "inviteEmail": "Invitee's email",
+    "selectRole": "Select role",
+    "cancel": "Cancel",
+    "resend": "Resend",
+    "expiresIn": "Expires in {days} days",
+    "messages": {
+      "inviteSent": "Invitation sent successfully",
+      "inviteCancelled": "Invitation cancelled",
+      "inviteAccepted": "Invitation accepted",
+      "inviteExpired": "This invitation has expired",
+      "alreadyMember": "This user is already a member of the company",
+      "alreadyInvited": "A pending invitation already exists for this email",
+      "invalidEmail": "The email entered is not valid",
+      "insufficientPermissions": "You don't have permission to invite members"
+    }
+  },
   "audiences": {
     "title": "Audience Management",
     "dashboard": "Dashboard",

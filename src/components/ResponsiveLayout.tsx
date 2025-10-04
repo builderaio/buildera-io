@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
 import ThemeSelector from '@/components/ThemeSelector';
 import { SmartNotifications } from '@/components/ui/smart-notifications';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from 'react-i18next';
 interface Profile {
@@ -468,6 +469,7 @@ const CompanyLayout = ({
             <Separator orientation="vertical" className="h-6" />
             <div className="flex-1" />
             <div className="flex items-center gap-3">
+              <LanguageSelector />
               <ThemeSelector />
               <SmartNotifications />
               <DropdownMenu>

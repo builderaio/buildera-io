@@ -741,218 +741,214 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         </div>
 
         {/* Información Básica de la Empresa */}
-        {companyData && (
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <Building2 className="w-6 h-6 text-blue-600" />
-                </div>
-                Información Empresarial
-                <Badge variant="secondary" className="ml-auto">Completado</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Building2 className="w-4 h-4" />
-                    Nombre de la Empresa
-                  </div>
-                  <EditableField
-                    field="name"
-                    value={companyData.name}
-                    onSave={(value) => saveField('name', value)}
-                    placeholder="Nombre de tu empresa"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Target className="w-4 h-4" />
-                    Sector Industrial
-                  </div>
-                  <EditableField
-                    field="industry_sector"
-                    value={companyData.industry_sector}
-                    onSave={(value) => saveField('industry_sector', value)}
-                    placeholder="Ej. Tecnología, Salud, Educación..."
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Users className="w-4 h-4" />
-                    Tamaño de Empresa
-                  </div>
-                  <EditableField
-                    field="company_size"
-                    value={companyData.company_size}
-                    onSave={(value) => saveField('company_size', value)}
-                    placeholder="Ej. 1-10 empleados, 11-50, etc."
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    País
-                  </div>
-                  <EditableField
-                    field="country"
-                    value={companyData.country}
-                    onSave={(value) => saveField('country', value)}
-                    placeholder="País donde opera tu empresa"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Globe className="w-4 h-4" />
-                    Sitio Web
-                  </div>
-                  <EditableField
-                    field="website_url"
-                    value={companyData.website_url}
-                    onSave={(value) => saveField('website_url', value)}
-                    type="url"
-                    placeholder="https://tu-empresa.com"
-                  />
-                </div>
-
-                {/* Logo empresarial */}
-                <div className="space-y-4 pt-4 border-t">
-                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Camera className="w-4 h-4" />
-                    Logo de la Empresa
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center bg-muted/20">
-                      {companyData.logo_url ? (
-                        <img 
-                          src={companyData.logo_url} 
-                          alt="Logo empresa" 
-                          className="w-full h-full object-contain rounded-lg"
-                        />
-                      ) : (
-                        <Building2 className="w-8 h-8 text-muted-foreground/50" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (file && profile?.user_id) {
-                            const logoUrl = await uploadAvatar(file, profile.user_id);
-                            if (logoUrl) {
-                              await saveField('logo_url', logoUrl);
-                            }
-                          }
-                        }}
-                        className="hidden"
-                        id="logo-upload"
-                      />
-                      <label htmlFor="logo-upload">
-                        <Button variant="outline" size="sm" disabled={uploading} asChild>
-                          <span className="cursor-pointer">
-                            {uploading ? (
-                              <>
-                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                Subiendo...
-                              </>
-                            ) : (
-                              <>
-                                <Upload className="w-4 h-4 mr-2" />
-                                Subir Logo
-                              </>
-                            )}
-                          </span>
-                        </Button>
-                      </label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Formato PNG, JPG. Máximo 5MB.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              
-              <div className="space-y-2 pt-4 border-t">
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Building2 className="w-6 h-6 text-blue-600" />
+              </div>
+              Información Empresarial
+              <Badge variant="secondary" className="ml-auto">Completado</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+              <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Eye className="w-4 h-4" />
-                  Descripción del Negocio
+                  <Building2 className="w-4 h-4" />
+                  Nombre de la Empresa
                 </div>
                 <EditableField
-                  field="description"
-                  value={companyData.description}
-                  onSave={(value) => saveField('description', value)}
-                  type="textarea"
-                  placeholder="Describe tu empresa, qué hace y a quién sirve..."
+                  field="name"
+                  value={companyData?.name || ''}
+                  onSave={(value) => saveField('name', value)}
+                  placeholder="Nombre de tu empresa"
                 />
               </div>
-            </CardContent>
-          </Card>
-        )}
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Target className="w-4 h-4" />
+                  Sector Industrial
+                </div>
+                <EditableField
+                  field="industry_sector"
+                  value={companyData?.industry_sector || ''}
+                  onSave={(value) => saveField('industry_sector', value)}
+                  placeholder="Ej. Tecnología, Salud, Educación..."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Users className="w-4 h-4" />
+                  Tamaño de Empresa
+                </div>
+                <EditableField
+                  field="company_size"
+                  value={companyData?.company_size || ''}
+                  onSave={(value) => saveField('company_size', value)}
+                  placeholder="Ej. 1-10 empleados, 11-50, etc."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <MapPin className="w-4 h-4" />
+                  País
+                </div>
+                <EditableField
+                  field="country"
+                  value={companyData?.country || ''}
+                  onSave={(value) => saveField('country', value)}
+                  placeholder="País donde opera tu empresa"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Globe className="w-4 h-4" />
+                  Sitio Web
+                </div>
+                <EditableField
+                  field="website_url"
+                  value={companyData?.website_url || ''}
+                  onSave={(value) => saveField('website_url', value)}
+                  type="url"
+                  placeholder="https://tu-empresa.com"
+                />
+              </div>
+
+              {/* Logo empresarial */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Camera className="w-4 h-4" />
+                  Logo de la Empresa
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center bg-muted/20">
+                    {companyData?.logo_url ? (
+                      <img 
+                        src={companyData.logo_url} 
+                        alt="Logo empresa" 
+                        className="w-full h-full object-contain rounded-lg"
+                      />
+                    ) : (
+                      <Building2 className="w-8 h-8 text-muted-foreground/50" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file && profile?.user_id) {
+                          const logoUrl = await uploadAvatar(file, profile.user_id);
+                          if (logoUrl) {
+                            await saveField('logo_url', logoUrl);
+                          }
+                        }
+                      }}
+                      className="hidden"
+                      id="logo-upload"
+                    />
+                    <label htmlFor="logo-upload">
+                      <Button variant="outline" size="sm" disabled={uploading} asChild>
+                        <span className="cursor-pointer">
+                          {uploading ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                              Subiendo...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Subir Logo
+                            </>
+                          )}
+                        </span>
+                      </Button>
+                    </label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Formato PNG, JPG. Máximo 5MB.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            
+            <div className="space-y-2 pt-4 border-t">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Eye className="w-4 h-4" />
+                Descripción del Negocio
+              </div>
+              <EditableField
+                field="description"
+                value={companyData?.description || ''}
+                onSave={(value) => saveField('description', value)}
+                type="textarea"
+                placeholder="Describe tu empresa, qué hace y a quién sirve..."
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Estrategia Empresarial */}
-        {strategyData && (
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <Target className="w-6 h-6 text-purple-600" />
-                </div>
-                Estrategia Empresarial
-                <Badge variant="secondary" className="ml-auto">Completado</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <h3 className="font-semibold text-purple-800 dark:text-purple-200">Misión</h3>
-                <EditableField
-                  field="mision"
-                  value={strategyData.mision || ''}
-                  onSave={(value) => saveField('mision', value, 'company_strategy', strategyData.id)}
-                  type="textarea"
-                  placeholder="Define la misión de tu empresa"
-                />
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <Target className="w-6 h-6 text-purple-600" />
               </div>
-              
+              Estrategia Empresarial
+              <Badge variant="secondary" className="ml-auto">Completado</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-3">
+              <h3 className="font-semibold text-purple-800 dark:text-purple-200">Misión</h3>
+              <EditableField
+                field="mision"
+                value={strategyData?.mision || ''}
+                onSave={(value) => saveField('mision', value, 'company_strategy', strategyData?.id)}
+                type="textarea"
+                placeholder="Define la misión de tu empresa"
+              />
+            </div>
+            
+            <div className="space-y-3">
+              <h3 className="font-semibold text-purple-800 dark:text-purple-200">Visión</h3>
+              <EditableField
+                field="vision"
+                value={strategyData?.vision || ''}
+                onSave={(value) => saveField('vision', value, 'company_strategy', strategyData?.id)}
+                type="textarea"
+                placeholder="Define la visión de tu empresa"
+              />
+            </div>
+            
+            <div className="space-y-3">
+              <h3 className="font-semibold text-purple-800 dark:text-purple-200">Propuesta de Valor</h3>
+              <EditableField
+                field="propuesta_valor"
+                value={strategyData?.propuesta_valor || ''}
+                onSave={(value) => saveField('propuesta_valor', value, 'company_strategy', strategyData?.id)}
+                type="textarea"
+                placeholder="Describe tu propuesta de valor"
+              />
+            </div>
+            
+            {strategyData?.publico_objetivo && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-purple-800 dark:text-purple-200">Visión</h3>
-                <EditableField
-                  field="vision"
-                  value={strategyData.vision || ''}
-                  onSave={(value) => saveField('vision', value, 'company_strategy', strategyData.id)}
-                  type="textarea"
-                  placeholder="Define la visión de tu empresa"
-                />
+                <h3 className="font-semibold text-purple-800 dark:text-purple-200">Público Objetivo</h3>
+                <div className="bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg">
+                  <pre className="text-sm whitespace-pre-wrap text-muted-foreground">
+                    {JSON.stringify(strategyData.publico_objetivo, null, 2)}
+                  </pre>
+                </div>
               </div>
-              
-              <div className="space-y-3">
-                <h3 className="font-semibold text-purple-800 dark:text-purple-200">Propuesta de Valor</h3>
-                <EditableField
-                    field="propuesta_valor"
-                    value={strategyData.propuesta_valor}
-                    onSave={(value) => saveField('propuesta_valor', value, 'company_strategy', strategyData.id)}
-                    type="textarea"
-                    placeholder="Describe tu propuesta de valor"
-                  />
-                </div>
-              
-              {strategyData.publico_objetivo && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-purple-800 dark:text-purple-200">Público Objetivo</h3>
-                  <div className="bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg">
-                    <pre className="text-sm whitespace-pre-wrap text-muted-foreground">
-                      {JSON.stringify(strategyData.publico_objetivo, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
 
         {/* Objetivos de Crecimiento */}
         <Card className="shadow-lg">

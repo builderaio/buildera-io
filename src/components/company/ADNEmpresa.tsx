@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -51,19 +51,33 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const [objectives, setObjectives] = useState<any[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [editing, setEditing] = useState<string | null>(null);
+  const loadedUserIdRef = useRef<string | null>(null);
+  const isLoadingRef = useRef(false);
 
   useEffect(() => {
     console.log('🔍 ADNEmpresa useEffect triggered with profile:', profile);
-    if (profile?.user_id) {
-      console.log('✅ profile.user_id found:', profile.user_id);
-      loadOnboardingData();
-    } else {
+    
+    // Evitar múltiples cargas para el mismo usuario
+    if (!profile?.user_id) {
       console.log('❌ No user_id in profile:', profile);
+      setLoading(false);
+      return;
     }
+    
+    // Si ya estamos cargando o ya cargamos este usuario, no hacer nada
+    if (isLoadingRef.current || loadedUserIdRef.current === profile.user_id) {
+      console.log('⏭️ Skipping load - already loaded or loading for user:', profile.user_id);
+      return;
+    }
+    
+    console.log('✅ profile.user_id found:', profile.user_id);
+    loadedUserIdRef.current = profile.user_id;
+    loadOnboardingData();
   }, [profile?.user_id]);
 
   const loadOnboardingData = async () => {
     try {
+      isLoadingRef.current = true;
       setLoading(true);
       console.log('🔍 Starting loadOnboardingData with profile:', profile);
       console.log('📋 profile.user_id:', profile.user_id);
@@ -180,6 +194,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         variant: "destructive"
       });
     } finally {
+      isLoadingRef.current = false;
       setLoading(false);
       console.log('🏁 Loading finished. Final state:', {
         companyData: !!companyData,

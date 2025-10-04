@@ -29,6 +29,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const [strategyData, setStrategyData] = useState<any>(null);
   const [companyWebsiteUrl, setCompanyWebsiteUrl] = useState('');
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -146,6 +147,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const executeStep1 = async () => {
     updateStepStatus(1, true);
     setCurrentStep(1);
+    setHasError(false);
 
     try {
       if (!companyWebsiteUrl) {
@@ -178,6 +180,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       
     } catch (error) {
       updateStepStatus(1, false);
+      setHasError(true);
       toast({
         title: "❌ Error en el paso 1",
         description: "No pudimos extraer la información de tu empresa. Intenta de nuevo.",
@@ -191,6 +194,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const executeStep2 = async (companyIdParam?: string, companyDataParam?: any) => {
     updateStepStatus(2, true);
     setCurrentStep(2);
+    setHasError(false);
 
     try {
       const result = await callOnboardingFunction('company-strategy', {
@@ -211,6 +215,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       
     } catch (error) {
       updateStepStatus(2, false);
+      setHasError(true);
       toast({
         title: "❌ Error en el paso 2",
         description: "No pudimos estructurar tu estrategia. Intenta de nuevo.",
@@ -223,6 +228,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const executeStep3 = async (companyIdParam?: string, strategyDataParam?: any) => {
     updateStepStatus(3, true);
     setCurrentStep(3);
+    setHasError(false);
 
     try {
       const strategy = strategyDataParam || strategyData;
@@ -246,6 +252,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       
     } catch (error) {
       updateStepStatus(3, false);
+      setHasError(true);
       toast({
         title: "❌ Error en el paso 3",
         description: "No pudimos analizar tu marca. Intenta de nuevo.",
@@ -258,6 +265,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const executeStep4 = async (companyIdParam?: string, strategyDataParam?: any) => {
     updateStepStatus(4, true);
     setCurrentStep(4);
+    setHasError(false);
 
     try {
       const strategy = strategyDataParam || strategyData;
@@ -287,6 +295,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       
     } catch (error) {
       updateStepStatus(4, false);
+      setHasError(true);
       toast({
         title: "❌ Error en el paso 4",
         description: "No pudimos definir tus objetivos. Intenta de nuevo.",
@@ -299,6 +308,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const executeStep5 = async (companyIdParam?: string) => {
     updateStepStatus(5, true);
     setCurrentStep(5);
+    setHasError(false);
 
     try {
       const result = await callOnboardingFunction('create-company-agent', {
@@ -318,6 +328,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       
     } catch (error) {
       updateStepStatus(5, false);
+      setHasError(true);
       toast({
         title: "❌ Error en el paso 5",
         description: "No pudimos crear tu asistente ERA. Intenta de nuevo.",
@@ -566,7 +577,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
               </Card>
             )}
 
-            {currentStep > 0 && !allStepsCompleted && (
+            {hasError && currentStep > 0 && !allStepsCompleted && (
               <div className="text-center">
                 <Button
                   onClick={retryCurrentStep}

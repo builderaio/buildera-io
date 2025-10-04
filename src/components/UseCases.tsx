@@ -3,6 +3,39 @@ import { useTranslation } from "react-i18next";
 const UseCases = () => {
   const { t } = useTranslation('landing');
 
+  const useCases = [
+    {
+      id: 'socialMedia',
+      color: 'primary',
+      featureCount: 3
+    },
+    {
+      id: 'customerService',
+      color: 'secondary',
+      featureCount: 3
+    },
+    {
+      id: 'sales',
+      color: 'accent',
+      featureCount: 3
+    },
+    {
+      id: 'ecommerce',
+      color: 'primary',
+      featureCount: 3
+    },
+    {
+      id: 'professionalServices',
+      color: 'secondary',
+      featureCount: 3
+    },
+    {
+      id: 'education',
+      color: 'accent',
+      featureCount: 3
+    }
+  ];
+
   return (
     <section id="casos-de-uso" className="py-16 scroll-mt-24">
       <div className="container mx-auto px-6">
@@ -14,83 +47,29 @@ const UseCases = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <article className="growth-card p-6">
-            <h3 className="font-heading text-xl mb-2 text-primary">{t('useCases.cases.socialMedia.title')}</h3>
-            <p className="text-sm text-muted-foreground mb-4">{t('useCases.cases.socialMedia.description')}</p>
-            <ul className="space-y-2 text-sm">
-              {(t('useCases.cases.socialMedia.features', { returnObjects: true }) as string[]).map((feature) => (
-                <li key={feature} className="flex items-start gap-2">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary" aria-hidden="true" />
-                  <span className="text-foreground/90">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-
-          <article className="growth-card p-6">
-            <h3 className="font-heading text-xl mb-2 text-secondary">{t('useCases.cases.customerService.title')}</h3>
-            <p className="text-sm text-muted-foreground mb-4">{t('useCases.cases.customerService.description')}</p>
-            <ul className="space-y-2 text-sm">
-              {(t('useCases.cases.customerService.features', { returnObjects: true }) as string[]).map((feature) => (
-                <li key={feature} className="flex items-start gap-2">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary" aria-hidden="true" />
-                  <span className="text-foreground/90">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-
-          <article className="growth-card p-6">
-            <h3 className="font-heading text-xl mb-2 text-accent">{t('useCases.cases.sales.title')}</h3>
-            <p className="text-sm text-muted-foreground mb-4">{t('useCases.cases.sales.description')}</p>
-            <ul className="space-y-2 text-sm">
-              {(t('useCases.cases.sales.features', { returnObjects: true }) as string[]).map((feature) => (
-                <li key={feature} className="flex items-start gap-2">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary" aria-hidden="true" />
-                  <span className="text-foreground/90">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-
-          <article className="growth-card p-6">
-            <h3 className="font-heading text-xl mb-2 text-primary">{t('useCases.cases.ecommerce.title')}</h3>
-            <p className="text-sm text-muted-foreground mb-4">{t('useCases.cases.ecommerce.description')}</p>
-            <ul className="space-y-2 text-sm">
-              {(t('useCases.cases.ecommerce.features', { returnObjects: true }) as string[]).map((feature) => (
-                <li key={feature} className="flex items-start gap-2">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary" aria-hidden="true" />
-                  <span className="text-foreground/90">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-
-          <article className="growth-card p-6">
-            <h3 className="font-heading text-xl mb-2 text-secondary">{t('useCases.cases.professionalServices.title')}</h3>
-            <p className="text-sm text-muted-foreground mb-4">{t('useCases.cases.professionalServices.description')}</p>
-            <ul className="space-y-2 text-sm">
-              {(t('useCases.cases.professionalServices.features', { returnObjects: true }) as string[]).map((feature) => (
-                <li key={feature} className="flex items-start gap-2">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary" aria-hidden="true" />
-                  <span className="text-foreground/90">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
-
-          <article className="growth-card p-6">
-            <h3 className="font-heading text-xl mb-2 text-accent">{t('useCases.cases.education.title')}</h3>
-            <p className="text-sm text-muted-foreground mb-4">{t('useCases.cases.education.description')}</p>
-            <ul className="space-y-2 text-sm">
-              {(t('useCases.cases.education.features', { returnObjects: true }) as string[]).map((feature) => (
-                <li key={feature} className="flex items-start gap-2">
-                  <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary" aria-hidden="true" />
-                  <span className="text-foreground/90">{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </article>
+          {useCases.map((useCase) => {
+            const features = t(`useCases.cases.${useCase.id}.features`, { returnObjects: true });
+            const featuresArray = Array.isArray(features) ? features : [];
+            
+            return (
+              <article key={useCase.id} className="growth-card p-6">
+                <h3 className={`font-heading text-xl mb-2 text-${useCase.color}`}>
+                  {t(`useCases.cases.${useCase.id}.title`)}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {t(`useCases.cases.${useCase.id}.description`)}
+                </p>
+                <ul className="space-y-2 text-sm">
+                  {featuresArray.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <span className="mt-1 w-1.5 h-1.5 rounded-full bg-primary" aria-hidden="true" />
+                      <span className="text-foreground/90">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

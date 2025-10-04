@@ -35,6 +35,7 @@ const CompanyDashboard = () => {
   const [activeView, setActiveView] = useState("mando-central");
   const [loading, setLoading] = useState(true);
   const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
+  const [showCoachMarkAfterGuide, setShowCoachMarkAfterGuide] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -71,12 +72,10 @@ const CompanyDashboard = () => {
         setActiveView('adn-empresa');
         setShouldShowOnboarding(false);
         
-        // Si viene de completar onboarding, activar coachmark
+        // Si viene de completar onboarding, NO activar coachmark aún
+        // El coachmark se activará después de que el usuario complete el SimpleEraGuide
         if (onboardingCompletedParam === 'true') {
-          console.log('🎯 Onboarding completado, activando coachmark');
-          setTimeout(() => {
-            showCoachMark();
-          }, 2000); // Esperar 2 segundos para que se cargue la página
+          console.log('🎯 Onboarding completado, el coachmark se mostrará después del SimpleEraGuide');
         }
         
         // Cargar el perfil para asegurar que ADNEmpresa pueda obtener datos de la BD
@@ -278,8 +277,22 @@ const CompanyDashboard = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate, toast, searchParams]); // Agregar searchParams como dependencia
+    // Listener para cuando el SimpleEraGuide se complete
+    const handleGuideCompleted = () => {
+      console.log('✅ SimpleEraGuide completado, activando coachmark');
+      setShowCoachMarkAfterGuide(true);
+      setTimeout(() => {
+        showCoachMark();
+      }, 500);
+    };
+
+    window.addEventListener('simple-era-guide-completed', handleGuideCompleted);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('simple-era-guide-completed', handleGuideCompleted);
+    };
+  }, [navigate, toast, searchParams, showCoachMark]); // Agregar searchParams como dependencia
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -380,8 +393,8 @@ const CompanyDashboard = () => {
         </div>
       </div>
       
-      {/* CoachMark solo para usuarios nuevos que completan onboarding */}
-      {shouldShowCoachMark && user && (
+      {/* CoachMark solo después de completar el SimpleEraGuide */}
+      {shouldShowCoachMark && showCoachMarkAfterGuide && user && (
         <EraCoachMark
           isOpen={shouldShowCoachMark}
           onClose={hideCoachMark}

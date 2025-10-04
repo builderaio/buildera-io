@@ -349,6 +349,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           title: "¡Tour completado exitosamente! 🎉",
           description: "Has dominado todas las funciones principales de Buildera. Era está lista para asistirte en todo momento.",
         });
+        
+        // Disparar evento para activar el CoachMark
+        window.dispatchEvent(new CustomEvent('simple-era-guide-completed'));
       }
 
     } catch (error) {
@@ -378,6 +381,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         title: "Tour completado",
         description: "Puedes reactivar el tour guiado en cualquier momento presionando el botón Era (círculo morado) en la esquina inferior derecha.",
       });
+      
+      // Disparar evento para activar el CoachMark incluso si se salta el tour
+      window.dispatchEvent(new CustomEvent('simple-era-guide-completed'));
     } catch (error) {
       console.error('Error skipping tour:', error);
     }

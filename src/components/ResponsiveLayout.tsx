@@ -231,8 +231,9 @@ const CompanyLayout = ({
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [isInOnboarding, setIsInOnboarding] = useState(false);
   
-  // Check onboarding completion status
+  // Check onboarding completion status and if user is in onboarding flow
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       if (!profile?.user_id) return;
@@ -257,6 +258,11 @@ const CompanyLayout = ({
       }
     };
     
+    // Verificar si estamos en la vista de onboarding
+    const urlParams = new URLSearchParams(location.search);
+    const viewParam = urlParams.get('view');
+    setIsInOnboarding(viewParam === 'onboarding');
+    
     checkOnboardingStatus();
 
     // Listener para detectar cuando se completa el onboarding
@@ -269,7 +275,6 @@ const CompanyLayout = ({
     window.addEventListener('onboarding-completed', handleOnboardingComplete);
     
     // También verificar cuando cambie la URL
-    const urlParams = new URLSearchParams(location.search);
     if (urlParams.get('onboarding_completed') === 'true') {
       setTimeout(checkOnboardingStatus, 1000);
     }
@@ -363,14 +368,13 @@ const CompanyLayout = ({
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      {/* Funcionalidad: Controlamos el ancho directamente aquí para evitar conflictos.
-        Estética: Usamos w-16 (64px) para el modo colapsado, que da un buen espacio.
-      */}
-      <Sidebar 
-        variant="sidebar" 
-        collapsible="icon" 
-        className="data-[state=expanded]:w-80 data-[state=collapsed]:w-16 border-r bg-sidebar shadow-xl z-40 transition-all duration-300 ease-in-out"
-      >
+      {/* Ocultar sidebar durante el onboarding */}
+      {!isInOnboarding && (
+        <Sidebar 
+          variant="sidebar" 
+          collapsible="icon" 
+          className="data-[state=expanded]:w-80 data-[state=collapsed]:w-16 border-r bg-sidebar shadow-xl z-40 transition-all duration-300 ease-in-out"
+        >
         {/* Funcionalidad: El "group-data-" asegura que este header reaccione al estado del Sidebar.
           Estética: Se oculta limpiamente al colapsar.
         */}
@@ -439,44 +443,57 @@ const CompanyLayout = ({
             </SidebarGroup>
           ))}
         </SidebarContent>
+        
+        <SidebarFooter className="p-4 border-t border-sidebar-border/50">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => setActiveView('configuracion')} disabled={shouldBlockNavigation} className="justify-start">
+                <Settings className="size-5" />
+                <span className="group-data-[state=collapsed]:hidden">Administración</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
       </Sidebar>
-      
-      {/* El resto del Layout (header y contenido principal) */}
-      <SidebarInset className="flex-1 overflow-hidden bg-background">
-        <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4 sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
-          <div className='flex items-center gap-2'>
-            <SidebarTrigger className="-ml-1" />
+      )}
+
+      {/* Main Content Area */}
+      <SidebarInset className="flex-1 overflow-auto">
+        {/* Header solo visible cuando no estamos en onboarding */}
+        {!isInOnboarding && (
+          <header className="flex items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4 sticky top-0 z-30">
+            <SidebarTrigger className="-ml-2" />
             <Separator orientation="vertical" className="h-6" />
-            <h1 className="text-lg font-semibold">{profile?.company_name || 'Mi Empresa'}</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeSelector />
-            <SmartNotifications />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-auto px-2 rounded-full">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="size-7"><AvatarImage src={profile.avatar_url} /><AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback></Avatar>
-                    <div className="hidden md:block"><span className="text-sm font-medium truncate max-w-[120px]">{profile?.full_name || "Usuario"}</span></div>
+            <div className="flex-1" />
+            <div className="flex items-center gap-3">
+              <ThemeSelector />
+              <SmartNotifications />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-9 w-auto px-2 rounded-full">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="size-7"><AvatarImage src={profile.avatar_url} /><AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback></Avatar>
+                      <div className="hidden md:block"><span className="text-sm font-medium truncate max-w-[120px]">{profile?.full_name || "Usuario"}</span></div>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex items-center justify-start gap-2 p-2">
+                    <Avatar className="size-8"><AvatarImage src={profile.avatar_url} /><AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback></Avatar>
+                    <div className="flex flex-col"><p className="font-medium">{profile?.full_name}</p><p className="w-[200px] truncate text-sm text-muted-foreground">{profile?.email}</p></div>
                   </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <Avatar className="size-8"><AvatarImage src={profile.avatar_url} /><AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback></Avatar>
-                  <div className="flex flex-col"><p className="font-medium">{profile?.full_name}</p><p className="w-[200px] truncate text-sm text-muted-foreground">{profile?.email}</p></div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setActiveView('profile')}><User className="mr-2 h-4 w-4" /><span>Mi Perfil</span></DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={shouldBlockNavigation}><Settings className="mr-2 h-4 w-4" /><span>Administración</span></DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="text-destructive"><LogOut className="mr-2 h-4 w-4" /><span>Cerrar sesión</span></DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-        <main className="flex-1 w-full h-full overflow-auto">
-          <div className="p-4 md:p-6"><Outlet /></div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setActiveView('profile')}><User className="mr-2 h-4 w-4" /><span>Mi Perfil</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={shouldBlockNavigation}><Settings className="mr-2 h-4 w-4" /><span>Administración</span></DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive"><LogOut className="mr-2 h-4 w-4" /><span>Cerrar sesión</span></DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
+        )}
+        <main className={isInOnboarding ? "flex-1" : "flex-1 p-6"}>
+          <Outlet />
         </main>
       </SidebarInset>
     </div>

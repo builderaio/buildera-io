@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
+import { useTranslation } from "react-i18next";
 import BaseConocimiento from "./BaseConocimiento";
 import { 
   Building2, 
@@ -40,6 +42,7 @@ interface ADNEmpresaProps {
 
 const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const { toast } = useToast();
+  const { t } = useTranslation(['marketing']);
   const { uploadAvatar, uploading } = useAvatarUpload();
   const [loading, setLoading] = useState(true);
   const [companyData, setCompanyData] = useState<any>(null);
@@ -200,11 +203,18 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         setBrandingData((prev: any) => ({ ...prev, [field]: updateData[field] }));
       }
       
-      toast({ title: "Campo actualizado", description: "Los cambios se han guardado correctamente" });
+      toast({ 
+        title: t('marketing:adnEmpresa.fieldUpdated'), 
+        description: t('marketing:adnEmpresa.updateSuccess') 
+      });
       setEditing(null);
     } catch (error) {
       console.error('Error saving field:', error);
-      toast({ title: "Error", description: "No se pudo guardar el campo", variant: "destructive" });
+      toast({ 
+        title: "Error", 
+        description: t('marketing:adnEmpresa.updateError'), 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -337,6 +347,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               onSave(tempValue);
               setEditing(null);
             }}
+            title={t('marketing:adnEmpresa.saveChanges')}
           >
             <Save className="w-4 h-4" />
           </Button>
@@ -347,6 +358,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               setTempValue(value || '');
               setEditing(null);
             }}
+            title={t('marketing:adnEmpresa.cancelEdit')}
           >
             ✕
           </Button>
@@ -355,15 +367,34 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     }
     
     return (
-      <div 
-        className="group flex items-center gap-2 cursor-pointer hover:bg-muted/20 p-1 rounded transition-colors"
-        onClick={() => setEditing(field)}
-      >
-        <span className={`flex-1 ${!value ? 'text-muted-foreground italic' : ''}`}>
-          {value || placeholder}
-        </span>
-        <Edit className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div 
+              className="group flex items-center gap-2 p-2 rounded border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/20 cursor-text transition-all animate-fade-in"
+              onClick={() => setEditing(field)}
+            >
+              <span className={`flex-1 ${!value ? 'text-muted-foreground italic' : ''}`}>
+                {value || placeholder}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 shrink-0 hover:bg-transparent"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditing(field);
+                }}
+              >
+                <Edit className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+              </Button>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{t('marketing:adnEmpresa.clickToEdit')}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
 
@@ -653,10 +684,15 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Información de tu empresa. Haz clic en cualquier campo para editarlo.
           </p>
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span>Campos editables - Clic para modificar</span>
+          
+          {/* Banner de campos editables con diseño más visible */}
+          <div className="flex items-center justify-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800 max-w-xl mx-auto animate-fade-in shadow-sm">
+            <Edit className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              {t('marketing:adnEmpresa.editableFields')}
+            </span>
           </div>
+          
           {lastUpdated && (
             <p className="text-sm text-muted-foreground">
               Última actualización: {lastUpdated}

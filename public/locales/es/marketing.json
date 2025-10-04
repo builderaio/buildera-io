@@ -83,5 +83,15 @@
     "errorLoading": "Error al cargar analíticas",
     "noData": "No hay datos disponibles",
     "basicInsights": "Insights básicos generados"
+  },
+  "adnEmpresa": {
+    "editField": "Editar campo",
+    "clickToEdit": "Haz clic para editar",
+    "editableFields": "Campos editables - Clic para modificar",
+    "saveChanges": "Guardar cambios",
+    "cancelEdit": "Cancelar edición",
+    "fieldUpdated": "Campo actualizado",
+    "updateSuccess": "Los cambios se han guardado correctamente",
+    "updateError": "No se pudo guardar el campo"
   }
 }

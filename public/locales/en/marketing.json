@@ -84,5 +84,15 @@
     "errorLoading": "Error loading analytics",
     "noData": "No data available",
     "basicInsights": "Basic insights generated"
+  },
+  "adnEmpresa": {
+    "editField": "Edit field",
+    "clickToEdit": "Click to edit",
+    "editableFields": "Editable fields - Click to modify",
+    "saveChanges": "Save changes",
+    "cancelEdit": "Cancel edit",
+    "fieldUpdated": "Field updated",
+    "updateSuccess": "Changes saved successfully",
+    "updateError": "Could not save field"
   }
 }

@@ -44,11 +44,12 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
   // Hook para manejar el agente empresarial
   const { updateCompanyAgent } = useCompanyAgent({ user, enabled: !!user });
 
-  // Verificar si el tour guiado está completado
+  // Verificar si el tour guiado está completado (con debounce para evitar loops)
   useEffect(() => {
-    const checkTourStatus = async () => {
-      if (!uid) return;
-      
+    if (!uid) return;
+    
+    let isMounted = true;
+    const timeoutId = setTimeout(async () => {
       try {
         setTourLoading(true);
         const { data: tourStatus } = await supabase
@@ -57,16 +58,25 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
           .eq('user_id', uid)
           .maybeSingle();
 
-        setIsTourCompleted(tourStatus?.tour_completed || false);
+        if (isMounted) {
+          setIsTourCompleted(tourStatus?.tour_completed || false);
+        }
       } catch (error) {
         console.error('Error checking tour status:', error);
-        setIsTourCompleted(false);
+        if (isMounted) {
+          setIsTourCompleted(false);
+        }
       } finally {
-        setTourLoading(false);
+        if (isMounted) {
+          setTourLoading(false);
+        }
       }
-    };
+    }, 500); // Debounce de 500ms para evitar múltiples llamadas
 
-    checkTourStatus();
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [uid]);
 
   const scrollToBottom = () => {

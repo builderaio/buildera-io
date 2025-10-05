@@ -99,7 +99,12 @@ const EraContextualTips = ({ userId, currentSection, onNavigate }: EraContextual
   ];
 
   useEffect(() => {
-    loadDismissedTips();
+    // Debounce para evitar múltiples llamadas al montar
+    const timeoutId = setTimeout(() => {
+      loadDismissedTips();
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
   }, [userId]);
 
   useEffect(() => {

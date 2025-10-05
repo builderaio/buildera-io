@@ -85,17 +85,24 @@ export const OnboardingProvider = ({ children, userId }: OnboardingProviderProps
   };
 
   useEffect(() => {
-    refreshOnboardingStatus();
+    // Debounce para evitar múltiples llamadas consecutivas
+    const timeoutId = setTimeout(() => {
+      refreshOnboardingStatus();
+    }, 300);
 
     // Listener para cambios de estado
     const handleOnboardingComplete = () => {
       console.log('🔄 [OnboardingContext] Event: onboarding-completed');
-      refreshOnboardingStatus();
+      // Debounce también el evento
+      setTimeout(() => {
+        refreshOnboardingStatus();
+      }, 300);
     };
 
     window.addEventListener('onboarding-completed', handleOnboardingComplete);
 
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('onboarding-completed', handleOnboardingComplete);
     };
   }, [userId]);

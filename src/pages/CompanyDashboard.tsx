@@ -39,8 +39,11 @@ const CompanyDashboard = () => {
   const { toast } = useToast();
   
   const { shouldShowCoachMark, hideCoachMark, showCoachMark } = useEraCoachMark(user?.id);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     const checkAuth = async () => {
       console.group('🔐 [CompanyDashboard] checkAuth');
       console.log('Timestamp:', new Date().toISOString());
@@ -336,7 +339,7 @@ const CompanyDashboard = () => {
       subscription.unsubscribe();
       window.removeEventListener('simple-era-guide-completed', handleGuideCompleted);
     };
-  }, [navigate, toast, searchParams, showCoachMark]); // Agregar searchParams como dependencia
+  }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();

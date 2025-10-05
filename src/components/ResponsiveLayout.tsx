@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Building, Bot, Store, Bell, Search, GraduationCap, Users, Settings, User, LogOut, Activity, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -277,12 +277,20 @@ const CompanyLayout = ({
   const { t } = useTranslation(['common']);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isInOnboarding, setIsInOnboarding] = useState(false);
+  const checkOnboardingInFlight = useRef(false);
+  const lastOnboardingCheckAt = useRef(0);
   
   // Check onboarding completion status and if user is in onboarding flow
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       if (!profile?.user_id) return;
-      
+
+      const now = Date.now();
+      if (checkOnboardingInFlight.current || now - lastOnboardingCheckAt.current < 1000) {
+        return; // Throttle/skip if in-flight or checked <1s ago
+      }
+      checkOnboardingInFlight.current = true;
+
       try {
         const { data, error } = await supabase
           .from('user_onboarding_status')
@@ -300,6 +308,9 @@ const CompanyLayout = ({
         setOnboardingComplete(!!hasCompletedOnboarding);
       } catch (error) {
         console.error('Error in checkOnboardingStatus:', error);
+      } finally {
+        lastOnboardingCheckAt.current = Date.now();
+        checkOnboardingInFlight.current = false;
       }
     };
     

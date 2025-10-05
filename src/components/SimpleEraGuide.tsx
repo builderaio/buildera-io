@@ -466,30 +466,39 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                                      urlParams.get('first_login') === 'true';
       
       if (isInOnboardingProcess) {
-        console.log('🚫 Usuario en proceso de onboarding, SimpleEraGuide no se mostrará');
+        console.log('🚫 Usuario en proceso de onboarding, tour no se mostrará');
         setIsActive(false);
         return;
       }
 
+      // 🔍 Verificar estado de onboarding (AMBOS campos)
       const { data: onboarding } = await supabase
         .from('user_onboarding_status')
-        .select('onboarding_completed_at')
+        .select('onboarding_completed_at, dna_empresarial_completed')
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (onboarding?.onboarding_completed_at) {
-        const completedDate = new Date(onboarding.onboarding_completed_at);
-        const now = new Date();
-        const hoursDiff = (now.getTime() - completedDate.getTime()) / (1000 * 3600);
-        
-        // Solo mostrar si completó onboarding hace menos de 7 días Y está en adn-empresa con parámetro
-        const onboardingJustCompleted = urlParams.get('onboarding_completed') === 'true';
-        
-        if (hoursDiff <= 168 && onboardingJustCompleted) {
-          console.log('✅ [SimpleEraGuide] Onboarding completado recientemente - auto-activando tour');
-          setShowWelcome(true);
-          setIsActive(true); // 🆕 CAMBIO: Activar tour automáticamente después del onboarding
-        }
+      // 🔍 Verificar si ya completó el tour
+      const { data: tourData } = await supabase
+        .from('user_guided_tour')
+        .select('tour_completed')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const hasCompletedOnboarding = onboarding?.onboarding_completed_at || onboarding?.dna_empresarial_completed;
+      const hasTourCompleted = tourData?.tour_completed;
+
+      // ✅ Activar tour si completó onboarding pero no el tour (SIN límite de tiempo)
+      if (hasCompletedOnboarding && !hasTourCompleted) {
+        console.log('✅ [SimpleEraGuide] Onboarding completado, tour no completado - auto-activando');
+        setShowWelcome(true);
+        setIsActive(true);
+      } else if (hasTourCompleted) {
+        console.log('✓ [SimpleEraGuide] Tour ya completado');
+        setIsActive(false);
+      } else {
+        console.log('⏳ [SimpleEraGuide] Onboarding no completado');
+        setIsActive(false);
       }
     } catch (error) {
       console.error('Error verificando nuevo usuario:', error);
@@ -730,6 +739,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           description: "Has completado el tour de Buildera. Era está lista para asistirte.",
         });
         
+        // 🎯 Dispatch evento para que ResponsiveLayout desbloquee el sidebar
+        window.dispatchEvent(new CustomEvent('tour-completed', { 
+          detail: { userId, timestamp: new Date().toISOString() }
+        }));
         window.dispatchEvent(new CustomEvent('simple-era-guide-completed'));
       } else {
         toast({
@@ -762,6 +775,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         description: "Puedes reactivarlo en cualquier momento con el botón Era.",
       });
       
+      // 🎯 Dispatch evento para que ResponsiveLayout desbloquee el sidebar
+      window.dispatchEvent(new CustomEvent('tour-completed', { 
+        detail: { userId, timestamp: new Date().toISOString() }
+      }));
       window.dispatchEvent(new CustomEvent('simple-era-guide-completed'));
     } catch (error) {
       console.error('Error skipping tour:', error);

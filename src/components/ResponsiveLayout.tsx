@@ -277,8 +277,52 @@ const CompanyLayout = ({
   const { t } = useTranslation(['common']);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isInOnboarding, setIsInOnboarding] = useState(false);
+  const [tourCompleted, setTourCompleted] = useState(false);
   const checkOnboardingInFlight = useRef(false);
   const lastOnboardingCheckAt = useRef(0);
+  const checkTourInFlight = useRef(false);
+  
+  // Check tour completion status
+  const checkTourStatus = async () => {
+    if (!profile?.user_id || checkTourInFlight.current) return;
+    
+    // Verificar caché en localStorage primero
+    const cachedTourStatus = localStorage.getItem(`tour-completed-${profile.user_id}`);
+    if (cachedTourStatus === 'true') {
+      console.log('✓ [ResponsiveLayout] Tour completado (desde caché)');
+      setTourCompleted(true);
+      return;
+    }
+    
+    checkTourInFlight.current = true;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_guided_tour')
+        .select('tour_completed')
+        .eq('user_id', profile.user_id)
+        .maybeSingle();
+        
+      if (error) {
+        console.error('Error checking tour status:', error);
+        return;
+      }
+      
+      const isCompleted = data?.tour_completed || false;
+      setTourCompleted(isCompleted);
+      
+      // Cachear en localStorage
+      if (isCompleted) {
+        localStorage.setItem(`tour-completed-${profile.user_id}`, 'true');
+      }
+      
+      console.log('✓ [ResponsiveLayout] Tour status:', isCompleted);
+    } catch (error) {
+      console.error('Error in checkTourStatus:', error);
+    } finally {
+      checkTourInFlight.current = false;
+    }
+  };
   
   // Check onboarding completion status and if user is in onboarding flow
   useEffect(() => {
@@ -320,6 +364,7 @@ const CompanyLayout = ({
     setIsInOnboarding(viewParam === 'onboarding');
     
     checkOnboardingStatus();
+    checkTourStatus(); // 🆕 Verificar también el estado del tour
 
     // Listener para detectar cuando se completa el onboarding
     const handleOnboardingComplete = () => {
@@ -327,8 +372,18 @@ const CompanyLayout = ({
       checkOnboardingStatus();
     };
 
-    // Escuchar cuando se complete el onboarding
+    // 🆕 Listener para detectar cuando se completa el tour
+    const handleTourComplete = (event: any) => {
+      console.log('🎉 [ResponsiveLayout] Tour completado, desbloqueando sidebar', event.detail);
+      setTourCompleted(true);
+      if (profile?.user_id) {
+        localStorage.setItem(`tour-completed-${profile.user_id}`, 'true');
+      }
+    };
+
+    // Escuchar eventos
     window.addEventListener('onboarding-completed', handleOnboardingComplete);
+    window.addEventListener('tour-completed', handleTourComplete);
     
     // También verificar cuando cambie la URL
     if (urlParams.get('onboarding_completed') === 'true') {
@@ -337,6 +392,7 @@ const CompanyLayout = ({
 
     return () => {
       window.removeEventListener('onboarding-completed', handleOnboardingComplete);
+      window.removeEventListener('tour-completed', handleTourComplete);
     };
   }, [profile?.user_id, location.search]);
   
@@ -423,8 +479,8 @@ const CompanyLayout = ({
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      {/* Ocultar sidebar durante el onboarding */}
-      {!isInOnboarding && (
+      {/* Ocultar sidebar durante el onboarding Y si el tour no está completado */}
+      {!isInOnboarding && tourCompleted && (
         <Sidebar 
           variant="sidebar" 
           collapsible="icon" 

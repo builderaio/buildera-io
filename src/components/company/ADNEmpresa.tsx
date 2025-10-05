@@ -119,9 +119,10 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       
       if (!primaryCompanyId) {
         console.log('⚠️ No se encontró empresa para el usuario');
+        setLoading(false);
         toast({
           title: "Aviso",
-          description: "No se encontró información de empresa",
+          description: "No se encontró información de empresa. Completa el onboarding primero.",
           variant: "default"
         });
         return;
@@ -197,6 +198,8 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
 
     } catch (error) {
       console.error('❌ Error loading onboarding data:', error);
+      loadedUserIdRef.current = null;
+      isLoadingRef.current = false;
       toast({
         title: "Error",
         description: "Error al cargar la información empresarial",
@@ -729,7 +732,21 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-foreground">ADN Empresarial</h1>
+          <div className="flex items-center justify-center gap-4">
+            <h1 className="text-4xl font-bold text-foreground">ADN Empresarial</h1>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                loadedUserIdRef.current = null;
+                loadOnboardingData();
+              }}
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Recargar
+            </Button>
+          </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Información de tu empresa. Haz clic en cualquier campo para editarlo.
           </p>
@@ -757,24 +774,38 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                 <Building2 className="w-6 h-6 text-blue-600" />
               </div>
               Información Empresarial
-              <Badge variant="secondary" className="ml-auto">Completado</Badge>
+              {companyData?.name && (
+                <Badge variant="secondary" className="ml-auto">Completado</Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Building2 className="w-4 h-4" />
-                  Nombre de la Empresa
-                </div>
-                <EditableField
-                  field="name"
-                  value={companyData?.name || ''}
-                  onSave={(value) => saveField('name', value)}
-                  placeholder="Nombre de tu empresa"
-                />
+            {!companyData?.name && !companyData?.industry_sector && !companyData?.company_size ? (
+              <div className="p-6 text-center bg-muted/20 rounded-lg border border-dashed">
+                <Building2 className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                <p className="text-muted-foreground mb-2 font-medium">
+                  No hay información de empresa registrada
+                </p>
+                <p className="text-sm text-muted-foreground/70">
+                  Completa el onboarding o haz clic en los campos para agregar información
+                </p>
               </div>
-              
-              <div className="space-y-2">
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Building2 className="w-4 h-4" />
+                    Nombre de la Empresa
+                  </div>
+                  <EditableField
+                    field="name"
+                    value={companyData?.name || ''}
+                    onSave={(value) => saveField('name', value)}
+                    placeholder="Nombre de tu empresa"
+                  />
+                </div>
+               
+                <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   <Target className="w-4 h-4" />
                   Sector Industrial
@@ -898,6 +929,8 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                 placeholder="Describe tu empresa, qué hace y a quién sirve..."
               />
             </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

@@ -252,14 +252,23 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
 
   // 🆕 Al cargar, verificar localStorage para restaurar estado
   useEffect(() => {
-    if (!isActive && !loading && userId) {
+    if (!loading && userId) {
       const wasActive = localStorage.getItem('simple-era-guide-active') === 'true';
       const savedStep = parseInt(localStorage.getItem('simple-era-guide-current-step') || '1');
+      const wasMinimized = localStorage.getItem('simple-era-guide-minimized') === 'true';
       
-      if (wasActive) {
+      console.log('🔄 [SimpleEraGuide] Verificando localStorage', { 
+        wasActive, 
+        savedStep, 
+        wasMinimized,
+        currentIsActive: isActive 
+      });
+      
+      if (wasActive && !isActive) {
         setIsActive(true);
         setCurrentStep(savedStep);
-        console.log('🔄 [SimpleEraGuide] Restaurando desde localStorage', { savedStep });
+        setIsMinimized(wasMinimized);
+        console.log('✅ Restaurado desde localStorage');
       }
     }
   }, [loading, userId]);
@@ -544,6 +553,17 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   };
   
   const handleMaximize = () => {
+    console.log('📖 [SimpleEraGuide] handleMaximize clicked', { isActive, isMinimized });
+    
+    // Si el tour no está activo, mostrar welcome dialog
+    if (!isActive) {
+      setShowWelcome(true);
+      setIsMinimized(false);
+      console.log('💡 Tour inactivo, mostrando welcome dialog');
+      return;
+    }
+    
+    // Si está activo, solo expandir
     setIsMinimized(false);
     setAutoMinimized(false);
     localStorage.setItem('simple-era-guide-minimized', 'false');
@@ -812,13 +832,14 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       >
         <Button
           onClick={() => {
+            console.log('🎯 Badge flotante clicked - activando tour directamente');
             setShowTourBadge(false);
-            setShowWelcome(true);
+            startTour();
           }}
-          className="rounded-full shadow-2xl hover:scale-110 transition-all h-14 px-6 group bg-gradient-to-r from-primary to-primary/80"
+          className="rounded-full shadow-2xl hover:scale-110 transition-all h-14 px-6 group bg-gradient-to-r from-primary to-primary/80 animate-pulse"
           size="lg"
         >
-          <Sparkles className="w-5 h-5 mr-2 animate-pulse" />
+          <Sparkles className="w-5 h-5 mr-2" />
           <span className="font-medium">Iniciar Tour de Era</span>
           <Badge className="ml-2 bg-primary-foreground/20 hover:bg-primary-foreground/30">
             {steps.length} pasos

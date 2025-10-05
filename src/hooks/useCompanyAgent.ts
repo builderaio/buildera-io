@@ -41,109 +41,16 @@ export const useCompanyAgent = ({ user, enabled = true }: UseCompanyAgentProps) 
     updateCompanyAgent();
   }, [updateCompanyAgent]);
 
-  // Escuchar cambios en las tablas relevantes
+  // DISABLED: Este hook estaba causando loops infinitos llamando constantemente a create-company-agent
+  // Los listeners de realtime han sido deshabilitados para prevenir llamadas excesivas al API gateway
+  // TODO: Implementar un mecanismo de debounce más robusto o mover esta lógica al backend
+  
   useEffect(() => {
-    if (!user?.user_id || !enabled) return;
-
-    let userCompany: any = null;
-
-    const initializeListeners = async () => {
-      userCompany = await updateCompanyAgent();
-      if (!userCompany) return;
-
-      const channels: any[] = [];
-
-    // Escuchar cambios en la estrategia empresarial
-    const strategyChannel = supabase
-      .channel('company_strategy_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'company_strategy',
-          filter: `company_id=eq.${userCompany.company_id}`
-        },
-        () => {
-          console.log('Company strategy changed, updating agent...');
-          setTimeout(updateCompanyAgent, 1000); // Delay para asegurar que los datos estén actualizados
-        }
-      )
-      .subscribe();
-
-    channels.push(strategyChannel);
-
-    // Escuchar cambios en el branding
-    const brandingChannel = supabase
-      .channel('company_branding_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'company_branding',
-          filter: `company_id=eq.${userCompany.company_id}`
-        },
-        () => {
-          console.log('Company branding changed, updating agent...');
-          setTimeout(updateCompanyAgent, 1000);
-        }
-      )
-      .subscribe();
-
-    channels.push(brandingChannel);
-
-    // Escuchar cambios en los objetivos
-    const objectivesChannel = supabase
-      .channel('company_objectives_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'company_objectives',
-          filter: `company_id=eq.${userCompany.company_id}`
-        },
-        () => {
-          console.log('Company objectives changed, updating agent...');
-          setTimeout(updateCompanyAgent, 1000);
-        }
-      )
-      .subscribe();
-
-    channels.push(objectivesChannel);
-
-    // Escuchar cambios en la información de la empresa
-    const companyChannel = supabase
-      .channel('companies_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'companies'
-        },
-        (payload) => {
-          // Verificar si el usuario es miembro de esta empresa
-          if (payload.new && (payload.new as any).created_by === user.user_id) {
-            console.log('Company information changed, updating agent...');
-            setTimeout(updateCompanyAgent, 1000);
-          }
-        }
-      )
-      .subscribe();
-
-    channels.push(companyChannel);
-
-    // Limpiar suscripciones al desmontar
-      return () => {
-        channels.forEach(channel => {
-          supabase.removeChannel(channel);
-        });
-      };
-    };
-
-    initializeListeners();
+    // Solo ejecutar una actualización inicial del agente
+    if (user?.user_id && enabled) {
+      console.log('[useCompanyAgent] Initial agent update on mount');
+      updateCompanyAgent();
+    }
   }, [user?.user_id, enabled, updateCompanyAgent]);
 
   return {

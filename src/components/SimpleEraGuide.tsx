@@ -239,39 +239,67 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     };
   }, [isActive, userId, currentStep, completedSteps]);
 
-  // 🆕 Guardar y restaurar estado en localStorage para persistencia entre recargas
+  // 🆕 Guardar y restaurar estado en localStorage para persistencia entre recargas (con userId y timestamp)
   useEffect(() => {
     if (isActive && userId) {
-      localStorage.setItem('simple-era-guide-active', 'true');
-      localStorage.setItem('simple-era-guide-current-step', currentStep.toString());
-      console.log('💾 [SimpleEraGuide] Guardando estado en localStorage', { isActive, currentStep });
+      const stateData = {
+        active: true,
+        step: currentStep,
+        section: currentSection,
+        minimized: isMinimized,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem(`simple-era-guide-active-${userId}`, JSON.stringify(stateData));
+      console.log('💾 [SimpleEraGuide] Guardando estado en localStorage', stateData);
     } else if (!isActive && userId) {
-      localStorage.removeItem('simple-era-guide-active');
+      localStorage.removeItem(`simple-era-guide-active-${userId}`);
     }
-  }, [isActive, currentStep, userId]);
+  }, [isActive, currentStep, currentSection, isMinimized, userId]);
 
-  // 🆕 Al cargar, verificar localStorage para restaurar estado
+  // 🆕 Al cargar, verificar localStorage para restaurar estado (con validación de tiempo y sección)
   useEffect(() => {
     if (!loading && userId) {
-      const wasActive = localStorage.getItem('simple-era-guide-active') === 'true';
-      const savedStep = parseInt(localStorage.getItem('simple-era-guide-current-step') || '1');
-      const wasMinimized = localStorage.getItem('simple-era-guide-minimized') === 'true';
+      const savedStateStr = localStorage.getItem(`simple-era-guide-active-${userId}`);
       
-      console.log('🔄 [SimpleEraGuide] Verificando localStorage', { 
-        wasActive, 
-        savedStep, 
-        wasMinimized,
-        currentIsActive: isActive 
-      });
-      
-      if (wasActive && !isActive) {
-        setIsActive(true);
-        setCurrentStep(savedStep);
-        setIsMinimized(wasMinimized);
-        console.log('✅ Restaurado desde localStorage');
+      if (savedStateStr) {
+        try {
+          const savedState = JSON.parse(savedStateStr);
+          const savedTimestamp = new Date(savedState.timestamp);
+          const hoursSince = (new Date().getTime() - savedTimestamp.getTime()) / (1000 * 3600);
+          
+          console.log('🔄 [SimpleEraGuide] Verificando localStorage', { 
+            savedState,
+            hoursSince,
+            currentSection,
+            currentIsActive: isActive 
+          });
+          
+          // Solo restaurar si:
+          // 1. Han pasado menos de 24 horas
+          // 2. Estamos en la misma sección donde se pausó (o sin sección guardada)
+          if (hoursSince <= 24 && savedState.active && !isActive) {
+            const isSameSection = !savedState.section || savedState.section === currentSection;
+            
+            if (isSameSection) {
+              setIsActive(true);
+              setCurrentStep(savedState.step || 1);
+              setIsMinimized(savedState.minimized || false);
+              console.log('✅ Restaurado desde localStorage');
+            } else {
+              console.log('⚠️ Sección diferente, no restaurar automáticamente');
+              setShowTourBadge(true); // Mostrar badge para continuar tour
+            }
+          } else if (hoursSince > 24) {
+            console.log('⏰ Estado expirado (>24h), limpiando...');
+            localStorage.removeItem(`simple-era-guide-active-${userId}`);
+          }
+        } catch (error) {
+          console.error('❌ Error parsing localStorage state:', error);
+          localStorage.removeItem(`simple-era-guide-active-${userId}`);
+        }
       }
     }
-  }, [loading, userId]);
+  }, [loading, userId, currentSection]);
   
   // 🆕 Cargar preferencias de localStorage
   useEffect(() => {

@@ -70,6 +70,8 @@ export const useSecureAuth = () => {
 
   // Enhanced sign out with cleanup
   const secureSignOut = async () => {
+    console.log('🚪 [useSecureAuth] Secure sign out - cleaning localStorage');
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -81,9 +83,17 @@ export const useSecureAuth = () => {
         });
       }
 
-      // Clear all auth-related storage
+      // Limpiar localStorage de forma exhaustiva incluyendo guías y estados de UI
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        if (
+          key.startsWith('supabase.auth.') || 
+          key.includes('sb-') ||
+          key.startsWith('simple-era-guide-') ||
+          key.includes('era-optimizer-') ||
+          key.includes('coach-mark-') ||
+          key.includes('onboarding-')
+        ) {
+          console.log('🗑️ Removing:', key);
           localStorage.removeItem(key);
         }
       });
@@ -94,12 +104,14 @@ export const useSecureAuth = () => {
       // Force page reload for clean state
       window.location.href = '/auth';
     } catch (error) {
-      console.error('Error during secure sign out:', error);
+      console.error('❌ Error during secure sign out:', error);
       toast({
         title: "Sign Out Error",
         description: "There was an issue signing out. Please clear your browser cache and try again.",
         variant: "destructive"
       });
+      // Even on error, attempt to redirect
+      window.location.href = '/auth';
     }
   };
 

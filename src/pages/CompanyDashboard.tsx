@@ -24,7 +24,6 @@ import AIWorkforce from "@/pages/AIWorkforce";
 
 import UserProfile from "./UserProfile";
 import CompanyAgents from "./CompanyAgents";
-import OnboardingRedirect from "@/components/OnboardingRedirect";
 import OnboardingOrchestrator from "@/components/OnboardingOrchestrator";
 import SimpleEraGuide from "@/components/SimpleEraGuide";
 import { User } from "@supabase/supabase-js";
@@ -34,7 +33,6 @@ const CompanyDashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [activeView, setActiveView] = useState("mando-central");
   const [loading, setLoading] = useState(true);
-  const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
   const [showCoachMarkAfterGuide, setShowCoachMarkAfterGuide] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -44,45 +42,44 @@ const CompanyDashboard = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Intentar obtener sesión con reintentos (evita expulsión tras OAuth)
-      let session = null as any;
-      for (let i = 0; i < 5; i++) {
-        const { data: { session: s } } = await supabase.auth.getSession();
-        session = s;
-        if (session?.user) break;
-        await new Promise(r => setTimeout(r, 500));
-      }
+      console.group('🔐 [CompanyDashboard] checkAuth');
+      console.log('Timestamp:', new Date().toISOString());
       
-      if (!session || !session.user) {
+      // Intentar obtener sesión (perfil ya validado por ResponsiveLayout)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        console.log('❌ No session found');
+        console.groupEnd();
         navigate('/auth');
         return;
       }
 
+      console.log('✅ Session found for user:', session.user.id);
       setUser(session.user);
 
       // Check for view parameter in URL
       const viewParam = searchParams.get('view');
       const onboardingCompletedParam = searchParams.get('onboarding_completed');
       
+      console.log('📍 URL params:', { viewParam, onboardingCompletedParam });
+      
       // Si viene con parámetro onboarding, mostrar el flujo de 5 pasos
       if (viewParam === 'onboarding') {
+        console.log('🔄 Showing onboarding orchestrator');
         setActiveView('onboarding');
-        setShouldShowOnboarding(false);
         setLoading(false);
+        console.groupEnd();
         return;
       } else if (viewParam === 'mando-central') {
+        console.log('📊 Showing mando-central');
         setActiveView('mando-central');
-        setShouldShowOnboarding(false);
         setLoading(false);
+        console.groupEnd();
         return;
       } else if (viewParam === 'adn-empresa') {
+        console.log('🏢 Showing adn-empresa');
         setActiveView('adn-empresa');
-        setShouldShowOnboarding(false);
-        
-        console.log('🎯 [CompanyDashboard] Llegada a ADN Empresa', {
-          onboardingCompletedParam,
-          userId: session.user.id
-        });
         
         // Cargar el perfil para asegurar que ADNEmpresa pueda obtener datos de la BD
         const { data: profileData } = await supabase
@@ -126,13 +123,13 @@ const CompanyDashboard = () => {
         }
         
         setLoading(false);
+        console.groupEnd();
         return;
       } else if (viewParam) {
-        console.log('🎯 Setting activeView from URL param:', viewParam);
+        console.log('🎯 Setting activeView from URL:', viewParam);
         setActiveView(viewParam);
-        setShouldShowOnboarding(false);
         
-        // Asegurar que el perfil esté cargado para vistas que lo necesitan (como audiencias)
+        // Asegurar que el perfil esté cargado para vistas que lo necesitan
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
@@ -145,10 +142,12 @@ const CompanyDashboard = () => {
         }
         
         setLoading(false);
+        console.groupEnd();
         return;
       }
 
       // Solo verificar onboarding si no viene con parámetros específicos
+      console.log('🔍 Checking onboarding status');
       const registrationMethod = session.user.app_metadata?.provider || 'email';
       
       // Verificar estado de onboarding para usuarios sin parámetros de vista
@@ -190,10 +189,11 @@ const CompanyDashboard = () => {
           onboardingCompleted: !!onboardingStatus?.onboarding_completed_at
         });
 
-        // Si no tiene empresa Y no viene con view param Y no ha completado onboarding, mostrar onboarding redirect
+        // Si no tiene empresa Y no viene con view param Y no ha completado onboarding
         if (!hasCompany && !viewParam && !onboardingStatus?.onboarding_completed_at) {
-          console.log('❌ Usuario no tiene empresa y no completó onboarding, mostrando OnboardingRedirect');
-          setShouldShowOnboarding(true);
+          console.log('❌ Usuario sin empresa ni onboarding completado, redirigir a complete-profile');
+          navigate('/complete-profile');
+          console.groupEnd();
           setLoading(false);
           return;
         }
@@ -301,6 +301,8 @@ const CompanyDashboard = () => {
         });
       }
       
+      console.log('✅ Auth check complete');
+      console.groupEnd();
       setLoading(false);
     };
 
@@ -414,13 +416,8 @@ const CompanyDashboard = () => {
     );
   }
 
-  // Si debe mostrar onboarding, usar el componente de redirección
-  if (shouldShowOnboarding && user) {
-    return <OnboardingRedirect user={user} />;
-  }
-
   return (
-    <div className="w-full min-h-full">
+    <div className="w-full min-h-full">;
       {/* Content Area optimizado para sidebar con padding y espaciado correcto */}
       <div className="animate-fade-in w-full">
         <div className="max-w-full">
@@ -438,7 +435,7 @@ const CompanyDashboard = () => {
       )}
       
       {/* Guía de Era para experiencia paso a paso */}
-      {user && !shouldShowOnboarding && activeView !== 'onboarding' && (
+      {user && activeView !== 'onboarding' && (
         <SimpleEraGuide
           userId={user.id}
           currentSection={activeView}

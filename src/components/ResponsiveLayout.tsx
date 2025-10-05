@@ -46,6 +46,9 @@ const ResponsiveLayout = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
   const checkAuth = async () => {
+    console.group('🔐 [ResponsiveLayout] checkAuth');
+    console.log('Timestamp:', new Date().toISOString());
+    
     try {
       // Intentar obtener sesión con reintentos (evita expulsión tras OAuth)
       let session = null as any;
@@ -53,18 +56,21 @@ const ResponsiveLayout = () => {
         const { data: { session: s } } = await supabase.auth.getSession();
         session = s;
         if (session?.user) break;
+        console.log(`⏳ Retry ${i + 1}/6 - waiting for session...`);
         await new Promise(r => setTimeout(r, 500));
       }
       
       if (!session || !session.user) {
-        console.log('❌ No hay sesión activa tras reintentos, redirigiendo a /auth');
+        console.log('❌ No session found after retries, redirecting to /auth');
+        console.groupEnd();
         navigate('/auth');
         return;
       }
 
       const user = session.user;
+      console.log('✅ Session found for user:', user.id);
       
-      // Obtener perfil de forma tolerante (puede no existir inmediatamente tras OAuth)
+      // Obtener perfil completo con validación de onboarding
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -72,7 +78,7 @@ const ResponsiveLayout = () => {
         .maybeSingle();
       
       if (profileError) {
-        console.error('⚠️ Error obteniendo perfil, continuando con fallback:', profileError);
+        console.error('⚠️ Error fetching profile, using fallback:', profileError);
       }
       
       // Fallback mínimo si el perfil aún no existe
@@ -87,11 +93,7 @@ const ResponsiveLayout = () => {
       // Obtener nombre de empresa principal si existe
       const { data: companyMember } = await supabase
         .from('company_members')
-        .select(`
-          companies (
-            name
-          )
-        `)
+        .select(`companies (name)`)
         .eq('user_id', user.id)
         .eq('is_primary', true)
         .maybeSingle();
@@ -101,32 +103,50 @@ const ResponsiveLayout = () => {
         company_name: companyMember?.companies?.name || baseProfile.company_name || 'Mi Empresa'
       };
       
-      console.log('✅ Sesión verificada - Profile loaded with company name:', profileWithCompanyName.company_name);
+      console.log('✅ Profile loaded:', {
+        userId: profileWithCompanyName.user_id,
+        email: profileWithCompanyName.email,
+        userType: profileWithCompanyName.user_type,
+        companyName: profileWithCompanyName.company_name
+      });
+      
       setProfile(profileWithCompanyName);
+      console.groupEnd();
     } catch (error) {
-      console.error('Error checking auth:', error);
+      console.error('❌ Exception in checkAuth:', error);
+      console.groupEnd();
       navigate('/auth');
     } finally {
       setLoading(false);
     }
   };
   const handleSignOut = async () => {
+    console.log('🚪 [ResponsiveLayout] Signing out and cleaning localStorage');
     try {
+      // Limpiar localStorage de forma exhaustiva
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        if (
+          key.startsWith('supabase.auth.') || 
+          key.includes('sb-') ||
+          key.startsWith('simple-era-guide-') ||
+          key.includes('era-optimizer-') ||
+          key.includes('coach-mark-')
+        ) {
+          console.log('🗑️ Removing:', key);
           localStorage.removeItem(key);
         }
       });
-      await supabase.auth.signOut({
-        scope: 'global'
-      });
+      
+      await supabase.auth.signOut({ scope: 'global' });
+      
       toast({
         title: "Sesión cerrada",
         description: "Has cerrado sesión correctamente"
       });
+      
       window.location.href = '/auth';
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('❌ Error signing out:', error);
       window.location.href = '/auth';
     }
   };
@@ -146,22 +166,28 @@ const ResponsiveLayout = () => {
     return 'mando-central';
   };
   const setActiveView = (view: string) => {
+    // Todas las rutas ahora usan query params para consistencia
     const routes: Record<string, string> = {
-      'mando-central': '/company-dashboard',
-      'adn-empresa': '/company-dashboard/adn-empresa',
-      'base-conocimiento': '/company-dashboard/base-conocimiento',
+      'mando-central': '/company-dashboard?view=mando-central',
+      'adn-empresa': '/company-dashboard?view=adn-empresa',
+      'base-conocimiento': '/company-dashboard?view=base-conocimiento',
+      'marketing-hub': '/company-dashboard?view=marketing-hub',
+      'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
+      'ai-workforce': '/company-dashboard?view=ai-workforce',
+      'academia-buildera': '/company-dashboard?view=academia-buildera',
+      'expertos': '/company-dashboard?view=expertos',
+      'configuracion': '/company-dashboard?view=configuracion',
       'mis-agentes': '/company/agents',
       'marketplace': '/marketplace/agents',
-      'marketing-hub': '/company-dashboard/marketing-hub',
-      'inteligencia-competitiva': '/company-dashboard/inteligencia-competitiva',
-      'ai-workforce': '/company-dashboard?view=ai-workforce',
-      'academia-buildera': '/company-dashboard/academia-buildera',
-      'expertos': '/company-dashboard/expertos',
-      'configuracion': '/company-dashboard/configuracion',
       'perfil': '/profile'
     };
-    if (routes[view]) {
-      navigate(routes[view]);
+    
+    const targetRoute = routes[view];
+    if (targetRoute) {
+      console.log('🚀 [ResponsiveLayout] Navigating to:', targetRoute);
+      navigate(targetRoute);
+    } else {
+      console.error('❌ No route found for view:', view);
     }
   };
   if (loading) {
@@ -319,14 +345,13 @@ const CompanyLayout = ({
   };
 
   const setActiveView = (view: string) => {
-    console.log('🎯 setActiveView called with:', view, 'shouldBlockNavigation:', shouldBlockNavigation);
+    console.log('🎯 [CompanyLayout] setActiveView:', view, 'blocked:', shouldBlockNavigation);
     
     if (shouldBlockNavigation && view !== "adn-empresa") {
-      console.log('⚠️ Navigation blocked - onboarding not complete');
+      console.log('⚠️ Navigation blocked - onboarding incomplete');
       return;
     }
 
-    // Aseguramos que las rutas con parámetros de consulta funcionen correctamente
     const routes: Record<string, string> = {
       'mando-central': '/company-dashboard?view=mando-central',
       'adn-empresa': '/company-dashboard?view=adn-empresa',
@@ -342,9 +367,9 @@ const CompanyLayout = ({
     };
     
     const targetRoute = routes[view];
-    console.log('🚀 Navigating to route:', targetRoute, 'for view:', view);
     
     if (targetRoute) {
+      console.log('✅ Navigating to:', targetRoute);
       navigate(targetRoute);
       if (isMobile) {
         setTimeout(() => setOpenMobile(false), 100);

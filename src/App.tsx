@@ -3,7 +3,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthenticatedLayout from "./components/AuthenticatedLayout";
-import OnboardingRedirect from "./components/OnboardingRedirect";
 import OnboardingOrchestrator from "./components/OnboardingOrchestrator";
 import { SecurityProvider } from "./components/SecurityProvider";
 import VersionUpdateNotification from "./components/VersionUpdateNotification";
@@ -128,8 +127,18 @@ const App = () => {
                 {/* Authenticated Routes with Layout */}
                 <Route element={<ResponsiveLayout />}>
                   <Route path="/company-dashboard" element={<CompanyDashboard />} />
+                  
+                  {/* Redirects de compatibilidad para path segments → query params */}
                   <Route path="/company-dashboard/ai-workforce" element={<Navigate to="/company-dashboard?view=ai-workforce" replace />} />
                   <Route path="/company-dashboard/adn-empresa" element={<Navigate to="/company-dashboard?view=adn-empresa" replace />} />
+                  <Route path="/company-dashboard/mando-central" element={<Navigate to="/company-dashboard?view=mando-central" replace />} />
+                  <Route path="/company-dashboard/marketing-hub" element={<Navigate to="/company-dashboard?view=marketing-hub" replace />} />
+                  <Route path="/company-dashboard/inteligencia-competitiva" element={<Navigate to="/company-dashboard?view=inteligencia-competitiva" replace />} />
+                  <Route path="/company-dashboard/academia-buildera" element={<Navigate to="/company-dashboard?view=academia-buildera" replace />} />
+                  <Route path="/company-dashboard/expertos" element={<Navigate to="/company-dashboard?view=expertos" replace />} />
+                  <Route path="/company-dashboard/configuracion" element={<Navigate to="/company-dashboard?view=configuracion" replace />} />
+                  <Route path="/company-dashboard/base-conocimiento" element={<Navigate to="/company-dashboard?view=base-conocimiento" replace />} />
+                  
                   <Route path="/expert-dashboard" element={<ExpertDashboard />} />
                   <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
                   <Route path="/profile" element={<UserProfile />} />
@@ -252,7 +261,7 @@ const App = () => {
 
                 {/* Onboarding Routes */}
                 <Route path="/auth/onboarding" element={user ? <OnboardingOrchestrator user={user} /> : <div>Loading...</div>} />
-                <Route path="/onboarding" element={user ? <OnboardingRedirect user={user} /> : <div>Loading...</div>} />
+                <Route path="/onboarding" element={<Navigate to="/company-dashboard?view=onboarding" replace />} />
                 <Route path="/auth/authenticated" element={<AuthenticatedLayout />} />
 
                 {/* 404 */}

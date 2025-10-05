@@ -157,20 +157,43 @@ const CompanyDashboard = () => {
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      // Si el usuario ya completó onboarding, ir directo al dashboard (NO repetir onboarding)
+      // Si el usuario ya completó onboarding, cargar perfil y continuar al dashboard
       if (onboardingStatus?.onboarding_completed_at) {
-        console.log('✅ Usuario ya completó onboarding, acceso directo al dashboard');
-        const { data: companies } = await supabase
-          .from('companies')
+        console.log('✅ Usuario ya completó onboarding, cargando perfil y continuando');
+        
+        // Cargar perfil del usuario
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
           .select('*')
-          .eq('created_by', session.user.id);
-
-        const hasCompany = companies && companies.length > 0;
-        console.log('🔍 CompanyDashboard check - Usuario con onboarding completado:', {
-          hasCompany,
-          companiesLength: companies?.length,
-          userId: session.user.id
-        });
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        if (profileError) {
+          console.error('⚠️ Error cargando perfil:', profileError);
+        }
+        
+        if (profileData) {
+          console.log('✅ Perfil cargado:', {
+            userId: profileData.user_id,
+            email: profileData.email,
+            userType: profileData.user_type
+          });
+          setProfile(profileData);
+        } else {
+          // Fallback: crear perfil mínimo
+          console.log('⚠️ No se encontró perfil, usando fallback mínimo');
+          setProfile({ 
+            user_id: session.user.id, 
+            email: session.user.email,
+            full_name: session.user.user_metadata?.full_name || 'Usuario',
+            user_type: 'company'
+          });
+        }
+        
+        // IMPORTANTE: Desactivar loading para permitir renderizado
+        setLoading(false);
+        console.groupEnd();
+        return;
       } else {
         // Solo mostrar onboarding si NO está completado
         const { data: companies } = await supabase
@@ -199,16 +222,17 @@ const CompanyDashboard = () => {
         }
       }
       
-      // Buscar perfil de empresa existente
+      // Buscar perfil de empresa existente (usar maybeSingle para robustez)
+      console.log('🔍 Buscando perfil de empresa existente...');
       let { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
       // Si no existe perfil, crear uno básico para empresa
-      if (error && error.code === 'PGRST116') {
-        console.log('No se encontró perfil, creando uno nuevo para empresa...');
+      if (!profileData) {
+        console.log('⚠️ No se encontró perfil, creando uno nuevo para empresa...');
         
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
@@ -224,43 +248,49 @@ const CompanyDashboard = () => {
           .single();
 
         if (insertError) {
-          console.error('Error creando perfil:', insertError);
+          console.error('❌ Error creando perfil:', insertError);
           toast({
             title: "Error",
             description: "No se pudo crear el perfil del negocio. Intente nuevamente.",
             variant: "destructive",
           });
+          setLoading(false);
           navigate('/auth');
           return;
         }
 
         profileData = newProfile;
+        console.log('✅ Perfil creado exitosamente');
         toast({
           title: "Perfil creado",
           description: "Se ha creado tu perfil de negocio. Completa tu información en ADN del Negocio.",
         });
       } else if (error) {
-        console.error('Error obteniendo perfil:', error);
+        console.error('❌ Error obteniendo perfil:', error);
         toast({
           title: "Error de acceso",
           description: "No se pudo obtener la información del perfil.",
           variant: "destructive",
         });
+        setLoading(false);
         navigate('/auth');
         return;
       }
 
       // Verificar que el perfil sea de tipo empresa
       if (profileData && profileData.user_type !== 'company') {
+        console.log('❌ Usuario no es de tipo empresa, redirigiendo');
         toast({
           title: "Acceso denegado",
           description: "Este dashboard es solo para negocios.",
           variant: "destructive",
         });
+        setLoading(false);
         navigate('/auth');
         return;
       }
 
+      console.log('✅ Perfil validado y establecido');
       setProfile(profileData);
       
       // Verificar si la información está completa (solo verificamos info personal ahora)
@@ -410,7 +440,7 @@ const CompanyDashboard = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando dashboard...</p>
+          <p className="text-muted-foreground">Cargando perfil...</p>
         </div>
       </div>
     );

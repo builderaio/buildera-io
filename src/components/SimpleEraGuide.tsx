@@ -328,7 +328,17 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     const criticalSections = ['adn-empresa', 'marketing-hub', 'content-creation'];
     const shouldAutoMinimize = criticalSections.includes(currentSection);
     
-    if (shouldAutoMinimize && !isMinimized && isActive) {
+    console.log('🔍 [SimpleEraGuide] Auto-minimize check:', {
+      currentSection,
+      shouldAutoMinimize,
+      isMinimized,
+      isActive
+    });
+    
+    // 🔥 DESHABILITAR auto-minimización si el tour recién se activó
+    // Solo minimizar si el usuario ya ha interactuado con el tour
+    if (shouldAutoMinimize && !isMinimized && isActive && completedSteps.length > 0) {
+      console.log('📦 [SimpleEraGuide] Auto-minimizando en sección crítica');
       setAutoMinimized(true);
       setIsMinimized(true);
       toast({
@@ -337,7 +347,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         duration: 4000
       });
     }
-  }, [currentSection, isMinimized, isActive]);
+  }, [currentSection, isMinimized, isActive, completedSteps.length]);
   
   // 🆕 Animación de peek cuando está minimizado
   useEffect(() => {
@@ -460,10 +470,18 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
 
   const checkIfNewUser = async () => {
     try {
+      console.log('🔍 [SimpleEraGuide] checkIfNewUser - Iniciando verificación');
+      
       // 🔍 Verificar si está en proceso de onboarding activo
       const urlParams = new URLSearchParams(window.location.search);
       const isInOnboardingProcess = urlParams.get('view') === 'onboarding' || 
                                      urlParams.get('first_login') === 'true';
+      
+      console.log('🔍 [SimpleEraGuide] URL params:', {
+        view: urlParams.get('view'),
+        first_login: urlParams.get('first_login'),
+        isInOnboardingProcess
+      });
       
       if (isInOnboardingProcess) {
         console.log('🚫 Usuario en proceso de onboarding, tour no se mostrará');
@@ -472,27 +490,38 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       }
 
       // 🔍 Verificar estado de onboarding (AMBOS campos)
-      const { data: onboarding } = await supabase
+      const { data: onboarding, error: onboardingError } = await supabase
         .from('user_onboarding_status')
         .select('onboarding_completed_at, dna_empresarial_completed')
         .eq('user_id', userId)
         .maybeSingle();
 
+      console.log('🔍 [SimpleEraGuide] Onboarding data:', { onboarding, error: onboardingError });
+
       // 🔍 Verificar si ya completó el tour
-      const { data: tourData } = await supabase
+      const { data: tourData, error: tourError } = await supabase
         .from('user_guided_tour')
         .select('tour_completed')
         .eq('user_id', userId)
         .maybeSingle();
 
+      console.log('🔍 [SimpleEraGuide] Tour data:', { tourData, error: tourError });
+
       const hasCompletedOnboarding = onboarding?.onboarding_completed_at || onboarding?.dna_empresarial_completed;
       const hasTourCompleted = tourData?.tour_completed;
+
+      console.log('🔍 [SimpleEraGuide] Verificación final:', {
+        hasCompletedOnboarding,
+        hasTourCompleted,
+        shouldActivate: hasCompletedOnboarding && !hasTourCompleted
+      });
 
       // ✅ Activar tour si completó onboarding pero no el tour (SIN límite de tiempo)
       if (hasCompletedOnboarding && !hasTourCompleted) {
         console.log('✅ [SimpleEraGuide] Onboarding completado, tour no completado - auto-activando');
         setShowWelcome(true);
         setIsActive(true);
+        setIsMinimized(false); // 🔥 ASEGURAR que se muestre expandido
       } else if (hasTourCompleted) {
         console.log('✓ [SimpleEraGuide] Tour ya completado');
         setIsActive(false);
@@ -501,7 +530,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         setIsActive(false);
       }
     } catch (error) {
-      console.error('Error verificando nuevo usuario:', error);
+      console.error('❌ [SimpleEraGuide] Error verificando nuevo usuario:', error);
     }
   };
 
@@ -876,7 +905,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         className="fixed bottom-6 right-6 z-50"
       >
         <Button
-          onClick={() => {
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('🎯 Badge flotante clicked - activando tour directamente');
             setShowTourBadge(false);
             startTour();
@@ -917,7 +949,12 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           </motion.div>
         )}
         <Button
-          onClick={handleMaximize}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleMaximize();
+          }}
           className="fixed bottom-6 right-6 rounded-full shadow-2xl hover:scale-110 transition-all z-50 h-14 px-6 group"
           size="lg"
         >
@@ -965,6 +1002,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                 {/* 🆕 Modo compacto toggle (solo desktop) */}
                 {window.innerWidth >= 768 && (
                   <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
                     onClick={toggleCompactMode}
@@ -977,6 +1015,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                 
                 {/* 🆕 Ocultar temporalmente */}
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={handleTemporaryHide}
@@ -988,6 +1027,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                 
                 {/* 🆕 Minimizar mejorado */}
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={handleMinimize}
@@ -1000,6 +1040,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                 
                 {/* Cerrar/Skip */}
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowSkipConfirm(true)}
@@ -1083,6 +1124,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
               <div className="flex gap-2 pt-2">
                 {currentStepData.target_section && onNavigate && (
                   <Button
+                    type="button"
                     onClick={() => {
                       onNavigate(currentStepData.target_section!, currentStepData.tab ? { tab: currentStepData.tab } : undefined);
                       // Auto-minimizar al navegar
@@ -1098,6 +1140,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                 
                 {isStepCompleted ? (
                   <Button
+                    type="button"
                     variant="outline"
                     disabled
                     className="flex-1 border-green-500 text-green-500"
@@ -1107,6 +1150,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                   </Button>
                 ) : (
                   <Button
+                    type="button"
                     onClick={() => completeStep(currentStep)}
                     variant="outline"
                     disabled={verifying}
@@ -1130,6 +1174,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
               {/* 🆕 Botón de pausar tour */}
               {!compactMode && (
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={handlePauseTour}

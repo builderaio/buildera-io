@@ -179,23 +179,20 @@ serve(async (req) => {
     // Get social media connections to determine active networks
     const { data: linkedinConnection } = await supabase
       .from('linkedin_connections')
-      .select('is_active')
+      .select('id')
       .eq('user_id', user.id)
-      .eq('is_active', true)
       .limit(1);
 
     const { data: facebookConnection } = await supabase
       .from('facebook_instagram_connections')
-      .select('is_active')
+      .select('id')
       .eq('user_id', user.id)
-      .eq('is_active', true)
       .limit(1);
 
     const { data: tiktokConnection } = await supabase
       .from('tiktok_connections')
-      .select('is_active')
+      .select('id')
       .eq('user_id', user.id)
-      .eq('is_active', true)
       .limit(1);
 
     // Build active social networks array

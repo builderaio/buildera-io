@@ -90,6 +90,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const autoSaveIntervalRef = useRef<NodeJS.Timeout>();
   const inactivityTimerRef = useRef<NodeJS.Timeout>();
   const lastInteractionRef = useRef<Date>(new Date());
+  const recentlyMaximizedRef = useRef(false);  // 🆕 Prevenir auto-minimización inmediata
   const verifications = useStepVerifications(userId);
   const cacheData = useAnalysisCache(userId);  // 🆕 Obtener metadata de análisis
 
@@ -327,6 +328,12 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   
   // 🆕 Auto-minimizar en secciones críticas
   useEffect(() => {
+    // 🔥 PREVENIR auto-minimización si el usuario acaba de maximizar manualmente
+    if (recentlyMaximizedRef.current) {
+      console.log('⏸️ [SimpleEraGuide] Usuario maximizó recientemente, evitando auto-minimización');
+      return;
+    }
+    
     const criticalSections = ['adn-empresa', 'marketing-hub', 'content-creation'];
     const shouldAutoMinimize = criticalSections.includes(currentSection);
     
@@ -334,7 +341,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       currentSection,
       shouldAutoMinimize,
       isMinimized,
-      isActive
+      isActive,
+      recentlyMaximized: recentlyMaximizedRef.current
     });
     
     // 🔥 DESHABILITAR auto-minimización si el tour recién se activó
@@ -705,11 +713,19 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const handleMaximize = () => {
     console.log('📖 [SimpleEraGuide] handleMaximize clicked', { isActive, isMinimized });
     
+    // 🔥 Marcar que el usuario maximizó manualmente
+    recentlyMaximizedRef.current = true;
+    
     // Si el tour no está activo, mostrar welcome dialog
     if (!isActive) {
       setShowWelcome(true);
       setIsMinimized(false);
       console.log('💡 Tour inactivo, mostrando welcome dialog');
+      
+      // Resetear flag después de 5 segundos
+      setTimeout(() => {
+        recentlyMaximizedRef.current = false;
+      }, 5000);
       return;
     }
     
@@ -717,6 +733,14 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     setIsMinimized(false);
     setAutoMinimized(false);
     localStorage.setItem('simple-era-guide-minimized', 'false');
+    
+    console.log('✅ [SimpleEraGuide] Maximizado por usuario, flag activado por 5 segundos');
+    
+    // Resetear flag después de 5 segundos
+    setTimeout(() => {
+      recentlyMaximizedRef.current = false;
+      console.log('⏰ [SimpleEraGuide] Flag de maximización manual expirado');
+    }, 5000);
   };
   
   const triggerCelebration = () => {

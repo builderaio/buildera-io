@@ -23,9 +23,6 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
   const [loading, setLoading] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
 
-  // Check if coming from tour by checking the current view
-  const isFromTour = window.location.search.includes('view=audiencias-create');
-
   useEffect(() => {
     const init = async () => {
       try {
@@ -209,23 +206,6 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {isFromTour && (
-        <div className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 border-2 border-pink-500/30 rounded-lg p-4 animate-fade-in">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center flex-shrink-0">
-              <Target className="w-5 h-5 text-pink-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-lg mb-1">🎯 Paso 6 del Tour: Crea tu Primer Segmento</h3>
-              <p className="text-sm text-muted-foreground">
-                Define un segmento de audiencia basado en los insights que la IA identificó en tu análisis. 
-                Especifica demografía, intereses y comportamientos de tu público objetivo.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-      
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Button 

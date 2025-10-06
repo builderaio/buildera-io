@@ -18,16 +18,12 @@ import {
   Target,
   Zap,
   Star,
-  Instagram,
-  Facebook,
-  Twitter,
-  Youtube,
-  Music,
   CheckCircle,
   AlertCircle,
   RefreshCw,
   BarChart3
 } from "lucide-react";
+import { FaFacebook, FaInstagram, FaLinkedin, FaTiktok, FaYoutube, FaXTwitter } from 'react-icons/fa6';
 
 interface SocialAnalysisData {
   id: string;
@@ -332,22 +328,22 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
 
   const getPlatformIconByName = (platform: string) => {
     switch (platform) {
-      case 'instagram': return <Instagram className="w-5 h-5 text-pink-500" />;
-      case 'facebook': return <Facebook className="w-5 h-5 text-blue-600" />;
-      case 'twitter': return <Twitter className="w-5 h-5 text-blue-400" />;
-      case 'tiktok': return <Music className="w-5 h-5 text-black" />;
-      case 'youtube': return <Youtube className="w-5 h-5 text-red-500" />;
+      case 'instagram': return <FaInstagram className="w-5 h-5 text-pink-500" />;
+      case 'facebook': return <FaFacebook className="w-5 h-5 text-blue-600" />;
+      case 'twitter': return <FaXTwitter className="w-5 h-5 text-black" />;
+      case 'tiktok': return <FaTiktok className="w-5 h-5 text-black" />;
+      case 'youtube': return <FaYoutube className="w-5 h-5 text-red-500" />;
       default: return <Globe className="w-5 h-5 text-gray-500" />;
     }
   };
 
   const getPlatformIcon = (socialType: string) => {
     switch (socialType) {
-      case 'INST': return <Instagram className="w-5 h-5 text-pink-500" />;
-      case 'FB': return <Facebook className="w-5 h-5 text-blue-600" />;
-      case 'TW': return <Twitter className="w-5 h-5 text-blue-400" />;
-      case 'TT': return <Music className="w-5 h-5 text-black" />;
-      case 'YT': return <Youtube className="w-5 h-5 text-red-500" />;
+      case 'INST': return <FaInstagram className="w-5 h-5 text-pink-500" />;
+      case 'FB': return <FaFacebook className="w-5 h-5 text-blue-600" />;
+      case 'TW': return <FaXTwitter className="w-5 h-5 text-black" />;
+      case 'TT': return <FaTiktok className="w-5 h-5 text-black" />;
+      case 'YT': return <FaYoutube className="w-5 h-5 text-red-500" />;
       default: return <Globe className="w-5 h-5 text-gray-500" />;
     }
   };

@@ -47,19 +47,14 @@ import {
   ShoppingCart,
   Mail,
   MessageSquare,
-  Facebook,
-  Instagram,
-  Linkedin,
-  Twitter,
-  Youtube,
-  Music,
-  X,
   Building,
   Wifi,
   WifiOff,
   Plus,
-  ChevronRight
+  ChevronRight,
+  X
 } from "lucide-react";
+import { FaFacebook, FaInstagram, FaLinkedin, FaTiktok, FaYoutube, FaXTwitter } from 'react-icons/fa6';
 import { SocialConnectionManager } from "./SocialConnectionManager";
 import SocialAnalysisDisplay from "./SocialAnalysisDisplay";
 
@@ -550,11 +545,11 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
             {Object.entries(socialUrls).map(([platform, url]: [string, any]) => (
               <div key={platform} className="flex items-center space-x-4 p-4 border rounded-lg bg-card">
                 <div className="flex items-center space-x-3 flex-1">
-                  {platform === 'instagram' && <Instagram className="w-5 h-5 text-pink-500" />}
-                  {platform === 'facebook' && <Facebook className="w-5 h-5 text-blue-600" />}
-                  {platform === 'twitter' && <Twitter className="w-5 h-5 text-blue-400" />}
-                  {platform === 'tiktok' && <Music className="w-5 h-5 text-black" />}
-                  {platform === 'youtube' && <Youtube className="w-5 h-5 text-red-500" />}
+                  {platform === 'instagram' && <FaInstagram className="w-5 h-5 text-pink-500" />}
+                  {platform === 'facebook' && <FaFacebook className="w-5 h-5 text-blue-600" />}
+                  {platform === 'twitter' && <FaXTwitter className="w-5 h-5 text-black" />}
+                  {platform === 'tiktok' && <FaTiktok className="w-5 h-5 text-black" />}
+                  {platform === 'youtube' && <FaYoutube className="w-5 h-5 text-red-500" />}
                   
                   <div className="flex-1">
                     <p className="font-medium capitalize">{platform}</p>
@@ -757,11 +752,11 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
             <div className="flex gap-3">
               {socialStats.map((profile, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  {profile.social_type === 'INST' && <Instagram className="w-5 h-5 text-pink-500" />}
-                  {profile.social_type === 'FB' && <Facebook className="w-5 h-5 text-blue-600" />}
-                  {profile.social_type === 'TW' && <Twitter className="w-5 h-5 text-blue-400" />}
-                  {profile.social_type === 'TT' && <Music className="w-5 h-5 text-black" />}
-                  {profile.social_type === 'YT' && <Youtube className="w-5 h-5 text-red-500" />}
+                  {profile.social_type === 'INST' && <FaInstagram className="w-5 h-5 text-pink-500" />}
+                  {profile.social_type === 'FB' && <FaFacebook className="w-5 h-5 text-blue-600" />}
+                  {profile.social_type === 'TW' && <FaXTwitter className="w-5 h-5 text-black" />}
+                  {profile.social_type === 'TT' && <FaTiktok className="w-5 h-5 text-black" />}
+                  {profile.social_type === 'YT' && <FaYoutube className="w-5 h-5 text-red-500" />}
                 </div>
               ))}
             </div>

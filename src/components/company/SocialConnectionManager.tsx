@@ -22,6 +22,8 @@ import {
   Save,
   Info
 } from "lucide-react";
+import { FaFacebook, FaInstagram, FaLinkedin, FaTiktok, FaYoutube, FaXTwitter, FaPinterest } from 'react-icons/fa6';
+import { SiThreads } from 'react-icons/si';
 
 interface SocialConnectionManagerProps {
   profile: any;
@@ -48,14 +50,14 @@ interface FacebookPage {
 }
 
 const platformConfig = {
-  facebook: { name: 'Facebook', icon: '📘', color: 'bg-blue-600', urlField: 'facebook_url' },
-  instagram: { name: 'Instagram', icon: '📷', color: 'bg-pink-600', urlField: 'instagram_url' },
-  linkedin: { name: 'LinkedIn', icon: '💼', color: 'bg-blue-700', urlField: 'linkedin_url' },
-  tiktok: { name: 'TikTok', icon: '🎵', color: 'bg-black', urlField: 'tiktok_url' },
-  youtube: { name: 'YouTube', icon: '📺', color: 'bg-red-600', urlField: 'youtube_url' },
-  twitter: { name: 'X (Twitter)', icon: '🐦', color: 'bg-gray-900', urlField: 'twitter_url' },
-  threads: { name: 'Threads', icon: '🧵', color: 'bg-gray-800', urlField: null },
-  pinterest: { name: 'Pinterest', icon: '📌', color: 'bg-red-700', urlField: null },
+  facebook: { name: 'Facebook', Icon: FaFacebook, color: 'bg-blue-600', urlField: 'facebook_url' },
+  instagram: { name: 'Instagram', Icon: FaInstagram, color: 'bg-pink-600', urlField: 'instagram_url' },
+  linkedin: { name: 'LinkedIn', Icon: FaLinkedin, color: 'bg-blue-700', urlField: 'linkedin_url' },
+  tiktok: { name: 'TikTok', Icon: FaTiktok, color: 'bg-black', urlField: 'tiktok_url' },
+  youtube: { name: 'YouTube', Icon: FaYoutube, color: 'bg-red-600', urlField: 'youtube_url' },
+  twitter: { name: 'X (Twitter)', Icon: FaXTwitter, color: 'bg-gray-900', urlField: 'twitter_url' },
+  threads: { name: 'Threads', Icon: SiThreads, color: 'bg-gray-800', urlField: null },
+  pinterest: { name: 'Pinterest', Icon: FaPinterest, color: 'bg-red-700', urlField: null },
 };
 
 export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: SocialConnectionManagerProps) => {
@@ -646,8 +648,8 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg ${config.color} flex items-center justify-center text-white text-lg`}>
-                      {config.icon}
+                    <div className={`w-10 h-10 rounded-lg ${config.color} flex items-center justify-center text-white text-xl`}>
+                      <config.Icon />
                     </div>
                     <div>
                       <h4 className="font-semibold text-sm">{config.name}</h4>

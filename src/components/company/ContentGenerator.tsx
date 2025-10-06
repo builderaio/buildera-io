@@ -17,16 +17,11 @@ import {
   Image, 
   Video, 
   FileText,
-  Instagram,
-  Linkedin,
-  Music,
-  Twitter,
-  Facebook,
-  Youtube,
   Loader2,
   CheckCircle2,
   RefreshCw
 } from "lucide-react";
+import { FaFacebook, FaInstagram, FaLinkedin, FaTiktok, FaYoutube, FaXTwitter } from 'react-icons/fa6';
 
 interface ContentGeneratorProps {
   profile: any;
@@ -52,12 +47,12 @@ const ContentGenerator = ({ profile }: ContentGeneratorProps) => {
   const [loading, setLoading] = useState(false);
 
   const platforms = [
-    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'text-blue-700' },
-    { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'text-pink-600' },
-    { id: 'tiktok', name: 'TikTok', icon: Music, color: 'text-black' },
-    { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'text-blue-600' },
-    { id: 'twitter', name: 'Twitter/X', icon: Twitter, color: 'text-black' },
-    { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'text-red-600' },
+    { id: 'linkedin', name: 'LinkedIn', icon: FaLinkedin, color: 'text-blue-700' },
+    { id: 'instagram', name: 'Instagram', icon: FaInstagram, color: 'text-pink-600' },
+    { id: 'tiktok', name: 'TikTok', icon: FaTiktok, color: 'text-black' },
+    { id: 'facebook', name: 'Facebook', icon: FaFacebook, color: 'text-blue-600' },
+    { id: 'twitter', name: 'Twitter/X', icon: FaXTwitter, color: 'text-black' },
+    { id: 'youtube', name: 'YouTube', icon: FaYoutube, color: 'text-red-600' },
   ];
 
   const contentTypes = [

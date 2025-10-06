@@ -11,18 +11,13 @@ import {
   Edit, 
   Trash2, 
   Eye,
-  Instagram,
-  Linkedin,
-  Music,
-  Facebook,
-  Twitter,
-  Youtube,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
   AlertCircle,
   CheckCircle2
 } from 'lucide-react';
+import { FaFacebook, FaInstagram, FaLinkedin, FaTiktok, FaYoutube, FaXTwitter } from 'react-icons/fa6';
 
 interface ContentCalendarProps {
   profile: any;
@@ -55,12 +50,12 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
   const { toast } = useToast();
 
   const platforms = {
-    linkedin: { name: 'LinkedIn', icon: Linkedin, color: 'bg-blue-700' },
-    instagram: { name: 'Instagram', icon: Instagram, color: 'bg-pink-600' },
-    tiktok: { name: 'TikTok', icon: Music, color: 'bg-[#000000]' },
-    facebook: { name: 'Facebook', icon: Facebook, color: 'bg-blue-600' },
-    twitter: { name: 'Twitter/X', icon: Twitter, color: 'bg-[#000000]' },
-    youtube: { name: 'YouTube', icon: Youtube, color: 'bg-red-600' }
+    linkedin: { name: 'LinkedIn', icon: FaLinkedin, color: 'bg-blue-700' },
+    instagram: { name: 'Instagram', icon: FaInstagram, color: 'bg-pink-600' },
+    tiktok: { name: 'TikTok', icon: FaTiktok, color: 'bg-[#000000]' },
+    facebook: { name: 'Facebook', icon: FaFacebook, color: 'bg-blue-600' },
+    twitter: { name: 'Twitter/X', icon: FaXTwitter, color: 'bg-[#000000]' },
+    youtube: { name: 'YouTube', icon: FaYoutube, color: 'bg-red-600' }
   };
 
   useEffect(() => {
@@ -229,7 +224,7 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
           <div className="space-y-1">
             {postsForDay.slice(0, 3).map((post) => {
               const platform = platforms[post.platform as keyof typeof platforms];
-              const IconComponent = platform?.icon || Instagram;
+              const IconComponent = platform?.icon || FaInstagram;
               const StatusIcon = getStatusIcon(post.status);
               
               return (
@@ -278,7 +273,7 @@ const ContentCalendar = ({ profile }: ContentCalendarProps) => {
           .slice(0, 5)
           .map((post) => {
             const platform = platforms[post.platform as keyof typeof platforms];
-            const IconComponent = platform?.icon || Instagram;
+            const IconComponent = platform?.icon || FaInstagram;
             const StatusIcon = getStatusIcon(post.status);
             const content = typeof post.content === 'string' ? post.content : 
                            post.content?.content || post.content?.text || 'Sin contenido';

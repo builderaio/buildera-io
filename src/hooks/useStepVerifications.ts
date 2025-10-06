@@ -119,32 +119,22 @@ export const useStepVerifications = (userId: string) => {
     }
   };
 
-  // Paso 6: Verificar que existan buyer personas creados
+  // Paso 6: Verificar que existan segmentos de audiencia creados
   const verifyBuyerPersonas = async (): Promise<boolean> => {
     try {
-      // Los buyer_personas están asociados a campañas, así que verificamos si hay campañas con personas
-      const { data: campaignData, error: campaignError } = await supabase
-        .from('marketing_campaigns')
+      // Verificar segmentos de audiencia en company_audiences
+      const { data, error } = await supabase
+        .from('company_audiences')
         .select('id')
         .eq('user_id', userId)
-        .limit(1)
-        .maybeSingle();
-      
-      if (campaignError || !campaignData) {
-        return false;
-      }
-
-      const { data, error } = await supabase
-        .from('buyer_personas')
-        .select('id')
-        .eq('campaign_id', campaignData.id)
+        .eq('is_active', true)
         .limit(1);
       
       if (error) throw error;
       
       return (data?.length || 0) > 0;
     } catch (error) {
-      console.error('Error verifying buyer personas:', error);
+      console.error('Error verifying audience segments:', error);
       return false;
     }
   };

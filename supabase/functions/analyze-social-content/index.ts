@@ -91,6 +91,144 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Helper function to save posts to specific platform tables
+async function savePostsToTables(
+  supabaseClient: any,
+  userId: string,
+  platform: string,
+  posts: any[],
+  cid: string
+): Promise<void> {
+  try {
+    for (const post of posts) {
+      const commonData = {
+        user_id: userId,
+        cid: cid,
+        data_id: post.dataId || post.postID || post.id,
+        from_owner: post.fromOwner || false,
+        posted_at: post.date || post.published_at || new Date().toISOString(),
+        engagement_rate: post.er || 0,
+        is_ad: post.isAd || false,
+        is_deleted: post.isDeleted || false,
+        interactions_count: post.interactions || 0,
+        time_update: post.timeUpdate || new Date().toISOString(),
+        post_url: post.postUrl || post.url,
+        post_image_url: post.postImage,
+        social_post_id: post.socialPostID,
+        text_length: post.textLength || 0,
+        index_grade: post.indexGrade,
+        main_grade: post.mainGrade,
+        raw_data: post
+      };
+
+      if (platform === 'facebook') {
+        const { error } = await supabaseClient
+          .from('facebook_posts')
+          .upsert({
+            ...commonData,
+            post_id: post.postID,
+            content: post.text || '',
+            likes_count: post.likes || 0,
+            comments_count: post.comments || 0,
+            shares_count: post.rePosts || 0,
+            reactions_count: post.likes || 0,
+            hashtags: post.hashTags || [],
+            mentions: post.mentions || [],
+            image_url: post.image,
+            video_url: post.videoLink,
+            video_views_count: post.videoViews || 0
+          }, {
+            onConflict: 'user_id,post_id',
+            ignoreDuplicates: false
+          });
+
+        if (error) console.error('Error saving Facebook post:', error);
+      } 
+      else if (platform === 'instagram') {
+        const { error } = await supabaseClient
+          .from('instagram_posts')
+          .upsert({
+            ...commonData,
+            platform: 'instagram',
+            post_id: post.postID,
+            shortcode: post.shortcode,
+            caption: post.text || '',
+            like_count: post.likes || 0,
+            comment_count: post.comments || 0,
+            video_view_count: post.videoViews || post.reelPlays || 0,
+            display_url: post.image,
+            video_url: post.videoLink,
+            hashtags: post.hashTags || [],
+            mentions: post.mentions || [],
+            reel_plays: post.reelPlays || 0,
+            video_plays: post.videoViews || 0
+          }, {
+            onConflict: 'user_id,post_id',
+            ignoreDuplicates: false
+          });
+
+        if (error) console.error('Error saving Instagram post:', error);
+      }
+      else if (platform === 'linkedin') {
+        const { error } = await supabaseClient
+          .from('linkedin_posts')
+          .upsert({
+            ...commonData,
+            post_id: post.postID,
+            content: post.text || '',
+            likes_count: post.likes || 0,
+            comments_count: post.comments || 0,
+            shares_count: post.rePosts || 0,
+            views_count: post.views || 0,
+            hashtags: post.hashTags || [],
+            mentions: post.mentions || [],
+            image_url: post.image,
+            video_url: post.videoLink,
+            impressions_count: post.impressions || 0
+          }, {
+            onConflict: 'user_id,post_id',
+            ignoreDuplicates: false
+          });
+
+        if (error) console.error('Error saving LinkedIn post:', error);
+      }
+      else if (platform === 'tiktok') {
+        const { error } = await supabaseClient
+          .from('tiktok_posts')
+          .upsert({
+            ...commonData,
+            tiktok_user_id: post.authorId || '',
+            video_id: post.postID || post.videoId,
+            aweme_id: post.postID,
+            title: post.text || '',
+            content: post.text || '',
+            cover_url: post.image,
+            duration: post.duration || 0,
+            play_count: post.videoViews || post.views || 0,
+            digg_count: post.likes || post.diggCount || 0,
+            comment_count: post.comments || 0,
+            share_count: post.rePosts || post.shareCount || 0,
+            download_count: post.downloadCount || 0,
+            hashtags: post.hashTags || [],
+            mentions: post.mentions || [],
+            image_url: post.image,
+            forward_count: post.forwardCount || 0,
+            whatsapp_share_count: post.whatsappShareCount || 0
+          }, {
+            onConflict: 'user_id,video_id',
+            ignoreDuplicates: false
+          });
+
+        if (error) console.error('Error saving TikTok post:', error);
+      }
+    }
+
+    console.log(`✅ Successfully saved ${posts.length} posts to ${platform}_posts table`);
+  } catch (error) {
+    console.error(`Error saving posts to ${platform} table:`, error);
+  }
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -397,6 +535,12 @@ Deno.serve(async (req) => {
             continue;
           }
           analysisId = insertedRow?.id ?? null;
+        }
+
+        // 🆕 Guardar posts en tablas específicas por plataforma
+        if (contentData.data.posts && contentData.data.posts.length > 0) {
+          console.log(`💾 Guardando ${contentData.data.posts.length} posts en la tabla ${platformStr}_posts...`);
+          await savePostsToTables(supabaseClient, user.id, platformStr, contentData.data.posts, cid);
         }
 
         results.push({

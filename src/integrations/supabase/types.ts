@@ -3851,14 +3851,27 @@ export type Database = {
       }
       facebook_posts: {
         Row: {
+          cid: string | null
           comments_count: number | null
           content: string | null
           created_at: string
+          data_id: string | null
           engagement_rate: number | null
+          from_owner: boolean | null
+          hashtags: string[] | null
           id: string
+          image_url: string | null
+          index_grade: number | null
+          interactions_count: number | null
+          is_ad: boolean | null
+          is_deleted: boolean | null
           likes_count: number | null
+          main_grade: string | null
+          mentions: string[] | null
           post_id: string
+          post_image_url: string | null
           post_type: string | null
+          post_url: string | null
           posted_at: string | null
           profile_category: string | null
           profile_followers_count: number | null
@@ -3869,18 +3882,36 @@ export type Database = {
           raw_data: Json | null
           reactions_count: number | null
           shares_count: number | null
+          social_post_id: string | null
+          text_length: number | null
+          time_update: string | null
           updated_at: string
           user_id: string
+          video_url: string | null
+          video_views_count: number | null
         }
         Insert: {
+          cid?: string | null
           comments_count?: number | null
           content?: string | null
           created_at?: string
+          data_id?: string | null
           engagement_rate?: number | null
+          from_owner?: boolean | null
+          hashtags?: string[] | null
           id?: string
+          image_url?: string | null
+          index_grade?: number | null
+          interactions_count?: number | null
+          is_ad?: boolean | null
+          is_deleted?: boolean | null
           likes_count?: number | null
+          main_grade?: string | null
+          mentions?: string[] | null
           post_id: string
+          post_image_url?: string | null
           post_type?: string | null
+          post_url?: string | null
           posted_at?: string | null
           profile_category?: string | null
           profile_followers_count?: number | null
@@ -3891,18 +3922,36 @@ export type Database = {
           raw_data?: Json | null
           reactions_count?: number | null
           shares_count?: number | null
+          social_post_id?: string | null
+          text_length?: number | null
+          time_update?: string | null
           updated_at?: string
           user_id: string
+          video_url?: string | null
+          video_views_count?: number | null
         }
         Update: {
+          cid?: string | null
           comments_count?: number | null
           content?: string | null
           created_at?: string
+          data_id?: string | null
           engagement_rate?: number | null
+          from_owner?: boolean | null
+          hashtags?: string[] | null
           id?: string
+          image_url?: string | null
+          index_grade?: number | null
+          interactions_count?: number | null
+          is_ad?: boolean | null
+          is_deleted?: boolean | null
           likes_count?: number | null
+          main_grade?: string | null
+          mentions?: string[] | null
           post_id?: string
+          post_image_url?: string | null
           post_type?: string | null
+          post_url?: string | null
           posted_at?: string | null
           profile_category?: string | null
           profile_followers_count?: number | null
@@ -3913,8 +3962,13 @@ export type Database = {
           raw_data?: Json | null
           reactions_count?: number | null
           shares_count?: number | null
+          social_post_id?: string | null
+          text_length?: number | null
+          time_update?: string | null
           updated_at?: string
           user_id?: string
+          video_url?: string | null
+          video_views_count?: number | null
         }
         Relationships: []
       }
@@ -4437,15 +4491,23 @@ export type Database = {
       instagram_posts: {
         Row: {
           caption: string | null
+          cid: string | null
           comment_count: number | null
           created_at: string
+          data_id: string | null
           display_url: string | null
           engagement_rate: number | null
+          from_owner: boolean | null
           hashtags: string[] | null
           id: string
           impressions: number | null
+          index_grade: number | null
+          interactions_count: number | null
+          is_ad: boolean | null
+          is_deleted: boolean | null
           is_video: boolean | null
           like_count: number | null
+          main_grade: string | null
           media_type: number | null
           mentions: string[] | null
           owner_full_name: string | null
@@ -4453,6 +4515,8 @@ export type Database = {
           owner_username: string | null
           platform: string
           post_id: string
+          post_image_url: string | null
+          post_url: string | null
           posted_at: string | null
           profile_followers_count: number | null
           profile_following_count: number | null
@@ -4463,25 +4527,39 @@ export type Database = {
           profile_username: string | null
           raw_data: Json | null
           reach: number | null
+          reel_plays: number | null
           saves: number | null
           shortcode: string | null
+          social_post_id: string | null
           taken_at_timestamp: number | null
+          text_length: number | null
           thumbnail_url: string | null
+          time_update: string | null
           updated_at: string
           user_id: string
+          video_plays: number | null
+          video_url: string | null
           video_view_count: number | null
         }
         Insert: {
           caption?: string | null
+          cid?: string | null
           comment_count?: number | null
           created_at?: string
+          data_id?: string | null
           display_url?: string | null
           engagement_rate?: number | null
+          from_owner?: boolean | null
           hashtags?: string[] | null
           id?: string
           impressions?: number | null
+          index_grade?: number | null
+          interactions_count?: number | null
+          is_ad?: boolean | null
+          is_deleted?: boolean | null
           is_video?: boolean | null
           like_count?: number | null
+          main_grade?: string | null
           media_type?: number | null
           mentions?: string[] | null
           owner_full_name?: string | null
@@ -4489,6 +4567,8 @@ export type Database = {
           owner_username?: string | null
           platform?: string
           post_id: string
+          post_image_url?: string | null
+          post_url?: string | null
           posted_at?: string | null
           profile_followers_count?: number | null
           profile_following_count?: number | null
@@ -4499,25 +4579,39 @@ export type Database = {
           profile_username?: string | null
           raw_data?: Json | null
           reach?: number | null
+          reel_plays?: number | null
           saves?: number | null
           shortcode?: string | null
+          social_post_id?: string | null
           taken_at_timestamp?: number | null
+          text_length?: number | null
           thumbnail_url?: string | null
+          time_update?: string | null
           updated_at?: string
           user_id: string
+          video_plays?: number | null
+          video_url?: string | null
           video_view_count?: number | null
         }
         Update: {
           caption?: string | null
+          cid?: string | null
           comment_count?: number | null
           created_at?: string
+          data_id?: string | null
           display_url?: string | null
           engagement_rate?: number | null
+          from_owner?: boolean | null
           hashtags?: string[] | null
           id?: string
           impressions?: number | null
+          index_grade?: number | null
+          interactions_count?: number | null
+          is_ad?: boolean | null
+          is_deleted?: boolean | null
           is_video?: boolean | null
           like_count?: number | null
+          main_grade?: string | null
           media_type?: number | null
           mentions?: string[] | null
           owner_full_name?: string | null
@@ -4525,6 +4619,8 @@ export type Database = {
           owner_username?: string | null
           platform?: string
           post_id?: string
+          post_image_url?: string | null
+          post_url?: string | null
           posted_at?: string | null
           profile_followers_count?: number | null
           profile_following_count?: number | null
@@ -4535,12 +4631,18 @@ export type Database = {
           profile_username?: string | null
           raw_data?: Json | null
           reach?: number | null
+          reel_plays?: number | null
           saves?: number | null
           shortcode?: string | null
+          social_post_id?: string | null
           taken_at_timestamp?: number | null
+          text_length?: number | null
           thumbnail_url?: string | null
+          time_update?: string | null
           updated_at?: string
           user_id?: string
+          video_plays?: number | null
+          video_url?: string | null
           video_view_count?: number | null
         }
         Relationships: []
@@ -4729,14 +4831,29 @@ export type Database = {
       }
       linkedin_posts: {
         Row: {
+          cid: string | null
+          click_count: number | null
           comments_count: number | null
           content: string | null
           created_at: string
+          data_id: string | null
           engagement_rate: number | null
+          from_owner: boolean | null
+          hashtags: string[] | null
           id: string
+          image_url: string | null
+          impressions_count: number | null
+          index_grade: number | null
+          interactions_count: number | null
+          is_ad: boolean | null
+          is_deleted: boolean | null
           likes_count: number | null
+          main_grade: string | null
+          mentions: string[] | null
           post_id: string
+          post_image_url: string | null
           post_type: string | null
+          post_url: string | null
           posted_at: string | null
           profile_followers_count: number | null
           profile_headline: string | null
@@ -4746,19 +4863,38 @@ export type Database = {
           profile_url: string | null
           raw_data: Json | null
           shares_count: number | null
+          social_post_id: string | null
+          text_length: number | null
+          time_update: string | null
           updated_at: string
           user_id: string
+          video_url: string | null
           views_count: number | null
         }
         Insert: {
+          cid?: string | null
+          click_count?: number | null
           comments_count?: number | null
           content?: string | null
           created_at?: string
+          data_id?: string | null
           engagement_rate?: number | null
+          from_owner?: boolean | null
+          hashtags?: string[] | null
           id?: string
+          image_url?: string | null
+          impressions_count?: number | null
+          index_grade?: number | null
+          interactions_count?: number | null
+          is_ad?: boolean | null
+          is_deleted?: boolean | null
           likes_count?: number | null
+          main_grade?: string | null
+          mentions?: string[] | null
           post_id: string
+          post_image_url?: string | null
           post_type?: string | null
+          post_url?: string | null
           posted_at?: string | null
           profile_followers_count?: number | null
           profile_headline?: string | null
@@ -4768,19 +4904,38 @@ export type Database = {
           profile_url?: string | null
           raw_data?: Json | null
           shares_count?: number | null
+          social_post_id?: string | null
+          text_length?: number | null
+          time_update?: string | null
           updated_at?: string
           user_id: string
+          video_url?: string | null
           views_count?: number | null
         }
         Update: {
+          cid?: string | null
+          click_count?: number | null
           comments_count?: number | null
           content?: string | null
           created_at?: string
+          data_id?: string | null
           engagement_rate?: number | null
+          from_owner?: boolean | null
+          hashtags?: string[] | null
           id?: string
+          image_url?: string | null
+          impressions_count?: number | null
+          index_grade?: number | null
+          interactions_count?: number | null
+          is_ad?: boolean | null
+          is_deleted?: boolean | null
           likes_count?: number | null
+          main_grade?: string | null
+          mentions?: string[] | null
           post_id?: string
+          post_image_url?: string | null
           post_type?: string | null
+          post_url?: string | null
           posted_at?: string | null
           profile_followers_count?: number | null
           profile_headline?: string | null
@@ -4790,8 +4945,12 @@ export type Database = {
           profile_url?: string | null
           raw_data?: Json | null
           shares_count?: number | null
+          social_post_id?: string | null
+          text_length?: number | null
+          time_update?: string | null
           updated_at?: string
           user_id?: string
+          video_url?: string | null
           views_count?: number | null
         }
         Relationships: []
@@ -6372,17 +6531,31 @@ export type Database = {
       tiktok_posts: {
         Row: {
           aweme_id: string
+          cid: string | null
           collect_count: number | null
           comment_count: number | null
+          content: string | null
           cover_url: string | null
           create_time: number | null
           created_at: string
+          data_id: string | null
           digg_count: number | null
           download_count: number | null
           duration: number | null
+          forward_count: number | null
+          from_owner: boolean | null
+          hashtags: string[] | null
           id: string
+          image_url: string | null
+          index_grade: number | null
+          interactions_count: number | null
           is_ad: boolean | null
+          is_deleted: boolean | null
+          main_grade: string | null
+          mentions: string[] | null
           play_count: number | null
+          post_image_url: string | null
+          post_url: string | null
           posted_at: string | null
           profile_avatar_url: string | null
           profile_display_name: string | null
@@ -6392,25 +6565,43 @@ export type Database = {
           profile_username: string | null
           raw_data: Json | null
           share_count: number | null
+          social_post_id: string | null
+          text_length: number | null
           tiktok_user_id: string
+          time_update: string | null
           title: string | null
           updated_at: string
           user_id: string
           video_id: string
+          whatsapp_share_count: number | null
         }
         Insert: {
           aweme_id: string
+          cid?: string | null
           collect_count?: number | null
           comment_count?: number | null
+          content?: string | null
           cover_url?: string | null
           create_time?: number | null
           created_at?: string
+          data_id?: string | null
           digg_count?: number | null
           download_count?: number | null
           duration?: number | null
+          forward_count?: number | null
+          from_owner?: boolean | null
+          hashtags?: string[] | null
           id?: string
+          image_url?: string | null
+          index_grade?: number | null
+          interactions_count?: number | null
           is_ad?: boolean | null
+          is_deleted?: boolean | null
+          main_grade?: string | null
+          mentions?: string[] | null
           play_count?: number | null
+          post_image_url?: string | null
+          post_url?: string | null
           posted_at?: string | null
           profile_avatar_url?: string | null
           profile_display_name?: string | null
@@ -6420,25 +6611,43 @@ export type Database = {
           profile_username?: string | null
           raw_data?: Json | null
           share_count?: number | null
+          social_post_id?: string | null
+          text_length?: number | null
           tiktok_user_id: string
+          time_update?: string | null
           title?: string | null
           updated_at?: string
           user_id: string
           video_id: string
+          whatsapp_share_count?: number | null
         }
         Update: {
           aweme_id?: string
+          cid?: string | null
           collect_count?: number | null
           comment_count?: number | null
+          content?: string | null
           cover_url?: string | null
           create_time?: number | null
           created_at?: string
+          data_id?: string | null
           digg_count?: number | null
           download_count?: number | null
           duration?: number | null
+          forward_count?: number | null
+          from_owner?: boolean | null
+          hashtags?: string[] | null
           id?: string
+          image_url?: string | null
+          index_grade?: number | null
+          interactions_count?: number | null
           is_ad?: boolean | null
+          is_deleted?: boolean | null
+          main_grade?: string | null
+          mentions?: string[] | null
           play_count?: number | null
+          post_image_url?: string | null
+          post_url?: string | null
           posted_at?: string | null
           profile_avatar_url?: string | null
           profile_display_name?: string | null
@@ -6448,11 +6657,15 @@ export type Database = {
           profile_username?: string | null
           raw_data?: Json | null
           share_count?: number | null
+          social_post_id?: string | null
+          text_length?: number | null
           tiktok_user_id?: string
+          time_update?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string
           video_id?: string
+          whatsapp_share_count?: number | null
         }
         Relationships: []
       }

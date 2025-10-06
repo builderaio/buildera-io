@@ -186,6 +186,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       why: "Las campañas estructuradas generan mejores resultados que publicaciones aisladas. Era te ayudará a definir objetivos claros.",
       how: "Ve a Marketing Hub → Campañas y usa el asistente. Define objetivos, audiencia, estrategia y calendario de contenido.",
       target_section: "marketing-hub",
+      tab: "campaigns",
       completed: false,
       icon: Megaphone,
       actionText: "Ir a Campañas",

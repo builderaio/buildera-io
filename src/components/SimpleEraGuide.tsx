@@ -88,6 +88,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const [showPeek, setShowPeek] = useState(false);
   
   const autoSaveIntervalRef = useRef<NodeJS.Timeout>();
+  const inactivityTimerRef = useRef<NodeJS.Timeout>();
+  const lastInteractionRef = useRef<Date>(new Date());
   const verifications = useStepVerifications(userId);
   const cacheData = useAnalysisCache(userId);  // 🆕 Obtener metadata de análisis
 
@@ -361,6 +363,88 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     return () => clearInterval(peekInterval);
   }, [isMinimized, isActive]);
   
+  // 🆕 Detectar si hay procesamiento activo en la plataforma
+  const isProcessingActive = useCallback(() => {
+    // Buscar indicadores de procesamiento
+    const hasLoadingIndicators = document.querySelector('[data-loading="true"]') !== null;
+    const hasSpinners = document.querySelector('.animate-spin') !== null;
+    const hasDisabledButtons = document.querySelector('button:disabled') !== null;
+    const hasFetchingText = document.body.textContent?.toLowerCase().includes('cargando') || 
+                            document.body.textContent?.toLowerCase().includes('procesando') ||
+                            document.body.textContent?.toLowerCase().includes('generando');
+    
+    return hasLoadingIndicators || hasSpinners || hasDisabledButtons || hasFetchingText;
+  }, []);
+
+  // 🆕 Auto-minimización al hacer clic en textareas y reaparición inteligente
+  useEffect(() => {
+    if (!isActive || isMinimized) return;
+
+    const handleTextareaClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Detectar clic en textarea o input de texto
+      if (target.tagName === 'TEXTAREA' || 
+          (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'text') ||
+          target.contentEditable === 'true') {
+        
+        console.log('📝 [SimpleEraGuide] Clic en campo de texto detectado, minimizando...');
+        setIsMinimized(true);
+        setAutoMinimized(true);
+        lastInteractionRef.current = new Date();
+        
+        // Limpiar timer anterior si existe
+        if (inactivityTimerRef.current) {
+          clearTimeout(inactivityTimerRef.current);
+        }
+        
+        // Iniciar timer de inactividad (8 segundos)
+        inactivityTimerRef.current = setTimeout(() => {
+          const now = new Date();
+          const timeSinceLastInteraction = (now.getTime() - lastInteractionRef.current.getTime()) / 1000;
+          
+          // Solo maximizar si:
+          // 1. Han pasado al menos 8 segundos
+          // 2. No hay procesamiento activo
+          // 3. El guide sigue activo y minimizado
+          if (timeSinceLastInteraction >= 8 && !isProcessingActive() && isActive) {
+            console.log('⏰ [SimpleEraGuide] Inactividad detectada sin procesamiento, maximizando...');
+            setIsMinimized(false);
+            setAutoMinimized(false);
+          } else if (isProcessingActive()) {
+            console.log('⚙️ [SimpleEraGuide] Procesamiento activo detectado, manteniendo minimizado');
+            // Reintentar después de 5 segundos adicionales
+            inactivityTimerRef.current = setTimeout(() => {
+              if (!isProcessingActive() && isActive) {
+                console.log('✅ [SimpleEraGuide] Procesamiento finalizado, maximizando...');
+                setIsMinimized(false);
+                setAutoMinimized(false);
+              }
+            }, 5000);
+          }
+        }, 8000); // 8 segundos de inactividad
+      }
+    };
+
+    // Detectar cualquier interacción del usuario para resetear el timer
+    const handleUserInteraction = () => {
+      lastInteractionRef.current = new Date();
+    };
+
+    document.addEventListener('click', handleTextareaClick);
+    document.addEventListener('keydown', handleUserInteraction);
+    document.addEventListener('scroll', handleUserInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleTextareaClick);
+      document.removeEventListener('keydown', handleUserInteraction);
+      document.removeEventListener('scroll', handleUserInteraction);
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [isActive, isMinimized, isProcessingActive]);
+
   // 🆕 Atajos de teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

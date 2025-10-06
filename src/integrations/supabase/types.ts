@@ -7725,7 +7725,7 @@ export type Database = {
       }
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: string
+        Returns: unknown
       }
       mark_onboarding_completed: {
         Args: { _registration_method?: string; _user_id: string }

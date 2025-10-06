@@ -86,6 +86,19 @@ interface SocialAnalysisData {
   updated_at: string;
 }
 
+interface UploadPostAnalytics {
+  platform: string;
+  companyUsername: string;
+  analytics: {
+    followers?: number;
+    impressions?: number;
+    profileViews?: number;
+    reach?: number;
+    reach_timeseries?: Array<{ date: string; value: number }>;
+  } | null;
+  error?: string;
+}
+
 interface SocialAnalysisDisplayProps {
   userId: string;
   companyData?: any;
@@ -97,10 +110,13 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
   const [error, setError] = useState<string | null>(null);
   const [refreshingPlatform, setRefreshingPlatform] = useState<string | null>(null);
   const [pendingPlatforms, setPendingPlatforms] = useState<Array<{platform: string, url: string}>>([]);
+  const [uploadPostAnalytics, setUploadPostAnalytics] = useState<Map<string, UploadPostAnalytics>>(new Map());
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     loadSocialAnalyses();
+    loadUploadPostAnalytics();
     if (companyData) {
       loadPendingPlatforms();
     }
@@ -139,6 +155,51 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadUploadPostAnalytics = async () => {
+    if (!userId) return;
+    
+    try {
+      setAnalyticsLoading(true);
+      console.log('📊 Cargando analítica de UploadPost...');
+      
+      const { data, error } = await supabase.functions.invoke('get-upload-post-analytics');
+      
+      if (error) throw error;
+      
+      if (data.success && data.data) {
+        const analyticsMap = new Map<string, UploadPostAnalytics>();
+        
+        for (const result of data.data) {
+          const platform = getPlatformFromUploadPostName(result.platform);
+          if (platform) {
+            analyticsMap.set(platform, result);
+          }
+        }
+        
+        setUploadPostAnalytics(analyticsMap);
+        console.log('✅ Analítica de UploadPost cargada:', analyticsMap.size, 'plataformas');
+      }
+    } catch (err) {
+      console.error('❌ Error cargando analítica de UploadPost:', err);
+      // No mostrar error al usuario, la analítica de UploadPost es opcional
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  const getPlatformFromUploadPostName = (uploadPostPlatform: string): string | null => {
+    const mapping: Record<string, string> = {
+      'instagram': 'instagram',
+      'Facebook': 'facebook',
+      'Linkedin': 'linkedin',
+      'X': 'twitter',
+      'tiktok': 'tiktok',
+      'youtube': 'youtube'
+    };
+    
+    return mapping[uploadPostPlatform] || null;
   };
 
   const loadPendingPlatforms = () => {
@@ -215,7 +276,10 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
       if (error) throw error;
 
       if (data.success) {
-        await loadSocialAnalyses(); // Reload the data
+        await Promise.all([
+          loadSocialAnalyses(),
+          loadUploadPostAnalytics() // También recargar analítica de UploadPost
+        ]);
         toast({
           title: "Análisis Actualizado",
           description: `Se actualizaron ${data.data?.length || 0} perfiles exitosamente`,
@@ -472,32 +536,36 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
       )}
 
       {/* Individual Platform Analysis - only show if there are analyzed platforms */}
-      {analyses.length > 0 && analyses.map((analysis) => (
-        <Card key={analysis.id} className="overflow-hidden">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {getPlatformIcon(analysis.social_type)}
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    {analysis.name}
-                    {analysis.verified && <CheckCircle className="w-4 h-4 text-blue-500" />}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    @{analysis.screen_name} • {getPlatformName(analysis.social_type)}
-                  </p>
+      {analyses.length > 0 && analyses.map((analysis) => {
+        const platform = getPlatformFromSocialType(analysis.social_type);
+        const uploadPostData = uploadPostAnalytics.get(platform);
+        
+        return (
+          <Card key={analysis.id} className="overflow-hidden">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {getPlatformIcon(analysis.social_type)}
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      {analysis.name}
+                      {analysis.verified && <CheckCircle className="w-4 h-4 text-blue-500" />}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      @{analysis.screen_name} • {getPlatformName(analysis.social_type)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant={analysis.community_status === 'COLLECTING' ? 'default' : 'secondary'}>
-                  {analysis.community_status}
-                </Badge>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const platform = getPlatformFromUrl(analysis.url);
-                    if (platform) refreshSocialAnalysis(platform);
+                <div className="flex items-center gap-2">
+                  <Badge variant={analysis.community_status === 'COLLECTING' ? 'default' : 'secondary'}>
+                    {analysis.community_status}
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const platform = getPlatformFromUrl(analysis.url);
+                      if (platform) refreshSocialAnalysis(platform);
                   }}
                   disabled={refreshingPlatform === getPlatformFromUrl(analysis.url)}
                   className="gap-2"
@@ -683,9 +751,106 @@ const SocialAnalysisDisplay = ({ userId, companyData }: SocialAnalysisDisplayPro
                 </div>
               )}
             </div>
+
+            {/* UploadPost Analytics Section - New */}
+            {uploadPostData && uploadPostData.analytics && (
+              <div className="mt-4 pt-4 border-t space-y-4">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                  <h4 className="font-semibold">Analítica de Redes Sociales</h4>
+                  <Badge variant="secondary" className="ml-auto">
+                    Datos de UploadPost
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {uploadPostData.analytics.impressions !== undefined && (
+                    <div className="p-3 bg-blue-500/5 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Eye className="w-4 h-4 text-blue-600" />
+                        <p className="text-xs text-muted-foreground">Impresiones</p>
+                      </div>
+                      <p className="text-lg font-bold text-blue-600">
+                        {formatNumber(uploadPostData.analytics.impressions)}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {uploadPostData.analytics.profileViews !== undefined && (
+                    <div className="p-3 bg-purple-500/5 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Users className="w-4 h-4 text-purple-600" />
+                        <p className="text-xs text-muted-foreground">Visitas al Perfil</p>
+                      </div>
+                      <p className="text-lg font-bold text-purple-600">
+                        {formatNumber(uploadPostData.analytics.profileViews)}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {uploadPostData.analytics.reach !== undefined && (
+                    <div className="p-3 bg-green-500/5 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <TrendingUp className="w-4 h-4 text-green-600" />
+                        <p className="text-xs text-muted-foreground">Alcance</p>
+                      </div>
+                      <p className="text-lg font-bold text-green-600">
+                        {formatNumber(uploadPostData.analytics.reach)}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {uploadPostData.analytics.followers !== undefined && (
+                    <div className="p-3 bg-orange-500/5 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Users className="w-4 h-4 text-orange-600" />
+                        <p className="text-xs text-muted-foreground">Seguidores</p>
+                      </div>
+                      <p className="text-lg font-bold text-orange-600">
+                        {formatNumber(uploadPostData.analytics.followers)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Reach Timeseries Chart */}
+                {uploadPostData.analytics.reach_timeseries && uploadPostData.analytics.reach_timeseries.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium mb-3">Alcance - Últimos 30 días</p>
+                    <div className="h-32 flex items-end justify-between gap-1">
+                      {uploadPostData.analytics.reach_timeseries.slice(-14).map((point, index) => {
+                        const maxValue = Math.max(...uploadPostData.analytics.reach_timeseries!.map(p => p.value));
+                        const heightPercentage = maxValue > 0 ? (point.value / maxValue) * 100 : 0;
+                        
+                        return (
+                          <div 
+                            key={index}
+                            className="flex-1 bg-primary/20 hover:bg-primary/40 transition-colors rounded-t relative group"
+                            style={{ height: `${heightPercentage}%`, minHeight: '2px' }}
+                          >
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                              {new Date(point.date).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
+                              <br />
+                              {formatNumber(point.value)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                      <span>
+                        {new Date(uploadPostData.analytics.reach_timeseries[uploadPostData.analytics.reach_timeseries.length - 14]?.date || uploadPostData.analytics.reach_timeseries[0].date).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
+                      </span>
+                      <span>Hoy</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
     </div>
   );
 };

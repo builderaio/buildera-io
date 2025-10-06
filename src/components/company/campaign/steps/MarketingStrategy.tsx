@@ -129,6 +129,18 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
       const normalizeStrategy = (raw: any) => {
         const s: any = { ...(raw || {}) };
 
+        // Map Spanish field names to English
+        if (s.análisis_competitivo) s.competitors = s.análisis_competitivo;
+        if (s.mensaje_unificado_diferenciador) {
+          s.core_message = s.mensaje_unificado_diferenciador.core_message;
+          s.message_variants = s.mensaje_unificado_diferenciador.variantes;
+        }
+        if (s.embudo_estrategias) s.strategies = s.embudo_estrategias;
+        if (s.plan_contenidos_matriz) s.content_plan = s.plan_contenidos_matriz;
+        if (s.calendario_editorial) s.editorial_calendar = s.calendario_editorial;
+        if (s.kpis_metas) s.kpis_goals = s.kpis_metas;
+        if (s.plan_ejecucion_recursos) s.execution_plan = s.plan_ejecucion_recursos;
+
         // Canonicalizar nombres de plataformas para evitar duplicados (p. ej. linkedin vs LinkedIn)
         const canon = (p: string) => {
           const k = (p || '').toLowerCase();
@@ -161,11 +173,11 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
         s.editorial_calendar = Array.isArray(s.editorial_calendar) ? s.editorial_calendar : [];
         s.competitors = Array.isArray(s.competitors) ? s.competitors : [];
 
-        // Normalizar strategies - convertir array a objeto usando funnel_stage como key
+        // Normalizar strategies - convertir array a objeto usando etapa/funnel_stage como key
         if (Array.isArray(s.strategies)) {
           const strategiesObj: Record<string, any> = {};
           s.strategies.forEach((strategy: any) => {
-            const stage = (strategy.funnel_stage || '').toLowerCase();
+            const stage = (strategy.etapa || strategy.funnel_stage || '').toLowerCase();
             if (stage) {
               strategiesObj[stage] = strategy;
             }
@@ -181,11 +193,11 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           s.strategies = {};
         }
 
-        // Normalizar content_plan - convertir array a objeto usando channel como key
+        // Normalizar content_plan - convertir array a objeto usando canal/channel como key
         if (Array.isArray(s.content_plan)) {
           const planObj: Record<string, any> = {};
           s.content_plan.forEach((plan: any) => {
-            const channel = canon(plan.channel || '');
+            const channel = canon(plan.canal || plan.channel || '');
             if (channel) {
               planObj[channel] = plan;
             }
@@ -201,9 +213,15 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           s.content_plan = {};
         }
 
-        // Normalizar KPIs - prioridad: kpis array > kpis_and_goals > kpis_goals
-        if (Array.isArray(s.kpis)) {
-          // Nuevo formato: array de objetos con name y goal
+        // Normalizar KPIs - prioridad: kpis_goals array > kpis array > kpis_and_goals
+        if (Array.isArray(s.kpis_goals)) {
+          // Formato N8N: array de objetos con kpi y meta
+          s.kpis_goals = s.kpis_goals.map((item: any) => ({
+            kpi: item.kpi || item.name || String(item),
+            goal: item.meta || item.goal || 'Meta no definida'
+          }));
+        } else if (Array.isArray(s.kpis)) {
+          // Formato alternativo: array de objetos con name y goal
           s.kpis_goals = s.kpis.map((kpi: any) => ({
             kpi: kpi.name || String(kpi),
             goal: kpi.goal || 'Meta no definida'
@@ -253,24 +271,28 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
         s.risks_assumptions = Array.isArray(s.risks_assumptions) ? s.risks_assumptions : [];
 
         // Normalizar competidores
-        s.competitors = s.competitors.map((c: any) => ({
+        s.competitors = (s.competitors || []).map((c: any) => ({
           ...c,
-          digital_tactics_summary: c?.digital_tactics_summary || c?.digital_tactics || c?.tactics || '',
-          // Convertir benchmarks string a objeto para compatibilidad
-          benchmarks: typeof c.benchmarks === 'string' 
+          name: c.nombre || c.name || '',
+          url: c.url || '',
+          strengths: c.fortalezas || c.strengths || '',
+          weaknesses: c.debilidades || c.weaknesses || '',
+          digital_tactics_summary: c.resumen_tácticas_digitales || c?.digital_tactics_summary || c?.digital_tactics || c?.tactics || '',
+          benchmarks: c.benchmarks_plataforma || (typeof c.benchmarks === 'string' 
             ? { descripcion: c.benchmarks }
-            : (c.benchmarks || {})
+            : (c.benchmarks || {}))
         }));
 
         // Normalizar y deduplicar calendario editorial
         if (Array.isArray(s.editorial_calendar)) {
           s.editorial_calendar = s.editorial_calendar.map((item: any) => ({
             ...item,
-            channel: canon(item?.channel || item?.red_social || item?.canal || ''),
-            format: item?.format || item?.tipo_contenido || item?.tipo || '',
-            title: item?.title || item?.titulo_gancho || item?.tema_concepto || '',
+            channel: canon(item?.canal || item?.channel || item?.red_social || ''),
+            format: canon(item?.formato || item?.format || item?.tipo_contenido || item?.tipo || ''),
+            title: item?.titulo_copy || item?.title || item?.titulo_gancho || item?.tema_concepto || '',
             cta: item?.cta || item?.call_to_action || item?.llamado_accion || '',
-            date: item?.date || item?.fecha || ''
+            date: item?.fecha || item?.date || '',
+            responsible: item?.responsable || item?.responsible || ''
           }));
           const seen = new Set<string>();
           s.editorial_calendar = s.editorial_calendar.filter((it: any) => {
@@ -279,6 +301,16 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
             seen.add(key);
             return true;
           });
+        }
+
+        // Normalizar plan de ejecución
+        if (s.execution_plan && typeof s.execution_plan === 'object') {
+          s.execution_plan = {
+            steps: s.execution_plan.pasos_operativos || s.execution_plan.steps || [],
+            roles: s.execution_plan.roles_necesarios || s.execution_plan.roles || [],
+            assets: s.execution_plan.activos_a_crear || s.execution_plan.assets || [],
+            budget: s.execution_plan.presupuesto_estimado_canal || s.execution_plan.budget || {}
+          };
         }
 
         return s;

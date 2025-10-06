@@ -252,95 +252,119 @@ serve(async (req) => {
 
     console.log('Processed input with real propuesta_valor:', JSON.stringify(processedInput, null, 2));
 
-    // Call N8N webhook
+    // Call N8N webhook with extended timeout (4 minutes)
     const webhookUrl = 'https://buildera.app.n8n.cloud/webhook/marketing-strategy';
     console.log('Calling N8N webhook:', webhookUrl);
 
-    const webhookResponse = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(N8N_AUTH_USER && N8N_AUTH_PASS ? {
-          'Authorization': `Basic ${btoa(`${N8N_AUTH_USER}:${N8N_AUTH_PASS}`)}`
-        } : {})
-      },
-      body: JSON.stringify(processedInput)
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 240000); // 4 minutes timeout
 
-    if (!webhookResponse.ok) {
-      console.error('N8N webhook failed:', webhookResponse.status, await webhookResponse.text());
-      return new Response(JSON.stringify({ 
-        error: 'Failed to generate marketing strategy',
-        details: `Webhook returned ${webhookResponse.status}`
-      }), {
-        status: 500,
+    try {
+      const webhookResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(N8N_AUTH_USER && N8N_AUTH_PASS ? {
+            'Authorization': `Basic ${btoa(`${N8N_AUTH_USER}:${N8N_AUTH_PASS}`)}`
+          } : {})
+        },
+        body: JSON.stringify(processedInput),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!webhookResponse.ok) {
+        console.error('N8N webhook failed:', webhookResponse.status, await webhookResponse.text());
+        return new Response(JSON.stringify({ 
+          error: 'Failed to generate marketing strategy',
+          details: `Webhook returned ${webhookResponse.status}`
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const webhookResult = await webhookResponse.json();
+      console.log('N8N webhook response:', JSON.stringify(webhookResult, null, 2));
+
+      // Store competitive intelligence if competitors data is available
+      if (webhookResult && webhookResult[0]?.output?.análisis_competitivo) {
+        try {
+          const competitors = webhookResult[0].output.análisis_competitivo;
+          const strategy = webhookResult[0].output;
+          
+          // Create competitive intelligence record
+          const { data: intelligence, error: intelligenceError } = await supabase
+            .from('competitive_intelligence')
+            .insert({
+              user_id: user.id,
+              industry_sector: companyData?.industry_sector || 'General',
+              target_market: companyData?.country || 'No especificado',
+              analysis_session_id: `marketing-strategy-${Date.now()}`,
+              analysis_status: 'completed',
+              data_sources: strategy.sources || [],
+              ai_discovered_competitors: competitors,
+              marketing_strategies_analysis: {
+                core_message: strategy.mensaje_unificado_diferenciador?.core_message,
+                strategies: strategy.embudo_estrategias
+              }
+            })
+            .select()
+            .single();
+
+          if (intelligenceError) {
+            console.error('Error creating competitive intelligence:', intelligenceError);
+          } else if (intelligence) {
+            // Store each competitor profile
+            for (const competitor of competitors) {
+              await supabase
+                .from('competitor_profiles')
+                .insert({
+                  analysis_id: intelligence.id,
+                  company_name: competitor.nombre,
+                  website_url: competitor.url,
+                  competitive_threat_score: 7, // Default medium-high threat
+                  strengths: Array.isArray(competitor.fortalezas) 
+                    ? competitor.fortalezas 
+                    : [competitor.fortalezas || ''],
+                  weaknesses: Array.isArray(competitor.debilidades)
+                    ? competitor.debilidades
+                    : [competitor.debilidades || ''],
+                  data_sources: competitor.sources || [],
+                  content_strategy: competitor.resumen_tácticas_digitales 
+                    ? { digital_tactics: competitor.resumen_tácticas_digitales } 
+                    : null,
+                });
+            }
+            console.log('Competitive intelligence saved successfully');
+          }
+        } catch (ciError) {
+          console.error('Error saving competitive intelligence:', ciError);
+          // Don't fail the entire request if competitive intelligence saving fails
+        }
+      }
+
+      return new Response(JSON.stringify(webhookResult), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
-    }
-
-    const webhookResult = await webhookResponse.json();
-    console.log('N8N webhook response:', JSON.stringify(webhookResult, null, 2));
-
-    // Store competitive intelligence if competitors data is available
-    if (webhookResult && webhookResult[0]?.output?.competitors) {
-      try {
-        const competitors = webhookResult[0].output.competitors;
-        const strategy = webhookResult[0].output;
-        
-        // Create competitive intelligence record
-        const { data: intelligence, error: intelligenceError } = await supabase
-          .from('competitive_intelligence')
-          .insert({
-            user_id: user.id,
-            industry_sector: companyData?.industry_sector || 'General',
-            target_market: companyData?.country || 'No especificado',
-            analysis_session_id: `marketing-strategy-${Date.now()}`,
-            analysis_status: 'completed',
-            data_sources: strategy.sources || [],
-            ai_discovered_competitors: competitors,
-            marketing_strategies_analysis: {
-              core_message: strategy.core_message,
-              strategies: strategy.strategies
-            }
-          })
-          .select()
-          .single();
-
-        if (intelligenceError) {
-          console.error('Error creating competitive intelligence:', intelligenceError);
-        } else if (intelligence) {
-          // Store each competitor profile
-          for (const competitor of competitors) {
-            await supabase
-              .from('competitor_profiles')
-              .insert({
-                analysis_id: intelligence.id,
-                company_name: competitor.name,
-                website_url: competitor.url,
-                competitive_threat_score: 7, // Default medium-high threat
-                strengths: Array.isArray(competitor.strengths) 
-                  ? competitor.strengths 
-                  : [competitor.strengths || ''],
-                weaknesses: Array.isArray(competitor.weaknesses)
-                  ? competitor.weaknesses
-                  : [competitor.weaknesses || ''],
-                data_sources: competitor.sources || [],
-                content_strategy: competitor.digital_tactics 
-                  ? { digital_tactics: competitor.digital_tactics } 
-                  : null,
-              });
-          }
-          console.log('Competitive intelligence saved successfully');
-        }
-      } catch (ciError) {
-        console.error('Error saving competitive intelligence:', ciError);
-        // Don't fail the entire request if competitive intelligence saving fails
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError.name === 'AbortError') {
+        console.error('N8N webhook timeout after 4 minutes');
+        return new Response(JSON.stringify({ 
+          error: 'Request timeout',
+          details: 'La generación de la estrategia tomó más de 4 minutos. Por favor, intenta de nuevo.'
+        }), {
+          status: 504,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
+      
+      throw fetchError;
     }
 
-    return new Response(JSON.stringify(webhookResult), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
 
   } catch (error) {
     console.error('Error in marketing-hub-marketing-strategy:', error);

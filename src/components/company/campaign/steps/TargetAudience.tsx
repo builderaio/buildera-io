@@ -215,7 +215,7 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
                               <div className="flex flex-wrap gap-1">
                                 {Object.entries(audience.age_ranges).map(([range, percentage]) => (
                                   <Badge key={range} variant="outline" className="text-xs">
-                                    {range}: {percentage as string}%
+                                    {range}: {percentage as string}
                                   </Badge>
                                 ))}
                               </div>
@@ -228,7 +228,7 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
                               <div className="flex flex-wrap gap-1">
                                 {Object.entries(audience.geographic_locations).slice(0, 3).map(([location, percentage]) => (
                                   <Badge key={location} variant="secondary" className="text-xs">
-                                    {location}: {percentage as string}%
+                                    {location}: {percentage as string}
                                   </Badge>
                                 ))}
                               </div>
@@ -241,7 +241,7 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
                               <div className="flex flex-wrap gap-1">
                                 {Object.entries(audience.platform_preferences).slice(0, 3).map(([platform, percentage]) => (
                                   <Badge key={platform} variant="default" className="text-xs">
-                                    {platform}: {percentage as string}%
+                                    {platform}: {percentage as string}
                                   </Badge>
                                 ))}
                               </div>

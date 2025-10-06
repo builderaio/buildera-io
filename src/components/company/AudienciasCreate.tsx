@@ -21,6 +21,7 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
   const [companyData, setCompanyData] = useState<any>(null);
   const [socialStats, setSocialStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   // Check if coming from tour by checking the current view
   const isFromTour = window.location.search.includes('view=audiencias-create');
@@ -91,6 +92,62 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
       }
     } catch (error) {
       console.error('Error loading social stats:', error);
+    }
+  };
+
+  const handleGenerateAIAudiences = async () => {
+    if (!userId || !companyData?.id) {
+      toast({
+        title: "Error",
+        description: "No se pudo obtener la información de la empresa",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAiGenerating(true);
+    try {
+      console.log('🤖 Iniciando generación de audiencias con IA...');
+      
+      const { data, error } = await supabase.functions.invoke('ai-audience-generator', {
+        body: {
+          user_id: userId,
+          company_id: companyData.id
+        }
+      });
+
+      if (error) {
+        console.error('Error en la función de IA:', error);
+        throw error;
+      }
+
+      console.log('✅ Respuesta de la IA:', data);
+
+      if (data.success && data.audiences?.length > 0) {
+        toast({
+          title: "Audiencias Generadas con IA",
+          description: `Se crearon ${data.generated_count} audiencias basadas en tu análisis`,
+        });
+        
+        // Navigate back to manager to see the new audiences
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          navigate('/company-dashboard?view=audiencias-manager');
+        }
+      } else {
+        throw new Error(data.error || 'No se pudieron generar audiencias');
+      }
+
+    } catch (error) {
+      console.error('Error generando audiencias con IA:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron generar audiencias con IA. Verifica que tengas análisis de audiencias disponibles.",
+        variant: "destructive"
+      });
+    } finally {
+      setAiGenerating(false);
     }
   };
 
@@ -169,16 +226,37 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
         </div>
       )}
       
-      <div className="flex items-center gap-4 mb-6">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/company-dashboard?view=audiencias-manager')}
-          className="gap-2"
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/company-dashboard?view=audiencias-manager')}
+            className="gap-2"
+          >
+            <ArrowRight className="h-4 w-4 rotate-180" />
+            Volver
+          </Button>
+          <h2 className="text-2xl font-bold">Crear Nueva Audiencia</h2>
+        </div>
+        
+        <Button
+          onClick={handleGenerateAIAudiences}
+          disabled={aiGenerating || !companyData}
+          variant="outline"
+          className="gap-2 border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
         >
-          <ArrowRight className="h-4 w-4 rotate-180" />
-          Volver
+          {aiGenerating ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Generando con IA...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" />
+              Generar con IA
+            </>
+          )}
         </Button>
-        <h2 className="text-2xl font-bold">Crear Nueva Audiencia</h2>
       </div>
 
       <Card>

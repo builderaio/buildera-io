@@ -15,10 +15,8 @@ import {
   Settings,
   X,
   Plus,
-  Sparkles,
   ArrowRight,
   Lightbulb,
-  Loader2,
   BarChart3
 } from "lucide-react";
 
@@ -49,8 +47,6 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   const [audiences, setAudiences] = useState<AudienceSegment[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedAudience, setSelectedAudience] = useState<AudienceSegment | null>(null);
-  const [aiGenerating, setAiGenerating] = useState(false);
-  const [companyData, setCompanyData] = useState<any>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -63,10 +59,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
         }
         
         if (uid) {
-          await Promise.all([
-            loadAudiences(uid),
-            loadCompanyData(uid)
-          ]);
+          await loadAudiences(uid);
         }
       } catch (e) {
         console.error('Error inicializando:', e);
@@ -74,31 +67,6 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     };
     init();
   }, [profile?.user_id, userId]);
-
-  const loadCompanyData = async (uid?: string) => {
-    const resolvedUid = uid || profile?.user_id || userId;
-    if (!resolvedUid) return;
-
-    try {
-      const { data: memberData } = await supabase
-        .from('company_members')
-        .select('company_id')
-        .eq('user_id', resolvedUid)
-        .single();
-
-      if (memberData) {
-        const { data: company } = await supabase
-          .from('companies')
-          .select('*')
-          .eq('id', memberData.company_id)
-          .single();
-        
-        setCompanyData(company);
-      }
-    } catch (error) {
-      console.error('Error loading company data:', error);
-    }
-  };
 
   const loadAudiences = async (uid?: string) => {
     const resolvedUid = uid || profile?.user_id || userId;
@@ -124,57 +92,6 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGenerateAIAudiences = async () => {
-    if (!userId || !companyData?.id) {
-      toast({
-        title: t('common:status.error'),
-        description: t('audiences.messages.errorUserData'),
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setAiGenerating(true);
-    try {
-      console.log('🤖 Iniciando generación de audiencias con IA...');
-      
-      const { data, error } = await supabase.functions.invoke('ai-audience-generator', {
-        body: {
-          user_id: userId,
-          company_id: companyData.id
-        }
-      });
-
-      if (error) {
-        console.error('Error en la función de IA:', error);
-        throw error;
-      }
-
-      console.log('✅ Respuesta de la IA:', data);
-
-      if (data.success && data.audiences?.length > 0) {
-        await loadAudiences(userId);
-        
-        toast({
-          title: "Audiencias Generadas con IA",
-          description: `Se crearon ${data.generated_count} audiencias basadas en tu análisis`,
-        });
-      } else {
-        throw new Error(data.error || 'No se pudieron generar audiencias');
-      }
-
-    } catch (error) {
-      console.error('Error generando audiencias con IA:', error);
-      toast({
-        title: t('common:status.error'),
-        description: "No se pudieron generar audiencias con IA. Verifica que tengas análisis de audiencias disponibles.",
-        variant: "destructive"
-      });
-    } finally {
-      setAiGenerating(false);
     }
   };
 
@@ -226,25 +143,6 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           >
             <BarChart3 className="h-4 w-4" />
             Análisis de Audiencias
-          </Button>
-
-          <Button 
-            onClick={handleGenerateAIAudiences}
-            disabled={aiGenerating}
-            variant="outline"
-            className="gap-2 border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
-          >
-            {aiGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Generando con IA...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4" />
-                Generar con IA
-              </>
-            )}
           </Button>
           
           <Button 
@@ -309,7 +207,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
       {/* Main Content */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       ) : audiences.length === 0 ? (
         <Card className="border-2 border-dashed">
@@ -331,29 +229,11 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
                 Analizar Audiencias Primero
               </Button>
               <Button 
-                onClick={handleGenerateAIAudiences}
-                disabled={aiGenerating}
-                variant="outline"
-                className="gap-2 border-purple-300 hover:bg-purple-50"
-              >
-                {aiGenerating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Generando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    Generar con IA
-                  </>
-                )}
-              </Button>
-              <Button 
                 onClick={() => navigate('/company-dashboard?view=audiencias-create')}
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
-                Crear Manualmente
+                Crear Audiencia
               </Button>
             </div>
           </CardContent>

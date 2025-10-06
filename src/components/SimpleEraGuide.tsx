@@ -911,13 +911,14 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       return 'bottom-6 right-6 w-auto';
     }
     
-    // En móvil, ocupar todo el ancho inferior
+    // En móvil, esquina inferior derecha más compacto
     if (window.innerWidth < 768) {
-      return 'bottom-0 left-0 right-0 rounded-t-xl rounded-b-none w-full';
+      return 'bottom-4 right-4 w-[calc(100vw-2rem)] max-w-sm';
     }
     
-    // En desktop normal, centrado inferior
-    return 'bottom-6 left-1/2 transform -translate-x-1/2 w-96 max-w-[90vw]';
+    // En desktop, esquina inferior derecha, compacto
+    return 'bottom-6 right-6 w-80';
+  };
   };
 
   if (loading) {
@@ -974,100 +975,98 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.2 }}
       >
-        <Card className={`fixed shadow-2xl border-primary/20 backdrop-blur-xl z-50 max-h-[85vh] overflow-y-auto ${getPositionClass()}`}>
-          <div className="p-6 space-y-4">
+        <Card className={`fixed shadow-2xl border-primary/20 backdrop-blur-xl z-50 max-h-[70vh] overflow-y-auto ${getPositionClass()}`}>
+          <div className="p-4 space-y-3">
             {/* Header simplificado */}
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-lg">Guía de Era</h3>
+                <Sparkles className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-sm">Guía de Era</h3>
               </div>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={handleMinimize}
-                className="h-8 w-8 p-0"
-                title="Minimizar (Esc)"
+                className="h-7 w-7 p-0 hover:bg-destructive/10"
+                title="Ocultar guía (Esc)"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
             
             {/* Progreso simplificado */}
-            <Progress value={progressPercentage} className="h-2" />
-            <p className="text-xs text-muted-foreground text-center">
-              Paso {currentStep} de {steps.length}
-            </p>
+            <div className="space-y-1">
+              <Progress value={progressPercentage} className="h-1.5" />
+              <p className="text-[10px] text-muted-foreground text-center">
+                Paso {currentStep} de {steps.length}
+              </p>
+            </div>
 
-            {/* Contenido del paso actual */}
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${currentStepData.color}`}>
-                  <currentStepData.icon className="w-5 h-5 text-white" />
+            {/* Contenido del paso actual - compacto */}
+            <div className="space-y-2">
+              <div className="flex items-start gap-2">
+                <div className={`p-1.5 rounded-md bg-gradient-to-br ${currentStepData.color} flex-shrink-0`}>
+                  <currentStepData.icon className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-bold text-base mb-1">{currentStepData.title}</h4>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm mb-1 leading-tight">{currentStepData.title}</h4>
                   
-                  {/* 🆕 Preview de datos existentes */}
+                  {/* 🆕 Preview de datos existentes - compacto */}
                   {!cacheData.loading && (
-                    <div className="mb-2">
+                    <div className="mb-1.5">
                       {currentStep === 1 && cacheData.companyProfile.exists && (
-                        <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200">
-                          <Eye className="w-3 h-3 mr-1" />
-                          Perfil configurado • {new Date(cacheData.companyProfile.lastUpdate!).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
+                        <Badge variant="outline" className="text-[10px] py-0 h-5 bg-blue-50 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-200">
+                          <Eye className="w-2.5 h-2.5 mr-1" />
+                          Perfil OK
                         </Badge>
                       )}
                       {currentStep === 2 && cacheData.socialAccounts.exists && (
-                        <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-300 border-green-200">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          {cacheData.socialAccounts.count} red{cacheData.socialAccounts.count !== 1 ? 'es' : ''} conectada{cacheData.socialAccounts.count !== 1 ? 's' : ''}
+                        <Badge variant="outline" className="text-[10px] py-0 h-5 bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-300 border-green-200">
+                          <CheckCircle2 className="w-2.5 h-2.5 mr-1" />
+                          {cacheData.socialAccounts.count} red{cacheData.socialAccounts.count !== 1 ? 'es' : ''}
                         </Badge>
                       )}
                       {currentStep === 4 && cacheData.audienceInsights.exists && (
-                        <Badge variant="outline" className="text-xs bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300 border-orange-200">
-                          <BarChart3 className="w-3 h-3 mr-1" />
-                          {cacheData.audienceInsights.count} análisis • {new Date(cacheData.audienceInsights.lastUpdate!).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
+                        <Badge variant="outline" className="text-[10px] py-0 h-5 bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300 border-orange-200">
+                          <BarChart3 className="w-2.5 h-2.5 mr-1" />
+                          {cacheData.audienceInsights.count} análisis
                         </Badge>
                       )}
                       {currentStep === 5 && cacheData.contentAnalysis.exists && (
-                        <Badge variant="outline" className="text-xs bg-cyan-50 dark:bg-cyan-950/20 text-cyan-700 dark:text-cyan-300 border-cyan-200">
-                          <FileText className="w-3 h-3 mr-1" />
-                          {cacheData.contentAnalysis.count} post{cacheData.contentAnalysis.count !== 1 ? 's' : ''} analizado{cacheData.contentAnalysis.count !== 1 ? 's' : ''} • {new Date(cacheData.contentAnalysis.lastUpdate!).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
+                        <Badge variant="outline" className="text-[10px] py-0 h-5 bg-cyan-50 dark:bg-cyan-950/20 text-cyan-700 dark:text-cyan-300 border-cyan-200">
+                          <FileText className="w-2.5 h-2.5 mr-1" />
+                          {cacheData.contentAnalysis.count} posts
                         </Badge>
                       )}
                       {currentStep === 6 && cacheData.buyerPersonas.exists && (
-                        <Badge variant="outline" className="text-xs bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 border-purple-200">
-                          <Users className="w-3 h-3 mr-1" />
-                          {cacheData.buyerPersonas.count} buyer persona{cacheData.buyerPersonas.count !== 1 ? 's' : ''} • {new Date(cacheData.buyerPersonas.lastUpdate!).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
+                        <Badge variant="outline" className="text-[10px] py-0 h-5 bg-purple-50 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 border-purple-200">
+                          <Users className="w-2.5 h-2.5 mr-1" />
+                          {cacheData.buyerPersonas.count} personas
                         </Badge>
                       )}
                     </div>
                   )}
                   
-                  <div className="text-sm text-muted-foreground space-y-2">
-                    <p>{currentStepData.what}</p>
-                    <p>{currentStepData.why}</p>
-                    <p>{currentStepData.how}</p>
-                  </div>
+                  {/* Solo mostrar descripción principal - compacta */}
+                  <p className="text-xs text-muted-foreground leading-snug">{currentStepData.what}</p>
                 </div>
               </div>
 
-              {/* Botón de acción principal */}
-              <div className="space-y-2 pt-2">
+              {/* Botones de acción - compactos */}
+              <div className="space-y-1.5">
                 {currentStepData.target_section && onNavigate && !isStepCompleted && (
                   <Button
                     type="button"
                     onClick={() => {
                       onNavigate(currentStepData.target_section!, currentStepData.tab ? { tab: currentStepData.tab } : undefined);
                       // Auto-minimizar al navegar
-                      setTimeout(() => handleMinimize(), 500);
+                      setTimeout(() => handleMinimize(), 300);
                     }}
-                    className="w-full"
-                    size="lg"
+                    className="w-full h-9 text-xs"
                   >
                     {currentStepData.actionText}
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    <ArrowRight className="w-3 h-3 ml-1" />
                   </Button>
                 )}
                 
@@ -1076,11 +1075,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                     type="button"
                     variant="outline"
                     disabled
-                    className="w-full border-green-500 text-green-500"
-                    size="lg"
+                    className="w-full h-8 text-xs border-green-500 text-green-500"
                   >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Paso completado
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    Completado
                   </Button>
                 ) : currentStepData.target_section ? (
                   <Button
@@ -1088,16 +1086,16 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                     onClick={() => completeStep(currentStep)}
                     variant="secondary"
                     disabled={verifying}
-                    className="w-full"
+                    className="w-full h-8 text-xs"
                   >
                     {verifying ? (
                       <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                         Verificando...
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
                         {currentStepData.verificationText}
                       </>
                     )}
@@ -1106,17 +1104,17 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
               </div>
             </div>
             
-            {/* Navegación entre pasos */}
-            <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-border/50">
+            {/* Navegación entre pasos - compacta */}
+            <div className="flex items-center gap-2 pt-2 mt-2 border-t border-border/50">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
                 disabled={currentStep === 1}
-                className="flex-1"
+                className="flex-1 h-8 text-xs px-2"
                 title="Paso anterior (←)"
               >
-                <ChevronLeft className="w-4 h-4 mr-1" />
+                <ChevronLeft className="w-3 h-3 mr-1" />
                 Anterior
               </Button>
               <Button
@@ -1124,11 +1122,11 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                 size="sm"
                 onClick={() => setCurrentStep(Math.min(steps.length, currentStep + 1))}
                 disabled={currentStep === steps.length}
-                className="flex-1"
+                className="flex-1 h-8 text-xs px-2"
                 title="Siguiente paso (→)"
               >
                 Siguiente
-                <ChevronRight className="w-4 h-4 ml-1" />
+                <ChevronRight className="w-3 h-3 ml-1" />
               </Button>
             </div>
           </div>

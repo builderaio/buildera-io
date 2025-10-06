@@ -87,7 +87,7 @@ export const useStepVerifications = (userId: string) => {
   const verifyAudienceAnalysis = async (): Promise<boolean> => {
     try {
       const { data, error } = await supabase
-        .from('audience_insights')
+        .from('social_analysis')
         .select('id')
         .eq('user_id', userId)
         .limit(1);

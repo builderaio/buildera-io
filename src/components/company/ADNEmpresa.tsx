@@ -1136,7 +1136,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                     value={brandingData.visual_identity}
                     onSave={(value) => saveField('visual_identity', value, 'company_branding', brandingData.id)}
                     type="textarea"
-                    placeholder="Describe la identidad visual"
+                    placeholder="Describe la identidad visual de tu marca (estilo, tipografía, elementos visuales...)"
                   />
                 </div>
               )}
@@ -1162,9 +1162,16 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                                 <h4 className="font-medium text-orange-900 dark:text-orange-100 text-sm uppercase tracking-wide">
                                   Descripción
                                 </h4>
-                                <p className="text-base leading-relaxed text-foreground bg-background/60 p-4 rounded-lg border border-orange-200/50 dark:border-orange-700/30">
-                                  {brandVoice.descripcion}
-                                </p>
+                                <EditableField
+                                  field="brand_voice_descripcion"
+                                  value={brandVoice.descripcion}
+                                  onSave={(value) => {
+                                    const updatedVoice = { ...brandVoice, descripcion: value };
+                                    saveField('brand_voice', JSON.stringify(updatedVoice), 'company_branding', brandingData.id);
+                                  }}
+                                  type="textarea"
+                                  placeholder="Describe cómo se comunica tu marca..."
+                                />
                               </div>
                             )}
                             
@@ -1174,29 +1181,61 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                                 <h4 className="font-medium text-orange-900 dark:text-orange-100 text-sm uppercase tracking-wide">
                                   Personalidad
                                 </h4>
-                                <div className="inline-flex items-center px-4 py-2 bg-orange-200 dark:bg-orange-800 text-orange-900 dark:text-orange-100 rounded-full font-medium">
-                                  {brandVoice.personalidad}
-                                </div>
+                                <EditableField
+                                  field="brand_voice_personalidad"
+                                  value={brandVoice.personalidad}
+                                  onSave={(value) => {
+                                    const updatedVoice = { ...brandVoice, personalidad: value };
+                                    saveField('brand_voice', JSON.stringify(updatedVoice), 'company_branding', brandingData.id);
+                                  }}
+                                  placeholder="Ej: Profesional, amigable, innovadora..."
+                                />
                               </div>
                             )}
                             
                             {/* Palabras Clave */}
-                            {brandVoice.palabras_clave && Array.isArray(brandVoice.palabras_clave) && brandVoice.palabras_clave.length > 0 && (
+                            {brandVoice.palabras_clave && (
                               <div className="space-y-3">
                                 <h4 className="font-medium text-orange-900 dark:text-orange-100 text-sm uppercase tracking-wide">
                                   Palabras Clave
                                 </h4>
-                                <div className="flex flex-wrap gap-2">
-                                  {brandVoice.palabras_clave.map((palabra, index) => (
-                                    <Badge 
-                                      key={index} 
-                                      variant="outline" 
-                                      className="bg-white/80 dark:bg-background/80 border-orange-300 dark:border-orange-600 text-orange-800 dark:text-orange-200 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors duration-200"
+                                {editing === 'brand_voice_palabras_clave' ? (
+                                  <div className="space-y-2">
+                                    <EditableField
+                                      field="brand_voice_palabras_clave"
+                                      value={Array.isArray(brandVoice.palabras_clave) ? brandVoice.palabras_clave.join(', ') : ''}
+                                      onSave={(value) => {
+                                        const palabrasArray = value.split(',').map(p => p.trim()).filter(p => p);
+                                        const updatedVoice = { ...brandVoice, palabras_clave: palabrasArray };
+                                        saveField('brand_voice', JSON.stringify(updatedVoice), 'company_branding', brandingData.id);
+                                      }}
+                                      type="textarea"
+                                      placeholder="Ingresa palabras separadas por comas: innovación, tecnología, futuro..."
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="group relative">
+                                    <div className="flex flex-wrap gap-2">
+                                      {Array.isArray(brandVoice.palabras_clave) && brandVoice.palabras_clave.map((palabra, index) => (
+                                        <Badge 
+                                          key={index} 
+                                          variant="outline" 
+                                          className="bg-white/80 dark:bg-background/80 border-orange-300 dark:border-orange-600 text-orange-800 dark:text-orange-200 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors duration-200"
+                                        >
+                                          #{palabra}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute -top-2 -right-2 h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={() => setEditing('brand_voice_palabras_clave')}
                                     >
-                                      #{palabra}
-                                    </Badge>
-                                  ))}
-                                </div>
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>

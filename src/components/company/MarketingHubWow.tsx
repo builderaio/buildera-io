@@ -86,7 +86,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     if (view === 'marketing-hub' && tab === 'analyze') {
       setActiveTab('analyze');
     } else if (tab) {
-      const allowed = new Set(['dashboard', 'create', 'analyze', 'content', 'history', 'campaigns']);
+      const allowed = new Set(['dashboard', 'create', 'analyze', 'content', 'history', 'campaigns', 'calendar', 'configuracion']);
       if (tab && allowed.has(tab)) setActiveTab(tab);
     }
   }, []);

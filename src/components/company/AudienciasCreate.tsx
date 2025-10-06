@@ -222,18 +222,18 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
         <Button
           onClick={handleGenerateAIAudiences}
           disabled={aiGenerating || !companyData}
-          variant="outline"
-          className="gap-2 border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+          size="lg"
+          className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
         >
           {aiGenerating ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Generando con IA...
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span className="font-semibold">Generando con IA...</span>
             </>
           ) : (
             <>
-              <Sparkles className="h-4 w-4" />
-              Generar con IA
+              <Sparkles className="h-5 w-5" />
+              <span className="font-semibold">✨ Generar con IA</span>
             </>
           )}
         </Button>

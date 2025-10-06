@@ -919,7 +919,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     // En desktop, esquina inferior derecha, compacto
     return 'bottom-6 right-6 w-80';
   };
-  };
 
   if (loading) {
     return (
@@ -1052,9 +1051,10 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                   <p className="text-xs text-muted-foreground leading-snug">{currentStepData.what}</p>
                 </div>
               </div>
+            </div>
 
-              {/* Botones de acción - compactos */}
-              <div className="space-y-1.5">
+            {/* Botones de acción - compactos */}
+            <div className="space-y-1.5">
                 {currentStepData.target_section && onNavigate && !isStepCompleted && (
                   <Button
                     type="button"
@@ -1102,7 +1102,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                   </Button>
                 ) : null}
               </div>
-            </div>
             
             {/* Navegación entre pasos - compacta */}
             <div className="flex items-center gap-2 pt-2 mt-2 border-t border-border/50">

@@ -25,6 +25,7 @@ import {
   Loader2,
   Save,
   ChevronDown,
+  ChevronLeft,
   Maximize2,
   Clock,
   Pause,
@@ -75,17 +76,14 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  // Estados principales
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false);
   const [recoveryData, setRecoveryData] = useState<any>(null);
-  const [showTourBadge, setShowTourBadge] = useState(false); // 🆕 Badge de tour disponible
+  const [showTourBadge, setShowTourBadge] = useState(false);
   
-  // 🆕 Nuevos estados para mejoras
+  // Estado de auto-minimización
   const [autoMinimized, setAutoMinimized] = useState(false);
-  const [temporarilyHidden, setTemporarilyHidden] = useState(false);
-  const [compactMode, setCompactMode] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(false);
-  const [showPeek, setShowPeek] = useState(false);
   
   const autoSaveIntervalRef = useRef<NodeJS.Timeout>();
   const inactivityTimerRef = useRef<NodeJS.Timeout>();
@@ -304,28 +302,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     }
   }, [loading, userId, currentSection]);
   
-  // 🆕 Cargar preferencias de localStorage
-  useEffect(() => {
-    const savedMinimized = localStorage.getItem('simple-era-guide-minimized');
-    const savedCompactMode = localStorage.getItem('simple-era-guide-compact');
-    const pausedUntil = localStorage.getItem('simple-era-guide-paused-until');
-    
-    if (savedMinimized === 'true') {
-      setIsMinimized(true);
-    }
-    if (savedCompactMode === 'true') {
-      setCompactMode(true);
-    }
-    if (pausedUntil) {
-      const pauseDate = new Date(pausedUntil);
-      if (pauseDate > new Date()) {
-        setTemporarilyHidden(true);
-      } else {
-        localStorage.removeItem('simple-era-guide-paused-until');
-      }
-    }
-  }, []);
-  
   // 🆕 Auto-minimizar en secciones críticas
   useEffect(() => {
     // 🔥 PREVENIR auto-minimización si el usuario acaba de maximizar manualmente
@@ -358,18 +334,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       });
     }
   }, [currentSection, isMinimized, isActive, completedSteps.length]);
-  
-  // 🆕 Animación de peek cuando está minimizado
-  useEffect(() => {
-    if (!isMinimized || !isActive) return;
-    
-    const peekInterval = setInterval(() => {
-      setShowPeek(true);
-      setTimeout(() => setShowPeek(false), 3000);
-    }, 120000); // Cada 2 minutos
-    
-    return () => clearInterval(peekInterval);
-  }, [isMinimized, isActive]);
   
   // 🆕 Detectar si hay procesamiento activo en la plataforma
   const isProcessingActive = useCallback(() => {
@@ -669,40 +633,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     }
   };
 
-  // 🆕 Funciones mejoradas
-  const handleTemporaryHide = () => {
-    setTemporarilyHidden(true);
-    toast({
-      title: "Guía oculta temporalmente",
-      description: "La guía reaparecerá en 5 minutos.",
-      duration: 3000
-    });
-    
-    setTimeout(() => {
-      setTemporarilyHidden(false);
-      setIsMinimized(true);
-    }, 300000); // 5 minutos
-  };
-  
-  const handlePauseTour = async () => {
-    const pauseUntil = new Date();
-    pauseUntil.setHours(pauseUntil.getHours() + 24);
-    
-    localStorage.setItem('simple-era-guide-paused-until', pauseUntil.toISOString());
-    setTemporarilyHidden(true);
-    
-    toast({
-      title: "Tour pausado por 24 horas",
-      description: "Puedes reactivarlo cuando quieras desde el menú.",
-      duration: 4000
-    });
-  };
-  
-  const toggleCompactMode = () => {
-    const newCompactMode = !compactMode;
-    setCompactMode(newCompactMode);
-    localStorage.setItem('simple-era-guide-compact', newCompactMode.toString());
-  };
   
   const handleMinimize = () => {
     setIsMinimized(true);
@@ -986,11 +916,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       return 'bottom-0 left-0 right-0 rounded-t-xl rounded-b-none w-full';
     }
     
-    // En desktop, modo compacto
-    if (compactMode) {
-      return 'bottom-6 right-6 w-64';
-    }
-    
     // En desktop normal, centrado inferior
     return 'bottom-6 left-1/2 transform -translate-x-1/2 w-96 max-w-[90vw]';
   };
@@ -1004,11 +929,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         </div>
       </Card>
     );
-  }
-
-  // 🆕 Si está temporalmente oculto, no renderizar
-  if (temporarilyHidden) {
-    return null;
   }
   
   // 🆕 Badge flotante de "Tour Disponible" cuando se cierra el welcome sin iniciar
@@ -1041,64 +961,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     );
   }
 
-  // 🎯 MINIMIZED STATE: Botón flotante con peek
-  if (isMinimized) {
-    const currentStepData = steps[currentStep - 1];
-    return (
-      <>
-        {showPeek && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-          >
-            <Card className="fixed bottom-20 right-6 w-72 shadow-2xl border-primary/20 z-50 p-4">
-              <div className="flex items-start gap-3">
-                <Sparkles className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Siguiente paso:</p>
-                  <p className="text-sm font-semibold">{currentStepData.title}</p>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-        )}
-        <Button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleMaximize();
-          }}
-          className="fixed bottom-6 right-6 rounded-full shadow-2xl hover:scale-110 transition-all z-50 h-14 px-6 group"
-          size="lg"
-        >
-          <currentStepData.icon className="w-5 h-5 mr-2" />
-          <span className="font-medium">Guía de Era</span>
-          <span className="ml-2 text-xs bg-primary-foreground/20 px-2 py-1 rounded-full">
-            {completedSteps.length}/{steps.length}
-          </span>
-          <Maximize2 className="w-4 h-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </Button>
-      </>
-    );
-  }
-
-  // 🎯 ACTIVE TOUR STATE: Card principal con overlay
+  // 🎯 ACTIVE TOUR STATE: Card principal
   const currentStepData = steps[currentStep - 1];
   const isStepCompleted = completedSteps.includes(currentStep);
   const progressPercentage = (completedSteps.length / steps.length) * 100;
 
   return (
     <>
-      {/* 🆕 Overlay semitransparente opcional */}
-      {showOverlay && (
-        <div 
-          className="fixed inset-0 bg-black/10 backdrop-blur-[2px] z-40 animate-fade-in"
-          onClick={handleMinimize}
-        />
-      )}
-      
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -1107,78 +976,29 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       >
         <Card className={`fixed shadow-2xl border-primary/20 backdrop-blur-xl z-50 max-h-[85vh] overflow-y-auto ${getPositionClass()}`}>
           <div className="p-6 space-y-4">
-            {/* Header con controles mejorados */}
+            {/* Header simplificado */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
                 <h3 className="font-bold text-lg">Guía de Era</h3>
               </div>
-              <div className="flex items-center gap-1">
-                {/* 🆕 Modo compacto toggle (solo desktop) */}
-                {window.innerWidth >= 768 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={toggleCompactMode}
-                    className="h-8 w-8 p-0"
-                    title={compactMode ? "Modo normal" : "Modo compacto"}
-                  >
-                    <ChevronRight className={`w-4 h-4 transition-transform ${compactMode ? 'rotate-180' : ''}`} />
-                  </Button>
-                )}
-                
-                {/* 🆕 Ocultar temporalmente */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleTemporaryHide}
-                  className="h-8 w-8 p-0"
-                  title="Ocultar por 5 minutos"
-                >
-                  <Clock className="w-4 h-4" />
-                </Button>
-                
-                {/* 🆕 Minimizar mejorado */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleMinimize}
-                  className="h-8 px-2 gap-1"
-                  title="Minimizar (Esc)"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                  <span className="text-xs hidden md:inline">Minimizar</span>
-                </Button>
-                
-                {/* Cerrar/Skip */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowSkipConfirm(true)}
-                  className="h-8 w-8 p-0"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleMinimize}
+                className="h-8 w-8 p-0"
+                title="Minimizar (Esc)"
+              >
+                <X className="w-4 h-4" />
+              </Button>
             </div>
             
-            {/* 🆕 Indicador de último guardado */}
-            {lastSaved && !compactMode && (
-              <p className="text-[10px] text-muted-foreground text-right -mt-2 mb-2">
-                Último guardado: {new Date(lastSaved).toLocaleTimeString()}
-              </p>
-            )}
-
+            {/* Progreso simplificado */}
             <Progress value={progressPercentage} className="h-2" />
-            {!compactMode && (
-              <p className="text-xs text-muted-foreground text-center">
-                Paso {currentStep} de {steps.length} • {completedSteps.length} completados
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground text-center">
+              Paso {currentStep} de {steps.length}
+            </p>
 
             {/* Contenido del paso actual */}
             <div className="space-y-3">
@@ -1225,19 +1045,17 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                     </div>
                   )}
                   
-                  {!compactMode && (
-                    <div className="text-sm text-muted-foreground space-y-2">
-                      <p>{currentStepData.what}</p>
-                      <p>{currentStepData.why}</p>
-                      <p>{currentStepData.how}</p>
-                    </div>
-                  )}
+                  <div className="text-sm text-muted-foreground space-y-2">
+                    <p>{currentStepData.what}</p>
+                    <p>{currentStepData.why}</p>
+                    <p>{currentStepData.how}</p>
+                  </div>
                 </div>
               </div>
 
-              {/* Botones de acción unificados */}
-              <div className="flex gap-2 pt-2">
-                {currentStepData.target_section && onNavigate && (
+              {/* Botón de acción principal */}
+              <div className="space-y-2 pt-2">
+                {currentStepData.target_section && onNavigate && !isStepCompleted && (
                   <Button
                     type="button"
                     onClick={() => {
@@ -1245,8 +1063,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                       // Auto-minimizar al navegar
                       setTimeout(() => handleMinimize(), 500);
                     }}
-                    className="flex-1"
-                    variant="default"
+                    className="w-full"
+                    size="lg"
                   >
                     {currentStepData.actionText}
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -1258,18 +1076,19 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                     type="button"
                     variant="outline"
                     disabled
-                    className="flex-1 border-green-500 text-green-500"
+                    className="w-full border-green-500 text-green-500"
+                    size="lg"
                   >
                     <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Completado
+                    Paso completado
                   </Button>
-                ) : (
+                ) : currentStepData.target_section ? (
                   <Button
                     type="button"
                     onClick={() => completeStep(currentStep)}
-                    variant="outline"
+                    variant="secondary"
                     disabled={verifying}
-                    className="flex-1"
+                    className="w-full"
                   >
                     {verifying ? (
                       <>
@@ -1283,61 +1102,35 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                       </>
                     )}
                   </Button>
-                )}
+                ) : null}
               </div>
-              
-              {/* 🆕 Botón de pausar tour */}
-              {!compactMode && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handlePauseTour}
-                  className="w-full mt-2 text-xs"
-                >
-                  <Pause className="w-3 h-3 mr-1" />
-                  Pausar tour por hoy
-                </Button>
-              )}
             </div>
             
-            {/* 🆕 Atajos de teclado (solo desktop y no compacto) */}
-            {!compactMode && window.innerWidth >= 768 && (
-              <div className="pt-3 border-t border-border/50">
-                <p className="text-[10px] text-muted-foreground text-center">
-                  <kbd className="px-1 py-0.5 bg-muted rounded text-[9px]">Esc</kbd> minimizar • 
-                  <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] ml-1">Shift+G</kbd> toggle •
-                  <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] ml-1">→</kbd> siguiente
-                </p>
-              </div>
-            )}
-
             {/* Navegación entre pasos */}
-            {!compactMode && (
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-                  disabled={currentStep === 1}
-                  className="flex-1"
-                >
-                  Anterior
-                </Button>
-                <span className="text-xs text-muted-foreground px-2">
-                  {currentStep}/{steps.length}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentStep(Math.min(steps.length, currentStep + 1))}
-                  disabled={currentStep === steps.length}
-                  className="flex-1"
-                >
-                  Siguiente
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-border/50">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+                disabled={currentStep === 1}
+                className="flex-1"
+                title="Paso anterior (←)"
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Anterior
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentStep(Math.min(steps.length, currentStep + 1))}
+                disabled={currentStep === steps.length}
+                className="flex-1"
+                title="Siguiente paso (→)"
+              >
+                Siguiente
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
           </div>
         </Card>
       </motion.div>

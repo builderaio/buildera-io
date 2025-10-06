@@ -1227,9 +1227,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                   
                   {!compactMode && (
                     <div className="text-sm text-muted-foreground space-y-2">
-                      <p><strong>QUÉ:</strong> {currentStepData.what}</p>
-                      <p><strong>POR QUÉ:</strong> {currentStepData.why}</p>
-                      <p><strong>CÓMO:</strong> {currentStepData.how}</p>
+                      <p>{currentStepData.what}</p>
+                      <p>{currentStepData.why}</p>
+                      <p>{currentStepData.how}</p>
                     </div>
                   )}
                 </div>

@@ -395,25 +395,12 @@ Deno.serve(async (req) => {
 
           const platformStr = analysis.social_type || 'instagram';
 
-          // Upsert manually without unique constraint
-          const { data: existingErrorRow } = await supabaseClient
+          // Upsert error data
+          await supabaseClient
             .from('social_content_analysis')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('platform', platformStr)
-            .eq('cid', cid)
-            .maybeSingle();
-
-          if (existingErrorRow?.id) {
-            await supabaseClient
-              .from('social_content_analysis')
-              .update({ ...errorAnalysisData, updated_at: new Date().toISOString() })
-              .eq('id', existingErrorRow.id);
-          } else {
-            await supabaseClient
-              .from('social_content_analysis')
-              .insert(errorAnalysisData);
-          }
+            .upsert(errorAnalysisData, {
+              onConflict: 'user_id,platform'
+            });
 
           continue;
         }
@@ -677,7 +664,7 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Store content analysis results
+        // Store content analysis results using upsert
         const contentAnalysisData = {
           user_id: user.id,
           platform: platformStr,
@@ -691,40 +678,20 @@ Deno.serve(async (req) => {
           created_at: new Date().toISOString(),
         };
 
-        // Upsert manually without requiring a DB unique constraint
-        const { data: existingRow } = await supabaseClient
+        const { data: upsertedRow, error: upsertError } = await supabaseClient
           .from('social_content_analysis')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('platform', platformStr)
-          .eq('cid', cid)
-          .maybeSingle();
+          .upsert(contentAnalysisData, {
+            onConflict: 'user_id,platform'
+          })
+          .select()
+          .single();
 
-        let analysisId: string | null = null;
-        if (existingRow?.id) {
-          const { data: updatedRow, error: updateError } = await supabaseClient
-            .from('social_content_analysis')
-            .update({ ...contentAnalysisData, updated_at: new Date().toISOString() })
-            .eq('id', existingRow.id)
-            .select()
-            .single();
-          if (updateError) {
-            console.error('Error updating content analysis:', updateError);
-            continue;
-          }
-          analysisId = updatedRow?.id ?? existingRow.id;
-        } else {
-          const { data: insertedRow, error: insertError } = await supabaseClient
-            .from('social_content_analysis')
-            .insert(contentAnalysisData)
-            .select()
-            .single();
-          if (insertError) {
-            console.error('Error inserting content analysis:', insertError);
-            continue;
-          }
-          analysisId = insertedRow?.id ?? null;
+        if (upsertError) {
+          console.error('Error upserting content analysis:', upsertError);
+          continue;
         }
+
+        const analysisId = upsertedRow?.id ?? null;
 
         // 🆕 Guardar posts en tablas específicas por plataforma
         if (contentData.data.posts && contentData.data.posts.length > 0) {

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CalendarGenerationLoader } from '@/components/ui/calendar-generation-loader';
 import { 
   Calendar, 
   Clock, 
@@ -217,6 +218,13 @@ export const ContentCalendar = ({ campaignData, onComplete, loading }: ContentCa
 
   return (
     <div className="space-y-6">
+      {/* Calendar Generation Loader */}
+      <CalendarGenerationLoader
+        isVisible={generating}
+        estimatedTime={90}
+        postsToGenerate={parseInt(duration) * 1.5}
+      />
+
       {/* Header */}
       <Card className="bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200">
         <CardHeader>

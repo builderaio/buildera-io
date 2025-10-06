@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { StrategyGenerationLoader } from '@/components/ui/strategy-generation-loader';
 import { 
   BarChart3, 
   Edit3, 
@@ -530,34 +531,11 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
         </div>
       )}
 
-      {/* Loading State */}
-      {generating && (
-        <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <CardContent className="py-16 text-center">
-            <div className="max-w-md mx-auto space-y-6">
-              <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto">
-                <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-2xl font-semibold text-blue-900">Generando tu Estrategia...</h3>
-                <p className="text-blue-700 text-lg">
-                  Nuestro algoritmo está analizando tu audiencia y creando una estrategia personalizada
-                </p>
-              </div>
-              <div className="bg-white/50 backdrop-blur p-4 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-pulse flex space-x-1">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                  </div>
-                  <span className="text-blue-600 font-medium ml-3">Esto puede tomar unos segundos...</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Advanced Loading State with Strategy Generation Loader */}
+      <StrategyGenerationLoader
+        isVisible={generating}
+        estimatedTime={150}
+      />
 
       {/* Generated Strategy */}
       {strategy && (

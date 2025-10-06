@@ -1,18 +1,17 @@
 import { 
-  Linkedin, 
-  Instagram, 
-  Facebook, 
-  Music, 
-  Twitter, 
-  Youtube,
-  type LucideIcon 
-} from 'lucide-react';
+  FaLinkedin, 
+  FaInstagram, 
+  FaFacebook, 
+  FaTiktok, 
+  FaXTwitter, 
+  FaYoutube
+} from 'react-icons/fa6';
 
 export interface SocialPlatform {
   id: string;
   name: string; // Nombre completo para mostrar al usuario
   internalName: string; // Nombre interno para lógica de la aplicación
-  icon: LucideIcon;
+  icon: React.ComponentType<any>;
   color: string;
   bgColor: string;
   officialColor: string; // Color oficial de la marca
@@ -23,17 +22,17 @@ export const SOCIAL_PLATFORMS: Record<string, SocialPlatform> = {
     id: 'linkedin',
     name: 'LinkedIn',
     internalName: 'linkedin',
-    icon: Linkedin,
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-700',
+    icon: FaLinkedin,
+    color: 'text-[#0077B5]',
+    bgColor: 'bg-[#0077B5]',
     officialColor: '#0077B5'
   },
   instagram: {
     id: 'instagram', 
     name: 'Instagram',
     internalName: 'instagram',
-    icon: Instagram,
-    color: 'text-pink-600',
+    icon: FaInstagram,
+    color: 'text-[#E4405F]',
     bgColor: 'bg-gradient-to-r from-purple-500 to-pink-500',
     officialColor: '#E4405F'
   },
@@ -41,16 +40,16 @@ export const SOCIAL_PLATFORMS: Record<string, SocialPlatform> = {
     id: 'facebook',
     name: 'Facebook', 
     internalName: 'facebook',
-    icon: Facebook,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-600',
+    icon: FaFacebook,
+    color: 'text-[#1877F2]',
+    bgColor: 'bg-[#1877F2]',
     officialColor: '#1877F2'
   },
   tiktok: {
     id: 'tiktok',
     name: 'TikTok',
-    internalName: 'tiktok', // Internamente puede seguir siendo 'tt' si es necesario
-    icon: Music, // Lucide no tiene ícono oficial de TikTok, usamos Music como representativo
+    internalName: 'tiktok',
+    icon: FaTiktok,
     color: 'text-black dark:text-white',
     bgColor: 'bg-black',
     officialColor: '#000000'
@@ -59,18 +58,18 @@ export const SOCIAL_PLATFORMS: Record<string, SocialPlatform> = {
     id: 'twitter',
     name: 'X (Twitter)',
     internalName: 'twitter',
-    icon: Twitter,
-    color: 'text-gray-900',
-    bgColor: 'bg-gray-900',
-    officialColor: '#1DA1F2'
+    icon: FaXTwitter,
+    color: 'text-[#000000]',
+    bgColor: 'bg-black',
+    officialColor: '#000000'
   },
   youtube: {
     id: 'youtube',
     name: 'YouTube',
     internalName: 'youtube', 
-    icon: Youtube,
-    color: 'text-red-600',
-    bgColor: 'bg-red-600',
+    icon: FaYoutube,
+    color: 'text-[#FF0000]',
+    bgColor: 'bg-[#FF0000]',
     officialColor: '#FF0000'
   }
 };
@@ -98,9 +97,9 @@ export const getPlatformDisplayName = (id: string): string => {
 };
 
 // Función para obtener el ícono
-export const getPlatformIcon = (id: string): LucideIcon => {
+export const getPlatformIcon = (id: string): React.ComponentType<any> => {
   const platform = getPlatform(id);
-  return platform?.icon || Music; // Fallback
+  return platform?.icon || FaTiktok; // Fallback
 };
 
 // Función para obtener el color

@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Activity, BarChart3 } from "lucide-react";
+import { getPlatformIcon } from "@/lib/socialPlatforms";
 
 interface SocialMetric {
   platform: string;
@@ -58,14 +59,17 @@ export default function SocialMetricsCard({ metrics, platform }: SocialMetricsCa
 
   return (
     <div className="space-y-6">
-      {Object.entries(groupedMetrics).map(([platformName, platformMetrics]) => (
-        <Card key={platformName}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="capitalize">{platformName}</span>
-              <Badge variant="secondary">{platformMetrics.length} métricas</Badge>
-            </CardTitle>
-          </CardHeader>
+      {Object.entries(groupedMetrics).map(([platformName, platformMetrics]) => {
+        const PlatformIcon = getPlatformIcon(platformName);
+        return (
+          <Card key={platformName}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PlatformIcon className="h-5 w-5" />
+                <span className="capitalize">{platformName}</span>
+                <Badge variant="secondary">{platformMetrics.length} métricas</Badge>
+              </CardTitle>
+            </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {platformMetrics.map((metric, index) => {
@@ -104,7 +108,8 @@ export default function SocialMetricsCard({ metrics, platform }: SocialMetricsCa
             )}
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
       
       {Object.keys(groupedMetrics).length === 0 && (
         <Card className="border-dashed">

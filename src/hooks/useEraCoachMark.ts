@@ -36,6 +36,20 @@ export const useEraCoachMark = (userId: string | undefined): UseEraCoachMarkRetu
           return;
         }
 
+        // 🔍 Verificar si el SimpleEraGuide está activo (tour no completado)
+        const { data: tourData } = await supabase
+          .from('user_guided_tour')
+          .select('tour_completed')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        // Si el tour del SimpleEraGuide no está completado, NO mostrar el coach mark
+        if (!tourData?.tour_completed) {
+          console.log('🚫 SimpleEraGuide activo, no se mostrará el EraCoachMark');
+          setIsLoading(false);
+          return;
+        }
+
         // Verificar si ya vio el tutorial
         const { data, error } = await supabase
           .from('user_tutorials')

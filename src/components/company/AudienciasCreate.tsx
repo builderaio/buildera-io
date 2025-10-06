@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Target, ArrowRight, Sparkles, Loader2 } from "lucide-react";
+import { Target, ArrowRight, Sparkles, Loader2, Users } from "lucide-react";
 
 interface AudienciasCreateProps {
   profile: any;
@@ -22,6 +22,7 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
   const [socialStats, setSocialStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [generatedAudiences, setGeneratedAudiences] = useState<any[]>([]);
 
   useEffect(() => {
     const init = async () => {
@@ -121,17 +122,11 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
       console.log('✅ Respuesta de la IA:', data);
 
       if (data.success && data.audiences?.length > 0) {
+        setGeneratedAudiences(data.audiences);
         toast({
-          title: "Audiencias Generadas con IA",
+          title: "✨ Audiencias Generadas con IA",
           description: `Se crearon ${data.generated_count} audiencias basadas en tu análisis`,
         });
-        
-        // Navigate back to manager to see the new audiences with reload trigger
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          navigate(`/company-dashboard?view=audiencias-manager&reload=${Date.now()}`);
-        }
       } else {
         throw new Error(data.error || 'No se pudieron generar audiencias');
       }
@@ -206,6 +201,85 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Generated Audiences Display */}
+      {generatedAudiences.length > 0 && (
+        <Card className="border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">✨ Audiencias Generadas con IA</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {generatedAudiences.length} segmento{generatedAudiences.length > 1 ? 's' : ''} creado{generatedAudiences.length > 1 ? 's' : ''} exitosamente
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/company-dashboard?view=audiencias-manager')}
+                className="gap-2"
+              >
+                <ArrowRight className="w-4 h-4" />
+                Ver Todas las Audiencias
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {generatedAudiences.map((audience, idx) => (
+                <Card key={idx} className="bg-background/50">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                        <Target className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg mb-1">{audience.name}</h4>
+                        <p className="text-sm text-muted-foreground mb-3">{audience.description}</p>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {audience.goals?.slice(0, 3).map((goal: string, i: number) => (
+                            <span key={i} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                              🎯 {goal}
+                            </span>
+                          ))}
+                          {audience.estimated_size && (
+                            <span className="px-2 py-1 bg-blue-500/10 text-blue-600 text-xs rounded-full">
+                              👥 {audience.estimated_size.toLocaleString()} usuarios
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="mt-4 flex gap-3">
+              <Button
+                onClick={() => {
+                  setGeneratedAudiences([]);
+                  navigate('/company-dashboard?view=audiencias-manager');
+                }}
+                className="flex-1"
+              >
+                <ArrowRight className="w-4 h-4 mr-2" />
+                Ir al Gestor de Audiencias
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setGeneratedAudiences([])}
+              >
+                Crear Otra Audiencia
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Button 

@@ -111,4 +111,7 @@ verify_jwt = true
 [functions.accept-company-invitation]
 verify_jwt = true
 
+[functions.era-campaign-optimizer]
+verify_jwt = true
+
 

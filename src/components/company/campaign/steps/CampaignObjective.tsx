@@ -20,7 +20,8 @@ import {
   Calendar,
   Sparkles,
   CheckCircle,
-  Loader2
+  Loader2,
+  Wand2
 } from 'lucide-react';
 
 interface CampaignObjectiveProps {
@@ -81,6 +82,7 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
   const [targetMetrics, setTargetMetrics] = useState(campaignData.objective?.target_metrics || {});
   const [companyObjectives, setCompanyObjectives] = useState([]);
   const [loadingObjectives, setLoadingObjectives] = useState(true);
+  const [optimizing, setOptimizing] = useState(false);
   const { toast } = useToast();
 
   const selectedObjectiveData = objectiveTypes.find(obj => obj.id === selectedObjective);
@@ -143,6 +145,53 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
     onComplete(objectiveData);
   };
 
+  const handleOptimizeDescription = async () => {
+    if (!campaignName) {
+      toast({
+        title: "Información faltante",
+        description: "Por favor, ingresa el nombre de la campaña primero",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setOptimizing(true);
+
+    try {
+      const { data: functionData, error: functionError } = await supabase.functions.invoke('era-campaign-optimizer', {
+        body: { 
+          description: description || "Sin descripción",
+          campaignName,
+          objectiveType: selectedObjectiveData?.title || "General",
+          companyName: companyData?.name || "",
+          industry: companyData?.industry_sector || ""
+        }
+      });
+
+      if (functionError) {
+        console.error('Error optimizando descripción:', functionError);
+        throw functionError;
+      }
+
+      if (functionData?.optimizedDescription) {
+        setDescription(functionData.optimizedDescription);
+        toast({
+          title: "✨ Descripción optimizada",
+          description: "ERA ha mejorado la descripción de tu campaña",
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo optimizar la descripción. Intenta de nuevo.",
+        variant: "destructive"
+      });
+    } finally {
+      setOptimizing(false);
+    }
+  };
+
   const canProceed = selectedObjective && campaignName.trim();
 
   return (
@@ -181,7 +230,29 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
           </div>
 
           <div>
-            <Label htmlFor="description">Descripción</Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label htmlFor="description">Descripción</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleOptimizeDescription}
+                disabled={optimizing || !campaignName}
+                className="h-8 text-xs gap-1"
+              >
+                {optimizing ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Optimizando...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-3 w-3" />
+                    Optimizar con ERA
+                  </>
+                )}
+              </Button>
+            </div>
             <Textarea
               id="description"
               value={description}
@@ -189,7 +260,11 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
               placeholder="Describe brevemente el propósito de esta campaña..."
               className="mt-1"
               rows={3}
+              disabled={optimizing}
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Usa "Optimizar con ERA" para mejorar automáticamente tu descripción
+            </p>
           </div>
 
         </CardContent>

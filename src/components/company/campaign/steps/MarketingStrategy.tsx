@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,6 +32,50 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
   const { toast } = useToast();
 
   console.log('🔍 MarketingStrategy render - strategy:', strategy, 'generating:', generating, 'campaignData:', campaignData);
+
+  // Load existing strategy if available (when user returns to this step)
+  useEffect(() => {
+    if (campaignData.strategy && !strategy && !generating) {
+      console.log('📥 Loading existing strategy from campaignData:', campaignData.strategy);
+      
+      // Extract the strategy object - could be nested in different ways
+      const existingStrategy = campaignData.strategy.strategy || campaignData.strategy;
+      
+      setStrategy(existingStrategy);
+      
+      // Set edited strategy text if available
+      if (campaignData.strategy.edited_strategy) {
+        setEditedStrategy(campaignData.strategy.edited_strategy);
+      } else if (existingStrategy.core_message) {
+        // Generate summary text from existing strategy
+        const strategyText = `MENSAJE PRINCIPAL: ${existingStrategy.core_message}
+
+VARIACIONES POR PLATAFORMA:
+${Object.entries(existingStrategy.message_variants || {}).map(([platform, message]: [string, any]) => 
+  `• ${platform.toUpperCase()}: ${message}`).join('\n')}
+
+ESTRATEGIAS POR FUNNEL:
+${Object.entries(existingStrategy.strategies || {}).map(([key, value]: [string, any]) => 
+  `• ${key.toUpperCase()}: ${value.objective || value}`).join('\n')}
+
+KPIS Y OBJETIVOS:
+${(existingStrategy.kpis_goals || []).map((kpi: any) => 
+  `• ${kpi.kpi}: ${kpi.goal}`).join('\n')}
+
+RIESGOS Y ASUNCIONES:
+${(existingStrategy.risks_assumptions || []).map((risk: string, idx: number) => 
+  `${idx + 1}. ${risk}`).join('\n')}
+
+PLAN DE CONTENIDO:
+${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [string, any]) => 
+  `• ${platform}: ${config.frequency} - ${config.tone}`).join('\n')}`;
+        
+        setEditedStrategy(strategyText);
+      }
+      
+      console.log('✅ Existing strategy loaded successfully');
+    }
+  }, [campaignData.strategy]);
 
   const generateStrategy = async () => {
     console.log('🚀 Starting strategy generation');
@@ -425,6 +469,33 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Strategy Display with Regenerate Option */}
+      {strategy && !generating && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Estrategia Generada
+            </h3>
+            <Button
+              onClick={() => {
+                if (confirm('¿Estás seguro de que quieres regenerar la estrategia? Esto reemplazará la estrategia actual.')) {
+                  setStrategy(null);
+                  setEditedStrategy('');
+                  generateStrategy();
+                }
+              }}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              Regenerar Estrategia
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Loading State */}

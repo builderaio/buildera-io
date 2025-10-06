@@ -337,7 +337,9 @@ serve(async (req) => {
 
           const { error: analysisError } = await supabase
             .from('social_analysis')
-            .insert(analysisData)
+            .upsert(analysisData, {
+              onConflict: 'user_id,social_type'
+            })
 
           if (analysisError) {
             console.error('Error storing social analysis data:', JSON.stringify(analysisError, null, 2))

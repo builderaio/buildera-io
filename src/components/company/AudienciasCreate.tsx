@@ -126,11 +126,11 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
           description: `Se crearon ${data.generated_count} audiencias basadas en tu análisis`,
         });
         
-        // Navigate back to manager to see the new audiences
+        // Navigate back to manager to see the new audiences with reload trigger
         if (onSuccess) {
           onSuccess();
         } else {
-          navigate('/company-dashboard?view=audiencias-manager');
+          navigate(`/company-dashboard?view=audiencias-manager&reload=${Date.now()}`);
         }
       } else {
         throw new Error(data.error || 'No se pudieron generar audiencias');

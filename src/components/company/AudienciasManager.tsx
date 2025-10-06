@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,10 +43,19 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   const { t } = useTranslation('marketing');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [userId, setUserId] = useState<string | null>(profile?.user_id || null);
   const [audiences, setAudiences] = useState<AudienceSegment[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedAudience, setSelectedAudience] = useState<AudienceSegment | null>(null);
+
+  // Effect to reload when navigating back with reload param
+  useEffect(() => {
+    const reloadParam = searchParams.get('reload');
+    if (reloadParam && userId) {
+      loadAudiences(userId);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const init = async () => {

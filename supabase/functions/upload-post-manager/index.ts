@@ -452,10 +452,11 @@ async function getFacebookPages(supabaseClient: any, userId: string, apiKey: str
   try {
     console.log(`📘 Getting Facebook pages for profile: ${companyUsername}`);
     
-    const response = await fetch(`https://api.upload-post.com/api/get-facebook-pages?profile=${companyUsername}`, {
+    // Según documentación oficial: https://docs.upload-post.com/api/get-facebook-pages
+    const response = await fetch(`https://api.upload-post.com/api/uploadposts/facebook/pages?profile=${companyUsername}`, {
       method: 'GET',
       headers: {
-        'Authorization': `ApiKey ${apiKey}`,
+        'Authorization': `Api-Key ${apiKey}`,
         'Content-Type': 'application/json',
       }
     });

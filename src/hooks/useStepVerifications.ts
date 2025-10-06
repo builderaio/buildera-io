@@ -107,7 +107,7 @@ export const useStepVerifications = (userId: string) => {
       const { data, error } = await supabase
         .from('social_content_analysis')
         .select('id')
-        .eq('cid', userId)
+        .eq('user_id', userId)
         .limit(1);
       
       if (error) throw error;

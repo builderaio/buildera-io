@@ -414,7 +414,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const renderPerformanceOverview = () => {
     const filteredData = getFilteredData();
     
-    const overviewMetrics = filteredData.retrospective.map(item => ({
+    // Si no hay datos de retrospective, calcular desde posts directamente
+    let overviewMetrics = filteredData.retrospective.map(item => ({
       platform: item.platform,
       followers: item.current_followers || 0,
       growth: item.followers_growth || 0,
@@ -422,6 +423,34 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       posts: item.total_posts || 0,
       quality: item.quality_score || 0
     }));
+
+    // Si no hay datos retrospectivos, usar posts como fuente
+    if (overviewMetrics.length === 0 && posts.length > 0) {
+      const platformGroups = posts.reduce((acc: any, post) => {
+        const platform = post.platform || 'unknown';
+        if (!acc[platform]) {
+          acc[platform] = [];
+        }
+        acc[platform].push(post);
+        return acc;
+      }, {});
+
+      overviewMetrics = Object.entries(platformGroups).map(([platform, platformPosts]: [string, any]) => {
+        const totalLikes = platformPosts.reduce((sum: number, p: any) => sum + (p.likes || 0), 0);
+        const totalComments = platformPosts.reduce((sum: number, p: any) => sum + (p.comments || 0), 0);
+        const totalEngagement = totalLikes + totalComments;
+        const avgEngagement = platformPosts.length > 0 ? totalEngagement / platformPosts.length / 100 : 0; // Estimado
+
+        return {
+          platform,
+          followers: 0, // No disponible desde posts
+          growth: 0, // No disponible desde posts
+          engagement: avgEngagement,
+          posts: platformPosts.length,
+          quality: avgEngagement // Usar engagement como proxy de calidad
+        };
+      });
+    }
 
     const totalMetrics = overviewMetrics.reduce((acc, curr) => ({
       followers: acc.followers + curr.followers,

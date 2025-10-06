@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,23 +74,25 @@ interface WorkflowState {
 }
 
 const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   
-  // Set initial tab from URL ?tab=
+  // Set tab from URL ?tab= and react to changes
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab');
-    const view = params.get('view');
+    const tab = searchParams.get('tab');
+    const view = searchParams.get('view');
     
     // If coming from audiencias route, open analyze tab  
     if (view === 'marketing-hub' && tab === 'analyze') {
       setActiveTab('analyze');
     } else if (tab) {
       const allowed = new Set(['dashboard', 'create', 'analyze', 'content', 'history', 'campaigns', 'calendar', 'configuracion']);
-      if (tab && allowed.has(tab)) setActiveTab(tab);
+      if (allowed.has(tab)) {
+        setActiveTab(tab);
+      }
     }
-  }, []);
+  }, [searchParams]);
 
   const [loading, setLoading] = useState(false);
   const [realMetrics, setRealMetrics] = useState<QuickStat[]>([]);

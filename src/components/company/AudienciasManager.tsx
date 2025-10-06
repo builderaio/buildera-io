@@ -164,9 +164,15 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
       const urlParams = new URLSearchParams(window.location.search);
       const viewParam = urlParams.get('audience_view');
       
+      console.log('🔍 AudienciasManager URL Change - audience_view:', viewParam);
+      console.log('🔍 Full URL:', window.location.href);
+      console.log('🔍 Current currentView state:', currentView);
+      
       if (viewParam === 'create') {
+        console.log('✅ Setting currentView to create-audience');
         setCurrentView('create-audience');
       } else if (viewParam === 'suggestions') {
+        console.log('✅ Setting currentView to audience-suggestions');
         setCurrentView('audience-suggestions');
       }
     };
@@ -192,20 +198,10 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
           if (uid) setUserId(uid);
         }
         
-        console.log('🔍 AudienciasManager - userId actual:', uid);
-        console.log('🔍 AudienciasManager - profile:', profile);
+        console.log('🔍 AudienciasManager INIT - userId actual:', uid);
+        console.log('🔍 AudienciasManager INIT - profile:', profile);
         
-        // Check URL params to determine initial view
-        const urlParams = new URLSearchParams(window.location.search);
-        const viewParam = urlParams.get('audience_view');
-        
-        if (viewParam === 'create') {
-          console.log('🎯 Setting currentView to create-audience from URL param');
-          setCurrentView('create-audience');
-        } else if (viewParam === 'suggestions') {
-          console.log('🎯 Setting currentView to audience-suggestions from URL param');
-          setCurrentView('audience-suggestions');
-        }
+        // REMOVED: Check URL params - esto se hace en el useEffect anterior para evitar duplicación
         
         if (uid) {
           await Promise.all([
@@ -1829,22 +1825,29 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     );
   };
 
+  console.log('🎨 AudienciasManager Render - currentView:', currentView);
+
   if (currentView === 'connections') {
+    console.log('📱 Rendering connections view');
     return renderConnectionsView();
   }
 
   if (currentView === 'create-audience') {
+    console.log('➕ Rendering create-audience view');
     return renderCreateAudienceView();
   }
 
   if (currentView === 'edit-audience') {
+    console.log('✏️ Rendering edit-audience view');
     return renderEditAudienceView();
   }
 
   if (currentView === 'audience-suggestions') {
+    console.log('💡 Rendering audience-suggestions view');
     return renderAudienceSuggestionsView();
   }
 
+  console.log('🏠 Rendering main audience view');
   return (
     <div className="space-y-6">
       {renderMainAudienceView()}

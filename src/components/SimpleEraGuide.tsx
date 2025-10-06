@@ -836,6 +836,18 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         if (nextStepData?.tab && nextStepData.target_section === currentSection) {
           onNavigate(nextStepData.target_section, { tab: nextStepData.tab });
         }
+        
+        // 🎯 Auto-minimizar después de verificar exitosamente para que el usuario pueda trabajar
+        toast({
+          title: "✓ Paso completado",
+          description: `Paso ${stepId} de ${steps.length} completado. El guide se minimizará para que puedas trabajar.`,
+        });
+        
+        // Minimizar después de 1.5 segundos para dar tiempo a ver la celebración
+        setTimeout(() => {
+          console.log('🔽 Auto-minimizando guide después de verificación exitosa');
+          handleMinimize();
+        }, 1500);
       }
 
       if (allCompleted) {
@@ -857,11 +869,6 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           detail: { userId, timestamp: new Date().toISOString() }
         }));
         window.dispatchEvent(new CustomEvent('simple-era-guide-completed'));
-      } else {
-        toast({
-          title: "✓ Paso completado",
-          description: `Paso ${stepId} de ${steps.length} completado.`,
-        });
       }
     } catch (error) {
       console.error('Error completing step:', error);

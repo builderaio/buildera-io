@@ -103,7 +103,11 @@ export const DraftCampaignsList = ({
         });
 
         return (
-          <Card key={draft.id} className="hover:shadow-md transition-shadow">
+          <Card 
+            key={draft.id} 
+            className="hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer"
+            onClick={() => onResume(draft)}
+          >
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -136,7 +140,7 @@ export const DraftCampaignsList = ({
                         </div>
                       </div>
 
-                      <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
                         <div
                           className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full transition-all"
                           style={{ width: `${stepInfo.progress}%` }}
@@ -153,7 +157,10 @@ export const DraftCampaignsList = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onResume(draft)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onResume(draft);
+                    }}
                     className="flex items-center gap-1"
                   >
                     <Play className="h-3 w-3" />
@@ -163,7 +170,10 @@ export const DraftCampaignsList = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onDelete(draft.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(draft.id);
+                    }}
                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-3 w-3" />

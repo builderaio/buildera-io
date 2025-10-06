@@ -58,7 +58,6 @@ interface GuideStep {
   verificationText: string;
   color: string;
   requiresManualCompletion?: boolean;
-  audience_view?: string; // Deep link parameter for AudienciasManager
 }
 
 interface SimpleEraGuideProps {
@@ -172,14 +171,13 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
       what: "Define buyer personas específicos por red social.",
       why: "Cada plataforma tiene diferentes audiencias. Personalizar tu mensaje por segmento aumenta la efectividad de tus campañas.",
       how: "Crea segmentos específicos usando los datos analizados. Define demografía, intereses y comportamientos que la IA ya identificó en tu audiencia.",
-      target_section: "audiencias-manager",
+      target_section: "audiencias-create",
       completed: false,
       icon: Users,
       actionText: "Crear Segmento",
       verificationText: "Verificar segmentos",
       color: "from-pink-500 to-pink-600",
-      requiresManualCompletion: false,
-      audience_view: "create" // Deep link parameter
+      requiresManualCompletion: false
     },
     {
       id: 7,
@@ -1061,11 +1059,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                   <Button
                     type="button"
                     onClick={() => {
-                      const params: Record<string, string> = {};
-                      if (currentStepData.tab) params.tab = currentStepData.tab;
-                      if ((currentStepData as any).audience_view) params.audience_view = (currentStepData as any).audience_view;
-                      
-                      onNavigate(currentStepData.target_section!, Object.keys(params).length > 0 ? params : undefined);
+                      onNavigate(currentStepData.target_section!, currentStepData.tab ? { tab: currentStepData.tab } : undefined);
                       // Auto-minimizar al navegar
                       setTimeout(() => handleMinimize(), 300);
                     }}

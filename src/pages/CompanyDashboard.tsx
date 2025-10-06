@@ -19,6 +19,8 @@ import Marketplace from "@/components/company/Marketplace";
 import Expertos from "@/components/company/Expertos";
 import Configuracion from "@/components/company/Configuracion";
 import AudienciasManager from "@/components/company/AudienciasManager";
+import AudienciasAnalysis from "@/components/company/AudienciasAnalysis";
+import AudienciasCreate from "@/components/company/AudienciasCreate";
 import { ContentAnalysisDashboard } from "@/components/company/ContentAnalysisDashboard";
 import AIWorkforce from "@/pages/AIWorkforce";
 
@@ -394,6 +396,10 @@ const CompanyDashboard = () => {
         return <InteligenciaCompetitiva />;
       case "audiencias-manager":
         return <AudienciasManager profile={profile} />;
+      case "audiencias-analysis":
+        return <AudienciasAnalysis profile={profile} />;
+      case "audiencias-create":
+        return <AudienciasCreate profile={profile} />;
       case "content-analysis-dashboard":
         return <ContentAnalysisDashboard profile={profile} />;
       case "academia-buildera":

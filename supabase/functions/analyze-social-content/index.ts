@@ -488,6 +488,195 @@ Deno.serve(async (req) => {
         const platformCode = analysis.social_type || analysis.platform || 'instagram';
         const platformStr = platformMapping[platformCode] || platformCode.toLowerCase();
 
+        // Save individual posts to platform-specific tables
+        if (contentData.data.posts && contentData.data.posts.length > 0) {
+          console.log(`📝 Guardando ${contentData.data.posts.length} posts en tabla ${platformStr}_posts...`);
+          
+          for (const post of contentData.data.posts) {
+            try {
+              // Map common fields
+              const basePostData = {
+                user_id: user.id,
+                cid: cid,
+                data_id: post.dataId || post.id,
+                from_owner: post.fromOwner || false,
+                hashtags: post.hashTags || [],
+                mentions: post.mentions || [],
+                index_grade: post.indexGrade || null,
+                main_grade: post.mainGrade || null,
+                is_ad: post.isAd || false,
+                is_deleted: post.isDeleted || false,
+                interactions_count: post.interactions || 0,
+                time_update: post.timeUpdate ? new Date(post.timeUpdate) : null,
+                post_url: post.postUrl || null,
+                social_post_id: post.socialPostID || post.postID,
+                text_length: post.textLength || 0,
+                posted_at: post.date ? new Date(post.date) : null,
+                engagement_rate: post.er || 0,
+                raw_data: post
+              };
+
+              // Platform-specific mapping
+              let platformPostData: any = null;
+
+              if (platformStr === 'facebook') {
+                platformPostData = {
+                  ...basePostData,
+                  post_id: post.postID || post.id,
+                  post_type: post.type || 'post',
+                  content: post.text || '',
+                  likes_count: post.likes || 0,
+                  comments_count: post.comments || 0,
+                  shares_count: post.rePosts || 0,
+                  reactions_count: post.reactions || 0,
+                  image_url: post.image || null,
+                  video_url: post.videoLink || null,
+                  video_views_count: post.videoViews || 0,
+                  post_image_url: post.postImage || null
+                };
+
+                // Upsert into facebook_posts
+                const { data: existingPost } = await supabaseClient
+                  .from('facebook_posts')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .eq('post_id', platformPostData.post_id)
+                  .maybeSingle();
+
+                if (existingPost) {
+                  await supabaseClient
+                    .from('facebook_posts')
+                    .update({ ...platformPostData, updated_at: new Date().toISOString() })
+                    .eq('id', existingPost.id);
+                } else {
+                  await supabaseClient
+                    .from('facebook_posts')
+                    .insert(platformPostData);
+                }
+
+              } else if (platformStr === 'instagram') {
+                platformPostData = {
+                  ...basePostData,
+                  platform: 'instagram',
+                  post_id: post.postID || post.id,
+                  shortcode: post.shortcode || null,
+                  caption: post.text || '',
+                  like_count: post.likes || 0,
+                  comment_count: post.comments || 0,
+                  media_type: post.type === 'video' ? 2 : 1,
+                  is_video: post.type === 'video',
+                  video_view_count: post.videoViews || post.views || 0,
+                  display_url: post.image || post.postImage || null,
+                  thumbnail_url: post.postImage || null,
+                  video_url: post.videoLink || null,
+                  owner_username: post.name || null,
+                  reel_plays: post.reelPlays || 0,
+                  video_plays: post.videoViews || 0,
+                  post_image_url: post.postImage || null
+                };
+
+                const { data: existingPost } = await supabaseClient
+                  .from('instagram_posts')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .eq('post_id', platformPostData.post_id)
+                  .maybeSingle();
+
+                if (existingPost) {
+                  await supabaseClient
+                    .from('instagram_posts')
+                    .update({ ...platformPostData, updated_at: new Date().toISOString() })
+                    .eq('id', existingPost.id);
+                } else {
+                  await supabaseClient
+                    .from('instagram_posts')
+                    .insert(platformPostData);
+                }
+
+              } else if (platformStr === 'tiktok') {
+                platformPostData = {
+                  ...basePostData,
+                  tiktok_user_id: post.authorId || null,
+                  video_id: post.postID || post.videoId || post.id,
+                  aweme_id: post.awemeId || post.postID,
+                  title: post.text || '',
+                  content: post.text || '',
+                  cover_url: post.image || post.postImage || null,
+                  image_url: post.image || null,
+                  post_image_url: post.postImage || null,
+                  duration: post.duration || 0,
+                  play_count: post.videoViews || post.views || 0,
+                  digg_count: post.diggCount || post.likes || 0,
+                  comment_count: post.comments || 0,
+                  share_count: post.rePosts || post.shares || 0,
+                  download_count: post.downloadCount || 0,
+                  collect_count: post.collectCount || 0,
+                  forward_count: post.forwardCount || 0,
+                  whatsapp_share_count: post.whatsappShareCount || 0
+                };
+
+                const { data: existingPost } = await supabaseClient
+                  .from('tiktok_posts')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .eq('video_id', platformPostData.video_id)
+                  .maybeSingle();
+
+                if (existingPost) {
+                  await supabaseClient
+                    .from('tiktok_posts')
+                    .update({ ...platformPostData, updated_at: new Date().toISOString() })
+                    .eq('id', existingPost.id);
+                } else {
+                  await supabaseClient
+                    .from('tiktok_posts')
+                    .insert(platformPostData);
+                }
+
+              } else if (platformStr === 'linkedin') {
+                platformPostData = {
+                  ...basePostData,
+                  post_id: post.postID || post.id,
+                  post_type: post.type || 'post',
+                  content: post.text || '',
+                  likes_count: post.likes || 0,
+                  comments_count: post.comments || 0,
+                  shares_count: post.rePosts || 0,
+                  views_count: post.views || 0,
+                  impressions_count: post.impressions || 0,
+                  click_count: post.clicks || 0,
+                  image_url: post.image || null,
+                  video_url: post.videoLink || null,
+                  post_image_url: post.postImage || null
+                };
+
+                const { data: existingPost } = await supabaseClient
+                  .from('linkedin_posts')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .eq('post_id', platformPostData.post_id)
+                  .maybeSingle();
+
+                if (existingPost) {
+                  await supabaseClient
+                    .from('linkedin_posts')
+                    .update({ ...platformPostData, updated_at: new Date().toISOString() })
+                    .eq('id', existingPost.id);
+                } else {
+                  await supabaseClient
+                    .from('linkedin_posts')
+                    .insert(platformPostData);
+                }
+              }
+
+              console.log(`✅ Post guardado en ${platformStr}_posts: ${post.postID || post.id}`);
+            } catch (postError) {
+              console.error(`❌ Error guardando post en ${platformStr}_posts:`, postError);
+              // Continue with other posts even if one fails
+            }
+          }
+        }
+
         // Store content analysis results
         const contentAnalysisData = {
           user_id: user.id,

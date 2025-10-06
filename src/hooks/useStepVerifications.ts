@@ -66,14 +66,16 @@ export const useStepVerifications = (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('social_accounts')
-        .select('platform_url, is_connected')
+        .select('platform, platform_username, is_connected')
         .eq('user_id', userId)
         .eq('is_connected', true);
       
       if (error) throw error;
       
-      // Al menos 1 cuenta conectada debe tener URL configurada
-      const withUrls = (data || []).filter((acc: any) => acc.platform_url && acc.platform_url.trim() !== '');
+      // Al menos 1 cuenta conectada debe tener username configurado (excluyendo upload_post_profile)
+      const withUrls = (data || []).filter(
+        (acc: any) => acc.platform !== 'upload_post_profile' && acc.platform_username && acc.platform_username.trim() !== ''
+      );
       return withUrls.length > 0;
     } catch (error) {
       console.error('Error verifying social URLs:', error);

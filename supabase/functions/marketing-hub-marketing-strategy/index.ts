@@ -112,10 +112,10 @@ serve(async (req) => {
 
     console.log('Company found:', companyMember.company_id);
 
-    // Get company data including social networks, industry, country
+    // Get comprehensive company data including all fields
     const { data: companyData, error: companyDataError } = await supabase
       .from('companies')
-      .select('name, industry_sector, country, facebook_url, twitter_url, linkedin_url, instagram_url, youtube_url, tiktok_url')
+      .select('name, description, website_url, industry_sector, country, location, facebook_url, twitter_url, linkedin_url, instagram_url, youtube_url, tiktok_url')
       .eq('id', companyMember.company_id)
       .single();
 
@@ -125,10 +125,10 @@ serve(async (req) => {
       console.log('Company data retrieved:', JSON.stringify(companyData, null, 2));
     }
 
-    // Get company audiences data for geographic_locations and job_titles
+    // Get comprehensive company audiences data
     const { data: companyAudiences, error: audiencesError } = await supabase
       .from('company_audiences')
-      .select('geographic_locations, job_titles, interests, age_ranges, pain_points, motivations, goals, challenges')
+      .select('name, description, gender_split, age_ranges, geographic_locations, job_titles, interests, pain_points, motivations, goals, challenges, preferred_channels')
       .eq('company_id', companyMember.company_id)
       .eq('is_active', true);
 
@@ -138,10 +138,10 @@ serve(async (req) => {
       console.log('Company audiences retrieved:', JSON.stringify(companyAudiences, null, 2));
     }
 
-    // Get company strategy to obtain propuesta_valor
+    // Get company strategy to obtain propuesta_valor and other strategic info
     const { data: companyStrategy, error: strategyError } = await supabase
       .from('company_strategy')
-      .select('propuesta_valor, mision, vision')
+      .select('propuesta_valor, mision, vision, valores, pilares_estrategicos')
       .eq('company_id', companyMember.company_id)
       .single();
 
@@ -154,13 +154,46 @@ serve(async (req) => {
       console.log('No company strategy found or no propuesta_valor, using default');
     }
 
-    // Get content analysis findings
+    // Get company branding to obtain brand_voice
+    const { data: companyBranding, error: brandingError } = await supabase
+      .from('company_branding')
+      .select('brand_voice, tono_comunicacion, personalidad_marca, valores_marca')
+      .eq('company_id', companyMember.company_id)
+      .single();
+
+    if (brandingError) {
+      console.error('Error getting company branding:', brandingError);
+    } else {
+      console.log('Company branding retrieved:', JSON.stringify(companyBranding, null, 2));
+    }
+
+    // Get company objectives (growth objectives)
+    const { data: companyObjectives, error: objectivesError } = await supabase
+      .from('company_objectives')
+      .select('*')
+      .eq('company_id', companyMember.company_id)
+      .eq('is_active', true);
+
+    if (objectivesError) {
+      console.error('Error getting company objectives:', objectivesError);
+    } else {
+      console.log('Company objectives retrieved:', JSON.stringify(companyObjectives, null, 2));
+    }
+
+    // Get content_insights and audience_insights
     const { data: contentInsights } = await supabase
+      .from('content_insights')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    const { data: audienceInsights } = await supabase
       .from('audience_insights')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(5);
+      .limit(10);
 
     const { data: marketingInsights } = await supabase
       .from('marketing_insights')
@@ -203,15 +236,15 @@ serve(async (req) => {
 
     console.log('Active social networks:', redesSocialesHabilitadas);
 
-    // Set defaults for optional fields with real propuesta_valor and enhanced data
+    // Build comprehensive processedInput with all required data
     const processedInput = {
-      nombre_empresa: input.nombre_empresa,
-      pais: companyData?.country || 'No especificado',
-      ubicacion: companyData?.country || 'No especificado',
+      // 1. COMPANY DATA (companies table)
+      nombre_empresa: companyData?.name || input.nombre_empresa,
+      descripcion_empresa: companyData?.description || 'No especificado',
+      sitio_web: companyData?.website_url || 'No especificado',
       industria: companyData?.industry_sector || 'No especificado',
-      objetivo_de_negocio: input.objetivo_de_negocio,
-      propuesta_de_valor: propuestaValor,
-      redes_sociales_habilitadas: redesSocialesHabilitadas,
+      pais: companyData?.country || 'No especificado',
+      ubicacion: companyData?.location || companyData?.country || 'No especificado',
       redes_sociales_urls: {
         facebook: companyData?.facebook_url || 'No tiene',
         twitter: companyData?.twitter_url || 'No tiene',
@@ -220,6 +253,68 @@ serve(async (req) => {
         youtube: companyData?.youtube_url || 'No tiene',
         tiktok: companyData?.tiktok_url || 'No tiene'
       },
+      redes_sociales_habilitadas: redesSocialesHabilitadas,
+
+      // 2. COMPANY AUDIENCES DATA
+      audiencias_empresa: (companyAudiences || []).map((audience: any) => ({
+        nombre: audience.name || 'Audiencia sin nombre',
+        descripcion: audience.description || '',
+        gender_split: audience.gender_split || {},
+        age_ranges: audience.age_ranges || {},
+        geographic_locations: audience.geographic_locations || {},
+        job_titles: audience.job_titles || {},
+        interests: audience.interests || {},
+        pain_points: audience.pain_points || [],
+        motivations: audience.motivations || [],
+        goals: audience.goals || [],
+        challenges: audience.challenges || [],
+        preferred_channels: audience.preferred_channels || []
+      })),
+
+      // 3. COMPANY BRANDING (brand_voice)
+      branding: {
+        brand_voice: companyBranding?.brand_voice || 'No especificado',
+        tono_comunicacion: companyBranding?.tono_comunicacion || 'Profesional',
+        personalidad_marca: companyBranding?.personalidad_marca || [],
+        valores_marca: companyBranding?.valores_marca || []
+      },
+
+      // 4. GROWTH OBJECTIVES (company_objectives)
+      objetivos_crecimiento: (companyObjectives || []).map((obj: any) => ({
+        nombre: obj.name || obj.objective_name,
+        descripcion: obj.description,
+        tipo: obj.objective_type,
+        meta_numerica: obj.target_value,
+        plazo: obj.timeframe,
+        prioridad: obj.priority
+      })),
+
+      // 5. COMPANY STRATEGY (propuesta_valor)
+      estrategia_empresa: {
+        propuesta_de_valor: propuestaValor,
+        mision: companyStrategy?.mision || 'No especificado',
+        vision: companyStrategy?.vision || 'No especificado',
+        valores: companyStrategy?.valores || [],
+        pilares_estrategicos: companyStrategy?.pilares_estrategicos || []
+      },
+      objetivo_de_negocio: input.objetivo_de_negocio,
+
+      // 6. CONTENT INSIGHTS & AUDIENCE INSIGHTS
+      hallazgos_analisis: {
+        content_insights: contentInsights || [],
+        audience_insights: audienceInsights || [],
+        marketing_insights: marketingInsights || [],
+        content_recommendations: contentRecommendations || []
+      },
+
+      // 7. CAMPAIGN INFORMATION
+      informacion_campana: {
+        nombre_campana: input.nombre_campana || 'Nueva Campaña',
+        objetivo_campana: input.objetivo_campana || 'No especificado',
+        tipo_objetivo: input.tipo_objetivo_campana || 'awareness'
+      },
+
+      // AUDIENCE TARGET (from wizard)
       audiencia_objetivo: {
         ...input.audiencia_objetivo,
         buyer_personas: input.audiencia_objetivo?.buyer_personas?.map((persona: any) => ({
@@ -228,22 +323,7 @@ serve(async (req) => {
             ...persona.demograficos,
             ubicacion: companyData?.country || 'No especificado'
           }
-        })) || [],
-        // Include company audiences data
-        geographic_locations: companyAudiences?.[0]?.geographic_locations || {},
-        job_titles: companyAudiences?.[0]?.job_titles || {},
-        interests: companyAudiences?.[0]?.interests || {},
-        age_ranges: companyAudiences?.[0]?.age_ranges || {},
-        pain_points: companyAudiences?.[0]?.pain_points || [],
-        motivations: companyAudiences?.[0]?.motivations || [],
-        goals: companyAudiences?.[0]?.goals || [],
-        challenges: companyAudiences?.[0]?.challenges || []
-      },
-      objetivo_campana: input.objetivo_campana || 'No especificado',
-      hallazgos_analisis: {
-        insights_audiencia: contentInsights || [],
-        insights_marketing: marketingInsights || [],
-        recomendaciones_contenido: contentRecommendations || []
+        })) || []
       }
     };
 

@@ -100,7 +100,9 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
     try {
       const strategyInput = {
         ...campaignData.company,
+        nombre_campana: campaignData.name || 'Nueva Campaña',
         objetivo_campana: campaignData.objective?.goal || '',
+        tipo_objetivo_campana: campaignData.objective?.type || 'awareness', // consideration, conversion, etc.
         audiencia_objetivo: {
           buyer_personas: campaignData.audience?.buyer_personas || []
         }

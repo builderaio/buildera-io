@@ -285,39 +285,34 @@ async function analyzeFollowersLocation(userId: string, platform: string, supaba
   };
 }
 
-async function generateAudienceInsights(userId: string, platform: string, supabase: any) {
-  console.log(`👥 Generating audience insights for ${platform}`);
+async function generateAudienceInsights(userId: string, companyId: string, socialStats: any, supabase: any) {
+  console.log(`👥 Generating AI-powered audience insights...`);
 
-  const insights = [
-    {
-      user_id: userId,
-      platform: platform,
-      insight_type: 'demographic',
-      audience_segment: 'primary',
-      age_ranges: { '18-24': 25, '25-34': 40, '35-44': 20, '45+': 15 },
-      gender_split: { 'male': 45, 'female': 53, 'other': 2 },
-      interests: { 'technology': 30, 'lifestyle': 25, 'business': 20 }
-    },
-    {
-      user_id: userId,
-      platform: platform,
-      insight_type: 'behavioral',
-      audience_segment: 'primary',
-      online_activity_patterns: { peak_hours: [18, 19, 20, 21] },
-      content_preferences: { video: 60, image: 30, carousel: 10 }
+  try {
+    // Invocar la nueva función de análisis inteligente de audiencia
+    const { data: insightsData, error: insightsError } = await supabase.functions.invoke(
+      'audience-intelligence-analysis',
+      {
+        body: {
+          userId,
+          companyId,
+          socialStats: socialStats,
+        }
+      }
+    );
+
+    if (insightsError) {
+      console.error('❌ Error generating audience insights:', insightsError);
+      throw insightsError;
     }
-  ];
 
-  const { error: insightsError } = await supabase
-    .from('audience_insights')
-    .upsert(insights);
-  
-  if (insightsError) {
-    console.error('❌ Error saving audience insights:', insightsError);
-    throw new Error(`Error saving audience insights: ${insightsError.message}`);
+    console.log('✅ AI audience insights generated successfully');
+    return insightsData;
+  } catch (error) {
+    console.error('Error in generateAudienceInsights:', error);
+    throw error;
   }
-  
-  console.log(`✅ Successfully saved ${insights.length} audience insights`);
+}
 
   return {
     insights_generated: insights.length,

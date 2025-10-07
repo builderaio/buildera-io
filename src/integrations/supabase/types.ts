@@ -1555,9 +1555,12 @@ export type Database = {
       audience_insights: {
         Row: {
           age_ranges: Json | null
+          ai_generated_insights: Json | null
+          ai_recommendations: Json | null
           analysis_period_end: string | null
           analysis_period_start: string | null
           audience_segment: string | null
+          audience_segments: Json | null
           brand_affinities: string[] | null
           confidence_level: number | null
           content_consumption_habits: Json | null
@@ -1572,6 +1575,7 @@ export type Database = {
           income_ranges: Json | null
           insight_type: string
           interests: Json | null
+          last_ai_analysis_at: string | null
           lifetime_value_estimate: number | null
           online_activity_patterns: Json | null
           platform: string
@@ -1587,9 +1591,12 @@ export type Database = {
         }
         Insert: {
           age_ranges?: Json | null
+          ai_generated_insights?: Json | null
+          ai_recommendations?: Json | null
           analysis_period_end?: string | null
           analysis_period_start?: string | null
           audience_segment?: string | null
+          audience_segments?: Json | null
           brand_affinities?: string[] | null
           confidence_level?: number | null
           content_consumption_habits?: Json | null
@@ -1604,6 +1611,7 @@ export type Database = {
           income_ranges?: Json | null
           insight_type: string
           interests?: Json | null
+          last_ai_analysis_at?: string | null
           lifetime_value_estimate?: number | null
           online_activity_patterns?: Json | null
           platform: string
@@ -1619,9 +1627,12 @@ export type Database = {
         }
         Update: {
           age_ranges?: Json | null
+          ai_generated_insights?: Json | null
+          ai_recommendations?: Json | null
           analysis_period_end?: string | null
           analysis_period_start?: string | null
           audience_segment?: string | null
+          audience_segments?: Json | null
           brand_affinities?: string[] | null
           confidence_level?: number | null
           content_consumption_habits?: Json | null
@@ -1636,6 +1647,7 @@ export type Database = {
           income_ranges?: Json | null
           insight_type?: string
           interests?: Json | null
+          last_ai_analysis_at?: string | null
           lifetime_value_estimate?: number | null
           online_activity_patterns?: Json | null
           platform?: string

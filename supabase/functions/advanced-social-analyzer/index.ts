@@ -314,12 +314,6 @@ async function generateAudienceInsights(userId: string, companyId: string, socia
   }
 }
 
-  return {
-    insights_generated: insights.length,
-    message: 'Insights de audiencia generados exitosamente'
-  };
-}
-
 async function generateMarketingInsights(userId: string, platform: string, posts: any[], supabase: any) {
   console.log(`🤖 Generating advanced marketing insights with AI for ${posts.length} posts on ${platform}`);
   

@@ -506,10 +506,14 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
       
       console.log('✅ Strategy state updated successfully, strategy keys:', Object.keys(normalized));
       
-      toast({
-        title: "¡Estrategia generada!",
-        description: "Tu estrategia de marketing personalizada está lista",
-      });
+      // Esperar un momento antes de ocultar el loader para asegurar que el estado se actualice
+      setTimeout(() => {
+        setGenerating(false);
+        toast({
+          title: "¡Estrategia generada!",
+          description: "Tu estrategia de marketing personalizada está lista",
+        });
+      }, 500);
     } catch (error: any) {
       console.error('💥 Error generating strategy:', error);
       setStrategy(null); // Reset strategy on error
@@ -544,8 +548,6 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
           </Button>
         ) : undefined
       });
-    } finally {
-      console.log('🏁 Strategy generation finished, setting generating=false');
       setGenerating(false);
     }
   };
@@ -1219,7 +1221,6 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
       {/* Advanced Loading State with Strategy Generation Loader */}
       <StrategyGenerationLoader
         isVisible={generating}
-        estimatedTime={150}
       />
 
       {/* Generated Strategy */}

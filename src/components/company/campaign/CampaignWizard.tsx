@@ -381,7 +381,10 @@ export const CampaignWizard = ({
 
   const renderCurrentStep = () => {
     const stepProps = {
-      campaignData,
+      campaignData: {
+        ...campaignData,
+        draftId: state.draftId // Pass draftId to child components
+      },
       onComplete: handleStepComplete,
       onDataChange: (stepData: any) => {
         // Update campaign data in real-time as user makes changes

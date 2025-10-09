@@ -236,105 +236,96 @@ serve(async (req) => {
 
     console.log('Active social networks:', redesSocialesHabilitadas);
 
-    // Build comprehensive processedInput with all required data
+    // Build streamlined processedInput with only relevant data
     const processedInput = {
-      // 1. COMPANY DATA (companies table)
-      nombre_empresa: companyData?.name || input.nombre_empresa,
-      descripcion_empresa: companyData?.description || 'No especificado',
-      sitio_web: companyData?.website_url || 'No especificado',
-      industria: companyData?.industry_sector || 'No especificado',
-      pais: companyData?.country || 'No especificado',
-      ubicacion: companyData?.location || companyData?.country || 'No especificado',
-      redes_sociales_urls: {
-        facebook: companyData?.facebook_url || 'No tiene',
-        twitter: companyData?.twitter_url || 'No tiene',
-        linkedin: companyData?.linkedin_url || 'No tiene',
-        instagram: companyData?.instagram_url || 'No tiene',
-        youtube: companyData?.youtube_url || 'No tiene',
-        tiktok: companyData?.tiktok_url || 'No tiene'
+      // EMPRESA (simplificado - solo info activa)
+      empresa: {
+        nombre: companyData?.name || input.nombre_empresa,
+        descripcion: companyData?.description || 'No especificado',
+        industria: companyData?.industry_sector || 'No especificado',
+        pais: companyData?.country || 'No especificado',
+        sitio_web: companyData?.website_url || 'No especificado',
+        redes_sociales_activas: redesSocialesHabilitadas
       },
-      redes_sociales_habilitadas: redesSocialesHabilitadas,
-
-      // 2. COMPANY AUDIENCES DATA
-      audiencias_empresa: (companyAudiences || []).map((audience: any) => ({
-        nombre: audience.name || 'Audiencia sin nombre',
-        descripcion: audience.description || '',
-        gender_split: audience.gender_split || {},
-        age_ranges: audience.age_ranges || {},
-        geographic_locations: audience.geographic_locations || {},
-        job_titles: audience.job_titles || {},
-        interests: audience.interests || {},
-        pain_points: audience.pain_points || [],
-        motivations: audience.motivations || [],
-        goals: audience.goals || [],
-        challenges: audience.challenges || [],
-        preferred_channels: audience.preferred_channels || []
-      })),
-
-      // 3. COMPANY BRANDING (brand_voice)
+      
+      // BRANDING
       branding: {
         brand_voice: companyBranding?.brand_voice || 'No especificado',
-        tono_comunicacion: companyBranding?.tono_comunicacion || 'Profesional',
-        personalidad_marca: companyBranding?.personalidad_marca || [],
-        valores_marca: companyBranding?.valores_marca || []
+        tono: companyBranding?.tono_comunicacion || 'Profesional',
+        valores: companyBranding?.valores_marca || []
       },
-
-      // 4. GROWTH OBJECTIVES (company_objectives)
-      objetivos_crecimiento: (companyObjectives || []).map((obj: any) => ({
-        nombre: obj.name || obj.objective_name,
-        descripcion: obj.description,
-        tipo: obj.objective_type,
-        meta_numerica: obj.target_value,
-        plazo: obj.timeframe,
-        prioridad: obj.priority
-      })),
-
-      // 5. COMPANY STRATEGY (propuesta_valor)
-      estrategia_empresa: {
-        propuesta_de_valor: propuestaValor,
+      
+      // ESTRATEGIA EMPRESARIAL
+      estrategia: {
+        propuesta_valor: propuestaValor,
         mision: companyStrategy?.mision || 'No especificado',
-        vision: companyStrategy?.vision || 'No especificado',
-        valores: companyStrategy?.valores || [],
-        pilares_estrategicos: companyStrategy?.pilares_estrategicos || []
+        vision: companyStrategy?.vision || 'No especificado'
       },
-      objetivo_de_negocio: input.objetivo_de_negocio,
-
-      // 6. CONTENT INSIGHTS & AUDIENCE INSIGHTS
-      hallazgos_analisis: {
-        content_insights: contentInsights || [],
-        audience_insights: audienceInsights || [],
-        marketing_insights: marketingInsights || [],
-        content_recommendations: contentRecommendations || []
+      
+      // OBJETIVO DE NEGOCIO
+      objetivo_negocio: input.objetivo_de_negocio,
+      
+      // ⭐ RESUMEN DE CAMPAÑA (Información completa estructurada)
+      resumen_campana: {
+        informacion_basica: {
+          nombre: input.nombre_campana || 'Nueva Campaña',
+          descripcion: input.descripcion_campana || input.objetivo_campana || 'Campaña de marketing',
+          empresa: companyData?.name || input.nombre_empresa
+        },
+        tipo_objetivo: {
+          tipo: input.tipo_objetivo_campana || 'awareness',
+          descripcion: input.objetivo_campana || 'No especificado'
+        },
+        objetivos_crecimiento: (companyObjectives || []).map((obj: any) => ({
+          nombre: obj.name || obj.objective_name,
+          metrica: obj.target_metric || obj.tipo,
+          valor_meta: obj.target_value,
+          plazo: obj.timeframe
+        })),
+        audiencias_seleccionadas: (input.audiencia_objetivo?.buyer_personas || []).map((persona: any) => ({
+          nombre: persona.nombre_ficticio || persona.name || 'Audiencia',
+          descripcion: persona.descripcion || persona.description || '',
+          edad: persona.demograficos?.edad || 'No especificado',
+          ubicaciones: persona.demograficos?.ubicacion 
+            ? [persona.demograficos.ubicacion]
+            : (persona.geographic_locations 
+              ? Object.keys(persona.geographic_locations) 
+              : []),
+          plataformas_preferidas: persona.demograficos?.plataforma_preferida
+            ? [persona.demograficos.plataforma_preferida]
+            : (persona.preferred_channels || []),
+          intereses_primarios: persona.intereses?.primary || [],
+          intereses_secundarios: persona.intereses?.secondary || []
+        }))
       },
-
-      // 7. CAMPAIGN INFORMATION
-      informacion_campana: {
-        nombre_campana: input.nombre_campana || 'Nueva Campaña',
-        objetivo_campana: input.objetivo_campana || 'No especificado',
-        tipo_objetivo: input.tipo_objetivo_campana || 'awareness'
-      },
-
-      // AUDIENCE TARGET (from wizard)
-      audiencia_objetivo: {
-        ...input.audiencia_objetivo,
-        buyer_personas: input.audiencia_objetivo?.buyer_personas?.map((persona: any) => ({
-          ...persona,
-          demograficos: {
-            ...persona.demograficos,
-            ubicacion: companyData?.country || 'No especificado'
-          }
-        })) || []
+      
+      // INSIGHTS (simplificados - solo títulos/resúmenes para contexto)
+      insights_previos: {
+        contenido: (contentInsights || []).slice(0, 3).map((i: any) => ({ 
+          titulo: i.title,
+          tipo: i.insight_type
+        })),
+        audiencia: (audienceInsights || []).slice(0, 3).map((i: any) => ({ 
+          titulo: i.insight_type,
+          segmento: i.audience_segment
+        }))
       }
     };
 
-    console.log('Processed input with real propuesta_valor:', JSON.stringify(processedInput, null, 2));
+    console.log('📊 Payload Summary:', {
+      empresa: processedInput.empresa.nombre,
+      audiencias_count: processedInput.resumen_campana.audiencias_seleccionadas.length,
+      objetivos_count: processedInput.resumen_campana.objetivos_crecimiento.length,
+      tipo_objetivo: processedInput.resumen_campana.tipo_objetivo.tipo,
+      payload_size_kb: Math.round(JSON.stringify(processedInput).length / 1024)
+    });
 
-    // Call N8N webhook with extended timeout (4 minutes)
+    // Call N8N webhook with extended timeout (5 minutes)
     const webhookUrl = 'https://buildera.app.n8n.cloud/webhook/marketing-strategy';
     console.log('Calling N8N webhook:', webhookUrl);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 240000); // 4 minutes timeout
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
 
     try {
       const webhookResponse = await fetch(webhookUrl, {
@@ -429,17 +420,27 @@ serve(async (req) => {
       clearTimeout(timeoutId);
       
       if (fetchError.name === 'AbortError') {
-        console.error('N8N webhook timeout after 4 minutes');
+        console.error('N8N webhook timeout after 5 minutes');
         return new Response(JSON.stringify({ 
-          error: 'Request timeout',
-          details: 'La generación de la estrategia tomó más de 4 minutos. Por favor, intenta de nuevo.'
+          error: 'timeout',
+          message: 'La generación está tomando más tiempo del esperado. Por favor, intenta nuevamente.',
+          retryable: true
         }), {
           status: 504,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
       
-      throw fetchError;
+      console.error('N8N webhook fetch error:', fetchError);
+      return new Response(JSON.stringify({ 
+        error: 'fetch_failed',
+        message: 'No se pudo conectar con el servicio de generación. Verifica tu conexión e intenta nuevamente.',
+        retryable: true,
+        details: fetchError.message
+      }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
 

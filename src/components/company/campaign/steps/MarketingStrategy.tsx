@@ -35,17 +35,18 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
 
   console.log('🔍 MarketingStrategy render - strategy:', strategy, 'generating:', generating, 'campaignData:', campaignData);
 
-  // Load existing strategy if available (when user returns to this step)
+  // Load existing strategy from campaignData (no database access - handled by CampaignWizard)
   useEffect(() => {
-    if (campaignData.strategy && !strategy && !generating) {
+    // Si ya hay estrategia en memoria o está generando, no hacer nada
+    if (strategy || generating) return;
+    
+    // Cargar desde campaignData (cuando usuario vuelve al paso)
+    if (campaignData.strategy) {
       console.log('📥 Loading existing strategy from campaignData:', campaignData.strategy);
       
-      // Extract the strategy object - could be nested in different ways
       const existingStrategy = campaignData.strategy.strategy || campaignData.strategy;
-      
       setStrategy(existingStrategy);
       
-      // Set edited strategy text if available
       if (campaignData.strategy.edited_strategy) {
         setEditedStrategy(campaignData.strategy.edited_strategy);
       } else if (existingStrategy.core_message) {
@@ -75,9 +76,9 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
         setEditedStrategy(strategyText);
       }
       
-      console.log('✅ Existing strategy loaded successfully');
+      console.log('✅ Existing strategy loaded from campaignData');
     }
-  }, [campaignData.strategy]);
+  }, [campaignData.strategy, strategy, generating]);
 
   const generateStrategy = async () => {
     console.log('🚀 Starting strategy generation');
@@ -367,17 +368,35 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
       console.error('💥 Error generating strategy:', error);
       setStrategy(null); // Reset strategy on error
 
-      let description = error?.message || 'No se pudo generar la estrategia. Por favor, intenta de nuevo.';
-      if (error?.name === 'AbortError') {
-        description = 'Tiempo de espera agotado al contactar el webhook (30s). Intenta nuevamente.';
-      } else if (typeof error?.message === 'string' && error.message.includes('Failed to fetch')) {
-        description = 'No se pudo conectar con el webhook. Verifica que el endpoint permita CORS y esté disponible.';
+      // Mejorar el manejo de errores con información más específica
+      let title = 'Error al generar estrategia';
+      let description = 'No se pudo generar la estrategia. Por favor, intenta de nuevo.';
+      let showRetry = true;
+
+      if (error?.error === 'timeout' || error?.name === 'AbortError') {
+        title = 'Generación en progreso';
+        description = error?.message || 'La generación está tomando más tiempo del esperado. Por favor, intenta nuevamente.';
+      } else if (error?.error === 'fetch_failed' || (typeof error?.message === 'string' && error.message.includes('Failed to fetch'))) {
+        description = error?.message || 'No se pudo conectar con el servicio de generación. Verifica tu conexión e intenta nuevamente.';
+      } else if (error?.message) {
+        description = error.message;
       }
 
       toast({
-        title: 'Error al generar estrategia',
+        title,
         description,
-        variant: 'destructive'
+        variant: 'destructive',
+        action: showRetry ? (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={generateStrategy}
+            className="gap-2"
+          >
+            <Sparkles className="h-3 w-3" />
+            Reintentar
+          </Button>
+        ) : undefined
       });
     } finally {
       console.log('🏁 Strategy generation finished, setting generating=false');

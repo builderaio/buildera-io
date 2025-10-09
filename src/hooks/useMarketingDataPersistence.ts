@@ -125,46 +125,52 @@ export const useMarketingDataPersistence = () => {
   };
 
   // Store marketing strategy data
-  const storeMarketingStrategyData = async (functionOutput: any, campaignId: string) => {
+  const storeMarketingStrategyData = async (strategyData: any, campaignId: string) => {
     setIsProcessing(true);
     try {
-      // Extract strategy data from function output - handle N8N response structure
-      let strategyData = functionOutput;
-      if (Array.isArray(functionOutput) && functionOutput.length > 0 && functionOutput[0].output) {
-        strategyData = functionOutput[0].output;
-      }
+      console.log('💾 Guardando estrategia en base de datos...', { 
+        campaignId, 
+        hasStrategy: !!strategyData?.strategy,
+        strategyKeys: Object.keys(strategyData || {})
+      });
 
-      // Extract comprehensive strategy information
-      const competitors = strategyData.competitors || [];
-      const mainStrategy = competitors.length > 3 ? competitors[3] : {};
-
+      // El strategyData ya viene normalizado desde MarketingStrategy component
+      const strategyObject = strategyData.strategy || strategyData;
+      
       const { data: strategy, error: strategyError } = await supabase
         .from('marketing_strategies')
         .insert({
           campaign_id: campaignId,
-          unified_message: mainStrategy.message_differentiator?.core || 'Estrategia personalizada generada con IA',
-          competitive_analysis: competitors.slice(0, 3) || [], // Store competitor analysis
-          marketing_funnel: mainStrategy.strategies || {}, // Store funnel strategies
+          unified_message: strategyObject.core_message || strategyData.message_differentiator?.core || 'Estrategia personalizada',
+          competitive_analysis: strategyData.competitors || strategyObject.competitors || [],
+          marketing_funnel: strategyData.funnel_strategies || strategyObject.strategies || {},
           content_plan: {
-            platform_plans: mainStrategy.content_plan || {},
-            editorial_calendar: mainStrategy.editorial_calendar || [],
-            kpis: mainStrategy.kpis || {},
-            execution_plan: mainStrategy.execution_plan || {},
-            budget_estimation: mainStrategy.execution_plan?.budget_estimation || {},
-            message_differentiator: mainStrategy.message_differentiator || {},
-            full_strategy_data: strategyData // Store complete response for reference
+            platform_plans: strategyObject.content_plan || {},
+            editorial_calendar: strategyData.editorial_calendar || strategyObject.editorial_calendar || [],
+            kpis: strategyData.kpis || strategyObject.kpis_goals || [],
+            execution_plan: strategyData.execution_plan || strategyObject.execution_plan || {},
+            budget_estimation: strategyData.execution_plan?.budget || {},
+            message_differentiator: strategyData.message_differentiator || {},
+            risks_assumptions: strategyData.risks_assumptions || strategyObject.risks_assumptions || [],
+            sources: strategyData.sources || strategyObject.sources || [],
+            full_strategy_data: strategyData // Store complete data for reference
           }
         })
         .select()
         .single();
 
-      if (strategyError) throw strategyError;
+      if (strategyError) {
+        console.error('❌ Error al guardar estrategia:', strategyError);
+        throw strategyError;
+      }
 
       // Update campaign status
       await supabase
         .from('marketing_campaigns')
         .update({ status: 'Strategy Created' })
         .eq('id', campaignId);
+
+      console.log('✅ Estrategia guardada exitosamente:', strategy.id);
 
       toast({
         title: "Estrategia de marketing guardada",
@@ -174,9 +180,10 @@ export const useMarketingDataPersistence = () => {
       return strategy.id;
 
     } catch (error: any) {
+      console.error('💥 Error completo al guardar estrategia:', error);
       toast({
         title: "Error al guardar estrategia",
-        description: error.message,
+        description: error.message || "No se pudo guardar la estrategia",
         variant: "destructive"
       });
       throw error;

@@ -256,9 +256,12 @@ export const CampaignWizard = ({
         break;
       case 2:
         updatedCampaignData.audience = stepData;
-        // Store target audience data in database
+        // Store target audience data in database and save campaignId
         if (stepData?.company && stepData?.analysis) {
-          storeTargetAudienceData(stepData.company, stepData.analysis?.buyer_personas || []);
+          const campaignId = await storeTargetAudienceData(stepData.company, stepData.analysis?.buyer_personas || []);
+          if (campaignId) {
+            setState(prev => ({ ...prev, campaignId }));
+          }
         }
         break;
       case 3:
@@ -295,9 +298,11 @@ export const CampaignWizard = ({
 
     // Handle async operations outside of setState
     try {
-      if (state.currentStep === 3 && stepData?.strategy) {
-        const strategyId = await storeMarketingStrategyData(stepData.strategy, stepData.tactics || []);
-        setState(prev => ({ ...prev, strategyId }));
+      if (state.currentStep === 3 && state.campaignId && stepData) {
+        const strategyId = await storeMarketingStrategyData(stepData, state.campaignId);
+        if (strategyId) {
+          setState(prev => ({ ...prev, strategyId }));
+        }
       }
       
       if (state.currentStep === 4 && stepData?.calendar_items && Array.isArray(stepData.calendar_items) && state.strategyId) {

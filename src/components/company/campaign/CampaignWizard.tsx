@@ -293,18 +293,6 @@ export const CampaignWizard = ({
     
     setCampaignData(updatedCampaignData);
 
-    // Auto-save draft progress
-    const stepNames = ['objective', 'audience', 'strategy', 'calendar', 'content', 'schedule', 'measurement'];
-    const draftId = await saveDraft(
-      updatedCampaignData, 
-      stepNames[state.currentStep - 1], 
-      state.draftId
-    );
-    
-    if (draftId && !state.draftId) {
-      setState(prev => ({ ...prev, draftId }));
-    }
-
     // Handle async operations outside of setState
     try {
       if (state.currentStep === 3 && stepData?.strategy) {
@@ -319,14 +307,26 @@ export const CampaignWizard = ({
       console.error('Error storing data:', error);
     }
 
-    // Note: Step completion and advancement is now handled above
-
-    // Mark step as completed and advance
+    // Mark step as completed and calculate next step
+    const nextStep = state.currentStep < steps.length ? state.currentStep + 1 : state.currentStep;
+    
     setState(prev => ({
       ...prev,
       completedSteps: [...prev.completedSteps.filter(s => s !== state.currentStep), state.currentStep],
-      currentStep: state.currentStep < steps.length ? state.currentStep + 1 : state.currentStep
+      currentStep: nextStep
     }));
+
+    // Auto-save draft progress with the NEXT step (where user should resume)
+    const stepNames = ['objective', 'audience', 'strategy', 'calendar', 'content', 'schedule', 'measurement'];
+    const draftId = await saveDraft(
+      updatedCampaignData, 
+      stepNames[nextStep - 1], // Save with next step, not current
+      state.draftId
+    );
+    
+    if (draftId && !state.draftId) {
+      setState(prev => ({ ...prev, draftId }));
+    }
 
     // Show success message with confetti effect
     toast({

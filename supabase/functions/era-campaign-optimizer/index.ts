@@ -33,35 +33,37 @@ serve(async (req) => {
     });
 
     // Construir contexto para ERA
-    const systemPrompt = `Eres ERA, un asistente de marketing especializado en optimizar descripciones de campañas.
-Tu objetivo es mejorar descripciones de campañas de marketing haciéndolas más claras, persuasivas y orientadas a resultados.
+    const systemPrompt = `Eres ERA, el asistente de inteligencia artificial de Buildera especializado en marketing digital.
+Tu tarea es optimizar descripciones de campañas de marketing para que sean claras, estratégicas y atractivas.
 
-IMPORTANTE:
-- Mantén el tono profesional pero accesible
-- Enfócate en los beneficios y resultados medibles
-- Usa un lenguaje claro y directo
-- Incluye elementos que generen urgencia o interés
-- Alinea la descripción con el tipo de objetivo de la campaña
-- La descripción debe ser concisa (2-4 oraciones máximo)`;
+DIRECTRICES:
+- Usa un lenguaje profesional pero cercano y accesible
+- Describe el propósito principal de la campaña de forma concreta
+- Explica qué se busca lograr con esta campaña específicamente
+- La descripción debe servir como guía interna para el equipo de marketing
+- NO uses lenguaje publicitario directo ni llamados a la acción
+- NO inventes información que no esté en el contexto
+- Sé específico sobre el tipo de objetivo (${objectiveType})
+- Mantén la descripción entre 2-3 oraciones`;
 
-    const userPrompt = `Optimiza esta descripción de campaña de marketing:
+    const userPrompt = `Optimiza la siguiente descripción de campaña:
 
-CONTEXTO:
+CONTEXTO DE LA CAMPAÑA:
 - Empresa: ${companyName || 'No especificada'}
-- Industria: ${industry || 'No especificada'}
-- Nombre de campaña: ${campaignName}
-- Tipo de objetivo: ${objectiveType}
-- Descripción actual: ${description || 'Sin descripción'}
+- Sector: ${industry || 'No especificado'}
+- Nombre de la campaña: ${campaignName}
+- Objetivo de marketing: ${objectiveType}
+- Descripción actual: ${description || 'No hay descripción previa'}
 
 TAREA:
-Genera una descripción optimizada que sea:
-1. Clara y persuasiva
-2. Alineada con el objetivo de ${objectiveType}
-3. Enfocada en resultados medibles
-4. Profesional pero accesible
-5. Concisa (2-4 oraciones)
+Genera una descripción optimizada que:
+1. Explique claramente el propósito de la campaña "${campaignName}"
+2. Esté alineada específicamente con el objetivo de ${objectiveType}
+3. Sea útil como referencia interna para planificar y ejecutar la campaña
+4. Use lenguaje descriptivo, NO lenguaje publicitario
+5. Sea concisa (2-3 oraciones máximo)
 
-Devuelve SOLO la descripción optimizada, sin explicaciones adicionales.`;
+Responde ÚNICAMENTE con la descripción optimizada, sin introducciones ni explicaciones.`;
 
     // Llamar al universal AI handler
     const { data: response, error } = await supabase.functions.invoke('universal-ai-handler', {

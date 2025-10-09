@@ -215,7 +215,7 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
                               <div className="flex flex-wrap gap-1">
                                 {Object.entries(audience.age_ranges).map(([range, percentage]) => (
                                   <Badge key={range} variant="outline" className="text-xs">
-                                    {range}: {percentage as string}
+                                    {range}: {String(percentage)}%
                                   </Badge>
                                 ))}
                               </div>
@@ -226,11 +226,18 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
                             <div>
                               <h5 className="font-medium text-sm mb-2">Ubicaciones</h5>
                               <div className="flex flex-wrap gap-1">
-                                {Object.entries(audience.geographic_locations).slice(0, 3).map(([location, percentage]) => (
-                                  <Badge key={location} variant="secondary" className="text-xs">
-                                    {location}: {percentage as string}
-                                  </Badge>
-                                ))}
+                                {Object.entries(audience.geographic_locations).slice(0, 3).map(([location, percentage]) => {
+                                  // Format location label: add spaces between capital letters for better readability
+                                  const formattedLocation = location
+                                    .replace(/([a-z])([A-Z])/g, '$1, $2')
+                                    .replace(/([A-Z])([A-Z][a-z])/g, '$1, $2');
+                                  
+                                  return (
+                                    <Badge key={location} variant="secondary" className="text-xs">
+                                      {formattedLocation}: {String(percentage)}%
+                                    </Badge>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
@@ -241,7 +248,7 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
                               <div className="flex flex-wrap gap-1">
                                 {Object.entries(audience.platform_preferences).slice(0, 3).map(([platform, percentage]) => (
                                   <Badge key={platform} variant="default" className="text-xs">
-                                    {platform}: {percentage as string}
+                                    {platform}: {String(percentage)}%
                                   </Badge>
                                 ))}
                               </div>

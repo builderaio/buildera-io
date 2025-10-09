@@ -16,7 +16,8 @@ import {
   CheckCircle,
   Loader2,
   TrendingUp,
-  Lightbulb
+  Lightbulb,
+  Users
 } from 'lucide-react';
 
 interface MarketingStrategyProps {
@@ -442,37 +443,137 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold text-sm text-muted-foreground mb-2">OBJETIVO</h4>
-              <p className="text-sm">{campaignData.objective?.goal || 'No definido'}</p>
+          <div className="space-y-6">
+            {/* Información Básica */}
+            <div className="pb-6 border-b">
+              <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                <Lightbulb className="h-4 w-4" />
+                INFORMACIÓN BÁSICA
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Nombre de la campaña</p>
+                  <p className="text-sm font-medium">{campaignData.name || 'Sin nombre'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Empresa</p>
+                  <p className="text-sm font-medium">{campaignData.company?.nombre_empresa || 'No definido'}</p>
+                </div>
+                {campaignData.description && (
+                  <div className="md:col-span-2">
+                    <p className="text-xs text-muted-foreground mb-1">Descripción</p>
+                    <p className="text-sm text-muted-foreground">{campaignData.description}</p>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <h4 className="font-semibold text-sm text-muted-foreground mb-2">EMPRESA</h4>
-              <p className="text-sm">{campaignData.company?.nombre_empresa || 'No definido'}</p>
+
+            {/* Tipo de Objetivo */}
+            <div className="pb-6 border-b">
+              <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                TIPO DE OBJETIVO
+              </h4>
+              <div className="flex items-center gap-2">
+                {campaignData.objective?.type && (
+                  <Badge variant="default" className="text-sm">
+                    {campaignData.objective.type === 'awareness' && '📢 Reconocimiento de Marca'}
+                    {campaignData.objective.type === 'consideration' && '🤔 Consideración'}
+                    {campaignData.objective.type === 'conversion' && '💰 Conversión'}
+                    {campaignData.objective.type === 'loyalty' && '❤️ Fidelización'}
+                    {!['awareness', 'consideration', 'conversion', 'loyalty'].includes(campaignData.objective.type) && campaignData.objective.type}
+                  </Badge>
+                )}
+                {campaignData.objective?.goal && (
+                  <span className="text-sm text-muted-foreground">- {campaignData.objective.goal}</span>
+                )}
+              </div>
             </div>
-            <div className="md:col-span-2">
-              <h4 className="font-semibold text-sm text-muted-foreground mb-2">AUDIENCIAS SELECCIONADAS</h4>
-              <div className="flex flex-wrap gap-2">
-                {campaignData.audience?.buyer_personas?.length > 0 ? (
-                  campaignData.audience.buyer_personas.slice(0, 3).map((persona: any, index: number) => (
-                    <Badge key={index} variant="outline">
-                      {persona.nombre_ficticio}
-                    </Badge>
+
+            {/* Objetivos de Crecimiento */}
+            {(campaignData.objective?.growth_metrics || campaignData.objective?.metrics) && (
+              <div className="pb-6 border-b">
+                <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  OBJETIVOS DE CRECIMIENTO
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {(campaignData.objective?.growth_metrics || campaignData.objective?.metrics || []).map((metric: any, index: number) => (
+                    <div key={index} className="flex items-start gap-2 bg-muted/50 p-3 rounded-lg">
+                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{metric.name || metric.metric}</p>
+                        {metric.target && (
+                          <p className="text-xs text-muted-foreground">Meta: {metric.target}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Audiencias Seleccionadas */}
+            <div>
+              <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                AUDIENCIAS SELECCIONADAS ({campaignData.audience?.audience_count || campaignData.audience?.buyer_personas?.length || campaignData.audience?.selected_audiences?.length || 0})
+              </h4>
+              <div className="space-y-3">
+                {campaignData.audience?.selected_audiences?.length > 0 ? (
+                  campaignData.audience.selected_audiences.map((audience: any, index: number) => (
+                    <div key={index} className="bg-muted/50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="font-semibold">
+                          {audience.name}
+                        </Badge>
+                      </div>
+                      {audience.description && (
+                        <p className="text-xs text-muted-foreground">{audience.description}</p>
+                      )}
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {audience.age_ranges && Object.keys(audience.age_ranges).length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            Edad: {Object.keys(audience.age_ranges).join(', ')}
+                          </Badge>
+                        )}
+                        {audience.geographic_locations && Object.keys(audience.geographic_locations).length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            📍 {Object.keys(audience.geographic_locations).slice(0, 2).join(', ')}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   ))
-                ) : campaignData.audience?.selected_audiences?.length > 0 ? (
-                  campaignData.audience.selected_audiences.slice(0, 3).map((audience: any, index: number) => (
-                    <Badge key={index} variant="outline">
-                      {audience.name}
-                    </Badge>
+                ) : campaignData.audience?.buyer_personas?.length > 0 ? (
+                  campaignData.audience.buyer_personas.map((persona: any, index: number) => (
+                    <div key={index} className="bg-muted/50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="font-semibold">
+                          {persona.nombre_ficticio}
+                        </Badge>
+                      </div>
+                      {persona.descripcion && (
+                        <p className="text-xs text-muted-foreground">{persona.descripcion}</p>
+                      )}
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {persona.demograficos?.edad && (
+                          <Badge variant="secondary" className="text-xs">
+                            Edad: {persona.demograficos.edad}
+                          </Badge>
+                        )}
+                        {persona.demograficos?.ubicacion && (
+                          <Badge variant="secondary" className="text-xs">
+                            📍 {persona.demograficos.ubicacion}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
                   ))
                 ) : (
-                  <span className="text-sm text-muted-foreground">Ninguna audiencia seleccionada</span>
-                )}
-                {(campaignData.audience?.buyer_personas?.length > 3 || campaignData.audience?.selected_audiences?.length > 3) && (
-                  <Badge variant="secondary">
-                    +{(campaignData.audience?.buyer_personas?.length || campaignData.audience?.selected_audiences?.length || 0) - 3} más
-                  </Badge>
+                  <div className="text-center py-4 text-muted-foreground text-sm">
+                    Ninguna audiencia seleccionada
+                  </div>
                 )}
               </div>
             </div>

@@ -141,9 +141,9 @@ serve(async (req) => {
     // Get company strategy to obtain propuesta_valor and other strategic info
     const { data: companyStrategy, error: strategyError } = await supabase
       .from('company_strategy')
-      .select('propuesta_valor, mision, vision, valores, pilares_estrategicos')
+      .select('propuesta_valor, mision, vision')
       .eq('company_id', companyMember.company_id)
-      .single();
+      .maybeSingle();
 
     let propuestaValor = input.propuesta_de_valor || 'Por definir';
     
@@ -157,15 +157,23 @@ serve(async (req) => {
     // Get company branding to obtain brand_voice
     const { data: companyBranding, error: brandingError } = await supabase
       .from('company_branding')
-      .select('brand_voice, tono_comunicacion, personalidad_marca, valores_marca')
+      .select('brand_voice, primary_color, secondary_color, complementary_color_1, complementary_color_2, visual_identity, full_brand_data, visual_synthesis')
       .eq('company_id', companyMember.company_id)
-      .single();
+      .maybeSingle();
 
     if (brandingError) {
       console.error('Error getting company branding:', brandingError);
     } else {
       console.log('Company branding retrieved:', JSON.stringify(companyBranding, null, 2));
     }
+
+    // Normalize branding fields from JSON structure
+    const brandVoiceJson = companyBranding?.brand_voice && typeof companyBranding.brand_voice === 'string'
+      ? (() => { try { return JSON.parse(companyBranding.brand_voice as unknown as string); } catch { return companyBranding.brand_voice; } })()
+      : companyBranding?.brand_voice;
+    const brandVoiceText = brandVoiceJson?.descripcion || brandVoiceJson?.personalidad || 'No especificado';
+    const tonoText = brandVoiceJson?.personalidad || 'Profesional';
+    const valoresArray = (companyBranding?.full_brand_data as any)?.valores || brandVoiceJson?.valores || [];
 
     // Get company objectives (growth objectives)
     const { data: companyObjectives, error: objectivesError } = await supabase
@@ -250,9 +258,9 @@ serve(async (req) => {
       
       // BRANDING
       branding: {
-        brand_voice: companyBranding?.brand_voice || 'No especificado',
-        tono: companyBranding?.tono_comunicacion || 'Profesional',
-        valores: companyBranding?.valores_marca || []
+        brand_voice: brandVoiceText,
+        tono: tonoText,
+        valores: Array.isArray(valoresArray) ? valoresArray : []
       },
       
       // ESTRATEGIA EMPRESARIAL
@@ -277,20 +285,24 @@ serve(async (req) => {
           descripcion: input.objetivo_campana || 'No especificado'
         },
         objetivos_crecimiento: (companyObjectives || []).map((obj: any) => ({
-          nombre: obj.name || obj.objective_name,
-          metrica: obj.target_metric || obj.tipo,
-          valor_meta: obj.target_value,
-          plazo: obj.timeframe
+          nombre: obj.title,
+          descripcion: obj.description,
+          tipo: obj.objective_type,
+          plazo: obj.target_date
         })),
         audiencias_seleccionadas: (input.audiencia_objetivo?.buyer_personas || []).map((persona: any) => ({
           nombre: persona.nombre_ficticio || persona.name || 'Audiencia',
           descripcion: persona.descripcion || persona.description || '',
           edad: persona.demograficos?.edad || 'No especificado',
-          ubicaciones: persona.demograficos?.ubicacion 
-            ? [persona.demograficos.ubicacion]
-            : (persona.geographic_locations 
-              ? Object.keys(persona.geographic_locations) 
-              : []),
+          ubicaciones: (() => {
+            if (persona.demograficos?.ubicacion) return [persona.demograficos.ubicacion];
+            const loc = persona.geographic_locations;
+            const all: string[] = [];
+            if (loc?.cities && Array.isArray(loc.cities)) all.push(...loc.cities);
+            if (loc?.countries && Array.isArray(loc.countries)) all.push(...loc.countries);
+            if (loc?.regions && Array.isArray(loc.regions)) all.push(...loc.regions);
+            return all;
+          })(),
           plataformas_preferidas: persona.demograficos?.plataforma_preferida
             ? [persona.demograficos.plataforma_preferida]
             : (persona.preferred_channels || []),

@@ -319,10 +319,13 @@ export const CampaignWizard = ({
       console.error('Error storing data:', error);
     }
 
-    // Mark step as completed
+    // Note: Step completion and advancement is now handled above
+
+    // Mark step as completed and advance
     setState(prev => ({
       ...prev,
-      completedSteps: [...prev.completedSteps.filter(s => s !== state.currentStep), state.currentStep]
+      completedSteps: [...prev.completedSteps.filter(s => s !== state.currentStep), state.currentStep],
+      currentStep: state.currentStep < steps.length ? state.currentStep + 1 : state.currentStep
     }));
 
     // Show success message with confetti effect
@@ -330,13 +333,6 @@ export const CampaignWizard = ({
       title: "¡Paso completado! 🎉",
       description: `${currentStep?.title} configurado exitosamente`,
     });
-
-    // Auto-advance to next step after a short delay for better UX
-    if (state.currentStep < steps.length) {
-      setTimeout(() => {
-        nextStep();
-      }, 1500);
-    }
   };
 
   const goToStep = (stepNumber: number) => {
@@ -349,6 +345,8 @@ export const CampaignWizard = ({
     if (typeof globalGet === 'function') {
       const data = globalGet();
       if (data) {
+        // Limpiar la función global inmediatamente para evitar loops
+        delete (window as any).getCurrentCampaignStepData;
         handleStepComplete(data);
         return; // handleStepComplete auto-avanza al siguiente paso
       }

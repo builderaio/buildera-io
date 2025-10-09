@@ -118,6 +118,31 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
     loadCompanyObjectives();
   }, [companyData?.id]);
 
+  // Exponer los datos del paso actual para que el Wizard pueda "Guardar y Avanzar"
+  useEffect(() => {
+    (window as any).getCurrentCampaignStepData = () => {
+      if (!selectedObjective || !campaignName?.trim()) return null;
+
+      const selectedCompanyObjectives = companyObjectives.filter((obj: any) => 
+        (targetMetrics.selectedObjectives || []).includes(obj.id)
+      );
+
+      return {
+        type: selectedObjective,
+        name: campaignName,
+        description,
+        target_metrics: targetMetrics,
+        company_objectives: selectedCompanyObjectives,
+        selected_objectives_ids: targetMetrics.selectedObjectives || [],
+        goal: `${selectedObjectiveData?.title}: ${campaignName}`
+      };
+    };
+
+    return () => {
+      delete (window as any).getCurrentCampaignStepData;
+    };
+  }, [selectedObjective, campaignName, description, targetMetrics, companyObjectives, selectedObjectiveData]);
+
   const handleMetricChange = (metric: string, value: string) => {
     setTargetMetrics(prev => ({
       ...prev,

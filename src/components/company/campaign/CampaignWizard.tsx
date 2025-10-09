@@ -344,10 +344,20 @@ export const CampaignWizard = ({
   };
 
   const nextStep = () => {
+    // Si el paso actual expone una función para obtener datos, la usamos para guardar antes de avanzar
+    const globalGet = (window as any).getCurrentCampaignStepData;
+    if (typeof globalGet === 'function') {
+      const data = globalGet();
+      if (data) {
+        handleStepComplete(data);
+        return; // handleStepComplete auto-avanza al siguiente paso
+      }
+    }
+
     if (state.currentStep < steps.length) {
       setState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }));
     } else {
-      // If we're at the last step, redirect to dashboard
+      // Si estamos en el último paso, redirigir al dashboard
       toast({
         title: "¡Campaña completada!",
         description: "Redirigiendo al dashboard...",

@@ -30,6 +30,37 @@ import {
   EditableKeyValuePair 
 } from './EditableStrategySection';
 
+
+class StrategyErrorBoundary extends React.Component<{ children: React.ReactNode; onReset?: () => void }, { hasError: boolean; error?: any }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: any) {
+    console.error('Strategy render error:', error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ocurrió un error al mostrar la estrategia</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">Hemos detectado un problema al renderizar esta sección. Puedes reintentar la generación.</p>
+            <Button onClick={this.props.onReset}>Reintentar</Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    return this.props.children as any;
+  }
+}
+
+
 interface MarketingStrategyProps {
   campaignData: any;
   onComplete: (data: any) => void;

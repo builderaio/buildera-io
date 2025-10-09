@@ -602,10 +602,10 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
       const pageHeight = doc.internal.pageSize.getHeight();
       let yPosition = 20;
 
-      // Función helper para agregar marca de agua en cada página
+      // Función helper para agregar marca de agua en cada página (más sutil)
       const addWatermark = () => {
-        doc.setTextColor(220, 220, 220);
-        doc.setFontSize(40);
+        doc.setTextColor(245, 245, 245);
+        doc.setFontSize(50);
         doc.text('BUILDERA', pageWidth / 2, pageHeight / 2, {
           align: 'center',
           angle: 45
@@ -634,23 +634,35 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
         return false;
       };
 
-      // Primera página - Header
+      // Primera página - Header mejorado
       addWatermark();
       
-      // Logo y título (usando texto en lugar de imagen)
-      doc.setFillColor(60, 70, 178); // Color Buildera
-      doc.rect(0, 0, pageWidth, 40, 'F');
+      // Header con gradiente (simulado con capas)
+      doc.setFillColor(60, 70, 178); // Azul Buildera
+      doc.rect(0, 0, pageWidth, 50, 'F');
+      doc.setFillColor(50, 60, 168); // Azul más oscuro
+      doc.rect(0, 40, pageWidth, 10, 'F');
+      
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
+      doc.setFontSize(28);
       doc.setFont('helvetica', 'bold');
       doc.text('BUILDERA', 20, 25);
-      doc.setFontSize(12);
+      
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'normal');
-      doc.text('Estrategia de Marketing', 20, 33);
+      doc.text('Estrategia de Marketing Inteligente', 20, 38);
+      
+      // Fecha en esquina superior derecha
+      doc.setFontSize(9);
+      doc.text(new Date().toLocaleDateString('es-ES', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }), pageWidth - 20, 25, { align: 'right' });
 
       // Info de campaña
       doc.setTextColor(0, 0, 0);
-      yPosition = 55;
+      yPosition = 65;
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
       doc.text('Estrategia de Marketing', 20, yPosition);
@@ -686,8 +698,70 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
         doc.text(messageLines, 20, yPosition);
         yPosition += messageLines.length * 6 + 5;
 
-        // Variaciones por plataforma
-        if (strategy.message_variants && Object.keys(strategy.message_variants).length > 0) {
+        // Variaciones específicas por plataforma (mejoradas)
+        if (strategy.differentiated_message) {
+          yPosition += 5;
+          checkAddPage(70);
+          
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(60, 70, 178);
+          doc.text('Variaciones por Plataforma:', 20, yPosition);
+          yPosition += 8;
+
+          // LinkedIn
+          if (strategy.differentiated_message.linkedin_variant) {
+            checkAddPage(25);
+            doc.setFillColor(219, 234, 254);
+            doc.roundedRect(25, yPosition - 3, pageWidth - 50, 8, 2, 2, 'F');
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(37, 99, 235);
+            doc.text('LinkedIn:', 28, yPosition + 3);
+            yPosition += 10;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            const linkedinLines = doc.splitTextToSize(strategy.differentiated_message.linkedin_variant, pageWidth - 55);
+            doc.text(linkedinLines, 28, yPosition);
+            yPosition += linkedinLines.length * 5 + 5;
+          }
+
+          // TikTok
+          if (strategy.differentiated_message.tiktok_variant) {
+            checkAddPage(25);
+            doc.setFillColor(243, 232, 255);
+            doc.roundedRect(25, yPosition - 3, pageWidth - 50, 8, 2, 2, 'F');
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(147, 51, 234);
+            doc.text('TikTok:', 28, yPosition + 3);
+            yPosition += 10;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            const tiktokLines = doc.splitTextToSize(strategy.differentiated_message.tiktok_variant, pageWidth - 55);
+            doc.text(tiktokLines, 28, yPosition);
+            yPosition += tiktokLines.length * 5 + 5;
+          }
+
+          // Instagram/Facebook
+          if (strategy.differentiated_message.instagram_facebook_variant) {
+            checkAddPage(25);
+            doc.setFillColor(252, 231, 243);
+            doc.roundedRect(25, yPosition - 3, pageWidth - 50, 8, 2, 2, 'F');
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(219, 39, 119);
+            doc.text('Instagram / Facebook:', 28, yPosition + 3);
+            yPosition += 10;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            const igLines = doc.splitTextToSize(strategy.differentiated_message.instagram_facebook_variant, pageWidth - 55);
+            doc.text(igLines, 28, yPosition);
+            yPosition += igLines.length * 5 + 5;
+          }
+        }
+        // Fallback a message_variants si no existe differentiated_message
+        else if (strategy.message_variants && Object.keys(strategy.message_variants).length > 0) {
           Object.entries(strategy.message_variants).forEach(([platform, message]) => {
             checkAddPage(25);
             doc.setFontSize(10);
@@ -700,6 +774,120 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
             yPosition += variantLines.length * 5 + 3;
           });
         }
+      }
+
+      // Análisis Completo de Competidores
+      if (strategy.competitors && strategy.competitors.length > 0) {
+        yPosition += 10;
+        checkAddPage(40);
+        
+        doc.setFillColor(241, 84, 56);
+        doc.rect(20, yPosition - 5, pageWidth - 40, 0.5, 'F');
+        yPosition += 3;
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(241, 84, 56);
+        doc.text('ANÁLISIS DE COMPETIDORES', 20, yPosition);
+        yPosition += 10;
+        doc.setTextColor(0, 0, 0);
+
+        strategy.competitors.forEach((competitor: any, idx: number) => {
+          checkAddPage(80);
+          
+          // Nombre del competidor con fondo
+          doc.setFillColor(255, 237, 213);
+          doc.roundedRect(20, yPosition - 3, pageWidth - 40, 10, 2, 2, 'F');
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`${idx + 1}. ${competitor.name || `Competidor ${idx + 1}`}`, 25, yPosition + 4);
+          yPosition += 15;
+
+          // Fortalezas
+          if (competitor.strengths && competitor.strengths.length > 0) {
+            doc.setFillColor(220, 252, 231);
+            doc.roundedRect(25, yPosition - 2, pageWidth - 50, (competitor.strengths.length * 5) + 8, 2, 2, 'F');
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(22, 163, 74);
+            doc.text('✅ Fortalezas:', 28, yPosition + 3);
+            yPosition += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            
+            competitor.strengths.forEach((strength: string) => {
+              checkAddPage(10);
+              const strengthLines = doc.splitTextToSize(`• ${strength}`, pageWidth - 65);
+              doc.text(strengthLines, 32, yPosition);
+              yPosition += strengthLines.length * 4 + 1;
+            });
+            yPosition += 5;
+          }
+
+          // Debilidades
+          if (competitor.weaknesses && competitor.weaknesses.length > 0) {
+            doc.setFillColor(254, 226, 226);
+            doc.roundedRect(25, yPosition - 2, pageWidth - 50, (competitor.weaknesses.length * 5) + 8, 2, 2, 'F');
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(220, 38, 38);
+            doc.text('⚠️ Debilidades:', 28, yPosition + 3);
+            yPosition += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            
+            competitor.weaknesses.forEach((weakness: string) => {
+              checkAddPage(10);
+              const weaknessLines = doc.splitTextToSize(`• ${weakness}`, pageWidth - 65);
+              doc.text(weaknessLines, 32, yPosition);
+              yPosition += weaknessLines.length * 4 + 1;
+            });
+            yPosition += 5;
+          }
+
+          // Tácticas Digitales
+          if (competitor.digital_tactics && competitor.digital_tactics.length > 0) {
+            doc.setFillColor(219, 234, 254);
+            doc.roundedRect(25, yPosition - 2, pageWidth - 50, (competitor.digital_tactics.length * 5) + 8, 2, 2, 'F');
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(37, 99, 235);
+            doc.text('🌐 Tácticas Digitales:', 28, yPosition + 3);
+            yPosition += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            
+            competitor.digital_tactics.forEach((tactic: string) => {
+              checkAddPage(10);
+              const tacticLines = doc.splitTextToSize(`• ${tactic}`, pageWidth - 65);
+              doc.text(tacticLines, 32, yPosition);
+              yPosition += tacticLines.length * 4 + 1;
+            });
+            yPosition += 5;
+          }
+
+          // Benchmarks
+          if (competitor.benchmarks && Object.keys(competitor.benchmarks).length > 0) {
+            doc.setFillColor(243, 232, 255);
+            doc.roundedRect(25, yPosition - 2, pageWidth - 50, (Object.keys(competitor.benchmarks).length * 6) + 10, 2, 2, 'F');
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(147, 51, 234);
+            doc.text('📊 Benchmarks:', 28, yPosition + 3);
+            yPosition += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            
+            Object.entries(competitor.benchmarks).forEach(([metric, value]: [string, any]) => {
+              checkAddPage(8);
+              doc.text(`• ${metric}: ${value}`, 32, yPosition);
+              yPosition += 5;
+            });
+            yPosition += 5;
+          }
+
+          yPosition += 5;
+        });
       }
 
       // Estrategias por Etapa del Funnel
@@ -760,20 +948,25 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
           }
 
           if (details.moonshot_tactics && details.moonshot_tactics.length > 0) {
-            yPosition += 3;
-            checkAddPage(20);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(147, 51, 234); // Purple
-            doc.text('Tácticas Moonshot:', 25, yPosition);
             yPosition += 5;
+            checkAddPage(30);
+            doc.setFillColor(243, 232, 255);
+            doc.roundedRect(25, yPosition - 2, pageWidth - 50, (details.moonshot_tactics.length * 6) + 10, 2, 2, 'F');
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(147, 51, 234);
+            doc.text('🚀 Tácticas Moonshot (Alto Impacto):', 28, yPosition + 3);
+            yPosition += 7;
             doc.setFont('helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
             
-            details.moonshot_tactics.forEach((tactic: string, idx: number) => {
-              checkAddPage(15);
-              const tacticLines = doc.splitTextToSize(`• ${tactic}`, pageWidth - 50);
-              doc.text(tacticLines, 30, yPosition);
+            details.moonshot_tactics.forEach((tactic: string) => {
+              checkAddPage(12);
+              const tacticLines = doc.splitTextToSize(`⭐ ${tactic}`, pageWidth - 55);
+              doc.text(tacticLines, 32, yPosition);
               yPosition += tacticLines.length * 5 + 2;
             });
+            yPosition += 5;
             doc.setTextColor(0, 0, 0);
           }
 
@@ -920,6 +1113,26 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
             doc.text(`${channel}: ${budget}`, 25, yPosition);
             yPosition += 5;
           });
+          yPosition += 5;
+        }
+
+        // Activos a Crear
+        if (strategy.execution_plan.assets && strategy.execution_plan.assets.length > 0) {
+          checkAddPage(30);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Activos a Crear:', 20, yPosition);
+          yPosition += 6;
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+
+          strategy.execution_plan.assets.forEach((asset: string, idx: number) => {
+            checkAddPage(10);
+            const assetLines = doc.splitTextToSize(`${idx + 1}. ${asset}`, pageWidth - 45);
+            doc.text(assetLines, 25, yPosition);
+            yPosition += assetLines.length * 5 + 2;
+          });
+          yPosition += 5;
         }
       }
 

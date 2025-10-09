@@ -172,6 +172,14 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
         if (s.differentiated_message) {
           s.core_message = s.differentiated_message.core_message || '';
           s.message_variants = s.differentiated_message.variants || {};
+          // Preservar el objeto completo para acceder a variantes específicas
+          s.differentiated_message = {
+            core_message: s.differentiated_message.core_message || '',
+            variants: s.differentiated_message.variants || {},
+            linkedin_variant: s.differentiated_message.linkedin_variant || '',
+            tiktok_variant: s.differentiated_message.tiktok_variant || '',
+            instagram_facebook_variant: s.differentiated_message.instagram_facebook_variant || ''
+          };
         } else if (s.mensaje_diferenciador) {
           s.core_message = s.mensaje_diferenciador.core_message || '';
           s.message_variants = {
@@ -179,9 +187,23 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
             Instagram: s.mensaje_diferenciador.instagram || '',
             TikTok: s.mensaje_diferenciador.tiktok || ''
           };
+          s.differentiated_message = {
+            core_message: s.mensaje_diferenciador.core_message || '',
+            variants: s.message_variants,
+            linkedin_variant: s.mensaje_diferenciador.linkedin || '',
+            tiktok_variant: s.mensaje_diferenciador.tiktok || '',
+            instagram_facebook_variant: s.mensaje_diferenciador.instagram || ''
+          };
         } else if (s.mensaje_unificado_diferenciador) {
           s.core_message = s.mensaje_unificado_diferenciador.core_message;
           s.message_variants = s.mensaje_unificado_diferenciador.variantes;
+          s.differentiated_message = {
+            core_message: s.mensaje_unificado_diferenciador.core_message || '',
+            variants: s.mensaje_unificado_diferenciador.variantes || {},
+            linkedin_variant: s.mensaje_unificado_diferenciador.variantes?.LinkedIn || '',
+            tiktok_variant: s.mensaje_unificado_diferenciador.variantes?.TikTok || '',
+            instagram_facebook_variant: s.mensaje_unificado_diferenciador.variantes?.Instagram || ''
+          };
         }
 
         // Normalizar message_variants si viene en otro formato
@@ -427,13 +449,30 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
             if (typeof c === 'string') {
               return { name: 'Competidor', description: c };
             }
+            
+            // Normalizar strengths y weaknesses a arrays
+            let strengths = c.fortalezas || c.strengths || [];
+            if (typeof strengths === 'string') {
+              strengths = strengths.split(/[,;]/).map((s: string) => s.trim()).filter(Boolean);
+            }
+            
+            let weaknesses = c.debilidades || c.weaknesses || [];
+            if (typeof weaknesses === 'string') {
+              weaknesses = weaknesses.split(/[,;]/).map((s: string) => s.trim()).filter(Boolean);
+            }
+            
+            let digital_tactics = c.digital_tactics || c.tacticas_digitales || c.resumen_tácticas_digitales || c.digital_tactics_summary || [];
+            if (typeof digital_tactics === 'string') {
+              digital_tactics = digital_tactics.split(/[,;]/).map((s: string) => s.trim()).filter(Boolean);
+            }
+            
             return {
               ...c,
               name: c.nombre || c.name || 'Competidor',
               url: c.url || '',
-              strengths: c.fortalezas || c.strengths || '',
-              weaknesses: c.debilidades || c.weaknesses || '',
-              digital_tactics_summary: c.resumen_tácticas_digitales || c?.digital_tactics_summary || c?.digital_tactics || c?.tactics || '',
+              strengths: Array.isArray(strengths) ? strengths : [],
+              weaknesses: Array.isArray(weaknesses) ? weaknesses : [],
+              digital_tactics: Array.isArray(digital_tactics) ? digital_tactics : [],
               benchmarks: c.benchmarks_plataforma || (typeof c.benchmarks === 'string' 
                 ? { descripcion: c.benchmarks }
                 : (c.benchmarks || {}))
@@ -1243,6 +1282,103 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
             </CardHeader>
           </Card>
 
+          {/* Competitors Analysis */}
+          {strategy.competitors && strategy.competitors.length > 0 && (
+            <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  Análisis de Competidores
+                </CardTitle>
+                <p className="text-muted-foreground">Fortalezas, debilidades y estrategias digitales de la competencia</p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-6">
+                  {strategy.competitors.map((competitor: any, idx: number) => (
+                    <div key={idx} className="bg-white p-6 rounded-xl border-2 border-orange-100 space-y-4">
+                      <div className="flex items-center gap-3 pb-3 border-b border-orange-200">
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                          <span className="text-orange-600 font-bold">{idx + 1}</span>
+                        </div>
+                        <h4 className="text-lg font-bold text-gray-800">{competitor.name || `Competidor ${idx + 1}`}</h4>
+                      </div>
+                      
+                      {/* Fortalezas */}
+                      {competitor.strengths && competitor.strengths.length > 0 && (
+                        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                          <h5 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                            ✅ Fortalezas
+                          </h5>
+                          <ul className="space-y-2">
+                            {competitor.strengths.map((strength: string, sidx: number) => (
+                              <li key={sidx} className="text-sm text-green-700 flex items-start gap-2">
+                                <span className="text-green-600 mt-0.5">•</span>
+                                <span>{strength}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Debilidades */}
+                      {competitor.weaknesses && competitor.weaknesses.length > 0 && (
+                        <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                          <h5 className="font-semibold text-red-800 mb-3 flex items-center gap-2">
+                            ⚠️ Debilidades
+                          </h5>
+                          <ul className="space-y-2">
+                            {competitor.weaknesses.map((weakness: string, widx: number) => (
+                              <li key={widx} className="text-sm text-red-700 flex items-start gap-2">
+                                <span className="text-red-600 mt-0.5">•</span>
+                                <span>{weakness}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Tácticas Digitales */}
+                      {competitor.digital_tactics && competitor.digital_tactics.length > 0 && (
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                          <h5 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                            🌐 Tácticas Digitales
+                          </h5>
+                          <ul className="space-y-2">
+                            {competitor.digital_tactics.map((tactic: string, tidx: number) => (
+                              <li key={tidx} className="text-sm text-blue-700 flex items-start gap-2">
+                                <span className="text-blue-600 mt-0.5">•</span>
+                                <span>{tactic}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {/* Benchmarks */}
+                      {competitor.benchmarks && Object.keys(competitor.benchmarks).length > 0 && (
+                        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                          <h5 className="font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                            📊 Benchmarks
+                          </h5>
+                          <div className="grid grid-cols-2 gap-3">
+                            {Object.entries(competitor.benchmarks).map(([metric, value]: [string, any]) => (
+                              <div key={metric} className="bg-white p-3 rounded-lg border border-purple-100">
+                                <p className="text-xs text-purple-600 font-medium mb-1">{metric}</p>
+                                <p className="text-sm font-bold text-purple-800">{value}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Message Differentiator */}
           {strategy.core_message && (
             <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
@@ -1264,6 +1400,53 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
                     <p className="text-muted-foreground">Mensaje central de tu estrategia</p>
                   </div>
                 </div>
+                
+                {/* Variantes por Plataforma desde differentiated_message */}
+                {strategy.differentiated_message && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    {strategy.differentiated_message.linkedin_variant && (
+                      <div className="bg-white/70 p-6 rounded-xl border-2 border-blue-100 bg-blue-50">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+                            <span className="font-bold text-sm">Li</span>
+                          </div>
+                          <h4 className="font-semibold text-blue-900">LinkedIn</h4>
+                        </div>
+                        <p className="text-sm leading-relaxed text-blue-700">
+                          {strategy.differentiated_message.linkedin_variant}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {strategy.differentiated_message.tiktok_variant && (
+                      <div className="bg-white/70 p-6 rounded-xl border-2 border-purple-100 bg-purple-50">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-purple-100 text-purple-600">
+                            <span className="font-bold text-sm">Tk</span>
+                          </div>
+                          <h4 className="font-semibold text-purple-900">TikTok</h4>
+                        </div>
+                        <p className="text-sm leading-relaxed text-purple-700">
+                          {strategy.differentiated_message.tiktok_variant}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {strategy.differentiated_message.instagram_facebook_variant && (
+                      <div className="bg-white/70 p-6 rounded-xl border-2 border-pink-100 bg-pink-50">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-pink-100 text-pink-600">
+                            <span className="font-bold text-sm">Ig</span>
+                          </div>
+                          <h4 className="font-semibold text-pink-900">Instagram / Facebook</h4>
+                        </div>
+                        <p className="text-sm leading-relaxed text-pink-700">
+                          {strategy.differentiated_message.instagram_facebook_variant}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 {strategy.message_variants && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1319,7 +1502,7 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
           )}
 
           {/* Funnel Strategies */}
-          {strategy.strategies && (
+          {(strategy.strategies || strategy.funnel_strategies) && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
@@ -1332,91 +1515,189 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
               </CardHeader>
               <CardContent>
                 <div className="grid gap-6">
-                  {Object.entries(strategy.strategies).map(([phase, details]: [string, any], index) => {
-                    const phaseColors = {
-                      awareness: 'from-yellow-400 to-orange-500',
-                      consideration: 'from-blue-400 to-cyan-500', 
-                      conversion: 'from-green-400 to-emerald-500',
-                      loyalty: 'from-purple-400 to-pink-500'
-                    };
-                    const phaseEmojis = {
-                      awareness: '📢',
-                      consideration: '🤔',
-                      conversion: '💰',
-                      loyalty: '❤️'
-                    };
-                    const phaseNames = {
-                      awareness: 'Reconocimiento',
-                      consideration: 'Consideración',
-                      conversion: 'Conversión',
-                      loyalty: 'Fidelización'
-                    };
-                    
-                    const timeline = details.timeline || {};
-                    
-                    return (
-                      <div key={phase} className="relative">
-                        <div className="bg-white border-2 border-gray-100 rounded-xl p-6 hover:shadow-lg transition-all">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-4">
-                              <div className={`w-14 h-14 bg-gradient-to-r ${phaseColors[phase as keyof typeof phaseColors] || 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center shadow-lg`}>
-                                <span className="text-2xl">{phaseEmojis[phase as keyof typeof phaseEmojis] || '🎯'}</span>
-                              </div>
-                              <div>
-                                <h4 className="text-xl font-bold capitalize">
-                                  {phaseNames[phase as keyof typeof phaseNames] || phase}
-                                </h4>
-                                {typeof details.timeline === 'string' && (
-                                  <Badge variant="secondary" className="mt-1">
-                                    ⏱️ {details.timeline}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Objetivo */}
-                          <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg mb-4 border-l-4 border-primary">
-                            <h5 className="font-semibold text-sm text-muted-foreground mb-1">🎯 Objetivo</h5>
-                            <p className="text-gray-800 font-medium leading-relaxed">{details.objective}</p>
-                          </div>
-                          
-                          {/* Timeline visual (si es objeto) */}
-                          {timeline.min && timeline.med && timeline.long && (
-                            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4">
-                              <h5 className="font-semibold text-sm text-blue-800 mb-3">⏱️ Timeline de Ejecución</h5>
-                              <div className="grid grid-cols-3 gap-3">
-                                <div className="bg-white p-3 rounded-lg text-center border border-blue-100">
-                                  <p className="text-xs text-blue-600 font-medium mb-1">Corto Plazo</p>
-                                  <p className="text-sm font-bold text-blue-800">{timeline.min}</p>
+                  {/* Renderizar desde funnel_strategies si existe */}
+                  {strategy.funnel_strategies && Array.isArray(strategy.funnel_strategies) ? (
+                    strategy.funnel_strategies.map((funnelStage: any, index: number) => {
+                      const phaseColors = {
+                        awareness: 'from-yellow-400 to-orange-500',
+                        consideration: 'from-blue-400 to-cyan-500', 
+                        conversion: 'from-green-400 to-emerald-500',
+                        loyalty: 'from-purple-400 to-pink-500'
+                      };
+                      const phaseEmojis = {
+                        awareness: '📢',
+                        consideration: '🤔',
+                        conversion: '💰',
+                        loyalty: '❤️'
+                      };
+                      const phaseNames = {
+                        awareness: 'Reconocimiento',
+                        consideration: 'Consideración',
+                        conversion: 'Conversión',
+                        loyalty: 'Fidelización'
+                      };
+                      
+                      const stage = funnelStage.stage?.toLowerCase() || '';
+                      
+                      return (
+                        <div key={index} className="relative">
+                          <div className="bg-white border-2 border-gray-100 rounded-xl p-6 hover:shadow-lg transition-all">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-14 h-14 bg-gradient-to-r ${phaseColors[stage as keyof typeof phaseColors] || 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center shadow-lg`}>
+                                  <span className="text-2xl">{phaseEmojis[stage as keyof typeof phaseEmojis] || '🎯'}</span>
                                 </div>
-                                <div className="bg-white p-3 rounded-lg text-center border border-blue-100">
-                                  <p className="text-xs text-blue-600 font-medium mb-1">Mediano Plazo</p>
-                                  <p className="text-sm font-bold text-blue-800">{timeline.med}</p>
-                                </div>
-                                <div className="bg-white p-3 rounded-lg text-center border border-blue-100">
-                                  <p className="text-xs text-blue-600 font-medium mb-1">Largo Plazo</p>
-                                  <p className="text-sm font-bold text-blue-800">{timeline.long}</p>
+                                <div>
+                                  <h4 className="text-xl font-bold capitalize">
+                                    {phaseNames[stage as keyof typeof phaseNames] || funnelStage.stage || `Etapa ${index + 1}`}
+                                  </h4>
+                                  {funnelStage.timeline && (
+                                    <Badge variant="secondary" className="mt-1">
+                                      ⏱️ {funnelStage.timeline}
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
                             </div>
-                          )}
-                          
-                          {/* Canal y KPI */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
-                              <h5 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
-                                📱 Canal Principal
-                              </h5>
-                              <p className="text-sm font-bold text-gray-800">{details.main_channel || details.canal_principal}</p>
+                            
+                            {/* Objetivo */}
+                            {funnelStage.objective && (
+                              <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg mb-4 border-l-4 border-primary">
+                                <h5 className="font-semibold text-sm text-muted-foreground mb-1">🎯 Objetivo</h5>
+                                <p className="text-gray-800 font-medium leading-relaxed">{funnelStage.objective}</p>
+                              </div>
+                            )}
+                            
+                            {/* Canal y KPI */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              {funnelStage.main_channel && (
+                                <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                                  <h5 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
+                                    📱 Canal Principal
+                                  </h5>
+                                  <p className="text-sm font-bold text-gray-800">{funnelStage.main_channel}</p>
+                                </div>
+                              )}
+                              {funnelStage.main_kpi && (
+                                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                  <h5 className="font-semibold text-sm text-green-700 mb-2 flex items-center gap-2">
+                                    📊 KPI Principal
+                                  </h5>
+                                  <p className="text-sm font-bold text-gray-800">{funnelStage.main_kpi}</p>
+                                </div>
+                              )}
                             </div>
-                            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                              <h5 className="font-semibold text-sm text-green-700 mb-2 flex items-center gap-2">
-                                📊 KPI Principal
-                              </h5>
-                              <p className="text-sm font-bold text-gray-800">{details.main_kpi || details.kpi_principal}</p>
-                            </div>
+                            
+                            {/* Tácticas */}
+                            {funnelStage.tactics && funnelStage.tactics.length > 0 && (
+                              <div className="mb-4">
+                                <h5 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                                  <CheckCircle className="h-4 w-4 text-green-600" />
+                                  Tácticas Ejecutables
+                                </h5>
+                                <div className="grid gap-2">
+                                  {funnelStage.tactics.map((tactic: string, idx: number) => (
+                                    <div key={idx} className="flex items-start gap-3 bg-white p-3 rounded-lg border border-gray-200">
+                                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <span className="text-green-600 font-bold text-xs">{idx + 1}</span>
+                                      </div>
+                                      <p className="text-sm text-gray-700 leading-relaxed">{tactic}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    /* Renderizar desde strategies (formato antiguo) */
+                    Object.entries(strategy.strategies || {}).map(([phase, details]: [string, any], index) => {
+                      const phaseColors = {
+                        awareness: 'from-yellow-400 to-orange-500',
+                        consideration: 'from-blue-400 to-cyan-500', 
+                        conversion: 'from-green-400 to-emerald-500',
+                        loyalty: 'from-purple-400 to-pink-500'
+                      };
+                      const phaseEmojis = {
+                        awareness: '📢',
+                        consideration: '🤔',
+                        conversion: '💰',
+                        loyalty: '❤️'
+                      };
+                      const phaseNames = {
+                        awareness: 'Reconocimiento',
+                        consideration: 'Consideración',
+                        conversion: 'Conversión',
+                        loyalty: 'Fidelización'
+                      };
+                      
+                      const timeline = details.timeline || {};
+                      
+                      return (
+                        <div key={phase} className="relative">
+                          <div className="bg-white border-2 border-gray-100 rounded-xl p-6 hover:shadow-lg transition-all">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-14 h-14 bg-gradient-to-r ${phaseColors[phase as keyof typeof phaseColors] || 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center shadow-lg`}>
+                                  <span className="text-2xl">{phaseEmojis[phase as keyof typeof phaseEmojis] || '🎯'}</span>
+                                </div>
+                                <div>
+                                  <h4 className="text-xl font-bold capitalize">
+                                    {phaseNames[phase as keyof typeof phaseNames] || phase}
+                                  </h4>
+                                  {typeof details.timeline === 'string' && (
+                                    <Badge variant="secondary" className="mt-1">
+                                      ⏱️ {details.timeline}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Objetivo */}
+                            <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg mb-4 border-l-4 border-primary">
+                              <h5 className="font-semibold text-sm text-muted-foreground mb-1">🎯 Objetivo</h5>
+                              <p className="text-gray-800 font-medium leading-relaxed">{details.objective}</p>
+                            </div>
+                            
+                            {/* Timeline visual (si es objeto) */}
+                            {timeline.min && timeline.med && timeline.long && (
+                              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4">
+                                <h5 className="font-semibold text-sm text-blue-800 mb-3">⏱️ Timeline de Ejecución</h5>
+                                <div className="grid grid-cols-3 gap-3">
+                                  <div className="bg-white p-3 rounded-lg text-center border border-blue-100">
+                                    <p className="text-xs text-blue-600 font-medium mb-1">Corto Plazo</p>
+                                    <p className="text-sm font-bold text-blue-800">{timeline.min}</p>
+                                  </div>
+                                  <div className="bg-white p-3 rounded-lg text-center border border-blue-100">
+                                    <p className="text-xs text-blue-600 font-medium mb-1">Mediano Plazo</p>
+                                    <p className="text-sm font-bold text-blue-800">{timeline.med}</p>
+                                  </div>
+                                  <div className="bg-white p-3 rounded-lg text-center border border-blue-100">
+                                    <p className="text-xs text-blue-600 font-medium mb-1">Largo Plazo</p>
+                                    <p className="text-sm font-bold text-blue-800">{timeline.long}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Canal y KPI */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                                <h5 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
+                                  📱 Canal Principal
+                                </h5>
+                                <p className="text-sm font-bold text-gray-800">{details.main_channel || details.canal_principal}</p>
+                              </div>
+                              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                                <h5 className="font-semibold text-sm text-green-700 mb-2 flex items-center gap-2">
+                                  📊 KPI Principal
+                                </h5>
+                                <p className="text-sm font-bold text-gray-800">{details.main_kpi || details.kpi_principal}</p>
+                              </div>
+                            </div>
                           
                           {/* Tácticas Ejecutables */}
                           {details.tactics && details.tactics.length > 0 && (
@@ -1460,7 +1741,8 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
                         </div>
                       </div>
                     );
-                  })}
+                  })
+                  )}
                 </div>
               </CardContent>
             </Card>

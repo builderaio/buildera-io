@@ -250,6 +250,9 @@ export const CampaignWizard = ({
     switch(state.currentStep) {
       case 1:
         updatedCampaignData.objective = { ...updatedCampaignData.objective, ...stepData };
+        // Guardar nombre y descripción en el nivel superior para fácil acceso
+        (updatedCampaignData as any).name = stepData.name || (updatedCampaignData as any).name;
+        (updatedCampaignData as any).description = stepData.description || (updatedCampaignData as any).description;
         break;
       case 2:
         updatedCampaignData.audience = stepData;

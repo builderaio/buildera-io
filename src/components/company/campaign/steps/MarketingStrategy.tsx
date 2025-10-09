@@ -990,20 +990,29 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
             </div>
 
             {/* Objetivos de Crecimiento */}
-            {(campaignData.objective?.growth_metrics || campaignData.objective?.metrics) && (
+            {(campaignData.objective?.company_objectives?.length > 0 || campaignData.objective?.target_metrics?.companyObjectives?.length > 0) && (
               <div className="pb-6 border-b">
                 <h4 className="font-semibold text-sm text-muted-foreground mb-3 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
                   OBJETIVOS DE CRECIMIENTO
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {(campaignData.objective?.growth_metrics || campaignData.objective?.metrics || []).map((metric: any, index: number) => (
+                  {(campaignData.objective?.company_objectives || campaignData.objective?.target_metrics?.companyObjectives || []).map((objective: any, index: number) => (
                     <div key={index} className="flex items-start gap-2 bg-muted/50 p-3 rounded-lg">
                       <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{metric.name || metric.metric}</p>
-                        {metric.target && (
-                          <p className="text-xs text-muted-foreground">Meta: {metric.target}</p>
+                        <p className="text-sm font-medium">{objective.title}</p>
+                        {objective.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">{objective.description}</p>
+                        )}
+                        {objective.metrics && objective.metrics.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {objective.metrics.slice(0, 2).map((metric: any, idx: number) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {metric.name}: {metric.target_value} {metric.unit}
+                              </Badge>
+                            ))}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1038,7 +1047,25 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
                         )}
                         {audience.geographic_locations && Object.keys(audience.geographic_locations).length > 0 && (
                           <Badge variant="secondary" className="text-xs">
-                            📍 {Object.keys(audience.geographic_locations).slice(0, 2).join(', ')}
+                            📍 {(() => {
+                              const locations = audience.geographic_locations;
+                              const allLocations = [];
+                              if (locations.cities && Array.isArray(locations.cities)) {
+                                allLocations.push(...locations.cities);
+                              }
+                              if (locations.countries && Array.isArray(locations.countries)) {
+                                allLocations.push(...locations.countries);
+                              }
+                              if (locations.regions && Array.isArray(locations.regions)) {
+                                allLocations.push(...locations.regions);
+                              }
+                              return allLocations.slice(0, 3).join(', ') || 'Ubicaciones definidas';
+                            })()}
+                          </Badge>
+                        )}
+                        {audience.platform_preferences && Object.keys(audience.platform_preferences).length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            🌐 {Object.keys(audience.platform_preferences).slice(0, 2).join(', ')}
                           </Badge>
                         )}
                       </div>

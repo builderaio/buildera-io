@@ -115,7 +115,7 @@ serve(async (req) => {
     // Get comprehensive company data including all fields
     const { data: companyData, error: companyDataError } = await supabase
       .from('companies')
-      .select('name, description, website_url, industry_sector, country, location, facebook_url, twitter_url, linkedin_url, instagram_url, youtube_url, tiktok_url')
+      .select('name, description, website_url, industry_sector, country, facebook_url, twitter_url, linkedin_url, instagram_url, youtube_url, tiktok_url')
       .eq('id', companyMember.company_id)
       .single();
 
@@ -128,7 +128,7 @@ serve(async (req) => {
     // Get comprehensive company audiences data
     const { data: companyAudiences, error: audiencesError } = await supabase
       .from('company_audiences')
-      .select('name, description, gender_split, age_ranges, geographic_locations, job_titles, interests, pain_points, motivations, goals, challenges, preferred_channels')
+      .select('name, description, gender_split, age_ranges, geographic_locations, job_titles, interests, pain_points, motivations, goals, challenges, platform_preferences')
       .eq('company_id', companyMember.company_id)
       .eq('is_active', true);
 
@@ -178,9 +178,8 @@ serve(async (req) => {
     // Get company objectives (growth objectives)
     const { data: companyObjectives, error: objectivesError } = await supabase
       .from('company_objectives')
-      .select('*')
-      .eq('company_id', companyMember.company_id)
-      .eq('is_active', true);
+      .select('title, description, objective_type, target_date')
+      .eq('company_id', companyMember.company_id);
 
     if (objectivesError) {
       console.error('Error getting company objectives:', objectivesError);
@@ -316,7 +315,12 @@ serve(async (req) => {
           })(),
           plataformas_preferidas: persona.demograficos?.plataforma_preferida
             ? [persona.demograficos.plataforma_preferida]
-            : (persona.preferred_channels || []),
+            : (() => {
+              const ch = (persona as any).preferred_channels ?? (persona as any).platform_preferences ?? [];
+              if (Array.isArray(ch)) return ch;
+              if (ch && typeof ch === 'object') return Object.keys(ch);
+              return [];
+            })(),
           intereses_primarios: persona.intereses?.primary || [],
           intereses_secundarios: persona.intereses?.secondary || []
         }))

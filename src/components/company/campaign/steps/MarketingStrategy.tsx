@@ -18,10 +18,17 @@ import {
   TrendingUp,
   Lightbulb,
   Users,
-  Download
+  Download,
+  Edit2
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { 
+  EditableStrategySection, 
+  EditableText, 
+  EditableList, 
+  EditableKeyValuePair 
+} from './EditableStrategySection';
 
 interface MarketingStrategyProps {
   campaignData: any;
@@ -35,6 +42,10 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
   const [generating, setGenerating] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const { toast } = useToast();
+  
+  // Estados de edición para cada sección
+  const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [editedData, setEditedData] = useState<any>({});
 
   console.log('🔍 MarketingStrategy render - strategy:', strategy, 'generating:', generating, 'campaignData:', campaignData);
 
@@ -1592,126 +1603,144 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
             </Card>
           )}
 
-          {/* Message Differentiator */}
+          {/* Message Differentiator - EDITABLE */}
           {strategy.core_message && (
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
-                    <Target className="h-6 w-6 text-primary" />
+            <EditableStrategySection
+              title="Mensaje Diferenciador Principal"
+              icon={
+                <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                  <Target className="h-6 w-6 text-primary" />
+                </div>
+              }
+              editMode={editingSection === 'message'}
+              setEditMode={(value) => {
+                if (value) {
+                  setEditingSection('message');
+                  setEditedData({
+                    core_message: strategy.core_message,
+                    differentiated_message: strategy.differentiated_message || {},
+                    message_variants: strategy.message_variants || {}
+                  });
+                } else {
+                  setEditingSection(null);
+                }
+              }}
+              onSave={() => {
+                setStrategy({
+                  ...strategy,
+                  core_message: editedData.core_message,
+                  differentiated_message: editedData.differentiated_message,
+                  message_variants: editedData.message_variants
+                });
+                toast({
+                  title: "Mensaje actualizado",
+                  description: "Los cambios se han guardado correctamente"
+                });
+              }}
+            >
+              <div className="text-center mb-6">
+                <div className="bg-white/50 backdrop-blur p-6 rounded-xl border">
+                  <h3 className="text-2xl font-bold text-primary mb-2">
+                    {editingSection === 'message' ? (
+                      <Textarea
+                        value={editedData.core_message || ''}
+                        onChange={(e) => setEditedData({...editedData, core_message: e.target.value})}
+                        className="text-2xl font-bold text-primary text-center"
+                      />
+                    ) : (
+                      `"${strategy.core_message}"`
+                    )}
+                  </h3>
+                  <p className="text-muted-foreground">Mensaje central de tu estrategia</p>
+                </div>
+              </div>
+              
+              {/* Variantes por Plataforma desde differentiated_message */}
+              {(strategy.differentiated_message || editingSection === 'message') && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  {/* LinkedIn */}
+                  <div className="bg-white/70 p-6 rounded-xl border-2 border-blue-100 bg-blue-50">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+                        <span className="font-bold text-sm">Li</span>
+                      </div>
+                      <h4 className="font-semibold text-blue-900">LinkedIn</h4>
+                    </div>
+                    {editingSection === 'message' ? (
+                      <Textarea
+                        value={editedData.differentiated_message?.linkedin_variant || ''}
+                        onChange={(e) => setEditedData({
+                          ...editedData,
+                          differentiated_message: {
+                            ...editedData.differentiated_message,
+                            linkedin_variant: e.target.value
+                          }
+                        })}
+                        className="text-sm min-h-[100px]"
+                      />
+                    ) : (
+                      <p className="text-sm leading-relaxed text-blue-700">
+                        {strategy.differentiated_message?.linkedin_variant || 'No definido'}
+                      </p>
+                    )}
                   </div>
-                  Mensaje Diferenciador Principal
-                </CardTitle>
-                <p className="text-muted-foreground">Tu propuesta única de valor para cada plataforma</p>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center mb-6">
-                  <div className="bg-white/50 backdrop-blur p-6 rounded-xl border">
-                    <h3 className="text-2xl font-bold text-primary mb-2">
-                      "{strategy.core_message}"
-                    </h3>
-                    <p className="text-muted-foreground">Mensaje central de tu estrategia</p>
+                  
+                  {/* TikTok */}
+                  <div className="bg-white/70 p-6 rounded-xl border-2 border-purple-100 bg-purple-50">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-purple-100 text-purple-600">
+                        <span className="font-bold text-sm">Tk</span>
+                      </div>
+                      <h4 className="font-semibold text-purple-900">TikTok</h4>
+                    </div>
+                    {editingSection === 'message' ? (
+                      <Textarea
+                        value={editedData.differentiated_message?.tiktok_variant || ''}
+                        onChange={(e) => setEditedData({
+                          ...editedData,
+                          differentiated_message: {
+                            ...editedData.differentiated_message,
+                            tiktok_variant: e.target.value
+                          }
+                        })}
+                        className="text-sm min-h-[100px]"
+                      />
+                    ) : (
+                      <p className="text-sm leading-relaxed text-purple-700">
+                        {strategy.differentiated_message?.tiktok_variant || 'No definido'}
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Instagram/Facebook */}
+                  <div className="bg-white/70 p-6 rounded-xl border-2 border-pink-100 bg-pink-50">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-pink-100 text-pink-600">
+                        <span className="font-bold text-sm">Ig</span>
+                      </div>
+                      <h4 className="font-semibold text-pink-900">Instagram / Facebook</h4>
+                    </div>
+                    {editingSection === 'message' ? (
+                      <Textarea
+                        value={editedData.differentiated_message?.instagram_facebook_variant || ''}
+                        onChange={(e) => setEditedData({
+                          ...editedData,
+                          differentiated_message: {
+                            ...editedData.differentiated_message,
+                            instagram_facebook_variant: e.target.value
+                          }
+                        })}
+                        className="text-sm min-h-[100px]"
+                      />
+                    ) : (
+                      <p className="text-sm leading-relaxed text-pink-700">
+                        {strategy.differentiated_message?.instagram_facebook_variant || 'No definido'}
+                      </p>
+                    )}
                   </div>
                 </div>
-                
-                {/* Variantes por Plataforma desde differentiated_message */}
-                {strategy.differentiated_message && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    {strategy.differentiated_message.linkedin_variant && (
-                      <div className="bg-white/70 p-6 rounded-xl border-2 border-blue-100 bg-blue-50">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
-                            <span className="font-bold text-sm">Li</span>
-                          </div>
-                          <h4 className="font-semibold text-blue-900">LinkedIn</h4>
-                        </div>
-                        <p className="text-sm leading-relaxed text-blue-700">
-                          {strategy.differentiated_message.linkedin_variant}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {strategy.differentiated_message.tiktok_variant && (
-                      <div className="bg-white/70 p-6 rounded-xl border-2 border-purple-100 bg-purple-50">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-purple-100 text-purple-600">
-                            <span className="font-bold text-sm">Tk</span>
-                          </div>
-                          <h4 className="font-semibold text-purple-900">TikTok</h4>
-                        </div>
-                        <p className="text-sm leading-relaxed text-purple-700">
-                          {strategy.differentiated_message.tiktok_variant}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {strategy.differentiated_message.instagram_facebook_variant && (
-                      <div className="bg-white/70 p-6 rounded-xl border-2 border-pink-100 bg-pink-50">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-pink-100 text-pink-600">
-                            <span className="font-bold text-sm">Ig</span>
-                          </div>
-                          <h4 className="font-semibold text-pink-900">Instagram / Facebook</h4>
-                        </div>
-                        <p className="text-sm leading-relaxed text-pink-700">
-                          {strategy.differentiated_message.instagram_facebook_variant}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {strategy.message_variants && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {Object.entries(strategy.message_variants).map(([platform, message]: [string, any]) => {
-                      const platformColors = {
-                        LinkedIn: 'border-blue-100 bg-blue-50',
-                        Instagram: 'border-pink-100 bg-pink-50',
-                        TikTok: 'border-purple-100 bg-purple-50'
-                      };
-                      
-                      const platformIcons = {
-                        LinkedIn: 'Li',
-                        Instagram: 'Ig', 
-                        TikTok: 'Tk'
-                      };
-                      
-                      const platformIconColors = {
-                        LinkedIn: 'bg-blue-100 text-blue-600',
-                        Instagram: 'bg-pink-100 text-pink-600',
-                        TikTok: 'bg-purple-100 text-purple-600'
-                      };
-                      
-                      const platformTextColors = {
-                        LinkedIn: 'text-blue-900',
-                        Instagram: 'text-pink-900',
-                        TikTok: 'text-purple-900'
-                      };
-                      
-                      const platformMessageColors = {
-                        LinkedIn: 'text-blue-700',
-                        Instagram: 'text-pink-700',
-                        TikTok: 'text-purple-700'
-                      };
-                      
-                      return (
-                        <div key={platform} className={`bg-white/70 p-6 rounded-xl border-2 ${platformColors[platform as keyof typeof platformColors] || 'border-gray-100 bg-gray-50'}`}>
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${platformIconColors[platform as keyof typeof platformIconColors] || 'bg-gray-100 text-gray-600'}`}>
-                              <span className="font-bold text-sm">{platformIcons[platform as keyof typeof platformIcons] || platform.charAt(0)}</span>
-                            </div>
-                            <h4 className={`font-semibold ${platformTextColors[platform as keyof typeof platformTextColors] || 'text-gray-900'}`}>{platform}</h4>
-                          </div>
-                          <p className={`text-sm leading-relaxed ${platformMessageColors[platform as keyof typeof platformMessageColors] || 'text-gray-700'}`}>
-                            {message}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              )}
+            </EditableStrategySection>
           )}
 
           {/* Funnel Strategies */}
@@ -2082,33 +2111,43 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
             </Card>
           )}
 
-          {/* Risk Assumptions */}
+          {/* Risk Assumptions - EDITABLE */}
           {strategy.risks_assumptions && strategy.risks_assumptions.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-xl">⚠️</span>
-                  </div>
-                  Riesgos y Asunciones
-                </CardTitle>
-                <p className="text-muted-foreground">Consideraciones importantes para el éxito de la estrategia</p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {strategy.risks_assumptions.map((assumption: string, idx: number) => (
-                    <div key={idx} className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg">
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-amber-600 font-bold text-sm">{idx + 1}</span>
-                        </div>
-                        <p className="text-amber-800 text-sm leading-relaxed">{assumption}</p>
-                      </div>
-                    </div>
-                  ))}
+            <EditableStrategySection
+              title="Riesgos y Asunciones"
+              icon={
+                <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-xl">⚠️</span>
                 </div>
-              </CardContent>
-            </Card>
+              }
+              editMode={editingSection === 'risks'}
+              setEditMode={(value) => {
+                if (value) {
+                  setEditingSection('risks');
+                  setEditedData({ risks_assumptions: [...strategy.risks_assumptions] });
+                } else {
+                  setEditingSection(null);
+                }
+              }}
+              onSave={() => {
+                setStrategy({
+                  ...strategy,
+                  risks_assumptions: editedData.risks_assumptions
+                });
+                toast({
+                  title: "Riesgos actualizados",
+                  description: "Los cambios se han guardado correctamente"
+                });
+              }}
+            >
+              <EditableList
+                items={editingSection === 'risks' ? editedData.risks_assumptions || [] : strategy.risks_assumptions}
+                onChange={(items) => setEditedData({ risks_assumptions: items })}
+                editMode={editingSection === 'risks'}
+                emptyMessage="No hay riesgos definidos"
+                addButtonText="Agregar Riesgo"
+              />
+            </EditableStrategySection>
           )}
 
           {/* Execution Plan & Resources */}

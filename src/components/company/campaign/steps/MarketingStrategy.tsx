@@ -134,19 +134,7 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
       const normalizeStrategy = (raw: any) => {
         const s: any = { ...(raw || {}) };
 
-        // Map Spanish field names to English
-        if (s.análisis_competitivo) s.competitors = s.análisis_competitivo;
-        if (s.mensaje_unificado_diferenciador) {
-          s.core_message = s.mensaje_unificado_diferenciador.core_message;
-          s.message_variants = s.mensaje_unificado_diferenciador.variantes;
-        }
-        if (s.embudo_estrategias) s.strategies = s.embudo_estrategias;
-        if (s.plan_contenidos_matriz) s.content_plan = s.plan_contenidos_matriz;
-        if (s.calendario_editorial) s.editorial_calendar = s.calendario_editorial;
-        if (s.kpis_metas) s.kpis_goals = s.kpis_metas;
-        if (s.plan_ejecucion_recursos) s.execution_plan = s.plan_ejecucion_recursos;
-
-        // Canonicalizar nombres de plataformas para evitar duplicados (p. ej. linkedin vs LinkedIn)
+        // Canonicalizar nombres de plataformas
         const canon = (p: string) => {
           const k = (p || '').toLowerCase();
           if (k === 'linkedin' || k === 'linked in') return 'LinkedIn';
@@ -157,138 +145,258 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           return p || '';
         };
 
-        // message_variants como objeto { Platform: message }
-        if (Array.isArray(s.message_variants)) {
-          s.message_variants = s.message_variants.reduce((acc: Record<string, string>, item: any) => {
-            const platform = item?.platform || item?.plataforma || item?.canal;
-            const msg = item?.message || item?.mensaje || '';
-            if (platform && typeof msg === 'string') acc[canon(platform)] = msg;
-            return acc;
-          }, {} as Record<string, string>);
-        } else if (s.message_variants && typeof s.message_variants === 'object') {
-          s.message_variants = Object.entries(s.message_variants).reduce((acc: Record<string, string>, [k, v]) => {
-            acc[canon(k)] = typeof v === 'string' ? v : String(v);
-            return acc;
-          }, {} as Record<string, string>);
+        // ========== NUEVA ESTRUCTURA N8N ==========
+        
+        // 1. Procesar competidores
+        if (typeof s.competidores === 'string') {
+          s.competitors = s.competidores ? [{ name: 'Análisis General', description: s.competidores }] : [];
+        } else if (Array.isArray(s.competidores)) {
+          s.competitors = s.competidores;
         } else {
-          s.message_variants = {};
+          s.competitors = s.competitors || [];
         }
 
-        // Asegurar arrays
-        s.editorial_calendar = Array.isArray(s.editorial_calendar) ? s.editorial_calendar : [];
-        s.competitors = Array.isArray(s.competitors) ? s.competitors : [];
+        // 2. Procesar mensaje_diferenciador
+        if (s.mensaje_diferenciador) {
+          s.core_message = s.mensaje_diferenciador.core_message || '';
+          s.message_variants = {
+            LinkedIn: s.mensaje_diferenciador.linkedin || '',
+            Instagram: s.mensaje_diferenciador.instagram || '',
+            TikTok: s.mensaje_diferenciador.tiktok || ''
+          };
+        } else if (s.mensaje_unificado_diferenciador) {
+          s.core_message = s.mensaje_unificado_diferenciador.core_message;
+          s.message_variants = s.mensaje_unificado_diferenciador.variantes;
+        }
 
-        // Normalizar strategies - convertir array a objeto usando etapa/funnel_stage como key
+        // Normalizar message_variants si viene en otro formato
+        if (!s.message_variants || Object.keys(s.message_variants).length === 0) {
+          if (Array.isArray(s.message_variants)) {
+            s.message_variants = s.message_variants.reduce((acc: Record<string, string>, item: any) => {
+              const platform = item?.platform || item?.plataforma || item?.canal;
+              const msg = item?.message || item?.mensaje || '';
+              if (platform && typeof msg === 'string') acc[canon(platform)] = msg;
+              return acc;
+            }, {} as Record<string, string>);
+          } else if (s.message_variants && typeof s.message_variants === 'object') {
+            s.message_variants = Object.entries(s.message_variants).reduce((acc: Record<string, string>, [k, v]) => {
+              acc[canon(k)] = typeof v === 'string' ? v : String(v);
+              return acc;
+            }, {} as Record<string, string>);
+          } else {
+            s.message_variants = {};
+          }
+        }
+
+        // 3. Procesar estrategias_embudo
+        if (s.estrategias_embudo) {
+          const mapStageKeys: Record<string, string> = {
+            'conciencia': 'awareness',
+            'consideracion': 'consideration',
+            'conversion': 'conversion',
+            'lealtad': 'loyalty',
+            'awareness': 'awareness',
+            'consideration': 'consideration',
+            'loyalty': 'loyalty'
+          };
+
+          s.strategies = {};
+          Object.entries(s.estrategias_embudo).forEach(([stage, details]: [string, any]) => {
+            const normalizedStage = mapStageKeys[stage.toLowerCase()] || stage.toLowerCase();
+            
+            // Separar tácticas ejecutables de moonshots
+            const allTactics = details.tacticas || details.tactics || [];
+            const executableTactics = allTactics
+              .filter((t: any) => !t.tipo || t.tipo === 'ejecutable')
+              .map((t: any) => t.tactica || t.tactic || String(t));
+            const moonshotTactics = allTactics
+              .filter((t: any) => t.tipo === 'moonshot')
+              .map((t: any) => t.tactica || t.tactic || String(t));
+
+            s.strategies[normalizedStage] = {
+              objective: details.objetivo || details.objective || '',
+              tactics: executableTactics,
+              moonshot_tactics: moonshotTactics,
+              main_channel: details.canal_principal || details.main_channel || '',
+              main_kpi: details.kpi_principal || details.main_kpi || '',
+              timeline: details.timeline || { min: '', med: '', long: '' }
+            };
+          });
+        } else if (s.embudo_estrategias) {
+          // Formato antiguo
+          s.strategies = s.embudo_estrategias;
+        }
+
+        // Fallback para strategies si aún no está normalizado
         if (Array.isArray(s.strategies)) {
           const strategiesObj: Record<string, any> = {};
           s.strategies.forEach((strategy: any) => {
             const stage = (strategy.etapa || strategy.funnel_stage || '').toLowerCase();
-            if (stage) {
-              strategiesObj[stage] = strategy;
-            }
+            if (stage) strategiesObj[stage] = strategy;
           });
           s.strategies = strategiesObj;
-        } else if (s.strategies_by_funnel_stage && typeof s.strategies_by_funnel_stage === 'object') {
+        } else if (s.strategies_by_funnel_stage) {
           s.strategies = s.strategies_by_funnel_stage;
-        } else if (s.strategies && typeof s.strategies === 'object') {
-          // mantener strategies existente
-        } else if (s.funnel_strategies && typeof s.funnel_strategies === 'object') {
+        } else if (s.funnel_strategies) {
           s.strategies = s.funnel_strategies;
-        } else {
+        } else if (!s.strategies || typeof s.strategies !== 'object') {
           s.strategies = {};
         }
 
-        // Normalizar content_plan - convertir array a objeto usando canal/channel como key
-        if (Array.isArray(s.content_plan)) {
-          const planObj: Record<string, any> = {};
-          s.content_plan.forEach((plan: any) => {
+        // 4. Procesar plan_contenidos
+        if (Array.isArray(s.plan_contenidos)) {
+          s.content_plan = {};
+          s.plan_contenidos.forEach((plan: any) => {
             const channel = canon(plan.canal || plan.channel || '');
             if (channel) {
-              planObj[channel] = plan;
+              s.content_plan[channel] = {
+                formats: plan.formatos || plan.formats || [],
+                tone: plan.tono || plan.tone || '',
+                cta: Array.isArray(plan.cta) ? plan.cta.join(' / ') : (plan.cta || ''),
+                frequency: plan.frecuencia_post_semana 
+                  ? `${plan.frecuencia_post_semana} posts/semana`
+                  : (plan.frequency || ''),
+                justification: plan.justificacion || plan.justification || ''
+              };
             }
           });
-          s.content_plan = planObj;
-        } else if (s.content_plan && typeof s.content_plan === 'object') {
-          // Canonicalizar claves del plan de contenido
-          s.content_plan = Object.entries(s.content_plan).reduce((acc: Record<string, any>, [k, v]) => {
-            acc[canon(k)] = v;
-            return acc;
-          }, {} as Record<string, any>);
-        } else {
-          s.content_plan = {};
+        } else if (s.plan_contenidos_matriz) {
+          s.content_plan = s.plan_contenidos_matriz;
         }
 
-        // Normalizar KPIs - prioridad: kpis_goals array > kpis array > kpis_and_goals
-        if (Array.isArray(s.kpis_goals)) {
-          // Formato N8N: array de objetos con kpi y meta
-          s.kpis_goals = s.kpis_goals.map((item: any) => ({
-            kpi: item.kpi || item.name || String(item),
-            goal: item.meta || item.goal || 'Meta no definida'
-          }));
-        } else if (Array.isArray(s.kpis)) {
-          // Formato alternativo: array de objetos con name y goal
-          s.kpis_goals = s.kpis.map((kpi: any) => ({
-            kpi: kpi.name || String(kpi),
-            goal: kpi.goal || 'Meta no definida'
-          }));
-        } else if (s.kpis_and_goals && typeof s.kpis_and_goals === 'object') {
-          if (s.kpis_and_goals.kpis && s.kpis_and_goals.goals) {
-            // Formato: { kpis: ["Alcance", "CTR"], goals: ["Aumentar alcance 30%", "Mejorar CTR 5%"] }
-            const kpis = Array.isArray(s.kpis_and_goals.kpis) ? s.kpis_and_goals.kpis : [];
-            const goals = Array.isArray(s.kpis_and_goals.goals) ? s.kpis_and_goals.goals : [];
-            
-            s.kpis_goals = kpis.map((kpi: string, index: number) => ({
-              kpi: kpi,
-              goal: goals[index] || 'Meta no definida'
-            }));
+        // Normalizar content_plan adicional si viene en otro formato
+        if (!s.content_plan || Object.keys(s.content_plan).length === 0) {
+          if (Array.isArray(s.content_plan)) {
+            const planObj: Record<string, any> = {};
+            s.content_plan.forEach((plan: any) => {
+              const channel = canon(plan.canal || plan.channel || '');
+              if (channel) planObj[channel] = plan;
+            });
+            s.content_plan = planObj;
+          } else if (s.content_plan && typeof s.content_plan === 'object') {
+            s.content_plan = Object.entries(s.content_plan).reduce((acc: Record<string, any>, [k, v]) => {
+              acc[canon(k)] = v;
+              return acc;
+            }, {} as Record<string, any>);
           } else {
-            // Fallback: tratar kpis_and_goals como objeto directo
-            s.kpis_goals = Object.entries(s.kpis_and_goals).map(([k, v]) => ({
+            s.content_plan = {};
+          }
+        }
+
+        // 5. Procesar kpi_metas
+        if (s.kpi_metas && s.kpi_metas.KPIs && s.kpi_metas.Metas_8_semanas) {
+          const kpis = s.kpi_metas.KPIs || [];
+          const metas = s.kpi_metas.Metas_8_semanas || {};
+          
+          s.kpis_goals = kpis.map((kpi: string) => ({
+            kpi: kpi,
+            goal: metas[kpi] || 'Meta no definida'
+          }));
+        } else if (s.kpis_metas && typeof s.kpis_metas === 'object') {
+          // Formato alternativo de kpis_metas
+          if (!s.kpis_metas.KPIs) {
+            s.kpis_goals = Object.entries(s.kpis_metas).map(([k, v]) => ({
               kpi: String(k),
               goal: String(v)
             }));
           }
-        } else if (Array.isArray(s.kpis_goals)) {
-          // mantener kpis_goals existente si ya es array
-        } else if (s.kpis_goals && typeof s.kpis_goals === 'object') {
-          // Formato anterior
-          const labels: Record<string, string> = {
-            reach: 'Alcance',
-            impressions: 'Impresiones',
-            ctr: 'CTR',
-            leads: 'Leads',
-            conversion_rate: 'Tasa de conversión',
-            'conversion rate': 'Tasa de conversión',
-            cac: 'CAC estimado'
-          };
-          s.kpis_goals = Object.entries(s.kpis_goals).map(([k, v]) => {
-            const key = typeof k === 'string' ? k.toLowerCase() : String(k);
-            return {
-              kpi: labels[key] || (k as string),
-              goal: String(v)
-            };
-          });
-        } else {
-          s.kpis_goals = [];
         }
 
-        // Normalizar risks_assumptions
+        // Fallback para KPIs de otros formatos
+        if (!s.kpis_goals || s.kpis_goals.length === 0) {
+          if (Array.isArray(s.kpis_goals)) {
+            s.kpis_goals = s.kpis_goals.map((item: any) => ({
+              kpi: item.kpi || item.name || String(item),
+              goal: item.meta || item.goal || 'Meta no definida'
+            }));
+          } else if (Array.isArray(s.kpis)) {
+            s.kpis_goals = s.kpis.map((kpi: any) => ({
+              kpi: kpi.name || String(kpi),
+              goal: kpi.goal || 'Meta no definida'
+            }));
+          } else if (s.kpis_and_goals && typeof s.kpis_and_goals === 'object') {
+            if (s.kpis_and_goals.kpis && s.kpis_and_goals.goals) {
+              const kpis = Array.isArray(s.kpis_and_goals.kpis) ? s.kpis_and_goals.kpis : [];
+              const goals = Array.isArray(s.kpis_and_goals.goals) ? s.kpis_and_goals.goals : [];
+              s.kpis_goals = kpis.map((kpi: string, index: number) => ({
+                kpi: kpi,
+                goal: goals[index] || 'Meta no definida'
+              }));
+            } else {
+              s.kpis_goals = Object.entries(s.kpis_and_goals).map(([k, v]) => ({
+                kpi: String(k),
+                goal: String(v)
+              }));
+            }
+          } else if (s.kpis_goals && typeof s.kpis_goals === 'object') {
+            const labels: Record<string, string> = {
+              reach: 'Alcance',
+              impressions: 'Impresiones',
+              ctr: 'CTR',
+              leads: 'Leads',
+              conversion_rate: 'Tasa de conversión',
+              'conversion rate': 'Tasa de conversión',
+              cac: 'CAC estimado'
+            };
+            s.kpis_goals = Object.entries(s.kpis_goals).map(([k, v]) => {
+              const key = typeof k === 'string' ? k.toLowerCase() : String(k);
+              return {
+                kpi: labels[key] || (k as string),
+                goal: String(v)
+              };
+            });
+          } else {
+            s.kpis_goals = [];
+          }
+        }
+
+        // 6. Procesar plan_ejecucion_recursos
+        if (s.plan_ejecucion_recursos) {
+          s.execution_plan = {
+            steps: s.plan_ejecucion_recursos.pasos_operativos || [],
+            roles: s.plan_ejecucion_recursos.roles_necesarios || [],
+            assets: s.plan_ejecucion_recursos.activos_crear || s.plan_ejecucion_recursos.activos_a_crear || [],
+            budget: s.plan_ejecucion_recursos.estimacion_presupuesto_por_canal || {}
+          };
+        } else if (s.execution_plan && typeof s.execution_plan === 'object') {
+          s.execution_plan = {
+            steps: s.execution_plan.pasos_operativos || s.execution_plan.steps || [],
+            roles: s.execution_plan.roles_necesarios || s.execution_plan.roles || [],
+            assets: s.execution_plan.activos_a_crear || s.execution_plan.activos_crear || s.execution_plan.assets || [],
+            budget: s.execution_plan.presupuesto_estimado_canal || s.execution_plan.estimacion_presupuesto_por_canal || s.execution_plan.budget || {}
+          };
+        }
+
+        // 7. Procesar sources
+        s.sources = Array.isArray(s.sources) ? s.sources : [];
+
+        // 8. Procesar risks_assumptions
         s.risks_assumptions = Array.isArray(s.risks_assumptions) ? s.risks_assumptions : [];
 
-        // Normalizar competidores
-        s.competitors = (s.competitors || []).map((c: any) => ({
-          ...c,
-          name: c.nombre || c.name || '',
-          url: c.url || '',
-          strengths: c.fortalezas || c.strengths || '',
-          weaknesses: c.debilidades || c.weaknesses || '',
-          digital_tactics_summary: c.resumen_tácticas_digitales || c?.digital_tactics_summary || c?.digital_tactics || c?.tactics || '',
-          benchmarks: c.benchmarks_plataforma || (typeof c.benchmarks === 'string' 
-            ? { descripcion: c.benchmarks }
-            : (c.benchmarks || {}))
-        }));
+        // 9. Normalizar competidores adicionales si es array de objetos
+        if (Array.isArray(s.competitors)) {
+          s.competitors = s.competitors.map((c: any) => {
+            if (typeof c === 'string') {
+              return { name: 'Competidor', description: c };
+            }
+            return {
+              ...c,
+              name: c.nombre || c.name || 'Competidor',
+              url: c.url || '',
+              strengths: c.fortalezas || c.strengths || '',
+              weaknesses: c.debilidades || c.weaknesses || '',
+              digital_tactics_summary: c.resumen_tácticas_digitales || c?.digital_tactics_summary || c?.digital_tactics || c?.tactics || '',
+              benchmarks: c.benchmarks_plataforma || (typeof c.benchmarks === 'string' 
+                ? { descripcion: c.benchmarks }
+                : (c.benchmarks || {}))
+            };
+          });
+        }
 
-        // Normalizar y deduplicar calendario editorial
+        // 10. Calendario editorial (si existe)
+        s.editorial_calendar = Array.isArray(s.editorial_calendar) ? s.editorial_calendar : [];
+        s.editorial_calendar = Array.isArray(s.calendario_editorial) ? s.calendario_editorial : s.editorial_calendar;
+        
         if (Array.isArray(s.editorial_calendar)) {
           s.editorial_calendar = s.editorial_calendar.map((item: any) => ({
             ...item,
@@ -306,16 +414,6 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
             seen.add(key);
             return true;
           });
-        }
-
-        // Normalizar plan de ejecución
-        if (s.execution_plan && typeof s.execution_plan === 'object') {
-          s.execution_plan = {
-            steps: s.execution_plan.pasos_operativos || s.execution_plan.steps || [],
-            roles: s.execution_plan.roles_necesarios || s.execution_plan.roles || [],
-            assets: s.execution_plan.activos_a_crear || s.execution_plan.assets || [],
-            budget: s.execution_plan.presupuesto_estimado_canal || s.execution_plan.budget || {}
-          };
         }
 
         return s;
@@ -415,13 +513,14 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
     }
 
     const strategyData = {
-      strategy: strategy,
+      strategy: strategy, // Guardar toda la estrategia normalizada completa
       competitors: strategy.competitors || [],
       content_plan: strategy.content_plan || {},
       editorial_calendar: strategy.editorial_calendar || [],
       kpis: strategy.kpis_goals || [],
       execution_plan: strategy.execution_plan || {},
       risks_assumptions: strategy.risks_assumptions || [],
+      sources: strategy.sources || [],
       message_differentiator: {
         core: strategy.core_message || '',
         linkedin_variation: strategy.message_variants?.LinkedIn || '',
@@ -433,6 +532,7 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
       final_strategy: isEditing ? editedStrategy : strategy
     };
 
+    console.log('💾 Guardando estrategia completa:', strategyData);
     onComplete(strategyData);
   };
 
@@ -773,6 +873,12 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
                       conversion: 'from-green-400 to-emerald-500',
                       loyalty: 'from-purple-400 to-pink-500'
                     };
+                    const phaseEmojis = {
+                      awareness: '📢',
+                      consideration: '🤔',
+                      conversion: '💰',
+                      loyalty: '❤️'
+                    };
                     const phaseNames = {
                       awareness: 'Reconocimiento',
                       consideration: 'Consideración',
@@ -780,51 +886,111 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
                       loyalty: 'Fidelización'
                     };
                     
+                    const timeline = details.timeline || {};
+                    
                     return (
                       <div key={phase} className="relative">
-                        <div className="bg-white border-2 border-gray-100 rounded-xl p-6 hover:shadow-lg transition-shadow">
+                        <div className="bg-white border-2 border-gray-100 rounded-xl p-6 hover:shadow-lg transition-all">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-4">
-                              <div className={`w-12 h-12 bg-gradient-to-r ${phaseColors[phase as keyof typeof phaseColors] || 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center text-white font-bold text-lg`}>
-                                {index + 1}
+                              <div className={`w-14 h-14 bg-gradient-to-r ${phaseColors[phase as keyof typeof phaseColors] || 'from-gray-400 to-gray-500'} rounded-xl flex items-center justify-center shadow-lg`}>
+                                <span className="text-2xl">{phaseEmojis[phase as keyof typeof phaseEmojis] || '🎯'}</span>
                               </div>
                               <div>
                                 <h4 className="text-xl font-bold capitalize">
                                   {phaseNames[phase as keyof typeof phaseNames] || phase}
                                 </h4>
-                                <Badge variant="secondary" className="mt-1">
-                                  {details.timeline}
-                                </Badge>
+                                {typeof details.timeline === 'string' && (
+                                  <Badge variant="secondary" className="mt-1">
+                                    ⏱️ {details.timeline}
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           </div>
                           
-                          <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                            <p className="text-gray-700 font-medium">{details.objective}</p>
+                          {/* Objetivo */}
+                          <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg mb-4 border-l-4 border-primary">
+                            <h5 className="font-semibold text-sm text-muted-foreground mb-1">🎯 Objetivo</h5>
+                            <p className="text-gray-800 font-medium leading-relaxed">{details.objective}</p>
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                              <h5 className="font-semibold text-sm text-primary mb-2">Canal Principal</h5>
-                              <p className="text-sm bg-primary/10 px-3 py-2 rounded-lg">{details.main_channel}</p>
-                            </div>
-                            <div>
-                              <h5 className="font-semibold text-sm text-green-600 mb-2">KPI Objetivo</h5>
-                              <p className="text-sm bg-green-50 px-3 py-2 rounded-lg">{details.main_kpi}</p>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <h5 className="font-semibold text-sm mb-3">Tácticas Específicas:</h5>
-                            <div className="grid gap-2">
-                              {details.tactics?.map((tactic: string, idx: number) => (
-                                <div key={idx} className="flex items-start gap-3">
-                                  <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                                  <p className="text-sm text-gray-700">{tactic}</p>
+                          {/* Timeline visual (si es objeto) */}
+                          {timeline.min && timeline.med && timeline.long && (
+                            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4">
+                              <h5 className="font-semibold text-sm text-blue-800 mb-3">⏱️ Timeline de Ejecución</h5>
+                              <div className="grid grid-cols-3 gap-3">
+                                <div className="bg-white p-3 rounded-lg text-center border border-blue-100">
+                                  <p className="text-xs text-blue-600 font-medium mb-1">Corto Plazo</p>
+                                  <p className="text-sm font-bold text-blue-800">{timeline.min}</p>
                                 </div>
-                              ))}
+                                <div className="bg-white p-3 rounded-lg text-center border border-blue-100">
+                                  <p className="text-xs text-blue-600 font-medium mb-1">Mediano Plazo</p>
+                                  <p className="text-sm font-bold text-blue-800">{timeline.med}</p>
+                                </div>
+                                <div className="bg-white p-3 rounded-lg text-center border border-blue-100">
+                                  <p className="text-xs text-blue-600 font-medium mb-1">Largo Plazo</p>
+                                  <p className="text-sm font-bold text-blue-800">{timeline.long}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Canal y KPI */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                              <h5 className="font-semibold text-sm text-primary mb-2 flex items-center gap-2">
+                                📱 Canal Principal
+                              </h5>
+                              <p className="text-sm font-bold text-gray-800">{details.main_channel || details.canal_principal}</p>
+                            </div>
+                            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                              <h5 className="font-semibold text-sm text-green-700 mb-2 flex items-center gap-2">
+                                📊 KPI Principal
+                              </h5>
+                              <p className="text-sm font-bold text-gray-800">{details.main_kpi || details.kpi_principal}</p>
                             </div>
                           </div>
+                          
+                          {/* Tácticas Ejecutables */}
+                          {details.tactics && details.tactics.length > 0 && (
+                            <div className="mb-4">
+                              <h5 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4 text-green-600" />
+                                Tácticas Ejecutables
+                              </h5>
+                              <div className="grid gap-2">
+                                {details.tactics.map((tactic: string, idx: number) => (
+                                  <div key={idx} className="flex items-start gap-3 bg-white p-3 rounded-lg border border-gray-200">
+                                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                      <span className="text-green-600 font-bold text-xs">{idx + 1}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 leading-relaxed">{tactic}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Tácticas Moonshot */}
+                          {details.moonshot_tactics && details.moonshot_tactics.length > 0 && (
+                            <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border-2 border-purple-200">
+                              <h5 className="font-semibold text-sm mb-3 flex items-center gap-2 text-purple-800">
+                                <Sparkles className="h-4 w-4" />
+                                🚀 Tácticas Moonshot (Alto Impacto)
+                              </h5>
+                              <div className="grid gap-2">
+                                {details.moonshot_tactics.map((tactic: string, idx: number) => (
+                                  <div key={idx} className="flex items-start gap-3 bg-white/70 p-3 rounded-lg border border-purple-300">
+                                    <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                      <Sparkles className="h-3 w-3 text-purple-600" />
+                                    </div>
+                                    <p className="text-sm text-purple-900 font-medium leading-relaxed">{tactic}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -984,95 +1150,160 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
             </Card>
           )}
 
-          {/* Competitors Analysis */}
-          {strategy.competitors && strategy.competitors.length > 0 && (
+          {/* Execution Plan & Resources */}
+          {strategy.execution_plan && (strategy.execution_plan.steps?.length > 0 || strategy.execution_plan.roles?.length > 0) && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
-                  <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg flex items-center justify-center">
-                    <Target className="h-6 w-6 text-white" />
+                  <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <Zap className="h-6 w-6 text-white" />
                   </div>
-                  Análisis de Competencia
+                  Plan de Ejecución y Recursos
                 </CardTitle>
-                <p className="text-muted-foreground">Conoce a tu competencia y sus estrategias digitales</p>
+                <p className="text-muted-foreground">Pasos operativos, roles necesarios y presupuesto estimado</p>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-6">
-                  {strategy.competitors.map((competitor: any, idx: number) => (
-                    <div key={idx} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                            {idx + 1}
-                          </div>
-                          <div>
-                            <h4 className="text-xl font-bold text-gray-800">{competitor.name}</h4>
-                            <a href={competitor.url} target="_blank" rel="noopener noreferrer" 
-                               className="text-primary text-sm hover:underline flex items-center gap-1">
-                              <span>🌐</span>
-                              {competitor.url}
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                        <h5 className="font-semibold text-sm text-gray-600 mb-2">Tácticas Digitales</h5>
-                        <p className="text-sm text-gray-700">{competitor.digital_tactics_summary}</p>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-green-600">✅</span>
-                            <h5 className="font-semibold text-green-800">Fortalezas</h5>
-                          </div>
-                          <p className="text-sm text-green-700">{competitor.strengths}</p>
-                        </div>
-                        <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-red-600">⚠️</span>
-                            <h5 className="font-semibold text-red-800">Debilidades</h5>
-                          </div>
-                          <p className="text-sm text-red-700">{competitor.weaknesses}</p>
-                        </div>
-                      </div>
-                      
-                      {competitor.benchmarks && (
-                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                          <h5 className="font-semibold text-blue-800 mb-3">📊 Benchmarks de Redes Sociales</h5>
-                          {typeof competitor.benchmarks === 'string' ? (
-                            <div className="bg-white p-3 rounded-lg border">
-                              <p className="text-sm text-gray-700">{competitor.benchmarks}</p>
+                  {/* Pasos Operativos */}
+                  {strategy.execution_plan.steps && strategy.execution_plan.steps.length > 0 && (
+                    <div>
+                      <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-blue-600" />
+                        Pasos Operativos
+                      </h4>
+                      <div className="grid gap-2">
+                        {strategy.execution_plan.steps.map((step: string, idx: number) => (
+                          <div key={idx} className="flex items-start gap-3 bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200">
+                            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
+                              {idx + 1}
                             </div>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                              {Object.entries(competitor.benchmarks)
-                                .filter(([platform]) => platform !== 'sources')
-                                .map(([platform, data]: [string, any]) => (
-                                  <div key={`${competitor.name}-${platform}`} className="bg-white p-3 rounded-lg border">
-                                    <h6 className="font-medium text-sm text-gray-700 capitalize">{platform}</h6>
-                                    <p className="text-xs text-gray-600">
-                                      {typeof data === 'string' ? data : data?.frequency || 'No disponible'}
-                                    </p>
-                                    {data?.engagement_rate && (
-                                      <p className="text-xs text-blue-600 font-medium">
-                                        Engagement: {data.engagement_rate}
-                                      </p>
-                                    )}
-                                  </div>
-                                ))
-                              }
-                            </div>
-                          )}
-                        </div>
-                      )}
+                            <p className="text-sm text-gray-800 leading-relaxed pt-1">{step}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
+                  
+                  {/* Roles y Activos */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {strategy.execution_plan.roles && strategy.execution_plan.roles.length > 0 && (
+                      <div className="bg-purple-50 border border-purple-200 p-5 rounded-lg">
+                        <h5 className="font-bold text-purple-800 mb-3 flex items-center gap-2">
+                          <Users className="h-5 w-5" />
+                          Roles Necesarios
+                        </h5>
+                        <div className="space-y-2">
+                          {strategy.execution_plan.roles.map((role: string, idx: number) => (
+                            <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded border border-purple-100">
+                              <span className="text-purple-600">👤</span>
+                              <p className="text-sm text-gray-800">{role}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {strategy.execution_plan.assets && strategy.execution_plan.assets.length > 0 && (
+                      <div className="bg-orange-50 border border-orange-200 p-5 rounded-lg">
+                        <h5 className="font-bold text-orange-800 mb-3 flex items-center gap-2">
+                          <Lightbulb className="h-5 w-5" />
+                          Activos a Crear
+                        </h5>
+                        <div className="space-y-2">
+                          {strategy.execution_plan.assets.map((asset: string, idx: number) => (
+                            <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded border border-orange-100">
+                              <span className="text-orange-600">📄</span>
+                              <p className="text-sm text-gray-800">{asset}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Presupuesto por Canal */}
+                  {strategy.execution_plan.budget && Object.keys(strategy.execution_plan.budget).length > 0 && (
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 p-5 rounded-lg">
+                      <h4 className="font-bold text-lg text-green-800 mb-4 flex items-center gap-2">
+                        💰 Presupuesto Estimado por Canal
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Object.entries(strategy.execution_plan.budget).map(([channel, budget]: [string, any]) => (
+                          <div key={channel} className="bg-white p-4 rounded-lg border border-green-200 shadow-sm">
+                            <h5 className="font-semibold text-gray-700 mb-2">{channel}</h5>
+                            <p className="text-xl font-bold text-green-700">{budget}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           )}
+
+          {/* Sources & Competitors Analysis */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Sources */}
+            {strategy.sources && strategy.sources.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-lg">
+                    <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-sm">📚</span>
+                    </div>
+                    Fuentes de Información
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {strategy.sources.map((source: string, idx: number) => (
+                      <div key={idx} className="bg-indigo-50 border border-indigo-200 p-3 rounded-lg">
+                        <p className="text-xs text-indigo-800 leading-relaxed">{source}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Competitors Quick View */}
+            {strategy.competitors && strategy.competitors.length > 0 && typeof strategy.competitors[0] !== 'string' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-lg">
+                    <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg flex items-center justify-center">
+                      <Target className="h-4 w-4 text-white" />
+                    </div>
+                    Análisis de Competencia
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {strategy.competitors.map((competitor: any, idx: number) => (
+                    <div key={idx} className="mb-4 last:mb-0 bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                          {idx + 1}
+                        </div>
+                        <div>
+                          <h5 className="font-bold text-gray-800">{competitor.name}</h5>
+                          {competitor.url && (
+                            <a href={competitor.url} target="_blank" rel="noopener noreferrer" 
+                               className="text-xs text-primary hover:underline">
+                              {competitor.url}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      {competitor.description && (
+                        <p className="text-xs text-gray-600 mt-2">{competitor.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       )}
 

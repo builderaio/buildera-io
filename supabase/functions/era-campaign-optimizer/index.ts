@@ -1,4 +1,11 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,10 +26,11 @@ serve(async (req) => {
       industry 
     } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY no está configurada");
-    }
+    console.log('ERA Campaign Optimizer - Processing request:', { 
+      campaignName, 
+      objectiveType, 
+      companyName 
+    });
 
     // Construir contexto para ERA
     const systemPrompt = `Eres ERA, un asistente de marketing especializado en optimizar descripciones de campañas.
@@ -55,56 +63,46 @@ Genera una descripción optimizada que sea:
 
 Devuelve SOLO la descripción optimizada, sin explicaciones adicionales.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+    // Llamar al universal AI handler
+    const { data: response, error } = await supabase.functions.invoke('universal-ai-handler', {
+      body: {
+        functionName: 'campaign_description_optimization',
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
         ],
-        temperature: 0.7,
-        max_tokens: 300
-      }),
+        context: {
+          campaignName,
+          objectiveType,
+          companyName,
+          industry,
+          maxTokens: 300
+        }
+      }
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Límite de solicitudes excedido. Intenta de nuevo en unos momentos." }), 
-          {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Por favor, recarga tu cuenta." }), 
-          {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      const errorText = await response.text();
-      console.error("Error del gateway de IA:", response.status, errorText);
-      throw new Error(`Error del gateway de IA: ${response.status}`);
+    if (error) {
+      throw new Error(`Universal AI Handler error: ${error.message}`);
     }
 
-    const data = await response.json();
-    const optimizedDescription = data.choices?.[0]?.message?.content?.trim();
+    if (!response.success) {
+      throw new Error(response.error || 'Error desconocido del handler universal');
+    }
+
+    const optimizedDescription = response.optimizedText || response.response;
 
     if (!optimizedDescription) {
       throw new Error("No se pudo generar una descripción optimizada");
     }
 
+    console.log('ERA Campaign Optimizer - Response generated successfully');
+
     return new Response(
-      JSON.stringify({ optimizedDescription }), 
+      JSON.stringify({ 
+        optimizedDescription,
+        provider: response.provider,
+        model: response.model 
+      }), 
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }

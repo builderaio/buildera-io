@@ -237,10 +237,19 @@ serve(async (req) => {
       .limit(1);
 
     // Build active social networks array
-    const redesSocialesHabilitadas = [];
+    const redesSocialesHabilitadas: string[] = [];
     if (linkedinConnection && linkedinConnection.length > 0) redesSocialesHabilitadas.push('linkedin');
     if (facebookConnection && facebookConnection.length > 0) redesSocialesHabilitadas.push('facebook', 'instagram');
     if (tiktokConnection && tiktokConnection.length > 0) redesSocialesHabilitadas.push('tiktok');
+
+    // Fallback: infer active networks from company social URLs if no connections are linked
+    if (redesSocialesHabilitadas.length === 0 && companyData) {
+      if (companyData.linkedin_url) redesSocialesHabilitadas.push('linkedin');
+      if (companyData.facebook_url) redesSocialesHabilitadas.push('facebook');
+      if (companyData.instagram_url) redesSocialesHabilitadas.push('instagram');
+      if (companyData.youtube_url) redesSocialesHabilitadas.push('youtube');
+      if (companyData.tiktok_url) redesSocialesHabilitadas.push('tiktok');
+    }
 
     console.log('Active social networks:', redesSocialesHabilitadas);
 
@@ -249,10 +258,10 @@ serve(async (req) => {
       // EMPRESA (simplificado - solo info activa)
       empresa: {
         nombre: companyData?.name || input.nombre_empresa,
-        descripcion: companyData?.description || 'No especificado',
-        industria: companyData?.industry_sector || 'No especificado',
-        pais: companyData?.country || 'No especificado',
-        sitio_web: companyData?.website_url || 'No especificado',
+        descripcion: companyData?.description || input.objetivo_de_negocio || 'No especificado',
+        industria: companyData?.industry_sector || input.industria || 'No especificado',
+        pais: companyData?.country || input.pais || 'No especificado',
+        sitio_web: companyData?.website_url || input.url_sitio_web || 'No especificado',
         redes_sociales_activas: redesSocialesHabilitadas
       },
       
@@ -284,12 +293,14 @@ serve(async (req) => {
           tipo: input.tipo_objetivo_campana || 'awareness',
           descripcion: input.objetivo_campana || 'No especificado'
         },
-        objetivos_crecimiento: (companyObjectives || []).map((obj: any) => ({
-          nombre: obj.title,
-          descripcion: obj.description,
-          tipo: obj.objective_type,
-          plazo: obj.target_date
-        })),
+        objetivos_crecimiento: (Array.isArray(input.objetivos_crecimiento) && input.objetivos_crecimiento.length > 0)
+          ? input.objetivos_crecimiento
+          : (companyObjectives || []).map((obj: any) => ({
+            nombre: obj.title,
+            descripcion: obj.description,
+            tipo: obj.objective_type,
+            plazo: obj.target_date
+          })),
         audiencias_seleccionadas: (input.audiencia_objetivo?.buyer_personas || []).map((persona: any) => ({
           nombre: persona.nombre_ficticio || persona.name || 'Audiencia',
           descripcion: persona.descripcion || persona.description || '',

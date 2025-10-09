@@ -38,18 +38,34 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
   useEffect(() => {
     const saveCurrentData = () => {
       if (selectedAudiences.length > 0 && onDataChange) {
-        const buyerPersonas = selectedAudiences.map(audience => ({
-          id: audience.id,
-          nombre_ficticio: audience.name,
-          descripcion: audience.description,
-          demograficos: {
-            edad: audience.age_ranges ? Object.keys(audience.age_ranges)[0] : '',
-            ubicacion: audience.geographic_locations ? Object.keys(audience.geographic_locations)[0] : '',
-            plataforma_preferida: audience.platform_preferences ? Object.keys(audience.platform_preferences)[0] : ''
-          },
-          intereses: audience.interests || [],
-          comportamientos: audience.behaviors || []
-        }));
+        const buyerPersonas = selectedAudiences.map(audience => {
+          // Build a readable location string while also passing the structured locations
+          const loc = audience.geographic_locations || {};
+          let ubicacionText = '';
+          if (Array.isArray(loc.cities) && loc.cities.length) {
+            ubicacionText = loc.cities.slice(0, 2).join(', ');
+          } else if (Array.isArray(loc.regions) && loc.regions.length) {
+            ubicacionText = loc.regions.slice(0, 2).join(', ');
+          } else if (Array.isArray(loc.countries) && loc.countries.length) {
+            ubicacionText = loc.countries.slice(0, 2).join(', ');
+          } else if (Object.keys(loc).length > 0) {
+            ubicacionText = Object.keys(loc)[0];
+          }
+
+        return ({
+            id: audience.id,
+            nombre_ficticio: audience.name,
+            descripcion: audience.description,
+            demograficos: {
+              edad: audience.age_ranges ? Object.keys(audience.age_ranges)[0] : '',
+              ubicacion: ubicacionText,
+              plataforma_preferida: audience.platform_preferences ? Object.keys(audience.platform_preferences)[0] : ''
+            },
+            geographic_locations: audience.geographic_locations || {},
+            intereses: audience.interests || [],
+            comportamientos: audience.behaviors || []
+          });
+        });
 
         const audienceData = {
           selected_audiences: selectedAudiences,
@@ -124,18 +140,33 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
     }
 
     // Convert selected audiences to buyer_personas format for compatibility with strategy step
-    const buyerPersonas = selectedAudiences.map(audience => ({
-      id: audience.id,
-      nombre_ficticio: audience.name,
-      descripcion: audience.description,
-      demograficos: {
-        edad: audience.age_ranges ? Object.keys(audience.age_ranges)[0] : '',
-        ubicacion: audience.geographic_locations ? Object.keys(audience.geographic_locations)[0] : '',
-        plataforma_preferida: audience.platform_preferences ? Object.keys(audience.platform_preferences)[0] : ''
-      },
-      intereses: audience.interests || [],
-      comportamientos: audience.behaviors || []
-    }));
+    const buyerPersonas = selectedAudiences.map(audience => {
+      const loc = audience.geographic_locations || {};
+      let ubicacionText = '';
+      if (Array.isArray(loc.cities) && loc.cities.length) {
+        ubicacionText = loc.cities.slice(0, 2).join(', ');
+      } else if (Array.isArray(loc.regions) && loc.regions.length) {
+        ubicacionText = loc.regions.slice(0, 2).join(', ');
+      } else if (Array.isArray(loc.countries) && loc.countries.length) {
+        ubicacionText = loc.countries.slice(0, 2).join(', ');
+      } else if (Object.keys(loc).length > 0) {
+        ubicacionText = Object.keys(loc)[0];
+      }
+
+      return ({
+        id: audience.id,
+        nombre_ficticio: audience.name,
+        descripcion: audience.description,
+        demograficos: {
+          edad: audience.age_ranges ? Object.keys(audience.age_ranges)[0] : '',
+          ubicacion: ubicacionText,
+          plataforma_preferida: audience.platform_preferences ? Object.keys(audience.platform_preferences)[0] : ''
+        },
+        geographic_locations: audience.geographic_locations || {},
+        intereses: audience.interests || [],
+        comportamientos: audience.behaviors || []
+      });
+    });
 
     const audienceData = {
       selected_audiences: selectedAudiences,

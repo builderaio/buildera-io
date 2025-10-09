@@ -103,11 +103,20 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
     setGenerating(true);
     
     try {
+      const objetivosSeleccionados = (campaignData.objective?.company_objectives || []).map((obj: any) => ({
+        nombre: obj.title || obj.name,
+        descripcion: obj.description || '',
+        tipo: obj.objective_type || obj.type || '',
+        plazo: obj.target_date || obj.deadline || null
+      }));
+
       const strategyInput = {
         ...campaignData.company,
         nombre_campana: campaignData.name || 'Nueva Campaña',
+        descripcion_campana: campaignData.description || campaignData.objective?.description || '',
         objetivo_campana: campaignData.objective?.goal || '',
         tipo_objetivo_campana: campaignData.objective?.type || 'awareness', // consideration, conversion, etc.
+        objetivos_crecimiento: objetivosSeleccionados,
         audiencia_objetivo: {
           buyer_personas: campaignData.audience?.buyer_personas || []
         }

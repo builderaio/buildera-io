@@ -506,14 +506,16 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
       
       console.log('✅ Strategy state updated successfully, strategy keys:', Object.keys(normalized));
       
-      // Esperar un momento antes de ocultar el loader para asegurar que el estado se actualice
-      setTimeout(() => {
-        setGenerating(false);
-        toast({
-          title: "¡Estrategia generada!",
-          description: "Tu estrategia de marketing personalizada está lista",
+      // Esperar a que React actualice el estado y el DOM antes de ocultar el loader
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setGenerating(false);
+          toast({
+            title: "¡Estrategia generada!",
+            description: "Tu estrategia de marketing personalizada está lista",
+          });
         });
-      }, 500);
+      });
     } catch (error: any) {
       console.error('💥 Error generating strategy:', error);
       setStrategy(null); // Reset strategy on error
@@ -1224,7 +1226,7 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
       />
 
       {/* Generated Strategy */}
-      {strategy && (
+      {strategy && !generating && (
         <div className="space-y-6">
           {/* Strategy Success Header */}
           <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">

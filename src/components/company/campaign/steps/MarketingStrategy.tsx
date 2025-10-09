@@ -17,8 +17,11 @@ import {
   Loader2,
   TrendingUp,
   Lightbulb,
-  Users
+  Users,
+  Download
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface MarketingStrategyProps {
   campaignData: any;
@@ -502,6 +505,383 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
     }
   };
 
+  const downloadStrategyPDF = async () => {
+    if (!strategy) return;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let yPosition = 20;
+
+      // Función helper para agregar marca de agua en cada página
+      const addWatermark = () => {
+        doc.setTextColor(220, 220, 220);
+        doc.setFontSize(40);
+        doc.text('BUILDERA', pageWidth / 2, pageHeight / 2, {
+          align: 'center',
+          angle: 45
+        });
+        doc.setTextColor(0, 0, 0);
+      };
+
+      // Función helper para agregar pie de página
+      const addFooter = (pageNum: number) => {
+        const footerY = pageHeight - 15;
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Generado por Buildera - www.buildera.io', pageWidth / 2, footerY, { align: 'center' });
+        doc.text(`Página ${pageNum}`, pageWidth - 20, footerY, { align: 'right' });
+      };
+
+      // Función helper para verificar espacio y agregar nueva página si es necesario
+      const checkAddPage = (requiredSpace: number) => {
+        if (yPosition + requiredSpace > pageHeight - 25) {
+          addFooter(doc.getCurrentPageInfo().pageNumber);
+          doc.addPage();
+          addWatermark();
+          yPosition = 20;
+          return true;
+        }
+        return false;
+      };
+
+      // Primera página - Header
+      addWatermark();
+      
+      // Logo y título (usando texto en lugar de imagen)
+      doc.setFillColor(60, 70, 178); // Color Buildera
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.text('BUILDERA', 20, 25);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Estrategia de Marketing', 20, 33);
+
+      // Info de campaña
+      doc.setTextColor(0, 0, 0);
+      yPosition = 55;
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Estrategia de Marketing', 20, yPosition);
+      
+      yPosition += 10;
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Campaña: ${campaignData.name || 'Sin nombre'}`, 20, yPosition);
+      yPosition += 7;
+      doc.text(`Empresa: ${campaignData.company?.nombre_empresa || 'No definido'}`, 20, yPosition);
+      yPosition += 7;
+      doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 20, yPosition);
+      
+      // Mensaje Diferenciador
+      if (strategy.core_message) {
+        yPosition += 15;
+        checkAddPage(40);
+        
+        doc.setFillColor(60, 70, 178);
+        doc.rect(20, yPosition - 5, pageWidth - 40, 0.5, 'F');
+        yPosition += 3;
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 70, 178);
+        doc.text('MENSAJE DIFERENCIADOR', 20, yPosition);
+        
+        yPosition += 8;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+        const messageLines = doc.splitTextToSize(strategy.core_message, pageWidth - 40);
+        doc.text(messageLines, 20, yPosition);
+        yPosition += messageLines.length * 6 + 5;
+
+        // Variaciones por plataforma
+        if (strategy.message_variants && Object.keys(strategy.message_variants).length > 0) {
+          Object.entries(strategy.message_variants).forEach(([platform, message]) => {
+            checkAddPage(25);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${platform}:`, 25, yPosition);
+            yPosition += 6;
+            doc.setFont('helvetica', 'normal');
+            const variantLines = doc.splitTextToSize(message as string, pageWidth - 50);
+            doc.text(variantLines, 25, yPosition);
+            yPosition += variantLines.length * 5 + 3;
+          });
+        }
+      }
+
+      // Estrategias por Etapa del Funnel
+      if (strategy.strategies && Object.keys(strategy.strategies).length > 0) {
+        yPosition += 10;
+        checkAddPage(40);
+        
+        doc.setFillColor(60, 70, 178);
+        doc.rect(20, yPosition - 5, pageWidth - 40, 0.5, 'F');
+        yPosition += 3;
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 70, 178);
+        doc.text('ESTRATEGIAS POR ETAPA DEL FUNNEL', 20, yPosition);
+        yPosition += 10;
+
+        const phaseNames: Record<string, string> = {
+          awareness: 'Reconocimiento',
+          consideration: 'Consideración',
+          conversion: 'Conversión',
+          loyalty: 'Fidelización'
+        };
+
+        Object.entries(strategy.strategies).forEach(([phase, details]: [string, any]) => {
+          checkAddPage(60);
+          
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(0, 0, 0);
+          doc.text(phaseNames[phase] || phase, 20, yPosition);
+          yPosition += 7;
+
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'italic');
+          const objectiveLines = doc.splitTextToSize(`Objetivo: ${details.objective}`, pageWidth - 40);
+          doc.text(objectiveLines, 25, yPosition);
+          yPosition += objectiveLines.length * 5 + 5;
+
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Canal Principal: ${details.main_channel || details.canal_principal || 'N/A'}`, 25, yPosition);
+          yPosition += 5;
+          doc.text(`KPI Principal: ${details.main_kpi || details.kpi_principal || 'N/A'}`, 25, yPosition);
+          yPosition += 8;
+
+          if (details.tactics && details.tactics.length > 0) {
+            doc.setFont('helvetica', 'bold');
+            doc.text('Tácticas:', 25, yPosition);
+            yPosition += 5;
+            doc.setFont('helvetica', 'normal');
+            
+            details.tactics.forEach((tactic: string, idx: number) => {
+              checkAddPage(15);
+              const tacticLines = doc.splitTextToSize(`${idx + 1}. ${tactic}`, pageWidth - 50);
+              doc.text(tacticLines, 30, yPosition);
+              yPosition += tacticLines.length * 5 + 2;
+            });
+          }
+
+          if (details.moonshot_tactics && details.moonshot_tactics.length > 0) {
+            yPosition += 3;
+            checkAddPage(20);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(147, 51, 234); // Purple
+            doc.text('Tácticas Moonshot:', 25, yPosition);
+            yPosition += 5;
+            doc.setFont('helvetica', 'normal');
+            
+            details.moonshot_tactics.forEach((tactic: string, idx: number) => {
+              checkAddPage(15);
+              const tacticLines = doc.splitTextToSize(`• ${tactic}`, pageWidth - 50);
+              doc.text(tacticLines, 30, yPosition);
+              yPosition += tacticLines.length * 5 + 2;
+            });
+            doc.setTextColor(0, 0, 0);
+          }
+
+          yPosition += 8;
+        });
+      }
+
+      // Plan de Contenido
+      if (strategy.content_plan && Object.keys(strategy.content_plan).length > 0) {
+        checkAddPage(40);
+        
+        doc.setFillColor(60, 70, 178);
+        doc.rect(20, yPosition - 5, pageWidth - 40, 0.5, 'F');
+        yPosition += 3;
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 70, 178);
+        doc.text('PLAN DE CONTENIDO', 20, yPosition);
+        yPosition += 10;
+        doc.setTextColor(0, 0, 0);
+
+        Object.entries(strategy.content_plan).forEach(([platform, config]: [string, any]) => {
+          checkAddPage(35);
+          
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(platform, 20, yPosition);
+          yPosition += 6;
+
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Frecuencia: ${config.frequency || 'N/A'}`, 25, yPosition);
+          yPosition += 5;
+          doc.text(`Tono: ${config.tone || 'N/A'}`, 25, yPosition);
+          yPosition += 5;
+          
+          if (config.formats && Array.isArray(config.formats)) {
+            doc.text(`Formatos: ${config.formats.join(', ')}`, 25, yPosition);
+            yPosition += 5;
+          }
+          
+          if (config.cta) {
+            const ctaLines = doc.splitTextToSize(`CTA: ${config.cta}`, pageWidth - 50);
+            doc.text(ctaLines, 25, yPosition);
+            yPosition += ctaLines.length * 5;
+          }
+          
+          yPosition += 8;
+        });
+      }
+
+      // KPIs y Objetivos
+      if (strategy.kpis_goals && strategy.kpis_goals.length > 0) {
+        checkAddPage(40);
+        
+        doc.setFillColor(60, 70, 178);
+        doc.rect(20, yPosition - 5, pageWidth - 40, 0.5, 'F');
+        yPosition += 3;
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 70, 178);
+        doc.text('KPIS Y OBJETIVOS', 20, yPosition);
+        yPosition += 10;
+        doc.setTextColor(0, 0, 0);
+
+        const kpiTableData = strategy.kpis_goals.map((kpi: any) => [
+          kpi.kpi,
+          kpi.goal
+        ]);
+
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['KPI', 'Meta']],
+          body: kpiTableData,
+          theme: 'grid',
+          headStyles: { fillColor: [60, 70, 178], textColor: 255 },
+          margin: { left: 20, right: 20 },
+          didDrawPage: (data) => {
+            addWatermark();
+            addFooter(doc.getCurrentPageInfo().pageNumber);
+          }
+        });
+
+        yPosition = (doc as any).lastAutoTable.finalY + 10;
+      }
+
+      // Plan de Ejecución
+      if (strategy.execution_plan && (strategy.execution_plan.steps?.length > 0 || strategy.execution_plan.roles?.length > 0)) {
+        checkAddPage(40);
+        
+        doc.setFillColor(60, 70, 178);
+        doc.rect(20, yPosition - 5, pageWidth - 40, 0.5, 'F');
+        yPosition += 3;
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 70, 178);
+        doc.text('PLAN DE EJECUCIÓN', 20, yPosition);
+        yPosition += 10;
+        doc.setTextColor(0, 0, 0);
+
+        if (strategy.execution_plan.steps && strategy.execution_plan.steps.length > 0) {
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Pasos Operativos:', 20, yPosition);
+          yPosition += 6;
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+
+          strategy.execution_plan.steps.forEach((step: string, idx: number) => {
+            checkAddPage(12);
+            const stepLines = doc.splitTextToSize(`${idx + 1}. ${step}`, pageWidth - 45);
+            doc.text(stepLines, 25, yPosition);
+            yPosition += stepLines.length * 5 + 2;
+          });
+          yPosition += 5;
+        }
+
+        if (strategy.execution_plan.roles && strategy.execution_plan.roles.length > 0) {
+          checkAddPage(20);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Roles Necesarios:', 20, yPosition);
+          yPosition += 6;
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.text(strategy.execution_plan.roles.join(', '), 25, yPosition, { maxWidth: pageWidth - 45 });
+          yPosition += 10;
+        }
+
+        if (strategy.execution_plan.budget && Object.keys(strategy.execution_plan.budget).length > 0) {
+          checkAddPage(30);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Presupuesto Estimado:', 20, yPosition);
+          yPosition += 6;
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+
+          Object.entries(strategy.execution_plan.budget).forEach(([channel, budget]) => {
+            checkAddPage(8);
+            doc.text(`${channel}: ${budget}`, 25, yPosition);
+            yPosition += 5;
+          });
+        }
+      }
+
+      // Riesgos y Asunciones
+      if (strategy.risks_assumptions && strategy.risks_assumptions.length > 0) {
+        yPosition += 5;
+        checkAddPage(40);
+        
+        doc.setFillColor(60, 70, 178);
+        doc.rect(20, yPosition - 5, pageWidth - 40, 0.5, 'F');
+        yPosition += 3;
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 70, 178);
+        doc.text('RIESGOS Y ASUNCIONES', 20, yPosition);
+        yPosition += 10;
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+
+        strategy.risks_assumptions.forEach((risk: string, idx: number) => {
+          checkAddPage(12);
+          const riskLines = doc.splitTextToSize(`${idx + 1}. ${risk}`, pageWidth - 45);
+          doc.text(riskLines, 25, yPosition);
+          yPosition += riskLines.length * 5 + 3;
+        });
+      }
+
+      // Footer en la última página
+      addFooter(doc.getCurrentPageInfo().pageNumber);
+
+      // Guardar PDF
+      const fileName = `Estrategia_Marketing_${campaignData.name || 'Buildera'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(fileName);
+
+      toast({
+        title: "✅ PDF Descargado",
+        description: "Tu estrategia ha sido descargada exitosamente"
+      });
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      toast({
+        title: "Error al generar PDF",
+        description: "No se pudo generar el archivo PDF. Intenta nuevamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleComplete = () => {
     if (!strategy) {
       toast({
@@ -726,7 +1106,7 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
         </Card>
       )}
 
-      {/* Strategy Display with Regenerate Option */}
+      {/* Strategy Display with Regenerate and Download Options */}
       {strategy && !generating && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
@@ -734,21 +1114,32 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
               <CheckCircle className="h-5 w-5 text-green-600" />
               Estrategia Generada
             </h3>
-            <Button
-              onClick={() => {
-                if (confirm('¿Estás seguro de que quieres regenerar la estrategia? Esto reemplazará la estrategia actual.')) {
-                  setStrategy(null);
-                  setEditedStrategy('');
-                  generateStrategy();
-                }
-              }}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              Regenerar Estrategia
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={downloadStrategyPDF}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Descargar PDF
+              </Button>
+              <Button
+                onClick={() => {
+                  if (confirm('¿Estás seguro de que quieres regenerar la estrategia? Esto reemplazará la estrategia actual.')) {
+                    setStrategy(null);
+                    setEditedStrategy('');
+                    generateStrategy();
+                  }
+                }}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                Regenerar Estrategia
+              </Button>
+            </div>
           </div>
         </div>
       )}

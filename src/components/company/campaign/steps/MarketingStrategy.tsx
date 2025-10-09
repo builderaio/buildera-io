@@ -168,8 +168,11 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           s.competitors = s.competitors || [];
         }
 
-        // 2. Procesar mensaje_diferenciador
-        if (s.mensaje_diferenciador) {
+        // 2. Procesar mensaje_diferenciador (priorizar formato N8N)
+        if (s.differentiated_message) {
+          s.core_message = s.differentiated_message.core_message || '';
+          s.message_variants = s.differentiated_message.variants || {};
+        } else if (s.mensaje_diferenciador) {
           s.core_message = s.mensaje_diferenciador.core_message || '';
           s.message_variants = {
             LinkedIn: s.mensaje_diferenciador.linkedin || '',
@@ -200,8 +203,11 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           }
         }
 
-        // 3. Procesar estrategias_embudo
-        if (s.estrategias_embudo) {
+        // 3. Procesar estrategias_embudo (priorizar formato N8N funnel_strategies)
+        if (s.funnel_strategies && typeof s.funnel_strategies === 'object') {
+          // Formato directo de N8N
+          s.strategies = s.funnel_strategies;
+        } else if (s.estrategias_embudo) {
           const mapStageKeys: Record<string, string> = {
             'conciencia': 'awareness',
             'consideracion': 'consideration',
@@ -249,14 +255,24 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           s.strategies = strategiesObj;
         } else if (s.strategies_by_funnel_stage) {
           s.strategies = s.strategies_by_funnel_stage;
-        } else if (s.funnel_strategies) {
-          s.strategies = s.funnel_strategies;
         } else if (!s.strategies || typeof s.strategies !== 'object') {
           s.strategies = {};
         }
 
-        // 4. Procesar plan_contenidos
-        if (Array.isArray(s.plan_contenidos)) {
+        // 4. Procesar plan_contenidos (priorizar formato N8N content_plan)
+        if (s.content_plan && typeof s.content_plan === 'object' && !Array.isArray(s.content_plan)) {
+          // Formato directo de N8N - ya viene con estructura correcta
+          const hasValidStructure = Object.values(s.content_plan).some((v: any) => 
+            v && typeof v === 'object' && (v.formats || v.tone || v.cta || v.recommended_frequency)
+          );
+          if (hasValidStructure) {
+            // Ya está en formato correcto, solo canonicalizar las keys
+            s.content_plan = Object.entries(s.content_plan).reduce((acc: Record<string, any>, [k, v]) => {
+              acc[canon(k)] = v;
+              return acc;
+            }, {} as Record<string, any>);
+          }
+        } else if (Array.isArray(s.plan_contenidos)) {
           s.content_plan = {};
           s.plan_contenidos.forEach((plan: any) => {
             const channel = canon(plan.canal || plan.channel || '');
@@ -295,8 +311,21 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           }
         }
 
-        // 5. Procesar kpi_metas
-        if (s.kpi_metas && s.kpi_metas.KPIs && s.kpi_metas.Metas_8_semanas) {
+        // 5. Procesar kpi_metas (priorizar formato N8N kpis_goals_8_weeks)
+        if (s.kpis_goals_8_weeks && typeof s.kpis_goals_8_weeks === 'object') {
+          const labels: Record<string, string> = {
+            reach: 'Alcance',
+            impressions: 'Impresiones',
+            ctr: 'CTR',
+            leads: 'Leads',
+            conversion_rate: 'Tasa de conversión',
+            estimated_cac: 'CAC estimado'
+          };
+          s.kpis_goals = Object.entries(s.kpis_goals_8_weeks).map(([k, v]) => ({
+            kpi: labels[k] || k,
+            goal: String(v)
+          }));
+        } else if (s.kpi_metas && s.kpi_metas.KPIs && s.kpi_metas.Metas_8_semanas) {
           const kpis = s.kpi_metas.KPIs || [];
           const metas = s.kpi_metas.Metas_8_semanas || {};
           
@@ -362,8 +391,15 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           }
         }
 
-        // 6. Procesar plan_ejecucion_recursos
-        if (s.plan_ejecucion_recursos) {
+        // 6. Procesar plan_ejecucion_recursos (priorizar formato N8N execution_plan_resources)
+        if (s.execution_plan_resources) {
+          s.execution_plan = {
+            steps: s.execution_plan_resources.steps || [],
+            roles: s.execution_plan_resources.roles_needed || [],
+            assets: s.execution_plan_resources.assets_to_create || [],
+            budget: s.execution_plan_resources.budget_estimation_per_channel || {}
+          };
+        } else if (s.plan_ejecucion_recursos) {
           s.execution_plan = {
             steps: s.plan_ejecucion_recursos.pasos_operativos || [],
             roles: s.plan_ejecucion_recursos.roles_necesarios || [],

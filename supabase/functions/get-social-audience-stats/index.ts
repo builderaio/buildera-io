@@ -295,7 +295,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         data: audienceStats,
-        accounts_processed: socialAccounts.length
+        accounts_processed: accountsToProcess.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

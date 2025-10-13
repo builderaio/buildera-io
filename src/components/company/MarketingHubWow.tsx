@@ -83,13 +83,18 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     const tab = searchParams.get('tab');
     const view = searchParams.get('view');
     
+    console.log('🔍 [MarketingHubWow] URL params:', { tab, view });
+    
     // If coming from audiencias route, open analyze tab  
     if (view === 'marketing-hub' && tab === 'analyze') {
       setActiveTab('analyze');
     } else if (tab) {
       const allowed = new Set(['dashboard', 'create', 'analyze', 'content', 'history', 'campaigns', 'calendar', 'configuracion']);
       if (allowed.has(tab)) {
+        console.log('✅ [MarketingHubWow] Cambiando a tab:', tab);
         setActiveTab(tab);
+      } else {
+        console.warn('⚠️ [MarketingHubWow] Tab no permitido:', tab);
       }
     }
   }, [searchParams]);
@@ -752,6 +757,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         <TabsContent value="dashboard" className="space-y-6">
           <div className="space-y-6">
             {/* Enhanced Content Analysis - Full Width for Wow Effect */}
+            {/* DISABLED: Comentado para evitar que aparezca el modal de análisis automáticamente
             <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-blue-50 via-white to-purple-50">
               <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -764,6 +770,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 <ContentAnalysisDashboard profile={profile} />
               </CardContent>
             </Card>
+            */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Enhanced Network Analysis */}

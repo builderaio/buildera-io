@@ -87,6 +87,50 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
     };
   };
 
+  // Helper para traducir tipos de alcanzabilidad a texto legible
+  const getReachabilityLabel = (key: string): string => {
+    const labels: Record<string, string> = {
+      'r0_500': '0-500 seguidores',
+      'r500_1000': '500-1K seguidores',
+      'r1000_1500': '1K-1.5K seguidores',
+      'r1500_plus': '1.5K+ seguidores'
+    };
+    return labels[key] || key;
+  };
+
+  // Helper para traducir tipos de seguidores a texto legible
+  const getFollowerTypeLabel = (key: string): string => {
+    const labels: Record<string, string> = {
+      'real': 'Seguidores Reales',
+      'influencer': 'Influencers',
+      'massfollowers': 'Seguidores Masivos',
+      'suspicious': 'Seguidores Sospechosos'
+    };
+    return labels[key] || key;
+  };
+
+  // Helper para descripciones adicionales de tipos de seguidores
+  const getFollowerTypeDescription = (key: string): string => {
+    const descriptions: Record<string, string> = {
+      'real': 'Cuentas genuinas con actividad orgánica',
+      'influencer': 'Cuentas con alta influencia y engagement',
+      'massfollowers': 'Cuentas que siguen a muchos usuarios',
+      'suspicious': 'Cuentas con patrones inusuales'
+    };
+    return descriptions[key] || '';
+  };
+
+  // Helper para descripción de alcanzabilidad
+  const getReachabilityDescription = (key: string): string => {
+    const descriptions: Record<string, string> = {
+      'r0_500': 'Micro-audiencias personales',
+      'r500_1000': 'Audiencias pequeñas',
+      'r1000_1500': 'Audiencias emergentes',
+      'r1500_plus': 'Audiencias establecidas'
+    };
+    return descriptions[key] || '';
+  };
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -927,37 +971,83 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
           </Card>
         )}
 
-        {/* Tipos de Audiencia */}
+        {/* Calidad y Alcanzabilidad de Audiencia */}
         {((mainProfile.members_types && mainProfile.members_types.length > 0) ||
           (mainProfile.members_reachability && mainProfile.members_reachability.length > 0)) && (
           <Card>
             <CardContent className="p-6">
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-primary" />
-                Análisis de Audiencia
+                Composición de Audiencia
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {mainProfile.members_types && mainProfile.members_types.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium mb-3">Tipos de Seguidores:</p>
-                    <div className="space-y-2">
-                      {mainProfile.members_types.map((type: any, idx: number) => (
-                        <div key={idx} className="flex justify-between items-center">
-                          <span className="text-sm capitalize">{type.name}</span>
-                          <span className="text-sm font-medium">{(type.percent * 100).toFixed(1)}%</span>
-                        </div>
-                      ))}
+                    <div className="mb-4">
+                      <p className="text-sm font-semibold text-foreground mb-1">Calidad de Seguidores</p>
+                      <p className="text-xs text-muted-foreground">
+                        Composición y autenticidad de tu audiencia
+                      </p>
+                    </div>
+                    <div className="space-y-4">
+                      {mainProfile.members_types.map((type: any, idx: number) => {
+                        const isPositive = type.name === 'real' || type.name === 'influencer';
+                        const isNegative = type.name === 'suspicious';
+                        const colorClass = isPositive ? 'text-green-600 dark:text-green-400' : 
+                                         isNegative ? 'text-red-600 dark:text-red-400' : 
+                                         'text-yellow-600 dark:text-yellow-400';
+                        
+                        return (
+                          <div key={idx} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-foreground">
+                                    {getFollowerTypeLabel(type.name)}
+                                  </span>
+                                  <span className={`text-sm font-bold ${colorClass}`}>
+                                    {(type.percent * 100).toFixed(1)}%
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {getFollowerTypeDescription(type.name)}
+                                </p>
+                              </div>
+                            </div>
+                            <Progress value={type.percent * 100} className="h-2" />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
                 {mainProfile.members_reachability && mainProfile.members_reachability.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium mb-3">Alcanzabilidad:</p>
-                    <div className="space-y-2">
+                    <div className="mb-4">
+                      <p className="text-sm font-semibold text-foreground mb-1">Alcanzabilidad de Seguidores</p>
+                      <p className="text-xs text-muted-foreground">
+                        Distribución según el tamaño de audiencia de tus seguidores
+                      </p>
+                    </div>
+                    <div className="space-y-4">
                       {mainProfile.members_reachability.map((reach: any, idx: number) => (
-                        <div key={idx} className="flex justify-between items-center">
-                          <span className="text-sm">{reach.name}</span>
-                          <span className="text-sm font-medium">{(reach.percent * 100).toFixed(1)}%</span>
+                        <div key={idx} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-foreground">
+                                  {getReachabilityLabel(reach.name)}
+                                </span>
+                                <span className="text-sm font-bold text-primary">
+                                  {(reach.percent * 100).toFixed(1)}%
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {getReachabilityDescription(reach.name)}
+                              </p>
+                            </div>
+                          </div>
+                          <Progress value={reach.percent * 100} className="h-2" />
                         </div>
                       ))}
                     </div>

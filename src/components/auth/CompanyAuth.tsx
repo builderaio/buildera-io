@@ -85,10 +85,25 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           return;
         }
 
+        // Validar requisitos de contraseña de Supabase
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        
         if (password.length < 8) {
           toast({
-            title: "Error",
-            description: "Password must be at least 8 characters long",
+            title: "Contraseña débil",
+            description: "La contraseña debe tener al menos 8 caracteres",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (!hasLowerCase || !hasUpperCase || !hasNumber) {
+          toast({
+            title: "Contraseña débil",
+            description: "La contraseña debe contener al menos: una letra minúscula (a-z), una letra mayúscula (A-Z) y un número (0-9)",
             variant: "destructive",
           });
           setLoading(false);
@@ -258,8 +273,12 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       
       // Mostrar mensajes de error más específicos
       let errorMessage = error.message;
+      let errorTitle = "Error";
       
-      if (error.message?.includes('Invalid login credentials')) {
+      if (error.code === 'weak_password' || error.message?.includes('Password should contain')) {
+        errorTitle = "Contraseña débil";
+        errorMessage = "La contraseña debe contener al menos: una letra minúscula (a-z), una letra mayúscula (A-Z) y un número (0-9)";
+      } else if (error.message?.includes('Invalid login credentials')) {
         errorMessage = "Email o contraseña incorrectos";
       } else if (error.message?.includes('Email not confirmed')) {
         errorMessage = "Tu cuenta necesita ser verificada. Por favor revisa tu email y haz clic en el enlace de verificación. Si no encuentras el email, revisa tu carpeta de spam.";
@@ -270,7 +289,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       }
       
       toast({
-        title: "Error",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive",
       });

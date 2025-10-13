@@ -674,13 +674,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <AdvancedAILoader 
-          isVisible={true}
-          currentStep={2}
-          totalSteps={6}
-          stepTitle="Inicializando Marketing Hub..."
-          stepDescription="Cargando datos de tu ecosistema de marketing"
-        />
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Cargando Marketing Hub...</p>
+        </div>
       </div>
     );
   }

@@ -33,6 +33,23 @@ interface AudienceStats {
   error?: string
 }
 
+// Función para extraer username de URL
+function extractUsernameFromUrl(url: string, platform: string): string | null {
+  const patterns: Record<string, RegExp> = {
+    instagram: /instagram\.com\/([^\/\?]+)/,
+    facebook: /facebook\.com\/([^\/\?]+)/,
+    twitter: /(?:twitter|x)\.com\/([^\/\?]+)/,
+    tiktok: /tiktok\.com\/@([^\/\?]+)/,
+    youtube: /youtube\.com\/(?:@|channel\/|user\/)([^\/\?]+)/
+  }
+  
+  const pattern = patterns[platform.toLowerCase()]
+  if (!pattern) return null
+  
+  const match = url.match(pattern)
+  return match ? match[1] : null
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -55,23 +72,64 @@ Deno.serve(async (req) => {
       throw new Error('User not authenticated')
     }
 
-    const { data: socialAccounts, error: accountsError } = await supabase
-      .from('social_accounts')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('is_connected', true)
+    // Leer el body para obtener social_urls
+    const body = await req.json()
+    const { social_urls } = body
 
-    if (accountsError) {
-      console.error('Error fetching social accounts:', accountsError)
-      throw new Error('Failed to fetch social accounts')
+    console.log('📨 Request received:', { 
+      userId: user.id, 
+      hasSocialUrls: !!social_urls,
+      urlsCount: social_urls ? Object.keys(social_urls).length : 0
+    })
+
+    let accountsToProcess: Array<{platform: string, username: string, userId?: string}> = []
+
+    // Opción 1: Si se enviaron URLs, procesarlas
+    if (social_urls && Object.keys(social_urls).length > 0) {
+      console.log('🔗 Processing from URLs:', social_urls)
+      for (const [platform, url] of Object.entries(social_urls)) {
+        const username = extractUsernameFromUrl(url as string, platform)
+        if (username) {
+          accountsToProcess.push({ platform, username })
+          console.log(`✅ Extracted ${platform}: ${username}`)
+        } else {
+          console.log(`❌ Failed to extract username from ${platform}: ${url}`)
+        }
+      }
+    }
+    // Opción 2: Si no hay URLs, buscar en social_accounts (comportamiento original)
+    else {
+      console.log('🔍 No URLs provided, checking social_accounts...')
+      const { data: socialAccounts, error: accountsError } = await supabase
+        .from('social_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_connected', true)
+
+      if (accountsError) {
+        console.error('Error fetching social accounts:', accountsError)
+        throw new Error('Failed to fetch social accounts')
+      }
+
+      if (socialAccounts && socialAccounts.length > 0) {
+        accountsToProcess = socialAccounts.map(acc => ({
+          platform: acc.platform,
+          username: acc.platform_user_id || acc.username,
+          userId: acc.platform_user_id
+        }))
+        console.log('📋 Found connected accounts:', accountsToProcess.length)
+      }
     }
 
-    if (!socialAccounts || socialAccounts.length === 0) {
+    // Si no hay nada que procesar
+    if (accountsToProcess.length === 0) {
+      console.log('⚠️ No accounts to process')
       return new Response(
         JSON.stringify({ 
-          success: true, 
-          data: [], 
-          message: 'No connected social accounts found' 
+          success: false, 
+          error: 'No social URLs or connected accounts found',
+          message: 'Por favor agrega URLs de redes sociales o conecta cuentas',
+          data: []
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -79,34 +137,35 @@ Deno.serve(async (req) => {
 
     const audienceStats: AudienceStats[] = []
 
-    // Procesar cada cuenta social conectada
-    for (const account of socialAccounts) {
+    // Procesar cada cuenta
+    for (const account of accountsToProcess) {
       try {
         let cid = ''
+        const username = account.username
         
         // Mapear plataforma a prefijo de CID según la documentación
         switch (account.platform.toLowerCase()) {
           case 'instagram':
-            cid = `INST:${account.platform_user_id}`
+            cid = `INST:${username}`
             break
           case 'youtube':
-            cid = `YT:${account.platform_user_id}`
+            cid = `YT:${username}`
             break
           case 'twitter':
-            cid = `TW:${account.platform_user_id}`
+            cid = `TW:${username}`
             break
           case 'tiktok':
-            cid = `TT:${account.platform_user_id}`
+            cid = `TT:${username}`
             break
           case 'facebook':
-            cid = `FB:${account.platform_user_id}`
+            cid = `FB:${username}`
             break
           default:
-            console.log(`Platform not supported: ${account.platform}`)
+            console.log(`❌ Platform not supported: ${account.platform}`)
             continue
         }
 
-        console.log(`Fetching stats for ${account.platform} with CID: ${cid}`)
+        console.log(`🔍 Fetching stats for ${account.platform} with CID: ${cid}`)
 
         const response = await fetch(
           `https://instagram-statistics-api.p.rapidapi.com/community?cid=${encodeURIComponent(cid)}`,
@@ -120,12 +179,12 @@ Deno.serve(async (req) => {
         )
 
         if (!response.ok) {
-          console.error(`API error for ${account.platform}:`, response.status, response.statusText)
-          audienceStats.push({
+          console.error(`❌ API error for ${account.platform}:`, response.status, response.statusText)
+          const errorData: AudienceStats = {
             cid,
             socialType: account.platform.toUpperCase(),
-            name: account.username,
-            screenName: account.username,
+            name: username,
+            screenName: username,
             usersCount: 0,
             avgER: 0,
             avgInteractions: 0,
@@ -137,18 +196,32 @@ Deno.serve(async (req) => {
             ages: [],
             lastPosts: [],
             error: `API Error: ${response.status}`
-          })
+          }
+          audienceStats.push(errorData)
+          
+          // Guardar el error en la base de datos también
+          await supabase
+            .from('social_analysis')
+            .upsert({
+              user_id: user.id,
+              platform: account.platform,
+              analysis_data: errorData,
+              created_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id,platform'
+            })
+          
           continue
         }
 
         const data = await response.json()
-        console.log(`Received data for ${account.platform}:`, JSON.stringify(data, null, 2))
+        console.log(`✅ Received data for ${account.platform}:`, JSON.stringify(data, null, 2))
 
-        audienceStats.push({
+        const statsData: AudienceStats = {
           cid: data.cid || cid,
           socialType: data.socialType || account.platform.toUpperCase(),
-          name: data.name || account.username,
-          screenName: data.screenName || account.username,
+          name: data.name || username,
+          screenName: data.screenName || username,
           usersCount: data.usersCount || 0,
           avgER: data.avgER || 0,
           avgInteractions: data.avgInteractions || 0,
@@ -159,12 +232,33 @@ Deno.serve(async (req) => {
           genders: data.genders || [],
           ages: data.ages || [],
           lastPosts: data.lastPosts || []
-        })
+        }
+
+        audienceStats.push(statsData)
+
+        // Guardar resultados en social_analysis
+        console.log(`💾 Saving analysis for ${account.platform} to database...`)
+        const { error: saveError } = await supabase
+          .from('social_analysis')
+          .upsert({
+            user_id: user.id,
+            platform: account.platform,
+            analysis_data: statsData,
+            created_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,platform'
+          })
+
+        if (saveError) {
+          console.error(`❌ Error saving ${account.platform} analysis:`, saveError)
+        } else {
+          console.log(`✅ Saved ${account.platform} analysis to database`)
+        }
 
       } catch (error) {
-        console.error(`Error processing ${account.platform}:`, error)
-        audienceStats.push({
-          cid: `${account.platform.toUpperCase()}:${account.platform_user_id}`,
+        console.error(`❌ Error processing ${account.platform}:`, error)
+        const errorData: AudienceStats = {
+          cid: `${account.platform.toUpperCase()}:${account.username}`,
           socialType: account.platform.toUpperCase(),
           name: account.username,
           screenName: account.username,
@@ -179,7 +273,20 @@ Deno.serve(async (req) => {
           ages: [],
           lastPosts: [],
           error: (error as Error).message
-        })
+        }
+        audienceStats.push(errorData)
+
+        // Guardar el error en la base de datos
+        await supabase
+          .from('social_analysis')
+          .upsert({
+            user_id: user.id,
+            platform: account.platform,
+            analysis_data: errorData,
+            created_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,platform'
+          })
       }
     }
 

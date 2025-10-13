@@ -114,6 +114,23 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
     return urls;
   };
 
+  const validateUrls = (urls: Record<string, string>): boolean => {
+    const urlPatterns = {
+      instagram: /instagram\.com\/[^\/\?]+/,
+      facebook: /facebook\.com\/[^\/\?]+/,
+      twitter: /(?:twitter|x)\.com\/[^\/\?]+/,
+      tiktok: /tiktok\.com\/@[^\/\?]+/,
+      youtube: /youtube\.com\/(?:@|channel\/|user\/)[^\/\?]+/
+    };
+
+    for (const [platform, url] of Object.entries(urls)) {
+      if (!urlPatterns[platform as keyof typeof urlPatterns]?.test(url)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   const analyzeWithConfirmedUrls = async () => {
     if (confirmedUrls.length === 0 || !userId) return;
     
@@ -126,6 +143,17 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
         return acc;
       }, {} as any);
 
+      console.log('📤 Sending analysis request with URLs:', selectedUrls);
+
+      if (!validateUrls(selectedUrls)) {
+        toast({
+          title: "URLs inválidas",
+          description: "Una o más URLs no tienen el formato correcto. Verifica e intenta de nuevo.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('get-social-audience-stats', {
         body: {
           user_id: userId,
@@ -133,23 +161,37 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Edge function error:', error);
+        throw error;
+      }
 
-      if (data.success) {
+      console.log('📥 Received response:', data);
+
+      // Validar que realmente haya datos
+      if (data.success && data.data && data.data.length > 0) {
         await loadSocialAudienceStats(userId);
         setShowUrlConfirmation(false);
         toast({
           title: "Análisis Completado",
-          description: `Se analizaron ${confirmedUrls.length} redes sociales exitosamente.`,
+          description: `Se analizaron ${data.data.length} redes sociales exitosamente.`,
         });
+      } else if (data.success && (!data.data || data.data.length === 0)) {
+        // Análisis "exitoso" pero sin datos
+        toast({
+          title: "Sin resultados",
+          description: data.message || "No se encontraron datos de audiencia. Verifica las URLs.",
+          variant: "destructive"
+        });
+        // NO volver a loadSocialAudienceStats porque sabemos que no hay datos
       } else {
         throw new Error(data.error || 'Error al analizar audiencias');
       }
-    } catch (error) {
-      console.error('Error analizando con URLs confirmadas:', error);
+    } catch (error: any) {
+      console.error('❌ Error analizando con URLs confirmadas:', error);
       toast({
         title: "Error en el Análisis",
-        description: "No se pudieron analizar las audiencias. Intenta de nuevo.",
+        description: error.message || "No se pudieron analizar las audiencias. Intenta de nuevo.",
         variant: "destructive"
       });
     } finally {

@@ -69,13 +69,14 @@ serve(async (req) => {
     }
 
     // Supported platforms and validators (only those the function can analyze)
-    const supportedPlatforms = ['instagram', 'youtube', 'twitter', 'tiktok', 'facebook']
+    const supportedPlatforms = ['instagram', 'youtube', 'twitter', 'tiktok', 'facebook', 'linkedin']
     const platformValidationRules: Record<string, (url: string) => boolean> = {
       'instagram': (url: string) => url.includes('instagram.com/') && !url.includes('/p/') && !url.includes('/reel/'),
       'youtube': (url: string) => url.includes('youtube.com/') && (url.includes('/@') || url.includes('/channel/') || url.includes('/c/')),
       'twitter': (url: string) => url.includes('twitter.com/') || url.includes('x.com/'),
       'tiktok': (url: string) => url.includes('tiktok.com/@'),
-      'facebook': (url: string) => url.includes('facebook.com/') && !url.includes('/groups/') && !url.includes('/profile.php')
+      'facebook': (url: string) => url.includes('facebook.com/') && !url.includes('/groups/') && !url.includes('/profile.php'),
+      'linkedin': (url: string) => url.includes('linkedin.com/company/')
     }
 
     // Helper to derive a company username for storage if missing
@@ -172,12 +173,197 @@ serve(async (req) => {
           'facebook': 'FB',
           'twitter': 'TW',
           'tiktok': 'TT',
-          'youtube': 'YT'
+          'youtube': 'YT',
+          'linkedin': 'LI'
         }
 
         const socialType = socialTypeMap[platform]
 
-        // Call Community endpoint as shown in curl example
+        // Handle LinkedIn separately with different API
+        if (platform === 'linkedin') {
+          console.log(`Making LinkedIn API call for: ${urlData.url}`)
+          
+          // Extract company name from LinkedIn URL
+          const companyMatch = urlData.url.match(/linkedin\.com\/company\/([^\/\?]+)/)
+          if (!companyMatch) {
+            console.error(`Could not extract company name from LinkedIn URL: ${urlData.url}`)
+            continue
+          }
+          
+          const companyName = companyMatch[1]
+          console.log(`Extracted LinkedIn company name: ${companyName}`)
+          
+          const linkedinResponse = await fetch(`https://fresh-linkedin-scraper-api.p.rapidapi.com/api/v1/company/profile?company=${encodeURIComponent(companyName)}`, {
+            method: 'GET',
+            headers: {
+              'x-rapidapi-host': 'fresh-linkedin-scraper-api.p.rapidapi.com',
+              'x-rapidapi-key': rapidApiKey
+            }
+          })
+
+          if (!linkedinResponse.ok) {
+            console.error(`LinkedIn API error: ${linkedinResponse.status} ${linkedinResponse.statusText}`)
+            continue
+          }
+
+          const linkedinData = await linkedinResponse.json()
+          console.log(`Successfully received LinkedIn data:`, JSON.stringify(linkedinData, null, 2))
+
+          if (!linkedinData.success || !linkedinData.data) {
+            console.error(`Invalid LinkedIn API response:`, linkedinData)
+            continue
+          }
+
+          const profileData = linkedinData.data
+
+          // Transform LinkedIn response to our format
+          const audienceStats: AudienceStats = {
+            socialType: 'LI',
+            name: profileData.name || 'LinkedIn Company',
+            screenName: profileData.universal_name || companyName,
+            description: profileData.description || '',
+            image: profileData.logo?.[0]?.url || '',
+            verified: profileData.verification?.verified || false,
+            usersCount: profileData.follower_count || 0,
+            qualityScore: 0, // LinkedIn API doesn't provide this
+            avgER: 0, // LinkedIn API doesn't provide this
+            pctUsersCount180d: 0,
+            membersTypes: {},
+            categories: profileData.industries || [],
+            tags: profileData.specialities || [],
+            type: 'company',
+            countries: [], // LinkedIn API doesn't provide demographic data
+            genders: [],
+            ages: [],
+            timeStatistics: new Date().toISOString(),
+            pctFakeFollowers: 0,
+            membersReachability: {},
+            avgLikes: 0,
+            avgComments: 0,
+            avgViews: 0,
+            lastPosts: []
+          }
+
+          // Store in social_accounts
+          try {
+            const companyUsername = await deriveCompanyUsername()
+            console.log(`Storing LinkedIn data with company_username: ${companyUsername}`)
+
+            const socialAccountData = {
+              user_id: user.id,
+              company_username: companyUsername,
+              platform: 'linkedin',
+              platform_username: profileData.universal_name || companyName,
+              platform_display_name: profileData.name || 'LinkedIn Company',
+              is_connected: true,
+              metadata: {
+                raw_analysis_data: linkedinData,
+                processed_stats: audienceStats,
+                analysis_timestamp: new Date().toISOString(),
+                api_source: 'fresh-linkedin-scraper-api',
+                employee_count: profileData.employee_count,
+                employee_count_range: profileData.employee_count_range,
+                website_url: profileData.website_url,
+                founded_on: profileData.founded_on,
+                locations: profileData.locations
+              },
+              last_sync_at: new Date().toISOString(),
+              connected_at: new Date().toISOString()
+            }
+
+            const { error: dbError } = await supabase
+              .from('social_accounts')
+              .upsert(socialAccountData, {
+                onConflict: 'user_id,platform'
+              })
+
+            if (dbError) {
+              console.error('Error storing LinkedIn social account data:', JSON.stringify(dbError, null, 2))
+            } else {
+              console.log(`Successfully stored LinkedIn data to social_accounts table`)
+            }
+          } catch (dbError) {
+            console.error('LinkedIn database storage error:', JSON.stringify(dbError, null, 2))
+          }
+
+          // Store in social_analysis
+          try {
+            console.log(`Storing detailed LinkedIn analysis data`)
+
+            const analysisData = {
+              user_id: user.id,
+              cid: profileData.id || null,
+              social_type: 'LI',
+              group_id: null,
+              url: urlData.url,
+              name: profileData.name || null,
+              image: profileData.logo?.[0]?.url || null,
+              description: profileData.description || null,
+              screen_name: profileData.universal_name || companyName,
+              users_count: profileData.follower_count || 0,
+              community_status: profileData.active ? 'active' : 'inactive',
+              is_blocked: false,
+              is_closed: profileData.archived || false,
+              verified: profileData.verification?.verified || false,
+              tags: profileData.specialities || [],
+              suggested_tags: [],
+              rating_tags: [],
+              categories: profileData.industries || [],
+              avg_er: 0,
+              avg_interactions: 0,
+              avg_views: 0,
+              rating_index: 0,
+              quality_score: 0,
+              time_statistics: new Date().toISOString(),
+              time_posts_loaded: null,
+              time_short_loop: null,
+              start_date: null,
+              members_cities: [],
+              members_countries: [],
+              members_genders_ages: {},
+              country: null,
+              country_code: null,
+              city: null,
+              profile_type: 'company',
+              gender: null,
+              age: null,
+              last_posts: [],
+              last_from_mentions: [],
+              similar_profiles: [],
+              members_types: [],
+              members_reachability: [],
+              countries: [],
+              cities: [],
+              genders: [],
+              ages: [],
+              interests: [],
+              brand_safety: {},
+              pct_fake_followers: 0,
+              audience_severity: 0,
+              contact_email: null,
+              raw_api_response: linkedinData
+            }
+
+            const { error: analysisError } = await supabase
+              .from('social_analysis')
+              .upsert(analysisData, {
+                onConflict: 'user_id,social_type'
+              })
+
+            if (analysisError) {
+              console.error('Error storing LinkedIn analysis data:', JSON.stringify(analysisError, null, 2))
+            } else {
+              console.log(`Successfully stored detailed LinkedIn analysis data`)
+            }
+          } catch (analysisError) {
+            console.error('LinkedIn analysis storage error:', JSON.stringify(analysisError, null, 2))
+          }
+
+          results.push(audienceStats)
+          continue
+        }
+
+        // Call Community endpoint for other platforms
         console.log(`Making Community API call for: ${urlData.url}`)
 
         const response = await fetch(`https://instagram-statistics-api.p.rapidapi.com/community?url=${encodeURIComponent(urlData.url)}`, {

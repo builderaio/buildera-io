@@ -188,12 +188,13 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
 
   const extractSocialUrls = (company: any) => {
     const urls: any = {};
-    const supported = ['instagram', 'youtube', 'twitter', 'tiktok', 'facebook'];
+    const supported = ['instagram', 'youtube', 'twitter', 'tiktok', 'facebook', 'linkedin'];
     if (company?.instagram_url && supported.includes('instagram')) urls.instagram = company.instagram_url;
     if (company?.facebook_url && supported.includes('facebook')) urls.facebook = company.facebook_url;
     if (company?.twitter_url && supported.includes('twitter')) urls.twitter = company.twitter_url;
     if (company?.tiktok_url && supported.includes('tiktok')) urls.tiktok = company.tiktok_url;
     if (company?.youtube_url && supported.includes('youtube')) urls.youtube = company.youtube_url;
+    if (company?.linkedin_url && supported.includes('linkedin')) urls.linkedin = company.linkedin_url;
     return urls;
   };
 
@@ -203,7 +204,8 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
       facebook: /facebook\.com\/[^\/\?]+/,
       twitter: /(?:twitter|x)\.com\/[^\/\?]+/,
       tiktok: /tiktok\.com\/@[^\/\?]+/,
-      youtube: /youtube\.com\/(?:@|channel\/|user\/)[^\/\?]+/
+      youtube: /youtube\.com\/(?:@|channel\/|user\/)[^\/\?]+/,
+      linkedin: /linkedin\.com\/company\/[^\/\?]+/
     };
 
     for (const [platform, url] of Object.entries(urls)) {
@@ -1074,6 +1076,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
                                     profile.social_type === 'TW' ? <FaXTwitter className="w-6 h-6 text-black dark:text-white" /> :
                                     profile.social_type === 'TT' ? <FaTiktok className="w-6 h-6 text-black dark:text-white" /> :
                                     profile.social_type === 'YT' ? <FaYoutube className="w-6 h-6 text-red-500" /> :
+                                    profile.social_type === 'LI' ? <Building className="w-6 h-6 text-blue-700" /> :
                                     <Globe className="w-6 h-6" />;
                 
                 const platformName = profile.social_type === 'INST' ? 'Instagram' :
@@ -1081,6 +1084,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
                                     profile.social_type === 'TW' ? 'Twitter/X' :
                                     profile.social_type === 'TT' ? 'TikTok' :
                                     profile.social_type === 'YT' ? 'YouTube' :
+                                    profile.social_type === 'LI' ? 'LinkedIn' :
                                     profile.platform || 'Desconocido';
 
                 return (

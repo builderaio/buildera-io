@@ -75,26 +75,35 @@ interface WorkflowState {
 
 const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState("dashboard");
+  
+  // Initialize activeTab from URL BEFORE first render to avoid race condition
+  const getInitialTab = () => {
+    const tab = searchParams.get('tab');
+    const allowed = new Set(['dashboard', 'create', 'analyze', 'content', 'history', 'campaigns', 'calendar', 'configuracion']);
+    
+    if (tab && allowed.has(tab)) {
+      console.log('🎯 [MarketingHubWow] Estado inicial del tab desde URL:', tab);
+      return tab;
+    }
+    
+    return 'dashboard';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getInitialTab());
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   
-  // Set tab from URL ?tab= and react to changes
+  // React to URL changes after initial render
   useEffect(() => {
     const tab = searchParams.get('tab');
     const view = searchParams.get('view');
     
-    console.log('🔍 [MarketingHubWow] URL params:', { tab, view });
+    console.log('🔍 [MarketingHubWow] URL params changed:', { tab, view, currentTab: activeTab });
     
-    // If coming from audiencias route, open analyze tab  
-    if (view === 'marketing-hub' && tab === 'analyze') {
-      setActiveTab('analyze');
-    } else if (tab) {
+    if (tab) {
       const allowed = new Set(['dashboard', 'create', 'analyze', 'content', 'history', 'campaigns', 'calendar', 'configuracion']);
-      if (allowed.has(tab)) {
-        console.log('✅ [MarketingHubWow] Cambiando a tab:', tab);
+      if (allowed.has(tab) && tab !== activeTab) {
+        console.log('✅ [MarketingHubWow] Actualizando tab a:', tab);
         setActiveTab(tab);
-      } else {
-        console.warn('⚠️ [MarketingHubWow] Tab no permitido:', tab);
       }
     }
   }, [searchParams]);

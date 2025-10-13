@@ -234,19 +234,22 @@ const CompleteProfile = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="userType">Tipo de usuario</Label>
-                <Select value={userType} onValueChange={setUserType} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona tu rol" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="developer">Desarrollador</SelectItem>
-                    <SelectItem value="expert">Experto</SelectItem>
-                    <SelectItem value="company">Negocio</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Solo mostrar selector de tipo si no viene en URL */}
+              {!searchParams.get('user_type') && (
+                <div className="space-y-2">
+                  <Label htmlFor="userType">Tipo de usuario</Label>
+                  <Select value={userType} onValueChange={setUserType} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona tu rol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="developer">Desarrollador</SelectItem>
+                      <SelectItem value="expert">Experto</SelectItem>
+                      <SelectItem value="company">Negocio</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="fullName">Nombre completo</Label>

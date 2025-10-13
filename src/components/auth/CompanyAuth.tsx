@@ -161,11 +161,22 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
               });
               
               console.log("Email de verificación enviado exitosamente");
-            } catch (emailError) {
-              console.error("Error enviando email de verificación:", emailError);
-              // No bloquear el registro si falla el email, usar el sistema por defecto
-              console.log("Fallback al sistema de verificación por defecto de Supabase");
-            }
+              } catch (emailError) {
+                console.error("Error enviando email de verificación:", emailError);
+                // Fallback real al sistema de verificación de Supabase
+                try {
+                  const verificationUrl = `${window.location.origin}/auth/verify?type=signup`;
+                  const { error: resendError } = await supabase.auth.resend({
+                    type: 'signup',
+                    email,
+                    options: { emailRedirectTo: verificationUrl }
+                  });
+                  if (resendError) throw resendError;
+                  console.log("Email de verificación enviado con fallback de Supabase");
+                } catch (fallbackError) {
+                  console.error("Fallback de Supabase falló:", fallbackError);
+                }
+              }
 
             // Mostrar información de verificación
             setRegisteredEmail(email);

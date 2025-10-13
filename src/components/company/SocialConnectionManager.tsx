@@ -237,24 +237,31 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     }
   };
   const startConnectionFlow = async () => {
+    console.log('🔗 [SocialConnectionManager] startConnectionFlow iniciado');
     try {
       setConnecting(true);
 
       let username = companyUsername;
+      console.log('📝 [SocialConnectionManager] Username actual:', username);
+      
       if (!username) {
+        console.log('⚠️ [SocialConnectionManager] No hay username, inicializando perfil...');
         toast({
           title: "Preparando perfil",
           description: "Inicializando perfil automáticamente...",
         });
         const resolved = await initializeProfile();
         username = resolved || '';
+        console.log('📝 [SocialConnectionManager] Username resuelto:', username);
         if (!username) {
+          console.error('❌ [SocialConnectionManager] No se pudo resolver username');
           setConnecting(false);
           return;
         }
       }
 
       const attemptGenerate = async () => {
+        console.log('🎯 [SocialConnectionManager] Intentando generar JWT...');
         const { data, error } = await supabase.functions.invoke('upload-post-manager', {
           body: {
             action: 'generate_jwt',
@@ -265,39 +272,60 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 }
           }
         });
-        if (error) throw error as any;
+        if (error) {
+          console.error('❌ [SocialConnectionManager] Error generando JWT:', error);
+          throw error as any;
+        }
+        console.log('✅ [SocialConnectionManager] JWT generado exitosamente:', data);
         return data;
       };
 
       let data = await attemptGenerate().catch(async (err: any) => {
         const msg = String(err?.message || '');
+        console.log('⚠️ [SocialConnectionManager] Error en attemptGenerate:', msg);
         if (msg.includes('400') || msg.includes('404')) {
+          console.log('🔄 [SocialConnectionManager] Reintentando tras inicializar perfil...');
           await initializeProfile();
           return await attemptGenerate();
         }
         throw err;
       });
 
+      console.log('📋 [SocialConnectionManager] Datos recibidos:', data);
+      
       if (data?.access_url) {
+        console.log('🌐 [SocialConnectionManager] Abriendo popup con URL:', data.access_url);
         const newWindow = window.open(
           data.access_url,
           'upload-post-connection',
           'width=800,height=600,scrollbars=yes,resizable=yes'
         );
+        
         if (!newWindow || newWindow.closed) {
+          console.warn('⚠️ [SocialConnectionManager] Popup bloqueado, redirigiendo en misma pestaña');
           // Popup bloqueado: fallback en la misma pestaña
           setConnecting(false);
           window.location.href = data.access_url;
           return;
         }
+        
+        console.log('✅ [SocialConnectionManager] Popup abierto exitosamente');
         setConnectionWindow(newWindow);
         toast({
           title: "🔗 Conectando redes sociales",
           description: "Complete el proceso en la ventana emergente",
         });
+      } else {
+        console.error('❌ [SocialConnectionManager] No se recibió access_url en la respuesta');
+        toast({
+          title: "Error",
+          description: "No se recibió URL de conexión del servidor",
+          variant: "destructive"
+        });
+        setConnecting(false);
       }
     } catch (error) {
-      console.error('Error starting connection flow:', error);
+      console.error('❌ [SocialConnectionManager] Error en startConnectionFlow:', error);
       toast({
         title: "Error",
         description: "No se pudo iniciar el flujo de conexión",

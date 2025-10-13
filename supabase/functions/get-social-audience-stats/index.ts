@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
       urlsCount: social_urls ? Object.keys(social_urls).length : 0
     })
 
-    let accountsToProcess: Array<{platform: string, username: string, userId?: string}> = []
+    let accountsToProcess: Array<{platform: string, username: string}> = []
 
     // Opción 1: Si se enviaron URLs, procesarlas
     if (social_urls && Object.keys(social_urls).length > 0) {
@@ -102,21 +102,22 @@ Deno.serve(async (req) => {
       console.log('🔍 No URLs provided, checking social_accounts...')
       const { data: socialAccounts, error: accountsError } = await supabase
         .from('social_accounts')
-        .select('*')
+        .select('platform, platform_username')
         .eq('user_id', user.id)
         .eq('is_connected', true)
 
       if (accountsError) {
-        console.error('Error fetching social accounts:', accountsError)
+        console.error('❌ Error fetching social accounts:', accountsError)
         throw new Error('Failed to fetch social accounts')
       }
 
       if (socialAccounts && socialAccounts.length > 0) {
-        accountsToProcess = socialAccounts.map(acc => ({
-          platform: acc.platform,
-          username: acc.platform_user_id || acc.username,
-          userId: acc.platform_user_id
-        }))
+        accountsToProcess = socialAccounts
+          .filter(acc => acc.platform_username) // Filtrar los que no tienen username
+          .map(acc => ({
+            platform: acc.platform,
+            username: acc.platform_username
+          }))
         console.log('📋 Found connected accounts:', accountsToProcess.length)
       }
     }

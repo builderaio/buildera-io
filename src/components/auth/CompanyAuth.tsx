@@ -146,38 +146,10 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         console.log("Registro exitoso:", data);
         
         if (data.user) {
-          // Enviar email de verificación personalizado usando el sistema de Buildera
+          // Supabase enviará automáticamente el email de verificación
           if (!data.user.email_confirmed_at) {
-            try {
-              const verificationUrl = `${window.location.origin}/auth/verify?type=signup`;
-              
-              await supabase.functions.invoke('send-verification-email', {
-                body: {
-                  email: email,
-                  fullName: fullName,
-                  confirmationUrl: verificationUrl,
-                  userType: 'empresa'
-                }
-              });
-              
-              console.log("Email de verificación enviado exitosamente");
-              } catch (emailError) {
-                console.error("Error enviando email de verificación:", emailError);
-                // Fallback real al sistema de verificación de Supabase
-                try {
-                  const verificationUrl = `${window.location.origin}/auth/verify?type=signup`;
-                  const { error: resendError } = await supabase.auth.resend({
-                    type: 'signup',
-                    email,
-                    options: { emailRedirectTo: verificationUrl }
-                  });
-                  if (resendError) throw resendError;
-                  console.log("Email de verificación enviado con fallback de Supabase");
-                } catch (fallbackError) {
-                  console.error("Fallback de Supabase falló:", fallbackError);
-                }
-              }
-
+            console.log("Email de verificación será enviado automáticamente por Supabase");
+            
             // Mostrar información de verificación
             setRegisteredEmail(email);
             setShowEmailVerification(true);
@@ -313,42 +285,21 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
     try {
       setLoading(true);
       
-      // Intentar primero con nuestro sistema personalizado
-      try {
-        const verificationUrl = `${window.location.origin}/auth/verify?type=signup`;
-        
-        await supabase.functions.invoke('send-verification-email', {
-          body: {
-            email: registeredEmail,
-            fullName: fullName || 'Usuario',
-            confirmationUrl: verificationUrl,
-            userType: 'empresa'
-          }
-        });
+      // Usar solo el sistema nativo de Supabase
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: registeredEmail,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/verify`
+        }
+      });
 
-        toast({
-          title: "Email reenviado",
-          description: "Hemos reenviado el enlace de verificación usando nuestro sistema personalizado.",
-        });
-      } catch (customError) {
-        console.error("Error con sistema personalizado, usando fallback:", customError);
-        
-        // Fallback al sistema por defecto de Supabase
-        const { error } = await supabase.auth.resend({
-          type: 'signup',
-          email: registeredEmail,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/verify`
-          }
-        });
+      if (error) throw error;
 
-        if (error) throw error;
-
-        toast({
-          title: "Email reenviado",
-          description: "Hemos reenviado el enlace de verificación a tu email.",
-        });
-      }
+      toast({
+        title: "Email reenviado",
+        description: "Hemos reenviado el enlace de verificación a tu email.",
+      });
     } catch (error: any) {
       toast({
         title: "Error",

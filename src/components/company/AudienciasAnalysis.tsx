@@ -847,15 +847,20 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
                 <div>
                   <h4 className="font-semibold mb-3">Distribución por Género</h4>
                   <div className="space-y-2">
-                    {mainProfile.genders.map((gender: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="text-sm capitalize">{gender.code === 'MALE' ? 'Masculino' : 'Femenino'}</span>
-                        <div className="flex items-center gap-3 flex-1 ml-4">
-                          <Progress value={gender.percentage || 0} className="h-2" />
-                          <span className="text-sm font-medium min-w-[45px]">{gender.percentage?.toFixed(1)}%</span>
+                    {mainProfile.genders.map((gender: any, index: number) => {
+                      const genderLabel = gender.code === 'MALE' ? 'Masculino' : 
+                                         gender.code === 'FEMALE' ? 'Femenino' : 
+                                         gender.code || 'Otro';
+                      return (
+                        <div key={index} className="flex items-center justify-between">
+                          <span className="text-sm capitalize">{genderLabel}</span>
+                          <div className="flex items-center gap-3 flex-1 ml-4">
+                            <Progress value={gender.percentage || 0} className="h-2" />
+                            <span className="text-sm font-medium min-w-[45px]">{gender.percentage?.toFixed(1)}%</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1056,6 +1061,139 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Fichas por Red Social */}
+        {socialStats.length > 1 && (
+          <div className="space-y-4">
+            <h3 className="text-2xl font-bold">📊 Análisis Detallado por Red Social</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {socialStats.map((profile, index) => {
+                const platformIcon = profile.social_type === 'INST' ? <FaInstagram className="w-6 h-6 text-pink-500" /> :
+                                    profile.social_type === 'FB' ? <FaFacebook className="w-6 h-6 text-blue-600" /> :
+                                    profile.social_type === 'TW' ? <FaXTwitter className="w-6 h-6 text-black dark:text-white" /> :
+                                    profile.social_type === 'TT' ? <FaTiktok className="w-6 h-6 text-black dark:text-white" /> :
+                                    profile.social_type === 'YT' ? <FaYoutube className="w-6 h-6 text-red-500" /> :
+                                    <Globe className="w-6 h-6" />;
+                
+                const platformName = profile.social_type === 'INST' ? 'Instagram' :
+                                    profile.social_type === 'FB' ? 'Facebook' :
+                                    profile.social_type === 'TW' ? 'Twitter/X' :
+                                    profile.social_type === 'TT' ? 'TikTok' :
+                                    profile.social_type === 'YT' ? 'YouTube' :
+                                    profile.platform || 'Desconocido';
+
+                return (
+                  <Card key={index} className="overflow-hidden">
+                    <CardContent className="p-0">
+                      {/* Header de la Red Social */}
+                      <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 border-b">
+                        <div className="flex items-center gap-3">
+                          {platformIcon}
+                          <div className="flex-1">
+                            <h4 className="font-bold text-lg">{platformName}</h4>
+                            <p className="text-sm text-muted-foreground">@{profile.screen_name}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contenido de la Ficha */}
+                      <div className="p-4 space-y-4">
+                        {/* KPIs Rápidos */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-accent/30 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground">Seguidores</p>
+                            <p className="text-xl font-bold">{((profile.users_count || 0) / 1000).toFixed(1)}K</p>
+                          </div>
+                          <div className="bg-accent/30 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground">Engagement</p>
+                            <p className="text-xl font-bold">{((profile.avg_er || 0) * 100).toFixed(2)}%</p>
+                          </div>
+                          <div className="bg-accent/30 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground">Calidad</p>
+                            <p className="text-xl font-bold">{Math.round((profile.quality_score || 0) * 100)}%</p>
+                          </div>
+                          <div className="bg-accent/30 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground">Vistas Prom.</p>
+                            <p className="text-xl font-bold">{((profile.avg_views || 0) / 1000).toFixed(1)}K</p>
+                          </div>
+                        </div>
+
+                        {/* Países Top 3 */}
+                        {profile.countries && profile.countries.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-2">Top Países</p>
+                            <div className="space-y-1">
+                              {profile.countries.slice(0, 3).map((country: any, idx: number) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <span className="text-xs flex-1">{country.name}</span>
+                                  <span className="text-xs font-medium">{country.percentage?.toFixed(1)}%</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Géneros */}
+                        {profile.genders && profile.genders.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-2">Género</p>
+                            <div className="flex gap-2">
+                              {profile.genders.map((gender: any, idx: number) => {
+                                const genderLabel = gender.code === 'MALE' ? 'Masculino' : 
+                                                   gender.code === 'FEMALE' ? 'Femenino' : 
+                                                   gender.code || 'Otro';
+                                return (
+                                  <Badge key={idx} variant="secondary" className="text-xs">
+                                    {genderLabel}: {gender.percentage?.toFixed(1)}%
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Intereses Top 5 */}
+                        {profile.interests && profile.interests.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-2">Intereses Principales</p>
+                            <div className="flex flex-wrap gap-1">
+                              {profile.interests.slice(0, 5).map((interest: any, idx: number) => (
+                                <Badge key={idx} variant="outline" className="text-xs">
+                                  {interest.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Calidad de Audiencia */}
+                        {profile.members_types && profile.members_types.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-2">Calidad de Seguidores</p>
+                            <div className="space-y-1">
+                              {profile.members_types.slice(0, 3).map((type: any, idx: number) => {
+                                const isPositive = type.name === 'real' || type.name === 'influencer';
+                                const colorClass = isPositive ? 'text-green-600' : 'text-yellow-600';
+                                return (
+                                  <div key={idx} className="flex items-center justify-between">
+                                    <span className="text-xs">{getFollowerTypeLabel(type.name)}</span>
+                                    <span className={`text-xs font-bold ${colorClass}`}>
+                                      {(type.percent * 100).toFixed(1)}%
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* Edades */}

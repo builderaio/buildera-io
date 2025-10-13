@@ -1255,30 +1255,29 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
               </CardContent>
             </Card>
 
-            {/* CTA para Crear Audiencias */}
-            <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+            {/* CTA para Crear Audiencias - Toda la Card es clickeable */}
+            <Card 
+              className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 cursor-pointer transition-all hover:shadow-xl hover:scale-[1.02] hover:border-primary/50"
+              onClick={() => navigate('/company-dashboard?view=audiencias-create')}
+            >
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-                      <Target className="w-6 h-6 text-primary-foreground" />
+                <div className="flex items-center justify-between gap-6">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                      <Target className="w-7 h-7 text-white" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold">🎯 Crea Audiencias Accionables</h4>
+                      <h4 className="text-xl font-bold mb-1">🎯 Crea Audiencias Accionables</h4>
                       <p className="text-sm text-muted-foreground">
                         Usa los insights para crear segmentos optimizados para tus campañas
                       </p>
                     </div>
                   </div>
-                  <Button
-                    onClick={() => navigate('/company-dashboard?view=audiencias-create')}
-                    size="lg"
-                    className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    Crear Audiencias con IA
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-2 text-primary font-semibold flex-shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                    <span>Crear con IA</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </div>
                 </div>
               </CardContent>
             </Card>

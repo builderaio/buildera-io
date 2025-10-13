@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -94,9 +94,9 @@ export const AudienceInsightsPanel = ({
   };
 
   // Cargar insights existentes al montar
-  useState(() => {
+  useEffect(() => {
     loadExistingInsights();
-  });
+  }, [userId]);
 
   if (!insights) {
     return (

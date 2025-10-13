@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { FaInstagram, FaFacebook, FaXTwitter, FaTiktok, FaYoutube } from 'react-icons/fa6';
 import { SocialConnectionManager } from "./SocialConnectionManager";
+import { AudienceInsightsPanel } from "./AudienceInsightsPanel";
 
 interface AudienciasAnalysisProps {
   profile: any;
@@ -37,6 +38,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(profile?.user_id || null);
   const [companyData, setCompanyData] = useState<any>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [socialStats, setSocialStats] = useState<any[]>([]);
   const [socialStatsLoading, setSocialStatsLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -48,6 +50,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
   const [existingAnalysisCount, setExistingAnalysisCount] = useState(0);
   const [lastAnalysisDate, setLastAnalysisDate] = useState<string | null>(null);
   const [showConnectionsView, setShowConnectionsView] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -97,6 +100,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
           .single();
         
         setCompanyData(company);
+        setCompanyId(company?.id || null);
       }
     } catch (error) {
       console.error('Error loading company data:', error);
@@ -729,6 +733,69 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Sección de Insights con IA */}
+        {showInsights && userId && companyId && (
+          <div className="space-y-4">
+            <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold">🧠 Análisis Profundo de Audiencia</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Genera insights avanzados y segmentos detallados con IA
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <AudienceInsightsPanel
+                  userId={userId}
+                  companyId={companyId}
+                  socialStats={socialStats}
+                  onInsightsGenerated={() => {
+                    toast({
+                      title: "✨ Insights Generados",
+                      description: "Análisis de audiencia completado exitosamente",
+                    });
+                  }}
+                />
+              </CardContent>
+            </Card>
+
+            {/* CTA para Crear Audiencias */}
+            <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
+                      <Target className="w-6 h-6 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold">🎯 Crea Audiencias Accionables</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Usa los insights para crear segmentos optimizados para tus campañas
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => navigate('/company-dashboard?view=audiencias-create')}
+                    size="lg"
+                    className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Crear Audiencias con IA
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

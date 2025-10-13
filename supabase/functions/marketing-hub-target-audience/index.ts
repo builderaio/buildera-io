@@ -1,3 +1,7 @@
+// ⚠️ DEPRECATED: Esta función está deprecada y será eliminada.
+// Esta era una función placeholder que no tiene funcionalidad real.
+// El análisis de audiencias se realiza a través de otras funciones especializadas.
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -10,6 +14,8 @@ const N8N_AUTH_USER = Deno.env.get('N8N_AUTH_USER');
 const N8N_AUTH_PASS = Deno.env.get('N8N_AUTH_PASS');
 
 serve(async (req) => {
+  console.warn('⚠️ DEPRECATION WARNING: marketing-hub-target-audience is deprecated and will be removed.')
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

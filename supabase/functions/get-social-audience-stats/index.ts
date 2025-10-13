@@ -1,3 +1,7 @@
+// ⚠️ DEPRECATED: Esta función está deprecada. Usa 'analyze-social-audience' en su lugar.
+// Esta función será eliminada en una versión futura.
+// Usa analyze-social-audience que es más completa y maneja mejor los datos.
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -51,6 +55,8 @@ function extractUsernameFromUrl(url: string, platform: string): string | null {
 }
 
 Deno.serve(async (req) => {
+  console.warn('⚠️ DEPRECATION WARNING: get-social-audience-stats is deprecated. Use analyze-social-audience instead.')
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }

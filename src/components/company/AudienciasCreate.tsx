@@ -23,6 +23,7 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
   const [loading, setLoading] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [generatedAudiences, setGeneratedAudiences] = useState<any[]>([]);
+  const [availableInsights, setAvailableInsights] = useState<any>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -38,6 +39,7 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
           await Promise.all([
             loadCompanyData(uid),
             loadSocialStats(uid),
+            loadAvailableInsights(uid),
           ]);
         }
       } catch (e) {
@@ -90,6 +92,30 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
       }
     } catch (error) {
       console.error('Error loading social stats:', error);
+    }
+  };
+
+  const loadAvailableInsights = async (uid?: string) => {
+    const resolvedUid = uid || profile?.user_id || userId;
+    if (!resolvedUid) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('audience_insights')
+        .select('*')
+        .eq('user_id', resolvedUid)
+        .eq('insight_type', 'ai_generated')
+        .order('last_ai_analysis_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setAvailableInsights(data);
+      }
+    } catch (error) {
+      console.error('Error loading insights:', error);
     }
   };
 
@@ -275,6 +301,25 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
               >
                 Crear Otra Audiencia
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Banner de Contexto de Insights */}
+      {availableInsights && (
+        <Card className="border-2 border-blue-500/30 bg-gradient-to-br from-blue-500/5 to-purple-500/5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-sm">💡 Tenemos insights de tu audiencia listos para usar</p>
+                <p className="text-xs text-muted-foreground">
+                  La IA creará segmentos optimizados basados en {availableInsights.audience_segments?.length || 0} segmentos identificados
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

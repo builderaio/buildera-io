@@ -343,6 +343,20 @@ const CompanyDashboard = () => {
     };
   }, []);
 
+  // Sincronizar activeView con cambios en URL (navegación entre vistas)
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam && viewParam !== activeView) {
+      console.log('🔄 [URL Sync] searchParams changed:', {
+        viewParam,
+        currentActiveView: activeView,
+        willUpdate: true
+      });
+      console.log('🔄 URL changed, updating activeView from:', activeView, 'to:', viewParam);
+      setActiveView(viewParam);
+    }
+  }, [searchParams]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate('/auth');

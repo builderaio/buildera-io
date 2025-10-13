@@ -23,7 +23,11 @@ import {
   MessageSquare,
   Building,
   Heart,
-  Share2
+  Share2,
+  ThumbsUp,
+  Calendar,
+  Shield,
+  BarChart3
 } from "lucide-react";
 import { FaInstagram, FaFacebook, FaXTwitter, FaTiktok, FaYoutube } from 'react-icons/fa6';
 import { SocialConnectionManager } from "./SocialConnectionManager";
@@ -51,6 +55,37 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
   const [lastAnalysisDate, setLastAnalysisDate] = useState<string | null>(null);
   const [showConnectionsView, setShowConnectionsView] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
+
+  // Helper para normalizar respuestas del edge a formato snake_case de la DB
+  const mapEdgeResultToDbRow = (edgeResult: any) => {
+    return {
+      id: edgeResult.id,
+      user_id: edgeResult.user_id || edgeResult.userId,
+      platform: edgeResult.platform,
+      social_type: edgeResult.socialType || edgeResult.social_type,
+      screen_name: edgeResult.screenName || edgeResult.screen_name,
+      name: edgeResult.name,
+      users_count: edgeResult.usersCount || edgeResult.users_count,
+      quality_score: edgeResult.qualityScore || edgeResult.quality_score,
+      avg_er: edgeResult.avgER || edgeResult.avg_er,
+      avg_views: edgeResult.avgViews || edgeResult.avg_views,
+      countries: edgeResult.countries,
+      genders: edgeResult.genders,
+      ages: edgeResult.ages,
+      interests: edgeResult.interests,
+      last_posts: edgeResult.lastPosts || edgeResult.last_posts,
+      categories: edgeResult.categories,
+      tags: edgeResult.tags,
+      brand_safety: edgeResult.brandSafety || edgeResult.brand_safety,
+      members_types: edgeResult.membersTypes || edgeResult.members_types,
+      members_reachability: edgeResult.membersReachability || edgeResult.members_reachability,
+      raw_data: edgeResult.raw_data,
+      image: edgeResult.image,
+      description: edgeResult.description,
+      verified: edgeResult.verified,
+      created_at: edgeResult.created_at
+    };
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -174,18 +209,25 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
 
       // Validar que realmente haya datos
       if (data.success && data.data && data.data.length > 0) {
-        // Optimistic UI: mostrar resultados inmediatamente
-        setSocialStats(data.data);
+        // Normalizar resultados y mostrar inmediatamente
+        const normalizedData = data.data.map(mapEdgeResultToDbRow);
+        setSocialStats(normalizedData);
         setHasSocialConnections(true);
         setShowUrlConfirmation(false);
-        setExistingAnalysisCount(data.data.length);
+        setShowInsights(true);
+        setExistingAnalysisCount(normalizedData.length);
         setLastAnalysisDate(new Date().toISOString());
-        // Refrescar en segundo plano desde la BD (no bloquear UI)
-        loadSocialAudienceStats(userId);
+        
         toast({
           title: "Análisis Completado",
-          description: `Se analizaron ${data.data.length} redes sociales exitosamente.`,
+          description: `Se analizaron ${normalizedData.length} redes sociales exitosamente. Generando insights...`,
         });
+        
+        // Refrescar en segundo plano desde la BD
+        loadSocialAudienceStats(userId);
+        
+        // Auto-generar insights si no existen
+        await autoGenerateInsightsIfNeeded(userId);
       } else if (data.success && (!data.data || data.data.length === 0)) {
         // Análisis "exitoso" pero sin datos
         toast({
@@ -235,17 +277,24 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
 
       if (data.success) {
         if (data.data && data.data.length > 0) {
-          setSocialStats(data.data);
+          const normalizedData = data.data.map(mapEdgeResultToDbRow);
+          setSocialStats(normalizedData);
           setHasSocialConnections(true);
-          setExistingAnalysisCount(data.data.length);
+          setShowInsights(true);
+          setExistingAnalysisCount(normalizedData.length);
           setLastAnalysisDate(new Date().toISOString());
+          
+          toast({
+            title: "Análisis Completado",
+            description: `Se analizaron todas las redes sociales exitosamente. Generando insights...`,
+          });
+          
+          // Refrescar en segundo plano desde la BD
+          loadSocialAudienceStats(userId);
+          
+          // Auto-generar insights si no existen
+          await autoGenerateInsightsIfNeeded(userId);
         }
-        // Refrescar en segundo plano desde la BD
-        loadSocialAudienceStats(userId);
-        toast({
-          title: "Análisis Completado",
-          description: `Se analizaron todas las redes sociales exitosamente.`,
-        });
       } else {
         throw new Error(data.error || 'Error al analizar audiencias');
       }
@@ -258,6 +307,55 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
       });
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  // Función para auto-generar insights si no existen
+  const autoGenerateInsightsIfNeeded = async (uid: string) => {
+    try {
+      // Verificar si ya existen insights
+      const { data: existingInsights, error: insightsError } = await supabase
+        .from('audience_insights')
+        .select('id')
+        .eq('user_id', uid)
+        .limit(1);
+
+      if (insightsError) {
+        console.error('Error checking existing insights:', insightsError);
+        return;
+      }
+
+      // Si no hay insights previos, generar automáticamente
+      if (!existingInsights || existingInsights.length === 0) {
+        console.log('No se encontraron insights previos, generando automáticamente...');
+        
+        const { data: invokeData, error: invokeError } = await supabase.functions.invoke(
+          'audience-intelligence-analysis',
+          {
+            body: {
+              userId: uid,
+              companyId: companyId,
+              socialStats: socialStats
+            }
+          }
+        );
+
+        if (invokeError) {
+          console.error('Error auto-generating insights:', invokeError);
+          toast({
+            title: "Aviso",
+            description: "No se pudieron generar insights automáticamente. Puedes generarlos manualmente.",
+            variant: "destructive"
+          });
+        } else if (invokeData?.success) {
+          toast({
+            title: "🎯 Insights generados",
+            description: "Los insights de IA están listos para visualizar.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error in autoGenerateInsightsIfNeeded:', error);
     }
   };
 
@@ -281,6 +379,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
         setLastAnalysisDate(existingAnalyses[0].created_at);
         setSocialStats(existingAnalyses);
         setHasSocialConnections(true);
+        setShowInsights(true); // Activar insights cuando hay datos previos
         setShowUrlConfirmation(false);
       } else {
         // Evitar sobreescribir el estado si ya tenemos resultados en memoria
@@ -627,7 +726,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Engagement Rate</p>
-                  <p className="text-2xl font-bold text-blue-600">{((mainProfile.avgER || 0) * 100).toFixed(2)}%</p>
+                  <p className="text-2xl font-bold text-blue-600">{((mainProfile.avg_er || 0) * 100).toFixed(2)}%</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                   <Heart className="w-6 h-6 text-blue-600" />
@@ -656,9 +755,9 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Alcance Promedio</p>
+                  <p className="text-sm font-medium text-muted-foreground">Vistas Promedio</p>
                   <p className="text-2xl font-bold text-orange-600">
-                    {((mainProfile.reach_avg || 0) / 1000).toFixed(1)}K
+                    {((mainProfile.avg_views || 0) / 1000).toFixed(1)}K
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
@@ -734,6 +833,166 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
           </CardContent>
         </Card>
 
+        {/* Últimos Posts */}
+        {mainProfile.last_posts && mainProfile.last_posts.length > 0 && (
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Calendar className="w-5 w-5 text-primary" />
+                Últimos Posts
+              </h3>
+              <div className="space-y-4">
+                {mainProfile.last_posts.slice(0, 3).map((post: any, idx: number) => (
+                  <div key={idx} className="flex gap-4 p-4 rounded-lg bg-accent/10 border">
+                    {post.image && (
+                      <img src={post.image} alt="Post" className="w-24 h-24 rounded object-cover" />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{post.text}</p>
+                      <div className="flex gap-4 text-xs text-muted-foreground">
+                        {post.views !== undefined && (
+                          <span className="flex items-center gap-1">
+                            <Eye className="h-3 w-3" /> {post.views.toLocaleString()}
+                          </span>
+                        )}
+                        {post.likes !== undefined && (
+                          <span className="flex items-center gap-1">
+                            <ThumbsUp className="h-3 w-3" /> {post.likes}
+                          </span>
+                        )}
+                        {post.comments !== undefined && (
+                          <span className="flex items-center gap-1">
+                            <MessageSquare className="h-3 w-3" /> {post.comments}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Categorías y Tags */}
+        {((mainProfile.categories && mainProfile.categories.length > 0) || 
+          (mainProfile.tags && mainProfile.tags.length > 0)) && (
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-xl font-bold mb-4">Categorías y Tags</h3>
+              <div className="space-y-3">
+                {mainProfile.categories && mainProfile.categories.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Categorías:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {mainProfile.categories.map((cat: string, idx: number) => (
+                        <Badge key={idx} variant="secondary">{cat}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {mainProfile.tags && mainProfile.tags.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Tags:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {mainProfile.tags.map((tag: string, idx: number) => (
+                        <Badge key={idx} variant="outline">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Brand Safety */}
+        {mainProfile.brand_safety && Object.values(mainProfile.brand_safety).some((v: any) => v > 0) && (
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                Seguridad de Marca
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(mainProfile.brand_safety)
+                  .filter(([_, value]) => (value as number) > 0)
+                  .map(([key, value], idx) => (
+                    <Badge key={idx} variant="destructive">
+                      {key}: {String(value)}
+                    </Badge>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tipos de Audiencia */}
+        {((mainProfile.members_types && mainProfile.members_types.length > 0) ||
+          (mainProfile.members_reachability && mainProfile.members_reachability.length > 0)) && (
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                Análisis de Audiencia
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {mainProfile.members_types && mainProfile.members_types.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium mb-3">Tipos de Seguidores:</p>
+                    <div className="space-y-2">
+                      {mainProfile.members_types.map((type: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center">
+                          <span className="text-sm capitalize">{type.name}</span>
+                          <span className="text-sm font-medium">{(type.percent * 100).toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {mainProfile.members_reachability && mainProfile.members_reachability.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium mb-3">Alcanzabilidad:</p>
+                    <div className="space-y-2">
+                      {mainProfile.members_reachability.map((reach: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center">
+                          <span className="text-sm">{reach.name}</span>
+                          <span className="text-sm font-medium">{(reach.percent * 100).toFixed(1)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Edades */}
+        {mainProfile.ages && mainProfile.ages.filter((a: any) => a.percent > 0).length > 0 && (
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-xl font-bold mb-4">Distribución por Edad</h3>
+              <div className="space-y-3">
+                {mainProfile.ages
+                  .filter((age: any) => age.percent > 0)
+                  .sort((a: any, b: any) => b.percent - a.percent)
+                  .map((age: any, idx: number) => (
+                    <div key={idx}>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm">{age.name}</span>
+                        <span className="text-sm font-medium">
+                          {(age.percent * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <Progress value={age.percent * 100} className="h-2" />
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Sección de Insights con IA */}
         {showInsights && userId && companyId && (
           <div className="space-y-4">
@@ -757,6 +1016,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
                   userId={userId}
                   companyId={companyId}
                   socialStats={socialStats}
+                  autoGenerate={true}
                   onInsightsGenerated={() => {
                     toast({
                       title: "✨ Insights Generados",

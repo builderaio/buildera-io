@@ -14,6 +14,7 @@ interface AudienceInsightsPanelProps {
   userId: string;
   companyId: string;
   socialStats: any;
+  autoGenerate?: boolean;
   onInsightsGenerated?: () => void;
 }
 
@@ -21,10 +22,12 @@ export const AudienceInsightsPanel = ({
   userId, 
   companyId, 
   socialStats,
+  autoGenerate = false,
   onInsightsGenerated
 }: AudienceInsightsPanelProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [insights, setInsights] = useState<any>(null);
+  const [hasCheckedAutoGenerate, setHasCheckedAutoGenerate] = useState(false);
   const { toast } = useToast();
 
   const generateAudienceInsights = async () => {
@@ -93,10 +96,21 @@ export const AudienceInsightsPanel = ({
     }
   };
 
-  // Cargar insights existentes al montar
+  // Cargar insights existentes y auto-generar si es necesario
   useEffect(() => {
-    loadExistingInsights();
-  }, [userId]);
+    const init = async () => {
+      await loadExistingInsights();
+      
+      // Si autoGenerate está activado y no hay insights, generar automáticamente
+      if (autoGenerate && !insights && !hasCheckedAutoGenerate) {
+        setHasCheckedAutoGenerate(true);
+        console.log('Auto-generando insights...');
+        await generateAudienceInsights();
+      }
+    };
+    
+    init();
+  }, [userId, autoGenerate]);
 
   if (!insights) {
     return (

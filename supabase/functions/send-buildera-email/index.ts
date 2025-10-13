@@ -157,7 +157,6 @@ const handler = async (req: Request): Promise<Response> => {
   
   try {
     requestData = await req.json();
-    requestData = await req.json();
     console.log("Request data received:", {
       test: requestData.test,
       hasConfiguration: !!requestData.configuration,

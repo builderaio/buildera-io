@@ -74,7 +74,7 @@ interface WorkflowState {
 }
 
 const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Initialize activeTab from URL BEFORE first render to avoid race condition
   const getInitialTab = () => {
@@ -724,7 +724,18 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs 
+        value={activeTab} 
+        onValueChange={(value) => {
+          setActiveTab(value);
+          const nextParams = new URLSearchParams(searchParams);
+          nextParams.set('view', 'marketing-hub');
+          nextParams.set('tab', value);
+          setSearchParams(nextParams);
+          console.log('🧭 [MarketingHubWow] Tab cambiado por usuario => URL sincronizada:', value);
+        }} 
+        className="w-full"
+      >
         <TabsList className="grid w-full grid-cols-8 lg:w-fit lg:grid-cols-8 mb-6">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />

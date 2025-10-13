@@ -362,18 +362,19 @@ const CompanyDashboard = () => {
     console.log('🎯 Navegando desde SimpleEraGuide a:', section, 'con params:', params);
     setActiveView(section);
     
-    // También actualizar la URL para reflejar el cambio
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', section);
+    // Usar navigate de react-router para actualizar URL y disparar efectos en hijos
+    const nextParams = new URLSearchParams(window.location.search);
+    nextParams.set('view', section);
     
     // Agregar parámetros adicionales si existen
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
-        url.searchParams.set(key, value);
+        nextParams.set(key, value);
       });
     }
     
-    window.history.pushState({}, '', url);
+    console.log('🧭 [CompanyDashboard] Navegando con React Router:', `?${nextParams.toString()}`);
+    navigate(`?${nextParams.toString()}`);
   };
 
   const renderContent = () => {

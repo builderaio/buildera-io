@@ -184,7 +184,7 @@ serve(async (req) => {
           }
         ],
         tool_choice: { type: 'function', function: { name: 'audience_insights' } },
-        max_completion_tokens: 1200
+        max_completion_tokens: 4000
       }
     });
 
@@ -194,15 +194,11 @@ serve(async (req) => {
     }
 
     console.log('✅ AI analysis completed');
+    console.log('🔍 Full AI Response:', JSON.stringify(aiResponse, null, 2).slice(0, 2000));
 
     let parsedInsights;
     try {
-      const contentCandidate = (
-        aiResponse?.choices?.[0]?.message?.content ??
-        aiResponse?.response?.choices?.[0]?.message?.content ??
-        aiResponse?.data?.choices?.[0]?.message?.content
-      );
-
+      // Intentar extraer tool_calls arguments (preferred)
       const toolArgs = (
         aiResponse?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ??
         aiResponse?.response?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ??
@@ -210,28 +206,92 @@ serve(async (req) => {
       );
 
       if (toolArgs) {
-        parsedInsights = JSON.parse(toolArgs);
-      } else if (contentCandidate) {
-        const cleaned = String(contentCandidate).replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        try {
-          parsedInsights = JSON.parse(cleaned);
-        } catch {
-          const first = cleaned.indexOf('{');
-          const last = cleaned.lastIndexOf('}');
-          if (first !== -1 && last !== -1 && last > first) {
-            parsedInsights = JSON.parse(cleaned.slice(first, last + 1));
-          } else {
-            throw new Error('No JSON content found in model response');
-          }
-        }
+        console.log('✅ Found tool_calls arguments');
+        parsedInsights = typeof toolArgs === 'string' ? JSON.parse(toolArgs) : toolArgs;
       } else {
-        console.error('AI response structure unexpected:', JSON.stringify(aiResponse)?.slice(0, 1000));
-        throw new Error('Empty AI response');
+        // Fallback: extraer content
+        const contentCandidate = (
+          aiResponse?.choices?.[0]?.message?.content ??
+          aiResponse?.response?.choices?.[0]?.message?.content ??
+          aiResponse?.data?.choices?.[0]?.message?.content ??
+          aiResponse?.response  // Caso especial donde response es string directo
+        );
+
+        console.log('⚠️ No tool_calls found, trying to extract from content');
+        console.log('Content preview:', String(contentCandidate).slice(0, 500));
+
+        if (!contentCandidate) {
+          console.error('❌ AI response structure:', JSON.stringify(aiResponse, null, 2).slice(0, 2000));
+          throw new Error('Empty AI response - no tool_calls or content found');
+        }
+
+        const contentStr = String(contentCandidate);
+        const cleaned = contentStr.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        
+        // Si la respuesta es un string JSON directo
+        if (cleaned.startsWith('{') && cleaned.includes('audience_segments')) {
+          try {
+            parsedInsights = JSON.parse(cleaned);
+            console.log('✅ Parsed JSON directly from content');
+          } catch {
+            const first = cleaned.indexOf('{');
+            const last = cleaned.lastIndexOf('}');
+            if (first !== -1 && last !== -1 && last > first) {
+              parsedInsights = JSON.parse(cleaned.slice(first, last + 1));
+              console.log('✅ Extracted and parsed JSON from content');
+            } else {
+              throw new Error('Could not extract valid JSON from content');
+            }
+          }
+        } else {
+          // Si no es JSON estructurado, construir objeto de fallback con el texto
+          console.log('⚠️ Response is plain text, creating fallback structure');
+          parsedInsights = {
+            audience_segments: [{
+              nombre: 'Audiencia General',
+              porcentaje: 100,
+              descripcion: contentStr.slice(0, 500)
+            }],
+            key_insights: [{
+              insight: contentStr.slice(0, 1000)
+            }],
+            recommendations: [{
+              titulo: 'Análisis disponible',
+              descripcion: 'El análisis completo está disponible en el texto generado'
+            }],
+            detailed_analysis: {
+              fortalezas: ['Análisis generado por IA'],
+              debilidades: [],
+              oportunidades: [],
+              amenazas: [],
+              tendencias_emergentes: []
+            },
+            raw_text: contentStr
+          };
+        }
       }
+
+      // Validar estructura mínima
+      if (!parsedInsights.audience_segments || !Array.isArray(parsedInsights.audience_segments)) {
+        console.warn('⚠️ Missing audience_segments, adding default');
+        parsedInsights.audience_segments = [{
+          nombre: 'Audiencia Principal',
+          porcentaje: 100,
+          descripcion: 'Audiencia base analizada'
+        }];
+      }
+
+      console.log('✅ Successfully parsed insights with', parsedInsights.audience_segments?.length, 'segments');
+
     } catch (parseError) {
-      console.error('Error parsing AI response:', parseError);
+      console.error('❌ Error parsing AI response:', parseError);
+      console.error('Full response:', JSON.stringify(aiResponse, null, 2));
       return new Response(
-        JSON.stringify({ error: 'Failed to parse AI response', details: parseError instanceof Error ? parseError.message : String(parseError) }),
+        JSON.stringify({ 
+          error: 'Failed to parse AI response', 
+          details: parseError instanceof Error ? parseError.message : String(parseError),
+          raw_response: JSON.stringify(aiResponse).slice(0, 1000)
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
       );
     }

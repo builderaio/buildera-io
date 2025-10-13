@@ -62,7 +62,12 @@ export const useStepVerifications = (userId: string) => {
   };
 
   // Paso 3: Verificar que existan URLs configuradas en social_accounts
-  const verifySocialURLs = async (): Promise<boolean> => {
+  const verifySocialURLs = async (): Promise<{
+    isComplete: boolean;
+    configured: number;
+    total: number;
+    missing: string[];
+  }> => {
     try {
       const { data, error } = await supabase
         .from('social_accounts')
@@ -72,14 +77,30 @@ export const useStepVerifications = (userId: string) => {
       
       if (error) throw error;
       
-      // Al menos 1 cuenta conectada debe tener username configurado (excluyendo upload_post_profile)
-      const withUrls = (data || []).filter(
-        (acc: any) => acc.platform !== 'upload_post_profile' && acc.platform_username && acc.platform_username.trim() !== ''
+      // Filtrar plataformas reales (excluir upload_post_profile)
+      const realConnections = (data || []).filter(
+        (acc: any) => acc.platform !== 'upload_post_profile'
       );
-      return withUrls.length > 0;
+      
+      // Contar URLs configuradas
+      const withUrls = realConnections.filter(
+        (acc: any) => acc.platform_username && acc.platform_username.trim() !== ''
+      );
+      
+      // Identificar plataformas faltantes
+      const missing = realConnections
+        .filter((acc: any) => !acc.platform_username || acc.platform_username.trim() === '')
+        .map((acc: any) => acc.platform);
+      
+      return {
+        isComplete: withUrls.length > 0,
+        configured: withUrls.length,
+        total: realConnections.length,
+        missing
+      };
     } catch (error) {
       console.error('Error verifying social URLs:', error);
-      return false;
+      return { isComplete: false, configured: 0, total: 0, missing: [] };
     }
   };
 

@@ -125,9 +125,9 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     {
       id: 3,
       title: "Configura URLs de tus Perfiles",
-      what: "Agrega las URLs públicas de tus perfiles en redes sociales.",
+      what: "Agrega las URLs públicas de tus perfiles en redes sociales conectados.",
       why: "Esto permite que Era analice tu contenido publicado y genere insights precisos sobre tu estrategia actual.",
-      how: "En Configuración → Conexiones de Redes Sociales, agrega las URLs de tus perfiles conectados.",
+      how: "En cada tarjeta de red social conectada, haz clic en el ícono de lápiz (✏️) junto a 'URL del perfil' e ingresa la URL pública. Ejemplos: https://linkedin.com/in/tu-usuario, https://instagram.com/tu-usuario, https://facebook.com/tu-pagina",
       target_section: "marketing-hub",
       tab: "configuracion",
       completed: false,
@@ -723,7 +723,8 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           isComplete = await verifications.verifySocialConnections();
           break;
         case 3:
-          isComplete = await verifications.verifySocialURLs();
+          const urlVerification = await verifications.verifySocialURLs();
+          isComplete = urlVerification.isComplete;
           break;
         case 4:
           isComplete = await verifications.verifyAudienceAnalysis();

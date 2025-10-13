@@ -20,8 +20,10 @@ import {
   Settings,
   Edit,
   Save,
-  Info
+  Info,
+  HelpCircle
 } from "lucide-react";
+import { SocialURLHelpDialog } from "./SocialURLHelpDialog";
 import { FaFacebook, FaInstagram, FaLinkedin, FaTiktok, FaYoutube, FaXTwitter, FaPinterest } from 'react-icons/fa6';
 import { SiThreads } from 'react-icons/si';
 
@@ -619,7 +621,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 Conexiones de Redes Sociales
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                {connectedCount}/{totalPlatforms} plataformas conectadas
+                {connectedCount}/{totalPlatforms} plataformas conectadas • {configuredUrlCount}/{connectedCount} URLs configuradas
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -654,16 +656,38 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         </CardHeader>
       </Card>
 
+      {/* URL Configuration Help Banner */}
+      {connectedCount > 0 && configuredUrlCount < connectedCount && (
+        <Alert className="border-orange-200 bg-orange-50/50">
+          <Info className="w-4 h-4 text-orange-600" />
+          <AlertDescription className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-orange-900">Configura las URLs de tus perfiles</p>
+              <p className="text-sm text-orange-700 mt-1">
+                {configuredUrlCount === 0 
+                  ? "Necesitas agregar las URLs públicas de tus perfiles para que Era pueda analizar tu contenido."
+                  : `Has configurado ${configuredUrlCount} de ${connectedCount} URLs. Completa las restantes para un análisis más completo.`
+                }
+              </p>
+            </div>
+            <SocialURLHelpDialog />
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Connection Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {Object.entries(platformConfig).map(([platform, config]) => {
           const isConnected = getConnectionStatus(platform);
           const accountInfo = getAccountInfo(platform);
           
+          const hasUrl = urlValues[platform] && urlValues[platform].trim() !== '';
+          const cardBorderClass = isConnected 
+            ? (hasUrl ? 'border-green-500 bg-green-50/50' : 'border-yellow-500 bg-yellow-50/30')
+            : 'border-gray-200 bg-gray-50/30';
+          
           return (
-            <Card key={platform} className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
-              isConnected ? 'border-green-200 bg-green-50/30' : 'border-gray-200 bg-gray-50/30'
-            }`}>
+            <Card key={platform} className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${cardBorderClass}`}>
               <CardContent className="p-4">
                 {/* Coachmark para nuevas conexiones */}
                 {newConnectedPlatforms.has(platform) && isConnected && (
@@ -692,7 +716,11 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                   </div>
                   
                   {isConnected ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    hasUrl ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <Info className="w-5 h-5 text-yellow-600" />
+                    )
                   ) : (
                     <XCircle className="w-5 h-5 text-gray-400" />
                   )}
@@ -716,10 +744,15 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 <Badge 
                   variant={isConnected ? "default" : "secondary"}
                   className={`w-full justify-center ${
-                    isConnected ? 'bg-green-100 text-green-700 border-green-200' : ''
+                    isConnected 
+                      ? (hasUrl ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200')
+                      : ''
                   }`}
                 >
-                  {isConnected ? 'Conectado' : 'No conectado'}
+                  {isConnected 
+                    ? (hasUrl ? '✓ Conectado y configurado' : '⚠ URL pendiente')
+                    : 'No conectado'
+                  }
                 </Badge>
 
                 {platform === 'facebook' && isConnected && (
@@ -749,56 +782,78 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 {/* URL Configuration */}
                 {config.urlField && (
                   <div className="mt-3 space-y-2">
-                    <Label className="text-xs font-medium text-muted-foreground">
-                      URL del perfil
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold flex items-center gap-1">
+                        URL del perfil {!hasUrl && isConnected && <span className="text-orange-500">*</span>}
+                      </Label>
+                      <SocialURLHelpDialog>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                          <HelpCircle className="w-3 h-3 mr-1" />
+                          Ayuda
+                        </Button>
+                      </SocialURLHelpDialog>
+                    </div>
                     {editingUrl === platform ? (
                       <div className="flex gap-1">
                         <Input
                           value={urlValues[platform] || ''}
                           onChange={(e) => setUrlValues(prev => ({ ...prev, [platform]: e.target.value }))}
-                          placeholder={`URL de ${config.name}`}
-                          className="text-xs"
-                          size={1}
+                          placeholder={
+                            platform === 'linkedin' ? 'https://linkedin.com/in/tu-usuario' :
+                            platform === 'instagram' ? 'https://instagram.com/tu_usuario' :
+                            platform === 'facebook' ? 'https://facebook.com/tu-pagina' :
+                            platform === 'tiktok' ? 'https://tiktok.com/@tu_usuario' :
+                            `URL de ${config.name}`
+                          }
+                          className="text-sm"
+                          autoFocus
                         />
                         <Button
                           onClick={() => saveUrl(platform)}
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-9 w-9 p-0"
+                          title="Guardar"
                         >
-                          <Save className="w-3 h-3" />
+                          <Save className="w-4 h-4 text-green-600" />
                         </Button>
                         <Button
                           onClick={() => setEditingUrl(null)}
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-9 w-9 p-0"
+                          title="Cancelar"
                         >
-                          <XCircle className="w-3 h-3" />
+                          <XCircle className="w-4 h-4 text-gray-600" />
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1">
-                        <div className="text-xs text-muted-foreground flex-1 truncate">
-                          {urlValues[platform] || 'No configurada'}
+                      <div className="flex items-center gap-1 group">
+                        <div className={`text-sm flex-1 truncate px-2 py-1.5 rounded ${
+                          hasUrl 
+                            ? 'text-foreground bg-muted/50' 
+                            : 'text-muted-foreground italic bg-orange-50/50 border border-orange-200'
+                        }`}>
+                          {urlValues[platform] || 'Haz clic en el lápiz para agregar →'}
                         </div>
                         <Button
                           onClick={() => setEditingUrl(platform)}
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0"
+                          className="h-8 w-8 p-0"
+                          title="Editar URL"
                         >
-                          <Edit className="w-3 h-3" />
+                          <Edit className="w-4 h-4" />
                         </Button>
                         {urlValues[platform] && (
                           <Button
                             onClick={() => window.open(urlValues[platform], '_blank')}
                             variant="ghost"
                             size="sm"
-                            className="h-6 w-6 p-0"
+                            className="h-8 w-8 p-0"
+                            title="Abrir URL"
                           >
-                            <ExternalLink className="w-3 h-3" />
+                            <ExternalLink className="w-4 h-4" />
                           </Button>
                         )}
                       </div>

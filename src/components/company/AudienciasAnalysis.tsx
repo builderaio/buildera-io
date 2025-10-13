@@ -170,8 +170,14 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
 
       // Validar que realmente haya datos
       if (data.success && data.data && data.data.length > 0) {
-        await loadSocialAudienceStats(userId);
+        // Optimistic UI: mostrar resultados inmediatamente
+        setSocialStats(data.data);
+        setHasSocialConnections(true);
         setShowUrlConfirmation(false);
+        setExistingAnalysisCount(data.data.length);
+        setLastAnalysisDate(new Date().toISOString());
+        // Refrescar en segundo plano desde la BD (no bloquear UI)
+        loadSocialAudienceStats(userId);
         toast({
           title: "Análisis Completado",
           description: `Se analizaron ${data.data.length} redes sociales exitosamente.`,
@@ -224,7 +230,14 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
       if (error) throw error;
 
       if (data.success) {
-        await loadSocialAudienceStats(userId);
+        if (data.data && data.data.length > 0) {
+          setSocialStats(data.data);
+          setHasSocialConnections(true);
+          setExistingAnalysisCount(data.data.length);
+          setLastAnalysisDate(new Date().toISOString());
+        }
+        // Refrescar en segundo plano desde la BD
+        loadSocialAudienceStats(userId);
         toast({
           title: "Análisis Completado",
           description: `Se analizaron todas las redes sociales exitosamente.`,
@@ -266,6 +279,10 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
         setHasSocialConnections(true);
         setShowUrlConfirmation(false);
       } else {
+        // Evitar sobreescribir el estado si ya tenemos resultados en memoria
+        if (socialStats.length > 0) {
+          return;
+        }
         setSocialStats([]);
         setHasSocialConnections(false);
         setExistingAnalysisCount(0);
@@ -282,8 +299,10 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
       }
     } catch (error) {
       console.error('Error loading social audience stats:', error);
-      setSocialStats([]);
-      setHasSocialConnections(false);
+      if (socialStats.length === 0) {
+        setSocialStats([]);
+        setHasSocialConnections(false);
+      }
     } finally {
       setSocialStatsLoading(false);
     }

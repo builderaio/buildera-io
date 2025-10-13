@@ -154,10 +154,10 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('get-social-audience-stats', {
+      const urlsPayload = Object.entries(selectedUrls).map(([platform, url]) => ({ platform, url }));
+      const { data, error } = await supabase.functions.invoke('analyze-social-audience', {
         body: {
-          user_id: userId,
-          social_urls: selectedUrls
+          urls: urlsPayload
         }
       });
 
@@ -220,10 +220,10 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
 
     setAnalyzing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('get-social-audience-stats', {
+      const urlsPayload = Object.entries(urls).map(([platform, url]) => ({ platform, url }));
+      const { data, error } = await supabase.functions.invoke('analyze-social-audience', {
         body: {
-          user_id: userId,
-          social_urls: urls
+          urls: urlsPayload
         }
       });
 

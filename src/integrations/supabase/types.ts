@@ -2917,40 +2917,64 @@ export type Database = {
       }
       content_insights: {
         Row: {
+          completed_at: string | null
+          content: string | null
           created_at: string
-          description: string | null
-          format_type: string | null
+          dismissed_at: string | null
+          dismissed_reason: string | null
+          format: string | null
+          generated_at: string
           hashtags: string[] | null
           id: string
+          insight_type: string
+          metadata: Json | null
           platform: string | null
-          raw_insight: string | null
-          suggested_schedule: string | null
+          source_analysis_id: string | null
+          status: string
+          strategy: string | null
+          timing: string | null
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          completed_at?: string | null
+          content?: string | null
           created_at?: string
-          description?: string | null
-          format_type?: string | null
+          dismissed_at?: string | null
+          dismissed_reason?: string | null
+          format?: string | null
+          generated_at?: string
           hashtags?: string[] | null
           id?: string
+          insight_type: string
+          metadata?: Json | null
           platform?: string | null
-          raw_insight?: string | null
-          suggested_schedule?: string | null
+          source_analysis_id?: string | null
+          status?: string
+          strategy?: string | null
+          timing?: string | null
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          completed_at?: string | null
+          content?: string | null
           created_at?: string
-          description?: string | null
-          format_type?: string | null
+          dismissed_at?: string | null
+          dismissed_reason?: string | null
+          format?: string | null
+          generated_at?: string
           hashtags?: string[] | null
           id?: string
+          insight_type?: string
+          metadata?: Json | null
           platform?: string | null
-          raw_insight?: string | null
-          suggested_schedule?: string | null
+          source_analysis_id?: string | null
+          status?: string
+          strategy?: string | null
+          timing?: string | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -4311,15 +4335,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "generated_content_insight_id_fkey"
-            columns: ["insight_id"]
-            isOneToOne: false
-            referencedRelation: "content_insights"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       instagram_business_connections: {
         Row: {

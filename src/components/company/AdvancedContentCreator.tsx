@@ -237,25 +237,29 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
         // Fallback: save a single generic insight with the raw text
         const { error } = await supabase.from('content_insights').insert({
           user_id: profile.user_id,
+          insight_type: 'content_idea',
           title: 'Ideas de contenido generadas',
-          description: 'Consulta el texto completo en raw_insight',
+          content: 'Consulta el texto completo en metadata',
           platform: selectedPlatform !== 'all' ? selectedPlatform : null,
-          raw_insight: rawInsights
+          status: 'active',
+          metadata: { raw_insight: rawInsights }
         });
         if (error) throw error;
         return;
       }
 
-      // Bulk insert for performance and reliability
+      // Bulk insert for performance and reliability with new schema
       const payload = ideas.map((idea) => ({
         user_id: profile.user_id,
+        insight_type: 'content_idea' as const,
         title: idea.title,
-        description: idea.description,
-        format_type: idea.format,
+        content: idea.description,
+        format: idea.format,
         platform: idea.platform || (selectedPlatform !== 'all' ? selectedPlatform : null),
         hashtags: idea.hashtags,
-        suggested_schedule: idea.schedule,
-        raw_insight: rawInsights,
+        timing: idea.schedule,
+        status: 'active' as const,
+        metadata: { raw_insight: rawInsights }
       }));
 
       const { error } = await supabase.from('content_insights').insert(payload);

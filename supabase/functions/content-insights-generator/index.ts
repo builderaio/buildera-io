@@ -327,46 +327,82 @@ Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empr
       insights = data.choices[0].message.content;
     }
 
-    // Guardar insights en la base de datos
-    try {
-      const { error: saveError } = await supabase
-        .from('content_recommendations')
-        .insert({
+    // Guardar insights en la base de datos - NUEVO ESQUEMA
+    const insightsToSave = [];
+    
+    // Preparar audience insights
+    if (structuredInsights?.audience_insights && Array.isArray(structuredInsights.audience_insights)) {
+      for (const insight of structuredInsights.audience_insights) {
+        insightsToSave.push({
           user_id: user_id,
-          recommendation_type: 'ai_insights',
-          platform: platform || 'all',
-          title: 'Insights de Contenido IA',
-          description: 'Insights generados automáticamente basados en análisis de contenido',
-          suggested_content: {
-            insights_text: insights,
-            audience_insights: structuredInsights?.audience_insights || [],
-            content_ideas: structuredInsights?.content_ideas || [],
-            generated_at: new Date().toISOString(),
-            context_analyzed: {
+          insight_type: 'audience',
+          title: insight.title,
+          strategy: insight.strategy,
+          content: insight.strategy,
+          status: 'active',
+          generated_at: new Date().toISOString(),
+          metadata: {
+            context: {
               company_name: company?.name,
-              audiences_count: audiences?.length || 0,
-              insights_count: audienceInsights?.length || 0,
+              platform: platform || 'all',
               posts_analyzed: socialPosts?.length || 0
             }
-          },
-          status: 'active',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          }
         });
-
-      if (saveError) {
-        console.error('Error saving insights:', saveError);
-      } else {
-        console.log('✅ Insights saved successfully to database');
       }
-    } catch (saveError) {
-      console.error('Error saving insights to database:', saveError);
+    }
+    
+    // Preparar content ideas
+    if (structuredInsights?.content_ideas && Array.isArray(structuredInsights.content_ideas)) {
+      for (const idea of structuredInsights.content_ideas) {
+        insightsToSave.push({
+          user_id: user_id,
+          insight_type: 'content_idea',
+          title: idea.title,
+          strategy: idea.strategy,
+          content: idea.strategy,
+          format: idea.format,
+          platform: idea.platform,
+          hashtags: idea.hashtags || [],
+          timing: idea.timing,
+          status: 'active',
+          generated_at: new Date().toISOString(),
+          metadata: {
+            context: {
+              company_name: company?.name,
+              original_platform_filter: platform || 'all',
+              posts_analyzed: socialPosts?.length || 0
+            }
+          }
+        });
+      }
+    }
+
+    // Bulk insert insights
+    let savedInsightsIds: string[] = [];
+    if (insightsToSave.length > 0) {
+      try {
+        const { data: savedInsights, error: saveError } = await supabase
+          .from('content_insights')
+          .insert(insightsToSave)
+          .select('id');
+
+        if (saveError) {
+          console.error('Error saving insights:', saveError);
+        } else {
+          savedInsightsIds = (savedInsights || []).map((insight: any) => insight.id);
+          console.log(`✅ Successfully saved ${savedInsightsIds.length} insights to database`);
+        }
+      } catch (saveError) {
+        console.error('Error in bulk insert:', saveError);
+      }
     }
 
     return new Response(JSON.stringify({ 
       insights_text: insights,
       audience_insights: structuredInsights?.audience_insights || [],
       content_ideas: structuredInsights?.content_ideas || [],
+      saved_insights_ids: savedInsightsIds,
       context_analyzed: {
         company_name: company?.name,
         audiences_count: audiences?.length || 0,

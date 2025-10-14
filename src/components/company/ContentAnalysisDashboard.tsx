@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ContentLibraryTab from "./ContentLibraryTab";
 import ContentCreatorTab from "./ContentCreatorTab";
 import InsightsRenderer, { ParsedContentIdea } from "./InsightsRenderer";
+import { InsightsManager } from "./insights/InsightsManager";
 import {
   BarChart,
   Bar,
@@ -123,6 +124,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const [existingPostsCount, setExistingPostsCount] = useState(0);
   const [lastAnalysisDate, setLastAnalysisDate] = useState<string | null>(null);
   const [prepopulatedContent, setPrepopulatedContent] = useState<ParsedContentIdea | null>(null);
+  const [newInsightsIds, setNewInsightsIds] = useState<string[]>([]);
   const { toast } = useToast();
 
   const generateAIInsights = async () => {
@@ -177,6 +179,11 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       console.log('📦 Response data:', data);
 
       if (data) {
+        // Track newly generated insights
+        if (data.saved_insights_ids && Array.isArray(data.saved_insights_ids)) {
+          setNewInsightsIds(data.saved_insights_ids);
+        }
+        
         // Check for structured output first
         if (data.audience_insights && Array.isArray(data.audience_insights) && data.audience_insights.length > 0 &&
             data.content_ideas && Array.isArray(data.content_ideas) && data.content_ideas.length > 0) {
@@ -883,67 +890,16 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             </div>
           </CardHeader>
           <CardContent>
-            {(aiAudienceInsights.length > 0 || aiContentIdeas.length > 0 || aiInsights) ? (
-              <InsightsRenderer 
-                insights={aiInsights}
-                audienceInsights={aiAudienceInsights}
-                contentIdeas={aiContentIdeas}
-                onCreateContent={(contentData) => {
-                  setPrepopulatedContent(contentData);
-                  setActiveTab('creator');
-                }}
-                onOpenCalendar={(contentData) => {
-                  setPrepopulatedContent({ ...contentData, schedule: true });
-                  setActiveTab('creator');
-                }}
-                onOpenCreator={() => {
-                  setActiveTab('creator');
-                }}
-              />
-            ) : (
-              <div className="p-6 text-center">
-                <Brain className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <h4 className="text-base font-semibold mb-2">
-                  {topPosts.length === 0 ? 'Sin datos suficientes' : 'Insights no generados'}
-                </h4>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {topPosts.length === 0 
-                    ? 'Necesitas tener posts analizados para generar insights'
-                    : 'Haz clic en "Generar Insights" para obtener recomendaciones personalizadas'
-                  }
-                </p>
-                {topPosts.length === 0 ? (
-                  <Button 
-                    onClick={triggerContentOnlyAnalysis}
-                    disabled={loading}
-                    variant="default"
-                    size="sm"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Analizar Posts
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={generateAIInsights}
-                    disabled={loadingInsights || posts.length === 0}
-                    variant="default"
-                    size="sm"
-                  >
-                    {loadingInsights ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Generando...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Generar Insights
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            )}
+            <InsightsManager
+              userId={profile?.user_id || profile?.id || ''}
+              onCreateContent={(contentData) => {
+                setPrepopulatedContent(contentData);
+                setActiveTab('creator');
+              }}
+              onGenerateMore={generateAIInsights}
+              isGenerating={loadingInsights}
+              newInsightsIds={newInsightsIds}
+            />
           </CardContent>
         </Card>
       </div>

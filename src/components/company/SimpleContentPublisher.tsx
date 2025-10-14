@@ -946,8 +946,10 @@ export default function SimpleContentPublisher({
       <ContentImageSelector
         isOpen={showImageSelector}
         onClose={() => setShowImageSelector(false)}
-        onSelectImage={(imageUrl, contentText) => {
+        onSelectImage={(imageUrl, contentText, mediaType) => {
           setSelectedContentImage(imageUrl);
+          setUploadedMediaUrl(imageUrl);
+          setUploadedMediaType(mediaType || 'image');
           if (contentText && !isEditing) {
             setEditingContent(contentText);
           }

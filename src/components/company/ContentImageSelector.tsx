@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Image, Check } from "lucide-react";
+import { Image, Check, Video, FileText } from "lucide-react";
 
 interface ContentItem {
   id: string;
@@ -26,7 +26,7 @@ interface ContentItem {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSelectImage: (imageUrl: string, contentText?: string) => void;
+  onSelectImage: (imageUrl: string, contentText?: string, mediaType?: 'image' | 'video' | 'pdf') => void;
   profile: { user_id?: string };
 }
 
@@ -87,7 +87,15 @@ export default function ContentImageSelector({ isOpen, onClose, onSelectImage, p
 
   const handleSelectImage = (item: ContentItem) => {
     setSelectedImage(item.suggested_content.image_url);
-    onSelectImage(item.suggested_content.image_url, item.suggested_content.content_text);
+    // Detectar el tipo de medio por la URL
+    const url = item.suggested_content.image_url.toLowerCase();
+    let mediaType: 'image' | 'video' | 'pdf' = 'image';
+    if (url.includes('/content-videos/') || url.match(/\.(mp4|mov|avi)$/)) {
+      mediaType = 'video';
+    } else if (url.includes('/content-documents/') || url.endsWith('.pdf')) {
+      mediaType = 'pdf';
+    }
+    onSelectImage(item.suggested_content.image_url, item.suggested_content.content_text, mediaType);
     onClose();
   };
 
@@ -97,8 +105,11 @@ export default function ContentImageSelector({ isOpen, onClose, onSelectImage, p
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Image className="h-5 w-5 text-primary" />
-            Seleccionar imagen de la biblioteca
+            Seleccionar desde la biblioteca
           </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Imágenes, videos y documentos guardados
+          </p>
         </DialogHeader>
 
         {loading ? (
@@ -110,11 +121,19 @@ export default function ContentImageSelector({ isOpen, onClose, onSelectImage, p
           </div>
         ) : savedContent.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full flex items-center justify-center">
-              <Image className="w-12 h-12 text-primary" />
+            <div className="flex justify-center gap-2 mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full flex items-center justify-center">
+                <Image className="w-8 h-8 text-primary" />
+              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-full flex items-center justify-center">
+                <Video className="w-8 h-8 text-blue-600" />
+              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-red-500/10 to-orange-500/10 rounded-full flex items-center justify-center">
+                <FileText className="w-8 h-8 text-red-600" />
+              </div>
             </div>
-            <h3 className="text-xl font-semibold mb-2">No hay imágenes guardadas</h3>
-            <p className="text-muted-foreground">Aún no tienes imágenes en tu biblioteca de contenidos. Crea y publica contenido para guardar las imágenes generadas.</p>
+            <h3 className="text-xl font-semibold mb-2">No hay archivos guardados</h3>
+            <p className="text-muted-foreground">Aún no tienes imágenes, videos o documentos en tu biblioteca. Crea y publica contenido para guardar los archivos generados.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -128,11 +147,30 @@ export default function ContentImageSelector({ isOpen, onClose, onSelectImage, p
               >
                 <CardContent className="p-4">
                   <div className="relative mb-3">
-                    <img 
-                      src={item.suggested_content.image_url} 
-                      alt={item.title}
-                      className="w-full h-32 object-cover rounded-md"
-                    />
+                    {/* Detectar el tipo de medio */}
+                    {item.suggested_content.image_url.toLowerCase().match(/\.(mp4|mov|avi)$/) || 
+                     item.suggested_content.image_url.includes('/content-videos/') ? (
+                      <div className="relative">
+                        <video 
+                          src={item.suggested_content.image_url} 
+                          className="w-full h-32 object-cover rounded-md"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-md">
+                          <Video className="h-8 w-8 text-white" />
+                        </div>
+                      </div>
+                    ) : item.suggested_content.image_url.toLowerCase().endsWith('.pdf') || 
+                          item.suggested_content.image_url.includes('/content-documents/') ? (
+                      <div className="w-full h-32 bg-red-50 dark:bg-red-950 rounded-md flex items-center justify-center">
+                        <FileText className="h-12 w-12 text-red-600" />
+                      </div>
+                    ) : (
+                      <img 
+                        src={item.suggested_content.image_url} 
+                        alt={item.title}
+                        className="w-full h-32 object-cover rounded-md"
+                      />
+                    )}
                     {selectedImage === item.suggested_content.image_url && (
                       <div className="absolute top-2 right-2 bg-primary text-white rounded-full p-1">
                         <Check className="h-3 w-3" />

@@ -55,12 +55,28 @@ export const InsightsManager = ({
   const loadInsights = async () => {
     try {
       console.log('🔄 [InsightsManager] Loading insights for user:', userId);
+      console.log('🔍 [InsightsManager] Filter mode:', filterMode, 'Show active only:', showActiveOnly);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('content_insights')
         .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .eq('user_id', userId);
+      
+      // FILTRO 1: Solo ideas de contenido si está en modo "Creador"
+      if (filterMode === 'content_ideas_only') {
+        query = query.eq('insight_type', 'content_idea');
+        console.log('🎯 [InsightsManager] Filtering by insight_type: content_idea');
+      }
+      
+      // FILTRO 2: Solo activos si está en modo "Creador"
+      if (showActiveOnly) {
+        query = query.eq('status', 'active');
+        console.log('✅ [InsightsManager] Filtering by status: active');
+      }
+      
+      query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('❌ [InsightsManager] Error loading insights:', error);
@@ -74,7 +90,7 @@ export const InsightsManager = ({
         status: item.status as 'active' | 'completed' | 'dismissed' | 'archived'
       }));
       
-      console.log(`✅ [InsightsManager] Loaded ${typedData.length} insights`);
+      console.log(`✅ [InsightsManager] Loaded ${typedData.length} insights after filtering`);
       setInsights(typedData);
     } catch (error) {
       console.error('Error loading insights:', error);
@@ -99,7 +115,7 @@ export const InsightsManager = ({
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [userId, newInsightsIds]);
+  }, [userId, newInsightsIds, filterMode, showActiveOnly]); // Re-cargar cuando cambien los filtros
 
   useEffect(() => {
     let filtered = insights;

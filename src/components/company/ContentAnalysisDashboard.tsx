@@ -651,88 +651,63 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Tendencias de Crecimiento
-            </CardTitle>
-            <CardDescription className="text-sm text-muted-foreground">
-              Nota: Esta gráfica muestra datos de Instagram y TikTok. LinkedIn no está incluido debido a limitaciones de la API de análisis retrospectivo.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={combinedTrends.slice(-30)}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area 
-                    type="monotone" 
-                    dataKey="totalFollowers" 
-                    stroke="#8B5CF6" 
-                    fill="#8B5CF6" 
-                    fillOpacity={0.2}
-                    name="Seguidores"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Gráficas de rendimiento - Layout compacto */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Tendencias de Crecimiento */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
-                Engagement Rate
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Tendencias de Crecimiento
               </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">
+                Nota: Instagram y TikTok únicamente (LinkedIn no incluido)
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
+              <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={combinedTrends.slice(-15)}>
+                  <AreaChart data={combinedTrends.slice(-30)}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value: any) => [`${(value * 100).toFixed(2)}%`, 'Engagement']} />
-                    <Line 
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Area 
                       type="monotone" 
-                      dataKey="avgEngagement" 
-                      stroke="#06B6D4" 
-                      strokeWidth={3}
-                      dot={{ fill: '#06B6D4', strokeWidth: 2, r: 4 }}
+                      dataKey="totalFollowers" 
+                      stroke="#8B5CF6" 
+                      fill="#8B5CF6" 
+                      fillOpacity={0.2}
+                      name="Seguidores"
                     />
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
 
+          {/* Engagement Rate */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-primary" />
-                Score de Calidad
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Activity className="h-4 w-4 text-primary" />
+                Tasa de Interacción
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64">
+              <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={combinedTrends.slice(-15)}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value: any) => [`${(value * 100).toFixed(1)}%`, 'Calidad']} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip formatter={(value: any) => [`${(value * 100).toFixed(2)}%`, 'Engagement']} />
                     <Line 
                       type="monotone" 
-                      dataKey="avgQuality" 
-                      stroke="#10B981" 
-                      strokeWidth={3}
-                      dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+                      dataKey="avgEngagement" 
+                      stroke="#06B6D4" 
+                      strokeWidth={2}
+                      dot={{ fill: '#06B6D4', strokeWidth: 2, r: 3 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -740,6 +715,81 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             </CardContent>
           </Card>
         </div>
+
+        {/* Sección de Insights AI */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Insights Inteligentes
+                </CardTitle>
+                <CardDescription className="text-sm text-muted-foreground mt-1">
+                  Insights generados por IA basados en tu contenido y audiencia
+                </CardDescription>
+              </div>
+              <Button 
+                onClick={generateAIInsights} 
+                disabled={loadingInsights || topPosts.length === 0}
+                variant="outline"
+                size="sm"
+              >
+                {loadingInsights ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generar Insights
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {aiInsights ? (
+              <InsightsRenderer 
+                insights={aiInsights}
+                onCreateContent={() => {
+                  setActiveTab('creator');
+                }}
+                onOpenCalendar={() => {
+                  window.location.href = '/company-dashboard?tab=calendario';
+                }}
+                onOpenCreator={() => {
+                  setActiveTab('creator');
+                }}
+              />
+            ) : (
+              <div className="p-6 text-center">
+                <Brain className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <h4 className="text-base font-semibold mb-2">
+                  {topPosts.length === 0 ? 'Sin datos suficientes' : 'Insights no generados'}
+                </h4>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {topPosts.length === 0 
+                    ? 'Necesitas tener posts analizados para generar insights'
+                    : 'Haz clic en "Generar Insights" para obtener recomendaciones personalizadas'
+                  }
+                </p>
+                {topPosts.length === 0 && (
+                  <Button 
+                    onClick={triggerContentOnlyAnalysis}
+                    disabled={loading}
+                    variant="default"
+                    size="sm"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Analizar Posts
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   };
@@ -862,80 +912,6 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     }
   };
 
-  const renderInsights = () => {
-    return (
-      <div className="space-y-6">
-        {/* Botón para generar insights */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold">Insights Inteligentes</h3>
-            <p className="text-sm text-muted-foreground">
-              Insights generados por IA basados en tu contenido y audiencia
-            </p>
-          </div>
-          <Button 
-            onClick={generateAIInsights} 
-            disabled={loadingInsights || topPosts.length === 0}
-            variant="outline"
-          >
-            {loadingInsights ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Generando...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Generar Insights
-              </>
-            )}
-          </Button>
-        </div>
-
-        {/* Mostrar insights */}
-        {aiInsights ? (
-          <InsightsRenderer 
-            insights={aiInsights}
-            onCreateContent={() => {
-              setActiveTab('creator');
-            }}
-            onOpenCalendar={() => {
-              // Navegar al calendario de marketing
-              window.location.href = '/company-dashboard?tab=calendario';
-            }}
-            onOpenCreator={() => {
-              setActiveTab('creator');
-            }}
-          />
-        ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Brain className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h4 className="text-lg font-semibold mb-2">
-                {topPosts.length === 0 ? 'Sin datos suficientes' : 'Insights no generados'}
-              </h4>
-              <p className="text-muted-foreground mb-4">
-                {topPosts.length === 0 
-                  ? 'Necesitas tener posts analizados para generar insights'
-                  : 'Haz clic en "Generar Insights" para obtener recomendaciones personalizadas'
-                }
-              </p>
-              {topPosts.length === 0 && (
-                <Button 
-                  onClick={triggerContentOnlyAnalysis}
-                  disabled={loading}
-                  variant="default"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Analizar Posts
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
-  };
 
   if (loading) {
     return (
@@ -1443,14 +1419,10 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
       {/* Analysis Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="performance" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Rendimiento
-          </TabsTrigger>
-          <TabsTrigger value="insights" className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            Insights
           </TabsTrigger>
           <TabsTrigger value="posts" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
@@ -1468,10 +1440,6 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
         <TabsContent value="performance">
           {renderContentPerformance()}
-        </TabsContent>
-
-        <TabsContent value="insights">
-          {renderInsights()}
         </TabsContent>
 
         <TabsContent value="posts">

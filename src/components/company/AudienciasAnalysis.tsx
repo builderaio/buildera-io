@@ -29,7 +29,7 @@ import {
   Shield,
   BarChart3
 } from "lucide-react";
-import { FaInstagram, FaFacebook, FaXTwitter, FaTiktok, FaYoutube } from 'react-icons/fa6';
+import { FaInstagram, FaFacebook, FaXTwitter, FaTiktok, FaYoutube, FaLinkedin } from 'react-icons/fa6';
 import { SocialConnectionManager } from "./SocialConnectionManager";
 import { AudienceInsightsPanel } from "./AudienceInsightsPanel";
 
@@ -129,6 +129,17 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
       'r1500_plus': 'Audiencias establecidas'
     };
     return descriptions[key] || '';
+  };
+
+  // Helper para formatear números de seguidores correctamente
+  const formatFollowersCount = (count: number): string => {
+    if (count < 1000) {
+      return count.toString();
+    } else if (count < 1000000) {
+      return (count / 1000).toFixed(1) + 'K';
+    } else {
+      return (count / 1000000).toFixed(1) + 'M';
+    }
   };
 
   useEffect(() => {
@@ -614,47 +625,27 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
       {existingAnalysisCount > 0 && lastAnalysisDate && (
         <Card className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-green-900 dark:text-green-100 flex items-center gap-2">
-                    ✓ Análisis de Audiencia Existente
-                  </h3>
-                  <p className="text-sm text-green-700 dark:text-green-300">
-                    {existingAnalysisCount} {existingAnalysisCount === 1 ? 'red social analizada' : 'redes sociales analizadas'} • 
-                    Última actualización: {new Date(lastAnalysisDate).toLocaleDateString('es', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric' 
-                    })}
-                  </p>
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-green-600" />
               </div>
-              <Button 
-                onClick={analyzeAllNetworksWithUrls}
-                disabled={analyzing}
-                variant="outline"
-                className="gap-2 border-green-300 hover:bg-green-100 dark:hover:bg-green-900/40"
-              >
-                {analyzing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Actualizando...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-4 w-4" />
-                    Actualizar Análisis
-                  </>
-                )}
-              </Button>
+              <div className="flex-1">
+                <h3 className="font-semibold text-green-900 dark:text-green-100 flex items-center gap-2">
+                  ✓ Análisis de Audiencia Existente
+                </h3>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  {existingAnalysisCount} {existingAnalysisCount === 1 ? 'red social analizada' : 'redes sociales analizadas'} • 
+                  Última actualización: {new Date(lastAnalysisDate).toLocaleDateString('es', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </p>
+              </div>
             </div>
             <div className="mt-4 flex gap-2 text-xs text-green-700 dark:text-green-300">
               <Eye className="w-4 h-4" />
-              <span>Los datos se muestran a continuación. Puedes actualizarlos para obtener información más reciente.</span>
+              <span>Los datos se muestran a continuación. Usa el botón "Actualizar Análisis" abajo para obtener información más reciente.</span>
             </div>
           </CardContent>
         </Card>
@@ -663,45 +654,24 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
       {/* Botones de Análisis */}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <h2 className="text-2xl font-bold">🎯 Análisis de Audiencias</h2>
-        <div className="flex gap-3">
-          <Button 
-            onClick={analyzeAllNetworksWithUrls}
-            disabled={analyzing}
-            size="lg"
-            className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-6 py-3"
-          >
-            {analyzing ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Analizando Todas las Redes...
-              </>
-            ) : (
-              <>
-                <Target className="h-5 w-5" />
-                {existingAnalysisCount > 0 ? 'Actualizar Análisis' : 'Analizar Todas las Redes'}
-              </>
-            )}
-          </Button>
-          
-          <Button 
-            onClick={() => loadSocialAudienceStats()}
-            disabled={socialStatsLoading}
-            variant="outline"
-            className="gap-2"
-          >
-            {socialStatsLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Cargando...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4" />
-                Actualizar Vista
-              </>
-            )}
-          </Button>
-        </div>
+        <Button 
+          onClick={analyzeAllNetworksWithUrls}
+          disabled={analyzing}
+          size="lg"
+          className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-6 py-3"
+        >
+          {analyzing ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Analizando Todas las Redes...
+            </>
+          ) : (
+            <>
+              <Target className="h-5 w-5" />
+              {existingAnalysisCount > 0 ? 'Actualizar Análisis' : 'Analizar Todas las Redes'}
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Header del Perfil Principal */}
@@ -712,9 +682,10 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
               <div key={index} className="flex items-center gap-2">
                 {profile.social_type === 'INST' && <FaInstagram className="w-5 h-5 text-pink-500" />}
                 {profile.social_type === 'FB' && <FaFacebook className="w-5 h-5 text-blue-600" />}
-                {profile.social_type === 'TW' && <FaXTwitter className="w-5 h-5 text-black" />}
-                {profile.social_type === 'TT' && <FaTiktok className="w-5 h-5 text-black" />}
+                {profile.social_type === 'TW' && <FaXTwitter className="w-5 h-5 text-black dark:text-white" />}
+                {profile.social_type === 'TT' && <FaTiktok className="w-5 h-5 text-black dark:text-white" />}
                 {profile.social_type === 'YT' && <FaYoutube className="w-5 h-5 text-red-500" />}
+                {profile.social_type === 'LI' && <FaLinkedin className="w-5 h-5 text-blue-700" />}
               </div>
             ))}
           </div>
@@ -738,7 +709,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
           </div>
           
           <div className="text-right">
-            <p className="text-3xl font-bold">{((socialStats.reduce((acc, s) => acc + (s.users_count || 0), 0)) / 1000).toFixed(1)}K</p>
+            <p className="text-3xl font-bold">{formatFollowersCount(socialStats.reduce((acc, s) => acc + (s.users_count || 0), 0))}</p>
             <p className="text-sm text-muted-foreground">Total Seguidores</p>
           </div>
         </div>
@@ -787,7 +758,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Seguidores</p>
                   <p className="text-2xl font-bold text-purple-600">
-                    {((socialStats.reduce((acc, s) => acc + (s.users_count || 0), 0)) / 1000).toFixed(1)}K
+                    {formatFollowersCount(socialStats.reduce((acc, s) => acc + (s.users_count || 0), 0))}
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
@@ -803,7 +774,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Vistas Promedio</p>
                   <p className="text-2xl font-bold text-orange-600">
-                    {((mainProfile.avg_views || 0) / 1000).toFixed(1)}K
+                    {formatFollowersCount(mainProfile.avg_views || 0)}
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
@@ -849,20 +820,29 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
                 <div>
                   <h4 className="font-semibold mb-3">Distribución por Género</h4>
                   <div className="space-y-2">
-                    {mainProfile.genders.map((gender: any, index: number) => {
-                      const genderLabel = gender.code === 'MALE' ? 'Masculino' : 
-                                         gender.code === 'FEMALE' ? 'Femenino' : 
-                                         gender.code || 'Otro';
-                      return (
-                        <div key={index} className="flex items-center justify-between">
-                          <span className="text-sm capitalize">{genderLabel}</span>
-                          <div className="flex items-center gap-3 flex-1 ml-4">
-                            <Progress value={gender.percentage || 0} className="h-2" />
-                            <span className="text-sm font-medium min-w-[45px]">{gender.percentage?.toFixed(1)}%</span>
+                    {mainProfile.genders
+                      .filter((gender: any) => gender.percentage > 0)
+                      .reduce((acc: any[], gender: any) => {
+                        // Evitar duplicados por código
+                        if (!acc.find(g => g.code === gender.code)) {
+                          acc.push(gender);
+                        }
+                        return acc;
+                      }, [])
+                      .map((gender: any, index: number) => {
+                        const genderLabel = gender.code === 'MALE' ? 'Masculino' : 
+                                           gender.code === 'FEMALE' ? 'Femenino' : 
+                                           gender.code || 'Otro';
+                        return (
+                          <div key={`${gender.code}-${index}`} className="flex items-center justify-between">
+                            <span className="text-sm capitalize">{genderLabel}</span>
+                            <div className="flex items-center gap-3 flex-1 ml-4">
+                              <Progress value={gender.percentage || 0} className="h-2" />
+                              <span className="text-sm font-medium min-w-[45px]">{gender.percentage?.toFixed(1)}%</span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </div>
               )}
@@ -1076,7 +1056,7 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
                                     profile.social_type === 'TW' ? <FaXTwitter className="w-6 h-6 text-black dark:text-white" /> :
                                     profile.social_type === 'TT' ? <FaTiktok className="w-6 h-6 text-black dark:text-white" /> :
                                     profile.social_type === 'YT' ? <FaYoutube className="w-6 h-6 text-red-500" /> :
-                                    profile.social_type === 'LI' ? <Building className="w-6 h-6 text-blue-700" /> :
+                                    profile.social_type === 'LI' ? <FaLinkedin className="w-6 h-6 text-blue-700" /> :
                                     <Globe className="w-6 h-6" />;
                 
                 const platformName = profile.social_type === 'INST' ? 'Instagram' :
@@ -1103,25 +1083,55 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
 
                       {/* Contenido de la Ficha */}
                       <div className="p-4 space-y-4">
-                        {/* KPIs Rápidos */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-accent/30 rounded-lg p-3">
-                            <p className="text-xs text-muted-foreground">Seguidores</p>
-                            <p className="text-xl font-bold">{((profile.users_count || 0) / 1000).toFixed(1)}K</p>
+                        {/* LinkedIn tiene datos diferentes */}
+                        {profile.social_type === 'LI' ? (
+                          <div className="space-y-3">
+                            <div className="bg-accent/30 rounded-lg p-3">
+                              <p className="text-xs text-muted-foreground">Seguidores</p>
+                              <p className="text-xl font-bold">{formatFollowersCount(profile.users_count || 0)}</p>
+                            </div>
+                            {profile.description && (
+                              <div>
+                                <p className="text-xs font-semibold text-muted-foreground mb-2">Descripción</p>
+                                <p className="text-sm">{profile.description}</p>
+                              </div>
+                            )}
+                            {profile.categories && profile.categories.length > 0 && (
+                              <div>
+                                <p className="text-xs font-semibold text-muted-foreground mb-2">Industrias</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {profile.categories.map((cat: string, idx: number) => (
+                                    <Badge key={idx} variant="outline" className="text-xs">
+                                      {cat}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          <div className="bg-accent/30 rounded-lg p-3">
-                            <p className="text-xs text-muted-foreground">Engagement</p>
-                            <p className="text-xl font-bold">{((profile.avg_er || 0) * 100).toFixed(2)}%</p>
-                          </div>
-                          <div className="bg-accent/30 rounded-lg p-3">
-                            <p className="text-xs text-muted-foreground">Calidad</p>
-                            <p className="text-xl font-bold">{Math.round((profile.quality_score || 0) * 100)}%</p>
-                          </div>
-                          <div className="bg-accent/30 rounded-lg p-3">
-                            <p className="text-xs text-muted-foreground">Vistas Prom.</p>
-                            <p className="text-xl font-bold">{((profile.avg_views || 0) / 1000).toFixed(1)}K</p>
-                          </div>
-                        </div>
+                        ) : (
+                          <>
+                            {/* KPIs Rápidos para otras redes */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="bg-accent/30 rounded-lg p-3">
+                                <p className="text-xs text-muted-foreground">Seguidores</p>
+                                <p className="text-xl font-bold">{formatFollowersCount(profile.users_count || 0)}</p>
+                              </div>
+                              <div className="bg-accent/30 rounded-lg p-3">
+                                <p className="text-xs text-muted-foreground">Engagement</p>
+                                <p className="text-xl font-bold">{((profile.avg_er || 0) * 100).toFixed(2)}%</p>
+                              </div>
+                              <div className="bg-accent/30 rounded-lg p-3">
+                                <p className="text-xs text-muted-foreground">Calidad</p>
+                                <p className="text-xl font-bold">{Math.round((profile.quality_score || 0) * 100)}%</p>
+                              </div>
+                              <div className="bg-accent/30 rounded-lg p-3">
+                                <p className="text-xs text-muted-foreground">Vistas Prom.</p>
+                                <p className="text-xl font-bold">{formatFollowersCount(profile.avg_views || 0)}</p>
+                              </div>
+                            </div>
+                          </>
+                        )}
 
                         {/* Países Top 3 */}
                         {profile.countries && profile.countries.length > 0 && (
@@ -1138,27 +1148,36 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
                           </div>
                         )}
 
-                        {/* Géneros */}
-                        {profile.genders && profile.genders.length > 0 && (
+                        {/* Géneros - Solo para redes que no sean LinkedIn */}
+                        {profile.social_type !== 'LI' && profile.genders && profile.genders.length > 0 && (
                           <div>
                             <p className="text-xs font-semibold text-muted-foreground mb-2">Género</p>
-                            <div className="flex gap-2">
-                              {profile.genders.map((gender: any, idx: number) => {
-                                const genderLabel = gender.code === 'MALE' ? 'Masculino' : 
-                                                   gender.code === 'FEMALE' ? 'Femenino' : 
-                                                   gender.code || 'Otro';
-                                return (
-                                  <Badge key={idx} variant="secondary" className="text-xs">
-                                    {genderLabel}: {gender.percentage?.toFixed(1)}%
-                                  </Badge>
-                                );
-                              })}
+                            <div className="flex flex-wrap gap-2">
+                              {profile.genders
+                                .filter((gender: any) => gender.percentage > 0)
+                                .reduce((acc: any[], gender: any) => {
+                                  // Evitar duplicados por código
+                                  if (!acc.find(g => g.code === gender.code)) {
+                                    acc.push(gender);
+                                  }
+                                  return acc;
+                                }, [])
+                                .map((gender: any, idx: number) => {
+                                  const genderLabel = gender.code === 'MALE' ? 'Masculino' : 
+                                                     gender.code === 'FEMALE' ? 'Femenino' : 
+                                                     gender.code || 'Otro';
+                                  return (
+                                    <Badge key={`${gender.code}-${idx}`} variant="secondary" className="text-xs">
+                                      {genderLabel}: {gender.percentage?.toFixed(1)}%
+                                    </Badge>
+                                  );
+                                })}
                             </div>
                           </div>
                         )}
 
-                        {/* Intereses Top 5 */}
-                        {profile.interests && profile.interests.length > 0 && (
+                        {/* Intereses Top 5 - Solo para redes que no sean LinkedIn */}
+                        {profile.social_type !== 'LI' && profile.interests && profile.interests.length > 0 && (
                           <div>
                             <p className="text-xs font-semibold text-muted-foreground mb-2">Intereses Principales</p>
                             <div className="flex flex-wrap gap-1">
@@ -1171,8 +1190,8 @@ const AudienciasAnalysis = ({ profile }: AudienciasAnalysisProps) => {
                           </div>
                         )}
 
-                        {/* Calidad de Audiencia */}
-                        {profile.members_types && profile.members_types.length > 0 && (
+                        {/* Calidad de Audiencia - Solo para redes que no sean LinkedIn */}
+                        {profile.social_type !== 'LI' && profile.members_types && profile.members_types.length > 0 && (
                           <div>
                             <p className="text-xs font-semibold text-muted-foreground mb-2">Calidad de Seguidores</p>
                             <div className="space-y-1">

@@ -13,6 +13,7 @@ import SimpleContentPublisher from './SimpleContentPublisher';
 import UnifiedContentCreator from "./UnifiedContentCreator";
 import InsightsRenderer, { ParsedContentIdea } from "./InsightsRenderer";
 import { InsightsManager } from "./insights/InsightsManager";
+import ContentCreatorHub from "./ContentCreatorHub";
 import {
   BarChart,
   Bar,
@@ -1549,28 +1550,15 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         </TabsContent>
 
         <TabsContent value="content">
-          <InsightsManager
-            userId={profile?.user_id || ''}
-            onCreateContent={(insight) => {
+          <ContentCreatorHub
+            profile={profile}
+            onContentPublished={() => {
+              loadInsights();
               toast({
-                title: "Preparando contenido",
-                description: "Configurando el publicador con tu insight...",
+                title: "¡Contenido publicado!",
+                description: "Tu contenido ha sido publicado exitosamente"
               });
-              
-              setPublisherContent({
-                title: insight.title || '',
-                content: insight.strategy || insight.content || '',
-                generatedImage: ''
-              });
-              setCurrentInsightId(insight.id);
-              setShowPublisher(true);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            onGenerateMore={generateAIInsights}
-            isGenerating={loadingInsights}
-            newInsightsIds={newInsightsIds}
-            filterMode="content_ideas_only"
-            showActiveOnly={true}
           />
         </TabsContent>
         

@@ -116,6 +116,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'engagement' | 'date' | 'performance'>('engagement');
   const [aiInsights, setAiInsights] = useState<string>('');
+  const [aiAudienceInsights, setAiAudienceInsights] = useState<Array<{ title: string; content: string }>>([]);
+  const [aiContentIdeas, setAiContentIdeas] = useState<ParsedContentIdea[]>([]);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('performance');
   const [existingPostsCount, setExistingPostsCount] = useState(0);
@@ -172,8 +174,33 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         throw error;
       }
 
-      if (data && data.insights) {
-        setAiInsights(data.insights);
+      if (data) {
+        // Check for structured output first
+        if (data.audience_insights && data.content_ideas) {
+          setAiAudienceInsights(data.audience_insights.map((ai: any) => ({ 
+            title: ai.title, 
+            content: ai.strategy 
+          })));
+          setAiContentIdeas(data.content_ideas.map((ci: any) => ({
+            title: ci.title,
+            format: ci.format,
+            platform: ci.platform,
+            hashtags: ci.hashtags || [],
+            timing: ci.timing || '',
+            strategy: ci.strategy
+          })));
+          setAiInsights(''); // Clear text fallback
+          console.log('✅ Structured insights loaded');
+        } else if (data.insights_text || data.insights) {
+          // Fallback to text
+          setAiInsights(data.insights_text || data.insights);
+          setAiAudienceInsights([]);
+          setAiContentIdeas([]);
+          console.log('⚠️ Using text fallback for insights');
+        } else {
+          throw new Error('No se recibieron insights de la IA');
+        }
+        
         toast({
           title: "Insights generados",
           description: "Se han generado nuevos insights inteligentes sobre tu contenido",
@@ -319,9 +346,21 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         } else if (insightsData && insightsData.length > 0) {
           const latestInsight = insightsData[0];
           const suggestedContent = latestInsight.suggested_content as any;
-          if (suggestedContent?.insights) {
-            setAiInsights(suggestedContent.insights);
-            console.log('Loaded existing insights from database');
+          
+          // Try structured first
+          if (suggestedContent?.audience_insights && suggestedContent?.content_ideas) {
+            setAiAudienceInsights(suggestedContent.audience_insights.map((ai: any) => ({ 
+              title: ai.title, 
+              content: ai.strategy 
+            })));
+            setAiContentIdeas(suggestedContent.content_ideas);
+            setAiInsights('');
+            console.log('✅ Loaded structured insights from database');
+          } else if (suggestedContent?.insights_text || suggestedContent?.insights) {
+            setAiInsights(suggestedContent.insights_text || suggestedContent.insights);
+            setAiAudienceInsights([]);
+            setAiContentIdeas([]);
+            console.log('⚠️ Loaded text insights from database');
           }
         }
       } catch (error) {
@@ -825,9 +864,11 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             </div>
           </CardHeader>
           <CardContent>
-            {aiInsights ? (
+            {(aiAudienceInsights.length > 0 || aiContentIdeas.length > 0 || aiInsights) ? (
               <InsightsRenderer 
                 insights={aiInsights}
+                audienceInsights={aiAudienceInsights}
+                contentIdeas={aiContentIdeas}
                 onCreateContent={(contentData) => {
                   setPrepopulatedContent(contentData);
                   setActiveTab('creator');

@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 
 interface InsightsRendererProps {
-  insights: string;
+  insights?: string;
+  audienceInsights?: ParsedInsight[];
+  contentIdeas?: ParsedContentIdea[];
   onCreateContent?: (contentData?: ParsedContentIdea) => void;
   onOpenCalendar?: (contentData?: ParsedContentIdea) => void;
   onOpenCreator?: () => void;
@@ -39,11 +41,18 @@ export interface ParsedContentIdea {
   schedule?: boolean;
 }
 
-const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCreator }: InsightsRendererProps) => {
+const InsightsRenderer = ({ 
+  insights, 
+  audienceInsights: propsAudienceInsights,
+  contentIdeas: propsContentIdeas,
+  onCreateContent, 
+  onOpenCalendar, 
+  onOpenCreator 
+}: InsightsRendererProps) => {
   
   const parseInsights = (rawInsights: string) => {
-    const audienceInsights: ParsedInsight[] = [];
-    const contentIdeas: ParsedContentIdea[] = [];
+    const parsedAudienceInsights: ParsedInsight[] = [];
+    const parsedContentIdeas: ParsedContentIdea[] = [];
     
     console.log('🔍 Raw insights:', rawInsights);
     
@@ -78,7 +87,7 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
     const content = estrategiaIdx >= 0 ? lines.slice(estrategiaIdx + 1).join(' ').trim() : lines.slice(1).join(' ').trim();
       
       if (content && content.length > 10) {
-        audienceInsights.push({ title, content });
+        parsedAudienceInsights.push({ title, content });
       }
     });
     
@@ -135,13 +144,23 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
         }
         
         contentIdeas.push({ title, format, platform, hashtags, timing: '', strategy });
+        parsedContentIdeas.push({ title, format, platform, hashtags, timing: '', strategy });
       }
     });
     
-    return { audienceInsights, contentIdeas };
+    return { audienceInsights: parsedAudienceInsights, contentIdeas: parsedContentIdeas };
   };
-
-  const { audienceInsights, contentIdeas } = parseInsights(insights);
+  
+  // If structured props are provided, use them; otherwise parse from text
+  let audienceInsights: ParsedInsight[] = propsAudienceInsights || [];
+  let contentIdeas: ParsedContentIdea[] = propsContentIdeas || [];
+  
+  // Only parse if we have text insights and no structured data
+  if (insights && !propsAudienceInsights && !propsContentIdeas) {
+    const parsed = parseInsights(insights);
+    audienceInsights = parsed.audienceInsights;
+    contentIdeas = parsed.contentIdeas;
+  }
 
   const getFormatIcon = (format: string) => {
     if (format.toLowerCase().includes('video')) return <Video className="h-4 w-4" />;

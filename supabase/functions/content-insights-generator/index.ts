@@ -251,7 +251,54 @@ Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empr
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 2000
+        max_tokens: 2000,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "emit_insights",
+              description: "Devuelve insights de audiencia e ideas de contenido 100% estructuradas para render sin parsing.",
+              parameters: {
+                type: "object",
+                properties: {
+                  audience_insights: {
+                    type: "array",
+                    minItems: 2,
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        strategy: { type: "string" }
+                      },
+                      required: ["title", "strategy"],
+                      additionalProperties: false
+                    }
+                  },
+                  content_ideas: {
+                    type: "array",
+                    minItems: 3,
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        format: { type: "string" },
+                        platform: { type: "string", enum: ["instagram", "linkedin", "tiktok", "facebook", "twitter"] },
+                        hashtags: { type: "array", items: { type: "string" } },
+                        timing: { type: "string" },
+                        strategy: { type: "string" }
+                      },
+                      required: ["title", "format", "platform", "strategy"],
+                      additionalProperties: false
+                    }
+                  }
+                },
+                required: ["audience_insights", "content_ideas"],
+                additionalProperties: false
+              }
+            }
+          }
+        ],
+        tool_choice: { type: "function", function: { name: "emit_insights" } }
       }),
     });
 
@@ -262,22 +309,38 @@ Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empr
     }
 
     const data = await response.json();
-    const insights = data.choices[0].message.content;
-
-    console.log('Generated insights:', insights);
+    
+    // Parse structured output from tool_calls
+    let structuredInsights: any = null;
+    let insights = '';
+    
+    if (data.choices[0].message.tool_calls && data.choices[0].message.tool_calls.length > 0) {
+      const toolCall = data.choices[0].message.tool_calls[0];
+      if (toolCall.function.name === 'emit_insights') {
+        structuredInsights = JSON.parse(toolCall.function.arguments);
+        console.log('✅ Generated structured insights:', JSON.stringify(structuredInsights, null, 2));
+      }
+    }
+    
+    // Fallback to text content if available
+    if (data.choices[0].message.content) {
+      insights = data.choices[0].message.content;
+    }
 
     // Guardar insights en la base de datos
     try {
       const { error: saveError } = await supabase
         .from('content_recommendations')
-        .upsert({
+        .insert({
           user_id: user_id,
           recommendation_type: 'ai_insights',
           platform: platform || 'all',
           title: 'Insights de Contenido IA',
           description: 'Insights generados automáticamente basados en análisis de contenido',
           suggested_content: {
-            insights: insights,
+            insights_text: insights,
+            audience_insights: structuredInsights?.audience_insights || [],
+            content_ideas: structuredInsights?.content_ideas || [],
             generated_at: new Date().toISOString(),
             context_analyzed: {
               company_name: company?.name,
@@ -289,21 +352,21 @@ Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empr
           status: 'active',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,recommendation_type,platform'
         });
 
       if (saveError) {
         console.error('Error saving insights:', saveError);
       } else {
-        console.log('Insights saved successfully to database');
+        console.log('✅ Insights saved successfully to database');
       }
     } catch (saveError) {
       console.error('Error saving insights to database:', saveError);
     }
 
     return new Response(JSON.stringify({ 
-      insights,
+      insights_text: insights,
+      audience_insights: structuredInsights?.audience_insights || [],
+      content_ideas: structuredInsights?.content_ideas || [],
       context_analyzed: {
         company_name: company?.name,
         audiences_count: audiences?.length || 0,

@@ -676,8 +676,13 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     }
     
     if (platformsToSend.includes('linkedin') && linkedinAccount?.linkedin_page_id) {
-      formData.append('target_linkedin_page_id', linkedinAccount.linkedin_page_id);
-      console.log('✅ Added LinkedIn Page ID (target_linkedin_page_id):', linkedinAccount.linkedin_page_id);
+      // Extract numeric ID from URN format (urn:li:organization:108477120 -> 108477120)
+      const linkedinPageId = linkedinAccount.linkedin_page_id.includes('urn:li:organization:')
+        ? linkedinAccount.linkedin_page_id.split('urn:li:organization:')[1]
+        : linkedinAccount.linkedin_page_id;
+      
+      formData.append('target_linkedin_page_id', linkedinPageId);
+      console.log('✅ Added LinkedIn Page ID (target_linkedin_page_id):', linkedinPageId);
     }
     
     platformsToSend.forEach((platform: string) => {

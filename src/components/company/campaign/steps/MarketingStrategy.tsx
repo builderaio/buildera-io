@@ -207,9 +207,12 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           return p || '';
         };
 
-        // ========== NUEVA ESTRUCTURA N8N ==========
+        // ========== NUEVA ESTRUCTURA N8N (Soporte Bilingüe ES/EN) ==========
         
-        // 1. Procesar competidores
+        // 1. Procesar core_message (mensaje_central en español)
+        s.core_message = s.core_message || s.mensaje_central || '';
+        
+        // 2. Procesar competidores / competitors
         if (typeof s.competidores === 'string') {
           s.competitors = s.competidores ? [{ name: 'Análisis General', description: s.competidores }] : [];
         } else if (Array.isArray(s.competidores)) {
@@ -218,7 +221,7 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           s.competitors = s.competitors || [];
         }
 
-        // 2. Procesar mensaje_diferenciador (priorizar formato N8N)
+        // 3. Procesar mensaje_diferenciador / differentiated_message (priorizar formato N8N)
         if (s.differentiated_message) {
           s.core_message = s.differentiated_message.core_message || '';
           s.message_variants = s.differentiated_message.variants || {};
@@ -235,7 +238,7 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           s.core_message = s.core_message || '';
           s.message_variants = {
             LinkedIn: s.variantes_mensajes.linkedin || '',
-            Instagram: s.variantes_mensajes.instagram_facebook || '',
+            Instagram: s.variantes_mensajes.instagram_facebook || s.variantes_mensajes.instagram || '',
             TikTok: s.variantes_mensajes.tiktok || ''
           };
           s.differentiated_message = {
@@ -243,7 +246,7 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
             variants: s.message_variants,
             linkedin_variant: s.variantes_mensajes.linkedin || '',
             tiktok_variant: s.variantes_mensajes.tiktok || '',
-            instagram_facebook_variant: s.variantes_mensajes.instagram_facebook || ''
+            instagram_facebook_variant: s.variantes_mensajes.instagram_facebook || s.variantes_mensajes.instagram || ''
           };
         } else if (s.mensaje_diferenciador) {
           s.core_message = s.mensaje_diferenciador.core_message || '';
@@ -290,7 +293,7 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           }
         }
 
-        // 3. Procesar estrategias_embudo (priorizar formato N8N funnel_strategies)
+        // 4. Procesar estrategias_embudo / funnel_strategies (priorizar formato N8N)
         if (s.funnel_strategies && typeof s.funnel_strategies === 'object') {
           // Formato directo de N8N
           s.strategies = s.funnel_strategies;
@@ -373,7 +376,7 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           s.strategies = {};
         }
 
-        // 4. Procesar plan_contenidos (priorizar formato N8N content_plan)
+        // 5. Procesar plan_contenidos / content_plan (priorizar formato N8N)
         if (Array.isArray(s.plan_contenidos)) {
           // NUEVO: Procesar formato de N8N API con plan_contenidos como array directo
           s.content_plan = {};
@@ -440,7 +443,7 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           }
         }
 
-        // 5. Procesar kpi_metas (priorizar formato N8N kpis_goals_8_weeks)
+        // 6. Procesar kpis / kpis_goals (priorizar formato N8N)
         if (Array.isArray(s.kpis)) {
           // NUEVO: Procesar formato de N8N API con kpis como array directo
           s.kpis_goals = s.kpis.map((item: any) => ({
@@ -526,7 +529,7 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           }
         }
 
-        // 6. Procesar plan_ejecucion (NUEVO: formato N8N API con plan_ejecucion como array)
+        // 7. Procesar plan_ejecucion / execution_plan (NUEVO: formato N8N API con plan_ejecucion como array)
         if (Array.isArray(s.plan_ejecucion)) {
           s.execution_plan = {
             steps: s.plan_ejecucion.map((p: any) => p.paso || '').filter(Boolean),
@@ -562,11 +565,13 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           s.execution_plan = { steps: [], roles: [], assets: [], budget: {} };
         }
 
-        // 7. Procesar sources
-        s.sources = Array.isArray(s.sources) ? s.sources : [];
+        // 8. Procesar sources / fuentes
+        s.sources = Array.isArray(s.sources) ? s.sources : (Array.isArray(s.fuentes) ? s.fuentes : []);
 
-        // 8. Procesar risks_assumptions
-        s.risks_assumptions = Array.isArray(s.risks_assumptions) ? s.risks_assumptions : [];
+        // 9. Procesar risks_assumptions / riesgos_supuestos
+        s.risks_assumptions = Array.isArray(s.risks_assumptions) 
+          ? s.risks_assumptions 
+          : (Array.isArray(s.riesgos_supuestos) ? s.riesgos_supuestos : []);
 
         // 9. Normalizar competidores adicionales si es array de objetos
         if (Array.isArray(s.competitors)) {

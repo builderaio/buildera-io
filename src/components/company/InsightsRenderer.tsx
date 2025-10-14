@@ -144,8 +144,24 @@ const InsightsRenderer = ({
             .map(l => l.trim());
         }
         
-        contentIdeas.push({ title, format, platform, hashtags, timing: '', strategy });
-        parsedContentIdeas.push({ title, format, platform, hashtags, timing: '', strategy });
+        contentIdeas.push({ 
+          id: `idea-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          title, 
+          format, 
+          platform, 
+          hashtags, 
+          timing: '', 
+          strategy 
+        });
+        parsedContentIdeas.push({ 
+          id: `idea-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          title, 
+          format, 
+          platform, 
+          hashtags, 
+          timing: '', 
+          strategy 
+        });
       }
     });
     
@@ -154,7 +170,11 @@ const InsightsRenderer = ({
   
   // If structured props are provided, use them; otherwise parse from text
   let audienceInsights: ParsedInsight[] = propsAudienceInsights || [];
-  let contentIdeas: ParsedContentIdea[] = propsContentIdeas || [];
+  let contentIdeas: ParsedContentIdea[] = (propsContentIdeas || []).map(idea => ({
+    ...idea,
+    // Ensure each idea has a unique ID
+    id: idea.id || `idea-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  }));
   
   // Only parse if we have text insights and no structured data
   if (insights && !propsAudienceInsights && !propsContentIdeas) {

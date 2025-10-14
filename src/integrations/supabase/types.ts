@@ -2749,6 +2749,30 @@ export type Database = {
           },
         ]
       }
+      completed_content_ideas: {
+        Row: {
+          completed_at: string
+          content_idea_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          content_idea_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          content_idea_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       content_calendar_items: {
         Row: {
           content_details: Json

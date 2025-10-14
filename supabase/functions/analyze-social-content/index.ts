@@ -92,12 +92,112 @@ const corsHeaders = {
 }
 
 // Helper function to save posts to specific platform tables
+// Helper function to download and save assets to content library
+async function saveAssetToLibrary(
+  supabaseClient: any,
+  userId: string,
+  companyId: string | null,
+  assetUrl: string,
+  platform: string,
+  postData: any
+): Promise<void> {
+  if (!assetUrl) return;
+  
+  try {
+    console.log(`📥 Downloading ${platform} asset:`, assetUrl.slice(0, 100) + '...');
+    
+    const response = await fetch(assetUrl);
+    if (!response.ok) {
+      console.error(`Failed to download ${platform} asset:`, response.status);
+      return;
+    }
+
+    const fileBuffer = await response.arrayBuffer();
+    let contentType = response.headers.get('content-type') || 'image/jpeg';
+    
+    // Force image type for Instagram, TikTok, Facebook if not video
+    if (['instagram', 'tiktok', 'facebook'].includes(platform.toLowerCase())) {
+      if (!contentType.includes('video')) {
+        contentType = 'image/jpeg';
+      }
+    }
+    
+    // Determine file extension
+    let extension = 'jpg';
+    if (contentType.includes('video')) {
+      extension = 'mp4';
+    } else if (contentType.includes('png')) {
+      extension = 'png';
+    } else if (contentType.includes('gif')) {
+      extension = 'gif';
+    } else if (contentType.includes('webp')) {
+      extension = 'webp';
+    }
+
+    // Generate unique filename
+    const timestamp = new Date().getTime();
+    const randomId = Math.random().toString(36).substring(2, 15);
+    const filename = `${userId}/${timestamp}_${randomId}.${extension}`;
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      .from('content-library')
+      .upload(filename, fileBuffer, {
+        contentType: contentType,
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      return;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabaseClient.storage
+      .from('content-library')
+      .getPublicUrl(uploadData.path);
+
+    // Save to content library
+    const { error: libraryError } = await supabaseClient
+      .from('content_library')
+      .insert({
+        user_id: userId,
+        company_id: companyId,
+        file_path: uploadData.path,
+        file_url: urlData.publicUrl,
+        original_url: assetUrl,
+        file_type: contentType.startsWith('video') ? 'video' : 'image',
+        file_size: fileBuffer.byteLength,
+        metadata: {
+          original_post: postData || {},
+          content_type: contentType,
+          downloaded_at: new Date().toISOString(),
+          platform: platform
+        }
+      });
+
+    if (libraryError) {
+      console.error('Library insert error:', libraryError);
+      // Clean up uploaded file
+      await supabaseClient.storage
+        .from('content-library')
+        .remove([uploadData.path]);
+      return;
+    }
+
+    console.log(`✅ ${platform} asset saved to library:`, urlData.publicUrl.slice(0, 100) + '...');
+  } catch (error) {
+    console.error(`Error saving ${platform} asset to library:`, error);
+  }
+}
+
 async function savePostsToTables(
   supabaseClient: any,
   userId: string,
   platform: string,
   posts: any[],
-  cid: string
+  cid: string,
+  companyId: string | null
 ): Promise<void> {
   try {
     for (const post of posts) {
@@ -142,7 +242,17 @@ async function savePostsToTables(
             ignoreDuplicates: false
           });
 
-        if (error) console.error('Error saving Facebook post:', error);
+        if (error) {
+          console.error('Error saving Facebook post:', error);
+        } else {
+          // Download and save images to library
+          if (post.image) {
+            await saveAssetToLibrary(supabaseClient, userId, companyId, post.image, platform, post);
+          }
+          if (post.videoLink) {
+            await saveAssetToLibrary(supabaseClient, userId, companyId, post.videoLink, platform, post);
+          }
+        }
       }
       else if (platform === 'instagram') {
         const { error } = await supabaseClient
@@ -168,7 +278,17 @@ async function savePostsToTables(
             ignoreDuplicates: false
           });
 
-        if (error) console.error('Error saving Instagram post:', error);
+        if (error) {
+          console.error('Error saving Instagram post:', error);
+        } else {
+          // Download and save display_url to library
+          if (post.image) {
+            await saveAssetToLibrary(supabaseClient, userId, companyId, post.image, platform, post);
+          }
+          if (post.videoLink) {
+            await saveAssetToLibrary(supabaseClient, userId, companyId, post.videoLink, platform, post);
+          }
+        }
       }
       else if (platform === 'linkedin') {
         const { error } = await supabaseClient
@@ -192,7 +312,17 @@ async function savePostsToTables(
             ignoreDuplicates: false
           });
 
-        if (error) console.error('Error saving LinkedIn post:', error);
+        if (error) {
+          console.error('Error saving LinkedIn post:', error);
+        } else {
+          // Download and save image_url and video_url to library
+          if (post.image) {
+            await saveAssetToLibrary(supabaseClient, userId, companyId, post.image, platform, post);
+          }
+          if (post.videoLink) {
+            await saveAssetToLibrary(supabaseClient, userId, companyId, post.videoLink, platform, post);
+          }
+        }
       }
       else if (platform === 'tiktok') {
         const { error } = await supabaseClient
@@ -221,7 +351,14 @@ async function savePostsToTables(
             ignoreDuplicates: false
           });
 
-        if (error) console.error('Error saving TikTok post:', error);
+        if (error) {
+          console.error('Error saving TikTok post:', error);
+        } else {
+          // Download and save post_image_url to library
+          if (post.image) {
+            await saveAssetToLibrary(supabaseClient, userId, companyId, post.image, platform, post);
+          }
+        }
       }
     }
 
@@ -285,6 +422,15 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Get user's primary company
+    const { data: profileData } = await supabaseClient
+      .from('profiles')
+      .select('primary_company_id')
+      .eq('user_id', user.id)
+      .single();
+    
+    const companyId = profileData?.primary_company_id || null;
 
     // Calculate date range (last 90 days)
     const toDate = new Date();
@@ -825,7 +971,7 @@ Deno.serve(async (req) => {
         // 🆕 Guardar posts en tablas específicas por plataforma
         if (contentData.data.posts && contentData.data.posts.length > 0) {
           console.log(`💾 Guardando ${contentData.data.posts.length} posts en la tabla ${platformStr}_posts...`);
-          await savePostsToTables(supabaseClient, user.id, platformStr, contentData.data.posts, cid);
+          await savePostsToTables(supabaseClient, user.id, platformStr, contentData.data.posts, cid, companyId);
         }
 
         results.push({

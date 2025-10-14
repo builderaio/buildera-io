@@ -215,19 +215,28 @@ export default function PostHistoryTab({ profile }: { profile: Profile }) {
                       {(imageUrl || videoUrl) && (
                         <div className="relative">
                           {videoUrl ? (
-                            <div className="w-full h-32 bg-muted rounded-md flex items-center justify-center">
+                            <div className="w-full h-48 bg-muted rounded-md flex items-center justify-center">
                               <Video className="w-8 h-8 text-muted-foreground" />
                               <span className="ml-2 text-sm text-muted-foreground">Video</span>
                             </div>
                           ) : imageUrl ? (
-                            <img 
-                              src={imageUrl} 
-                              alt="Post content" 
-                              className="w-full h-32 object-cover rounded-md"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
+                            <div className="w-full h-48 bg-muted rounded-md overflow-hidden">
+                              <img 
+                                src={imageUrl} 
+                                alt="Post content" 
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                                crossOrigin="anonymous"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = '<div class="w-full h-full flex items-center justify-center"><svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                  }
+                                }}
+                              />
+                            </div>
                           ) : null}
                         </div>
                       )}

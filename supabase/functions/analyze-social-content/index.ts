@@ -334,97 +334,237 @@ Deno.serve(async (req) => {
 
         console.log(`📊 Analyzing content for CID: ${cid}`);
 
-        // Call RapidAPI Instagram Statistics API
-        const apiUrl = `https://instagram-statistics-api.p.rapidapi.com/posts?cid=${encodeURIComponent(cid)}&from=${fromFormatted}&to=${toFormatted}&type=posts&sort=date`;
-        
-        let apiResponse;
-        let retryCount = 0;
-        const maxRetries = 3;
-        const baseDelay = 2000; // 2 seconds
+        // Map platform codes to full names
+        const platformMapping: Record<string, string> = {
+          'INST': 'instagram',
+          'TT': 'tiktok',
+          'LI': 'linkedin',
+          'FB': 'facebook',
+          'instagram': 'instagram',
+          'tiktok': 'tiktok',
+          'linkedin': 'linkedin',
+          'facebook': 'facebook'
+        };
 
-        // Implement exponential backoff for rate limiting
-        while (retryCount <= maxRetries) {
-          apiResponse = await fetch(apiUrl, {
-            method: 'GET',
-            headers: {
-              'x-rapidapi-host': 'instagram-statistics-api.p.rapidapi.com',
-              'x-rapidapi-key': rapidApiKey,
-            },
-          });
+        const platformCode = analysis.social_type || analysis.platform || 'instagram';
+        const platformStr = platformMapping[platformCode] || platformCode.toLowerCase();
 
-          if (apiResponse.ok) {
-            break; // Success
-          }
+        let contentData: any = { data: { posts: [], summary: null } };
 
-          if (apiResponse.status === 429 && retryCount < maxRetries) {
-            // Rate limited - wait and retry
-            const delay = baseDelay * Math.pow(2, retryCount);
-            console.log(`Rate limited for CID ${cid}. Retrying in ${delay}ms... (attempt ${retryCount + 1}/${maxRetries + 1})`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            retryCount++;
+        // Handle LinkedIn differently (different API)
+        if (platformStr === 'linkedin') {
+          console.log(`🔵 Analyzing LinkedIn content for company_id: ${cid}`);
+          
+          const linkedinApiKey = Deno.env.get('RAPIDAPI_KEY');
+          if (!linkedinApiKey) {
+            console.error('RapidAPI key not configured for LinkedIn');
             continue;
           }
 
-          // Other error or max retries reached
-          console.error(`API error for CID ${cid}:`, apiResponse.status, apiResponse.statusText);
-          if (apiResponse.status === 429) {
-            console.error(`Rate limit exceeded for CID ${cid} after ${maxRetries + 1} attempts`);
-          }
-          break;
-        }
+          // Fetch all pages of LinkedIn posts
+          let allLinkedInPosts: any[] = [];
+          let currentPage = 1;
+          let hasMore = true;
 
-        if (!apiResponse?.ok) {
-          // Store partial analysis with error info for better user feedback
-          const errorAnalysisData = {
-            user_id: user.id,
-            platform: analysis.social_type || 'instagram',
-            cid: cid,
-            analysis_period_start: fromDate.toISOString(),
-            analysis_period_end: toDate.toISOString(),
-            posts_analyzed: 0,
-            posts_data: [],
-            summary_data: null,
-            error_details: {
-              status: apiResponse?.status,
-              statusText: apiResponse?.statusText,
-              message: apiResponse?.status === 429 ? 'Rate limit exceeded - try again later' : 'API error'
-            },
-            raw_api_response: null,
-            created_at: new Date().toISOString(),
+          while (hasMore) {
+            try {
+              console.log(`📄 Fetching LinkedIn page ${currentPage}...`);
+              
+              const linkedinUrl = `https://fresh-linkedin-scraper-api.p.rapidapi.com/api/v1/company/posts?company_id=${encodeURIComponent(cid)}&page=${currentPage}&sort_by=recent`;
+              
+              const linkedinResponse = await fetch(linkedinUrl, {
+                method: 'GET',
+                headers: {
+                  'x-rapidapi-host': 'fresh-linkedin-scraper-api.p.rapidapi.com',
+                  'x-rapidapi-key': linkedinApiKey,
+                },
+              });
+
+              if (!linkedinResponse.ok) {
+                console.error(`LinkedIn API error on page ${currentPage}:`, linkedinResponse.status, linkedinResponse.statusText);
+                break;
+              }
+
+              const linkedinData = await linkedinResponse.json();
+              
+              if (!linkedinData.success || !linkedinData.data || !Array.isArray(linkedinData.data)) {
+                console.log(`No posts found on LinkedIn page ${currentPage}`);
+                break;
+              }
+
+              // Filter out promotional content (ads/promotions)
+              const validPosts = linkedinData.data.filter((post: any) => 
+                post.id && !post.id.startsWith('urn:li:inAppPromotion')
+              );
+
+              console.log(`✅ Found ${validPosts.length} valid posts on page ${currentPage} (filtered from ${linkedinData.data.length} total)`);
+              
+              allLinkedInPosts = [...allLinkedInPosts, ...validPosts];
+
+              // Check if there are more pages
+              hasMore = linkedinData.has_more === true;
+              
+              if (hasMore) {
+                currentPage++;
+                // Small delay between pages to be nice to the API
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+            } catch (pageError) {
+              console.error(`Error fetching LinkedIn page ${currentPage}:`, pageError);
+              break;
+            }
+          }
+
+          console.log(`📊 Total LinkedIn posts fetched: ${allLinkedInPosts.length} across ${currentPage} page(s)`);
+
+          // Transform LinkedIn API response to match our internal format
+          const transformedPosts = allLinkedInPosts.map((post: any) => {
+            // Extract image URL from content
+            let imageUrl = null;
+            if (post.content?.images && Array.isArray(post.content.images) && post.content.images.length > 0) {
+              const imageObj = post.content.images[0].image;
+              if (Array.isArray(imageObj)) {
+                // Find the largest image (usually 1080x1080)
+                const largeImage = imageObj.find((img: any) => img.width >= 1080) || imageObj[imageObj.length - 1];
+                imageUrl = largeImage?.url;
+              }
+            }
+
+            // Extract video URL
+            let videoUrl = null;
+            if (post.content?.video?.url) {
+              videoUrl = post.content.video.url;
+            }
+
+            return {
+              postID: post.id,
+              id: post.id,
+              text: post.text || '',
+              date: post.created_at,
+              likes: post.activity?.num_likes || 0,
+              comments: post.activity?.num_comments || 0,
+              rePosts: post.activity?.num_shares || 0,
+              shares: post.activity?.num_shares || 0,
+              views: 0, // Not provided in this API
+              impressions: 0,
+              image: imageUrl,
+              videoLink: videoUrl,
+              postImage: imageUrl,
+              postUrl: post.url,
+              fromOwner: post.author?.id === cid,
+              type: videoUrl ? 'video' : (imageUrl ? 'image' : 'text'),
+              hashTags: [], // Not provided in this API
+              mentions: [],
+              er: 0, // Will be calculated if we have follower count
+              interactions: (post.activity?.num_likes || 0) + (post.activity?.num_comments || 0) + (post.activity?.num_shares || 0),
+              dataId: post.id,
+              timeUpdate: new Date().toISOString()
+            };
+          });
+
+          contentData = {
+            success: true,
+            data: {
+              posts: transformedPosts,
+              summary: {
+                total_posts: transformedPosts.length,
+                total_likes: transformedPosts.reduce((sum: number, p: any) => sum + p.likes, 0),
+                total_comments: transformedPosts.reduce((sum: number, p: any) => sum + p.comments, 0),
+                total_shares: transformedPosts.reduce((sum: number, p: any) => sum + p.rePosts, 0),
+              }
+            }
           };
 
-          const platformStr = analysis.social_type || 'instagram';
+        } else {
+          // Original Instagram/TikTok/Facebook API logic
+          const apiUrl = `https://instagram-statistics-api.p.rapidapi.com/posts?cid=${encodeURIComponent(cid)}&from=${fromFormatted}&to=${toFormatted}&type=posts&sort=date`;
+          
+          let apiResponse;
+          let retryCount = 0;
+          const maxRetries = 3;
+          const baseDelay = 2000; // 2 seconds
 
-          // Upsert error data
-          await supabaseClient
-            .from('social_content_analysis')
-            .upsert(errorAnalysisData, {
-              onConflict: 'user_id,platform'
+          // Implement exponential backoff for rate limiting
+          while (retryCount <= maxRetries) {
+            apiResponse = await fetch(apiUrl, {
+              method: 'GET',
+              headers: {
+                'x-rapidapi-host': 'instagram-statistics-api.p.rapidapi.com',
+                'x-rapidapi-key': rapidApiKey,
+              },
             });
 
-          continue;
+            if (apiResponse.ok) {
+              break; // Success
+            }
+
+            if (apiResponse.status === 429 && retryCount < maxRetries) {
+              // Rate limited - wait and retry
+              const delay = baseDelay * Math.pow(2, retryCount);
+              console.log(`Rate limited for CID ${cid}. Retrying in ${delay}ms... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              retryCount++;
+              continue;
+            }
+
+            // Other error or max retries reached
+            console.error(`API error for CID ${cid}:`, apiResponse.status, apiResponse.statusText);
+            if (apiResponse.status === 429) {
+              console.error(`Rate limit exceeded for CID ${cid} after ${maxRetries + 1} attempts`);
+            }
+            break;
+          }
+
+          if (!apiResponse?.ok) {
+            // Store partial analysis with error info for better user feedback
+            const errorAnalysisData = {
+              user_id: user.id,
+              platform: platformStr,
+              cid: cid,
+              analysis_period_start: fromDate.toISOString(),
+              analysis_period_end: toDate.toISOString(),
+              posts_analyzed: 0,
+              posts_data: [],
+              summary_data: null,
+              error_details: {
+                status: apiResponse?.status,
+                statusText: apiResponse?.statusText,
+                message: apiResponse?.status === 429 ? 'Rate limit exceeded - try again later' : 'API error'
+              },
+              raw_api_response: null,
+              created_at: new Date().toISOString(),
+            };
+
+            // Upsert error data
+            await supabaseClient
+              .from('social_content_analysis')
+              .upsert(errorAnalysisData, {
+                onConflict: 'user_id,platform'
+              });
+
+            continue;
+          }
+
+          contentData = await apiResponse.json();
+
+          if (!contentData.data || !contentData.data.posts) {
+            console.log(`No posts found for CID ${cid} — storing empty analysis`);
+            contentData.data = contentData.data || {};
+            contentData.data.posts = [];
+            contentData.data.summary = contentData.data.summary || null;
+          }
         }
 
-        const contentData = await apiResponse.json();
-
-        if (!contentData.data || !contentData.data.posts) {
-          console.log(`No posts found for CID ${cid} — storing empty analysis`);
-          contentData.data = contentData.data || {};
-          contentData.data.posts = [];
-          contentData.data.summary = contentData.data.summary || null;
-        }
-
-        console.log(`✅ Found ${contentData.data.posts.length} posts for CID ${cid}`);
+        console.log(`✅ Found ${contentData.data.posts.length} posts for ${platformStr} CID ${cid}`);
 
         // Save posts to content library
         if (contentData.data.posts.length > 0) {
           console.log(`📚 Saving ${contentData.data.posts.length} posts to content library...`);
           
-          // Map Instagram API format to helper format
+          // Map API format to helper format
           const mappedPosts = contentData.data.posts.map((post: any) => ({
             ...post,
-            // Map Instagram API fields to helper expected fields
-            image_url: post.image || post.videoLink, // Use image first, then videoLink as fallback
+            image_url: post.image || post.videoLink,
             media_url: post.image || post.videoLink,
             like_count: post.likes || 0,
             comment_count: post.comments || 0,
@@ -433,9 +573,11 @@ Deno.serve(async (req) => {
 
           try {
             let savedCount = 0;
-            const platformName = analysis.social_type === 'INST' ? 'Instagram' : 
-                               analysis.social_type === 'TT' ? 'TikTok' : 
-                               analysis.social_type || 'Instagram';
+            const platformName = platformStr === 'instagram' ? 'Instagram' : 
+                               platformStr === 'tiktok' ? 'TikTok' : 
+                               platformStr === 'linkedin' ? 'LinkedIn' :
+                               platformStr === 'facebook' ? 'Facebook' :
+                               platformStr;
 
             for (const post of mappedPosts) {
               // Skip posts without media
@@ -459,21 +601,6 @@ Deno.serve(async (req) => {
             // Continue with analysis even if library save fails
           }
         }
-
-        // Map platform codes to full names
-        const platformMapping: Record<string, string> = {
-          'INST': 'instagram',
-          'TT': 'tiktok',
-          'LI': 'linkedin',
-          'FB': 'facebook',
-          'instagram': 'instagram',
-          'tiktok': 'tiktok',
-          'linkedin': 'linkedin',
-          'facebook': 'facebook'
-        };
-
-        const platformCode = analysis.social_type || analysis.platform || 'instagram';
-        const platformStr = platformMapping[platformCode] || platformCode.toLowerCase();
 
         // Save individual posts to platform-specific tables
         if (contentData.data.posts && contentData.data.posts.length > 0) {

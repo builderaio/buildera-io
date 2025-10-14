@@ -94,7 +94,8 @@ const PLATFORM_COLORS = {
   linkedin: '#0077B5', 
   facebook: '#1877F2',
   tiktok: '#000000',
-  twitter: '#1DA1F2'
+  twitter: '#1DA1F2',
+  LI: '#0077B5'
 };
 
 const CHART_COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5A2B'];

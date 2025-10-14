@@ -37,6 +37,10 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
   const [manualText, setManualText] = useState('');
   const [isOptimizing, setIsOptimizing] = useState(false);
   
+  // Insights generation states
+  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
+  const [newInsightsIds, setNewInsightsIds] = useState<string[]>([]);
+  
   // Publisher states
   const [showPublisher, setShowPublisher] = useState(false);
   const [publisherContent, setPublisherContent] = useState<{ title: string; content: string; generatedImage?: string }>({ title: '', content: '' });
@@ -212,6 +216,65 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
     setShowPublisher(true);
   };
 
+  const handleGenerateMoreInsights = async () => {
+    if (!profile.user_id) {
+      toast({ 
+        title: "Error", 
+        description: "Usuario no autenticado", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    setIsGeneratingInsights(true);
+    
+    try {
+      toast({
+        title: "Generando insights",
+        description: "La IA está analizando tu contenido...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('content-insights-generator', {
+        body: {
+          user_id: profile.user_id,
+          platform: selectedPlatformLocal !== 'general' ? selectedPlatformLocal : null,
+          top_posts: topPosts.slice(0, 10).map(post => ({
+            platform: post.platform,
+            text: post.text,
+            likes: post.likes || 0,
+            comments: post.comments || 0,
+            shares: post.rePosts || 0,
+            views: post.videoViews || post.views || 0
+          }))
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.saved_insights_ids && data.saved_insights_ids.length > 0) {
+        setNewInsightsIds(data.saved_insights_ids);
+        toast({
+          title: "¡Insights generados!",
+          description: `Se generaron ${data.saved_insights_ids.length} nuevos insights`,
+        });
+      } else {
+        toast({
+          title: "Información",
+          description: "No se generaron nuevos insights en este momento",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating insights:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron generar los insights",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingInsights(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
@@ -235,6 +298,9 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
           <InsightsManager
             userId={profile.user_id || ''}
             onCreateContent={handleInsightCreateContent}
+            onGenerateMore={handleGenerateMoreInsights}
+            isGenerating={isGeneratingInsights}
+            newInsightsIds={newInsightsIds}
           />
         </TabsContent>
 

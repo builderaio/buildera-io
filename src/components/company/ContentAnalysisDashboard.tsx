@@ -1561,15 +1561,15 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           </TabsTrigger>
           <TabsTrigger value="posts" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            Posts
+            Mis Post
           </TabsTrigger>
           <TabsTrigger value="library" className="flex items-center gap-2">
             <Image className="h-4 w-4" />
-            Biblioteca
+            Biblioteca de Contenido
           </TabsTrigger>
           <TabsTrigger value="creator" className="flex items-center gap-2">
             <PlusCircle className="h-4 w-4" />
-            Crear contenido
+            Crear Contenido
           </TabsTrigger>
         </TabsList>
 

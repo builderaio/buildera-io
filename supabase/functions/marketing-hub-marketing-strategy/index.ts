@@ -46,7 +46,7 @@ serve(async (req) => {
     const body = await req.json();
     console.log('Raw request body:', JSON.stringify(body));
     
-    const { input } = body;
+    const { input, retrieve_existing } = body;
     
     if (!input) {
       console.error('No input found in request body');
@@ -111,6 +111,48 @@ serve(async (req) => {
     }
 
     console.log('Company found:', companyMember.company_id);
+
+    // If retrieve_existing is true, try to load existing strategy from database
+    if (retrieve_existing === true) {
+      console.log('🔍 Attempting to retrieve existing strategy...');
+      
+      const { data: existingStrategy, error: strategyError } = await supabase
+        .from('marketing_strategies')
+        .select(`
+          *,
+          marketing_campaigns!inner(
+            id,
+            campaign_name,
+            campaign_description,
+            status,
+            created_at,
+            company_id
+          )
+        `)
+        .eq('marketing_campaigns.user_id', user.id)
+        .eq('marketing_campaigns.company_id', companyMember.company_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!strategyError && existingStrategy && existingStrategy.full_strategy_data) {
+        console.log('✅ Found existing strategy, returning cached version');
+        return new Response(JSON.stringify([{
+          output: existingStrategy.full_strategy_data,
+          metadata: {
+            campaign_id: existingStrategy.campaign_id,
+            strategy_id: existingStrategy.id,
+            from_cache: true,
+            created_at: existingStrategy.created_at,
+            updated_at: existingStrategy.updated_at
+          }
+        }]), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else {
+        console.log('❌ No existing strategy found, will generate new one');
+      }
+    }
 
     // Get comprehensive company data including all fields
     const { data: companyData, error: companyDataError } = await supabase
@@ -383,6 +425,128 @@ serve(async (req) => {
       const webhookResult = await webhookResponse.json();
       console.log('N8N webhook response:', JSON.stringify(webhookResult, null, 2));
 
+      // ========== STORE STRATEGY IN DATABASE ==========
+      let campaignId: string | null = null;
+      let strategyId: string | null = null;
+
+      try {
+        // 1. Check if campaign exists or create new one
+        const campaignName = input.nombre_campana || `Campaña ${companyData?.name || input.nombre_empresa}`;
+        
+        const { data: existingCampaign } = await supabase
+          .from('marketing_campaigns')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('company_id', companyMember.company_id)
+          .eq('campaign_name', campaignName)
+          .eq('status', 'Active')
+          .maybeSingle();
+
+        if (existingCampaign) {
+          campaignId = existingCampaign.id;
+          console.log('📂 Using existing campaign:', campaignId);
+        } else {
+          const { data: newCampaign, error: campaignError } = await supabase
+            .from('marketing_campaigns')
+            .insert({
+              user_id: user.id,
+              company_id: companyMember.company_id,
+              company_name: companyData?.name || input.nombre_empresa,
+              business_objective: input.objetivo_de_negocio,
+              campaign_name: campaignName,
+              campaign_description: input.descripcion_campana || input.objetivo_campana,
+              campaign_type: input.tipo_objetivo_campana || 'awareness',
+              status: 'Active',
+              is_draft: false
+            })
+            .select('id')
+            .single();
+
+          if (campaignError) {
+            console.error('⚠️ Error creating campaign:', campaignError);
+          } else {
+            campaignId = newCampaign.id;
+            console.log('✅ Created new campaign:', campaignId);
+          }
+        }
+
+        // 2. Store buyer personas if campaign was created
+        if (campaignId && input.audiencia_objetivo?.buyer_personas) {
+          for (const persona of input.audiencia_objetivo.buyer_personas) {
+            await supabase
+              .from('buyer_personas')
+              .upsert({
+                campaign_id: campaignId,
+                fictional_name: persona.nombre_ficticio || persona.name || 'Persona',
+                professional_role: persona.demograficos?.ubicacion || persona.professional_role,
+                details: persona
+              }, {
+                onConflict: 'campaign_id,fictional_name'
+              });
+          }
+          console.log('✅ Stored buyer personas');
+        }
+
+        // 3. Store or update the strategy
+        if (campaignId && webhookResult && webhookResult[0]?.output) {
+          const strategyOutput = webhookResult[0].output;
+          
+          // Check if strategy already exists
+          const { data: existingStrategy } = await supabase
+            .from('marketing_strategies')
+            .select('id')
+            .eq('campaign_id', campaignId)
+            .maybeSingle();
+
+          const strategyData = {
+            campaign_id: campaignId,
+            unified_message: strategyOutput.core_message || strategyOutput.mensaje_central || '',
+            competitive_analysis: strategyOutput.competitors || strategyOutput.competidores || [],
+            marketing_funnel: strategyOutput.embudo || strategyOutput.funnel_strategies || {},
+            content_plan: strategyOutput.plan_contenidos || strategyOutput.content_plan || {},
+            kpis: strategyOutput.kpis || strategyOutput.kpis_goals || [],
+            execution_plan: strategyOutput.plan_ejecucion || strategyOutput.execution_plan || {},
+            sources: strategyOutput.sources || strategyOutput.fuentes || [],
+            risks_assumptions: strategyOutput.risks_assumptions || strategyOutput.riesgos_supuestos || [],
+            message_variants: strategyOutput.variantes_mensajes || strategyOutput.differentiated_message?.variants || {},
+            full_strategy_data: strategyOutput
+          };
+
+          if (existingStrategy) {
+            const { data: updatedStrategy, error: updateError } = await supabase
+              .from('marketing_strategies')
+              .update(strategyData)
+              .eq('id', existingStrategy.id)
+              .select('id')
+              .single();
+            
+            if (updateError) {
+              console.error('⚠️ Error updating strategy:', updateError);
+            } else {
+              strategyId = updatedStrategy.id;
+              console.log('✅ Updated existing strategy:', strategyId);
+            }
+          } else {
+            const { data: newStrategy, error: insertError } = await supabase
+              .from('marketing_strategies')
+              .insert(strategyData)
+              .select('id')
+              .single();
+            
+            if (insertError) {
+              console.error('⚠️ Error creating strategy:', insertError);
+            } else {
+              strategyId = newStrategy.id;
+              console.log('✅ Created new strategy:', strategyId);
+            }
+          }
+        }
+      } catch (storageError) {
+        console.error('⚠️ Non-critical storage error:', storageError);
+        // Don't fail the request, just log the error
+      }
+      // ========== END STORAGE ==========
+
       // Store competitive intelligence if competitors data is available
       if (webhookResult && webhookResult[0]?.output?.análisis_competitivo) {
         try {
@@ -440,7 +604,19 @@ serve(async (req) => {
         }
       }
 
-      return new Response(JSON.stringify(webhookResult), {
+      // Return enriched response with metadata
+      const enrichedResponse = webhookResult.map((item: any, index: number) => ({
+        ...item,
+        metadata: {
+          ...(item.metadata || {}),
+          campaign_id: campaignId,
+          strategy_id: strategyId,
+          stored_at: new Date().toISOString(),
+          reusable: !!campaignId && !!strategyId
+        }
+      }));
+
+      return new Response(JSON.stringify(enrichedResponse), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     } catch (fetchError: any) {

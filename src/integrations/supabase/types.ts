@@ -5232,6 +5232,10 @@ export type Database = {
       marketing_campaigns: {
         Row: {
           business_objective: string
+          campaign_description: string | null
+          campaign_name: string | null
+          campaign_type: string | null
+          company_id: string | null
           company_name: string
           created_at: string
           current_step: string | null
@@ -5245,6 +5249,10 @@ export type Database = {
         }
         Insert: {
           business_objective: string
+          campaign_description?: string | null
+          campaign_name?: string | null
+          campaign_type?: string | null
+          company_id?: string | null
           company_name: string
           created_at?: string
           current_step?: string | null
@@ -5258,6 +5266,10 @@ export type Database = {
         }
         Update: {
           business_objective?: string
+          campaign_description?: string | null
+          campaign_name?: string | null
+          campaign_type?: string | null
+          company_id?: string | null
           company_name?: string
           created_at?: string
           current_step?: string | null
@@ -5269,7 +5281,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "marketing_campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketing_insights: {
         Row: {
@@ -5358,27 +5378,48 @@ export type Database = {
           competitive_analysis: Json
           content_plan: Json
           created_at: string
+          execution_plan: Json | null
+          full_strategy_data: Json | null
           id: string
+          kpis: Json | null
           marketing_funnel: Json
+          message_variants: Json | null
+          risks_assumptions: string[] | null
+          sources: string[] | null
           unified_message: string | null
+          updated_at: string | null
         }
         Insert: {
           campaign_id: string
           competitive_analysis?: Json
           content_plan?: Json
           created_at?: string
+          execution_plan?: Json | null
+          full_strategy_data?: Json | null
           id?: string
+          kpis?: Json | null
           marketing_funnel?: Json
+          message_variants?: Json | null
+          risks_assumptions?: string[] | null
+          sources?: string[] | null
           unified_message?: string | null
+          updated_at?: string | null
         }
         Update: {
           campaign_id?: string
           competitive_analysis?: Json
           content_plan?: Json
           created_at?: string
+          execution_plan?: Json | null
+          full_strategy_data?: Json | null
           id?: string
+          kpis?: Json | null
           marketing_funnel?: Json
+          message_variants?: Json | null
+          risks_assumptions?: string[] | null
+          sources?: string[] | null
           unified_message?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {

@@ -82,12 +82,130 @@ export const MarketingStrategy = ({ campaignData, onComplete, loading }: Marketi
 
   console.log('🔍 MarketingStrategy render - strategy:', strategy, 'generating:', generating, 'campaignData:', campaignData);
 
-  // Load existing strategy from campaignData (no database access - handled by CampaignWizard)
-  useEffect(() => {
-    // Si ya hay estrategia en memoria o está generando, no hacer nada
-    if (strategy || generating) return;
+  // Helper function to normalize strategy data (supports EN/ES)
+  const normalizeStrategy = (raw: any) => {
+    const s: any = { ...(raw || {}) };
+
+    // Canonicalizar nombres de plataformas
+    const canon = (p: string) => {
+      const k = (p || '').toLowerCase();
+      if (k === 'linkedin' || k === 'linked in') return 'LinkedIn';
+      if (k === 'instagram') return 'Instagram';
+      if (k === 'tiktok' || k === 'tik tok') return 'TikTok';
+      if (k === 'email' || k === 'correo' || k === 'mail') return 'Email';
+      if (k === 'web' || k === 'website' || k === 'sitio' || k === 'site') return 'Web';
+      return p || '';
+    };
+
+    // 1. Procesar core_message (mensaje_central en español)
+    s.core_message = s.core_message || s.mensaje_central || '';
     
-    // Cargar desde campaignData (cuando usuario vuelve al paso)
+    // 2. Procesar competidores / competitors
+    if (typeof s.competidores === 'string') {
+      s.competitors = s.competidores ? [{ name: 'Análisis General', description: s.competidores }] : [];
+    } else if (Array.isArray(s.competidores)) {
+      s.competitors = s.competidores;
+    } else {
+      s.competitors = s.competitors || [];
+    }
+
+    // 3. Procesar mensaje_diferenciador / differentiated_message
+    if (s.variantes_mensajes) {
+      s.message_variants = {
+        LinkedIn: s.variantes_mensajes.linkedin || '',
+        Instagram: s.variantes_mensajes.instagram_facebook || s.variantes_mensajes.instagram || '',
+        TikTok: s.variantes_mensajes.tiktok || ''
+      };
+    }
+
+    // 4. Procesar embudo / funnel_strategies
+    if (Array.isArray(s.embudo)) {
+      s.strategies = {};
+      s.embudo.forEach((item: any) => {
+        const key = (item.etapa || '').toLowerCase().replace(/\s+/g, '_');
+        if (key) s.strategies[key] = item;
+      });
+    }
+
+    // 5. Procesar kpis
+    if (Array.isArray(s.kpis)) {
+      s.kpis_goals = s.kpis.map((item: any) => ({
+        kpi: item.kpi || '',
+        goal: item.meta || item.goal || ''
+      }));
+    }
+
+    // 6. Procesar plan_contenidos / content_plan
+    if (Array.isArray(s.plan_contenidos)) {
+      s.content_plan = {};
+      s.plan_contenidos.forEach((item: any) => {
+        const platform = canon(item.canal || item.channel);
+        if (platform) {
+          s.content_plan[platform] = {
+            formats: item.formatos || item.formats || '',
+            tone: item.tono || item.tone || '',
+            cta: item.CTA || item.cta || '',
+            frequency: item.frecuencia_recomendada || item.frequency || ''
+          };
+        }
+      });
+    }
+
+    // 7. Procesar plan_ejecucion / execution_plan
+    if (Array.isArray(s.plan_ejecucion)) {
+      s.execution_plan = {
+        steps: s.plan_ejecucion.map((p: any) => p.paso || '').filter(Boolean),
+        roles: s.plan_ejecucion.map((p: any) => p.responsable || '').filter(Boolean),
+        assets: s.plan_ejecucion.map((p: any) => p.activos || '').filter(Boolean),
+        budget: s.plan_ejecucion.map((p: any) => p.presupuesto || '').filter(Boolean)
+      };
+    }
+
+    // 8. Procesar sources / fuentes
+    s.sources = Array.isArray(s.sources) ? s.sources : (Array.isArray(s.fuentes) ? s.fuentes : []);
+
+    // 9. Procesar risks_assumptions / riesgos_supuestos
+    s.risks_assumptions = Array.isArray(s.risks_assumptions) 
+      ? s.risks_assumptions 
+      : (Array.isArray(s.riesgos_supuestos) ? s.riesgos_supuestos : []);
+
+    return s;
+  };
+
+  // Helper function to generate strategy summary text
+  const generateStrategyText = (strategy: any) => {
+    return `MENSAJE PRINCIPAL: ${strategy.core_message || ''}
+
+VARIACIONES POR PLATAFORMA:
+${Object.entries(strategy.message_variants || {}).map(([platform, message]: [string, any]) => 
+  `• ${platform.toUpperCase()}: ${message}`).join('\n')}
+
+ESTRATEGIAS POR FUNNEL:
+${Object.entries(strategy.strategies || {}).map(([key, value]: [string, any]) => 
+  `• ${key.toUpperCase()}: ${value.objective || value}`).join('\n')}
+
+KPIS Y OBJETIVOS:
+${(strategy.kpis_goals || []).map((kpi: any) => 
+  `• ${kpi.kpi}: ${kpi.goal}`).join('\n')}
+
+RIESGOS Y ASUNCIONES:
+${(strategy.risks_assumptions || []).map((risk: string, idx: number) => 
+  `${idx + 1}. ${risk}`).join('\n')}
+
+PLAN DE CONTENIDO:
+${Object.entries(strategy.content_plan || {}).map(([platform, config]: [string, any]) => 
+  `• ${platform}: ${config.frequency} - ${config.tone}`).join('\n')}`;
+  };
+
+  // Load existing strategy from campaignData or database
+  useEffect(() => {
+    // Don't reload if already have strategy or currently generating
+    if (strategy || generating) {
+      console.log('⏭️ Skipping load - already have strategy or generating');
+      return;
+    }
+    
+    // 1. First try to load from campaignData (memory)
     if (campaignData.strategy) {
       console.log('📥 Loading existing strategy from campaignData:', campaignData.strategy);
       
@@ -124,8 +242,56 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
       }
       
       console.log('✅ Existing strategy loaded from campaignData');
+    } else {
+      // 2. If no strategy in memory, try to load from database
+      console.log('🔍 No strategy in memory, attempting to load from database...');
+      loadExistingStrategy();
     }
-  }, [campaignData.strategy, strategy, generating]);
+  }, [campaignData.strategy]);
+
+  // Load existing strategy from database
+  const loadExistingStrategy = async () => {
+    try {
+      setGenerating(true);
+      console.log('🔄 Calling edge function to retrieve existing strategy...');
+      
+      const { data, error } = await supabase.functions.invoke(
+        'marketing-hub-marketing-strategy',
+        {
+          body: { 
+            retrieve_existing: true,
+            input: {
+              nombre_empresa: campaignData.company?.nombre_empresa || '',
+              objetivo_de_negocio: campaignData.company?.objetivo_de_negocio || ''
+            }
+          }
+        }
+      );
+
+      if (!error && data && data[0]?.output) {
+        console.log('✅ Existing strategy retrieved from database');
+        const existingStrategy = data[0].output;
+        const normalized = normalizeStrategy(existingStrategy);
+        setStrategy(normalized);
+        
+        // Generate editable text
+        const strategyText = generateStrategyText(normalized);
+        setEditedStrategy(strategyText);
+        
+        toast({
+          title: "Éxito",
+          description: "Estrategia recuperada exitosamente",
+        });
+      } else {
+        console.log('ℹ️ No existing strategy found in database');
+      }
+    } catch (error) {
+      console.log('ℹ️ No existing strategy available:', error);
+      // This is not an error - just means no previous strategy exists
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const generateStrategy = async () => {
     console.log('🚀 Starting strategy generation');
@@ -1574,39 +1740,51 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
         </Card>
       )}
 
-      {/* Strategy Display with Regenerate and Download Options */}
+      {/* Strategy Display with Action Buttons */}
       {strategy && !generating && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              Estrategia Generada
-            </h3>
-            <div className="flex gap-2">
-              <Button
-                onClick={downloadStrategyPDF}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Descargar PDF
-              </Button>
-              <Button
-                onClick={() => {
-                  if (confirm('¿Estás seguro de que quieres regenerar la estrategia? Esto reemplazará la estrategia actual.')) {
-                    setStrategy(null);
-                    setEditedStrategy('');
-                    generateStrategy();
-                  }
-                }}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <Sparkles className="h-4 w-4" />
-                Regenerar Estrategia
-              </Button>
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Estrategia Generada
+              </h3>
+              <div className="flex gap-2">
+                <Button
+                  onClick={downloadStrategyPDF}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Descargar PDF
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (confirm('¿Estás seguro? Se generará una nueva estrategia desde cero y se reemplazará la actual.')) {
+                      setStrategy(null);
+                      setEditedStrategy('');
+                      generateStrategy();
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Regenerar Estrategia
+                </Button>
+              </div>
+            </div>
+            
+            {/* Info banner about reusability */}
+            <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="h-4 w-4 text-white" />
+              </div>
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                Esta estrategia se ha guardado automáticamente. Puedes volver a este paso en cualquier momento para revisarla, editarla o regenerarla.
+              </p>
             </div>
           </div>
         </div>

@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ContentLibraryTab from "./ContentLibraryTab";
 import ContentCreatorTab from "./ContentCreatorTab";
-import InsightsRenderer from "./InsightsRenderer";
+import InsightsRenderer, { ParsedContentIdea } from "./InsightsRenderer";
 import {
   BarChart,
   Bar,
@@ -120,6 +120,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const [activeTab, setActiveTab] = useState<string>('performance');
   const [existingPostsCount, setExistingPostsCount] = useState(0);
   const [lastAnalysisDate, setLastAnalysisDate] = useState<string | null>(null);
+  const [prepopulatedContent, setPrepopulatedContent] = useState<ParsedContentIdea | null>(null);
   const { toast } = useToast();
 
   const generateAIInsights = async () => {
@@ -827,11 +828,13 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             {aiInsights ? (
               <InsightsRenderer 
                 insights={aiInsights}
-                onCreateContent={() => {
+                onCreateContent={(contentData) => {
+                  setPrepopulatedContent(contentData);
                   setActiveTab('creator');
                 }}
-                onOpenCalendar={() => {
-                  window.location.href = '/company-dashboard?tab=calendario';
+                onOpenCalendar={(contentData) => {
+                  setPrepopulatedContent({ ...contentData, schedule: true });
+                  setActiveTab('creator');
                 }}
                 onOpenCreator={() => {
                   setActiveTab('creator');
@@ -1523,7 +1526,13 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         </TabsContent>
 
         <TabsContent value="creator">
-          <ContentCreatorTab profile={profile} topPosts={topPosts} selectedPlatform={selectedPlatform} />
+          <ContentCreatorTab 
+            profile={profile} 
+            topPosts={topPosts} 
+            selectedPlatform={selectedPlatform}
+            prepopulatedContent={prepopulatedContent}
+            onContentUsed={() => setPrepopulatedContent(null)}
+          />
         </TabsContent>
       </Tabs>
     </div>

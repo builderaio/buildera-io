@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,19 @@ interface Props {
   profile: { user_id?: string };
   topPosts: any[];
   selectedPlatform: string;
+  prepopulatedContent?: {
+    title: string;
+    format: string;
+    platform: string;
+    hashtags: string[];
+    timing: string;
+    strategy: string;
+    schedule?: boolean;
+  } | null;
+  onContentUsed?: () => void;
 }
 
-export default function ContentCreatorTab({ profile, topPosts, selectedPlatform }: Props) {
+export default function ContentCreatorTab({ profile, topPosts, selectedPlatform, prepopulatedContent, onContentUsed }: Props) {
   const { toast } = useToast();
   const [generatingContent, setGeneratingContent] = useState(false);
   const [contentPrompt, setContentPrompt] = useState('');
@@ -45,6 +55,39 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform 
       setManualContent(optimized);
     }
   });
+
+  // Pre-populate content when received from insights
+  useEffect(() => {
+    if (prepopulatedContent) {
+      // Build content with title, strategy, and hashtags
+      let content = `${prepopulatedContent.title}\n\n`;
+      
+      if (prepopulatedContent.strategy) {
+        content += `${prepopulatedContent.strategy}\n\n`;
+      }
+      
+      if (prepopulatedContent.hashtags && prepopulatedContent.hashtags.length > 0) {
+        content += prepopulatedContent.hashtags.join(' ');
+      }
+      
+      setManualContent(content);
+      setContentPrompt(prepopulatedContent.title);
+      
+      // Show publisher if schedule mode
+      if (prepopulatedContent.schedule) {
+        setPublisherContent(content);
+        setShowPublisher(true);
+      }
+      
+      toast({
+        title: "Contenido pre-cargado",
+        description: "Los datos de la idea se han cargado en el editor",
+      });
+      
+      // Clear prepopulated data after use
+      onContentUsed?.();
+    }
+  }, [prepopulatedContent]);
 
   const generateContent = async () => {
     if (!contentPrompt.trim()) {

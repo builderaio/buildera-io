@@ -19,8 +19,8 @@ import {
 
 interface InsightsRendererProps {
   insights: string;
-  onCreateContent?: () => void;
-  onOpenCalendar?: () => void;
+  onCreateContent?: (contentData?: ParsedContentIdea) => void;
+  onOpenCalendar?: (contentData?: ParsedContentIdea) => void;
   onOpenCreator?: () => void;
 }
 
@@ -29,13 +29,14 @@ interface ParsedInsight {
   content: string;
 }
 
-interface ParsedContentIdea {
+export interface ParsedContentIdea {
   title: string;
   format: string;
   platform: string;
   hashtags: string[];
   timing: string;
   strategy: string;
+  schedule?: boolean;
 }
 
 const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCreator }: InsightsRendererProps) => {
@@ -185,37 +186,15 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
       {/* Content Ideas Section */}
       {contentIdeas.length > 0 && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-accent/50">
-                <Lightbulb className="h-6 w-6 text-accent-foreground" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-accent-foreground to-accent-foreground/70 bg-clip-text text-transparent">
-                  Ideas de Contenido
-                </h3>
-                <p className="text-sm text-muted-foreground">Ideas específicas listas para crear</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-accent/50">
+              <Lightbulb className="h-6 w-6 text-accent-foreground" />
             </div>
-            
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={onOpenCalendar}
-                className="flex items-center gap-2"
-              >
-                <Calendar className="h-4 w-4" />
-                Planificar
-              </Button>
-              <Button 
-                size="sm"
-                onClick={onOpenCreator}
-                className="flex items-center gap-2"
-              >
-                <PlusCircle className="h-4 w-4" />
-                Crear Contenido
-              </Button>
+            <div>
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-accent-foreground to-accent-foreground/70 bg-clip-text text-transparent">
+                Ideas de Contenido
+              </h3>
+              <p className="text-sm text-muted-foreground">Ideas específicas listas para crear</p>
             </div>
           </div>
           
@@ -290,7 +269,7 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
                   <div className="flex gap-2 pt-2">
                     <Button 
                       size="sm" 
-                      onClick={onCreateContent}
+                      onClick={() => onCreateContent?.(idea)}
                       className="flex-1"
                     >
                       <PlusCircle className="h-4 w-4 mr-1.5" />
@@ -299,7 +278,7 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
                     <Button 
                       size="sm" 
                       variant="outline"
-                      onClick={onOpenCalendar}
+                      onClick={() => onOpenCalendar?.(idea)}
                     >
                       <Calendar className="h-4 w-4 mr-1.5" />
                       Programar

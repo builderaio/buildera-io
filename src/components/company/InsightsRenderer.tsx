@@ -45,30 +45,57 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
     const audienceInsights: ParsedInsight[] = [];
     const contentIdeas: ParsedContentIdea[] = [];
     
-    // Split by **Título**: or **Título**:
-    const sections = rawInsights.split(/\*\*Título\*\*:/i).filter(s => s.trim());
+    // First, split by content ideas section marker
+    const contentIdeasSectionRegex = /\*\*[💡🔥✨]*\s*(IDEAS?\s+DE\s+CONTENIDO|CONTENT\s+IDEAS?)\*\*/i;
+    const parts = rawInsights.split(contentIdeasSectionRegex);
     
-    sections.forEach(section => {
+    const audiencePart = parts[0] || '';
+    const contentPart = parts.length > 1 ? parts[parts.length - 1] : '';
+    
+    // Parse audience insights
+    const audienceSections = audiencePart.split(/\*\*Título\*\*:/i).filter(s => s.trim());
+    audienceSections.forEach(section => {
       const lines = section.split('\n').map(l => l.trim()).filter(l => l);
       if (lines.length === 0) return;
       
-      // First line is the title
       const title = lines[0].trim();
       
-      // Check if this is a content idea (has format/platform indicators)
+      // Skip if this is a section marker
+      if (/^(IDEAS?\s+DE\s+CONTENIDO|CONTENT\s+IDEAS?)$/i.test(title)) return;
+      
+      // Look for **Estrategia**: pattern
+      const estrategiaMatch = section.match(/\*\*Estrategia\*\*:\s*(.+)/is);
+      const content = estrategiaMatch ? estrategiaMatch[1].trim() : lines.slice(1).join(' ').trim();
+      
+      if (content && content.length > 10) {
+        audienceInsights.push({ title, content });
+      }
+    });
+    
+    // Parse content ideas
+    const contentSections = contentPart.split(/\*\*Título\*\*:/i).filter(s => s.trim());
+    contentSections.forEach(section => {
+      const lines = section.split('\n').map(l => l.trim()).filter(l => l);
+      if (lines.length === 0) return;
+      
+      const title = lines[0].trim();
+      
+      // Skip if this is a section marker
+      if (/^(IDEAS?\s+DE\s+CONTENIDO|CONTENT\s+IDEAS?)$/i.test(title)) return;
+      
+      // Check if this has format/platform indicators (content idea)
       const hasFormatIndicators = lines.some(line => 
         /^(Story|Reel|Post|Video|Carrusel|Photo)/i.test(line) ||
         /^(Instagram|LinkedIn|TikTok|Facebook|Twitter)/i.test(line)
       );
       
       if (hasFormatIndicators) {
-        // This is a content idea
         let format = '';
         let platform = '';
         let hashtags: string[] = [];
         let strategy = '';
         
-        // Find format (usually second line if it's a single word like "Story")
+        // Find format
         const formatLine = lines.find(l => /^(Story|Reel|Post|Video|Carrusel|Photo)$/i.test(l));
         if (formatLine) {
           format = formatLine;
@@ -92,23 +119,12 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
         // Find hashtags
         const hashtagsIndex = lines.findIndex(l => /hashtags sugeridos:/i.test(l));
         if (hashtagsIndex >= 0) {
-          // Get all lines after "Hashtags sugeridos:" that start with #
           hashtags = lines.slice(hashtagsIndex + 1)
             .filter(l => l.startsWith('#'))
             .map(l => l.trim());
         }
         
         contentIdeas.push({ title, format, platform, hashtags, timing: '', strategy });
-        
-      } else {
-        // This is an audience insight
-        // Look for **Estrategia**: pattern
-        const estrategiaMatch = section.match(/\*\*Estrategia\*\*:\s*(.+)/is);
-        const content = estrategiaMatch ? estrategiaMatch[1].trim() : lines.slice(1).join(' ').trim();
-        
-        if (content) {
-          audienceInsights.push({ title, content });
-        }
       }
     });
     

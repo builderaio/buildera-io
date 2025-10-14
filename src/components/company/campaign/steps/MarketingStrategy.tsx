@@ -39,8 +39,10 @@ class StrategyErrorBoundary extends React.Component<{ children: React.ReactNode;
   static getDerivedStateFromError(error: any) {
     return { hasError: true, error };
   }
-  componentDidCatch(error: any) {
-    console.error('Strategy render error:', error);
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error('❌ Strategy render error:', error);
+    console.error('❌ Error info:', errorInfo);
+    console.error('❌ Component stack:', errorInfo.componentStack);
   }
   render() {
     if (this.state.hasError) {
@@ -228,6 +230,21 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
             tiktok_variant: s.differentiated_message.tiktok_variant || '',
             instagram_facebook_variant: s.differentiated_message.instagram_facebook_variant || ''
           };
+        } else if (s.variantes_mensajes) {
+          // NUEVO: Procesar formato de N8N API con variantes_mensajes
+          s.core_message = s.core_message || '';
+          s.message_variants = {
+            LinkedIn: s.variantes_mensajes.linkedin || '',
+            Instagram: s.variantes_mensajes.instagram_facebook || '',
+            TikTok: s.variantes_mensajes.tiktok || ''
+          };
+          s.differentiated_message = {
+            core_message: s.core_message,
+            variants: s.message_variants,
+            linkedin_variant: s.variantes_mensajes.linkedin || '',
+            tiktok_variant: s.variantes_mensajes.tiktok || '',
+            instagram_facebook_variant: s.variantes_mensajes.instagram_facebook || ''
+          };
         } else if (s.mensaje_diferenciador) {
           s.core_message = s.mensaje_diferenciador.core_message || '';
           s.message_variants = {
@@ -277,6 +294,33 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
         if (s.funnel_strategies && typeof s.funnel_strategies === 'object') {
           // Formato directo de N8N
           s.strategies = s.funnel_strategies;
+        } else if (Array.isArray(s.embudo)) {
+          // NUEVO: Procesar formato de N8N API con embudo como array
+          const mapStageKeys: Record<string, string> = {
+            'conciencia': 'awareness',
+            'consideracion': 'consideration',
+            'consideración': 'consideration',
+            'conversion': 'conversion',
+            'conversión': 'conversion',
+            'lealtad': 'loyalty',
+            'awareness': 'awareness',
+            'consideration': 'consideration',
+            'loyalty': 'loyalty'
+          };
+          
+          s.strategies = {};
+          s.embudo.forEach((stage: any) => {
+            const normalizedStage = mapStageKeys[stage.etapa?.toLowerCase() || ''] || stage.etapa?.toLowerCase() || '';
+            
+            s.strategies[normalizedStage] = {
+              objective: stage.objetivo || '',
+              tactics: stage.tacticas || [],
+              moonshot_tactics: [],
+              main_channel: stage.canal_principal || '',
+              main_kpi: stage.kpi_principal || '',
+              timeline: stage.timeline || ''
+            };
+          });
         } else if (s.estrategias_embudo) {
           const mapStageKeys: Record<string, string> = {
             'conciencia': 'awareness',
@@ -330,7 +374,22 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
         }
 
         // 4. Procesar plan_contenidos (priorizar formato N8N content_plan)
-        if (s.content_plan && typeof s.content_plan === 'object' && !Array.isArray(s.content_plan)) {
+        if (Array.isArray(s.plan_contenidos)) {
+          // NUEVO: Procesar formato de N8N API con plan_contenidos como array directo
+          s.content_plan = {};
+          s.plan_contenidos.forEach((plan: any) => {
+            const channel = canon(plan.canal || plan.channel || '');
+            if (channel) {
+              s.content_plan[channel] = {
+                formats: typeof plan.formatos === 'string' ? [plan.formatos] : (plan.formatos || plan.formats || []),
+                tone: plan.tono || plan.tone || '',
+                cta: plan.CTA || plan.cta || '',
+                frequency: plan.frecuencia_recomendada || plan.frequency || '',
+                justification: plan.justificacion || plan.justification || ''
+              };
+            }
+          });
+        } else if (s.content_plan && typeof s.content_plan === 'object' && !Array.isArray(s.content_plan)) {
           // Formato directo de N8N - ya viene con estructura correcta
           const hasValidStructure = Object.values(s.content_plan).some((v: any) => 
             v && typeof v === 'object' && (v.formats || v.tone || v.cta || v.recommended_frequency)
@@ -342,7 +401,7 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
               return acc;
             }, {} as Record<string, any>);
           }
-        } else if (Array.isArray(s.plan_contenidos)) {
+        } else if (Array.isArray(s.plan_contenidos_old)) {
           s.content_plan = {};
           s.plan_contenidos.forEach((plan: any) => {
             const channel = canon(plan.canal || plan.channel || '');
@@ -382,7 +441,13 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
         }
 
         // 5. Procesar kpi_metas (priorizar formato N8N kpis_goals_8_weeks)
-        if (s.kpis_goals_8_weeks && typeof s.kpis_goals_8_weeks === 'object') {
+        if (Array.isArray(s.kpis)) {
+          // NUEVO: Procesar formato de N8N API con kpis como array directo
+          s.kpis_goals = s.kpis.map((item: any) => ({
+            kpi: item.kpi || '',
+            goal: item.meta || item.goal || ''
+          }));
+        } else if (s.kpis_goals_8_weeks && typeof s.kpis_goals_8_weeks === 'object') {
           const labels: Record<string, string> = {
             reach: 'Alcance',
             impressions: 'Impresiones',
@@ -461,8 +526,18 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
           }
         }
 
-        // 6. Procesar plan_ejecucion_recursos (priorizar formato N8N execution_plan_resources)
-        if (s.execution_plan_resources) {
+        // 6. Procesar plan_ejecucion (NUEVO: formato N8N API con plan_ejecucion como array)
+        if (Array.isArray(s.plan_ejecucion)) {
+          s.execution_plan = {
+            steps: s.plan_ejecucion.map((p: any) => p.paso || '').filter(Boolean),
+            roles: [...new Set(s.plan_ejecucion.map((p: any) => p.responsable || '').filter(Boolean))],
+            assets: s.plan_ejecucion.map((p: any) => p.activos || '').filter(Boolean),
+            budget: s.plan_ejecucion.reduce((acc: any, p: any, idx: number) => {
+              if (p.presupuesto) acc[`Paso ${idx + 1}`] = p.presupuesto;
+              return acc;
+            }, {})
+          };
+        } else if (s.execution_plan_resources) {
           s.execution_plan = {
             steps: s.execution_plan_resources.steps || [],
             roles: s.execution_plan_resources.roles_needed || [],
@@ -483,6 +558,8 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
             assets: s.execution_plan.activos_a_crear || s.execution_plan.activos_crear || s.execution_plan.assets || [],
             budget: s.execution_plan.presupuesto_estimado_canal || s.execution_plan.estimacion_presupuesto_por_canal || s.execution_plan.budget || {}
           };
+        } else {
+          s.execution_plan = { steps: [], roles: [], assets: [], budget: {} };
         }
 
         // 7. Procesar sources
@@ -557,6 +634,16 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
       const normalized = normalizeStrategy(processedStrategy);
 
       console.log('✅ Processed strategy (normalized):', normalized);
+      console.log('🔍 Strategy sections check:', {
+        hasCompetitors: !!normalized.competitors,
+        hasCoreMessage: !!normalized.core_message,
+        hasMessageVariants: !!normalized.message_variants,
+        hasStrategies: !!normalized.strategies,
+        hasContentPlan: !!normalized.content_plan,
+        hasKPIs: !!normalized.kpis_goals,
+        hasExecutionPlan: !!normalized.execution_plan,
+        hasRisks: !!normalized.risks_assumptions
+      });
       
       if (!normalized || Object.keys(normalized).length === 0) {
         throw new Error('La estrategia recibida está vacía');

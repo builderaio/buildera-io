@@ -1014,6 +1014,21 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       return matchesPlatform && matchesSearch;
     });
 
+    // Función mejorada para obtener imagen de posts
+    const getPostImage = (post: any) => {
+      // Para TikTok, usar thumbnail o videoLink
+      if (post.platform === 'tiktok' || post.socialType === 'tiktok') {
+        return post.thumbnail || post.videoLink || post.image || post.postImage;
+      }
+      // Para Instagram, priorizar image y postImage
+      if (post.platform === 'instagram' || post.socialType === 'instagram') {
+        return post.image || post.postImage || post.videoLink;
+      }
+      // Para otros (LinkedIn, Facebook)
+      return post.image || post.postImage || post.videoLink;
+    };
+
+    // Ordenar posts según el criterio seleccionado
     const sortedPosts = [...filteredPosts].sort((a, b) => {
       switch (sortBy) {
         case 'engagement':
@@ -1027,6 +1042,18 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         default:
           return 0;
       }
+    });
+
+    // Posts de alto rendimiento (top 10 por engagement total)
+    const topPerformingPosts = [...filteredPosts].sort((a, b) => {
+      const aEng = (a.likes || 0) + (a.comments || 0) + (a.rePosts || 0) + ((a.videoViews || a.views || 0) * 0.01);
+      const bEng = (b.likes || 0) + (b.comments || 0) + (b.rePosts || 0) + ((b.videoViews || b.views || 0) * 0.01);
+      return bEng - aEng;
+    }).slice(0, 6);
+
+    // Posts en orden cronológico para la sección "Todos los Posts"
+    const chronologicalPosts = [...filteredPosts].sort((a, b) => {
+      return new Date(b.date || b.published_at).getTime() - new Date(a.date || a.published_at).getTime();
     });
 
     const saveContentToLibrary = async (post: any) => {
@@ -1115,12 +1142,17 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Award className="h-5 w-5 text-primary" />
-              Top Posts Performers
+              Publicaciones Más Exitosas
             </CardTitle>
+            <CardDescription>
+              Posts con mayor interacción (likes, comentarios, compartidos y vistas) que generan más engagement con tu audiencia
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {topPosts.slice(0, 6).map((post, index) => (
+              {topPerformingPosts.map((post, index) => {
+                const postImage = getPostImage(post);
+                return (
                 <div key={post.postID || index} className="border border-border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <Badge variant="secondary" className="text-xs">
@@ -1135,16 +1167,18 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
                     </Button>
                   </div>
                   
-                  {(post.image || post.videoLink) && (
-                    <img 
-                      src={post.image || post.videoLink} 
-                      alt="Post content" 
-                      className="w-full h-32 object-cover rounded-md"
-                      onError={(e) => {
-                        console.log('Error loading image:', post.image || post.videoLink);
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
+                  {postImage && (
+                    <div className="relative w-full h-32 bg-muted rounded-md overflow-hidden">
+                      <img 
+                        src={postImage} 
+                        alt="Post content" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.log('Error loading image:', postImage);
+                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%23999"%3ENo image%3C/text%3E%3C/svg%3E';
+                        }}
+                      />
+                    </div>
                   )}
                   
                   <p className="text-sm text-muted-foreground line-clamp-3">
@@ -1176,7 +1210,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
                     </Button>
                   )}
                 </div>
-              ))}
+              );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -1185,10 +1220,15 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         <Card>
           <CardHeader>
             <CardTitle>Todos los Posts</CardTitle>
+            <CardDescription>
+              Historial completo de tus publicaciones ordenadas cronológicamente
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {sortedPosts.map((post, index) => (
+              {chronologicalPosts.map((post, index) => {
+                const postImage = getPostImage(post);
+                return (
                 <div key={post.postID || index} className="border border-border rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
@@ -1218,20 +1258,22 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {(post.image || post.videoLink) && (
+                  {postImage && (
                     <div className="md:col-span-1">
-                      <img 
-                        src={post.image || post.videoLink} 
-                        alt="Post content" 
-                        className="w-full h-24 object-cover rounded-md"
-                        onError={(e) => {
-                          console.log('Error loading image:', post.image || post.videoLink);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
+                      <div className="relative w-full h-24 bg-muted rounded-md overflow-hidden">
+                        <img 
+                          src={postImage} 
+                          alt="Post content" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.log('Error loading image:', postImage);
+                            e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%23999"%3ENo image%3C/text%3E%3C/svg%3E';
+                          }}
+                        />
+                      </div>
                     </div>
                   )}
-                    <div className={post.image || post.videoLink ? "md:col-span-3" : "md:col-span-4"}>
+                    <div className={postImage ? "md:col-span-3" : "md:col-span-4"}>
                       <p className="text-sm text-muted-foreground line-clamp-3 mb-2">
                         {post.text}
                       </p>
@@ -1276,7 +1318,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           </CardContent>
         </Card>

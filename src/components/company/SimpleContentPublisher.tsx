@@ -37,9 +37,20 @@ interface Props {
   profile: { user_id?: string };
   onSuccess?: () => void;
   contentIdeaId?: string;
+  generatedContentId?: string;
+  source?: 'insight' | 'manual' | 'ai';
 }
 
-export default function SimpleContentPublisher({ isOpen, onClose, content, profile, onSuccess, contentIdeaId }: Props) {
+export default function SimpleContentPublisher({ 
+  isOpen, 
+  onClose, 
+  content, 
+  profile, 
+  onSuccess, 
+  contentIdeaId,
+  generatedContentId,
+  source = 'manual'
+}: Props) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
@@ -333,9 +344,20 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
         description: `Contenido ${publishMode === 'immediate' ? 'publicado' : 'programado'} en ${selectedPlatforms.length} plataforma(s)`,
       });
       
-      // Mark content idea as completed if ID provided
+      // Mark content idea as completed and update tracking
       if (contentIdeaId) {
         try {
+          // Update insight status to completed and mark as having generated content
+          await supabase
+            .from('content_insights')
+            .update({ 
+              status: 'completed',
+              has_generated_content: true,
+              completed_at: new Date().toISOString()
+            })
+            .eq('id', contentIdeaId);
+          
+          // Keep legacy table for backward compatibility
           await supabase
             .from('completed_content_ideas')
             .insert({
@@ -347,6 +369,23 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
           console.warn('Error marking content idea as completed:', ideaError);
         }
       }
+      
+      // Update generated content status if provided
+      if (generatedContentId) {
+        try {
+          await supabase
+            .from('generated_content')
+            .update({
+              publication_status: publishMode === 'scheduled' ? 'scheduled' : 'published',
+              published_at: publishMode === 'scheduled' ? scheduledISO : new Date().toISOString()
+            })
+            .eq('id', generatedContentId);
+        } catch (genError) {
+          console.warn('Error updating generated content status:', genError);
+        }
+      }
+      
+      console.log('📊 Content tracking:', { source, contentIdeaId, generatedContentId, publishMode });
       
       // Call success callback to reset form
       onSuccess?.();

@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ContentLibraryTab from "./ContentLibraryTab";
-import ContentCreatorTab from "./ContentCreatorTab";
+import UnifiedContentCreator from "./UnifiedContentCreator";
 import InsightsRenderer, { ParsedContentIdea } from "./InsightsRenderer";
 import { InsightsManager } from "./insights/InsightsManager";
 import {
@@ -1489,7 +1489,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
       {/* Analysis Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="performance" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Rendimiento
@@ -1498,13 +1498,9 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             <FileText className="h-4 w-4" />
             Mis Post
           </TabsTrigger>
-          <TabsTrigger value="library" className="flex items-center gap-2">
-            <Image className="h-4 w-4" />
-            Biblioteca de Contenido
-          </TabsTrigger>
-          <TabsTrigger value="creator" className="flex items-center gap-2">
+          <TabsTrigger value="content" className="flex items-center gap-2">
             <PlusCircle className="h-4 w-4" />
-            Crear Contenido
+            Creador de Contenido
           </TabsTrigger>
         </TabsList>
 
@@ -1516,17 +1512,11 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           {renderPostsAnalysis()}
         </TabsContent>
 
-        <TabsContent value="library">
-          <ContentLibraryTab profile={profile} />
-        </TabsContent>
-
-        <TabsContent value="creator">
-          <ContentCreatorTab 
-            profile={profile} 
-            topPosts={topPosts} 
+        <TabsContent value="content">
+          <UnifiedContentCreator
+            profile={profile}
+            topPosts={topPosts}
             selectedPlatform={selectedPlatform}
-            prepopulatedContent={prepopulatedContent}
-            onContentUsed={() => setPrepopulatedContent(null)}
           />
         </TabsContent>
       </Tabs>

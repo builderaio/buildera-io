@@ -2924,11 +2924,13 @@ export type Database = {
           dismissed_reason: string | null
           format: string | null
           generated_at: string
+          has_generated_content: boolean | null
           hashtags: string[] | null
           id: string
           insight_type: string
           metadata: Json | null
           platform: string | null
+          source: string | null
           source_analysis_id: string | null
           status: string
           strategy: string | null
@@ -2945,11 +2947,13 @@ export type Database = {
           dismissed_reason?: string | null
           format?: string | null
           generated_at?: string
+          has_generated_content?: boolean | null
           hashtags?: string[] | null
           id?: string
           insight_type: string
           metadata?: Json | null
           platform?: string | null
+          source?: string | null
           source_analysis_id?: string | null
           status?: string
           strategy?: string | null
@@ -2966,11 +2970,13 @@ export type Database = {
           dismissed_reason?: string | null
           format?: string | null
           generated_at?: string
+          has_generated_content?: boolean | null
           hashtags?: string[] | null
           id?: string
           insight_type?: string
           metadata?: Json | null
           platform?: string | null
+          source?: string | null
           source_analysis_id?: string | null
           status?: string
           strategy?: string | null
@@ -4310,6 +4316,8 @@ export type Database = {
           id: string
           insight_id: string | null
           media_url: string | null
+          publication_status: string | null
+          published_at: string | null
           updated_at: string
           user_id: string
         }
@@ -4321,6 +4329,8 @@ export type Database = {
           id?: string
           insight_id?: string | null
           media_url?: string | null
+          publication_status?: string | null
+          published_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -4332,6 +4342,8 @@ export type Database = {
           id?: string
           insight_id?: string | null
           media_url?: string | null
+          publication_status?: string | null
+          published_at?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -676,8 +676,8 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     }
     
     if (platformsToSend.includes('linkedin') && linkedinAccount?.linkedin_page_id) {
-      formData.append('linkedin_page_id', linkedinAccount.linkedin_page_id);
-      console.log('✅ Added LinkedIn Page ID:', linkedinAccount.linkedin_page_id);
+      formData.append('target_linkedin_page_id', linkedinAccount.linkedin_page_id);
+      console.log('✅ Added LinkedIn Page ID (target_linkedin_page_id):', linkedinAccount.linkedin_page_id);
     }
     
     platformsToSend.forEach((platform: string) => {

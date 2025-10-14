@@ -32,6 +32,7 @@ interface ParsedInsight {
 }
 
 export interface ParsedContentIdea {
+  id?: string; // Add unique ID for tracking
   title: string;
   format: string;
   platform: string;

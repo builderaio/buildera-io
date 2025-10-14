@@ -26,6 +26,7 @@ interface Props {
     timing: string;
     strategy: string;
     schedule?: boolean;
+    id?: string; // Add ID to track the content idea
   } | null;
   onContentUsed?: () => void;
 }
@@ -41,6 +42,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
   const [generatingImage, setGeneratingImage] = useState(false);
   const [showPublisher, setShowPublisher] = useState(false);
   const [publisherContent, setPublisherContent] = useState('');
+  const [currentContentIdeaId, setCurrentContentIdeaId] = useState<string | undefined>(undefined);
   
   // Era Optimizer hook
   const {
@@ -62,6 +64,11 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
       // Only pre-fill the content prompt (description field)
       // User must generate the actual content using the "Generar Contenido" button
       setContentPrompt(prepopulatedContent.title);
+      
+      // Store content idea ID if provided
+      if (prepopulatedContent.id) {
+        setCurrentContentIdeaId(prepopulatedContent.id);
+      }
       
       // Show publisher if schedule mode (but don't pre-fill content)
       if (prepopulatedContent.schedule) {
@@ -187,6 +194,22 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
   const handlePublish = (content: string) => {
     setPublisherContent(content);
     setShowPublisher(true);
+  };
+
+  const handlePublishSuccess = () => {
+    // Reset all form fields
+    setContentPrompt('');
+    setGeneratedContent('');
+    setManualContent('');
+    setGeneratedImage('');
+    setPublisherContent('');
+    setCurrentContentIdeaId(undefined);
+    setShowPublisher(false);
+    
+    toast({
+      title: "Formulario limpiado",
+      description: "Puedes crear nuevo contenido ahora",
+    });
   };
 
   if (showAdvancedCreator) {
@@ -491,6 +514,8 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
             generatedImage: generatedImage || undefined
           }}
           profile={profile}
+          onSuccess={handlePublishSuccess}
+          contentIdeaId={currentContentIdeaId}
         />
       )}
 

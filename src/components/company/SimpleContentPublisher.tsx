@@ -35,9 +35,11 @@ interface Props {
   onClose: () => void;
   content: SimpleContent;
   profile: { user_id?: string };
+  onSuccess?: () => void;
+  contentIdeaId?: string;
 }
 
-export default function SimpleContentPublisher({ isOpen, onClose, content, profile }: Props) {
+export default function SimpleContentPublisher({ isOpen, onClose, content, profile, onSuccess, contentIdeaId }: Props) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
@@ -330,6 +332,24 @@ export default function SimpleContentPublisher({ isOpen, onClose, content, profi
         title: publishMode === 'immediate' ? '¡Publicado!' : '¡Programado!',
         description: `Contenido ${publishMode === 'immediate' ? 'publicado' : 'programado'} en ${selectedPlatforms.length} plataforma(s)`,
       });
+      
+      // Mark content idea as completed if ID provided
+      if (contentIdeaId) {
+        try {
+          await supabase
+            .from('completed_content_ideas')
+            .insert({
+              user_id: profile.user_id,
+              content_idea_id: contentIdeaId,
+              completed_at: new Date().toISOString(),
+            });
+        } catch (ideaError) {
+          console.warn('Error marking content idea as completed:', ideaError);
+        }
+      }
+      
+      // Call success callback to reset form
+      onSuccess?.();
       
       // Close dialog and navigate to posts tab
       onClose();

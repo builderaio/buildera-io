@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,11 @@ interface Props {
   profile: { user_id?: string };
   topPosts?: any[];
   selectedPlatform?: string;
+  prepopulatedContent?: any;
+  onContentUsed?: () => void;
 }
 
-export default function UnifiedContentCreator({ profile, topPosts = [], selectedPlatform = 'general' }: Props) {
+export default function UnifiedContentCreator({ profile, topPosts = [], selectedPlatform = 'general', prepopulatedContent, onContentUsed }: Props) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'insights' | 'create' | 'library'>('insights');
   const [createMode, setCreateMode] = useState<'ai' | 'manual'>('ai');
@@ -50,6 +52,27 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
   // Image selector
   const [showImageSelector, setShowImageSelector] = useState(false);
   const [selectedContentImage, setSelectedContentImage] = useState<string>('');
+
+  // Auto-open publisher when prepopulated content arrives from performance tab
+  useEffect(() => {
+    if (prepopulatedContent) {
+      setPublisherContent({
+        title: prepopulatedContent.title || '',
+        content: prepopulatedContent.strategy || prepopulatedContent.content || '',
+        generatedImage: ''
+      });
+      setCurrentInsightId(prepopulatedContent.id);
+      setShowPublisher(true);
+      
+      // Notify parent that content was used
+      if (onContentUsed) {
+        onContentUsed();
+      }
+      
+      // Scroll to top for better UX
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [prepopulatedContent, onContentUsed]);
 
   const handleGenerateAI = async () => {
     if (!profile.user_id) {

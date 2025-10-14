@@ -873,7 +873,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
               userId={profile?.user_id || ''}
               onCreateContent={(contentData) => {
                 setPrepopulatedContent(contentData);
-                setActiveTab('creator');
+                setActiveTab('content');
               }}
               onGenerateMore={generateAIInsights}
               isGenerating={loadingInsights}
@@ -1517,6 +1517,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             profile={profile}
             topPosts={topPosts}
             selectedPlatform={selectedPlatform}
+            prepopulatedContent={prepopulatedContent}
+            onContentUsed={() => setPrepopulatedContent(null)}
           />
         </TabsContent>
       </Tabs>

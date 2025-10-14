@@ -447,6 +447,12 @@ export default function SimpleContentPublisher({
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
             Publicar Contenido
+            {contentIdeaId && (
+              <Badge variant="secondary" className="ml-2 animate-pulse">
+                <Sparkles className="w-3 h-3 mr-1" />
+                Desde Insight
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 

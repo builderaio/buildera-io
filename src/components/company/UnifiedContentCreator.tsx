@@ -207,13 +207,30 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
   };
 
   const handleInsightCreateContent = (insight: any) => {
+    // 1. Feedback inmediato
+    toast({
+      title: "Preparando contenido",
+      description: "Configurando el publicador con tu insight...",
+    });
+
+    // 2. Configurar contenido correctamente (priorizar strategy)
     setPublisherContent({
       title: insight.title,
-      content: insight.content || '',
+      content: insight.strategy || insight.content || '',
       generatedImage: ''
     });
+    
+    // 3. Guardar ID para tracking
     setCurrentInsightId(insight.id);
+    
+    // 4. Cambiar a modo de creación para contexto visual
+    setCreateMode('ai');
+    
+    // 5. Abrir el publisher
     setShowPublisher(true);
+    
+    // 6. Scroll suave al top para que el dialog sea visible
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleGenerateMoreInsights = async () => {
@@ -537,21 +554,31 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
           setShowPublisher(false);
           setCurrentInsightId(undefined);
           setCurrentGeneratedContentId(undefined);
+          setPublisherContent({ title: '', content: '' });
         }}
         content={publisherContent}
         profile={profile}
         contentIdeaId={currentInsightId}
         generatedContentId={currentGeneratedContentId}
-        source={createMode === 'ai' ? 'ai' : 'manual'}
+        source={currentInsightId ? 'insight' : (createMode === 'ai' ? 'ai' : 'manual')}
         onSuccess={() => {
           setShowPublisher(false);
-          toast({ title: "¡Publicado!", description: "Tu contenido ha sido publicado exitosamente" });
+          
+          toast({ 
+            title: "¡Contenido publicado exitosamente!", 
+            description: "Tu contenido está disponible en tus redes sociales",
+            duration: 5000 
+          });
+          
           // Reset states
           setAiPrompt('');
           setGeneratedText('');
           setGeneratedImage('');
           setManualText('');
           setSelectedContentImage('');
+          setCurrentInsightId(undefined);
+          setCurrentGeneratedContentId(undefined);
+          setPublisherContent({ title: '', content: '' });
         }}
       />
 

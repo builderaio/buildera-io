@@ -721,31 +721,6 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
     return (
       <div className="space-y-6">
-        {/* Header con botón de generar insights */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold">Rendimiento del Contenido</h3>
-            <p className="text-sm text-muted-foreground">Análisis detallado de tus publicaciones</p>
-          </div>
-          <Button
-            onClick={generateAIInsights}
-            disabled={loadingInsights || posts.length === 0}
-            className="gap-2"
-          >
-            {loadingInsights ? (
-              <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                Generando...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4" />
-                Generar Insights IA
-              </>
-            )}
-          </Button>
-        </div>
-
         {/* Gráficas de rendimiento - Layout compacto */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Tendencias de Crecimiento */}
@@ -825,14 +800,18 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
                 </CardDescription>
               </div>
               <Button 
-                onClick={generateAIInsights} 
-                disabled={loadingInsights || topPosts.length === 0}
+                onClick={() => {
+                  console.log('Generating insights - topPosts count:', topPosts.length);
+                  console.log('Generating insights - posts count:', posts.length);
+                  generateAIInsights();
+                }} 
+                disabled={loadingInsights || posts.length === 0}
                 variant="outline"
                 size="sm"
               >
                 {loadingInsights ? (
                   <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    <RefreshCw className="w-4 w-4 mr-2 animate-spin" />
                     Generando...
                   </>
                 ) : (

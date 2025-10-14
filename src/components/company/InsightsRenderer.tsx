@@ -59,8 +59,11 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
     console.log('👥 Audience part:', audiencePart);
     console.log('💡 Content part:', contentPart);
     
+    const titleSplitRegex = /(?:\*\*\s*T(?:í|i)tulo\s*\*\*\s*:|T(?:í|i)tulo\s*\*\*\s*:|\*\*\s*T(?:í|i)tulo\s*:|T(?:í|i)tulo\s*:)/i;
+    const estrategiaRegex = /(?:\*\*\s*)?Estrategia(?:\s*\*\*)?\s*:/i;
+    
     // Parse audience insights
-    const audienceSections = audiencePart.split(/\*\*Título\*\*:/i).filter(s => s.trim());
+    const audienceSections = audiencePart.split(titleSplitRegex).filter(s => s.trim());
     audienceSections.forEach(section => {
       const lines = section.split('\n').map(l => l.trim()).filter(l => l);
       if (lines.length === 0) return;
@@ -70,9 +73,9 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
       // Skip if this is a section marker
       if (/^(IDEAS?\s+DE\s+CONTENIDO|CONTENT\s+IDEAS?)$/i.test(title)) return;
       
-      // Look for **Estrategia**: pattern
-      const estrategiaMatch = section.match(/\*\*Estrategia\*\*:\s*(.+)/is);
-      const content = estrategiaMatch ? estrategiaMatch[1].trim() : lines.slice(1).join(' ').trim();
+    // Look for Estrategia (flexible bold/colon formats)
+    const estrategiaIdx = lines.findIndex(l => estrategiaRegex.test(l));
+    const content = estrategiaIdx >= 0 ? lines.slice(estrategiaIdx + 1).join(' ').trim() : lines.slice(1).join(' ').trim();
       
       if (content && content.length > 10) {
         audienceInsights.push({ title, content });
@@ -80,7 +83,7 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
     });
     
     // Parse content ideas
-    const contentSections = contentPart.split(/\*\*Título\*\*:/i).filter(s => s.trim());
+    const contentSections = contentPart.split(titleSplitRegex).filter(s => s.trim());
     contentSections.forEach(section => {
       const lines = section.split('\n').map(l => l.trim()).filter(l => l);
       if (lines.length === 0) return;
@@ -115,7 +118,7 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
         }
         
         // Find strategy
-        const strategyIndex = lines.findIndex(l => /^Estrategia:/i.test(l));
+        const strategyIndex = lines.findIndex(l => estrategiaRegex.test(l));
         if (strategyIndex >= 0) {
           strategy = lines.slice(strategyIndex + 1)
             .filter(l => !l.startsWith('#') && !l.toLowerCase().includes('hashtags'))

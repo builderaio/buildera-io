@@ -1348,39 +1348,17 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             Insights profundos sobre el rendimiento de su contenido
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <select 
-            value={selectedPlatform} 
-            onChange={(e) => setSelectedPlatform(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-border bg-background"
-          >
-            <option value="all">Todas las plataformas</option>
-            {analysisData.socialAccounts.map(account => (
-              <option key={account.social_type || account.platform} value={account.social_type || account.platform}>
-                {account.social_type || account.platform}
-              </option>
-            ))}
-          </select>
-          {analysisData.content.length === 0 && (
-            <Button 
-              onClick={triggerContentOnlyAnalysis} 
-              disabled={loading}
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Analizar Posts
-            </Button>
-          )}
+        {analysisData.content.length === 0 && (
           <Button 
-            onClick={triggerContentAnalysis} 
+            onClick={triggerContentOnlyAnalysis} 
             disabled={loading}
-            className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {existingPostsCount > 0 ? 'Actualizar' : 'Iniciar'} Análisis
+            <FileText className="h-4 w-4 mr-2" />
+            Analizar Posts
           </Button>
-        </div>
+        )}
       </div>
 
       {/* Empty State */}

@@ -88,7 +88,7 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
               Actualizar
             </Button>
           </CardTitle>
-          <p className="text-sm text-muted-foreground">Guarda y reutiliza tus mejores contenidos. Las imágenes se guardan automáticamente al analizar redes sociales y generar contenido.</p>
+          <p className="text-sm text-muted-foreground">Tu colección personal de contenido exitoso. Guarda imágenes, videos y textos de tus mejores publicaciones para reutilizarlos fácilmente en futuras campañas.</p>
         </CardHeader>
         <CardContent>
           {savedContent.length === 0 ? (
@@ -96,13 +96,13 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full flex items-center justify-center">
                 <Image className="w-12 h-12 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Biblioteca vacía</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">Aún no has guardado ningún contenido. Ve a la pestaña "Posts" y guarda tus publicaciones más exitosas.</p>
+              <h3 className="text-xl font-semibold mb-2">Tu biblioteca está vacía</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">Comienza a guardar tu mejor contenido desde la pestaña "Mis Post". Filtra por rendimiento y guarda las publicaciones más exitosas para reutilizarlas.</p>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✨ Guarda contenido desde la pestaña "Posts"</p>
-                <p>🎨 Reutiliza imágenes exitosas</p>
-                <p>📝 Crea plantillas de texto</p>
-                <p>📊 Filtra por rendimiento</p>
+                <p>📱 Guarda posts exitosos desde "Mis Post"</p>
+                <p>🎨 Reutiliza imágenes y videos en nuevas campañas</p>
+                <p>📋 Copia URLs de archivos fácilmente</p>
+                <p>📊 Mantén el contenido con mejor rendimiento a mano</p>
               </div>
             </div>
           ) : (

@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SmartLoader } from "@/components/ui/smart-loader";
-import { PlusCircle, Sparkles, Lightbulb, Copy, Brain, Target, TrendingUp, Clock, ArrowRight, Edit3, Image, Send, Calendar } from "lucide-react";
+import { PlusCircle, Sparkles, Lightbulb, Copy, Brain, Target, TrendingUp, Clock, ArrowRight, Edit3, Image, Send, Calendar, Loader2, Heart, MessageCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import AdvancedContentCreator from "./AdvancedContentCreator";
 import { useEraOptimizer } from "@/hooks/useEraOptimizer";
@@ -301,88 +301,143 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
             </CardContent>
           </Card>
 
-      {/* Simple Content Creator */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <PlusCircle className="h-5 w-5 text-primary" />
-            Creador de Contenido Simple
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">Crea contenido manualmente o genera con IA</p>
+      {/* Main Content Creator */}
+      <Card className="border-0 shadow-xl bg-card/50 backdrop-blur-sm animate-fade-in">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <PlusCircle className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Crear Contenido</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">Elige tu método preferido</p>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="auto" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="auto" className="flex items-center gap-2">
+          <Tabs defaultValue="auto" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-muted/50">
+              <TabsTrigger 
+                value="auto" 
+                className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300"
+              >
                 <Sparkles className="h-4 w-4" />
-                Generación IA
+                <span className="font-medium">Generación IA</span>
               </TabsTrigger>
-              <TabsTrigger value="manual" className="flex items-center gap-2">
+              <TabsTrigger 
+                value="manual" 
+                className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300"
+              >
                 <Edit3 className="h-4 w-4" />
-                Escribir Manualmente
+                <span className="font-medium">Escribir Manual</span>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="auto" className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Describe el contenido que quieres crear</label>
+            <TabsContent value="auto" className="space-y-4 animate-fade-in">
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-primary" />
+                  Describe el contenido que quieres crear
+                </label>
                 <Textarea
                   value={contentPrompt}
                   onChange={(e) => setContentPrompt(e.target.value)}
                   placeholder="Ej: Crea una publicación sobre los beneficios de la automatización empresarial, enfocada en ahorro de tiempo y costos..."
-                  className="h-24"
+                  className="h-28 resize-none border-2 focus:border-primary transition-colors"
                 />
               </div>
-              <Button onClick={generateContent} disabled={generatingContent || !contentPrompt.trim()} className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
-                {generatingContent ? "Generando contenido..." : "Generar Contenido"}
+              <Button 
+                onClick={generateContent} 
+                disabled={generatingContent || !contentPrompt.trim()} 
+                size="lg"
+                className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                {generatingContent ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Generando contenido...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    Generar Contenido con IA
+                  </>
+                )}
               </Button>
             </TabsContent>
 
-            <TabsContent value="manual" className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Escribe tu contenido</label>
+            <TabsContent value="manual" className="space-y-4 animate-fade-in">
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold flex items-center gap-2">
+                  <Edit3 className="h-4 w-4 text-primary" />
+                  Escribe tu contenido
+                </label>
                 <Textarea
                   value={manualContent}
                   onChange={(e) => setManualContent(e.target.value)}
                   placeholder="Escribe tu publicación aquí..."
-                  className="h-32"
+                  className="h-36 resize-none border-2 focus:border-primary transition-colors"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <Button 
                   onClick={() => optimizeWithEra(manualContent, 'social_post', {
                     platform: selectedPlatform,
                     userType: 'company'
                   })}
                   disabled={isOptimizing || !manualContent.trim()}
+                  size="lg"
                   variant="outline"
-                  className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+                  className="border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-400 transition-all duration-300"
                 >
-                  {isOptimizing ? "Era optimizando..." : "Optimizar con Era"}
+                  {isOptimizing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Optimizando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Optimizar con Era
+                    </>
+                  )}
                 </Button>
                 <Button 
                   onClick={generateImageWithEra}
                   disabled={generatingImage || !manualContent.trim()}
+                  size="lg"
                   variant="outline"
-                  className="flex-1"
+                  className="border-2 hover:border-primary transition-all duration-300"
                 >
-                  {generatingImage ? "Generando..." : "Generar Imagen"}
+                  {generatingImage ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <Image className="h-4 w-4 mr-2" />
+                      Generar Imagen
+                    </>
+                  )}
                 </Button>
               </div>
             </TabsContent>
 
             {/* Generated/Manual Content Display */}
             {(generatedContent || manualContent) && (
-              <Card className="border-l-4 border-l-green-500">
-                <CardHeader>
+              <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50/30 to-blue-50/30 animate-scale-in">
+                <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-green-600" />
+                    <div className="p-2 rounded-lg bg-green-100">
+                      <Sparkles className="h-5 w-5 text-green-600" />
+                    </div>
                     {manualContent ? 'Tu Contenido' : 'Contenido Generado'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="p-4 bg-gradient-to-br from-green-50/50 to-blue-50/50 rounded-lg border border-green-200/50">
+                    <div className="p-5 bg-white/80 backdrop-blur-sm rounded-xl border-2 border-green-200/50 shadow-sm">
                       <div className="prose prose-sm max-w-none text-foreground leading-relaxed whitespace-pre-wrap">
                         {manualContent || generatedContent}
                       </div>
@@ -390,40 +445,53 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                     
                     {/* Generated Image */}
                     {generatedImage && (
-                      <div className="p-4 bg-gradient-to-br from-blue-50/50 to-purple-50/50 rounded-lg border border-blue-200/50">
-                        <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <div className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border-2 border-blue-200/50 shadow-sm">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2 text-blue-900">
                           <Image className="h-4 w-4" />
                           Imagen Generada
                         </h4>
                         <img 
                           src={generatedImage} 
                           alt="Generated content image" 
-                          className="max-w-full h-auto rounded-lg border"
+                          className="max-w-full h-auto rounded-lg border-2 border-border shadow-md hover:shadow-xl transition-shadow duration-300"
                         />
                       </div>
                     )}
                     
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(manualContent || generatedContent)}>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          navigator.clipboard.writeText(manualContent || generatedContent);
+                          toast({ title: "¡Copiado!", description: "Contenido copiado al portapapeles" });
+                        }}
+                        className="hover-scale"
+                      >
                         <Copy className="h-4 w-4 mr-1" />Copiar
                       </Button>
                       <Button 
                         size="sm" 
                         onClick={() => handlePublish(manualContent || generatedContent)}
-                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-md hover:shadow-lg transition-all duration-300 hover-scale"
                       >
-                        <Send className="h-4 w-4 mr-1" />Publicar
+                        <Send className="h-4 w-4 mr-1" />Publicar Ahora
                       </Button>
-                      {!manualContent && (
-                        <Button size="sm" variant="outline" onClick={() => setGeneratedContent('')}>
-                          Limpiar
-                        </Button>
-                      )}
-                      {manualContent && (
-                        <Button size="sm" variant="outline" onClick={() => {setManualContent(''); setGeneratedImage('');}}>
-                          Limpiar Todo
-                        </Button>
-                      )}
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={() => {
+                          if (manualContent) {
+                            setManualContent(''); 
+                            setGeneratedImage('');
+                          } else {
+                            setGeneratedContent('');
+                          }
+                        }}
+                        className="hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        Limpiar
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -433,58 +501,137 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
         </CardContent>
       </Card>
 
-      {/* Historical Performance Insights */}
+      {/* Enhanced Historical Performance Insights */}
       {topPosts.length > 0 && (
-        <Card className="border-l-4 border-l-primary">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Análisis de Contenido Histórico
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Patrones identificados en tu contenido con mejor rendimiento
-            </p>
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-purple-500/5 shadow-lg animate-fade-in">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-md">
+                  <TrendingUp className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Análisis de Contenido Histórico</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Aprende de tu contenido más exitoso
+                  </p>
+                </div>
+              </div>
+              <Badge variant="secondary" className="px-3 py-1">
+                {topPosts.length} posts analizados
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-primary rounded-full"></div>
-                  <h4 className="font-medium">Hashtags más exitosos</h4>
+              {/* Hashtags Section */}
+              <div className="space-y-3 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-primary/10 hover:border-primary/30 transition-colors duration-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                  <h4 className="font-semibold text-primary">Hashtags Exitosos</h4>
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {Array.from(new Set(topPosts.flatMap(post => post.hashTags || []))).slice(0, 8).map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs hover:bg-primary hover:text-white transition-colors">
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(new Set(topPosts.flatMap(post => post.hashTags || []))).slice(0, 10).map((tag, index) => (
+                    <Badge 
+                      key={index} 
+                      variant="secondary" 
+                      className="text-xs hover:bg-primary hover:text-white cursor-pointer transition-all duration-200 hover-scale"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`#${tag}`);
+                        toast({ title: "Copiado", description: `#${tag} copiado al portapapeles` });
+                      }}
+                    >
                       #{tag}
                     </Badge>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  💡 Click para copiar cualquier hashtag
+                </p>
               </div>
               
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                  <h4 className="font-medium">Formatos exitosos</h4>
+              {/* Formats Section */}
+              <div className="space-y-3 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-colors duration-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                  <h4 className="font-semibold text-purple-700">Formatos Populares</h4>
                 </div>
-                <div className="space-y-1">
-                  {Array.from(new Set(topPosts.map(post => post.type || 'POST'))).slice(0, 4).map((type, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <span className="capitalize">{type.toLowerCase()}</span>
-                    </div>
-                  ))}
+                <div className="space-y-2">
+                  {Array.from(new Set(topPosts.map(post => post.type || 'POST'))).slice(0, 5).map((type, index) => {
+                    const count = topPosts.filter(p => (p.type || 'POST') === type).length;
+                    const percentage = (count / topPosts.length) * 100;
+                    return (
+                      <div key={index} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="capitalize font-medium">{type.toLowerCase()}</span>
+                          <span className="text-xs text-muted-foreground">{Math.round(percentage)}%</span>
+                        </div>
+                        <div className="w-full bg-purple-100 rounded-full h-1.5 overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-3 h-3 text-orange-500" />
-                  <h4 className="font-medium">Engagement promedio</h4>
+              {/* Engagement Stats Section */}
+              <div className="space-y-3 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-orange-500/10 hover:border-orange-500/30 transition-colors duration-300">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                  <h4 className="font-semibold text-orange-700">Estadísticas Clave</h4>
                 </div>
-                <div className="text-2xl font-bold text-primary">
-                  {Math.round(topPosts.reduce((acc, post) => acc + ((post.likes || 0) + (post.comments || 0)), 0) / topPosts.length)}
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                        {Math.round(topPosts.reduce((acc, post) => acc + ((post.likes || 0) + (post.comments || 0)), 0) / topPosts.length)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">interacciones</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">por post en promedio</p>
+                  </div>
+                  
+                  <div className="pt-3 border-t border-border/50">
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="flex items-center gap-1">
+                        <Heart className="h-3 w-3 text-red-500" />
+                        Likes
+                      </span>
+                      <span className="font-semibold">
+                        {Math.round(topPosts.reduce((acc, post) => acc + (post.likes || 0), 0) / topPosts.length)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-1">
+                        <MessageCircle className="h-3 w-3 text-blue-500" />
+                        Comentarios
+                      </span>
+                      <span className="font-semibold">
+                        {Math.round(topPosts.reduce((acc, post) => acc + (post.comments || 0), 0) / topPosts.length)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">interacciones por post</p>
+              </div>
+            </div>
+
+            {/* Additional Insight */}
+            <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-blue-50/50 to-purple-50/50 border border-blue-200/30">
+              <div className="flex items-start gap-3">
+                <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-blue-900 mb-1">
+                    💡 Consejo: Usa estos datos para tu próximo contenido
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Los hashtags y formatos mostrados aquí son los que han generado mayor engagement. 
+                    Considera incorporarlos en tu siguiente publicación para maximizar el alcance.
+                  </p>
+                </div>
               </div>
             </div>
           </CardContent>

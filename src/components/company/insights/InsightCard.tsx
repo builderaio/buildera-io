@@ -28,6 +28,23 @@ interface InsightCardProps {
   onCreateContent?: (insight: any) => void;
 }
 
+// Mapeo de formatos a términos claros en español
+const formatLabels: Record<string, string> = {
+  'image': '🎨 Gráfico/Infografía',
+  'photo': '📸 Fotografía',
+  'video': '🎥 Video',
+  'text': '📝 Publicación de texto',
+  'post': '📱 Post',
+  'reel': '🎬 Reel',
+  'story': '⭐ Historia',
+  'carousel': '🎠 Carrusel',
+  'article': '📄 Artículo',
+  'infographic': '📊 Infografía',
+  'gif': '🎞️ GIF animado',
+  'poll': '📊 Encuesta',
+  'live': '🔴 Transmisión en vivo'
+};
+
 export const InsightCard = ({
   insight,
   isNew,
@@ -92,10 +109,12 @@ export const InsightCard = ({
             {!isAudience && (
               <div className="flex flex-wrap gap-2 mb-3">
                 {insight.format && (
-                  <Badge variant="outline">{insight.format}</Badge>
+                  <Badge variant="outline" className="font-medium">
+                    {formatLabels[insight.format.toLowerCase()] || insight.format}
+                  </Badge>
                 )}
                 {insight.platform && (
-                  <Badge variant="outline">{insight.platform}</Badge>
+                  <Badge variant="outline" className="capitalize">{insight.platform}</Badge>
                 )}
                 {insight.timing && (
                   <Badge variant="outline">

@@ -18,16 +18,14 @@ interface ContentIdeaCardProps {
     platform?: string;
     format?: string;
   };
-  onCreateWithAI: () => void;
-  onCreateManual: () => void;
+  onCreateContent: () => void;
   onComplete: () => void;
   onDismiss: () => void;
 }
 
 export const ContentIdeaCard = ({
   idea,
-  onCreateWithAI,
-  onCreateManual,
+  onCreateContent,
   onComplete,
   onDismiss,
 }: ContentIdeaCardProps) => {
@@ -63,22 +61,12 @@ export const ContentIdeaCard = ({
       <CardFooter className="flex gap-2 pt-2">
         <Button 
           size="sm" 
-          onClick={onCreateWithAI}
-          className="flex-1 gap-1"
+          onClick={onCreateContent}
+          className="flex-1 gap-2"
           variant="default"
         >
-          <Sparkles className="w-3 h-3" />
-          IA
-        </Button>
-        
-        <Button 
-          size="sm" 
-          variant="outline"
-          onClick={onCreateManual}
-          className="flex-1 gap-1"
-        >
-          <Edit3 className="w-3 h-3" />
-          Manual
+          <Sparkles className="w-4 h-4" />
+          Crear Contenido
         </Button>
         
         <DropdownMenu>

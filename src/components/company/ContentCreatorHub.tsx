@@ -167,45 +167,9 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     setShowPublisher(true);
   };
 
-  const handleCreateWithAI = async (idea: any) => {
-    setIsGenerating(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-company-content', {
-        body: {
-          userId: profile.user_id,
-          prompt: `${idea.title}. ${idea.strategy || idea.content || ''}`,
-          platform: idea.platform || 'general',
-          contentType: idea.format || 'post'
-        }
-      });
-
-      if (error) throw error;
-
-      setPublisherContent({
-        title: idea.title,
-        content: data.content || '',
-        generatedImage: data.imageUrl || ''
-      });
-      setCurrentInsightId(idea.id);
-      setShowPublisher(true);
-
-      toast({
-        title: "¡Contenido generado!",
-        description: "Tu idea ha sido transformada en contenido listo para publicar"
-      });
-    } catch (error) {
-      console.error('Error generating content:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo generar el contenido",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleCreateManualFromIdea = (idea: any) => {
+  const handleCreateContentFromIdea = (idea: any) => {
+    // Enviar la información de la idea como estrategia del insight
+    // para que el usuario la genere desde el modal con el botón "Generar contenido con IA"
     setPublisherContent({
       title: idea.title,
       content: idea.strategy || idea.content || '',
@@ -213,6 +177,11 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     });
     setCurrentInsightId(idea.id);
     setShowPublisher(true);
+    
+    toast({
+      title: "Preparando contenido",
+      description: "Usa 'Generar contenido con IA' en el modal para crear tu publicación",
+    });
   };
 
   const handleCompleteIdea = async (ideaId: string) => {
@@ -440,8 +409,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
               <ContentIdeaCard
                 key={idea.id}
                 idea={idea}
-                onCreateWithAI={() => handleCreateWithAI(idea)}
-                onCreateManual={() => handleCreateManualFromIdea(idea)}
+                onCreateContent={() => handleCreateContentFromIdea(idea)}
                 onComplete={() => handleCompleteIdea(idea.id)}
                 onDismiss={() => handleDismissIdea(idea.id)}
               />

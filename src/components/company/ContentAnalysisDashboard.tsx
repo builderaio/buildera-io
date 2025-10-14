@@ -1443,18 +1443,10 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
       {/* Analysis Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="performance" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Rendimiento
-          </TabsTrigger>
-          <TabsTrigger value="timing" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Timing
-          </TabsTrigger>
-          <TabsTrigger value="comparison" className="flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Comparación
           </TabsTrigger>
           <TabsTrigger value="insights" className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
@@ -1476,14 +1468,6 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
         <TabsContent value="performance">
           {renderContentPerformance()}
-        </TabsContent>
-
-        <TabsContent value="timing">
-          {renderActivityTimeline()}
-        </TabsContent>
-
-        <TabsContent value="comparison">
-          {renderPlatformComparison()}
         </TabsContent>
 
         <TabsContent value="insights">

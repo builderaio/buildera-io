@@ -337,11 +337,10 @@ Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empr
           user_id: user_id,
           insight_type: 'audience',
           title: insight.title,
-          strategy: insight.strategy,
           content: insight.strategy,
           status: 'active',
-          generated_at: new Date().toISOString(),
           metadata: {
+            strategy: insight.strategy,
             context: {
               company_name: company?.name,
               platform: platform || 'all',
@@ -359,15 +358,14 @@ Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empr
           user_id: user_id,
           insight_type: 'content_idea',
           title: idea.title,
-          strategy: idea.strategy,
           content: idea.strategy,
           format: idea.format,
           platform: idea.platform,
           hashtags: idea.hashtags || [],
           timing: idea.timing,
           status: 'active',
-          generated_at: new Date().toISOString(),
           metadata: {
+            strategy: idea.strategy,
             context: {
               company_name: company?.name,
               original_platform_filter: platform || 'all',
@@ -382,20 +380,29 @@ Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empr
     let savedInsightsIds: string[] = [];
     if (insightsToSave.length > 0) {
       try {
+        console.log(`🔍 Attempting to insert ${insightsToSave.length} insights...`);
+        console.log('📋 Sample insight:', JSON.stringify(insightsToSave[0], null, 2));
+        
         const { data: savedInsights, error: saveError } = await supabase
           .from('content_insights')
           .insert(insightsToSave)
           .select('id');
 
         if (saveError) {
-          console.error('Error saving insights:', saveError);
+          console.error('❌ Error saving insights:', JSON.stringify(saveError, null, 2));
+          throw new Error(`Failed to save insights: ${saveError.message}`);
+        } else if (!savedInsights || savedInsights.length === 0) {
+          console.error('⚠️ No insights were saved, but no error was returned');
         } else {
           savedInsightsIds = (savedInsights || []).map((insight: any) => insight.id);
-          console.log(`✅ Successfully saved ${savedInsightsIds.length} insights to database`);
+          console.log(`✅ Successfully saved ${savedInsightsIds.length} insights with IDs:`, savedInsightsIds);
         }
       } catch (saveError) {
-        console.error('Error in bulk insert:', saveError);
+        console.error('❌ Exception in bulk insert:', saveError);
+        throw saveError;
       }
+    } else {
+      console.log('⚠️ No insights to save - insightsToSave array is empty');
     }
 
     return new Response(JSON.stringify({ 

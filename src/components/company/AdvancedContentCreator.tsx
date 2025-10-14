@@ -66,7 +66,7 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
       return;
     }
     
-    console.log('Loading insights for user:', profile.user_id);
+    console.log('🔄 Loading insights for user:', profile.user_id);
     
     try {
       const { data, error } = await supabase
@@ -76,11 +76,11 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
         .order('created_at', { ascending: false });
         
       if (error) {
-        console.error('Supabase error loading insights:', error);
+        console.error('❌ Supabase error loading insights:', error);
         throw error;
       }
       
-      console.log('Loaded insights:', data);
+      console.log(`✅ Loaded ${data?.length || 0} insights from database`);
       setInsights(data || []);
     } catch (error) {
       console.error('Error loading insights:', error);

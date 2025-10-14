@@ -50,13 +50,18 @@ export const InsightsManager = ({
 
   const loadInsights = async () => {
     try {
+      console.log('🔄 [InsightsManager] Loading insights for user:', userId);
+      
       const { data, error } = await supabase
         .from('content_insights')
         .select('*')
         .eq('user_id', userId)
-        .order('generated_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [InsightsManager] Error loading insights:', error);
+        throw error;
+      }
       
       // Cast the data to match our Insight interface
       const typedData = (data || []).map(item => ({
@@ -65,6 +70,7 @@ export const InsightsManager = ({
         status: item.status as 'active' | 'completed' | 'dismissed' | 'archived'
       }));
       
+      console.log(`✅ [InsightsManager] Loaded ${typedData.length} insights`);
       setInsights(typedData);
     } catch (error) {
       console.error('Error loading insights:', error);

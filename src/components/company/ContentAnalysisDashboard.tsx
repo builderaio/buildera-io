@@ -181,9 +181,12 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       if (data) {
         // Track newly generated insights
         if (data.saved_insights_ids && Array.isArray(data.saved_insights_ids)) {
+          console.log('✅ Received insights IDs:', data.saved_insights_ids);
           setNewInsightsIds(data.saved_insights_ids);
           // Clear after 10 seconds
           setTimeout(() => setNewInsightsIds([]), 10000);
+        } else {
+          console.warn('⚠️ No saved_insights_ids in response');
         }
         
         // Check for structured output first

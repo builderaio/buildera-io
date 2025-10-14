@@ -449,6 +449,11 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       };
     });
 
+    // Calcular métricas totales de contenido
+    const totalLikes = posts.reduce((sum: number, p: any) => sum + (p.likes || 0), 0);
+    const totalComments = posts.reduce((sum: number, p: any) => sum + (p.comments || 0), 0);
+    const totalImpressions = posts.reduce((sum: number, p: any) => sum + (p.impressions || 0), 0);
+    
     const totalMetrics = overviewMetrics.reduce((acc, curr) => ({
       followers: acc.followers + curr.followers,
       growth: acc.growth + curr.growth,
@@ -463,20 +468,14 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Seguidores Totales</p>
-                <p className="text-2xl font-bold">{totalMetrics.followers.toLocaleString()}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total de Likes</p>
+                <p className="text-2xl font-bold">{totalLikes.toLocaleString()}</p>
               </div>
-              <Users className="h-8 w-8 text-purple-500" />
+              <Heart className="h-8 w-8 text-purple-500" />
             </div>
-            <div className="flex items-center mt-2">
-              {totalMetrics.growth > 0 ? (
-                <ArrowUp className="h-4 w-4 text-green-500 mr-1" />
-              ) : (
-                <ArrowDown className="h-4 w-4 text-red-500 mr-1" />
-              )}
-              <span className={`text-sm ${totalMetrics.growth > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {totalMetrics.growth > 0 ? '+' : ''}{totalMetrics.growth}
-              </span>
+            <div className="flex items-center mt-2 text-xs text-muted-foreground">
+              <MessageCircle className="h-3 w-3 mr-1" />
+              <span>{totalComments.toLocaleString()} comentarios</span>
             </div>
           </CardContent>
         </Card>

@@ -122,6 +122,77 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const [lastAnalysisDate, setLastAnalysisDate] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const generateAIInsights = async () => {
+    setLoadingInsights(true);
+    
+    try {
+      const currentUserId = profile?.user_id || profile?.id;
+      
+      if (!currentUserId) {
+        toast({
+          title: t('common:status.error'),
+          description: 'No se pudo identificar el usuario',
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Generando insights",
+        description: "La IA está analizando tu contenido. Esto puede tomar unos momentos...",
+      });
+
+      // Get top performing posts to send as context
+      const sortedByEngagement = [...posts].sort((a, b) => {
+        const aEng = (a.likes || 0) + (a.comments || 0) + (a.rePosts || 0) + ((a.videoViews || a.views || 0) * 0.01);
+        const bEng = (b.likes || 0) + (b.comments || 0) + (b.rePosts || 0) + ((b.videoViews || b.views || 0) * 0.01);
+        return bEng - aEng;
+      }).slice(0, 10);
+
+      const { data, error } = await supabase.functions.invoke('content-insights-generator', {
+        body: {
+          user_id: currentUserId,
+          platform: selectedPlatform !== 'all' ? selectedPlatform : null,
+          top_posts: sortedByEngagement.map(post => ({
+            platform: post.platform || post.socialType,
+            text: post.text,
+            likes: post.likes || 0,
+            comments: post.comments || 0,
+            shares: post.rePosts || 0,
+            views: post.videoViews || post.views || 0,
+            date: post.date || post.published_at,
+            hashtags: post.hashTags || []
+          }))
+        }
+      });
+
+      if (error) {
+        console.error('Error generating insights:', error);
+        throw error;
+      }
+
+      if (data && data.insights) {
+        setAiInsights(data.insights);
+        toast({
+          title: "Insights generados",
+          description: "Se han generado nuevos insights inteligentes sobre tu contenido",
+        });
+      } else {
+        throw new Error('No se recibieron insights de la IA');
+      }
+
+    } catch (error: any) {
+      console.error('Error generating AI insights:', error);
+      toast({
+        title: "Error al generar insights",
+        description: error.message || "No se pudieron generar los insights. Por favor, intenta nuevamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingInsights(false);
+    }
+  };
+
   useEffect(() => {
     if (!profile) return;
     loadExistingData();
@@ -650,6 +721,31 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
     return (
       <div className="space-y-6">
+        {/* Header con botón de generar insights */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold">Rendimiento del Contenido</h3>
+            <p className="text-sm text-muted-foreground">Análisis detallado de tus publicaciones</p>
+          </div>
+          <Button
+            onClick={generateAIInsights}
+            disabled={loadingInsights || posts.length === 0}
+            className="gap-2"
+          >
+            {loadingInsights ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Generando...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                Generar Insights IA
+              </>
+            )}
+          </Button>
+        </div>
+
         {/* Gráficas de rendimiento - Layout compacto */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Tendencias de Crecimiento */}
@@ -867,48 +963,6 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         </div>
       </div>
     );
-  };
-
-  const generateAIInsights = async () => {
-    if (!profile.user_id) return;
-    
-    setLoadingInsights(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('content-insights-generator', {
-        body: {
-          user_id: profile.user_id,
-          platform: selectedPlatform === 'all' ? null : selectedPlatform,
-          top_posts: topPosts.slice(0, 10) // Enviar los top 10 posts
-        }
-      });
-
-      if (error) {
-        console.error('Error generating insights:', error);
-        toast({
-          title: "Error",
-          description: "No se pudieron generar los insights",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (data?.insights) {
-        setAiInsights(data.insights);
-        toast({
-          title: "Insights generados",
-          description: "Se han generado nuevos insights basados en tu contenido",
-        });
-      }
-    } catch (error) {
-      console.error('Error generating insights:', error);
-      toast({
-        title: "Error",
-        description: "Error al generar insights",
-        variant: "destructive"
-      });
-    } finally {
-      setLoadingInsights(false);
-    }
   };
 
 

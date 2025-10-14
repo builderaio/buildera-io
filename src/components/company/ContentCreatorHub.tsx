@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Edit3, Loader2, Wand2, RefreshCw } from "lucide-react";
 import { ContentIdeaCard } from "./ContentIdeaCard";
 import SimpleContentPublisher from "./SimpleContentPublisher";
+import { useEraOptimizer } from "@/hooks/useEraOptimizer";
+import { EraOptimizerDialog } from "@/components/ui/era-optimizer-dialog";
 
 interface ContentCreatorHubProps {
   profile: any;
@@ -27,10 +29,26 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
   const [selectedFormat, setSelectedFormat] = useState('post');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
-  const [isOptimizing, setIsOptimizing] = useState(false);
   const [showPublisher, setShowPublisher] = useState(false);
   const [publisherContent, setPublisherContent] = useState({ title: '', content: '', generatedImage: '' });
   const [currentInsightId, setCurrentInsightId] = useState<string>();
+
+  const { 
+    optimizeWithEra, 
+    isOptimizing, 
+    optimizedText, 
+    showOptimizedDialog, 
+    acceptOptimization, 
+    rejectOptimization 
+  } = useEraOptimizer({
+    onOptimized: (optimized) => {
+      setManualContent(optimized);
+      toast({
+        title: "¡Contenido optimizado!",
+        description: "Tu contenido ha sido mejorado por Era"
+      });
+    }
+  });
 
   useEffect(() => {
     if (profile?.user_id) {
@@ -168,44 +186,11 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     setShowPublisher(true);
   };
 
-  const handleOptimizeWithEra = async () => {
-    if (!manualContent.trim()) {
-      toast({
-        title: "Error",
-        description: "Escribe algo primero para optimizar",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsOptimizing(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('era-content-optimizer', {
-        body: { 
-          content: manualContent,
-          platform: selectedPlatform,
-          userId: profile.user_id
-        }
-      });
-
-      if (error) throw error;
-      
-      setManualContent(data?.optimizedContent || manualContent);
-      toast({
-        title: "¡Contenido optimizado!",
-        description: "Tu contenido ha sido mejorado por Era"
-      });
-    } catch (error) {
-      console.error('Error optimizing:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo optimizar el contenido",
-        variant: "destructive"
-      });
-    } finally {
-      setIsOptimizing(false);
-    }
+  const handleOptimizeWithEra = () => {
+    optimizeWithEra(manualContent, 'post_content', {
+      platform: selectedPlatform,
+      format: selectedFormat
+    });
   };
 
   const handleCreateContentFromIdea = (idea: any) => {
@@ -464,6 +449,16 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
           </div>
         )}
       </div>
+
+      {/* Era Optimizer Dialog */}
+      <EraOptimizerDialog
+        isOpen={showOptimizedDialog}
+        onClose={rejectOptimization}
+        originalText={manualContent}
+        optimizedText={optimizedText}
+        onAccept={acceptOptimization}
+        onReject={rejectOptimization}
+      />
 
       {/* Publisher Modal */}
       <SimpleContentPublisher

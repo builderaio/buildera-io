@@ -497,8 +497,9 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Engagement Promedio</p>
-                <p className="text-2xl font-bold">{(totalMetrics.avgEngagement * 100).toFixed(1)}%</p>
+                <p className="text-sm font-medium text-muted-foreground">Tasa de Interacción</p>
+                <p className="text-xs text-muted-foreground/70 mt-0.5">Likes + comentarios por post</p>
+                <p className="text-2xl font-bold mt-1">{(totalMetrics.avgEngagement * 100).toFixed(1)}%</p>
               </div>
               <Heart className="h-8 w-8 text-green-500" />
             </div>
@@ -509,8 +510,9 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Score de Calidad</p>
-                <p className="text-2xl font-bold">{(totalMetrics.avgQuality * 100).toFixed(0)}%</p>
+                <p className="text-sm font-medium text-muted-foreground">Calidad del Contenido</p>
+                <p className="text-xs text-muted-foreground/70 mt-0.5">Rendimiento vs. audiencia</p>
+                <p className="text-2xl font-bold mt-1">{(totalMetrics.avgQuality * 100).toFixed(0)}%</p>
               </div>
               <Star className="h-8 w-8 text-orange-500" />
             </div>
@@ -655,6 +657,9 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
               <TrendingUp className="h-5 w-5 text-primary" />
               Tendencias de Crecimiento
             </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Nota: Esta gráfica muestra datos de Instagram y TikTok. LinkedIn no está incluido debido a limitaciones de la API de análisis retrospectivo.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">

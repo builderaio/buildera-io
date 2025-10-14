@@ -182,6 +182,8 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         // Track newly generated insights
         if (data.saved_insights_ids && Array.isArray(data.saved_insights_ids)) {
           setNewInsightsIds(data.saved_insights_ids);
+          // Clear after 10 seconds
+          setTimeout(() => setNewInsightsIds([]), 10000);
         }
         
         // Check for structured output first
@@ -855,39 +857,13 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         {/* Sección de Insights AI */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  Insights Inteligentes
-                </CardTitle>
-                <CardDescription className="text-sm text-muted-foreground mt-1">
-                  Insights generados por IA basados en tu contenido y audiencia
-                </CardDescription>
-              </div>
-              <Button 
-                onClick={() => {
-                  console.log('Generating insights - topPosts count:', topPosts.length);
-                  console.log('Generating insights - posts count:', posts.length);
-                  generateAIInsights();
-                }} 
-                disabled={loadingInsights || posts.length === 0}
-                variant="outline"
-                size="sm"
-              >
-                {loadingInsights ? (
-                  <>
-                    <RefreshCw className="w-4 w-4 mr-2 animate-spin" />
-                    Generando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Generar Insights
-                  </>
-                )}
-              </Button>
-            </div>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Insights Inteligentes
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground mt-1">
+              Insights generados por IA basados en tu contenido y audiencia
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <InsightsManager

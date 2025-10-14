@@ -80,7 +80,16 @@ export const InsightsManager = ({
 
   useEffect(() => {
     loadInsights();
-  }, [userId]);
+    
+    // Clear new insights IDs after they've been loaded
+    if (newInsightsIds && newInsightsIds.length > 0) {
+      const timer = setTimeout(() => {
+        // The parent component should handle clearing newInsightsIds
+        // We just show them as new when they first load
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [userId, newInsightsIds]);
 
   useEffect(() => {
     let filtered = insights;

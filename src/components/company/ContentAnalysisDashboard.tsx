@@ -131,7 +131,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     setLoadingInsights(true);
     
     try {
-      const currentUserId = profile?.user_id || profile?.id;
+      const currentUserId = profile?.user_id;
       
       if (!currentUserId) {
         toast({
@@ -255,7 +255,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   useEffect(() => {
     if (!profile) return;
     loadExistingData();
-  }, [profile?.user_id, profile?.id]);
+  }, [profile?.user_id]);
 
   const loadExistingData = async () => {
     setLoading(true);
@@ -870,7 +870,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           </CardHeader>
           <CardContent>
             <InsightsManager
-              userId={profile?.user_id || profile?.id || ''}
+              userId={profile?.user_id || ''}
               onCreateContent={(contentData) => {
                 setPrepopulatedContent(contentData);
                 setActiveTab('creator');

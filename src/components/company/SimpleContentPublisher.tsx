@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X, Calendar, Image, Sparkles } from "lucide-react";
+import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X, Calendar, Image, Sparkles, FileUp, Video, FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import ContentImageSelector from "./ContentImageSelector";
 import { SmartLoader } from "@/components/ui/smart-loader";
@@ -65,6 +65,9 @@ export default function SimpleContentPublisher({
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [needsGeneration, setNeedsGeneration] = useState(false);
   const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+  const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string>('');
+  const [uploadedMediaType, setUploadedMediaType] = useState<'image' | 'video' | 'pdf' | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
 
   // Fetch social accounts when dialog opens
   useEffect(() => {
@@ -240,6 +243,88 @@ export default function SimpleContentPublisher({
     }
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const validVideoTypes = ['video/mp4', 'video/mov', 'video/avi', 'video/quicktime'];
+    const validPdfType = 'application/pdf';
+
+    let mediaType: 'image' | 'video' | 'pdf' | null = null;
+    if (validImageTypes.includes(file.type)) {
+      mediaType = 'image';
+    } else if (validVideoTypes.includes(file.type)) {
+      mediaType = 'video';
+    } else if (file.type === validPdfType) {
+      mediaType = 'pdf';
+    } else {
+      toast({
+        title: "Tipo de archivo no válido",
+        description: "Solo se permiten imágenes (JPG, PNG, GIF, WEBP), videos (MP4, MOV, AVI) o PDFs",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar tamaño (máx 20MB)
+    const maxSize = 20 * 1024 * 1024; // 20MB
+    if (file.size > maxSize) {
+      toast({
+        title: "Archivo muy grande",
+        description: "El archivo no debe superar los 20MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingMedia(true);
+    try {
+      // Subir archivo a Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.user_id}/${Date.now()}.${fileExt}`;
+      const bucketName = mediaType === 'image' ? 'content-media' : 
+                         mediaType === 'video' ? 'content-videos' : 
+                         'content-documents';
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Obtener URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(fileName);
+
+      setUploadedMediaUrl(publicUrl);
+      setUploadedMediaType(mediaType);
+      
+      // Si es imagen, también setear en selectedContentImage para compatibilidad
+      if (mediaType === 'image') {
+        setSelectedContentImage(publicUrl);
+      }
+
+      toast({
+        title: "¡Archivo cargado!",
+        description: `${mediaType === 'image' ? 'Imagen' : mediaType === 'video' ? 'Video' : 'PDF'} cargado exitosamente`,
+      });
+    } catch (error) {
+      console.error("Error uploading media:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar el archivo",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingMedia(false);
+      // Limpiar el input
+      event.target.value = '';
+    }
+  };
+
   const handleGenerateImage = async () => {
     if (!editingContent) {
       toast({
@@ -264,6 +349,8 @@ export default function SimpleContentPublisher({
 
       if (data?.imageUrl) {
         setSelectedContentImage(data.imageUrl);
+        setUploadedMediaUrl(data.imageUrl);
+        setUploadedMediaType('image');
         toast({
           title: "¡Imagen generada!",
           description: "La imagen ha sido generada con IA exitosamente",
@@ -598,45 +685,119 @@ export default function SimpleContentPublisher({
                     </p>
                   )}
 
-                  {/* Image Section */}
+                  {/* Media Section */}
                   <div className="mt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-sm font-medium">Imagen</Label>
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-sm font-medium">Archivos multimedia</Label>
+                    </div>
+                    
+                    {/* Media Upload Options */}
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => document.getElementById('media-upload-input')?.click()}
+                        disabled={isUploadingMedia}
+                        className="w-full"
+                      >
+                        {isUploadingMedia ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <FileUp className="h-4 w-4 mr-2" />
+                        )}
+                        Cargar archivo
+                      </Button>
+                      <input 
+                        id="media-upload-input"
+                        type="file" 
+                        accept="image/*,video/*,.pdf"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      
                       <Button 
                         size="sm" 
                         variant="outline" 
                         onClick={() => setShowImageSelector(true)}
-                        className="text-xs"
+                        className="w-full"
                       >
-                        <Image className="h-3 w-3 mr-1" />
-                        Seleccionar de biblioteca
+                        <Image className="h-4 w-4 mr-2" />
+                        Biblioteca
+                      </Button>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={handleGenerateImage}
+                        disabled={isGeneratingImage}
+                        className="w-full"
+                      >
+                        {isGeneratingImage ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4 mr-2" />
+                        )}
+                        Generar IA
                       </Button>
                     </div>
                     
-                    {(selectedContentImage || content.generatedImage) && (
+                    {/* Media Preview */}
+                    {(uploadedMediaUrl || selectedContentImage || content.generatedImage) && (
                       <div className="relative">
-                        <img 
-                          src={selectedContentImage || content.generatedImage} 
-                          alt="Content image" 
-                          className="max-w-full h-auto rounded-lg border max-h-48 object-cover"
-                        />
-                        {selectedContentImage && (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="absolute top-2 right-2 p-1 h-6 w-6"
-                            onClick={() => setSelectedContentImage('')}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
+                        {uploadedMediaType === 'video' ? (
+                          <video 
+                            src={uploadedMediaUrl} 
+                            controls 
+                            className="max-w-full h-auto rounded-lg border max-h-48"
+                          />
+                        ) : uploadedMediaType === 'pdf' ? (
+                          <div className="border rounded-lg p-4 bg-muted">
+                            <div className="flex items-center gap-3">
+                              <FileText className="h-8 w-8 text-red-600" />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">Documento PDF adjunto</p>
+                                <a 
+                                  href={uploadedMediaUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-primary hover:underline"
+                                >
+                                  Ver documento
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <img 
+                            src={uploadedMediaUrl || selectedContentImage || content.generatedImage} 
+                            alt="Content media" 
+                            className="max-w-full h-auto rounded-lg border max-h-48 object-cover"
+                          />
                         )}
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="absolute top-2 right-2 p-1 h-6 w-6"
+                          onClick={() => {
+                            setUploadedMediaUrl('');
+                            setUploadedMediaType(null);
+                            setSelectedContentImage('');
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
                     )}
                     
-                    {!selectedContentImage && !content.generatedImage && (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                        <Image className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm text-gray-500">No hay imagen seleccionada</p>
+                    {!uploadedMediaUrl && !selectedContentImage && !content.generatedImage && (
+                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                        <div className="flex justify-center gap-2 mb-3">
+                          <Image className="h-6 w-6 text-muted-foreground" />
+                          <Video className="h-6 w-6 text-muted-foreground" />
+                          <FileText className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-1">No hay archivos multimedia</p>
+                        <p className="text-xs text-muted-foreground">Imágenes, videos o PDFs (máx 20MB)</p>
                       </div>
                     )}
                   </div>

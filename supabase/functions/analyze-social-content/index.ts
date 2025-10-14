@@ -107,7 +107,6 @@ async function savePostsToTables(
         data_id: post.dataId || post.postID || post.id,
         from_owner: post.fromOwner || false,
         posted_at: post.date || post.published_at || new Date().toISOString(),
-        engagement_rate: post.er || 0,
         is_ad: post.isAd || false,
         is_deleted: post.isDeleted || false,
         interactions_count: post.interactions || 0,
@@ -136,14 +135,15 @@ async function savePostsToTables(
             mentions: post.mentions || [],
             image_url: post.image,
             video_url: post.videoLink,
-            video_views_count: post.videoViews || 0
+            video_views_count: post.videoViews || 0,
+            engagement_rate: post.er || 0
           }, {
             onConflict: 'user_id,post_id',
             ignoreDuplicates: false
           });
 
         if (error) console.error('Error saving Facebook post:', error);
-      } 
+      }
       else if (platform === 'instagram') {
         const { error } = await supabaseClient
           .from('instagram_posts')
@@ -161,7 +161,8 @@ async function savePostsToTables(
             hashtags: post.hashTags || [],
             mentions: post.mentions || [],
             reel_plays: post.reelPlays || 0,
-            video_plays: post.videoViews || 0
+            video_plays: post.videoViews || 0,
+            engagement_rate: post.er || 0
           }, {
             onConflict: 'user_id,post_id',
             ignoreDuplicates: false
@@ -184,7 +185,8 @@ async function savePostsToTables(
             mentions: post.mentions || [],
             image_url: post.image,
             video_url: post.videoLink,
-            impressions_count: post.impressions || 0
+            impressions_count: post.impressions || 0,
+            engagement_rate: post.er || 0
           }, {
             onConflict: 'user_id,post_id',
             ignoreDuplicates: false

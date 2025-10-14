@@ -59,29 +59,18 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
   // Pre-populate content when received from insights
   useEffect(() => {
     if (prepopulatedContent) {
-      // Build content with title, strategy, and hashtags
-      let content = `${prepopulatedContent.title}\n\n`;
-      
-      if (prepopulatedContent.strategy) {
-        content += `${prepopulatedContent.strategy}\n\n`;
-      }
-      
-      if (prepopulatedContent.hashtags && prepopulatedContent.hashtags.length > 0) {
-        content += prepopulatedContent.hashtags.join(' ');
-      }
-      
-      setManualContent(content);
+      // Only pre-fill the content prompt (description field)
+      // User must generate the actual content using the "Generar Contenido" button
       setContentPrompt(prepopulatedContent.title);
       
-      // Show publisher if schedule mode
+      // Show publisher if schedule mode (but don't pre-fill content)
       if (prepopulatedContent.schedule) {
-        setPublisherContent(content);
         setShowPublisher(true);
       }
       
       toast({
-        title: "Contenido pre-cargado",
-        description: "Los datos de la idea se han cargado en el editor",
+        title: "Idea cargada",
+        description: "Describe el contenido y usa 'Generar Contenido' para crearlo",
       });
       
       // Clear prepopulated data after use

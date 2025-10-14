@@ -45,12 +45,19 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
     const audienceInsights: ParsedInsight[] = [];
     const contentIdeas: ParsedContentIdea[] = [];
     
+    console.log('🔍 Raw insights:', rawInsights);
+    
     // First, split by content ideas section marker
     const contentIdeasSectionRegex = /\*\*[💡🔥✨]*\s*(IDEAS?\s+DE\s+CONTENIDO|CONTENT\s+IDEAS?)\*\*/i;
     const parts = rawInsights.split(contentIdeasSectionRegex);
     
+    console.log('📦 Parts after split:', parts.length, parts);
+    
     const audiencePart = parts[0] || '';
     const contentPart = parts.length > 1 ? parts[parts.length - 1] : '';
+    
+    console.log('👥 Audience part:', audiencePart);
+    console.log('💡 Content part:', contentPart);
     
     // Parse audience insights
     const audienceSections = audiencePart.split(/\*\*Título\*\*:/i).filter(s => s.trim());

@@ -849,7 +849,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
                     : 'Haz clic en "Generar Insights" para obtener recomendaciones personalizadas'
                   }
                 </p>
-                {topPosts.length === 0 && (
+                {topPosts.length === 0 ? (
                   <Button 
                     onClick={triggerContentOnlyAnalysis}
                     disabled={loading}
@@ -858,6 +858,25 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Analizar Posts
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={generateAIInsights}
+                    disabled={loadingInsights || posts.length === 0}
+                    variant="default"
+                    size="sm"
+                  >
+                    {loadingInsights ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Generar Insights
+                      </>
+                    )}
                   </Button>
                 )}
               </div>

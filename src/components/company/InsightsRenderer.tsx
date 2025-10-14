@@ -41,59 +41,76 @@ interface ParsedContentIdea {
 const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCreator }: InsightsRendererProps) => {
   
   const parseInsights = (rawInsights: string) => {
-    const sections = rawInsights.split(/\*\*💡 IDEAS DE CONTENIDO\*\*/);
-    const audienceSection = sections[0]?.replace(/\*\*📊 INSIGHTS DE AUDIENCIA\*\*/, '').trim();
-    const contentSection = sections[1]?.trim();
-
-    // Parse audience insights
     const audienceInsights: ParsedInsight[] = [];
-    if (audienceSection) {
-      const insights = audienceSection.split(/\d+\.\s+\*\*/).filter(Boolean);
-      insights.forEach(insight => {
-        const lines = insight.split('\n');
-        const title = lines[0]?.replace(/\*\*:?/, '').trim();
-        const content = lines.slice(1).join(' ').replace(/^\*\*/, '').trim();
-        if (title && content) {
-          audienceInsights.push({ title, content });
-        }
-      });
-    }
-
-    // Parse content ideas
     const contentIdeas: ParsedContentIdea[] = [];
-    if (contentSection) {
-      const ideas = contentSection.split(/\d+\.\s+\*\*/).filter(Boolean);
-      ideas.forEach(idea => {
-        const lines = idea.split('\n').filter(line => line.trim());
-        const title = lines[0]?.replace(/\*\*$/, '').replace(/"/g, '').trim();
-        
+    
+    // Split by **Título**: or **Título**:
+    const sections = rawInsights.split(/\*\*Título\*\*:/i).filter(s => s.trim());
+    
+    sections.forEach(section => {
+      const lines = section.split('\n').map(l => l.trim()).filter(l => l);
+      if (lines.length === 0) return;
+      
+      // First line is the title
+      const title = lines[0].trim();
+      
+      // Check if this is a content idea (has format/platform indicators)
+      const hasFormatIndicators = lines.some(line => 
+        /^(Story|Reel|Post|Video|Carrusel|Photo)/i.test(line) ||
+        /^(Instagram|LinkedIn|TikTok|Facebook|Twitter)/i.test(line)
+      );
+      
+      if (hasFormatIndicators) {
+        // This is a content idea
         let format = '';
         let platform = '';
         let hashtags: string[] = [];
-        let timing = '';
         let strategy = '';
-
-        lines.forEach(line => {
-          if (line.includes('**Formato sugerido**:')) {
-            format = line.replace('**Formato sugerido**:', '').trim();
-          } else if (line.includes('**Plataforma recomendada**:')) {
-            platform = line.replace('**Plataforma recomendada**:', '').trim();
-          } else if (line.includes('**Hashtags**:')) {
-            const hashtagsText = line.replace('**Hashtags**:', '').trim();
-            hashtags = hashtagsText.split(' ').filter(tag => tag.startsWith('#'));
-          } else if (line.includes('**Hora/día sugerido**:')) {
-            timing = line.replace('**Hora/día sugerido**:', '').replace('para publicar', '').trim();
-          } else if (line.includes('**Estrategia**:')) {
-            strategy = line.replace('**Estrategia**:', '').trim();
-          }
-        });
-
-        if (title) {
-          contentIdeas.push({ title, format, platform, hashtags, timing, strategy });
+        
+        // Find format (usually second line if it's a single word like "Story")
+        const formatLine = lines.find(l => /^(Story|Reel|Post|Video|Carrusel|Photo)$/i.test(l));
+        if (formatLine) {
+          format = formatLine;
         }
-      });
-    }
-
+        
+        // Find platform
+        const platformLine = lines.find(l => /^(Instagram|LinkedIn|TikTok|Facebook|Twitter)$/i.test(l));
+        if (platformLine) {
+          platform = platformLine;
+        }
+        
+        // Find strategy
+        const strategyIndex = lines.findIndex(l => /^Estrategia:/i.test(l));
+        if (strategyIndex >= 0) {
+          strategy = lines.slice(strategyIndex + 1)
+            .filter(l => !l.startsWith('#') && !l.toLowerCase().includes('hashtags'))
+            .join(' ')
+            .trim();
+        }
+        
+        // Find hashtags
+        const hashtagsIndex = lines.findIndex(l => /hashtags sugeridos:/i.test(l));
+        if (hashtagsIndex >= 0) {
+          // Get all lines after "Hashtags sugeridos:" that start with #
+          hashtags = lines.slice(hashtagsIndex + 1)
+            .filter(l => l.startsWith('#'))
+            .map(l => l.trim());
+        }
+        
+        contentIdeas.push({ title, format, platform, hashtags, timing: '', strategy });
+        
+      } else {
+        // This is an audience insight
+        // Look for **Estrategia**: pattern
+        const estrategiaMatch = section.match(/\*\*Estrategia\*\*:\s*(.+)/is);
+        const content = estrategiaMatch ? estrategiaMatch[1].trim() : lines.slice(1).join(' ').trim();
+        
+        if (content) {
+          audienceInsights.push({ title, content });
+        }
+      }
+    });
+    
     return { audienceInsights, contentIdeas };
   };
 
@@ -126,23 +143,27 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
     <div className="space-y-8">
       {/* Audience Insights Section */}
       {audienceInsights.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
-              <Users className="h-5 w-5 text-blue-600" />
+            <div className="p-3 rounded-xl bg-primary/10">
+              <Users className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold">📊 Insights de Audiencia</h3>
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                Insights de Audiencia
+              </h3>
               <p className="text-sm text-muted-foreground">Patrones identificados en tu audiencia</p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {audienceInsights.map((insight, index) => (
-              <Card key={index} className="border-l-4 border-l-blue-500">
+              <Card key={index} className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Brain className="h-4 w-4 text-blue-500" />
+                  <CardTitle className="text-lg flex items-center gap-2 font-semibold">
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <Brain className="h-4 w-4 text-primary" />
+                    </div>
                     {insight.title}
                   </CardTitle>
                 </CardHeader>
@@ -163,14 +184,16 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
 
       {/* Content Ideas Section */}
       {contentIdeas.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
-                <Lightbulb className="h-5 w-5 text-green-600" />
+              <div className="p-3 rounded-xl bg-accent/50">
+                <Lightbulb className="h-6 w-6 text-accent-foreground" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold">💡 Ideas de Contenido</h3>
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-accent-foreground to-accent-foreground/70 bg-clip-text text-transparent">
+                  Ideas de Contenido
+                </h3>
                 <p className="text-sm text-muted-foreground">Ideas específicas listas para crear</p>
               </div>
             </div>
@@ -198,21 +221,25 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {contentIdeas.map((idea, index) => (
-              <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
+              <Card key={index} className="overflow-hidden hover:shadow-lg transition-all border-2 hover:border-primary/50">
+                <CardHeader className="pb-4 bg-gradient-to-br from-background to-muted/20">
                   <div className="flex items-start justify-between gap-3">
-                    <CardTitle className="text-base leading-tight flex-1">
+                    <CardTitle className="text-lg leading-tight flex-1 font-semibold">
                       {idea.title}
                     </CardTitle>
-                    {getFormatIcon(idea.format)}
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      {getFormatIcon(idea.format)}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {idea.format}
-                    </Badge>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {idea.format && (
+                      <Badge variant="secondary" className="text-xs font-medium">
+                        {idea.format}
+                      </Badge>
+                    )}
                     {idea.platform && (
                       <Badge 
-                        className={`text-white text-xs ${getPlatformColor(idea.platform)}`}
+                        className={`text-white text-xs font-medium ${getPlatformColor(idea.platform)}`}
                       >
                         {idea.platform}
                       </Badge>
@@ -220,11 +247,14 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
                   </div>
                 </CardHeader>
                 
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 pt-4">
                   {/* Strategy */}
                   {idea.strategy && (
-                    <div>
-                      <h5 className="text-sm font-medium mb-1">Estrategia:</h5>
+                    <div className="bg-muted/30 p-3 rounded-lg">
+                      <h5 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        Estrategia:
+                      </h5>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {idea.strategy}
                       </p>
@@ -234,13 +264,13 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
                   {/* Hashtags */}
                   {idea.hashtags.length > 0 && (
                     <div>
-                      <h5 className="text-sm font-medium mb-2 flex items-center gap-1">
-                        <Hash className="h-3 w-3" />
+                      <h5 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                        <Hash className="h-3.5 w-3.5" />
                         Hashtags sugeridos:
                       </h5>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-2">
                         {idea.hashtags.map((tag, tagIndex) => (
-                          <Badge key={tagIndex} variant="outline" className="text-xs">
+                          <Badge key={tagIndex} variant="outline" className="text-xs font-medium">
                             {tag}
                           </Badge>
                         ))}
@@ -250,8 +280,8 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
 
                   {/* Timing */}
                   {idea.timing && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 p-2 rounded-md">
+                      <Calendar className="h-3.5 w-3.5" />
                       <span>Mejor momento: {idea.timing}</span>
                     </div>
                   )}
@@ -263,7 +293,7 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
                       onClick={onCreateContent}
                       className="flex-1"
                     >
-                      <PlusCircle className="h-3 w-3 mr-1" />
+                      <PlusCircle className="h-4 w-4 mr-1.5" />
                       Crear Ahora
                     </Button>
                     <Button 
@@ -271,7 +301,7 @@ const InsightsRenderer = ({ insights, onCreateContent, onOpenCalendar, onOpenCre
                       variant="outline"
                       onClick={onOpenCalendar}
                     >
-                      <Calendar className="h-3 w-3 mr-1" />
+                      <Calendar className="h-4 w-4 mr-1.5" />
                       Programar
                     </Button>
                   </div>

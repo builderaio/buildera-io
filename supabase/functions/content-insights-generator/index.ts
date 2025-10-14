@@ -339,6 +339,9 @@ Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empr
           title: insight.title,
           content: insight.strategy,
           status: 'active',
+          source: 'ai_generated',
+          created_at: new Date().toISOString(),
+          generated_at: new Date().toISOString(),
           metadata: {
             strategy: insight.strategy,
             context: {
@@ -364,6 +367,9 @@ Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empr
           hashtags: idea.hashtags || [],
           timing: idea.timing,
           status: 'active',
+          source: 'ai_generated',
+          created_at: new Date().toISOString(),
+          generated_at: new Date().toISOString(),
           metadata: {
             strategy: idea.strategy,
             context: {

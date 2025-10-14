@@ -31,6 +31,8 @@ interface InsightsManagerProps {
   onGenerateMore?: () => void;
   isGenerating?: boolean;
   newInsightsIds?: string[];
+  filterMode?: 'all' | 'content_ideas_only';
+  showActiveOnly?: boolean;
 }
 
 export const InsightsManager = ({
@@ -38,7 +40,9 @@ export const InsightsManager = ({
   onCreateContent,
   onGenerateMore,
   isGenerating,
-  newInsightsIds = []
+  newInsightsIds = [],
+  filterMode = 'all',
+  showActiveOnly = false
 }: InsightsManagerProps) => {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [filteredInsights, setFilteredInsights] = useState<Insight[]>([]);
@@ -250,7 +254,9 @@ export const InsightsManager = ({
       {/* Header with Stats */}
       <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-6 border border-primary/20">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">Gestión de Insights</h2>
+          <h2 className="text-2xl font-bold">
+            {filterMode === 'content_ideas_only' ? 'Ideas de Contenido' : 'Gestión de Insights'}
+          </h2>
           {onGenerateMore && (
             <Button
               onClick={onGenerateMore}
@@ -311,16 +317,32 @@ export const InsightsManager = ({
         counts={counts}
       />
 
+      {/* Filtros condicionales */}
+      {filterMode !== 'content_ideas_only' && (
+        <InsightsFilters
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          counts={counts}
+        />
+      )}
+
       {/* Insights List */}
       <div className="space-y-4">
         {filteredInsights.length === 0 ? (
           <div className="text-center py-12 bg-card/30 rounded-lg border-2 border-dashed">
             <Sparkles className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">No hay insights {activeFilter !== 'all' ? `${activeFilter}s` : ''}</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              {filterMode === 'content_ideas_only' 
+                ? 'No hay ideas de contenido activas'
+                : `No hay insights ${activeFilter !== 'all' ? `${activeFilter}s` : ''}`}
+            </h3>
             <p className="text-muted-foreground">
-              {activeFilter === 'active' && "Genera nuevos insights para comenzar"}
-              {activeFilter === 'completed' && "Aún no has completado ningún insight"}
-              {activeFilter === 'dismissed' && "No has descartado ningún insight"}
+              {filterMode === 'content_ideas_only'
+                ? 'Genera nuevas ideas con IA para comenzar a crear contenido'
+                : activeFilter === 'active' ? "Genera nuevos insights para comenzar"
+                : activeFilter === 'completed' ? "Aún no has completado ningún insight"
+                : activeFilter === 'dismissed' ? "No has descartado ningún insight"
+                : "Genera nuevos insights para comenzar"}
             </p>
           </div>
         ) : (

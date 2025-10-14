@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import ContentLibraryTab from "./ContentLibraryTab";
+import { ScheduledPostsManager } from './ScheduledPostsManager';
+import SimpleContentPublisher from './SimpleContentPublisher';
 import UnifiedContentCreator from "./UnifiedContentCreator";
 import InsightsRenderer, { ParsedContentIdea } from "./InsightsRenderer";
 import { InsightsManager } from "./insights/InsightsManager";
@@ -67,7 +69,8 @@ import {
   Search,
   PlusCircle,
   Save,
-  Bookmark
+  Bookmark,
+  Library
 } from 'lucide-react';
 
 interface ContentAnalysisData {
@@ -125,6 +128,9 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const [lastAnalysisDate, setLastAnalysisDate] = useState<string | null>(null);
   const [prepopulatedContent, setPrepopulatedContent] = useState<ParsedContentIdea | null>(null);
   const [newInsightsIds, setNewInsightsIds] = useState<string[]>([]);
+  const [showPublisher, setShowPublisher] = useState(false);
+  const [publisherContent, setPublisherContent] = useState({ title: '', content: '', generatedImage: '' });
+  const [currentInsightId, setCurrentInsightId] = useState<string | undefined>(undefined);
   const { toast } = useToast();
 
   const generateAIInsights = async () => {
@@ -250,6 +256,14 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
     } finally {
       setLoadingInsights(false);
     }
+  };
+
+  const loadInsights = async () => {
+    // Esta función simplemente activa una recarga
+    // El componente InsightsManager maneja su propia carga de datos
+    // Así que simplemente disparamos un pequeño truco para forzar la recarga
+    setLoadingInsights(true);
+    setTimeout(() => setLoadingInsights(false), 100);
   };
 
   useEffect(() => {
@@ -1489,7 +1503,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
 
       {/* Analysis Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="performance" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Rendimiento
@@ -1499,8 +1513,12 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
             Mis Post
           </TabsTrigger>
           <TabsTrigger value="content" className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Creador de Contenido
+            <Sparkles className="h-4 w-4" />
+            Creador
+          </TabsTrigger>
+          <TabsTrigger value="library" className="flex items-center gap-2">
+            <Library className="h-4 w-4" />
+            Biblioteca
           </TabsTrigger>
         </TabsList>
 
@@ -1509,19 +1527,91 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         </TabsContent>
 
         <TabsContent value="posts">
-          {renderPostsAnalysis()}
+          <Tabs defaultValue="all" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="all">Historial</TabsTrigger>
+              <TabsTrigger value="scheduled">Programados</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="all">
+              {renderPostsAnalysis()}
+            </TabsContent>
+            
+            <TabsContent value="scheduled">
+              <ScheduledPostsManager 
+                profile={profile}
+                onPostsUpdated={() => {
+                  // Callback para recargar si es necesario
+                }}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="content">
-          <UnifiedContentCreator
-            profile={profile}
-            topPosts={topPosts}
-            selectedPlatform={selectedPlatform}
-            prepopulatedContent={prepopulatedContent}
-            onContentUsed={() => setPrepopulatedContent(null)}
+          <InsightsManager
+            userId={profile?.user_id || ''}
+            onCreateContent={(insight) => {
+              toast({
+                title: "Preparando contenido",
+                description: "Configurando el publicador con tu insight...",
+              });
+              
+              setPublisherContent({
+                title: insight.title || '',
+                content: insight.strategy || insight.content || '',
+                generatedImage: ''
+              });
+              setCurrentInsightId(insight.id);
+              setShowPublisher(true);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            onGenerateMore={generateAIInsights}
+            isGenerating={loadingInsights}
+            newInsightsIds={newInsightsIds}
+            filterMode="content_ideas_only"
+            showActiveOnly={true}
           />
         </TabsContent>
+        
+        <TabsContent value="library">
+          <ContentLibraryTab profile={profile} />
+        </TabsContent>
       </Tabs>
+      
+      {/* Modal de publicador */}
+      <SimpleContentPublisher
+        isOpen={showPublisher}
+        onClose={() => {
+          setShowPublisher(false);
+          setCurrentInsightId(undefined);
+        }}
+        content={publisherContent}
+        profile={profile}
+        contentIdeaId={currentInsightId}
+        source="insight"
+        onSuccess={async () => {
+          setShowPublisher(false);
+          toast({ 
+            title: "¡Contenido publicado!", 
+            description: "Tu contenido ha sido publicado exitosamente",
+            duration: 5000 
+          });
+          
+          // Marcar insight como completado automáticamente
+          if (currentInsightId) {
+            await supabase
+              .from('content_insights')
+              .update({ status: 'completed', completed_at: new Date().toISOString() })
+              .eq('id', currentInsightId);
+          }
+          
+          setCurrentInsightId(undefined);
+          
+          // Recargar insights
+          loadInsights();
+        }}
+      />
     </div>
   );
 };

@@ -26,6 +26,7 @@ interface InsightCardProps {
   onDismiss: (id: string) => void;
   onRestore: (id: string) => void;
   onCreateContent?: (insight: any) => void;
+  hideRestoreButton?: boolean;
 }
 
 // Mapeo de formatos a términos claros en español
@@ -51,7 +52,8 @@ export const InsightCard = ({
   onComplete,
   onDismiss,
   onRestore,
-  onCreateContent
+  onCreateContent,
+  hideRestoreButton = false
 }: InsightCardProps) => {
   const isAudience = insight.insight_type === 'audience';
   const isActive = insight.status === 'active';
@@ -174,7 +176,7 @@ export const InsightCard = ({
             </Button>
           </>
         )}
-        {(isCompleted || isDismissed) && (
+        {(isCompleted || isDismissed) && !hideRestoreButton && (
           <Button
             size="sm"
             variant="outline"

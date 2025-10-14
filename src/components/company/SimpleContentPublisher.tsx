@@ -63,6 +63,8 @@ export default function SimpleContentPublisher({
   const [showImageSelector, setShowImageSelector] = useState(false);
   const [selectedContentImage, setSelectedContentImage] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [needsGeneration, setNeedsGeneration] = useState(false);
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false);
 
   // Fetch social accounts when dialog opens
   useEffect(() => {
@@ -71,10 +73,12 @@ export default function SimpleContentPublisher({
     }
   }, [isOpen, profile.user_id]);
 
-  // Update editing content when prop changes
+  // Update editing content when prop changes and detect if needs generation
   useEffect(() => {
     setEditingContent(content.content);
-  }, [content.content]);
+    // Detectar si necesita generación de contenido
+    setNeedsGeneration(!!contentIdeaId && source === 'insight');
+  }, [content.content, contentIdeaId, source]);
 
   const fetchSocialAccounts = async () => {
     try {
@@ -190,6 +194,50 @@ export default function SimpleContentPublisher({
       title: "Contenido actualizado",
       description: "Los cambios han sido guardados"
     });
+  };
+
+  const handleGenerateContentFromInsight = async () => {
+    if (!profile.user_id) return;
+    
+    setIsGeneratingContent(true);
+    
+    try {
+      toast({
+        title: "Generando contenido",
+        description: "La IA está creando tu publicación...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('generate-company-content', {
+        body: {
+          user_id: profile.user_id,
+          prompt: `Basándote en esta estrategia de contenido: "${content.content}", 
+                   genera una publicación atractiva y profesional para redes sociales. 
+                   Incluye un gancho inicial, desarrollo del mensaje y call-to-action.`,
+          content_type: 'social_post',
+          tone: 'professional'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.content) {
+        setEditingContent(data.content);
+        setNeedsGeneration(false);
+        toast({
+          title: "¡Contenido generado!",
+          description: "Revisa y edita el contenido antes de publicar",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating content:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo generar el contenido",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingContent(false);
+    }
   };
 
   const handleGenerateImage = async () => {
@@ -460,97 +508,140 @@ export default function SimpleContentPublisher({
           {/* Content Preview and Edit */}
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-3">
-                <Label className="text-sm font-medium">Contenido</Label>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
-                  {isEditing ? <Save className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
-                  {isEditing ? 'Guardar' : 'Editar'}
-                </Button>
-              </div>
-              
-              {isEditing ? (
-                <div className="space-y-3">
-                  <Textarea
-                    value={editingContent}
-                    onChange={(e) => setEditingContent(e.target.value)}
-                    className="min-h-[120px]"
-                    placeholder="Edita tu contenido..."
-                  />
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={saveEditedContent}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Guardar
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={handleGenerateImage}
-                      disabled={isGeneratingImage}
-                    >
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      {isGeneratingImage ? "Generando..." : "Generar con IA"}
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => {
-                      setEditingContent(content.content);
-                      setIsEditing(false);
-                    }}>
-                      <X className="h-4 w-4 mr-2" />
-                      Cancelar
-                    </Button>
+              {needsGeneration ? (
+                // Modo: Generar contenido desde insight
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-start gap-3">
+                      <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm mb-2">Estrategia del Insight</h4>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                          {content.content}
+                        </p>
+                      </div>
+                    </div>
                   </div>
+
+                  <Button 
+                    onClick={handleGenerateContentFromInsight}
+                    disabled={isGeneratingContent}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isGeneratingContent ? (
+                      <>
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Generando contenido...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-5 w-5 mr-2" />
+                        Generar Contenido con IA
+                      </>
+                    )}
+                  </Button>
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    La IA creará una publicación profesional basada en esta estrategia
+                  </p>
                 </div>
               ) : (
-                <div className="p-4 bg-gray-50 rounded-lg whitespace-pre-wrap text-sm">
-                  {editingContent}
-                </div>
-              )}
+                // Modo: Editar contenido generado
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-sm font-medium">Contenido</Label>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setIsEditing(!isEditing)}
+                    >
+                      {isEditing ? <Save className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
+                      {isEditing ? 'Guardar' : 'Editar'}
+                    </Button>
+                  </div>
+                  
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <Textarea
+                        value={editingContent}
+                        onChange={(e) => setEditingContent(e.target.value)}
+                        className="min-h-[120px]"
+                        placeholder="Edita tu contenido..."
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={saveEditedContent}>
+                          <Save className="h-4 w-4 mr-2" />
+                          Guardar
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={handleGenerateImage}
+                          disabled={isGeneratingImage}
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          {isGeneratingImage ? "Generando..." : "Generar Imagen"}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => {
+                          setEditingContent(content.content);
+                          setIsEditing(false);
+                        }}>
+                          <X className="h-4 w-4 mr-2" />
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-foreground whitespace-pre-wrap p-3 bg-muted rounded-md">
+                      {editingContent || content.content}
+                    </p>
+                  )}
 
-              {/* Image Section */}
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-sm font-medium">Imagen</Label>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => setShowImageSelector(true)}
-                    className="text-xs"
-                  >
-                    <Image className="h-3 w-3 mr-1" />
-                    Seleccionar de biblioteca
-                  </Button>
-                </div>
-                
-                {(selectedContentImage || content.generatedImage) && (
-                  <div className="relative">
-                    <img 
-                      src={selectedContentImage || content.generatedImage} 
-                      alt="Content image" 
-                      className="max-w-full h-auto rounded-lg border max-h-48 object-cover"
-                    />
-                    {selectedContentImage && (
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="absolute top-2 right-2 p-1 h-6 w-6"
-                        onClick={() => setSelectedContentImage('')}
+                  {/* Image Section */}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-sm font-medium">Imagen</Label>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => setShowImageSelector(true)}
+                        className="text-xs"
                       >
-                        <X className="h-3 w-3" />
+                        <Image className="h-3 w-3 mr-1" />
+                        Seleccionar de biblioteca
                       </Button>
+                    </div>
+                    
+                    {(selectedContentImage || content.generatedImage) && (
+                      <div className="relative">
+                        <img 
+                          src={selectedContentImage || content.generatedImage} 
+                          alt="Content image" 
+                          className="max-w-full h-auto rounded-lg border max-h-48 object-cover"
+                        />
+                        {selectedContentImage && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="absolute top-2 right-2 p-1 h-6 w-6"
+                            onClick={() => setSelectedContentImage('')}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    
+                    {!selectedContentImage && !content.generatedImage && (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <Image className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-sm text-gray-500">No hay imagen seleccionada</p>
+                      </div>
                     )}
                   </div>
-                )}
-                
-                {!selectedContentImage && !content.generatedImage && (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Image className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-500">No hay imagen seleccionada</p>
-                  </div>
-                )}
-              </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -665,17 +756,27 @@ export default function SimpleContentPublisher({
             </Button>
             <Button 
               onClick={handlePublish}
-              disabled={loading || selectedPlatforms.length === 0}
+              disabled={loading || selectedPlatforms.length === 0 || needsGeneration}
               className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
             >
               {loading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Publicando...
+                </>
+              ) : needsGeneration ? (
+                'Genera contenido primero'
               ) : publishMode === 'immediate' ? (
-                <Upload className="h-4 w-4 mr-2" />
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Publicar Ahora
+                </>
               ) : (
-                <Clock className="h-4 w-4 mr-2" />
+                <>
+                  <Clock className="h-4 w-4 mr-2" />
+                  Programar
+                </>
               )}
-              {loading ? 'Procesando...' : publishMode === 'immediate' ? 'Publicar Ahora' : 'Programar'}
             </Button>
           </div>
         </div>

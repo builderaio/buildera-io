@@ -166,17 +166,23 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
 
       console.log('📤 Sending strategy input:', strategyInput);
 
-      // Llamar función Edge principal (sin proxy)
-      const { data, error } = await supabase.functions.invoke('marketing-hub-marketing-strategy', {
+      // Crear promesa de invocación con timeout de 4 minutos
+      const invokePromise = supabase.functions.invoke('marketing-hub-marketing-strategy', {
         body: { input: strategyInput }
       });
+
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: La generación de estrategia está tomando más tiempo del esperado (>4 minutos)')), 240000)
+      );
+
+      // Ejecutar con race para timeout
+      const result = await Promise.race([invokePromise, timeoutPromise]) as any;
+      const { data, error } = result;
 
       if (error) {
         console.error('❌ Edge function error:', error);
         throw new Error(error.message || 'Error al contactar el generador');
       }
-
-      console.log('📥 Raw strategy data received:', data);
       
       // Procesar la respuesta de N8N correctamente
       let processedStrategy = data as any;

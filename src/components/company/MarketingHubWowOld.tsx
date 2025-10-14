@@ -712,24 +712,32 @@ const MarketingHubWow = ({
     const N8N_AUTH_PASS = 'BuilderaFlow2024!';
     const credentials = btoa(`${N8N_AUTH_USER}:${N8N_AUTH_PASS}`);
     console.log(`🔄 Calling marketing function: ${functionName}`, data);
+    
     try {
-      const {
-        data: result,
-        error
-      } = await supabase.functions.invoke(functionName, {
-        body: {
-          input: data
-        },
+      // Crear promesa de invocación
+      const invokePromise = supabase.functions.invoke(functionName, {
+        body: { input: data },
         headers: {
           'Authorization': `Basic ${credentials}`
         }
       });
+
+      // Timeout de 4 minutos para marketing-hub-marketing-strategy, 2 minutos para otras
+      const timeoutDuration = functionName === 'marketing-hub-marketing-strategy' ? 240000 : 120000;
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(`Timeout: ${functionName} excedió el tiempo límite`)), timeoutDuration)
+      );
+
+      // Ejecutar con race para timeout
+      const result = await Promise.race([invokePromise, timeoutPromise]) as any;
+      const { data: resultData, error } = result;
+      
       if (error) {
         console.error(`❌ Error in ${functionName}:`, error);
         throw error;
       }
-      console.log(`✅ Success in ${functionName}:`, result);
-      return result;
+      console.log(`✅ Success in ${functionName}:`, resultData);
+      return resultData;
     } catch (error) {
       console.error(`🚨 Fatal error in ${functionName}:`, error);
       throw error;

@@ -108,6 +108,12 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // Skip LinkedIn - the retrospective API only supports Instagram and TikTok
+        if (analysis.social_type === 'LI' || cid.toString().startsWith('108477120')) {
+          console.log(`⚠️ LinkedIn CID ${cid} skipped - retrospective API only supports Instagram/TikTok`);
+          continue;
+        }
+
         console.log(`📈 Analyzing retrospective statistics for CID: ${cid}`);
 
         // Call RapidAPI Instagram Statistics API - Retrospective endpoint

@@ -16,10 +16,10 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { userId, companyId, socialStats } = await req.json();
+    const { userId, companyId } = await req.json();
 
-    if (!userId || !companyId || !socialStats) {
-      throw new Error('Missing required parameters: userId, companyId, or socialStats');
+    if (!userId || !companyId) {
+      throw new Error('Missing required parameters: userId or companyId');
     }
 
     console.log('🎯 Starting audience intelligence analysis for user:', userId);
@@ -31,11 +31,11 @@ serve(async (req) => {
       .eq('id', companyId)
       .maybeSingle();
 
-    // 2. Obtener audiencias definidas
-    const { data: audiences } = await supabase
-      .from('company_audiences')
+    // 2. Obtener análisis de redes sociales
+    const { data: socialAnalysis } = await supabase
+      .from('social_analysis')
       .select('*')
-      .eq('company_id', companyId);
+      .eq('user_id', userId);
 
     // 3. Obtener estrategia de la empresa
     const { data: strategy } = await supabase
@@ -51,34 +51,25 @@ serve(async (req) => {
         descripcion: company?.description,
         industria: company?.industry_sector,
         pais: company?.country,
-        valores: company?.values,
-        mercado_objetivo: company?.target_market,
+        tamaño: company?.company_size,
+        sitio_web: company?.website_url,
       },
-      audiencias_definidas: audiences?.map(a => ({
-        nombre: a.name,
-        descripcion: a.description,
-        demografia: {
-          genero: a.gender_split,
-          edades: a.age_ranges,
-          ubicaciones: a.geographic_locations,
-        },
-        psicografia: {
-          intereses: a.interests,
-          motivaciones: a.motivations,
-          desafios: a.challenges,
-          objetivos: a.goals,
-        },
-        comportamiento: {
-          canales_preferidos: a.preferred_channels,
-          titulos_trabajo: a.job_titles,
-        },
-      })) || [],
       estrategia: strategy ? {
         propuesta_valor: strategy.value_proposition,
         mensajes_clave: strategy.key_messages,
         ventajas_competitivas: strategy.competitive_advantages,
+        objetivos: strategy.objectives,
+        vision: strategy.vision,
+        mision: strategy.mission,
       } : null,
-      datos_sociales: socialStats,
+      redes_sociales: socialAnalysis?.map(sa => ({
+        plataforma: sa.social_type,
+        seguidores: sa.users_count || sa.followers_count || 0,
+        nombre_cuenta: sa.name,
+        verificada: sa.verified,
+        datos_demograficos: sa.platform_data,
+        datos_brutos: sa.raw_data,
+      })) || [],
     };
 
     console.log('📊 Calling AI for audience intelligence analysis...');
@@ -88,8 +79,18 @@ serve(async (req) => {
       body: {
         functionName: 'audience_intelligence_analysis',
         messages: [{
+          role: 'system',
+          content: `Eres un analista experto de audiencias digitales y estrategia de marketing. Analiza los datos de redes sociales de la empresa junto con su información estratégica.
+
+INSTRUCCIONES ESPECÍFICAS:
+1. Genera entre 5 y 7 INSIGHTS CLAVE sobre la audiencia actual de la empresa basándote en los datos de sus redes sociales.
+2. Proporciona entre 6 y 8 RECOMENDACIONES ESTRATÉGICAS accionables para mejorar el alcance y engagement.
+3. Elabora un ANÁLISIS DETALLADO que incluya fortalezas, debilidades, oportunidades, amenazas y tendencias emergentes.
+
+Enfócate en insights prácticos y recomendaciones específicas basadas en los datos reales de las redes sociales analizadas.`
+        }, {
           role: 'user',
-          content: `Analiza esta audiencia de redes sociales y genera insights profundos.\n\nDATOS DE ENTRADA:\n${JSON.stringify(analysisInput, null, 2)}\n\nDevuelve la respuesta usando la herramienta audience_insights.`
+          content: `Analiza los datos de redes sociales y genera insights estratégicos.\n\nDATOS DE ENTRADA:\n${JSON.stringify(analysisInput, null, 2)}\n\nDevuelve la respuesta usando la herramienta audience_insights.`
         }],
         tools: [
           {
@@ -100,85 +101,75 @@ serve(async (req) => {
               parameters: {
                 type: 'object',
                 properties: {
-                  audience_segments: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        nombre: { type: 'string' },
-                        porcentaje: { type: 'number' },
-                        descripcion: { type: 'string' },
-                        demografia: {
-                          type: 'object',
-                          properties: {
-                            edad_promedio: { type: 'string' },
-                            genero_predominante: { type: 'string' },
-                            ubicacion_principal: { type: 'string' }
-                          }
-                        },
-                        psicografia: {
-                          type: 'object',
-                          properties: {
-                            intereses_clave: { type: 'array', items: { type: 'string' } },
-                            valores: { type: 'array', items: { type: 'string' } },
-                            estilo_vida: { type: 'string' }
-                          }
-                        },
-                        comportamiento_social: {
-                          type: 'object',
-                          properties: {
-                            plataformas_activas: { type: 'array', items: { type: 'string' } },
-                            horarios_pico: { type: 'array', items: { type: 'string' } },
-                            tipo_contenido_preferido: { type: 'array', items: { type: 'string' } }
-                          }
-                        },
-                        potencial_conversion: { type: 'number' },
-                        canales_preferidos: { type: 'array', items: { type: 'string' } }
-                      },
-                      required: ['nombre', 'porcentaje']
-                    }
-                  },
                   key_insights: {
                     type: 'array',
+                    description: 'Entre 5 y 7 insights clave sobre la audiencia',
+                    minItems: 5,
+                    maxItems: 7,
                     items: {
                       type: 'object',
                       properties: {
-                        categoria: { type: 'string' },
-                        insight: { type: 'string' },
-                        evidencia: { type: 'string' },
-                        implicacion: { type: 'string' }
+                        categoria: { type: 'string', description: 'Categoría del insight (ej: Demográfico, Comportamental, etc.)' },
+                        insight: { type: 'string', description: 'El insight principal' },
+                        evidencia: { type: 'string', description: 'Datos que respaldan este insight' },
+                        implicacion: { type: 'string', description: 'Qué significa esto para la estrategia' }
                       },
-                      required: ['insight']
+                      required: ['categoria', 'insight', 'evidencia', 'implicacion']
                     }
                   },
                   recommendations: {
                     type: 'array',
+                    description: 'Entre 6 y 8 recomendaciones estratégicas accionables',
+                    minItems: 6,
+                    maxItems: 8,
                     items: {
                       type: 'object',
                       properties: {
-                        tipo: { type: 'string' },
-                        prioridad: { type: 'string' },
-                        titulo: { type: 'string' },
-                        descripcion: { type: 'string' },
-                        accion_especifica: { type: 'string' },
-                        segmento_objetivo: { type: 'string' },
-                        impacto_esperado: { type: 'string' },
-                        metricas_seguimiento: { type: 'array', items: { type: 'string' } }
-                      }
+                        tipo: { type: 'string', description: 'Tipo de recomendación (Contenido, Segmentación, Timing, etc.)' },
+                        prioridad: { type: 'string', enum: ['Alta', 'Media', 'Baja'] },
+                        titulo: { type: 'string', description: 'Título de la recomendación' },
+                        descripcion: { type: 'string', description: 'Descripción detallada' },
+                        accion_especifica: { type: 'string', description: 'Acción concreta a tomar' },
+                        impacto_esperado: { type: 'string', description: 'Impacto esperado de implementar esta recomendación' },
+                        metricas_seguimiento: { type: 'array', items: { type: 'string' }, description: 'Métricas para medir el éxito' }
+                      },
+                      required: ['tipo', 'prioridad', 'titulo', 'descripcion', 'accion_especifica']
                     }
                   },
                   detailed_analysis: {
                     type: 'object',
+                    description: 'Análisis FODA detallado y tendencias',
                     properties: {
-                      fortalezas: { type: 'array', items: { type: 'string' } },
-                      debilidades: { type: 'array', items: { type: 'string' } },
-                      oportunidades: { type: 'array', items: { type: 'string' } },
-                      amenazas: { type: 'array', items: { type: 'string' } },
-                      tendencias_emergentes: { type: 'array', items: { type: 'string' } }
-                    }
+                      fortalezas: { 
+                        type: 'array', 
+                        items: { type: 'string' },
+                        description: 'Fortalezas identificadas en la presencia digital'
+                      },
+                      debilidades: { 
+                        type: 'array', 
+                        items: { type: 'string' },
+                        description: 'Áreas de mejora en la presencia digital'
+                      },
+                      oportunidades: { 
+                        type: 'array', 
+                        items: { type: 'string' },
+                        description: 'Oportunidades de crecimiento identificadas'
+                      },
+                      amenazas: { 
+                        type: 'array', 
+                        items: { type: 'string' },
+                        description: 'Amenazas o riesgos potenciales'
+                      },
+                      tendencias_emergentes: { 
+                        type: 'array', 
+                        items: { type: 'string' },
+                        description: 'Tendencias emergentes relevantes para la audiencia'
+                      }
+                    },
+                    required: ['fortalezas', 'debilidades', 'oportunidades', 'amenazas']
                   }
                 },
-                required: ['audience_segments', 'key_insights', 'recommendations', 'detailed_analysis']
+                required: ['key_insights', 'recommendations', 'detailed_analysis']
               }
             }
           }
@@ -247,17 +238,18 @@ serve(async (req) => {
           // Si no es JSON estructurado, construir objeto de fallback con el texto
           console.log('⚠️ Response is plain text, creating fallback structure');
           parsedInsights = {
-            audience_segments: [{
-              nombre: 'Audiencia General',
-              porcentaje: 100,
-              descripcion: contentStr.slice(0, 500)
-            }],
             key_insights: [{
-              insight: contentStr.slice(0, 1000)
+              categoria: 'General',
+              insight: contentStr.slice(0, 500),
+              evidencia: 'Análisis basado en datos de redes sociales',
+              implicacion: 'Revisar análisis completo'
             }],
             recommendations: [{
+              tipo: 'Estrategia General',
+              prioridad: 'Media',
               titulo: 'Análisis disponible',
-              descripcion: 'El análisis completo está disponible en el texto generado'
+              descripcion: 'El análisis completo está disponible en el texto generado',
+              accion_especifica: 'Revisar recomendaciones detalladas'
             }],
             detailed_analysis: {
               fortalezas: ['Análisis generado por IA'],
@@ -272,16 +264,17 @@ serve(async (req) => {
       }
 
       // Validar estructura mínima
-      if (!parsedInsights.audience_segments || !Array.isArray(parsedInsights.audience_segments)) {
-        console.warn('⚠️ Missing audience_segments, adding default');
-        parsedInsights.audience_segments = [{
-          nombre: 'Audiencia Principal',
-          porcentaje: 100,
-          descripcion: 'Audiencia base analizada'
+      if (!parsedInsights.key_insights || !Array.isArray(parsedInsights.key_insights)) {
+        console.warn('⚠️ Missing key_insights, adding default');
+        parsedInsights.key_insights = [{
+          categoria: 'General',
+          insight: 'Análisis generado',
+          evidencia: 'Basado en datos disponibles',
+          implicacion: 'Requiere análisis más profundo'
         }];
       }
 
-      console.log('✅ Successfully parsed insights with', parsedInsights.audience_segments?.length, 'segments');
+      console.log('✅ Successfully parsed insights with', parsedInsights.key_insights?.length, 'key insights');
 
     } catch (parseError) {
       console.error('❌ Error parsing AI response:', parseError);
@@ -297,6 +290,9 @@ serve(async (req) => {
     }
 
     // 6. Guardar insights en la base de datos
+    const totalFollowers = socialAnalysis?.reduce((sum: number, sa: any) => 
+      sum + (sa.users_count || sa.followers_count || 0), 0) || 0;
+
     const { data: savedInsight, error: saveError } = await supabase
       .from('audience_insights')
       .upsert({
@@ -305,16 +301,15 @@ serve(async (req) => {
         insight_type: 'ai_generated',
         ai_generated_insights: parsedInsights.detailed_analysis,
         ai_recommendations: parsedInsights.recommendations,
-        audience_segments: parsedInsights.audience_segments,
         raw_insights: {
           key_insights: parsedInsights.key_insights,
           analysis_timestamp: new Date().toISOString(),
+          company_info: analysisInput.empresa,
+          strategy_info: analysisInput.estrategia,
         },
         last_ai_analysis_at: new Date().toISOString(),
         confidence_level: 85,
-          sample_size: Array.isArray(socialStats)
-            ? socialStats.reduce((sum: number, stat: any) => sum + (stat.followers || stat.users_count || 0), 0)
-            : Object.values(socialStats).reduce((sum: number, stat: any) => sum + (stat.followers || stat.users_count || 0), 0),
+        sample_size: totalFollowers,
       }, {
         onConflict: 'user_id,platform,insight_type'
       })

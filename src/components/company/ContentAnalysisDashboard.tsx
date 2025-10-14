@@ -886,9 +886,21 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
           <CardContent>
             <InsightsManager
               userId={profile?.user_id || ''}
-              onCreateContent={(contentData) => {
-                setPrepopulatedContent(contentData);
-                setActiveTab('content');
+              onCreateContent={(insight) => {
+                // Misma lógica que en el tab Creador
+                toast({
+                  title: "Preparando contenido",
+                  description: "Usa 'Generar contenido con IA' en el modal para crear tu publicación",
+                });
+                
+                setPublisherContent({
+                  title: insight.title || '',
+                  content: insight.strategy || insight.content || '',
+                  generatedImage: ''
+                });
+                setCurrentInsightId(insight.id);
+                setShowPublisher(true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onGenerateMore={generateAIInsights}
               isGenerating={loadingInsights}

@@ -27,6 +27,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
   const [selectedFormat, setSelectedFormat] = useState('post');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const [showPublisher, setShowPublisher] = useState(false);
   const [publisherContent, setPublisherContent] = useState({ title: '', content: '', generatedImage: '' });
   const [currentInsightId, setCurrentInsightId] = useState<string>();
@@ -167,6 +168,46 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     setShowPublisher(true);
   };
 
+  const handleOptimizeWithEra = async () => {
+    if (!manualContent.trim()) {
+      toast({
+        title: "Error",
+        description: "Escribe algo primero para optimizar",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsOptimizing(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('era-content-optimizer', {
+        body: { 
+          content: manualContent,
+          platform: selectedPlatform,
+          userId: profile.user_id
+        }
+      });
+
+      if (error) throw error;
+      
+      setManualContent(data?.optimizedContent || manualContent);
+      toast({
+        title: "¡Contenido optimizado!",
+        description: "Tu contenido ha sido mejorado por Era"
+      });
+    } catch (error) {
+      console.error('Error optimizing:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo optimizar el contenido",
+        variant: "destructive"
+      });
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
   const handleCreateContentFromIdea = (idea: any) => {
     // Enviar la información de la idea como estrategia del insight
     // para que el usuario la genere desde el modal con el botón "Generar contenido con IA"
@@ -232,34 +273,6 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 rounded-lg p-6 border border-primary/20">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-primary" />
-              Creador de Contenido
-            </h2>
-            <p className="text-muted-foreground">
-              Crea contenido increíble con IA o manualmente
-            </p>
-          </div>
-          <Button 
-            onClick={handleGenerateIdeas} 
-            disabled={isGeneratingIdeas}
-            size="lg"
-            className="gap-2"
-          >
-            {isGeneratingIdeas ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Wand2 className="w-4 h-4" />
-            )}
-            Generar Ideas con IA
-          </Button>
-        </div>
-      </div>
-
       {/* Quick Creation Section */}
       <Card>
         <CardHeader>
@@ -348,6 +361,25 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
               />
 
               <Button 
+                variant="outline" 
+                onClick={handleOptimizeWithEra} 
+                disabled={isOptimizing || !manualContent.trim()}
+                className="w-full"
+              >
+                {isOptimizing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Optimizando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Optimizar con Era
+                  </>
+                )}
+              </Button>
+
+              <Button 
                 onClick={handleCreateManual}
                 disabled={!manualContent.trim()}
                 className="w-full"
@@ -370,14 +402,29 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
               <Badge variant="secondary">{contentIdeas.length} activas</Badge>
             )}
           </h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={loadContentIdeas}
-            disabled={loading}
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={loadContentIdeas}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button 
+              onClick={handleGenerateIdeas} 
+              disabled={isGeneratingIdeas}
+              size="sm"
+              className="gap-2"
+            >
+              {isGeneratingIdeas ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Wand2 className="w-4 h-4" />
+              )}
+              Generar Ideas
+            </Button>
+          </div>
         </div>
 
         {loading ? (

@@ -310,13 +310,6 @@ export const InsightsManager = ({
         </div>
       </div>
 
-      {/* Filters */}
-      <InsightsFilters
-        activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
-        counts={counts}
-      />
-
       {/* Filtros condicionales */}
       {filterMode !== 'content_ideas_only' && (
         <InsightsFilters

@@ -415,43 +415,39 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
   const renderPerformanceOverview = () => {
     const filteredData = getFilteredData();
     
-    // Si no hay datos de retrospective, calcular desde posts directamente
-    let overviewMetrics = filteredData.retrospective.map(item => ({
-      platform: item.platform,
-      followers: item.current_followers || 0,
-      growth: item.followers_growth || 0,
-      engagement: item.average_er || 0,
-      posts: item.total_posts || 0,
-      quality: item.quality_score || 0
-    }));
+    // Combinar datos de retrospective con posts reales para tener todos los datos
+    // Agrupar posts por plataforma
+    const platformGroups = posts.reduce((acc: any, post) => {
+      const platform = post.platform || 'unknown';
+      if (!acc[platform]) {
+        acc[platform] = [];
+      }
+      acc[platform].push(post);
+      return acc;
+    }, {});
 
-    // Si no hay datos retrospectivos, usar posts como fuente
-    if (overviewMetrics.length === 0 && posts.length > 0) {
-      const platformGroups = posts.reduce((acc: any, post) => {
-        const platform = post.platform || 'unknown';
-        if (!acc[platform]) {
-          acc[platform] = [];
-        }
-        acc[platform].push(post);
-        return acc;
-      }, {});
+    // Crear métricas combinando retrospective (cuando existe) con datos reales de posts
+    const overviewMetrics = Object.entries(platformGroups).map(([platform, platformPosts]: [string, any]) => {
+      // Buscar datos retrospectivos para esta plataforma
+      const retroData = filteredData.retrospective.find(item => item.platform === platform);
+      
+      const totalLikes = platformPosts.reduce((sum: number, p: any) => sum + (p.likes || 0), 0);
+      const totalComments = platformPosts.reduce((sum: number, p: any) => sum + (p.comments || 0), 0);
+      const totalEngagement = totalLikes + totalComments;
+      const avgEngagement = platformPosts.length > 0 ? totalEngagement / platformPosts.length / 100 : 0;
 
-      overviewMetrics = Object.entries(platformGroups).map(([platform, platformPosts]: [string, any]) => {
-        const totalLikes = platformPosts.reduce((sum: number, p: any) => sum + (p.likes || 0), 0);
-        const totalComments = platformPosts.reduce((sum: number, p: any) => sum + (p.comments || 0), 0);
-        const totalEngagement = totalLikes + totalComments;
-        const avgEngagement = platformPosts.length > 0 ? totalEngagement / platformPosts.length / 100 : 0; // Estimado
-
-        return {
-          platform,
-          followers: 0, // No disponible desde posts
-          growth: 0, // No disponible desde posts
-          engagement: avgEngagement,
-          posts: platformPosts.length,
-          quality: avgEngagement // Usar engagement como proxy de calidad
-        };
-      });
-    }
+      return {
+        platform,
+        // Usar followers de retrospective si existe, sino 0
+        followers: retroData?.current_followers || 0,
+        growth: retroData?.followers_growth || 0,
+        // Usar engagement real calculado o de retrospective
+        engagement: retroData?.average_er || avgEngagement,
+        // Usar conteo real de posts
+        posts: platformPosts.length,
+        quality: retroData?.quality_score || avgEngagement
+      };
+    });
 
     const totalMetrics = overviewMetrics.reduce((acc, curr) => ({
       followers: acc.followers + curr.followers,

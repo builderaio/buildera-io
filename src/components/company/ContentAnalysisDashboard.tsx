@@ -170,42 +170,61 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       });
 
       if (error) {
-        console.error('Error generating insights:', error);
+        console.error('❌ Error generating insights:', error);
         throw error;
       }
 
+      console.log('📦 Response data:', data);
+
       if (data) {
         // Check for structured output first
-        if (data.audience_insights && data.content_ideas) {
-          setAiAudienceInsights(data.audience_insights.map((ai: any) => ({ 
+        if (data.audience_insights && Array.isArray(data.audience_insights) && data.audience_insights.length > 0 &&
+            data.content_ideas && Array.isArray(data.content_ideas) && data.content_ideas.length > 0) {
+          
+          const mappedAudience = data.audience_insights.map((ai: any) => ({ 
             title: ai.title, 
             content: ai.strategy 
-          })));
-          setAiContentIdeas(data.content_ideas.map((ci: any) => ({
+          }));
+          
+          const mappedContent = data.content_ideas.map((ci: any) => ({
             title: ci.title,
             format: ci.format,
             platform: ci.platform,
             hashtags: ci.hashtags || [],
             timing: ci.timing || '',
             strategy: ci.strategy
-          })));
+          }));
+          
+          setAiAudienceInsights(mappedAudience);
+          setAiContentIdeas(mappedContent);
           setAiInsights(''); // Clear text fallback
-          console.log('✅ Structured insights loaded');
+          
+          console.log('✅ Structured insights loaded:', {
+            audienceCount: mappedAudience.length,
+            contentCount: mappedContent.length
+          });
+          
+          toast({
+            title: "Insights generados",
+            description: `${mappedAudience.length} insights de audiencia y ${mappedContent.length} ideas de contenido generadas`,
+          });
         } else if (data.insights_text || data.insights) {
           // Fallback to text
           setAiInsights(data.insights_text || data.insights);
           setAiAudienceInsights([]);
           setAiContentIdeas([]);
           console.log('⚠️ Using text fallback for insights');
+          
+          toast({
+            title: "Insights generados",
+            description: "Se han generado nuevos insights inteligentes sobre tu contenido",
+          });
         } else {
-          throw new Error('No se recibieron insights de la IA');
+          console.error('❌ Invalid data structure:', data);
+          throw new Error('No se recibieron insights válidos de la IA');
         }
-        
-        toast({
-          title: "Insights generados",
-          description: "Se han generado nuevos insights inteligentes sobre tu contenido",
-        });
       } else {
+        console.error('❌ No data received from edge function');
         throw new Error('No se recibieron insights de la IA');
       }
 

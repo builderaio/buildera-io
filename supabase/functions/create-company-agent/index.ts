@@ -73,6 +73,48 @@ serve(async (req) => {
 
     console.log('Creating company agent for:', { user_id, company_id });
 
+    // Step 0: Verificar si ya existe un agente válido
+    console.log('Step 0: Checking if agent already exists in database...');
+    const { data: existingDbAgent, error: dbCheckError } = await supabase
+      .from('company_agents')
+      .select('agent_id, agent_name')
+      .eq('company_id', company_id)
+      .maybeSingle();
+
+    if (existingDbAgent?.agent_id) {
+      console.log('Agent already exists in database:', existingDbAgent.agent_id);
+      
+      // Verificar que el agente existe y es válido en OpenAI
+      try {
+        const verifyResponse = await fetch(`https://api.openai.com/v1/assistants/${existingDbAgent.agent_id}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'OpenAI-Beta': 'assistants=v2'
+          }
+        });
+
+        if (verifyResponse.ok) {
+          const agentData = await verifyResponse.json();
+          console.log('✅ Agent verified in OpenAI, returning existing agent');
+          return new Response(JSON.stringify({ 
+            success: true,
+            agent: {
+              ...existingDbAgent,
+              openai_data: agentData
+            },
+            message: 'Agent already exists and is functional'
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } else {
+          console.log('⚠️ Agent not found in OpenAI (will recreate), status:', verifyResponse.status);
+        }
+      } catch (verifyError) {
+        console.log('⚠️ Error verifying agent in OpenAI:', verifyError);
+      }
+    }
+
     // Obtener datos completos de la empresa
     console.log('Step 1: Getting company data for company_id:', company_id);
     const companyData = await getCompanyData(company_id);
@@ -345,6 +387,32 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
     if (!response.ok) {
       const errorBody = await response.text().catch(() => '');
       console.error('OpenAI update error:', response.status, response.statusText, errorBody);
+      
+      // Si el error es 404, el agente fue eliminado en OpenAI, crear uno nuevo
+      if (response.status === 404) {
+        console.log('⚠️ Agent not found in OpenAI (404), creating new one...');
+        // Crear nuevo agente
+        const createResponse = await fetch('https://api.openai.com/v1/assistants', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2'
+          },
+          body: JSON.stringify(agentPayload)
+        });
+
+        if (!createResponse.ok) {
+          const createErrorBody = await createResponse.text().catch(() => '');
+          console.error('OpenAI create error after 404:', createResponse.status, createErrorBody);
+          throw new Error(`Error creating OpenAI agent after 404: ${createResponse.status}`);
+        }
+
+        const newAgent = await createResponse.json();
+        console.log('✅ New agent created after 404');
+        return newAgent;
+      }
+      
       throw new Error(`Error updating OpenAI agent: ${response.status} ${response.statusText} ${errorBody}`);
     }
 

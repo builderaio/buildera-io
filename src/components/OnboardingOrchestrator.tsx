@@ -313,6 +313,30 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     setHasError(false);
 
     try {
+      // NUEVO: Verificar si ya existe el agente antes de llamar a la función
+      console.log('🔍 Verificando si el agente ERA ya existe...');
+      const { data: existingAgent } = await supabase
+        .from('company_agents')
+        .select('id, agent_id, agent_name')
+        .eq('company_id', companyIdParam || companyId)
+        .maybeSingle();
+
+      if (existingAgent?.agent_id) {
+        console.log('✅ Agente ERA ya existe:', existingAgent);
+        updateStepStatus(5, false, true);
+        
+        toast({
+          title: "✅ Asistente ERA verificado",
+          description: "Tu copiloto empresarial ya estaba listo"
+        });
+
+        // Complete onboarding
+        setTimeout(() => completeOnboarding(), 1000);
+        return;
+      }
+
+      // Si no existe, proceder con la creación
+      console.log('🤖 Creando nuevo agente ERA...');
       const result = await callOnboardingFunction('create-company-agent', {
         user_id: user.id,
         company_id: companyIdParam || companyId
@@ -329,14 +353,32 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       setTimeout(() => completeOnboarding(), 1000);
       
     } catch (error) {
-      updateStepStatus(5, false);
-      setHasError(true);
-      toast({
-        title: "❌ Error en el paso 5",
-        description: "No pudimos crear tu asistente ERA. Intenta de nuevo.",
-        variant: "destructive"
-      });
-      throw error;
+      // MEJORAR: Verificar si el error es porque ya existe
+      const errorMessage = (error as Error).message;
+      console.error('❌ Error en paso 5:', errorMessage);
+      
+      if (errorMessage.includes('already exists') || 
+          errorMessage.includes('Agent already exists') ||
+          errorMessage.includes('duplicate key')) {
+        console.log('⚠️ Agente ya existe (error capturado), marcando como completado');
+        updateStepStatus(5, false, true);
+        
+        toast({
+          title: "✅ Asistente ERA verificado",
+          description: "Tu copiloto ya estaba creado, continuando..."
+        });
+
+        setTimeout(() => completeOnboarding(), 1000);
+      } else {
+        updateStepStatus(5, false);
+        setHasError(true);
+        toast({
+          title: "❌ Error en el paso 5",
+          description: "No pudimos crear tu asistente ERA. Intenta de nuevo.",
+          variant: "destructive"
+        });
+        throw error;
+      }
     }
   };
 

@@ -55,25 +55,36 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const isLoadingRef = useRef(false);
 
   useEffect(() => {
-    console.log('🔍 ADNEmpresa useEffect triggered with profile:', profile);
+    console.log('🔍 ADNEmpresa useEffect triggered', { 
+      hasProfile: !!profile, 
+      userId: profile?.user_id,
+      loadedUserId: loadedUserIdRef.current,
+      isLoading: isLoadingRef.current 
+    });
     
-    // Evitar múltiples cargas para el mismo usuario
+    // Esperar a que profile esté disponible
     if (!profile?.user_id) {
-      console.log('❌ No user_id in profile:', profile);
+      console.log('⏸️ Waiting for profile with user_id...');
       setLoading(false);
       return;
     }
     
-    // Si ya estamos cargando o ya cargamos este usuario, no hacer nada
-    if (isLoadingRef.current || loadedUserIdRef.current === profile.user_id) {
-      console.log('⏭️ Skipping load - already loaded or loading for user:', profile.user_id);
+    // Si ya estamos cargando este usuario, no hacer nada
+    if (isLoadingRef.current && loadedUserIdRef.current === profile.user_id) {
+      console.log('⏭️ Already loading for this user:', profile.user_id);
       return;
     }
     
-    console.log('✅ profile.user_id found:', profile.user_id);
+    // Si ya cargamos para este usuario y tenemos datos, no recargar
+    if (loadedUserIdRef.current === profile.user_id && companyData) {
+      console.log('✅ Data already loaded for user:', profile.user_id);
+      return;
+    }
+    
+    console.log('🚀 Starting data load for user:', profile.user_id);
     loadedUserIdRef.current = profile.user_id;
     loadOnboardingData();
-  }, [profile?.user_id]);
+  }, [profile?.user_id, companyData]);
 
   const loadOnboardingData = async () => {
     try {
@@ -118,8 +129,10 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       }
       
       if (!primaryCompanyId) {
-        console.log('⚠️ No se encontró empresa para el usuario');
+        console.error('❌ No se encontró empresa para el usuario:', profile.user_id);
         setLoading(false);
+        loadedUserIdRef.current = null; // Permitir reintentos
+        isLoadingRef.current = false;
         toast({
           title: "Aviso",
           description: "No se encontró información de empresa. Completa el onboarding primero.",
@@ -720,6 +733,28 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
           <div className="text-center py-12">
             <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
             <p className="text-muted-foreground">Cargando información empresarial...</p>
+            <p className="text-xs text-muted-foreground/60 mt-2">
+              User ID: {profile?.user_id ? '✓' : '✗'} | 
+              Loading: {isLoadingRef.current ? '✓' : '✗'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // Mostrar mensaje si no hay profile después de cargar
+  if (!profile?.user_id) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center py-12">
+            <Building2 className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+            <p className="text-muted-foreground mb-4">No se pudo cargar el perfil de usuario</p>
+            <Button onClick={() => window.location.reload()}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Recargar página
+            </Button>
           </div>
         </div>
       </div>
@@ -738,7 +773,13 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               variant="outline"
               size="sm"
               onClick={() => {
+                console.log('🔄 Manual reload triggered');
                 loadedUserIdRef.current = null;
+                isLoadingRef.current = false;
+                setCompanyData(null);
+                setStrategyData(null);
+                setBrandingData(null);
+                setObjectives([]);
                 loadOnboardingData();
               }}
               className="gap-2"
@@ -747,6 +788,21 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               Recargar
             </Button>
           </div>
+          
+          {/* Debug info - solo visible en development */}
+          {import.meta.env.DEV && (
+            <div className="text-xs text-left bg-slate-100 dark:bg-slate-900 p-3 rounded max-w-xl mx-auto font-mono">
+              <div className="font-bold mb-1">🐛 Debug Info:</div>
+              <div>Profile User ID: {profile?.user_id || 'null'}</div>
+              <div>Company Data: {companyData ? `✓ (${companyData.name})` : '✗'}</div>
+              <div>Strategy Data: {strategyData ? '✓' : '✗'}</div>
+              <div>Branding Data: {brandingData ? '✓' : '✗'}</div>
+              <div>Objectives: {objectives.length}</div>
+              <div>Loading: {loading ? '✓' : '✗'}</div>
+              <div>Loaded User: {loadedUserIdRef.current || 'null'}</div>
+            </div>
+          )}
+          
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Información de tu empresa. Haz clic en cualquier campo para editarlo.
           </p>

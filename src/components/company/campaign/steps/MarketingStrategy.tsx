@@ -360,9 +360,18 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
         setTimeout(() => reject(new Error('Timeout: La generación de estrategia está tomando más tiempo del esperado (>4 minutos)')), 240000)
       );
 
-      // Ejecutar con race para timeout
-      const result = await Promise.race([invokePromise, timeoutPromise]) as any;
-      const { data, error } = result;
+      // Ejecutar con race para timeout (manejar ambos formatos de respuesta)
+      const resultOrData: any = await Promise.race([invokePromise, timeoutPromise]);
+
+      // Supabase normalmente retorna { data, error }, pero si por alguna razón llega el resultado crudo (array), lo soportamos
+      let data: any;
+      let error: any;
+      if (resultOrData && typeof resultOrData === 'object' && 'data' in resultOrData) {
+        ({ data, error } = resultOrData as { data: any; error: any });
+      } else {
+        data = resultOrData;
+        error = undefined;
+      }
 
       if (error) {
         console.error('❌ Edge function error:', error);

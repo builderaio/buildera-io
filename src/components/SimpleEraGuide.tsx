@@ -85,6 +85,12 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
   // Estado de auto-minimización
   const [autoMinimized, setAutoMinimized] = useState(false);
   
+  // Estado de "snooze" temporal
+  const [isSnoozed, setIsSnoozed] = useState(false);
+  const [snoozeTimeLeft, setSnoozeTimeLeft] = useState(45);
+  const snoozeTimerRef = useRef<NodeJS.Timeout>();
+  const snoozeCountdownRef = useRef<NodeJS.Timeout>();
+  
   const autoSaveIntervalRef = useRef<NodeJS.Timeout>();
   const inactivityTimerRef = useRef<NodeJS.Timeout>();
   const lastInteractionRef = useRef<Date>(new Date());
@@ -674,6 +680,59 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
     }, 5000);
   };
   
+  // Función para activar el "snooze" temporal (45 segundos)
+  const handleSnooze = () => {
+    console.log('😴 [SimpleEraGuide] Activando snooze por 45 segundos');
+    setIsSnoozed(true);
+    setSnoozeTimeLeft(45);
+    
+    // Limpiar timers anteriores si existen
+    if (snoozeTimerRef.current) clearTimeout(snoozeTimerRef.current);
+    if (snoozeCountdownRef.current) clearInterval(snoozeCountdownRef.current);
+    
+    // Countdown de 1 segundo
+    snoozeCountdownRef.current = setInterval(() => {
+      setSnoozeTimeLeft(prev => {
+        if (prev <= 1) {
+          if (snoozeCountdownRef.current) clearInterval(snoozeCountdownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    // Timer para volver a mostrar después de 45 segundos
+    snoozeTimerRef.current = setTimeout(() => {
+      console.log('⏰ [SimpleEraGuide] Snooze finalizado, mostrando guía');
+      setIsSnoozed(false);
+      setSnoozeTimeLeft(45);
+      if (snoozeCountdownRef.current) clearInterval(snoozeCountdownRef.current);
+      
+      toast({
+        title: "Guía reactivada",
+        description: "La guía volvió para ayudarte. ¡Continúa cuando estés listo!",
+        duration: 3000
+      });
+    }, 45000);
+  };
+  
+  // Función para cancelar el snooze manualmente
+  const handleWakeUp = () => {
+    console.log('👁️ [SimpleEraGuide] Usuario canceló snooze manualmente');
+    if (snoozeTimerRef.current) clearTimeout(snoozeTimerRef.current);
+    if (snoozeCountdownRef.current) clearInterval(snoozeCountdownRef.current);
+    setIsSnoozed(false);
+    setSnoozeTimeLeft(45);
+  };
+  
+  // Limpiar timers al desmontar
+  useEffect(() => {
+    return () => {
+      if (snoozeTimerRef.current) clearTimeout(snoozeTimerRef.current);
+      if (snoozeCountdownRef.current) clearInterval(snoozeCountdownRef.current);
+    };
+  }, []);
+  
   const triggerCelebration = () => {
     confetti({
       particleCount: 100,
@@ -970,6 +1029,30 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
 
   return (
     <>
+      {/* 😴 SNOOZE BADGE - Indicador flotante cuando está en modo snooze */}
+      {isActive && isSnoozed && (
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="fixed bottom-6 right-6 z-50"
+        >
+          <Button
+            onClick={handleWakeUp}
+            variant="outline"
+            size="lg"
+            className="bg-background/95 backdrop-blur-sm border-primary/20 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 h-auto py-3 px-4"
+          >
+            <Eye className="h-5 w-5 mr-3 text-primary animate-pulse" />
+            <div className="flex flex-col items-start">
+              <span className="text-sm font-medium">Guía en pausa</span>
+              <span className="text-xs text-muted-foreground">Vuelve en {snoozeTimeLeft}s</span>
+            </div>
+          </Button>
+        </motion.div>
+      )}
+
+      {/* 🎯 TOUR ACTIVO - Card principal */}
+      {isActive && !isMinimized && !isSnoozed && (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -984,16 +1067,28 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
                 <Sparkles className="w-4 h-4 text-primary" />
                 <h3 className="font-semibold text-sm">Guía de Era</h3>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleMinimize}
-                className="h-7 w-7 p-0 hover:bg-destructive/10"
-                title="Ocultar guía (Esc)"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSnooze}
+                  className="h-7 w-7 p-0 hover:bg-muted"
+                  title="Ocultar por 45 segundos"
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleMinimize}
+                  className="h-7 w-7 p-0 hover:bg-destructive/10"
+                  title="Ocultar guía (Esc)"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
             
             {/* Progreso simplificado */}
@@ -1133,6 +1228,7 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
           </div>
         </Card>
       </motion.div>
+      )}
 
       {/* Welcome Dialog */}
       <AlertDialog open={showWelcome} onOpenChange={setShowWelcome}>

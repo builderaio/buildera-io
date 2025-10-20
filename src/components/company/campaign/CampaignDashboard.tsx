@@ -157,45 +157,13 @@ export const CampaignDashboard = ({ onStartNewCampaign }: CampaignDashboardProps
       </div>
 
       {/* Draft Campaigns List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Tus Campañas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DraftCampaignsList
-            drafts={drafts}
-            onResume={handleResumeDraft}
-            onDelete={handleDeleteDraft}
-            loading={loading}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      {drafts.length === 0 && (
-        <Card className="border-dashed border-2 border-muted">
-          <CardContent className="p-8 text-center">
-            <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">
-              ¡Comienza tu primera campaña inteligente!
-            </h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Crea campañas de marketing personalizadas con IA que generen resultados reales para tu negocio
-            </p>
-            <Button 
-              onClick={handleStartNewCampaign}
-              size="lg"
-              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Crear Primera Campaña
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <DraftCampaignsList
+        drafts={drafts}
+        onResume={handleResumeDraft}
+        onDelete={handleDeleteDraft}
+        loading={loading}
+        onStartNewCampaign={handleStartNewCampaign}
+      />
     </div>
   );
 };

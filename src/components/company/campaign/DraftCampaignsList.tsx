@@ -34,6 +34,7 @@ interface DraftCampaignsListProps {
   onResume: (draft: DraftCampaign) => void;
   onDelete: (draftId: string) => void;
   loading: boolean;
+  onStartNewCampaign?: () => void;
 }
 
 const getStepInfo = (stepName: string) => {
@@ -54,7 +55,8 @@ export const DraftCampaignsList = ({
   drafts, 
   onResume, 
   onDelete, 
-  loading 
+  loading,
+  onStartNewCampaign
 }: DraftCampaignsListProps) => {
   if (loading) {
     return (
@@ -71,16 +73,32 @@ export const DraftCampaignsList = ({
 
   if (drafts.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center py-8">
+      <Card className="border-dashed border-2 border-muted">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Tus Campañas
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-8">
+          <div className="text-center">
             <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-              No tienes campañas en progreso
+            <h3 className="text-xl font-semibold mb-2">
+              ¡Comienza tu primera campaña inteligente!
             </h3>
-            <p className="text-sm text-muted-foreground">
-              Crea tu primera campaña inteligente para comenzar
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              Crea campañas de marketing personalizadas con IA que generen resultados reales para tu negocio
             </p>
+            {onStartNewCampaign && (
+              <Button 
+                onClick={onStartNewCampaign}
+                size="lg"
+                className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+              >
+                <Play className="h-5 w-5 mr-2" />
+                Crear Primera Campaña
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -88,11 +106,15 @@ export const DraftCampaignsList = ({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Clock className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">Campañas en Progreso ({drafts.length})</h3>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Tus Campañas ({drafts.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
 
       {drafts.map((draft) => {
         const stepInfo = getStepInfo(draft.current_step);
@@ -184,6 +206,8 @@ export const DraftCampaignsList = ({
           </Card>
         );
       })}
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

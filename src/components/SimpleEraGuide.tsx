@@ -1051,6 +1051,30 @@ const SimpleEraGuide = ({ userId, currentSection, onNavigate }: SimpleEraGuidePr
         </motion.div>
       )}
 
+      {/* 📦 BADGE MINIMIZADO - Siempre visible cuando está minimizado */}
+      {isActive && isMinimized && !isSnoozed && (
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="fixed bottom-6 right-6 z-50"
+        >
+          <Button
+            onClick={handleMaximize}
+            variant="outline"
+            size="lg"
+            className="bg-background/95 backdrop-blur-sm border-primary/20 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 h-auto py-2 px-3"
+          >
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <div className="flex flex-col items-start">
+                <span className="text-xs font-medium">Guía de Era</span>
+                <span className="text-[10px] text-muted-foreground">Paso {currentStep}/{steps.length}</span>
+              </div>
+            </div>
+          </Button>
+        </motion.div>
+      )}
+
       {/* 🎯 TOUR ACTIVO - Card principal */}
       {isActive && !isMinimized && !isSnoozed && (
       <motion.div

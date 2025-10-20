@@ -1,0 +1,72 @@
+{
+  "loading": {
+    "profile": "Loading profile...",
+    "data": "Loading data..."
+  },
+  "errors": {
+    "profileCreate": "Could not create business profile. Please try again.",
+    "profileAccess": "Could not get profile information.",
+    "accessDenied": "Access denied",
+    "companyOnly": "This dashboard is for businesses only."
+  },
+  "toast": {
+    "profileCreated": "Profile created",
+    "profileCreatedDesc": "Your business profile has been created. Complete your information in Business DNA.",
+    "completeProfile": "Complete your profile",
+    "completeProfileDesc": "You must complete all your business information to continue."
+  },
+  "views": {
+    "mandoCentral": {
+      "title": "Command Center",
+      "description": "Your business control center"
+    },
+    "adn": {
+      "title": "Business DNA",
+      "description": "Business identity and strategy"
+    },
+    "marketing": {
+      "title": "Marketing Hub",
+      "description": "Comprehensive marketing management"
+    },
+    "intelligencia": {
+      "title": "Competitive Intelligence",
+      "description": "Market and competition analysis"
+    },
+    "audiencias": {
+      "title": "My Audiences",
+      "description": "Audience and segment management"
+    },
+    "workforce": {
+      "title": "My AI Workforce",
+      "description": "AI agent team"
+    },
+    "agents": {
+      "title": "My Agents",
+      "description": "Custom agent management"
+    },
+    "knowledge": {
+      "title": "Knowledge Base",
+      "description": "File and document repository"
+    },
+    "academy": {
+      "title": "Buildera Academy",
+      "description": "Learn and get certified"
+    },
+    "marketplace": {
+      "title": "Marketplace",
+      "description": "Explore solutions and services"
+    },
+    "experts": {
+      "title": "Experts",
+      "description": "Connect with specialists"
+    },
+    "configuration": {
+      "title": "Configuration",
+      "description": "Account and preference settings"
+    },
+    "profile": {
+      "title": "My Profile",
+      "description": "Personal information"
+    }
+  }
+}

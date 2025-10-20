@@ -1,0 +1,72 @@
+{
+  "loading": {
+    "profile": "Cargando perfil...",
+    "data": "Cargando datos..."
+  },
+  "errors": {
+    "profileCreate": "No se pudo crear el perfil del negocio. Intente nuevamente.",
+    "profileAccess": "No se pudo obtener la información del perfil.",
+    "accessDenied": "Acceso denegado",
+    "companyOnly": "Este dashboard es solo para negocios."
+  },
+  "toast": {
+    "profileCreated": "Perfil creado",
+    "profileCreatedDesc": "Se ha creado tu perfil de negocio. Completa tu información en ADN del Negocio.",
+    "completeProfile": "Complete su perfil",
+    "completeProfileDesc": "Debes completar toda la información de tu negocio para continuar."
+  },
+  "views": {
+    "mandoCentral": {
+      "title": "Mando Central",
+      "description": "Centro de control de tu negocio"
+    },
+    "adn": {
+      "title": "ADN del Negocio",
+      "description": "Identidad y estrategia empresarial"
+    },
+    "marketing": {
+      "title": "Marketing Hub",
+      "description": "Gestión integral de marketing"
+    },
+    "intelligencia": {
+      "title": "Inteligencia Competitiva",
+      "description": "Análisis de mercado y competencia"
+    },
+    "audiencias": {
+      "title": "Mis Audiencias",
+      "description": "Gestión de audiencias y segmentos"
+    },
+    "workforce": {
+      "title": "Mi Workforce IA",
+      "description": "Equipo de agentes IA"
+    },
+    "agents": {
+      "title": "Mis Agentes",
+      "description": "Gestión de agentes personalizados"
+    },
+    "knowledge": {
+      "title": "Base de Conocimiento",
+      "description": "Repositorio de archivos y documentos"
+    },
+    "academy": {
+      "title": "Academia Buildera",
+      "description": "Aprende y certifícate"
+    },
+    "marketplace": {
+      "title": "Marketplace",
+      "description": "Explora soluciones y servicios"
+    },
+    "experts": {
+      "title": "Expertos",
+      "description": "Conéctate con especialistas"
+    },
+    "configuration": {
+      "title": "Configuración",
+      "description": "Ajustes de cuenta y preferencias"
+    },
+    "profile": {
+      "title": "Mi Perfil",
+      "description": "Información personal"
+    }
+  }
+}

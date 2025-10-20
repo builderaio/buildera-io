@@ -1,0 +1,72 @@
+{
+  "loading": {
+    "profile": "Carregando perfil...",
+    "data": "Carregando dados..."
+  },
+  "errors": {
+    "profileCreate": "Não foi possível criar o perfil empresarial. Tente novamente.",
+    "profileAccess": "Não foi possível obter informações do perfil.",
+    "accessDenied": "Acesso negado",
+    "companyOnly": "Este painel é apenas para empresas."
+  },
+  "toast": {
+    "profileCreated": "Perfil criado",
+    "profileCreatedDesc": "Seu perfil empresarial foi criado. Complete suas informações no DNA do Negócio.",
+    "completeProfile": "Complete seu perfil",
+    "completeProfileDesc": "Você deve completar todas as informações do seu negócio para continuar."
+  },
+  "views": {
+    "mandoCentral": {
+      "title": "Centro de Comando",
+      "description": "Centro de controle do seu negócio"
+    },
+    "adn": {
+      "title": "DNA do Negócio",
+      "description": "Identidade e estratégia empresarial"
+    },
+    "marketing": {
+      "title": "Marketing Hub",
+      "description": "Gestão integral de marketing"
+    },
+    "intelligencia": {
+      "title": "Inteligência Competitiva",
+      "description": "Análise de mercado e concorrência"
+    },
+    "audiencias": {
+      "title": "Minhas Audiências",
+      "description": "Gestão de audiências e segmentos"
+    },
+    "workforce": {
+      "title": "Minha Força de Trabalho IA",
+      "description": "Equipe de agentes IA"
+    },
+    "agents": {
+      "title": "Meus Agentes",
+      "description": "Gestão de agentes personalizados"
+    },
+    "knowledge": {
+      "title": "Base de Conhecimento",
+      "description": "Repositório de arquivos e documentos"
+    },
+    "academy": {
+      "title": "Academia Buildera",
+      "description": "Aprenda e certifique-se"
+    },
+    "marketplace": {
+      "title": "Marketplace",
+      "description": "Explore soluções e serviços"
+    },
+    "experts": {
+      "title": "Especialistas",
+      "description": "Conecte-se com especialistas"
+    },
+    "configuration": {
+      "title": "Configuração",
+      "description": "Configurações de conta e preferências"
+    },
+    "profile": {
+      "title": "Meu Perfil",
+      "description": "Informações pessoais"
+    }
+  }
+}

@@ -1,7 +1,6 @@
-
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,6 +30,7 @@ import SimpleEraGuide from "@/components/SimpleEraGuide";
 import { User } from "@supabase/supabase-js";
 
 const CompanyDashboard = () => {
+  const { t } = useTranslation(['company', 'common']);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [activeView, setActiveView] = useState("mando-central");
@@ -232,8 +232,8 @@ const CompanyDashboard = () => {
         if (insertError) {
           console.error('❌ Error creando perfil:', insertError);
           toast({
-            title: "Error",
-            description: "No se pudo crear el perfil del negocio. Intente nuevamente.",
+            title: t('common:status.error'),
+            description: t('company:errors.profileCreate'),
             variant: "destructive",
           });
           setLoading(false);
@@ -244,14 +244,14 @@ const CompanyDashboard = () => {
         profileData = newProfile;
         console.log('✅ Perfil creado exitosamente');
         toast({
-          title: "Perfil creado",
-          description: "Se ha creado tu perfil de negocio. Completa tu información en ADN del Negocio.",
+          title: t('company:toast.profileCreated'),
+          description: t('company:toast.profileCreatedDesc'),
         });
       } else if (error) {
         console.error('❌ Error obteniendo perfil:', error);
         toast({
-          title: "Error de acceso",
-          description: "No se pudo obtener la información del perfil.",
+          title: t('company:errors.accessDenied'),
+          description: t('company:errors.profileAccess'),
           variant: "destructive",
         });
         setLoading(false);
@@ -263,8 +263,8 @@ const CompanyDashboard = () => {
       if (profileData && profileData.user_type !== 'company') {
         console.log('❌ Usuario no es de tipo empresa, redirigiendo');
         toast({
-          title: "Acceso denegado",
-          description: "Este dashboard es solo para negocios.",
+          title: t('company:errors.accessDenied'),
+          description: t('company:errors.companyOnly'),
           variant: "destructive",
         });
         setLoading(false);
@@ -308,8 +308,8 @@ const CompanyDashboard = () => {
       if (stillIncomplete) {
         setActiveView("profile");
         toast({
-          title: "Complete su perfil",
-          description: "Debes completar toda la información de tu negocio para continuar.",
+          title: t('company:toast.completeProfile'),
+          description: t('company:toast.completeProfileDesc'),
         });
       }
       
@@ -441,7 +441,7 @@ const CompanyDashboard = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando perfil...</p>
+          <p className="text-muted-foreground">{t('company:loading.profile')}</p>
         </div>
       </div>
     );

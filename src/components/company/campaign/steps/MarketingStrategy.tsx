@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { StrategyGenerationLoader } from '@/components/ui/strategy-generation-loader';
+import { flushSync } from 'react-dom';
 import { 
   BarChart3, 
   Edit3, 
@@ -327,7 +328,9 @@ ${Object.entries(existingStrategy.content_plan || {}).map(([platform, config]: [
       return;
     }
 
-    setGenerating(true);
+    flushSync(() => setGenerating(true));
+    // Allow the UI to paint the loader before heavy work
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
     
     try {
       const objetivosSeleccionados = (campaignData.objective?.company_objectives || []).map((obj: any) => ({
@@ -1830,6 +1833,7 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
 
       {/* Advanced Loading State with Strategy Generation Loader */}
       <StrategyGenerationLoader
+        key={generating ? 'gen' : 'idle'}
         isVisible={generating}
       />
 

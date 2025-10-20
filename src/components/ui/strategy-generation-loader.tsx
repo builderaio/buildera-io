@@ -40,13 +40,20 @@ export function StrategyGenerationLoader({
   isVisible
 }: StrategyGenerationLoaderProps) {
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   const CurrentTipIcon = marketingTips[currentTipIndex].icon;
 
   useEffect(() => {
     if (!isVisible) {
       setCurrentTipIndex(0);
+      setShowTimeoutWarning(false);
       return;
     }
+
+    // Mostrar advertencia después de 3 minutos
+    const timeoutWarning = setTimeout(() => {
+      setShowTimeoutWarning(true);
+    }, 180000); // 3 minutos
 
     // Rotate tips every 8 seconds
     const tipInterval = setInterval(() => {
@@ -54,6 +61,7 @@ export function StrategyGenerationLoader({
     }, 8000);
 
     return () => {
+      clearTimeout(timeoutWarning);
       clearInterval(tipInterval);
     };
   }, [isVisible]);
@@ -93,6 +101,27 @@ export function StrategyGenerationLoader({
                 <p className="text-muted-foreground mt-3 text-lg">
                   Nuestra IA está analizando datos y creando una estrategia personalizada para ti
                 </p>
+                
+                {/* Warning después de 3 minutos */}
+                {showTimeoutWarning && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg"
+                  >
+                    <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+                      ⏱️ La generación está tomando más tiempo de lo esperado. 
+                      Esto puede suceder con estrategias muy complejas. 
+                      Por favor, continúa esperando o recarga la página para intentar de nuevo.
+                    </p>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-sm font-medium transition-colors"
+                    >
+                      🔄 Recargar Página
+                    </button>
+                  </motion.div>
+                )}
               </div>
             </div>
 

@@ -31,19 +31,29 @@ import {
 } from './EditableStrategySection';
 
 
-class StrategyErrorBoundary extends React.Component<{ children: React.ReactNode; onReset?: () => void }, { hasError: boolean; error?: any }> {
+class StrategyErrorBoundary extends React.Component<
+  { children: React.ReactNode; onReset?: () => void; onError?: () => void },
+  { hasError: boolean; error?: any }
+> {
   constructor(props: any) {
     super(props);
     this.state = { hasError: false };
   }
+  
   static getDerivedStateFromError(error: any) {
     return { hasError: true, error };
   }
+  
   componentDidCatch(error: any, errorInfo: any) {
     console.error('❌ Strategy render error:', error);
     console.error('❌ Error info:', errorInfo);
-    console.error('❌ Component stack:', errorInfo.componentStack);
+    
+    // NUEVO: Llamar onError para resetear generating
+    if (this.props.onError) {
+      this.props.onError();
+    }
   }
+  
   render() {
     if (this.state.hasError) {
       return (
@@ -52,8 +62,15 @@ class StrategyErrorBoundary extends React.Component<{ children: React.ReactNode;
             <CardTitle>Ocurrió un error al mostrar la estrategia</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">Hemos detectado un problema al renderizar esta sección. Puedes reintentar la generación.</p>
-            <Button onClick={this.props.onReset}>Reintentar</Button>
+            <p className="text-sm text-muted-foreground mb-4">
+              Hemos detectado un problema al renderizar esta sección. Puedes reintentar la generación.
+            </p>
+            <Button onClick={() => {
+              this.setState({ hasError: false });
+              this.props.onReset?.();
+            }}>
+              Reintentar
+            </Button>
           </CardContent>
         </Card>
       );
@@ -895,7 +912,10 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
           </Button>
         ) : undefined
       });
-      setGenerating(false);
+    } finally {
+      // CRÍTICO: Siempre resetear generating, sin importar el resultado
+      // Usar setTimeout para asegurar que React procese el estado
+      setTimeout(() => setGenerating(false), 100);
     }
   };
 
@@ -1526,7 +1546,16 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
   const canProceed = strategy && !generating;
 
   return (
-    <div className="space-y-6">
+    <StrategyErrorBoundary
+      onReset={() => {
+        setStrategy(null);
+        setGenerating(false);
+      }}
+      onError={() => {
+        setGenerating(false); // CRÍTICO: Resetear generating si hay crash
+      }}
+    >
+      <div className="space-y-6">
       {/* Header */}
       <Card className="bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200">
         <CardHeader>
@@ -2625,6 +2654,7 @@ ${Object.entries(normalized.content_plan || {}).map(([platform, config]: [string
           {loading ? 'Guardando...' : 'Continuar con Calendario de Contenido'}
         </Button>
       </div>
-    </div>
+      </div>
+    </StrategyErrorBoundary>
   );
 };

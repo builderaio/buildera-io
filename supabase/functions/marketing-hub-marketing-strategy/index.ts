@@ -92,7 +92,10 @@ serve(async (req) => {
       });
     }
 
-    console.log('User authenticated:', user.id);
+    console.log('========== MARKETING STRATEGY GENERATION START ==========');
+    console.log('User ID:', user.id);
+    console.log('Input:', JSON.stringify(input, null, 2));
+    console.log('Retrieve existing:', input.retrieve_existing);
 
     // Get user's primary company
     const { data: companyMember, error: companyError } = await supabase
@@ -391,7 +394,10 @@ serve(async (req) => {
 
     // Call N8N webhook with extended timeout (5 minutes)
     const webhookUrl = 'https://buildera.app.n8n.cloud/webhook/marketing-strategy';
-    console.log('Calling N8N webhook:', webhookUrl);
+    
+    console.log('Calling N8N webhook with processedInput');
+    console.log('N8N URL:', webhookUrl);
+    console.log('Input size (bytes):', JSON.stringify(processedInput).length);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minutes timeout
@@ -412,7 +418,12 @@ serve(async (req) => {
       clearTimeout(timeoutId);
 
       if (!webhookResponse.ok) {
-        console.error('N8N webhook failed:', webhookResponse.status, await webhookResponse.text());
+        const errorText = await webhookResponse.text().catch(() => 'No error text');
+        console.error('N8N webhook error:', {
+          status: webhookResponse.status,
+          statusText: webhookResponse.statusText,
+          errorText: errorText.substring(0, 500)
+        });
         return new Response(JSON.stringify({ 
           error: 'Failed to generate marketing strategy',
           details: `Webhook returned ${webhookResponse.status}`
@@ -603,6 +614,10 @@ serve(async (req) => {
           // Don't fail the entire request if competitive intelligence saving fails
         }
       }
+
+      console.log('========== MARKETING STRATEGY GENERATION SUCCESS ==========');
+      console.log('Campaign ID:', campaignId);
+      console.log('Strategy stored successfully');
 
       // Return enriched response with metadata
       const enrichedResponse = webhookResult.map((item: any, index: number) => ({

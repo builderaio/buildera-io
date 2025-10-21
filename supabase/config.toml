@@ -2,4 +2,3 @@ project_id = "ubhzzppmkhxbuiajfswa"
 
 [functions.marketing-hub-marketing-strategy]
 verify_jwt = true
-timeout = 300

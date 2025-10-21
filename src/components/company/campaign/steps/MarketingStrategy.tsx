@@ -57,13 +57,19 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
 
     try {
       const result = await generateStrategy({ campaignData });
+      console.log('🎯 Strategy result received in component:', {
+        hasResult: !!result,
+        hasCoreMessage: !!result?.core_message,
+        resultKeys: result ? Object.keys(result) : []
+      });
+      
       setStrategy(result);
       
       toast.success('¡Estrategia generada con éxito!', {
         description: 'Tu estrategia de marketing está lista'
       });
     } catch (error: any) {
-      console.error('Error generating strategy:', error);
+      console.error('❌ Error generating strategy:', error);
       
       toast.error('Error al generar estrategia', {
         description: error.message || 'Por favor intenta nuevamente'

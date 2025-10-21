@@ -53,8 +53,22 @@ export async function generateStrategy({
     throw new Error('No se recibió respuesta del servidor');
   }
 
+  console.log('📥 Received data from backend:', {
+    hasStrategy: !!data.strategy,
+    hasStrategyId: !!data.strategy_id,
+    cached: data.cached,
+    dataKeys: Object.keys(data)
+  });
+
   // Normalizar y retornar
-  return normalizeStrategy(data);
+  const normalized = normalizeStrategy(data);
+  console.log('✅ Strategy normalized:', {
+    hasCoreMessage: !!normalized.core_message,
+    hasCompetitors: !!normalized.competitors?.length,
+    hasStrategies: !!Object.keys(normalized.strategies || {}).length
+  });
+  
+  return normalized;
 }
 
 /**

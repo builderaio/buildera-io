@@ -124,13 +124,14 @@ serve(async (req) => {
 
     const strategyData = await n8nResponse.json();
     console.log('✅ Strategy generated');
+    console.log('📊 Strategy data keys:', Object.keys(strategyData));
 
     // Store strategy (simple)
     const { data: existingStrategy } = await supabase
       .from('marketing_strategies')
       .select('id')
       .eq('company_id', companyId)
-      .single();
+      .maybeSingle();
 
     const strategyPayload = {
       company_id: companyId,
@@ -143,30 +144,43 @@ serve(async (req) => {
     let strategyId: string;
 
     if (existingStrategy) {
-      const { data: updated } = await supabase
+      const { data: updated, error: updateError } = await supabase
         .from('marketing_strategies')
         .update(strategyPayload)
         .eq('id', existingStrategy.id)
         .select()
         .single();
-      strategyId = updated!.id;
+      
+      if (updateError || !updated) {
+        console.error('Error updating strategy:', updateError);
+        throw new Error('Error al actualizar estrategia');
+      }
+      strategyId = updated.id;
     } else {
-      const { data: created } = await supabase
+      const { data: created, error: insertError } = await supabase
         .from('marketing_strategies')
         .insert(strategyPayload)
         .select()
         .single();
-      strategyId = created!.id;
+      
+      if (insertError || !created) {
+        console.error('Error creating strategy:', insertError);
+        throw new Error('Error al crear estrategia');
+      }
+      strategyId = created.id;
     }
 
     console.log('✅ Strategy saved:', strategyId);
 
     // Return response
-    return new Response(JSON.stringify({
+    const response = {
       strategy: strategyData,
       strategy_id: strategyId,
       cached: false
-    }), {
+    };
+    console.log('📤 Returning response with keys:', Object.keys(response));
+    
+    return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 

@@ -9,6 +9,7 @@ import { normalizeStrategy } from '@/utils/strategyNormalizer';
 import type { MarketingStrategy } from '@/types/strategy';
 import { StrategyGenerationLoader } from '@/components/ui/strategy-generation-loader';
 import { EditableStrategySection } from './EditableStrategySection';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -145,7 +146,8 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
   }
 
   return (
-    <div className="space-y-6">
+    <ErrorBoundary context="MarketingStrategyStep">
+      <div className="space-y-6">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -243,6 +245,9 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
               <p className="text-green-600">
                 Estrategia personalizada generada exitosamente
               </p>
+              {strategy?.full_strategy_data?.request_id && (
+                <p className="text-xs text-green-700 mt-2">Trace ID: {strategy.full_strategy_data.request_id}</p>
+              )}
             </CardHeader>
           </Card>
 
@@ -316,7 +321,7 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
           )}
 
           {/* Competitors */}
-          {strategy.competitors && strategy.competitors.length > 0 && (
+          {Array.isArray(strategy.competitors) && strategy.competitors.length > 0 ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
@@ -328,22 +333,20 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
                 <div className="space-y-4">
                   {strategy.competitors.map((comp, idx) => (
                     <div key={idx} className="bg-white p-4 rounded-lg border">
-                      <h4 className="font-bold mb-3">{comp.name}</h4>
-                      
-                      {comp.strengths && comp.strengths.length > 0 && (
+                      <h4 className="font-bold mb-3">{comp?.name || 'Competidor'}</h4>
+                      {Array.isArray(comp?.strengths) && comp.strengths.length > 0 && (
                         <div className="mb-3">
                           <p className="font-semibold text-green-700 mb-1">✅ Fortalezas</p>
                           <ul className="list-disc list-inside text-sm space-y-1">
-                            {comp.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                            {comp.strengths.map((s: string, i: number) => <li key={i}>{s}</li>)}
                           </ul>
                         </div>
                       )}
-                      
-                      {comp.weaknesses && comp.weaknesses.length > 0 && (
+                      {Array.isArray(comp?.weaknesses) && comp.weaknesses.length > 0 && (
                         <div>
                           <p className="font-semibold text-red-700 mb-1">⚠️ Debilidades</p>
                           <ul className="list-disc list-inside text-sm space-y-1">
-                            {comp.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+                            {comp.weaknesses.map((w: string, i: number) => <li key={i}>{w}</li>)}
                           </ul>
                         </div>
                       )}
@@ -352,10 +355,22 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
                 </div>
               </CardContent>
             </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <Users className="h-6 w-6" />
+                  Análisis de Competidores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Sin competidores disponibles</p>
+              </CardContent>
+            </Card>
           )}
 
           {/* Funnel Strategies */}
-          {(strategy.strategies || strategy.funnel_strategies) && (
+          {strategy && typeof strategy.strategies === 'object' && !Array.isArray(strategy.strategies) && Object.keys(strategy.strategies || {}).length > 0 ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
@@ -368,9 +383,8 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
                   {Object.entries(strategy.strategies || {}).map(([phase, details]: [string, any]) => (
                     <div key={phase} className="bg-white p-4 rounded-lg border">
                       <h4 className="font-bold capitalize mb-2">{phase}</h4>
-                      <p className="text-sm text-muted-foreground mb-3">{details.objective}</p>
-                      
-                      {details.tactics && details.tactics.length > 0 && (
+                      <p className="text-sm text-muted-foreground mb-3">{details?.objective || ''}</p>
+                      {Array.isArray(details?.tactics) && details.tactics.length > 0 && (
                         <div>
                           <p className="font-semibold text-sm mb-2">Tácticas:</p>
                           <ul className="list-disc list-inside text-sm space-y-1">
@@ -381,6 +395,18 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <TrendingUp className="h-6 w-6" />
+                  Estrategias por Etapa del Funnel
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Sin estrategias disponibles</p>
               </CardContent>
             </Card>
           )}
@@ -395,5 +421,6 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

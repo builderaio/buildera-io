@@ -53,22 +53,35 @@ export async function generateStrategy({
     throw new Error('No se recibió respuesta del servidor');
   }
 
+  const requestId = (data as any).request_id || (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+  console.groupCollapsed(`[Strategy][${requestId}] Backend response`);
   console.log('📥 Received data from backend:', {
     hasStrategy: !!data.strategy,
     hasStrategyId: !!data.strategy_id,
     cached: data.cached,
     dataKeys: Object.keys(data)
   });
+  console.groupEnd();
 
   // Normalizar y retornar
   const normalized = normalizeStrategy(data);
+  const enriched: MarketingStrategy = {
+    ...normalized,
+    full_strategy_data: {
+      ...normalized.full_strategy_data,
+      request_id: requestId,
+    },
+  } as MarketingStrategy;
+
+  console.groupCollapsed(`[Strategy][${requestId}] Normalized`);
   console.log('✅ Strategy normalized:', {
-    hasCoreMessage: !!normalized.core_message,
-    hasCompetitors: !!normalized.competitors?.length,
-    hasStrategies: !!Object.keys(normalized.strategies || {}).length
+    hasCoreMessage: !!enriched.core_message,
+    hasCompetitors: !!enriched.competitors?.length,
+    hasStrategies: !!Object.keys(enriched.strategies || {}).length
   });
+  console.groupEnd();
   
-  return normalized;
+  return enriched;
 }
 
 /**

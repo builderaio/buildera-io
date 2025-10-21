@@ -57,16 +57,13 @@ serve(async (req) => {
       .single();
 
     if (!companyMember) {
-      return new Response(JSON.stringify({ error: 'Empresa no encontrada' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      console.warn('No primary company found for user. Proceeding without DB persistence.');
     }
 
-    const companyId = companyMember.company_id;
+    const companyId = companyMember?.company_id || null;
 
     // Check for existing strategy (early return)
-    if (retrieve_existing === true) {
+    if (retrieve_existing === true && companyId) {
       const { data: existing } = await supabase
         .from('marketing_strategies')
         .select('*')
@@ -126,51 +123,55 @@ serve(async (req) => {
     console.log('✅ Strategy generated');
     console.log('📊 Strategy data keys:', Object.keys(strategyData));
 
-    // Store strategy (simple)
-    const { data: existingStrategy } = await supabase
-      .from('marketing_strategies')
-      .select('id')
-      .eq('company_id', companyId)
-      .maybeSingle();
+    // Store strategy (simple) - only if we have a companyId
+    let strategyId: string | null = null;
 
-    const strategyPayload = {
-      company_id: companyId,
-      core_message: strategyData.mensaje_diferenciador || strategyData.core_message || '',
-      full_strategy_data: strategyData,
-      message_variants: strategyData.variantes_mensaje || strategyData.differentiated_message || {},
-      updated_at: new Date().toISOString()
-    };
-
-    let strategyId: string;
-
-    if (existingStrategy) {
-      const { data: updated, error: updateError } = await supabase
+    if (companyId) {
+      const { data: existingStrategy } = await supabase
         .from('marketing_strategies')
-        .update(strategyPayload)
-        .eq('id', existingStrategy.id)
-        .select()
-        .single();
-      
-      if (updateError || !updated) {
-        console.error('Error updating strategy:', updateError);
-        throw new Error('Error al actualizar estrategia');
+        .select('id')
+        .eq('company_id', companyId)
+        .maybeSingle();
+
+      const strategyPayload = {
+        company_id: companyId,
+        core_message: strategyData.mensaje_diferenciador || strategyData.core_message || '',
+        full_strategy_data: strategyData,
+        message_variants: strategyData.variantes_mensaje || strategyData.differentiated_message || {},
+        updated_at: new Date().toISOString()
+      };
+
+      if (existingStrategy) {
+        const { data: updated, error: updateError } = await supabase
+          .from('marketing_strategies')
+          .update(strategyPayload)
+          .eq('id', existingStrategy.id)
+          .select()
+          .single();
+        
+        if (updateError || !updated) {
+          console.error('Error updating strategy:', updateError);
+          throw new Error('Error al actualizar estrategia');
+        }
+        strategyId = updated.id;
+      } else {
+        const { data: created, error: insertError } = await supabase
+          .from('marketing_strategies')
+          .insert(strategyPayload)
+          .select()
+          .single();
+        
+        if (insertError || !created) {
+          console.error('Error creating strategy:', insertError);
+          throw new Error('Error al crear estrategia');
+        }
+        strategyId = created.id;
       }
-      strategyId = updated.id;
+
+      console.log('✅ Strategy saved:', strategyId);
     } else {
-      const { data: created, error: insertError } = await supabase
-        .from('marketing_strategies')
-        .insert(strategyPayload)
-        .select()
-        .single();
-      
-      if (insertError || !created) {
-        console.error('Error creating strategy:', insertError);
-        throw new Error('Error al crear estrategia');
-      }
-      strategyId = created.id;
+      console.log('ℹ️ Skipping DB persistence because no companyId was found.');
     }
-
-    console.log('✅ Strategy saved:', strategyId);
 
     // Return response
     const response = {

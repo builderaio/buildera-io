@@ -55,17 +55,36 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
   };
 
   const handleGenerateStrategy = async () => {
+    console.log('🔍 [MarketingStrategy] campaignData received:', {
+      hasAudiences: !!campaignData.audiences,
+      hasAudience: !!campaignData.audience,
+      audiencesType: Array.isArray(campaignData.audiences) ? 'array' : typeof campaignData.audiences,
+      audienceType: typeof campaignData.audience,
+      audiencesValue: campaignData.audiences,
+      audienceValue: campaignData.audience,
+      allKeys: Object.keys(campaignData)
+    });
+
     if (!campaignData.company) {
       toast.error('Datos de empresa requeridos');
       return;
     }
 
-    // Normalize audiences to array format
+    // Normalize audiences to array format - support multiple data structures
     const audiences = Array.isArray(campaignData.audiences) 
       ? campaignData.audiences 
-      : campaignData.audiences 
+      : (campaignData.audiences ?? null)
         ? [campaignData.audiences] 
-        : [];
+        : campaignData.audience?.selected_audience
+          ? [campaignData.audience.selected_audience]
+          : campaignData.audience
+            ? [campaignData.audience]
+            : [];
+
+    console.log('🔍 [MarketingStrategy] Normalized audiences:', {
+      count: audiences.length,
+      audiences
+    });
 
     if (audiences.length === 0) {
       toast.error('Debes definir al menos una audiencia objetivo');

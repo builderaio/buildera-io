@@ -255,6 +255,7 @@ export const CampaignWizard = ({
         (updatedCampaignData as any).description = stepData.description || (updatedCampaignData as any).description;
         break;
       case 2:
+        console.log('🔍 [CampaignWizard] Audience step data received:', stepData);
         updatedCampaignData.audience = stepData;
         // Store target audience data in database and save campaignId
         if (stepData?.company && stepData?.analysis) {

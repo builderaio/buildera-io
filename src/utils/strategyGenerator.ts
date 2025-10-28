@@ -40,7 +40,7 @@ export async function generateStrategy({
     ? campaignData.objective
     : campaignData.objective?.description || campaignData.objective?.label || campaignData.objective?.name || '';
 
-  // Limpiar audiencias - solo enviar campos relevantes
+  // Limpiar audiencias - solo enviar campos relevantes (sin id, company_id, user_id)
   const cleanedAudiences = audiencesArray.map(audience => ({
     name: audience.name || 'Audiencia',
     description: audience.description || '',
@@ -52,27 +52,52 @@ export async function generateStrategy({
     content_preferences: audience.content_preferences || {}
   }));
 
-  console.log('📊 [strategyGenerator] Campaign data:', {
+  console.log('📊 [strategyGenerator] Campaign data validation:', {
     hasCompany: !!campaignData.company,
     companyKeys: campaignData.company ? Object.keys(campaignData.company) : [],
-    audiencesCount: cleanedAudiences.length
+    audiencesCount: cleanedAudiences.length,
+    criticalFieldsPreview: {
+      nombre_empresa: campaignData.company?.name || campaignData.company?.nombre_empresa || 'MISSING',
+      objetivo_negocio: campaignData.company?.description ? 'OK' : 'MISSING',
+      propuesta_valor: campaignData.company?.propuesta_valor ? 'OK' : 'MISSING',
+      sitio_web: campaignData.company?.website_url ? 'OK' : 'MISSING',
+      sector_industria: campaignData.company?.industry_sector ? 'OK' : 'MISSING'
+    }
   });
 
+  // Construir payload con todos los campos críticos
   const payload = {
     retrieve_existing: retrieveExisting,
     input: {
-      nombre_empresa: campaignData.company?.nombre_empresa || campaignData.company?.name || 'Mi Empresa',
-      objetivo_de_negocio: campaignData.company?.description || '',
-      propuesta_valor: campaignData.company?.value_proposition || campaignData.company?.propuesta_valor || '',
-      sitio_web: campaignData.company?.website || campaignData.company?.sitio_web || campaignData.company?.website_url || '',
+      // Datos de empresa (múltiples variantes para compatibilidad)
+      nombre_empresa: campaignData.company?.name || campaignData.company?.nombre_empresa || 'Mi Empresa',
+      objetivo_de_negocio: campaignData.company?.description || campaignData.company?.objetivo_de_negocio || '',
+      propuesta_valor: campaignData.company?.propuesta_valor || campaignData.company?.propuesta_de_valor || campaignData.company?.value_proposition || '',
+      sitio_web: campaignData.company?.website_url || campaignData.company?.url_sitio_web || campaignData.company?.website || '',
+      sector_industria: campaignData.company?.industry_sector || campaignData.company?.sector_industria || '',
+      mision: campaignData.company?.mision || '',
+      vision: campaignData.company?.vision || '',
+      
+      // Datos de campaña
       nombre_campana: campaignData.name || 'Nueva Campaña',
       objetivo_campana: objectiveText,
       descripcion_campana: campaignData.description || '',
+      
+      // Audiencias limpias
       audiencias: cleanedAudiences
     }
   };
 
-  console.log('📤 [strategyGenerator] Payload to send:', JSON.stringify(payload, null, 2));
+  console.log('📤 [strategyGenerator] Payload being sent to backend:', {
+    retrieve_existing: payload.retrieve_existing,
+    nombre_empresa: payload.input.nombre_empresa,
+    objetivo_de_negocio: payload.input.objetivo_de_negocio || 'EMPTY',
+    propuesta_valor: payload.input.propuesta_valor || 'EMPTY',
+    sitio_web: payload.input.sitio_web || 'EMPTY',
+    sector_industria: payload.input.sector_industria || 'EMPTY',
+    audiencias_count: payload.input.audiencias.length,
+    full_payload: JSON.stringify(payload, null, 2)
+  });
 
   // Llamar a la edge function
   const { data, error } = await supabase.functions.invoke('marketing-hub-marketing-strategy', {

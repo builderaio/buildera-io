@@ -190,15 +190,32 @@ export const CampaignWizard = ({
   // Populate with real company data when available
   useEffect(() => {
     if (primaryCompany && !campaignData.company.nombre_empresa) {
+      console.log('📊 [CampaignWizard] Populating company data:', {
+        name: primaryCompany.name,
+        hasDescription: !!primaryCompany.description,
+        hasPropuestaValor: !!primaryCompany.propuesta_valor,
+        hasWebsite: !!primaryCompany.website_url,
+        hasIndustry: !!primaryCompany.industry_sector
+      });
+
       setCampaignData(prev => ({
         ...prev,
         company: {
           ...prev.company,
+          name: primaryCompany.name || '',
           nombre_empresa: primaryCompany.name || '',
-          url_sitio_web: primaryCompany.website_url || '',
-          pais: '',
+          description: primaryCompany.description || '',
           objetivo_de_negocio: primaryCompany.description || '',
-          propuesta_de_valor: '',
+          propuesta_valor: primaryCompany.propuesta_valor || '',
+          propuesta_de_valor: primaryCompany.propuesta_valor || '',
+          website_url: primaryCompany.website_url || '',
+          url_sitio_web: primaryCompany.website_url || '',
+          industry_sector: primaryCompany.industry_sector || '',
+          sector_industria: primaryCompany.industry_sector || '',
+          mision: primaryCompany.mision || '',
+          vision: primaryCompany.vision || '',
+          pais: '',
+          redes_sociales_activas: []
         }
       }));
     }

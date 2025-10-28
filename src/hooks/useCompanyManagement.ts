@@ -14,6 +14,11 @@ export interface Company {
   created_by: string;
   created_at: string;
   updated_at: string;
+  // Datos estratégicos de company_strategy
+  propuesta_valor?: string;
+  mision?: string;
+  vision?: string;
+  valores_corporativos?: string[];
 }
 
 export interface CompanyMember {
@@ -46,7 +51,15 @@ export const useCompanyManagement = () => {
         .from('company_members')
         .select(`
           *,
-          companies (*)
+          companies (
+            *,
+            company_strategy (
+              propuesta_valor,
+              mision,
+              vision,
+              valores_corporativos
+            )
+          )
         `)
         .eq('user_id', userId);
 
@@ -55,8 +68,21 @@ export const useCompanyManagement = () => {
         return;
       }
 
-      const companies = memberData?.map((member: any) => member.companies) || [];
-      const primaryCompanyData = memberData?.find((member: any) => member.is_primary)?.companies;
+      const companies = memberData?.map((member: any) => {
+        const company = member.companies;
+        if (!company) return null;
+        const strategy = company.company_strategy?.[0] as Partial<Company> | undefined;
+        return strategy ? { ...company, ...strategy } : company;
+      }).filter(Boolean) || [];
+      
+      const primaryMember = memberData?.find((member: any) => member.is_primary);
+      const primaryCompanyBase = primaryMember?.companies;
+      let primaryCompanyData: Company | null = null;
+      
+      if (primaryCompanyBase) {
+        const strategy = primaryCompanyBase.company_strategy?.[0] as Partial<Company> | undefined;
+        primaryCompanyData = strategy ? { ...primaryCompanyBase, ...strategy } : primaryCompanyBase;
+      }
 
       setUserCompanies(companies);
       setPrimaryCompany(primaryCompanyData || null);

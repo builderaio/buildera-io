@@ -60,6 +60,25 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
       return;
     }
 
+    // Validación de datos críticos
+    const missingFields = [];
+    if (!campaignData.company.name && !campaignData.company.nombre_empresa) {
+      missingFields.push('Nombre de empresa');
+    }
+    if (!campaignData.company.description && !campaignData.company.objetivo_de_negocio) {
+      missingFields.push('Objetivo de negocio');
+    }
+    if (!campaignData.company.propuesta_valor && !campaignData.company.propuesta_de_valor) {
+      missingFields.push('Propuesta de valor');
+    }
+
+    if (missingFields.length > 0) {
+      toast.error('Faltan datos críticos', {
+        description: `Completa estos campos en ADN Empresa: ${missingFields.join(', ')}`
+      });
+      return;
+    }
+
     // Normalize audiences to array format - the audience comes from step 2 as campaignData.audience.selected_audience
     const audiences = campaignData.audience?.selected_audience
       ? [campaignData.audience.selected_audience]

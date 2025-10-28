@@ -1,7 +1,178 @@
 project_id = "ubhzzppmkhxbuiajfswa"
 
+# ============= DATA LAYER =============
+
 [functions.get-company-data]
 verify_jwt = true
 
+[functions.get-company-objetivos]
+verify_jwt = true
+
+[functions.manage-company-objectives]
+verify_jwt = true
+
+[functions.get-social-audience-stats]
+verify_jwt = true
+
+[functions.calculate-social-analytics]
+verify_jwt = true
+
+[functions.calculate-dashboard-metrics]
+verify_jwt = true
+
+# ============= AI/ML LAYER =============
+
+[functions.generate-company-content]
+verify_jwt = true
+
+[functions.marketing-hub-post-creator]
+verify_jwt = true
+
+[functions.marketing-hub-image-creator]
+verify_jwt = true
+
+[functions.marketing-hub-reel-creator]
+verify_jwt = true
+
+[functions.marketing-hub-video-creator]
+verify_jwt = true
+
 [functions.marketing-hub-marketing-strategy]
+verify_jwt = true
+
+[functions.marketing-hub-target-audience]
+verify_jwt = true
+
+[functions.marketing-hub-content-calendar]
+verify_jwt = true
+
+[functions.analyze-social-content]
+verify_jwt = true
+
+[functions.analyze-social-audience]
+verify_jwt = true
+
+[functions.analyze-social-activity]
+verify_jwt = true
+
+[functions.analyze-social-retrospective]
+verify_jwt = true
+
+[functions.advanced-social-analyzer]
+verify_jwt = true
+
+[functions.premium-ai-insights]
+verify_jwt = true
+
+[functions.content-insights-generator]
+verify_jwt = true
+
+[functions.content-insights-analyzer]
+verify_jwt = true
+
+[functions.audience-intelligence-analysis]
+verify_jwt = true
+
+[functions.era-content-optimizer]
+verify_jwt = true
+
+[functions.era-campaign-optimizer]
+verify_jwt = true
+
+[functions.era-chat]
+verify_jwt = true
+
+[functions.ai-audience-generator]
+verify_jwt = true
+
+[functions.ai-learning-tutor]
+verify_jwt = true
+
+[functions.execute-workforce-mission]
+verify_jwt = true
+
+# ============= BUSINESS LAYER =============
+
+[functions.campaign-ai-generator]
+verify_jwt = true
+
+[functions.company-info-extractor]
+verify_jwt = true
+
+[functions.company-strategy]
+verify_jwt = true
+
+[functions.brand-identity]
+verify_jwt = true
+
+[functions.check-subscription-status]
+verify_jwt = true
+
+[functions.create-subscription-checkout]
+verify_jwt = true
+
+[functions.calculate-revenue]
+verify_jwt = true
+
+[functions.create-company-agent]
+verify_jwt = true
+
+[functions.company-agent-chat]
+verify_jwt = true
+
+[functions.deploy-agent]
+verify_jwt = true
+
+[functions.deploy-agent-instance]
+verify_jwt = true
+
+[functions.deploy-workforce-agent]
+verify_jwt = true
+
+[functions.create-response-agent]
+verify_jwt = true
+
+[functions.agent-chat-proxy]
+verify_jwt = true
+
+[functions.facebook-instagram-auth]
+verify_jwt = true
+
+[functions.tiktok-auth]
+verify_jwt = true
+
+[functions.linkedin-oauth-callback]
+verify_jwt = true
+
+[functions.linkedin-data-sync]
+verify_jwt = true
+
+[functions.linkedin-posts]
+verify_jwt = true
+
+[functions.send-buildera-email]
+verify_jwt = true
+
+[functions.send-verification-email]
+verify_jwt = false
+
+[functions.send-welcome-email]
+verify_jwt = true
+
+[functions.send-password-reset-email]
+verify_jwt = false
+
+[functions.send-company-invitation]
+verify_jwt = true
+
+[functions.accept-company-invitation]
+verify_jwt = false
+
+[functions.fetch-available-models]
+verify_jwt = true
+
+[functions.run-champion-challenge]
+verify_jwt = true
+
+[functions.ai-model-monitoring]
 verify_jwt = true

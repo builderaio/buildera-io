@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { edgeFunctions } from '@/services/edgeFunctions';
 
 interface UseCompanyAgentProps {
   user: any;
@@ -21,15 +22,15 @@ export const useCompanyAgent = ({ user, enabled = true }: UseCompanyAgentProps) 
 
       if (userCompany) {
         // Actualizar el agente con la información más reciente
-        await supabase.functions.invoke('create-company-agent', {
-          body: {
-            user_id: user.user_id,
-            company_id: userCompany.company_id
-          }
-        });
+        const { error } = await edgeFunctions.business.createCompanyAgent(
+          user.user_id,
+          userCompany.company_id
+        );
         
-        console.log('Company agent updated successfully');
-        return userCompany; // Retornar para uso en realtime listeners
+        if (!error) {
+          console.log('Company agent updated successfully');
+        }
+        return userCompany;
       }
     } catch (error) {
       console.error('Error updating company agent:', error);

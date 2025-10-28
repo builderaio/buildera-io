@@ -1,59 +1,38 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { edgeFunctions } from '@/services/edgeFunctions';
+import type { CompanyData } from '@/services/edgeFunctions/types';
 
-interface CompanyDataResult {
-  objectives: any[];
-  audiences: any[];
-  company_id: string;
-}
-
+/**
+ * Hook to fetch company data (objectives and audiences)
+ * Uses the centralized Edge Functions service
+ */
 export const useCompanyData = (companyId: string | undefined) => {
   return useQuery({
     queryKey: ['company-data', companyId],
-    queryFn: async (): Promise<CompanyDataResult> => {
+    queryFn: async (): Promise<CompanyData> => {
       if (!companyId) {
         throw new Error('No company ID provided');
       }
 
-      console.log('🔄 [useCompanyData] Fetching data for company:', companyId);
+      console.log('🔄 [useCompanyData] Fetching via edgeFunctions.data.getCompanyData');
 
-      // Direct Supabase query with proper error handling
-      const [objectivesResult, audiencesResult] = await Promise.all([
-        supabase
-          .from('company_objectives')
-          .select('*')
-          .eq('company_id', companyId)
-          .eq('status', 'active')
-          .order('priority', { ascending: true }),
-        supabase
-          .from('company_audiences')
-          .select('*')
-          .eq('company_id', companyId)
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-      ]);
+      const { data, error } = await edgeFunctions.data.getCompanyData(companyId);
 
-      if (objectivesResult.error) {
-        console.error('❌ Error fetching objectives:', objectivesResult.error);
-      }
-      if (audiencesResult.error) {
-        console.error('❌ Error fetching audiences:', audiencesResult.error);
+      if (error) {
+        console.error('❌ [useCompanyData] Error:', error);
+        throw error;
       }
 
-      const objectives = objectivesResult.data || [];
-      const audiences = audiencesResult.data || [];
+      if (!data) {
+        throw new Error('No data returned');
+      }
 
-      console.log('✅ [useCompanyData] Data fetched:', {
-        objectives: objectives.length,
-        audiences: audiences.length,
-        company_id: companyId
+      console.log('✅ [useCompanyData] Success:', {
+        objectives: data.objectives.length,
+        audiences: data.audiences.length
       });
 
-      return {
-        objectives,
-        audiences,
-        company_id: companyId
-      };
+      return data;
     },
     enabled: !!companyId,
     staleTime: 1000 * 60 * 5, // 5 minutes

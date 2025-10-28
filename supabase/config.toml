@@ -1,4 +1,7 @@
 project_id = "ubhzzppmkhxbuiajfswa"
 
+[functions.get-company-data]
+verify_jwt = true
+
 [functions.marketing-hub-marketing-strategy]
 verify_jwt = true

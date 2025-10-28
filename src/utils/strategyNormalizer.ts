@@ -26,11 +26,17 @@ export function normalizeStrategy(rawData: any): MarketingStrategy {
   
   // Normalizar ai_insights según su tipo
   if (aiInsights) {
-    console.log('✅ [normalizeStrategy] AI Insights found:', {
-      type: typeof aiInsights,
-      isArray: Array.isArray(aiInsights),
-      keysOrLength: Array.isArray(aiInsights) ? aiInsights.length : (typeof aiInsights === 'object' ? Object.keys(aiInsights) : 'N/A')
-    });
+    try {
+      console.log('✅ [normalizeStrategy] AI Insights found:', {
+        type: typeof aiInsights,
+        isArray: Array.isArray(aiInsights),
+        keysOrLength: Array.isArray(aiInsights) 
+          ? aiInsights.length 
+          : (typeof aiInsights === 'object' && aiInsights !== null ? Object.keys(aiInsights) : 'N/A')
+      });
+    } catch (e) {
+      console.warn('⚠️ [normalizeStrategy] Error logging AI Insights:', e);
+    }
   } else {
     console.warn('⚠️ [normalizeStrategy] AI Insights NOT found in strategy data');
   }

@@ -123,17 +123,13 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
     (window as any).getCurrentCampaignStepData = () => {
       if (!selectedObjective || !campaignName?.trim()) return null;
 
-      const selectedCompanyObjectives = companyObjectives.filter((obj: any) => 
-        (targetMetrics.selectedObjectives || []).includes(obj.id)
-      );
-
       return {
         type: selectedObjective,
         name: campaignName,
         description,
         target_metrics: targetMetrics,
-        company_objectives: selectedCompanyObjectives,
-        selected_objectives_ids: targetMetrics.selectedObjectives || [],
+        company_objective: targetMetrics.companyObjective || null,
+        selected_objective_id: targetMetrics.selectedObjective || null,
         goal: `${selectedObjectiveData?.title}: ${campaignName}`
       };
     };
@@ -141,7 +137,7 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
     return () => {
       delete (window as any).getCurrentCampaignStepData;
     };
-  }, [selectedObjective, campaignName, description, targetMetrics, companyObjectives, selectedObjectiveData]);
+  }, [selectedObjective, campaignName, description, targetMetrics, selectedObjectiveData]);
 
   const handleMetricChange = (metric: string, value: string) => {
     setTargetMetrics(prev => ({
@@ -153,17 +149,13 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
   const handleSubmit = () => {
     if (!selectedObjective || !campaignName) return;
 
-    const selectedCompanyObjectives = companyObjectives.filter(obj => 
-      targetMetrics.selectedObjectives?.includes(obj.id)
-    );
-
     const objectiveData = {
       type: selectedObjective,
       name: campaignName,
       description,
       target_metrics: targetMetrics,
-      company_objectives: selectedCompanyObjectives,
-      selected_objectives_ids: targetMetrics.selectedObjectives || [],
+      company_objective: targetMetrics.companyObjective || null,
+      selected_objective_id: targetMetrics.selectedObjective || null,
       goal: `${selectedObjectiveData?.title}: ${campaignName}`
     };
 
@@ -350,10 +342,10 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
-            Objetivos de Crecimiento de la Empresa
+            Objetivo de Crecimiento de la Empresa
           </CardTitle>
           <p className="text-muted-foreground">
-            Selecciona los objetivos estratégicos que esta campaña ayudará a alcanzar
+            Selecciona el objetivo estratégico principal que esta campaña ayudará a alcanzar
           </p>
         </CardHeader>
         <CardContent>
@@ -364,79 +356,77 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
             </div>
           ) : companyObjectives.length > 0 ? (
             <div className="space-y-4">
-              {companyObjectives.map((objective: any) => (
-                <div
-                  key={objective.id}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:scale-[1.02] ${
-                    targetMetrics.selectedObjectives?.includes(objective.id)
-                      ? 'border-primary bg-primary/5 shadow-lg' 
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => {
-                    const currentSelected = targetMetrics.selectedObjectives || [];
-                    const isSelected = currentSelected.includes(objective.id);
-                    const newSelected = isSelected 
-                      ? currentSelected.filter(id => id !== objective.id)
-                      : [...currentSelected, objective.id];
-                    
-                    setTargetMetrics(prev => ({
-                      ...prev,
-                      selectedObjectives: newSelected,
-                      companyObjectives: companyObjectives.filter(obj => newSelected.includes(obj.id))
-                    }));
-                  }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-base text-foreground mb-2">
-                        {objective.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {objective.description}
-                      </p>
-                      
-                      {objective.metrics && objective.metrics.length > 0 && (
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium text-foreground">Métricas clave:</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {objective.metrics.map((metric: any, index: number) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {metric.name}: {metric.target_value} {metric.unit}
-                              </Badge>
-                            ))}
+              {companyObjectives.map((objective: any) => {
+                const isSelected = targetMetrics.selectedObjective === objective.id;
+                
+                return (
+                  <div
+                    key={objective.id}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:scale-[1.02] ${
+                      isSelected
+                        ? 'border-primary bg-primary/5 shadow-lg' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => {
+                      setTargetMetrics(prev => ({
+                        ...prev,
+                        selectedObjective: isSelected ? null : objective.id,
+                        companyObjective: isSelected ? null : objective
+                      }));
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-base text-foreground mb-2">
+                          {objective.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {objective.description}
+                        </p>
+                        
+                        {objective.metrics && objective.metrics.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-medium text-foreground">Métricas clave:</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {objective.metrics.map((metric: any, index: number) => (
+                                <Badge key={index} variant="secondary" className="text-xs">
+                                  {metric.name}: {metric.target_value} {metric.unit}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                        
+                        {objective.deadline && (
+                          <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            Fecha límite: {new Date(objective.deadline).toLocaleDateString('es-ES')}
+                          </div>
+                        )}
+                      </div>
                       
-                      {objective.deadline && (
-                        <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="h-4 w-4" />
-                          Fecha límite: {new Date(objective.deadline).toLocaleDateString('es-ES')}
-                        </div>
+                      {isSelected && (
+                        <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 ml-4" />
                       )}
                     </div>
                     
-                    {targetMetrics.selectedObjectives?.includes(objective.id) && (
-                      <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 ml-4" />
-                    )}
-                  </div>
-                  
-                  <div className="mt-3 flex items-center justify-between">
-                    <Badge 
-                      variant={objective.priority === 1 ? 'destructive' : 
-                             objective.priority === 2 ? 'default' : 'secondary'}
-                      className="text-xs"
-                    >
-                      Prioridad {objective.priority === 1 ? 'Alta' : 
-                                objective.priority === 2 ? 'Media' : 'Baja'}
-                    </Badge>
-                    
-                    <div className="text-xs text-muted-foreground">
-                      Progreso: {objective.progress || 0}%
+                    <div className="mt-3 flex items-center justify-between">
+                      <Badge 
+                        variant={objective.priority === 1 ? 'destructive' : 
+                               objective.priority === 2 ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        Prioridad {objective.priority === 1 ? 'Alta' : 
+                                  objective.priority === 2 ? 'Media' : 'Baja'}
+                      </Badge>
+                      
+                      <div className="text-xs text-muted-foreground">
+                        Progreso: {objective.progress || 0}%
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8">

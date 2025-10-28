@@ -30,47 +30,43 @@ interface TargetAudienceProps {
 
 export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading, companyData }: TargetAudienceProps) => {
   const [existingAudiences, setExistingAudiences] = useState([]);
-  const [selectedAudiences, setSelectedAudiences] = useState(campaignData.audiences || []);
+  const [selectedAudience, setSelectedAudience] = useState(campaignData.audience || null);
   const [loadingAudiences, setLoadingAudiences] = useState(true);
   const { toast } = useToast();
 
   // Set up auto-save function for when user navigates away
   useEffect(() => {
     const saveCurrentData = () => {
-      if (selectedAudiences.length > 0 && onDataChange) {
-        const buyerPersonas = selectedAudiences.map(audience => {
-          // Build a readable location string while also passing the structured locations
-          const loc = audience.geographic_locations || {};
-          let ubicacionText = '';
-          if (Array.isArray(loc.cities) && loc.cities.length) {
-            ubicacionText = loc.cities.slice(0, 2).join(', ');
-          } else if (Array.isArray(loc.regions) && loc.regions.length) {
-            ubicacionText = loc.regions.slice(0, 2).join(', ');
-          } else if (Array.isArray(loc.countries) && loc.countries.length) {
-            ubicacionText = loc.countries.slice(0, 2).join(', ');
-          } else if (Object.keys(loc).length > 0) {
-            ubicacionText = Object.keys(loc)[0];
-          }
+      if (selectedAudience && onDataChange) {
+        const loc = selectedAudience.geographic_locations || {};
+        let ubicacionText = '';
+        if (Array.isArray(loc.cities) && loc.cities.length) {
+          ubicacionText = loc.cities.slice(0, 2).join(', ');
+        } else if (Array.isArray(loc.regions) && loc.regions.length) {
+          ubicacionText = loc.regions.slice(0, 2).join(', ');
+        } else if (Array.isArray(loc.countries) && loc.countries.length) {
+          ubicacionText = loc.countries.slice(0, 2).join(', ');
+        } else if (Object.keys(loc).length > 0) {
+          ubicacionText = Object.keys(loc)[0];
+        }
 
-        return ({
-            id: audience.id,
-            nombre_ficticio: audience.name,
-            descripcion: audience.description,
-            demograficos: {
-              edad: audience.age_ranges ? Object.keys(audience.age_ranges)[0] : '',
-              ubicacion: ubicacionText,
-              plataforma_preferida: audience.platform_preferences ? Object.keys(audience.platform_preferences)[0] : ''
-            },
-            geographic_locations: audience.geographic_locations || {},
-            intereses: audience.interests || [],
-            comportamientos: audience.behaviors || []
-          });
-        });
+        const buyerPersona = {
+          id: selectedAudience.id,
+          nombre_ficticio: selectedAudience.name,
+          descripcion: selectedAudience.description,
+          demograficos: {
+            edad: selectedAudience.age_ranges ? Object.keys(selectedAudience.age_ranges)[0] : '',
+            ubicacion: ubicacionText,
+            plataforma_preferida: selectedAudience.platform_preferences ? Object.keys(selectedAudience.platform_preferences)[0] : ''
+          },
+          geographic_locations: selectedAudience.geographic_locations || {},
+          intereses: selectedAudience.interests || [],
+          comportamientos: selectedAudience.behaviors || []
+        };
 
         const audienceData = {
-          selected_audiences: selectedAudiences,
-          buyer_personas: buyerPersonas,
-          audience_count: selectedAudiences.length
+          selected_audience: selectedAudience,
+          buyer_persona: buyerPersona
         };
 
         onDataChange(audienceData);
@@ -85,7 +81,7 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
       saveCurrentData();
       delete (window as any).savePendingCampaignData;
     };
-  }, [selectedAudiences, onDataChange]);
+  }, [selectedAudience, onDataChange]);
 
   // Load existing audiences
   useEffect(() => {
@@ -119,65 +115,61 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
   }, [companyData?.id]);
 
   const toggleAudienceSelection = (audience) => {
-    setSelectedAudiences(prev => {
-      const isSelected = prev.some(a => a.id === audience.id);
-      if (isSelected) {
-        return prev.filter(a => a.id !== audience.id);
-      } else {
-        return [...prev, audience];
+    setSelectedAudience(prev => {
+      // Si ya está seleccionada, deseleccionar
+      if (prev?.id === audience.id) {
+        return null;
       }
+      // Si no, seleccionar esta audiencia
+      return audience;
     });
   };
 
   const handleComplete = () => {
-    if (selectedAudiences.length === 0) {
+    if (!selectedAudience) {
       toast({
-        title: "Selecciona audiencias",
-        description: "Debes seleccionar al menos una audiencia para la campaña",
+        title: "Selecciona una audiencia",
+        description: "Debes seleccionar una audiencia para la campaña",
         variant: "destructive"
       });
       return;
     }
 
-    // Convert selected audiences to buyer_personas format for compatibility with strategy step
-    const buyerPersonas = selectedAudiences.map(audience => {
-      const loc = audience.geographic_locations || {};
-      let ubicacionText = '';
-      if (Array.isArray(loc.cities) && loc.cities.length) {
-        ubicacionText = loc.cities.slice(0, 2).join(', ');
-      } else if (Array.isArray(loc.regions) && loc.regions.length) {
-        ubicacionText = loc.regions.slice(0, 2).join(', ');
-      } else if (Array.isArray(loc.countries) && loc.countries.length) {
-        ubicacionText = loc.countries.slice(0, 2).join(', ');
-      } else if (Object.keys(loc).length > 0) {
-        ubicacionText = Object.keys(loc)[0];
-      }
+    const loc = selectedAudience.geographic_locations || {};
+    let ubicacionText = '';
+    if (Array.isArray(loc.cities) && loc.cities.length) {
+      ubicacionText = loc.cities.slice(0, 2).join(', ');
+    } else if (Array.isArray(loc.regions) && loc.regions.length) {
+      ubicacionText = loc.regions.slice(0, 2).join(', ');
+    } else if (Array.isArray(loc.countries) && loc.countries.length) {
+      ubicacionText = loc.countries.slice(0, 2).join(', ');
+    } else if (Object.keys(loc).length > 0) {
+      ubicacionText = Object.keys(loc)[0];
+    }
 
-      return ({
-        id: audience.id,
-        nombre_ficticio: audience.name,
-        descripcion: audience.description,
-        demograficos: {
-          edad: audience.age_ranges ? Object.keys(audience.age_ranges)[0] : '',
-          ubicacion: ubicacionText,
-          plataforma_preferida: audience.platform_preferences ? Object.keys(audience.platform_preferences)[0] : ''
-        },
-        geographic_locations: audience.geographic_locations || {},
-        intereses: audience.interests || [],
-        comportamientos: audience.behaviors || []
-      });
-    });
+    const buyerPersona = {
+      id: selectedAudience.id,
+      nombre_ficticio: selectedAudience.name,
+      descripcion: selectedAudience.description,
+      demograficos: {
+        edad: selectedAudience.age_ranges ? Object.keys(selectedAudience.age_ranges)[0] : '',
+        ubicacion: ubicacionText,
+        plataforma_preferida: selectedAudience.platform_preferences ? Object.keys(selectedAudience.platform_preferences)[0] : ''
+      },
+      geographic_locations: selectedAudience.geographic_locations || {},
+      intereses: selectedAudience.interests || [],
+      comportamientos: selectedAudience.behaviors || []
+    };
 
     const audienceData = {
-      selected_audiences: selectedAudiences,
-      buyer_personas: buyerPersonas,
-      audience_count: selectedAudiences.length
+      selected_audience: selectedAudience,
+      buyer_persona: buyerPersona
     };
 
     onComplete(audienceData);
   };
 
-  const canProceed = selectedAudiences.length > 0;
+  const canProceed = selectedAudience !== null;
 
   return (
     <div className="space-y-6">
@@ -186,10 +178,10 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-green-800">
             <Users className="h-6 w-6" />
-            Selecciona las Audiencias para tu Campaña
+            Selecciona la Audiencia para tu Campaña
           </CardTitle>
           <p className="text-green-600">
-            Elige las audiencias creadas para tu empresa que participarán en esta campaña
+            Elige la audiencia principal que participará en esta campaña
           </p>
         </CardHeader>
       </Card>
@@ -202,7 +194,7 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
             Audiencias Disponibles
           </CardTitle>
           <p className="text-muted-foreground">
-            Selecciona las audiencias que quieres incluir en esta campaña
+            Selecciona la audiencia principal para esta campaña
           </p>
         </CardHeader>
         <CardContent>
@@ -214,7 +206,7 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
           ) : existingAudiences.length > 0 ? (
             <div className="space-y-4">
               {existingAudiences.map((audience) => {
-                const isSelected = selectedAudiences.some(a => a.id === audience.id);
+                const isSelected = selectedAudience?.id === audience.id;
                 
                 return (
                   <div
@@ -292,18 +284,14 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
                 );
               })}
               
-              {selectedAudiences.length > 0 && (
+              {selectedAudience && (
                 <div className="mt-6 p-4 bg-primary/10 rounded-lg">
                   <h4 className="font-semibold text-primary mb-2">
-                    Audiencias Seleccionadas: {selectedAudiences.length}
+                    Audiencia Seleccionada
                   </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedAudiences.map(audience => (
-                      <Badge key={audience.id} className="bg-primary/20 text-primary">
-                        {audience.name}
-                      </Badge>
-                    ))}
-                  </div>
+                  <Badge className="bg-primary/20 text-primary">
+                    {selectedAudience.name}
+                  </Badge>
                 </div>
               )}
             </div>

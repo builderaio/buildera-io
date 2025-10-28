@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -74,13 +75,37 @@ serve(async (req) => {
 
     console.log('📊 Calling AI for audience intelligence analysis...');
 
-    // 5. Invocar función universal de IA con estructura compatible con content-insights-generator
-    const { data: aiResponse, error: aiError } = await supabase.functions.invoke('universal-ai-handler', {
-      body: {
-        functionName: 'audience_intelligence_analysis',
-        messages: [{
-          role: 'system',
-          content: `Eres un experto en marketing digital y análisis de audiencias. Analiza los datos de redes sociales y genera insights ESPECÍFICOS para esta empresa.
+    // 5. Obtener OpenAI API key
+    const { data: apiKeyData } = await supabase
+      .from('llm_api_keys')
+      .select('api_key_hash')
+      .eq('provider', 'openai')
+      .eq('status', 'active')
+      .maybeSingle();
+
+    const openAIApiKey = apiKeyData?.api_key_hash || Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    // 6. Preparar contexto descriptivo
+    let contextDescription = '';
+    
+    if (analysisInput.empresa?.nombre) {
+      contextDescription += `\n📊 EMPRESA: ${analysisInput.empresa.nombre}`;
+      if (analysisInput.empresa.industria) contextDescription += `\nIndustria: ${analysisInput.empresa.industria}`;
+      if (analysisInput.empresa.descripcion) contextDescription += `\nDescripción: ${analysisInput.empresa.descripcion}`;
+      contextDescription += '\n';
+    }
+    
+    if (analysisInput.redes_sociales?.length > 0) {
+      contextDescription += `\n👥 REDES SOCIALES (${analysisInput.redes_sociales.length} cuentas):\n`;
+      analysisInput.redes_sociales.forEach((red: any) => {
+        contextDescription += `- ${red.plataforma}: ${red.seguidores} seguidores\n`;
+      });
+    }
+
+    const systemPrompt = `Eres un experto en marketing digital y análisis de audiencias. Analiza los datos de redes sociales y genera insights ESPECÍFICOS para esta empresa.
 
 INSTRUCCIONES CRÍTICAS:
 1. **OBLIGATORIO**: Usa el nombre de la empresa, su industria y estrategia en tus análisis
@@ -93,11 +118,27 @@ INSTRUCCIONES CRÍTICAS:
 
 Debes generar EXACTAMENTE:
 - 2-3 audience_insights (insights sobre la audiencia actual)
-- 3-4 content_ideas (ideas de contenido personalizadas)`
-        }, {
-          role: 'user',
-          content: `Analiza los datos y genera insights y contenido ESPECÍFICO para esta empresa.\n\nDATOS:\n${JSON.stringify(analysisInput, null, 2)}\n\nUsa la herramienta emit_insights.`
-        }],
+- 3-4 content_ideas (ideas de contenido personalizadas)`;
+
+    const userPrompt = `${contextDescription}
+
+Por favor, genera insights y contenido ESPECÍFICAMENTE diseñado para esta empresa y su contexto. NO generes contenido genérico.`;
+
+    // 7. Llamar a OpenAI directamente (igual que content-insights-generator)
+    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
         tools: [
           {
             type: 'function',
@@ -114,10 +155,11 @@ Debes generar EXACTAMENTE:
                     items: {
                       type: 'object',
                       properties: {
-                        title: { type: 'string', description: 'Título del insight sobre la audiencia' },
-                        strategy: { type: 'string', description: 'Descripción del insight y su implicación estratégica' }
+                        title: { type: 'string' },
+                        strategy: { type: 'string' }
                       },
-                      required: ['title', 'strategy']
+                      required: ['title', 'strategy'],
+                      additionalProperties: false
                     }
                   },
                   content_ideas: {
@@ -127,49 +169,50 @@ Debes generar EXACTAMENTE:
                     items: {
                       type: 'object',
                       properties: {
-                        title: { type: 'string', description: 'Título específico del contenido' },
-                        format: { type: 'string', description: 'Formato: post/video/carrusel/story/reel' },
-                        platform: { type: 'string', enum: ['instagram', 'linkedin', 'tiktok', 'facebook', 'twitter'], description: 'Plataforma recomendada' },
-                        hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags específicos de la industria' },
-                        timing: { type: 'string', description: 'Hora/día sugerido (ej: Lunes 10:00 AM)' },
-                        strategy: { type: 'string', description: 'Por qué esta idea es relevante para esta empresa' }
+                        title: { type: 'string' },
+                        format: { type: 'string' },
+                        platform: { type: 'string', enum: ['instagram', 'linkedin', 'tiktok', 'facebook', 'twitter'] },
+                        hashtags: { type: 'array', items: { type: 'string' } },
+                        timing: { type: 'string' },
+                        strategy: { type: 'string' }
                       },
-                      required: ['title', 'format', 'platform', 'strategy']
+                      required: ['title', 'format', 'platform', 'strategy'],
+                      additionalProperties: false
                     }
                   }
                 },
-                required: ['audience_insights', 'content_ideas']
+                required: ['audience_insights', 'content_ideas'],
+                additionalProperties: false
               }
             }
           }
         ],
-        tool_choice: { type: 'function', function: { name: 'emit_insights' } },
-        max_completion_tokens: 3000
-      }
+        tool_choice: { type: 'function', function: { name: 'emit_insights' } }
+      }),
     });
 
-    if (aiError) {
-      console.error('❌ AI analysis error:', aiError);
-      throw aiError;
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('OpenAI API error:', aiResponse.status, errorText);
+      throw new Error(`OpenAI API error: ${aiResponse.status}`);
     }
 
+    const data = await aiResponse.json();
     console.log('✅ AI analysis completed');
 
-    // Parse structured output from tool_calls (misma lógica que content-insights-generator)
+    // 8. Parse structured output from tool_calls (misma lógica que content-insights-generator)
     let structuredInsights: any = null;
     
     try {
-      const toolCall = (
-        aiResponse?.choices?.[0]?.message?.tool_calls?.[0] ??
-        aiResponse?.response?.choices?.[0]?.message?.tool_calls?.[0] ??
-        aiResponse?.data?.choices?.[0]?.message?.tool_calls?.[0]
-      );
+      if (data.choices[0].message.tool_calls && data.choices[0].message.tool_calls.length > 0) {
+        const toolCall = data.choices[0].message.tool_calls[0];
+        if (toolCall.function.name === 'emit_insights') {
+          structuredInsights = JSON.parse(toolCall.function.arguments);
+          console.log('✅ Generated structured insights:', JSON.stringify(structuredInsights, null, 2));
+        }
+      }
 
-      if (toolCall?.function?.name === 'emit_insights') {
-        const args = toolCall.function.arguments;
-        structuredInsights = typeof args === 'string' ? JSON.parse(args) : args;
-        console.log('✅ Generated structured insights:', JSON.stringify(structuredInsights, null, 2));
-      } else {
+      if (!structuredInsights) {
         console.warn('⚠️ No tool_calls found in AI response');
         throw new Error('AI did not use emit_insights tool');
       }
@@ -184,7 +227,7 @@ Debes generar EXACTAMENTE:
 
     } catch (parseError) {
       console.error('❌ Error parsing AI response:', parseError);
-      console.error('Full response:', JSON.stringify(aiResponse, null, 2).slice(0, 2000));
+      console.error('Full response:', JSON.stringify(data, null, 2).slice(0, 2000));
       return new Response(
         JSON.stringify({ 
           error: 'Failed to parse AI response', 
@@ -194,7 +237,7 @@ Debes generar EXACTAMENTE:
       );
     }
 
-    // 6. Guardar insights en content_insights (misma tabla que content-insights-generator)
+    // 9. Guardar insights en content_insights (misma tabla que content-insights-generator)
     const insightsToSave = [];
     
     // Preparar audience insights

@@ -71,24 +71,42 @@ export const AudienceInsightsPanel = ({
 
   const loadExistingInsights = async () => {
     try {
-      const { data, error } = await supabase
-        .from('audience_insights')
+      // Cargar desde content_insights (nueva estructura)
+      const { data: audienceData, error: audienceError } = await supabase
+        .from('content_insights')
         .select('*')
         .eq('user_id', userId)
-        .eq('insight_type', 'ai_generated')
-        .order('last_ai_analysis_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('insight_type', 'audience')
+        .eq('source', 'ai_generated')
+        .order('created_at', { ascending: false })
+        .limit(3);
 
-      if (error) throw error;
+      const { data: contentData, error: contentError } = await supabase
+        .from('content_insights')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('insight_type', 'content_idea')
+        .eq('source', 'ai_generated')
+        .order('created_at', { ascending: false })
+        .limit(4);
 
-      if (data) {
-        const rawInsights = data.raw_insights as any;
+      if (audienceError) throw audienceError;
+      if (contentError) throw contentError;
+
+      if (audienceData || contentData) {
         setInsights({
-          audience_segments: data.audience_segments,
-          key_insights: rawInsights?.key_insights || [],
-          recommendations: data.ai_recommendations,
-          detailed_analysis: data.ai_generated_insights,
+          audience_insights: audienceData?.map(d => ({
+            title: d.title,
+            strategy: d.content
+          })) || [],
+          content_ideas: contentData?.map(d => ({
+            title: d.title,
+            format: d.format,
+            platform: d.platform,
+            hashtags: d.hashtags,
+            timing: d.timing,
+            strategy: d.content
+          })) || [],
         });
       }
     } catch (error) {
@@ -176,125 +194,70 @@ export const AudienceInsightsPanel = ({
           </Button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 bg-primary/5 rounded-lg">
-            <Users className="h-5 w-5 mx-auto mb-1 text-primary" />
-            <div className="text-2xl font-bold text-foreground">
-              {insights.audience_segments?.length || 0}
-            </div>
-            <div className="text-xs text-muted-foreground">Segmentos</div>
-          </div>
+        <div className="grid grid-cols-2 gap-4">
           <div className="text-center p-3 bg-primary/5 rounded-lg">
             <Target className="h-5 w-5 mx-auto mb-1 text-primary" />
             <div className="text-2xl font-bold text-foreground">
-              {insights.key_insights?.length || 0}
+              {insights.audience_insights?.length || 0}
             </div>
-            <div className="text-xs text-muted-foreground">Insights</div>
+            <div className="text-xs text-muted-foreground">Insights de Audiencia</div>
           </div>
           <div className="text-center p-3 bg-primary/5 rounded-lg">
             <TrendingUp className="h-5 w-5 mx-auto mb-1 text-primary" />
             <div className="text-2xl font-bold text-foreground">
-              {insights.recommendations?.length || 0}
+              {insights.content_ideas?.length || 0}
             </div>
-            <div className="text-xs text-muted-foreground">Acciones</div>
+            <div className="text-xs text-muted-foreground">Ideas de Contenido</div>
           </div>
         </div>
       </Card>
 
       {/* Tabs de contenido */}
-      <Tabs defaultValue="segments" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="segments">Segmentos</TabsTrigger>
-          <TabsTrigger value="insights">Insights</TabsTrigger>
-          <TabsTrigger value="recommendations">Acciones</TabsTrigger>
-          <TabsTrigger value="analysis">Análisis</TabsTrigger>
+      <Tabs defaultValue="audience" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="audience">Insights de Audiencia</TabsTrigger>
+          <TabsTrigger value="ideas">Ideas de Contenido</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="segments" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {insights.audience_segments?.map((segment: any, idx: number) => (
-              <AudienceSegmentCard key={idx} {...segment} />
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="insights" className="space-y-3">
-          {insights.key_insights?.map((insight: any, idx: number) => (
-            <InsightsCard key={idx} {...insight} />
+        <TabsContent value="audience" className="space-y-3">
+          {insights.audience_insights?.map((insight: any, idx: number) => (
+            <Card key={idx} className="p-4 border-l-4 border-primary">
+              <h4 className="font-semibold text-foreground mb-2">{insight.title}</h4>
+              <p className="text-sm text-muted-foreground">{insight.strategy}</p>
+            </Card>
           ))}
+          {(!insights.audience_insights || insights.audience_insights.length === 0) && (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No hay insights de audiencia disponibles.</p>
+            </Card>
+          )}
         </TabsContent>
 
-        <TabsContent value="recommendations" className="space-y-4">
-          <RecommendationsList 
-            recommendations={insights.recommendations || []}
-            onApply={(rec) => {
-              toast({
-                title: "Recomendación guardada",
-                description: "Esta acción ha sido agregada a tu lista de tareas.",
-              });
-            }}
-          />
-        </TabsContent>
-
-        <TabsContent value="analysis" className="space-y-4">
-          {insights.detailed_analysis && (
-            <>
-              {insights.detailed_analysis.fortalezas && (
-                <Card className="p-4 border-l-4 border-green-500">
-                  <h4 className="font-semibold text-foreground mb-2">💪 Fortalezas</h4>
-                  <ul className="space-y-1">
-                    {insights.detailed_analysis.fortalezas.map((item: string, idx: number) => (
-                      <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                        <Badge className="mt-0.5 h-1.5 w-1.5 p-0 rounded-full bg-green-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              )}
-
-              {insights.detailed_analysis.oportunidades && (
-                <Card className="p-4 border-l-4 border-blue-500">
-                  <h4 className="font-semibold text-foreground mb-2">🎯 Oportunidades</h4>
-                  <ul className="space-y-1">
-                    {insights.detailed_analysis.oportunidades.map((item: string, idx: number) => (
-                      <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                        <Badge className="mt-0.5 h-1.5 w-1.5 p-0 rounded-full bg-blue-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              )}
-
-              {insights.detailed_analysis.debilidades && (
-                <Card className="p-4 border-l-4 border-yellow-500">
-                  <h4 className="font-semibold text-foreground mb-2">⚠️ Áreas de mejora</h4>
-                  <ul className="space-y-1">
-                    {insights.detailed_analysis.debilidades.map((item: string, idx: number) => (
-                      <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                        <Badge className="mt-0.5 h-1.5 w-1.5 p-0 rounded-full bg-yellow-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              )}
-
-              {insights.detailed_analysis.tendencias_emergentes && (
-                <Card className="p-4 border-l-4 border-purple-500">
-                  <h4 className="font-semibold text-foreground mb-2">📈 Tendencias emergentes</h4>
-                  <ul className="space-y-1">
-                    {insights.detailed_analysis.tendencias_emergentes.map((item: string, idx: number) => (
-                      <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                        <Badge className="mt-0.5 h-1.5 w-1.5 p-0 rounded-full bg-purple-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </Card>
-              )}
-            </>
+        <TabsContent value="ideas" className="space-y-3">
+          {insights.content_ideas?.map((idea: any, idx: number) => (
+            <Card key={idx} className="p-4">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-semibold text-foreground">{idea.title}</h4>
+                <Badge variant="outline">{idea.platform}</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">{idea.strategy}</p>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {idea.hashtags?.map((tag: string, tagIdx: number) => (
+                  <Badge key={tagIdx} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Formato: {idea.format}</span>
+                {idea.timing && <span>⏰ {idea.timing}</span>}
+              </div>
+            </Card>
+          ))}
+          {(!insights.content_ideas || insights.content_ideas.length === 0) && (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No hay ideas de contenido disponibles.</p>
+            </Card>
           )}
         </TabsContent>
       </Tabs>

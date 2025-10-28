@@ -21,7 +21,7 @@ export type Database = {
           created_at: string | null
           details: Json | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           resource_id: string | null
           resource_type: string
           user_agent: string | null
@@ -32,7 +32,7 @@ export type Database = {
           created_at?: string | null
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resource_id?: string | null
           resource_type: string
           user_agent?: string | null
@@ -43,7 +43,7 @@ export type Database = {
           created_at?: string | null
           details?: Json | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resource_id?: string | null
           resource_type?: string
           user_agent?: string | null
@@ -4124,7 +4124,7 @@ export type Database = {
           avg_purchasing_power: number | null
           city: string | null
           confidence_score: number | null
-          coordinates: unknown | null
+          coordinates: unknown
           country: string
           country_code: string | null
           created_at: string
@@ -4151,7 +4151,7 @@ export type Database = {
           avg_purchasing_power?: number | null
           city?: string | null
           confidence_score?: number | null
-          coordinates?: unknown | null
+          coordinates?: unknown
           country: string
           country_code?: string | null
           created_at?: string
@@ -4178,7 +4178,7 @@ export type Database = {
           avg_purchasing_power?: number | null
           city?: string | null
           confidence_score?: number | null
-          coordinates?: unknown | null
+          coordinates?: unknown
           country?: string
           country_code?: string | null
           created_at?: string
@@ -5721,7 +5721,7 @@ export type Database = {
           details: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           risk_level: string | null
           user_agent: string | null
           user_id: string | null
@@ -5731,7 +5731,7 @@ export type Database = {
           details?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           risk_level?: string | null
           user_agent?: string | null
           user_id?: string | null
@@ -5741,7 +5741,7 @@ export type Database = {
           details?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           risk_level?: string | null
           user_agent?: string | null
           user_id?: string | null
@@ -7746,14 +7746,7 @@ export type Database = {
         Args: { _provider: string; _user_id: string }
         Returns: undefined
       }
-      assign_admin_role: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
-      binary_quantize: {
-        Args: { "": string } | { "": unknown }
-        Returns: unknown
-      }
+      assign_admin_role: { Args: { target_user_id: string }; Returns: boolean }
       calculate_competitive_landscape_score: {
         Args: { analysis_id_param: string }
         Returns: number
@@ -7766,10 +7759,7 @@ export type Database = {
         Args: { platform_param: string; user_id_param: string }
         Returns: Json
       }
-      calculate_user_level: {
-        Args: { total_points: number }
-        Returns: number
-      }
+      calculate_user_level: { Args: { total_points: number }; Returns: number }
       check_usage_limit: {
         Args: {
           limit_key_param: string
@@ -7778,9 +7768,19 @@ export type Database = {
         }
         Returns: boolean
       }
-      create_company_with_owner: {
-        Args:
-          | {
+      create_company_with_owner:
+        | {
+            Args: {
+              company_description?: string
+              company_name: string
+              company_size?: string
+              industry_sector?: string
+              website_url?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
               company_description?: string
               company_name: string
               company_size?: string
@@ -7788,39 +7788,17 @@ export type Database = {
               user_id_param?: string
               website_url?: string
             }
-          | {
-              company_description?: string
-              company_name: string
-              company_size?: string
-              industry_sector?: string
-              website_url?: string
-            }
-        Returns: string
-      }
-      current_user_is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+            Returns: string
+          }
+      current_user_is_admin: { Args: never; Returns: boolean }
       deactivate_company: {
         Args: { target_company_id: string }
         Returns: boolean
       }
-      deactivate_user: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
-      expire_old_invitations: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      extract_hashtags: {
-        Args: { caption: string }
-        Returns: string[]
-      }
-      extract_mentions: {
-        Args: { caption: string }
-        Returns: string[]
-      }
+      deactivate_user: { Args: { target_user_id: string }; Returns: boolean }
+      expire_old_invitations: { Args: never; Returns: undefined }
+      extract_hashtags: { Args: { caption: string }; Returns: string[] }
+      extract_mentions: { Args: { caption: string }; Returns: string[] }
       get_admin_analytics_data: {
         Args: { end_date: string; start_date: string }
         Returns: {
@@ -7847,14 +7825,14 @@ export type Database = {
         }[]
       }
       get_admin_recent_activity: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           recent_connections: Json
           recent_profiles: Json
         }[]
       }
       get_admin_social_connections: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           facebook_connections: number
           linkedin_connections: number
@@ -7865,7 +7843,7 @@ export type Database = {
         }[]
       }
       get_admin_user_analytics: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           companies: number
           developers: number
@@ -7889,7 +7867,7 @@ export type Database = {
         }[]
       }
       get_all_profiles_admin: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           avatar_url: string
           company_id: string
@@ -7913,7 +7891,7 @@ export type Database = {
         }[]
       }
       get_company_members_with_profiles: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           company_id: string
           email: string
@@ -7958,7 +7936,7 @@ export type Database = {
         }[]
       }
       get_user_stats_admin: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           active_last_30_days: number
           companies: number
@@ -7977,42 +7955,7 @@ export type Database = {
           status: string
         }[]
       }
-      halfvec_avg: {
-        Args: { "": number[] }
-        Returns: unknown
-      }
-      halfvec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      halfvec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      halfvec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
-      }
-      handle_webhook_notification: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      hnsw_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnsw_sparsevec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      hnswhandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
+      handle_webhook_notification: { Args: never; Returns: undefined }
       increment_usage: {
         Args: {
           increment_by?: number
@@ -8021,30 +7964,7 @@ export type Database = {
         }
         Returns: undefined
       }
-      is_admin: {
-        Args: { check_user_id?: string }
-        Returns: boolean
-      }
-      ivfflat_bit_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflat_halfvec_support: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      ivfflathandler: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      l2_norm: {
-        Args: { "": unknown } | { "": unknown }
-        Returns: number
-      }
-      l2_normalize: {
-        Args: { "": string } | { "": unknown } | { "": unknown }
-        Returns: unknown
-      }
+      is_admin: { Args: { check_user_id?: string }; Returns: boolean }
       mark_onboarding_completed: {
         Args: { _registration_method?: string; _user_id: string }
         Returns: undefined
@@ -8053,10 +7973,7 @@ export type Database = {
         Args: { target_company_id: string }
         Returns: boolean
       }
-      reactivate_user: {
-        Args: { target_user_id: string }
-        Returns: boolean
-      }
+      reactivate_user: { Args: { target_user_id: string }; Returns: boolean }
       remove_linked_provider: {
         Args: { _provider: string; _user_id: string }
         Returns: undefined
@@ -8068,18 +7985,6 @@ export type Database = {
           version_number_param: string
         }
         Returns: boolean
-      }
-      sparsevec_out: {
-        Args: { "": unknown }
-        Returns: unknown
-      }
-      sparsevec_send: {
-        Args: { "": unknown }
-        Returns: string
-      }
-      sparsevec_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
       }
       update_user_gamification: {
         Args: { p_points_earned?: number; p_user_id: string }
@@ -8108,30 +8013,6 @@ export type Database = {
       validate_password_strength: {
         Args: { password_input: string }
         Returns: Json
-      }
-      vector_avg: {
-        Args: { "": number[] }
-        Returns: string
-      }
-      vector_dims: {
-        Args: { "": string } | { "": unknown }
-        Returns: number
-      }
-      vector_norm: {
-        Args: { "": string }
-        Returns: number
-      }
-      vector_out: {
-        Args: { "": string }
-        Returns: unknown
-      }
-      vector_send: {
-        Args: { "": string }
-        Returns: string
-      }
-      vector_typmod_in: {
-        Args: { "": unknown[] }
-        Returns: number
       }
     }
     Enums: {

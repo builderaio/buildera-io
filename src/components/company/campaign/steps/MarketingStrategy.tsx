@@ -49,7 +49,14 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
       return;
     }
 
-    if (!campaignData.audiences || campaignData.audiences.length === 0) {
+    // Normalize audiences to array format
+    const audiences = Array.isArray(campaignData.audiences) 
+      ? campaignData.audiences 
+      : campaignData.audiences 
+        ? [campaignData.audiences] 
+        : [];
+
+    if (audiences.length === 0) {
       toast.error('Debes definir al menos una audiencia objetivo');
       return;
     }
@@ -57,7 +64,13 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
     setGenerating(true);
 
     try {
-      const result = await generateStrategy({ campaignData });
+      // Pass normalized campaign data with audiences as array
+      const normalizedCampaignData = {
+        ...campaignData,
+        audiences
+      };
+      
+      const result = await generateStrategy({ campaignData: normalizedCampaignData });
       console.log('🎯 Strategy result received in component:', {
         hasResult: !!result,
         hasCoreMessage: !!result?.core_message,
@@ -172,8 +185,12 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
               <p className="font-medium">{campaignData.objective}</p>
             </div>
             <div>
-              <span className="text-muted-foreground">Audiencias:</span>
-              <p className="font-medium">{campaignData.audiences?.length || 0}</p>
+              <span className="text-muted-foreground">Audiencia:</span>
+              <p className="font-medium">
+                {Array.isArray(campaignData.audiences) 
+                  ? campaignData.audiences[0]?.name || 'No definida'
+                  : campaignData.audiences?.name || 'No definida'}
+              </p>
             </div>
             <div>
               <span className="text-muted-foreground">Empresa:</span>

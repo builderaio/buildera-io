@@ -16,9 +16,22 @@ serve(async (req) => {
     const body = await req.json();
     const { input, retrieve_existing } = body;
     
-    if (!input?.nombre_empresa || !input?.objetivo_de_negocio) {
+    console.log('📥 Received payload:', JSON.stringify({ input, retrieve_existing }, null, 2));
+    
+    if (!input?.nombre_empresa) {
+      console.error('❌ Missing nombre_empresa');
       return new Response(JSON.stringify({ 
-        error: 'Campos requeridos: nombre_empresa, objetivo_de_negocio' 
+        error: 'Campo requerido: nombre_empresa' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!input?.audiencias || !Array.isArray(input.audiencias) || input.audiencias.length === 0) {
+      console.error('❌ Missing or invalid audiencias');
+      return new Response(JSON.stringify({ 
+        error: 'Debes definir al menos una audiencia objetivo' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -87,12 +100,16 @@ serve(async (req) => {
     // Build minimal payload for N8N
     const payload = {
       nombre_empresa: input.nombre_empresa,
-      objetivo_de_negocio: input.objetivo_de_negocio,
+      objetivo_de_negocio: input.objetivo_de_negocio || '',
+      propuesta_valor: input.propuesta_valor || '',
+      sitio_web: input.sitio_web || '',
       nombre_campana: input.nombre_campana || 'Nueva Campaña',
       objetivo_campana: input.objetivo_campana || 'General',
       descripcion_campana: input.descripcion_campana || '',
       audiencias: input.audiencias || []
     };
+
+    console.log('📤 Sending to N8N:', JSON.stringify(payload, null, 2));
 
     console.log('🔄 Calling N8N webhook...');
     

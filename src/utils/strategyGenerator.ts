@@ -42,29 +42,37 @@ export async function generateStrategy({
 
   // Limpiar audiencias - solo enviar campos relevantes
   const cleanedAudiences = audiencesArray.map(audience => ({
-    name: audience.name,
-    description: audience.description,
-    demographics: audience.demographics,
-    psychographics: audience.psychographics,
-    pain_points: audience.pain_points,
-    goals: audience.goals,
-    preferred_channels: audience.preferred_channels,
-    content_preferences: audience.content_preferences
+    name: audience.name || 'Audiencia',
+    description: audience.description || '',
+    demographics: audience.demographics || {},
+    psychographics: audience.psychographics || {},
+    pain_points: audience.pain_points || [],
+    goals: audience.goals || [],
+    preferred_channels: audience.preferred_channels || [],
+    content_preferences: audience.content_preferences || {}
   }));
+
+  console.log('📊 [strategyGenerator] Campaign data:', {
+    hasCompany: !!campaignData.company,
+    companyKeys: campaignData.company ? Object.keys(campaignData.company) : [],
+    audiencesCount: cleanedAudiences.length
+  });
 
   const payload = {
     retrieve_existing: retrieveExisting,
     input: {
-      nombre_empresa: campaignData.company.nombre_empresa || campaignData.company.name,
-      objetivo_de_negocio: campaignData.company.business_objective || campaignData.company.objetivo_negocio || '',
-      propuesta_valor: campaignData.company.value_proposition || campaignData.company.propuesta_valor || '',
-      sitio_web: campaignData.company.website || campaignData.company.sitio_web || '',
-      nombre_campana: campaignData.name,
+      nombre_empresa: campaignData.company?.nombre_empresa || campaignData.company?.name || 'Mi Empresa',
+      objetivo_de_negocio: campaignData.company?.business_objective || campaignData.company?.objetivo_negocio || campaignData.company?.value_proposition || '',
+      propuesta_valor: campaignData.company?.value_proposition || campaignData.company?.propuesta_valor || '',
+      sitio_web: campaignData.company?.website || campaignData.company?.sitio_web || campaignData.company?.website_url || '',
+      nombre_campana: campaignData.name || 'Nueva Campaña',
       objetivo_campana: objectiveText,
-      descripcion_campana: campaignData.description,
+      descripcion_campana: campaignData.description || '',
       audiencias: cleanedAudiences
     }
   };
+
+  console.log('📤 [strategyGenerator] Payload to send:', JSON.stringify(payload, null, 2));
 
   // Llamar a la edge function
   const { data, error } = await supabase.functions.invoke('marketing-hub-marketing-strategy', {

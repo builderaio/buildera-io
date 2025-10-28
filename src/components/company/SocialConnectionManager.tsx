@@ -80,6 +80,8 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const [urlValues, setUrlValues] = useState<Record<string, string>>({});
   const [showCoachMark, setShowCoachMark] = useState(false);
   const [newConnectedPlatforms, setNewConnectedPlatforms] = useState<Set<string>>(new Set());
+  const [showConnectionDialog, setShowConnectionDialog] = useState(false);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const { toast } = useToast();
 
   // Resolver userId desde el perfil o, si no existe, desde Supabase Auth
@@ -635,7 +637,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 Actualizar
               </Button>
               <Button
-                onClick={startConnectionFlow}
+                onClick={() => setShowConnectionDialog(true)}
                 disabled={connecting || loading}
                 className="bg-primary hover:bg-primary/90"
               >
@@ -1020,6 +1022,43 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
               </Button>
               <Button onClick={selectLinkedInPage} disabled={!selectedLinkedinPage}>
                 Seleccionar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Connection Platform Selection Dialog */}
+      <Dialog open={showConnectionDialog} onOpenChange={setShowConnectionDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Conectar Redes Sociales</DialogTitle>
+            <DialogDescription>
+              Conecta tus redes sociales para empezar a gestionar tu contenido desde un solo lugar.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Se abrirá una ventana para conectar tus redes sociales de forma segura a través de Upload-Post.
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowConnectionDialog(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowConnectionDialog(false);
+                  startConnectionFlow();
+                }}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Network className="w-4 h-4 mr-2" />
+                Continuar
               </Button>
             </div>
           </div>

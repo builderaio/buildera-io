@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { useTranslation } from "react-i18next";
+import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import BaseConocimiento from "./BaseConocimiento";
 import { 
   Building2, 
@@ -387,13 +388,17 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     value, 
     onSave, 
     type = "text", 
-    placeholder = "" 
+    placeholder = "",
+    enableEraOptimizer = false,
+    eraFieldType = ""
   }: { 
     field: string; 
     value: string; 
     onSave: (value: string) => void; 
     type?: string;
     placeholder?: string;
+    enableEraOptimizer?: boolean;
+    eraFieldType?: string;
   }) => {
     const [tempValue, setTempValue] = useState(value || '');
     const isEditing = editing === field;
@@ -404,43 +409,56 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     
     if (isEditing) {
       return (
-        <div className="flex gap-2 items-center">
-          {type === "textarea" ? (
-            <Textarea
-              value={tempValue}
-              onChange={(e) => setTempValue(e.target.value)}
-              placeholder={placeholder}
-              className="min-h-[60px]"
-            />
-          ) : (
-            <Input
-              type={type}
-              value={tempValue}
-              onChange={(e) => setTempValue(e.target.value)}
-              placeholder={placeholder}
+        <div className="space-y-2">
+          <div className="flex gap-2 items-start">
+            {type === "textarea" ? (
+              <Textarea
+                value={tempValue}
+                onChange={(e) => setTempValue(e.target.value)}
+                placeholder={placeholder}
+                className="min-h-[60px]"
+              />
+            ) : (
+              <Input
+                type={type}
+                value={tempValue}
+                onChange={(e) => setTempValue(e.target.value)}
+                placeholder={placeholder}
+              />
+            )}
+            <div className="flex flex-col gap-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  onSave(tempValue);
+                  setEditing(null);
+                }}
+                title={t('marketing:adnEmpresa.saveChanges')}
+              >
+                <Save className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setTempValue(value || '');
+                  setEditing(null);
+                }}
+                title={t('marketing:adnEmpresa.cancelEdit')}
+              >
+                ✕
+              </Button>
+            </div>
+          </div>
+          {enableEraOptimizer && type === "textarea" && (
+            <EraOptimizerButton
+              currentText={tempValue}
+              fieldType={eraFieldType}
+              context={companyData}
+              onOptimized={(optimizedText) => setTempValue(optimizedText)}
+              size="sm"
             />
           )}
-          <Button
-            size="sm"
-            onClick={() => {
-              onSave(tempValue);
-              setEditing(null);
-            }}
-            title={t('marketing:adnEmpresa.saveChanges')}
-          >
-            <Save className="w-4 h-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setTempValue(value || '');
-              setEditing(null);
-            }}
-            title={t('marketing:adnEmpresa.cancelEdit')}
-          >
-            ✕
-          </Button>
         </div>
       );
     }
@@ -506,13 +524,20 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               />
             </div>
             
-            <div>
+            <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">Descripción</label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Descripción del objetivo"
                 className="mt-1 min-h-[80px]"
+              />
+              <EraOptimizerButton
+                currentText={formData.description}
+                fieldType="Objetivo Empresarial"
+                context={companyData}
+                onOptimized={(optimizedText) => setFormData(prev => ({ ...prev, description: optimizedText }))}
+                size="sm"
               />
             </div>
 
@@ -669,13 +694,20 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
             />
           </div>
           
-          <div>
+          <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Descripción *</label>
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Describe cómo planeas lograr este objetivo..."
               className="mt-1 min-h-[100px]"
+            />
+            <EraOptimizerButton
+              currentText={formData.description}
+              fieldType="Objetivo Empresarial"
+              context={companyData}
+              onOptimized={(optimizedText) => setFormData(prev => ({ ...prev, description: optimizedText }))}
+              size="sm"
             />
           </div>
 
@@ -997,6 +1029,8 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                 onSave={(value) => saveField('description', value)}
                 type="textarea"
                 placeholder="Describe tu empresa, qué hace y a quién sirve..."
+                enableEraOptimizer={true}
+                eraFieldType="Descripción del Negocio"
               />
             </div>
               </>
@@ -1024,6 +1058,8 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                 onSave={(value) => saveField('mision', value, 'company_strategy', strategyData?.id)}
                 type="textarea"
                 placeholder="Define la misión de tu empresa"
+                enableEraOptimizer={true}
+                eraFieldType="Misión"
               />
             </div>
             
@@ -1035,6 +1071,8 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                 onSave={(value) => saveField('vision', value, 'company_strategy', strategyData?.id)}
                 type="textarea"
                 placeholder="Define la visión de tu empresa"
+                enableEraOptimizer={true}
+                eraFieldType="Visión"
               />
             </div>
             
@@ -1046,6 +1084,8 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                 onSave={(value) => saveField('propuesta_valor', value, 'company_strategy', strategyData?.id)}
                 type="textarea"
                 placeholder="Describe tu propuesta de valor"
+                enableEraOptimizer={true}
+                eraFieldType="Propuesta de Valor"
               />
             </div>
             
@@ -1207,6 +1247,8 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                     onSave={(value) => saveField('visual_identity', value, 'company_branding', brandingData.id)}
                     type="textarea"
                     placeholder="Describe la identidad visual de tu marca (estilo, tipografía, elementos visuales...)"
+                    enableEraOptimizer={true}
+                    eraFieldType="Identidad Visual"
                   />
                 </div>
               )}
@@ -1241,6 +1283,8 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                                   }}
                                   type="textarea"
                                   placeholder="Describe cómo se comunica tu marca..."
+                                  enableEraOptimizer={true}
+                                  eraFieldType="Voz de Marca"
                                 />
                               </div>
                             )}

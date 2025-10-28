@@ -3,13 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Download, Sparkles, Target, Users, TrendingUp, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Download, Sparkles, Target, Users, TrendingUp, FileText, AlertTriangle, CheckCircle, Bug, ChevronDown, ChevronUp } from 'lucide-react';
 import { generateStrategy, loadExistingStrategy } from '@/utils/strategyGenerator';
 import { normalizeStrategy } from '@/utils/strategyNormalizer';
 import type { MarketingStrategy } from '@/types/strategy';
 import { StrategyGenerationLoader } from '@/components/ui/strategy-generation-loader';
 import { EditableStrategySection } from './EditableStrategySection';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -24,6 +25,10 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
   const [generating, setGenerating] = useState(false);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editedData, setEditedData] = useState<any>({});
+  const [debugPanelOpen, setDebugPanelOpen] = useState(false);
+  
+  // Detectar si estamos en desarrollo
+  const isDevelopment = import.meta.env.DEV;
 
   // Load existing strategy on mount
   useEffect(() => {
@@ -316,6 +321,95 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
               )}
             </CardHeader>
           </Card>
+
+          {/* Debug Panel (Solo en Desarrollo) */}
+          {isDevelopment && (
+            <Collapsible open={debugPanelOpen} onOpenChange={setDebugPanelOpen}>
+              <Card className="border-orange-200 bg-orange-50/50">
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-orange-100/50 transition-colors">
+                    <CardTitle className="flex items-center justify-between text-orange-900">
+                      <div className="flex items-center gap-2">
+                        <Bug className="h-5 w-5" />
+                        Panel de Debug (Desarrollo)
+                      </div>
+                      {debugPanelOpen ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Campos Presentes/Ausentes */}
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2 text-orange-900">Estado de Campos Críticos</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                          {[
+                            { field: 'core_message', label: 'Mensaje Principal' },
+                            { field: 'differentiated_message', label: 'Variantes de Mensaje' },
+                            { field: 'competitors', label: 'Competidores' },
+                            { field: 'strategies', label: 'Estrategias' },
+                            { field: 'ai_insights', label: 'AI Insights' },
+                            { field: 'funnel_strategies', label: 'Estrategias Funnel' },
+                            { field: 'content_plan', label: 'Plan de Contenido' },
+                            { field: 'kpis', label: 'KPIs' },
+                            { field: 'execution_plan', label: 'Plan Ejecución' }
+                          ].map(({ field, label }) => {
+                            const value = strategy?.[field as keyof MarketingStrategy];
+                            const isPresent = Array.isArray(value) 
+                              ? value.length > 0 
+                              : typeof value === 'object' 
+                                ? value !== null && Object.keys(value).length > 0
+                                : !!value;
+                            
+                            return (
+                              <div 
+                                key={field}
+                                className={`p-2 rounded border ${
+                                  isPresent 
+                                    ? 'bg-green-100 border-green-300 text-green-800' 
+                                    : 'bg-red-100 border-red-300 text-red-800'
+                                }`}
+                              >
+                                <div className="font-medium">{label}</div>
+                                <div className="text-xs opacity-75">
+                                  {isPresent ? '✓ Presente' : '✗ Ausente'}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Estructura Completa */}
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2 text-orange-900">Estructura Completa</h4>
+                        <pre className="bg-white p-3 rounded border border-orange-200 text-xs overflow-x-auto max-h-96 overflow-y-auto">
+                          {JSON.stringify(strategy, null, 2)}
+                        </pre>
+                      </div>
+
+                      {/* AI Insights Detail */}
+                      {strategy?.ai_insights && (
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2 text-orange-900">
+                            AI Insights (Tipo: {typeof strategy.ai_insights})
+                          </h4>
+                          <pre className="bg-white p-3 rounded border border-orange-200 text-xs overflow-x-auto">
+                            {JSON.stringify(strategy.ai_insights, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          )}
 
           {/* Core Message */}
           {strategy.core_message && (

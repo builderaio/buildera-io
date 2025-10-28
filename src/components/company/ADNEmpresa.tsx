@@ -311,8 +311,22 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
           description: "Los cambios se han guardado correctamente",
         });
         
-        // Recargar objetivos
-        loadOnboardingData();
+        // Actualizar estado local sin recargar todo
+        if (objectiveId) {
+          // Actualizar objetivo existente
+          setObjectives(prev => prev.map(obj => 
+            obj.id === objectiveId ? { ...obj, ...objectiveData } : obj
+          ));
+        } else {
+          // Agregar nuevo objetivo con el ID devuelto por la API
+          const newObjective = { 
+            id: result.data?.id || result.objectiveId,
+            ...objectiveData,
+            status: objectiveData.status || 'active'
+          };
+          setObjectives(prev => [...prev, newObjective]);
+        }
+        
         setEditing(null);
       } else {
         throw new Error(result.error);
@@ -352,8 +366,8 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
           description: "El objetivo se ha eliminado correctamente",
         });
         
-        // Recargar objetivos
-        loadOnboardingData();
+        // Actualizar estado local sin recargar todo
+        setObjectives(prev => prev.filter(obj => obj.id !== objectiveId));
       } else {
         throw new Error(result.error);
       }

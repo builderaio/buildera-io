@@ -20,11 +20,15 @@ export async function generateStrategy({
     throw new Error('Datos de empresa requeridos');
   }
 
+  // Compatibilidad: aceptar audiencia única o arreglo y diferentes estructuras
+  const selectedAudience = campaignData.audience?.selected_audience || campaignData.audience;
+  const rawAudiences = campaignData.audiences ?? selectedAudience;
+
   // Normalizar audiencias a arreglo (acepta objeto único)
-  const audiencesArray = Array.isArray(campaignData.audiences)
-    ? campaignData.audiences
-    : campaignData.audiences
-      ? [campaignData.audiences]
+  const audiencesArray = Array.isArray(rawAudiences)
+    ? rawAudiences
+    : rawAudiences
+      ? [rawAudiences]
       : [];
 
   if (audiencesArray.length === 0) {
@@ -32,6 +36,10 @@ export async function generateStrategy({
   }
 
   // Preparar payload mínimo
+  const objectiveText = typeof campaignData.objective === 'string'
+    ? campaignData.objective
+    : campaignData.objective?.type || campaignData.objective?.name || '';
+
   const payload = {
     retrieve_existing: retrieveExisting,
     input: {
@@ -40,7 +48,7 @@ export async function generateStrategy({
                            campaignData.company.description || 
                            campaignData.description,
       nombre_campana: campaignData.name,
-      objetivo_campana: campaignData.objective,
+      objetivo_campana: objectiveText,
       descripcion_campana: campaignData.description,
       audiencias: audiencesArray
     }

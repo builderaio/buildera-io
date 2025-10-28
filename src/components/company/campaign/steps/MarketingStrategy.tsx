@@ -31,9 +31,13 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
       // Normaliza audiencias para compatibilidad con backend
       const audiences = Array.isArray(campaignData.audiences)
         ? campaignData.audiences
-        : campaignData.audiences
+        : (campaignData.audiences ?? null)
           ? [campaignData.audiences]
-          : [];
+          : campaignData.audience?.selected_audience
+            ? [campaignData.audience.selected_audience]
+            : campaignData.audience
+              ? [campaignData.audience]
+              : [];
 
       loadExisting({ ...campaignData, audiences });
     }
@@ -74,7 +78,15 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
       // Pass normalized campaign data with audiences as array
       const normalizedCampaignData = {
         ...campaignData,
-        audiences
+        audiences: Array.isArray(campaignData.audiences)
+          ? campaignData.audiences
+          : (campaignData.audiences ?? null)
+            ? [campaignData.audiences]
+            : campaignData.audience?.selected_audience
+              ? [campaignData.audience.selected_audience]
+              : campaignData.audience
+                ? [campaignData.audience]
+                : []
       };
       
       const result = await generateStrategy({ campaignData: normalizedCampaignData });
@@ -189,14 +201,18 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
             </div>
             <div>
               <span className="text-muted-foreground">Objetivo:</span>
-              <p className="font-medium">{campaignData.objective}</p>
+              <p className="font-medium">
+                {typeof campaignData.objective === 'string'
+                  ? campaignData.objective
+                  : (campaignData.objective?.type || campaignData.objective?.name || 'No definido')}
+              </p>
             </div>
             <div>
               <span className="text-muted-foreground">Audiencia:</span>
               <p className="font-medium">
-                {Array.isArray(campaignData.audiences) 
-                  ? campaignData.audiences[0]?.name || 'No definida'
-                  : campaignData.audiences?.name || 'No definida'}
+                {Array.isArray(campaignData.audiences)
+                  ? (campaignData.audiences[0]?.name || 'No definida')
+                  : (campaignData.audiences?.name || campaignData.audience?.selected_audience?.name || campaignData.audience?.name || 'No definida')}
               </p>
             </div>
             <div>

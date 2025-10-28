@@ -28,13 +28,13 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
   // Load existing strategy on mount
   useEffect(() => {
     if (!strategy && !generating && campaignData) {
-      // Normaliza audiencias para compatibilidad con backend
-      const audiences = Array.isArray(campaignData.audiences)
-        ? campaignData.audiences
-        : (campaignData.audiences ?? null)
-          ? [campaignData.audiences]
-          : campaignData.audience?.selected_audience
-            ? [campaignData.audience.selected_audience]
+      // Normalize audiences - prioritize audience.selected_audience from step 2
+      const audiences = campaignData.audience?.selected_audience
+        ? [campaignData.audience.selected_audience]
+        : Array.isArray(campaignData.audiences)
+          ? campaignData.audiences
+          : (campaignData.audiences ?? null)
+            ? [campaignData.audiences]
             : campaignData.audience
               ? [campaignData.audience]
               : [];
@@ -55,36 +55,21 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
   };
 
   const handleGenerateStrategy = async () => {
-    console.log('🔍 [MarketingStrategy] campaignData received:', {
-      hasAudiences: !!campaignData.audiences,
-      hasAudience: !!campaignData.audience,
-      audiencesType: Array.isArray(campaignData.audiences) ? 'array' : typeof campaignData.audiences,
-      audienceType: typeof campaignData.audience,
-      audiencesValue: campaignData.audiences,
-      audienceValue: campaignData.audience,
-      allKeys: Object.keys(campaignData)
-    });
-
     if (!campaignData.company) {
       toast.error('Datos de empresa requeridos');
       return;
     }
 
-    // Normalize audiences to array format - support multiple data structures
-    const audiences = Array.isArray(campaignData.audiences) 
-      ? campaignData.audiences 
-      : (campaignData.audiences ?? null)
-        ? [campaignData.audiences] 
-        : campaignData.audience?.selected_audience
-          ? [campaignData.audience.selected_audience]
+    // Normalize audiences to array format - the audience comes from step 2 as campaignData.audience.selected_audience
+    const audiences = campaignData.audience?.selected_audience
+      ? [campaignData.audience.selected_audience]
+      : Array.isArray(campaignData.audiences) 
+        ? campaignData.audiences 
+        : (campaignData.audiences ?? null)
+          ? [campaignData.audiences] 
           : campaignData.audience
             ? [campaignData.audience]
             : [];
-
-    console.log('🔍 [MarketingStrategy] Normalized audiences:', {
-      count: audiences.length,
-      audiences
-    });
 
     if (audiences.length === 0) {
       toast.error('Debes definir al menos una audiencia objetivo');
@@ -95,17 +80,10 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
 
     try {
       // Pass normalized campaign data with audiences as array
+      // Prioritize audience.selected_audience from step 2
       const normalizedCampaignData = {
         ...campaignData,
-        audiences: Array.isArray(campaignData.audiences)
-          ? campaignData.audiences
-          : (campaignData.audiences ?? null)
-            ? [campaignData.audiences]
-            : campaignData.audience?.selected_audience
-              ? [campaignData.audience.selected_audience]
-              : campaignData.audience
-                ? [campaignData.audience]
-                : []
+        audiences
       };
       
       const result = await generateStrategy({ campaignData: normalizedCampaignData });

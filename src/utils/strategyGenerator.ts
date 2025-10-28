@@ -119,8 +119,29 @@ export async function generateStrategy({
     hasStrategy: !!data.strategy,
     hasStrategyId: !!data.strategy_id,
     cached: data.cached,
-    dataKeys: Object.keys(data)
+    dataKeys: Object.keys(data),
+    strategyKeys: data.strategy ? Object.keys(data.strategy) : []
   });
+  
+  // Validar campos críticos en la respuesta
+  const strategyData = data.strategy || data;
+  const criticalFieldsCheck = {
+    core_message: !!(strategyData.core_message || strategyData.mensaje_diferenciador),
+    competitors: !!(strategyData.competitors || strategyData.competidores),
+    ai_insights: !!(strategyData.ai_insights || strategyData.insights)
+  };
+  
+  console.log('🔍 Critical fields validation:', criticalFieldsCheck);
+  
+  // Advertir sobre campos faltantes
+  const missingCritical = Object.entries(criticalFieldsCheck)
+    .filter(([_, present]) => !present)
+    .map(([field]) => field);
+  
+  if (missingCritical.length > 0) {
+    console.warn('⚠️ Missing critical fields from backend:', missingCritical);
+  }
+  
   console.groupEnd();
 
   // Normalizar y retornar

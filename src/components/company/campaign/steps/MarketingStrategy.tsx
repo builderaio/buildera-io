@@ -109,8 +109,18 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
       console.log('🎯 Strategy result received in component:', {
         hasResult: !!result,
         hasCoreMessage: !!result?.core_message,
+        hasAiInsights: !!result?.ai_insights,
+        aiInsightsType: result?.ai_insights ? typeof result.ai_insights : 'N/A',
         resultKeys: result ? Object.keys(result) : []
       });
+      
+      // Validar que se recibieron datos mínimos
+      if (!result.core_message && !result.competitors && !result.ai_insights) {
+        console.warn('⚠️ Strategy received but missing all critical fields');
+        toast.error('Estrategia generada incompleta', {
+          description: 'Algunos campos importantes pueden estar vacíos'
+        });
+      }
       
       setStrategy(result);
       
@@ -387,23 +397,75 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {Array.isArray(strategy.ai_insights) ? (
-                    strategy.ai_insights.map((insight: any, idx: number) => (
-                      <div key={idx} className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
-                        <h4 className="font-bold text-primary mb-2">{insight.title || insight.category || 'Insight'}</h4>
-                        <p className="text-sm">{insight.description || insight.content || insight.text || JSON.stringify(insight)}</p>
-                      </div>
-                    ))
-                  ) : typeof strategy.ai_insights === 'object' ? (
-                    Object.entries(strategy.ai_insights).map(([key, value]: [string, any]) => (
-                      <div key={key} className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
-                        <h4 className="font-bold text-primary mb-2 capitalize">{key.replace(/_/g, ' ')}</h4>
-                        <p className="text-sm">{typeof value === 'string' ? value : JSON.stringify(value, null, 2)}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{String(strategy.ai_insights)}</p>
-                  )}
+                  {(() => {
+                    console.log('🎨 [MarketingStrategy] Rendering ai_insights:', {
+                      type: typeof strategy.ai_insights,
+                      isArray: Array.isArray(strategy.ai_insights),
+                      value: strategy.ai_insights
+                    });
+
+                    // Caso 1: Array de insights
+                    if (Array.isArray(strategy.ai_insights)) {
+                      if (strategy.ai_insights.length === 0) {
+                        return <p className="text-sm text-muted-foreground">No hay insights disponibles</p>;
+                      }
+                      return strategy.ai_insights.map((insight: any, idx: number) => (
+                        <div key={idx} className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
+                          <h4 className="font-bold text-primary mb-2">
+                            {insight.title || insight.category || insight.name || `Insight ${idx + 1}`}
+                          </h4>
+                          <p className="text-sm">
+                            {insight.description || insight.content || insight.text || insight.value || JSON.stringify(insight)}
+                          </p>
+                          {insight.recommendation && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              💡 {insight.recommendation}
+                            </p>
+                          )}
+                        </div>
+                      ));
+                    }
+
+                    // Caso 2: Objeto con categorías
+                    if (typeof strategy.ai_insights === 'object' && strategy.ai_insights !== null) {
+                      const entries = Object.entries(strategy.ai_insights);
+                      if (entries.length === 0) {
+                        return <p className="text-sm text-muted-foreground">No hay insights disponibles</p>;
+                      }
+                      return entries.map(([key, value]: [string, any]) => (
+                        <div key={key} className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
+                          <h4 className="font-bold text-primary mb-2 capitalize">
+                            {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </h4>
+                          <div className="text-sm">
+                            {typeof value === 'string' ? (
+                              <p>{value}</p>
+                            ) : Array.isArray(value) ? (
+                              <ul className="list-disc list-inside space-y-1">
+                                {value.map((item: any, i: number) => (
+                                  <li key={i}>{typeof item === 'string' ? item : JSON.stringify(item)}</li>
+                                ))}
+                              </ul>
+                            ) : typeof value === 'object' && value !== null ? (
+                              <pre className="text-xs bg-white/50 p-2 rounded overflow-x-auto">
+                                {JSON.stringify(value, null, 2)}
+                              </pre>
+                            ) : (
+                              <p>{String(value)}</p>
+                            )}
+                          </div>
+                        </div>
+                      ));
+                    }
+
+                    // Caso 3: String simple
+                    if (typeof strategy.ai_insights === 'string') {
+                      return <p className="text-sm">{strategy.ai_insights}</p>;
+                    }
+
+                    // Fallback
+                    return <p className="text-sm text-muted-foreground">Formato de insights no reconocido</p>;
+                  })()}
                 </div>
               </CardContent>
             </Card>

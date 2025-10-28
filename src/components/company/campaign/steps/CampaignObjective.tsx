@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCompanyData } from '@/hooks/useCompanyData';
+import { useTranslation } from 'react-i18next';
 import { 
   Target, 
   TrendingUp, 
@@ -80,48 +81,15 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
   const [campaignName, setCampaignName] = useState(campaignData.objective?.name || '');
   const [description, setDescription] = useState(campaignData.objective?.description || '');
   const [targetMetrics, setTargetMetrics] = useState(campaignData.objective?.target_metrics || {});
-  const [companyObjectives, setCompanyObjectives] = useState([]);
-  const [loadingObjectives, setLoadingObjectives] = useState(true);
   const [optimizing, setOptimizing] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation('campaigns');
+
+  // Use unified hook for company data
+  const { data: companyDataResult, isLoading: loadingObjectives, error: dataError, refetch } = useCompanyData(companyData?.id);
+  const companyObjectives = companyDataResult?.objectives || [];
 
   const selectedObjectiveData = objectiveTypes.find(obj => obj.id === selectedObjective);
-
-  // Load company objectives
-  useEffect(() => {
-    const loadCompanyObjectives = async () => {
-      if (!companyData?.id) {
-        console.log('⚠️ No company ID found, skipping objectives load');
-        setLoadingObjectives(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('company_objectives')
-          .select('*')
-          .eq('company_id', companyData.id)
-          .eq('status', 'active')
-          .order('priority', { ascending: true });
-
-        if (error) throw error;
-        
-        console.log('✅ Loaded company objectives:', data?.length || 0);
-        setCompanyObjectives(data || []);
-      } catch (error) {
-        console.error('❌ Error loading company objectives:', error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los objetivos de la empresa",
-          variant: "destructive"
-        });
-      } finally {
-        setLoadingObjectives(false);
-      }
-    };
-
-    loadCompanyObjectives();
-  }, [companyData?.id]);
 
   // Exponer los datos del paso actual para que el Wizard pueda "Guardar y Avanzar"
   useEffect(() => {
@@ -357,7 +325,20 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
           {loadingObjectives ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="ml-2 text-muted-foreground">Cargando objetivos...</span>
+              <span className="ml-2 text-muted-foreground">{t('wizard.loading.objectives', 'Cargando objetivos...')}</span>
+            </div>
+          ) : dataError ? (
+            <div className="text-center py-8">
+              <Target className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <p className="text-destructive mb-2">
+                {t('wizard.errors.loadingObjectives', 'Error al cargar los objetivos')}
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {dataError.message}
+              </p>
+              <Button onClick={() => refetch()} variant="outline" size="sm">
+                {t('wizard.actions.retry', 'Reintentar')}
+              </Button>
             </div>
           ) : companyObjectives.length > 0 ? (
             <div className="space-y-4">
@@ -437,11 +418,14 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
             <div className="text-center py-8">
               <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-2">
-                No hay objetivos de crecimiento definidos para tu empresa
+                {t('wizard.empty.objectives', 'No hay objetivos de crecimiento definidos para tu empresa')}
               </p>
-              <p className="text-sm text-muted-foreground">
-                Ve a la sección de estrategia empresarial para definir tus objetivos
+              <p className="text-sm text-muted-foreground mb-4">
+                {t('wizard.empty.objectivesHint', 'Ve a la sección de estrategia empresarial para definir tus objetivos')}
               </p>
+              <Button onClick={() => refetch()} variant="outline" size="sm">
+                {t('wizard.actions.refresh', 'Actualizar')}
+              </Button>
             </div>
           )}
         </CardContent>

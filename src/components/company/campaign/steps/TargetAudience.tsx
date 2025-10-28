@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCompanyData } from '@/hooks/useCompanyData';
+import { useTranslation } from 'react-i18next';
 import { 
   Users, 
   Target, 
@@ -29,10 +27,13 @@ interface TargetAudienceProps {
 }
 
 export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading, companyData }: TargetAudienceProps) => {
-  const [existingAudiences, setExistingAudiences] = useState([]);
   const [selectedAudience, setSelectedAudience] = useState(campaignData.audience || null);
-  const [loadingAudiences, setLoadingAudiences] = useState(true);
   const { toast } = useToast();
+  const { t } = useTranslation('campaigns');
+
+  // Use unified hook for company data
+  const { data: companyDataResult, isLoading: loadingAudiences, error: dataError, refetch } = useCompanyData(companyData?.id);
+  const existingAudiences = companyDataResult?.audiences || [];
 
   // Set up auto-save function for when user navigates away
   useEffect(() => {
@@ -83,41 +84,6 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
     };
   }, [selectedAudience, onDataChange]);
 
-  // Load existing audiences
-  useEffect(() => {
-    const loadAudiences = async () => {
-      if (!companyData?.id) {
-        console.log('⚠️ No company ID found, skipping audiences load');
-        setLoadingAudiences(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('company_audiences')
-          .select('*')
-          .eq('company_id', companyData.id)
-          .eq('is_active', true)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        
-        console.log('✅ Loaded audiences:', data?.length || 0);
-        setExistingAudiences(data || []);
-      } catch (error) {
-        console.error('❌ Error loading audiences:', error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar las audiencias",
-          variant: "destructive"
-        });
-      } finally {
-        setLoadingAudiences(false);
-      }
-    };
-
-    loadAudiences();
-  }, [companyData?.id]);
 
   const toggleAudienceSelection = (audience) => {
     setSelectedAudience(prev => {
@@ -206,7 +172,20 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
           {loadingAudiences ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="ml-2">Cargando audiencias...</span>
+              <span className="ml-2">{t('wizard.loading.audiences', 'Cargando audiencias...')}</span>
+            </div>
+          ) : dataError ? (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <p className="text-destructive mb-2">
+                {t('wizard.errors.loadingAudiences', 'Error al cargar las audiencias')}
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {dataError.message}
+              </p>
+              <Button onClick={() => refetch()} variant="outline" size="sm">
+                {t('wizard.actions.retry', 'Reintentar')}
+              </Button>
             </div>
           ) : existingAudiences.length > 0 ? (
             <div className="space-y-4">
@@ -303,8 +282,11 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-3 opacity-50" />
-              <p>No hay audiencias creadas para esta empresa</p>
-              <p className="text-sm">Primero crea audiencias desde el Manager de Audiencias</p>
+              <p>{t('wizard.empty.audiences', 'No hay audiencias creadas para esta empresa')}</p>
+              <p className="text-sm mb-4">{t('wizard.empty.audiencesHint', 'Primero crea audiencias desde el Manager de Audiencias')}</p>
+              <Button onClick={() => refetch()} variant="outline" size="sm">
+                {t('wizard.actions.refresh', 'Actualizar')}
+              </Button>
             </div>
           )}
         </CardContent>

@@ -1,26 +1,7 @@
 project_id = "ubhzzppmkhxbuiajfswa"
 
-# Core functions that exist and are critical
 [functions.get-company-data]
 verify_jwt = true
 
 [functions.marketing-hub-marketing-strategy]
-verify_jwt = true
-
-[functions.campaign-ai-generator]
-verify_jwt = true
-
-[functions.company-agent-chat]
-verify_jwt = true
-
-[functions.era-chat]
-verify_jwt = true
-
-[functions.create-company-agent]
-verify_jwt = true
-
-[functions.check-subscription-status]
-verify_jwt = true
-
-[functions.generate-company-content]
 verify_jwt = true

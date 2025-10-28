@@ -74,108 +74,77 @@ serve(async (req) => {
 
     console.log('📊 Calling AI for audience intelligence analysis...');
 
-    // 5. Invocar función universal de IA (con tool calling para JSON estructurado)
+    // 5. Invocar función universal de IA con estructura compatible con content-insights-generator
     const { data: aiResponse, error: aiError } = await supabase.functions.invoke('universal-ai-handler', {
       body: {
         functionName: 'audience_intelligence_analysis',
         messages: [{
           role: 'system',
-          content: `Eres un analista experto de audiencias digitales y estrategia de marketing. Analiza los datos de redes sociales de la empresa junto con su información estratégica.
+          content: `Eres un experto en marketing digital y análisis de audiencias. Analiza los datos de redes sociales y genera insights ESPECÍFICOS para esta empresa.
 
-INSTRUCCIONES ESPECÍFICAS:
-1. Genera entre 5 y 7 INSIGHTS CLAVE sobre la audiencia actual de la empresa basándote en los datos de sus redes sociales.
-2. Proporciona entre 6 y 8 RECOMENDACIONES ESTRATÉGICAS accionables para mejorar el alcance y engagement.
-3. Elabora un ANÁLISIS DETALLADO que incluya fortalezas, debilidades, oportunidades, amenazas y tendencias emergentes.
+INSTRUCCIONES CRÍTICAS:
+1. **OBLIGATORIO**: Usa el nombre de la empresa, su industria y estrategia en tus análisis
+2. **OBLIGATORIO**: Si hay datos de redes sociales, identifica patrones específicos y oportunidades
+3. Genera insights de audiencia basados en datos reales (seguidores, engagement, demografía)
+4. Crea ideas de contenido ÚNICAMENTE relevantes para esta empresa e industria específica
+5. NO generes ideas genéricas - personaliza TODO al contexto dado
+6. Incluye formatos variados (posts, videos, carruseles, stories, reels)
+7. Proporciona hashtags específicos de la industria
 
-Enfócate en insights prácticos y recomendaciones específicas basadas en los datos reales de las redes sociales analizadas.`
+Debes generar EXACTAMENTE:
+- 2-3 audience_insights (insights sobre la audiencia actual)
+- 3-4 content_ideas (ideas de contenido personalizadas)`
         }, {
           role: 'user',
-          content: `Analiza los datos de redes sociales y genera insights estratégicos.\n\nDATOS DE ENTRADA:\n${JSON.stringify(analysisInput, null, 2)}\n\nDevuelve la respuesta usando la herramienta audience_insights.`
+          content: `Analiza los datos y genera insights y contenido ESPECÍFICO para esta empresa.\n\nDATOS:\n${JSON.stringify(analysisInput, null, 2)}\n\nUsa la herramienta emit_insights.`
         }],
         tools: [
           {
             type: 'function',
             function: {
-              name: 'audience_insights',
-              description: 'Devuelve insights de audiencia en formato estructurado',
+              name: 'emit_insights',
+              description: 'Devuelve insights de audiencia e ideas de contenido estructuradas',
               parameters: {
                 type: 'object',
                 properties: {
-                  key_insights: {
+                  audience_insights: {
                     type: 'array',
-                    description: 'Entre 5 y 7 insights clave sobre la audiencia',
-                    minItems: 5,
-                    maxItems: 7,
+                    minItems: 2,
+                    maxItems: 3,
                     items: {
                       type: 'object',
                       properties: {
-                        categoria: { type: 'string', description: 'Categoría del insight (ej: Demográfico, Comportamental, etc.)' },
-                        insight: { type: 'string', description: 'El insight principal' },
-                        evidencia: { type: 'string', description: 'Datos que respaldan este insight' },
-                        implicacion: { type: 'string', description: 'Qué significa esto para la estrategia' }
+                        title: { type: 'string', description: 'Título del insight sobre la audiencia' },
+                        strategy: { type: 'string', description: 'Descripción del insight y su implicación estratégica' }
                       },
-                      required: ['categoria', 'insight', 'evidencia', 'implicacion']
+                      required: ['title', 'strategy']
                     }
                   },
-                  recommendations: {
+                  content_ideas: {
                     type: 'array',
-                    description: 'Entre 6 y 8 recomendaciones estratégicas accionables',
-                    minItems: 6,
-                    maxItems: 8,
+                    minItems: 3,
+                    maxItems: 4,
                     items: {
                       type: 'object',
                       properties: {
-                        tipo: { type: 'string', description: 'Tipo de recomendación (Contenido, Segmentación, Timing, etc.)' },
-                        prioridad: { type: 'string', enum: ['Alta', 'Media', 'Baja'] },
-                        titulo: { type: 'string', description: 'Título de la recomendación' },
-                        descripcion: { type: 'string', description: 'Descripción detallada' },
-                        accion_especifica: { type: 'string', description: 'Acción concreta a tomar' },
-                        impacto_esperado: { type: 'string', description: 'Impacto esperado de implementar esta recomendación' },
-                        metricas_seguimiento: { type: 'array', items: { type: 'string' }, description: 'Métricas para medir el éxito' }
+                        title: { type: 'string', description: 'Título específico del contenido' },
+                        format: { type: 'string', description: 'Formato: post/video/carrusel/story/reel' },
+                        platform: { type: 'string', enum: ['instagram', 'linkedin', 'tiktok', 'facebook', 'twitter'], description: 'Plataforma recomendada' },
+                        hashtags: { type: 'array', items: { type: 'string' }, description: 'Hashtags específicos de la industria' },
+                        timing: { type: 'string', description: 'Hora/día sugerido (ej: Lunes 10:00 AM)' },
+                        strategy: { type: 'string', description: 'Por qué esta idea es relevante para esta empresa' }
                       },
-                      required: ['tipo', 'prioridad', 'titulo', 'descripcion', 'accion_especifica']
+                      required: ['title', 'format', 'platform', 'strategy']
                     }
-                  },
-                  detailed_analysis: {
-                    type: 'object',
-                    description: 'Análisis FODA detallado y tendencias',
-                    properties: {
-                      fortalezas: { 
-                        type: 'array', 
-                        items: { type: 'string' },
-                        description: 'Fortalezas identificadas en la presencia digital'
-                      },
-                      debilidades: { 
-                        type: 'array', 
-                        items: { type: 'string' },
-                        description: 'Áreas de mejora en la presencia digital'
-                      },
-                      oportunidades: { 
-                        type: 'array', 
-                        items: { type: 'string' },
-                        description: 'Oportunidades de crecimiento identificadas'
-                      },
-                      amenazas: { 
-                        type: 'array', 
-                        items: { type: 'string' },
-                        description: 'Amenazas o riesgos potenciales'
-                      },
-                      tendencias_emergentes: { 
-                        type: 'array', 
-                        items: { type: 'string' },
-                        description: 'Tendencias emergentes relevantes para la audiencia'
-                      }
-                    },
-                    required: ['fortalezas', 'debilidades', 'oportunidades', 'amenazas']
                   }
                 },
-                required: ['key_insights', 'recommendations', 'detailed_analysis']
+                required: ['audience_insights', 'content_ideas']
               }
             }
           }
         ],
-        tool_choice: { type: 'function', function: { name: 'audience_insights' } },
-        max_completion_tokens: 4000
+        tool_choice: { type: 'function', function: { name: 'emit_insights' } },
+        max_completion_tokens: 3000
       }
     });
 
@@ -185,140 +154,127 @@ Enfócate en insights prácticos y recomendaciones específicas basadas en los d
     }
 
     console.log('✅ AI analysis completed');
-    console.log('🔍 Full AI Response:', JSON.stringify(aiResponse, null, 2).slice(0, 2000));
 
-    let parsedInsights;
+    // Parse structured output from tool_calls (misma lógica que content-insights-generator)
+    let structuredInsights: any = null;
+    
     try {
-      // Intentar extraer tool_calls arguments (preferred)
-      const toolArgs = (
-        aiResponse?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ??
-        aiResponse?.response?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments ??
-        aiResponse?.data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments
+      const toolCall = (
+        aiResponse?.choices?.[0]?.message?.tool_calls?.[0] ??
+        aiResponse?.response?.choices?.[0]?.message?.tool_calls?.[0] ??
+        aiResponse?.data?.choices?.[0]?.message?.tool_calls?.[0]
       );
 
-      if (toolArgs) {
-        console.log('✅ Found tool_calls arguments');
-        parsedInsights = typeof toolArgs === 'string' ? JSON.parse(toolArgs) : toolArgs;
+      if (toolCall?.function?.name === 'emit_insights') {
+        const args = toolCall.function.arguments;
+        structuredInsights = typeof args === 'string' ? JSON.parse(args) : args;
+        console.log('✅ Generated structured insights:', JSON.stringify(structuredInsights, null, 2));
       } else {
-        // Fallback: extraer content
-        const contentCandidate = (
-          aiResponse?.choices?.[0]?.message?.content ??
-          aiResponse?.response?.choices?.[0]?.message?.content ??
-          aiResponse?.data?.choices?.[0]?.message?.content ??
-          aiResponse?.response  // Caso especial donde response es string directo
-        );
-
-        console.log('⚠️ No tool_calls found, trying to extract from content');
-        console.log('Content preview:', String(contentCandidate).slice(0, 500));
-
-        if (!contentCandidate) {
-          console.error('❌ AI response structure:', JSON.stringify(aiResponse, null, 2).slice(0, 2000));
-          throw new Error('Empty AI response - no tool_calls or content found');
-        }
-
-        const contentStr = String(contentCandidate);
-        const cleaned = contentStr.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        
-        // Si la respuesta es un string JSON directo
-        if (cleaned.startsWith('{') && cleaned.includes('audience_segments')) {
-          try {
-            parsedInsights = JSON.parse(cleaned);
-            console.log('✅ Parsed JSON directly from content');
-          } catch {
-            const first = cleaned.indexOf('{');
-            const last = cleaned.lastIndexOf('}');
-            if (first !== -1 && last !== -1 && last > first) {
-              parsedInsights = JSON.parse(cleaned.slice(first, last + 1));
-              console.log('✅ Extracted and parsed JSON from content');
-            } else {
-              throw new Error('Could not extract valid JSON from content');
-            }
-          }
-        } else {
-          // Si no es JSON estructurado, construir objeto de fallback con el texto
-          console.log('⚠️ Response is plain text, creating fallback structure');
-          parsedInsights = {
-            key_insights: [{
-              categoria: 'General',
-              insight: contentStr.slice(0, 500),
-              evidencia: 'Análisis basado en datos de redes sociales',
-              implicacion: 'Revisar análisis completo'
-            }],
-            recommendations: [{
-              tipo: 'Estrategia General',
-              prioridad: 'Media',
-              titulo: 'Análisis disponible',
-              descripcion: 'El análisis completo está disponible en el texto generado',
-              accion_especifica: 'Revisar recomendaciones detalladas'
-            }],
-            detailed_analysis: {
-              fortalezas: ['Análisis generado por IA'],
-              debilidades: [],
-              oportunidades: [],
-              amenazas: [],
-              tendencias_emergentes: []
-            },
-            raw_text: contentStr
-          };
-        }
+        console.warn('⚠️ No tool_calls found in AI response');
+        throw new Error('AI did not use emit_insights tool');
       }
 
-      // Validar estructura mínima
-      if (!parsedInsights.key_insights || !Array.isArray(parsedInsights.key_insights)) {
-        console.warn('⚠️ Missing key_insights, adding default');
-        parsedInsights.key_insights = [{
-          categoria: 'General',
-          insight: 'Análisis generado',
-          evidencia: 'Basado en datos disponibles',
-          implicacion: 'Requiere análisis más profundo'
-        }];
+      // Validar estructura
+      if (!structuredInsights?.audience_insights || !Array.isArray(structuredInsights.audience_insights)) {
+        throw new Error('Missing audience_insights array');
       }
-
-      console.log('✅ Successfully parsed insights with', parsedInsights.key_insights?.length, 'key insights');
+      if (!structuredInsights?.content_ideas || !Array.isArray(structuredInsights.content_ideas)) {
+        throw new Error('Missing content_ideas array');
+      }
 
     } catch (parseError) {
       console.error('❌ Error parsing AI response:', parseError);
-      console.error('Full response:', JSON.stringify(aiResponse, null, 2));
+      console.error('Full response:', JSON.stringify(aiResponse, null, 2).slice(0, 2000));
       return new Response(
         JSON.stringify({ 
           error: 'Failed to parse AI response', 
           details: parseError instanceof Error ? parseError.message : String(parseError),
-          raw_response: JSON.stringify(aiResponse).slice(0, 1000)
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
       );
     }
 
-    // 6. Guardar insights en la base de datos
-    const totalFollowers = socialAnalysis?.reduce((sum: number, sa: any) => 
-      sum + (sa.users_count || sa.followers_count || 0), 0) || 0;
+    // 6. Guardar insights en content_insights (misma tabla que content-insights-generator)
+    const insightsToSave = [];
+    
+    // Preparar audience insights
+    if (structuredInsights?.audience_insights && Array.isArray(structuredInsights.audience_insights)) {
+      for (const insight of structuredInsights.audience_insights) {
+        insightsToSave.push({
+          user_id: userId,
+          insight_type: 'audience',
+          title: insight.title,
+          content: insight.strategy,
+          status: 'active',
+          source: 'ai_generated',
+          created_at: new Date().toISOString(),
+          generated_at: new Date().toISOString(),
+          metadata: {
+            strategy: insight.strategy,
+            context: {
+              company_name: company?.name,
+              company_id: companyId,
+              platform: 'multi-platform',
+              analysis_type: 'audience_intelligence'
+            }
+          }
+        });
+      }
+    }
+    
+    // Preparar content ideas
+    if (structuredInsights?.content_ideas && Array.isArray(structuredInsights.content_ideas)) {
+      for (const idea of structuredInsights.content_ideas) {
+        insightsToSave.push({
+          user_id: userId,
+          insight_type: 'content_idea',
+          title: idea.title,
+          content: idea.strategy,
+          format: idea.format,
+          platform: idea.platform,
+          hashtags: idea.hashtags || [],
+          timing: idea.timing,
+          status: 'active',
+          source: 'ai_generated',
+          created_at: new Date().toISOString(),
+          generated_at: new Date().toISOString(),
+          metadata: {
+            strategy: idea.strategy,
+            context: {
+              company_name: company?.name,
+              company_id: companyId,
+              analysis_type: 'audience_intelligence'
+            }
+          }
+        });
+      }
+    }
 
-    const { data: savedInsight, error: saveError } = await supabase
-      .from('audience_insights')
-      .upsert({
-        user_id: userId,
-        platform: 'multi-platform',
-        insight_type: 'ai_generated',
-        ai_generated_insights: parsedInsights.detailed_analysis,
-        ai_recommendations: parsedInsights.recommendations,
-        raw_insights: {
-          key_insights: parsedInsights.key_insights,
-          analysis_timestamp: new Date().toISOString(),
-          company_info: analysisInput.empresa,
-          strategy_info: analysisInput.estrategia,
-        },
-        last_ai_analysis_at: new Date().toISOString(),
-        confidence_level: 85,
-        sample_size: totalFollowers,
-      }, {
-        onConflict: 'user_id,platform,insight_type'
-      })
-      .select()
-      .single();
+    // Bulk insert insights
+    let savedInsightsIds: string[] = [];
+    if (insightsToSave.length > 0) {
+      try {
+        console.log(`🔍 Attempting to insert ${insightsToSave.length} insights...`);
+        console.log('📋 Sample insight:', JSON.stringify(insightsToSave[0], null, 2));
+        
+        const { data: savedInsights, error: saveError } = await supabase
+          .from('content_insights')
+          .insert(insightsToSave)
+          .select('id');
 
-    if (saveError) {
-      console.error('Error saving insights:', saveError);
-      throw saveError;
+        if (saveError) {
+          console.error('❌ Error saving insights:', JSON.stringify(saveError, null, 2));
+          throw new Error(`Failed to save insights: ${saveError.message}`);
+        } else {
+          savedInsightsIds = (savedInsights || []).map((insight: any) => insight.id);
+          console.log(`✅ Successfully saved ${savedInsightsIds.length} insights with IDs:`, savedInsightsIds);
+        }
+      } catch (saveError) {
+        console.error('❌ Exception in bulk insert:', saveError);
+        throw saveError;
+      }
+    } else {
+      console.log('⚠️ No insights to save - insightsToSave array is empty');
     }
 
     console.log('💾 Insights saved successfully');
@@ -326,8 +282,15 @@ Enfócate en insights prácticos y recomendaciones específicas basadas en los d
     return new Response(
       JSON.stringify({
         success: true,
-        insights: parsedInsights,
-        saved_insight_id: savedInsight.id,
+        audience_insights: structuredInsights?.audience_insights || [],
+        content_ideas: structuredInsights?.content_ideas || [],
+        saved_insights_ids: savedInsightsIds,
+        context_analyzed: {
+          company_name: company?.name,
+          social_accounts: socialAnalysis?.length || 0,
+          total_followers: socialAnalysis?.reduce((sum: number, sa: any) => 
+            sum + (sa.users_count || sa.followers_count || 0), 0) || 0,
+        }
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

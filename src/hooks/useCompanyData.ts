@@ -17,30 +17,43 @@ export const useCompanyData = (companyId: string | undefined) => {
 
       console.log('🔄 [useCompanyData] Fetching data for company:', companyId);
 
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session) {
-        throw new Error('No active session');
+      // Direct Supabase query with proper error handling
+      const [objectivesResult, audiencesResult] = await Promise.all([
+        supabase
+          .from('company_objectives')
+          .select('*')
+          .eq('company_id', companyId)
+          .eq('status', 'active')
+          .order('priority', { ascending: true }),
+        supabase
+          .from('company_audiences')
+          .select('*')
+          .eq('company_id', companyId)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+      ]);
+
+      if (objectivesResult.error) {
+        console.error('❌ Error fetching objectives:', objectivesResult.error);
+      }
+      if (audiencesResult.error) {
+        console.error('❌ Error fetching audiences:', audiencesResult.error);
       }
 
-      const { data, error } = await supabase.functions.invoke('get-company-data', {
-        body: { company_id: companyId }
-      });
-
-      if (error) {
-        console.error('❌ [useCompanyData] Edge function error:', error);
-        throw error;
-      }
-
-      if (!data) {
-        throw new Error('No data returned from edge function');
-      }
+      const objectives = objectivesResult.data || [];
+      const audiences = audiencesResult.data || [];
 
       console.log('✅ [useCompanyData] Data fetched:', {
-        objectives: data.objectives?.length || 0,
-        audiences: data.audiences?.length || 0
+        objectives: objectives.length,
+        audiences: audiences.length,
+        company_id: companyId
       });
 
-      return data;
+      return {
+        objectives,
+        audiences,
+        company_id: companyId
+      };
     },
     enabled: !!companyId,
     staleTime: 1000 * 60 * 5, // 5 minutes

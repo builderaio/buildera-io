@@ -192,16 +192,20 @@ export const CampaignWizard = ({
     if (primaryCompany && !campaignData.company.nombre_empresa) {
       console.log('📊 [CampaignWizard] Populating company data:', {
         name: primaryCompany.name,
+        id: primaryCompany.id,
+        hasId: !!primaryCompany.id,
         hasDescription: !!primaryCompany.description,
         hasPropuestaValor: !!primaryCompany.propuesta_valor,
         hasWebsite: !!primaryCompany.website_url,
-        hasIndustry: !!primaryCompany.industry_sector
+        hasIndustry: !!primaryCompany.industry_sector,
+        allKeys: Object.keys(primaryCompany)
       });
 
       setCampaignData(prev => ({
         ...prev,
         company: {
           ...prev.company,
+          id: primaryCompany.id, // ← CRÍTICO: Agregar el ID
           name: primaryCompany.name || '',
           nombre_empresa: primaryCompany.name || '',
           description: primaryCompany.description || '',

@@ -72,7 +72,18 @@ export const useCompanyManagement = () => {
         const company = member.companies;
         if (!company) return null;
         const strategy = company.company_strategy?.[0] as Partial<Company> | undefined;
-        return strategy ? { ...company, ...strategy } : company;
+        const merged = strategy ? { ...company, ...strategy } : company;
+        
+        console.log('🏢 [useCompanyManagement] Company mapping:', {
+          companyName: company?.name,
+          hasId: !!merged?.id,
+          id: merged?.id,
+          hasStrategy: !!strategy,
+          companyKeys: company ? Object.keys(company) : [],
+          mergedKeys: merged ? Object.keys(merged) : []
+        });
+        
+        return merged;
       }).filter(Boolean) || [];
       
       const primaryMember = memberData?.find((member: any) => member.is_primary);
@@ -82,6 +93,17 @@ export const useCompanyManagement = () => {
       if (primaryCompanyBase) {
         const strategy = primaryCompanyBase.company_strategy?.[0] as Partial<Company> | undefined;
         primaryCompanyData = strategy ? { ...primaryCompanyBase, ...strategy } : primaryCompanyBase;
+        
+        console.log('🎯 [useCompanyManagement] Primary company:', {
+          name: primaryCompanyData?.name,
+          hasId: !!primaryCompanyData?.id,
+          id: primaryCompanyData?.id,
+          hasStrategy: !!strategy,
+          baseKeys: primaryCompanyBase ? Object.keys(primaryCompanyBase) : [],
+          finalKeys: primaryCompanyData ? Object.keys(primaryCompanyData) : []
+        });
+      } else {
+        console.warn('⚠️ [useCompanyManagement] No primary company found for user');
       }
 
       setUserCompanies(companies);

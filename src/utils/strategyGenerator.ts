@@ -62,7 +62,7 @@ export async function generateStrategy({
     retrieve_existing: retrieveExisting,
     input: {
       nombre_empresa: campaignData.company?.nombre_empresa || campaignData.company?.name || 'Mi Empresa',
-      objetivo_de_negocio: campaignData.company?.business_objective || campaignData.company?.objetivo_negocio || campaignData.company?.value_proposition || '',
+      objetivo_de_negocio: campaignData.company?.description || '',
       propuesta_valor: campaignData.company?.value_proposition || campaignData.company?.propuesta_valor || '',
       sitio_web: campaignData.company?.website || campaignData.company?.sitio_web || campaignData.company?.website_url || '',
       nombre_campana: campaignData.name || 'Nueva Campaña',

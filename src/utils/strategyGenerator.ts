@@ -20,7 +20,14 @@ export async function generateStrategy({
     throw new Error('Datos de empresa requeridos');
   }
 
-  if (!campaignData.audiences || campaignData.audiences.length === 0) {
+  // Normalizar audiencias a arreglo (acepta objeto único)
+  const audiencesArray = Array.isArray(campaignData.audiences)
+    ? campaignData.audiences
+    : campaignData.audiences
+      ? [campaignData.audiences]
+      : [];
+
+  if (audiencesArray.length === 0) {
     throw new Error('Debes definir al menos una audiencia objetivo');
   }
 
@@ -35,7 +42,7 @@ export async function generateStrategy({
       nombre_campana: campaignData.name,
       objetivo_campana: campaignData.objective,
       descripcion_campana: campaignData.description,
-      audiencias: campaignData.audiences
+      audiencias: audiencesArray
     }
   };
 

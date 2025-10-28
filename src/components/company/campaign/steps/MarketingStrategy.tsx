@@ -28,13 +28,20 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
   // Load existing strategy on mount
   useEffect(() => {
     if (!strategy && !generating && campaignData) {
-      loadExisting();
+      // Normaliza audiencias para compatibilidad con backend
+      const audiences = Array.isArray(campaignData.audiences)
+        ? campaignData.audiences
+        : campaignData.audiences
+          ? [campaignData.audiences]
+          : [];
+
+      loadExisting({ ...campaignData, audiences });
     }
   }, []);
 
-  const loadExisting = async () => {
+  const loadExisting = async (normalizedCampaignData?: any) => {
     try {
-      const existing = await loadExistingStrategy(campaignData);
+      const existing = await loadExistingStrategy(normalizedCampaignData || campaignData);
       if (existing) {
         setStrategy(existing);
       }

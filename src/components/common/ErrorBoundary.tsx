@@ -34,6 +34,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         <div className="p-4 border rounded-md bg-destructive/5 text-destructive">
           <p className="font-semibold">Se produjo un error al mostrar esta sección.</p>
           <p className="text-sm opacity-80">Intenta recargar o volver a generar la estrategia.</p>
+          {this.state.error && (
+            <details className="mt-2 text-xs opacity-70 whitespace-pre-wrap">
+              <summary>Mostrar detalles técnicos</summary>
+              {String(this.state.error?.message || this.state.error)}
+            </details>
+          )}
         </div>
       );
     }

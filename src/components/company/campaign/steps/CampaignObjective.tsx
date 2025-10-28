@@ -90,7 +90,11 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
   // Load company objectives
   useEffect(() => {
     const loadCompanyObjectives = async () => {
-      if (!companyData?.id) return;
+      if (!companyData?.id) {
+        console.log('⚠️ No company ID found, skipping objectives load');
+        setLoadingObjectives(false);
+        return;
+      }
 
       try {
         const { data, error } = await supabase
@@ -102,9 +106,10 @@ export const CampaignObjective = ({ campaignData, onComplete, loading, companyDa
 
         if (error) throw error;
         
+        console.log('✅ Loaded company objectives:', data?.length || 0);
         setCompanyObjectives(data || []);
       } catch (error) {
-        console.error('Error loading company objectives:', error);
+        console.error('❌ Error loading company objectives:', error);
         toast({
           title: "Error",
           description: "No se pudieron cargar los objetivos de la empresa",

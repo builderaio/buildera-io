@@ -86,7 +86,11 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
   // Load existing audiences
   useEffect(() => {
     const loadAudiences = async () => {
-      if (!companyData?.id) return;
+      if (!companyData?.id) {
+        console.log('⚠️ No company ID found, skipping audiences load');
+        setLoadingAudiences(false);
+        return;
+      }
 
       try {
         const { data, error } = await supabase
@@ -98,9 +102,10 @@ export const TargetAudience = ({ campaignData, onComplete, onDataChange, loading
 
         if (error) throw error;
         
+        console.log('✅ Loaded audiences:', data?.length || 0);
         setExistingAudiences(data || []);
       } catch (error) {
-        console.error('Error loading audiences:', error);
+        console.error('❌ Error loading audiences:', error);
         toast({
           title: "Error",
           description: "No se pudieron cargar las audiencias",

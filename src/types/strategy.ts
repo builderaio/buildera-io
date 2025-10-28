@@ -55,5 +55,6 @@ export interface MarketingStrategy {
   risks?: string[];
   assumptions?: string[];
   sources?: string[];
+  ai_insights?: any[] | Record<string, any> | string;
   full_strategy_data?: any;
 }

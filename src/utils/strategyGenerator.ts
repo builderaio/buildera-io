@@ -35,22 +35,34 @@ export async function generateStrategy({
     throw new Error('Debes definir al menos una audiencia objetivo');
   }
 
-  // Preparar payload mínimo
+  // Preparar payload con datos completos y limpios
   const objectiveText = typeof campaignData.objective === 'string'
     ? campaignData.objective
-    : campaignData.objective?.type || campaignData.objective?.name || '';
+    : campaignData.objective?.description || campaignData.objective?.label || campaignData.objective?.name || '';
+
+  // Limpiar audiencias - solo enviar campos relevantes
+  const cleanedAudiences = audiencesArray.map(audience => ({
+    name: audience.name,
+    description: audience.description,
+    demographics: audience.demographics,
+    psychographics: audience.psychographics,
+    pain_points: audience.pain_points,
+    goals: audience.goals,
+    preferred_channels: audience.preferred_channels,
+    content_preferences: audience.content_preferences
+  }));
 
   const payload = {
     retrieve_existing: retrieveExisting,
     input: {
       nombre_empresa: campaignData.company.nombre_empresa || campaignData.company.name,
-      objetivo_de_negocio: campaignData.company.value_proposition || 
-                           campaignData.company.description || 
-                           campaignData.description,
+      objetivo_de_negocio: campaignData.company.business_objective || campaignData.company.objetivo_negocio || '',
+      propuesta_valor: campaignData.company.value_proposition || campaignData.company.propuesta_valor || '',
+      sitio_web: campaignData.company.website || campaignData.company.sitio_web || '',
       nombre_campana: campaignData.name,
       objetivo_campana: objectiveText,
       descripcion_campana: campaignData.description,
-      audiencias: audiencesArray
+      audiencias: cleanedAudiences
     }
   };
 

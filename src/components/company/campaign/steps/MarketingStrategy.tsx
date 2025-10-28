@@ -357,6 +357,39 @@ export function MarketingStrategy({ campaignData, onComplete, loading }: Marketi
             </EditableStrategySection>
           )}
 
+          {/* AI Insights */}
+          {strategy.ai_insights && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <Sparkles className="h-6 w-6" />
+                  Insights Generados por IA
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Array.isArray(strategy.ai_insights) ? (
+                    strategy.ai_insights.map((insight: any, idx: number) => (
+                      <div key={idx} className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
+                        <h4 className="font-bold text-primary mb-2">{insight.title || insight.category || 'Insight'}</h4>
+                        <p className="text-sm">{insight.description || insight.content || insight.text || JSON.stringify(insight)}</p>
+                      </div>
+                    ))
+                  ) : typeof strategy.ai_insights === 'object' ? (
+                    Object.entries(strategy.ai_insights).map(([key, value]: [string, any]) => (
+                      <div key={key} className="bg-gradient-to-r from-primary/5 to-primary/10 p-4 rounded-lg border border-primary/20">
+                        <h4 className="font-bold text-primary mb-2 capitalize">{key.replace(/_/g, ' ')}</h4>
+                        <p className="text-sm">{typeof value === 'string' ? value : JSON.stringify(value, null, 2)}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{String(strategy.ai_insights)}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Competitors */}
           {Array.isArray(strategy.competitors) && strategy.competitors.length > 0 ? (
             <Card>

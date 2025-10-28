@@ -141,7 +141,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       
       // Detectar nuevas conexiones antes de actualizar
       if (socialAccounts.length > 0) {
-        detectNewConnections(list);
+        await detectNewConnections(list);
       }
       
       setSocialAccounts(list);
@@ -170,7 +170,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   };
 
   // Detectar nuevas conexiones para mostrar coachmarks
-  const detectNewConnections = (newAccounts: SocialAccount[]) => {
+  const detectNewConnections = async (newAccounts: SocialAccount[]) => {
     const currentConnected = new Set(
       socialAccounts.filter(acc => acc.is_connected).map(acc => acc.platform)
     );
@@ -186,8 +186,23 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     });
     
     if (newPlatforms.size > 0) {
-      setNewConnectedPlatforms(newPlatforms);
-      setShowCoachMark(true);
+      // Verificar si el usuario ya ha visto el tutorial de Era
+      try {
+        const { data: tutorialData } = await supabase
+          .from('user_tutorials')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('tutorial_name', 'era_introduction')
+          .maybeSingle();
+        
+        // Solo mostrar el coach mark si el usuario NO ha visto el tutorial
+        if (!tutorialData) {
+          setNewConnectedPlatforms(newPlatforms);
+          setShowCoachMark(true);
+        }
+      } catch (error) {
+        console.error('Error verificando tutorial de Era:', error);
+      }
     }
   };
 

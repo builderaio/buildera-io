@@ -3,20 +3,6 @@
     "title": "Campaña Inteligente",
     "subtitle": "Crea campañas de marketing que generen resultados reales con el poder de la IA",
     "progress": "Paso {current} de {total} • {percent}% completado",
-    "loading": {
-      "objectives": "Cargando objetivos...",
-      "audiences": "Cargando audiencias..."
-    },
-    "errors": {
-      "loadingObjectives": "Error al cargar los objetivos",
-      "loadingAudiences": "Error al cargar las audiencias"
-    },
-    "empty": {
-      "objectives": "No hay objetivos de crecimiento definidos para tu empresa",
-      "objectivesHint": "Ve a la sección de estrategia empresarial para definir tus objetivos",
-      "audiences": "No hay audiencias creadas para esta empresa",
-      "audiencesHint": "Primero crea audiencias desde el Manager de Audiencias"
-    },
     "steps": {
       "objective": {
         "title": "Objetivo de Crecimiento",
@@ -52,9 +38,7 @@
       "previous": "Anterior",
       "finish": "Finalizar Campaña",
       "saveDraft": "Guardar Borrador",
-      "generateWithAI": "Generar con IA",
-      "retry": "Reintentar",
-      "refresh": "Actualizar"
+      "generateWithAI": "Generar con IA"
     },
     "messages": {
       "stepComplete": "¡Paso completado! 🎉",

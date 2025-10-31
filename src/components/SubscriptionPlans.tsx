@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Check, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { edgeFunctions } from '@/services/edgeFunctions';
 import { toast } from "sonner";
 
 interface SubscriptionPlan {
@@ -68,7 +67,7 @@ const SubscriptionPlans = () => {
 
   const fetchUserSubscription = async () => {
     try {
-      const { data, error } = await edgeFunctions.business.checkSubscriptionStatus();
+      const { data, error } = await supabase.functions.invoke('check-subscription-status');
       
       if (error) {
         console.error('Error fetching subscription:', error);
@@ -94,7 +93,9 @@ const SubscriptionPlans = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await edgeFunctions.business.createSubscriptionCheckout(planSlug);
+      const { data, error } = await supabase.functions.invoke('create-subscription-checkout', {
+        body: { planSlug, isYearly }
+      });
 
       if (error) {
         console.error('Error creating checkout:', error);

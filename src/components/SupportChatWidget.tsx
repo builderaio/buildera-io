@@ -6,7 +6,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { edgeFunctions } from '@/services/edgeFunctions';
 import { useToast } from "@/hooks/use-toast";
 import { useCompanyAgent } from "@/hooks/useCompanyAgent";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
@@ -126,10 +125,12 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
 
     try {
       // Try company agent chat first
-      const { data, error } = await edgeFunctions.business.chatWithCompanyAgent({
-        message: inputMessage,
-        user_id: uid,
-        context: pageContext
+      const { data, error } = await supabase.functions.invoke('company-agent-chat', {
+        body: {
+          message: inputMessage,
+          user_id: uid,
+          context: pageContext
+        }
       });
 
       if (error) throw error;
@@ -149,12 +150,14 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
       
       // Fallback to general Era chat
       try {
-        const { data: fallbackData, error: fallbackError } = await edgeFunctions.ai.chatWithERA({
-          message: inputMessage,
-          context: pageContext,
-          userInfo: {
-            display_name: displayName,
-            user_type: (user as any)?.user_type
+        const { data: fallbackData, error: fallbackError } = await supabase.functions.invoke('era-chat', {
+          body: {
+            message: inputMessage,
+            context: pageContext,
+            userInfo: {
+              display_name: displayName,
+              user_type: (user as any)?.user_type
+            }
           }
         });
 
@@ -249,10 +252,12 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
 
             if (!companyAgent) {
               // Crear agente en background
-              edgeFunctions.business.createCompanyAgent(
-                uid,
-                userCompany.company_id
-              ).catch(console.error);
+              supabase.functions.invoke('create-company-agent', {
+                body: {
+                  user_id: uid,
+                  company_id: userCompany.company_id
+                }
+              }).catch(console.error);
             }
 
             const companyName = userCompany.companies?.name || 'tu empresa';

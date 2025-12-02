@@ -106,7 +106,7 @@ const PLATFORM_COLORS = {
 const CHART_COLORS = ['#8B5CF6', '#06B6D4', '#10B981', '#F59E0B', '#EF4444', '#8B5A2B'];
 
 export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> = ({ profile }) => {
-  const { t } = useTranslation('analytics');
+  const { t, i18n } = useTranslation('analytics');
   const [loading, setLoading] = useState(false);
   const [analysisData, setAnalysisData] = useState<ContentAnalysisData>({
     retrospective: [],
@@ -165,6 +165,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
         body: {
           user_id: currentUserId,
           platform: selectedPlatform !== 'all' ? selectedPlatform : null,
+          language: i18n.language,
           top_posts: sortedByEngagement.map(post => ({
             platform: post.platform || post.socialType,
             text: post.text,

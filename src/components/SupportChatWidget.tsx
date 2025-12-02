@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { MessageCircle, X, Send, Bot, User, Minimize2, Maximize2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ interface SupportChatWidgetProps {
 const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const { i18n } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -154,6 +156,7 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
           body: {
             message: inputMessage,
             context: pageContext,
+            language: i18n.language,
             userInfo: {
               display_name: displayName,
               user_type: (user as any)?.user_type

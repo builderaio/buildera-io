@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getSystemPrompt, validateLanguage } from '../_shared/prompts.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,7 +31,8 @@ serve(async (req) => {
   }
 
   try {
-    const { user_id, company_id } = await req.json();
+    const { user_id, company_id, language } = await req.json();
+    const userLanguage = validateLanguage(language);
     
     if (!user_id) {
       return new Response(JSON.stringify({ error: 'user_id es requerido' }), {
@@ -112,52 +114,40 @@ serve(async (req) => {
       existingAudiencesCount: context.existingAudiences.length
     });
 
-    const systemPrompt = `Eres un experto en marketing digital y segmentación de audiencias. Tu tarea es generar audiencias inteligentes y accionables basándote en los datos de análisis social y recomendaciones de contenido proporcionados.
+    console.log('User language:', userLanguage);
+    const systemPrompt = getSystemPrompt('ai-audience-generator', userLanguage);
 
-INSTRUCCIONES CRÍTICAS:
-1. Genera exactamente 3-5 audiencias diferentes pero complementarias
-2. Cada audiencia debe ser específica, accionable y basada en los datos reales proporcionados
-3. Evita duplicar audiencias existentes
-4. Incluye datos demográficos, psicográficos y comportamentales específicos
-5. Proporciona targeting específico para cada plataforma social
-6. Calcula estimaciones realistas de tamaño y potencial de conversión
+    const userPromptText = userLanguage === 'en' 
+      ? 'Analyze the following data and generate intelligent audiences:'
+      : userLanguage === 'pt'
+      ? 'Analise os seguintes dados e gere públicos inteligentes:'
+      : 'Analiza los siguientes datos y genera audiencias inteligentes:';
 
-FORMATO DE RESPUESTA (JSON):
-{
-  "audiences": [
-    {
-      "name": "Nombre específico y descriptivo",
-      "description": "Descripción detallada de 2-3 líneas",
-      "age_ranges": {"18-24": 15, "25-34": 45, "35-44": 30, "45-54": 10},
-      "gender_split": {"male": 45, "female": 55},
-      "geographic_locations": {"countries": ["Colombia", "México"], "cities": ["Bogotá", "CDMX"]},
-      "interests": {"primary": ["tecnología", "emprendimiento"], "secondary": ["productividad", "innovación"]},
-      "job_titles": ["Emprendedor", "Gerente de TI", "Consultor"],
-      "income_ranges": {"$30k-50k": 30, "$50k-80k": 50, "$80k+": 20},
-      "pain_points": ["Falta de tiempo", "Procesos manuales", "Costos elevados"],
-      "goals": ["Automatización", "Eficiencia", "Crecimiento"],
-      "motivations": ["Innovación", "Competitividad", "Productividad"],
-      "platform_preferences": {"instagram": 80, "linkedin": 90, "tiktok": 30},
-      "content_preferences": {"educational": 70, "behind_scenes": 40, "testimonials": 60},
-      "estimated_size": 15000,
-      "conversion_potential": 0.75,
-      "acquisition_cost_estimate": 45,
-      "lifetime_value_estimate": 1200,
-      "facebook_targeting": {"interests": ["Emprendimiento", "Startups"], "behaviors": ["Small business owners"]},
-      "instagram_targeting": {"hashtags": ["#emprendedor", "#startup"], "interests": ["Business"]},
-      "linkedin_targeting": {"job_titles": ["CEO", "Founder"], "company_sizes": ["1-50"]},
-      "confidence_score": 0.85
-    }
-  ],
-  "insights": {
-    "total_market_size": 125000,
-    "recommended_budget_distribution": {"facebook": 30, "instagram": 40, "linkedin": 30},
-    "key_opportunities": ["Segmento joven tecnológico en crecimiento", "Alto engagement en contenido educativo"],
-    "recommendations": ["Enfocar contenido en casos de uso específicos", "Crear testimonios por industria"]
-  }
-}`;
+    const companyLabel = userLanguage === 'en' ? 'COMPANY:' : userLanguage === 'pt' ? 'EMPRESA:' : 'EMPRESA:';
+    const audienceLabel = userLanguage === 'en' ? 'SOCIAL AUDIENCE ANALYSIS:' : userLanguage === 'pt' ? 'ANÁLISE DE PÚBLICO SOCIAL:' : 'ANÁLISIS DE AUDIENCIAS SOCIALES:';
+    const contentLabel = userLanguage === 'en' ? 'CONTENT RECOMMENDATIONS:' : userLanguage === 'pt' ? 'RECOMENDAÇÕES DE CONTEÚDO:' : 'RECOMENDACIONES DE CONTENIDO:';
+    const existingLabel = userLanguage === 'en' ? 'EXISTING AUDIENCES (DO NOT DUPLICATE):' : userLanguage === 'pt' ? 'PÚBLICOS EXISTENTES (NÃO DUPLICAR):' : 'AUDIENCIAS EXISTENTES (NO DUPLICAR):';
+    const generateText = userLanguage === 'en' 
+      ? 'Generate specific, differentiated and actionable audiences based on this real data.'
+      : userLanguage === 'pt'
+      ? 'Gere públicos específicos, diferenciados e acionáveis baseados nestes dados reais.'
+      : 'Genera audiencias específicas, diferenciadas y accionables basadas en estos datos reales.';
 
-    const userPrompt = `Analiza los siguientes datos y genera audiencias inteligentes:
+    const userPrompt = `${userPromptText}
+
+${companyLabel}
+${JSON.stringify(context.company, null, 2)}
+
+${audienceLabel}
+${JSON.stringify(context.audienceAnalysis, null, 2)}
+
+${contentLabel}
+${JSON.stringify(context.contentRecommendations, null, 2)}
+
+${existingLabel}
+${JSON.stringify(context.existingAudiences, null, 2)}
+
+${generateText}`;
 
 EMPRESA:
 ${JSON.stringify(context.company, null, 2)}

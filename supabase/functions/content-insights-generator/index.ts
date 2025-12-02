@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { getSystemPrompt, validateLanguage } from '../_shared/prompts.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,7 +33,8 @@ serve(async (req) => {
   }
 
   try {
-    const { user_id, platform, top_posts } = await req.json();
+    const { user_id, platform, top_posts, language } = await req.json();
+    const userLanguage = validateLanguage(language);
 
     if (!user_id) {
       throw new Error('User ID is required');
@@ -197,40 +199,9 @@ Sitio web: ${context.company.website || 'No disponible'}\n`;
     }
 
     console.log('Context description prepared:', contextDescription);
+    console.log('User language:', userLanguage);
 
-    const systemPrompt = `Eres un experto en marketing digital y generación de contenido. DEBES analizar profundamente el contexto de la empresa proporcionado y generar insights ESPECÍFICOS para esa empresa, su industria y su audiencia.
-
-INSTRUCCIONES CRÍTICAS:
-1. **OBLIGATORIO**: Usa el nombre de la empresa, su industria y descripción en tus recomendaciones
-2. **OBLIGATORIO**: Si hay audiencias definidas, genera contenido específico para sus pain points y objetivos
-3. Si hay posts recientes, identifica qué funcionó mejor y por qué
-4. Genera ideas de contenido que sean ÚNICAMENTE relevantes para esta empresa e industria específica
-5. NO generes ideas genéricas - cada idea debe ser personalizada al contexto dado
-6. Incluye formatos variados (posts, videos, carruseles, stories, reels)
-7. Proporciona hashtags específicos de la industria
-
-FORMATO DE RESPUESTA:
-Genera exactamente 6 elementos organizados así:
-
-**📊 INSIGHTS DE AUDIENCIA**
-**Título**: [Nombre del insight sobre comportamiento]
-**Estrategia**: [Descripción del insight basado en los datos de la empresa y audiencia]
-
-**Título**: [Segundo insight]
-**Estrategia**: [Descripción del segundo insight]
-
-**💡 IDEAS DE CONTENIDO**
-
-**Título**: [Título específico relacionado con la empresa/industria]
-**Formato sugerido**: [post/video/carrusel/story/reel]
-**Plataforma recomendada**: [instagram/linkedin/tiktok/facebook]
-**Hashtags**: #hashtag1 #hashtag2 #hashtag3
-**Hora/día sugerido para publicar**: [Ej: Lunes 10:00 AM]
-**Estrategia**: [Por qué esta idea es relevante para esta empresa específica]
-
-[Repite el formato anterior para 3 ideas más de contenido]
-
-RECUERDA: Cada idea DEBE mencionar o relacionarse directamente con la empresa, su industria o su audiencia específica.`;
+    const systemPrompt = getSystemPrompt('content-insights-generator', userLanguage);
 
     const userPrompt = `${contextDescription}
 

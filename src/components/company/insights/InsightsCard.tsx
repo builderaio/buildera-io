@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 import { Lightbulb, TrendingUp, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface InsightCardProps {
@@ -17,6 +18,7 @@ export const InsightsCard = ({
   implicacion,
   prioridad 
 }: InsightCardProps) => {
+  const { t } = useTranslation('marketing');
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case 'alta': return 'bg-red-500/10 text-red-700 dark:text-red-400';
@@ -50,7 +52,7 @@ export const InsightsCard = ({
             </Badge>
             {prioridad && (
               <Badge className={`text-xs ${getPriorityColor(prioridad)}`}>
-                Prioridad {prioridad}
+                {t('insights.priority.label')} {t(`insights.priority.${prioridad}`)}
               </Badge>
             )}
           </div>
@@ -61,13 +63,13 @@ export const InsightsCard = ({
           
           {evidencia && (
             <p className="text-xs text-muted-foreground">
-              <span className="font-medium">Evidencia:</span> {evidencia}
+              <span className="font-medium">{t('insights.evidence')}</span> {evidencia}
             </p>
           )}
           
           {implicacion && (
             <p className="text-xs text-muted-foreground">
-              <span className="font-medium">Implicación:</span> {implicacion}
+              <span className="font-medium">{t('insights.implication')}</span> {implicacion}
             </p>
           )}
         </div>

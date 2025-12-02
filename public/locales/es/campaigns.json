@@ -53,5 +53,18 @@
       "aiCampaignsCount": "Se generaron {count} campañas personalizadas",
       "aiError": "No se pudieron generar las campañas con IA"
     }
+  },
+  "dashboard": {
+    "title": "Campañas Inteligentes",
+    "subtitle": "Crea y gestiona tus campañas de marketing con IA",
+    "newCampaign": "Nueva Campaña",
+    "backToCampaigns": "Volver a Campañas",
+    "stats": {
+      "inProgress": "En Progreso",
+      "completed": "Completadas",
+      "performance": "Rendimiento",
+      "avgROI": "ROI Promedio"
+    },
+    "confirmDelete": "¿Estás seguro de que quieres eliminar esta campaña en progreso?"
   }
 }

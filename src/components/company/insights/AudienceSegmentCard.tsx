@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useTranslation } from "react-i18next";
 import { Users, Target, TrendingUp } from "lucide-react";
 
 interface AudienceSegmentProps {
@@ -35,6 +36,7 @@ export const AudienceSegmentCard = ({
   potencial_conversion,
   canales_preferidos
 }: AudienceSegmentProps) => {
+  const { t } = useTranslation('marketing');
   return (
     <Card className="p-4 space-y-4 hover:shadow-lg transition-shadow">
       {/* Header */}
@@ -47,7 +49,7 @@ export const AudienceSegmentCard = ({
             <h4 className="font-semibold text-foreground">{nombre}</h4>
           </div>
           <Badge className="bg-primary/10 text-primary">
-            {porcentaje}% de tu audiencia
+            {porcentaje}% {t('audienceSegment.ofYourAudience')}
           </Badge>
         </div>
         
@@ -61,12 +63,12 @@ export const AudienceSegmentCard = ({
         <div className="space-y-2">
           <h5 className="text-xs font-medium text-foreground flex items-center gap-1">
             <Target className="h-3 w-3" />
-            Demografía
+            {t('audienceSegment.demographics')}
           </h5>
           <div className="flex flex-wrap gap-2">
             {demografia.edad_promedio && (
               <Badge variant="outline" className="text-xs">
-                {demografia.edad_promedio} años
+                {demografia.edad_promedio} {t('audienceSegment.years')}
               </Badge>
             )}
             {demografia.genero_predominante && (
@@ -86,7 +88,7 @@ export const AudienceSegmentCard = ({
       {/* Psicografía */}
       {psicografia && psicografia.intereses_clave && psicografia.intereses_clave.length > 0 && (
         <div className="space-y-2">
-          <h5 className="text-xs font-medium text-foreground">Intereses</h5>
+          <h5 className="text-xs font-medium text-foreground">{t('audienceSegment.interests')}</h5>
           <div className="flex flex-wrap gap-1">
             {psicografia.intereses_clave.map((interes, idx) => (
               <Badge key={idx} variant="secondary" className="text-xs">
@@ -100,7 +102,7 @@ export const AudienceSegmentCard = ({
       {/* Comportamiento Social */}
       {comportamiento_social && (
         <div className="space-y-2">
-          <h5 className="text-xs font-medium text-foreground">Plataformas activas</h5>
+          <h5 className="text-xs font-medium text-foreground">{t('audienceSegment.activePlatforms')}</h5>
           <div className="flex flex-wrap gap-1">
             {comportamiento_social.plataformas_activas?.map((plataforma, idx) => (
               <Badge key={idx} className="text-xs bg-accent/50 text-accent-foreground">
@@ -117,7 +119,7 @@ export const AudienceSegmentCard = ({
           <div className="flex items-center justify-between">
             <h5 className="text-xs font-medium text-foreground flex items-center gap-1">
               <TrendingUp className="h-3 w-3" />
-              Potencial de conversión
+              {t('audienceSegment.conversionPotential')}
             </h5>
             <span className="text-sm font-bold text-primary">
               {potencial_conversion}/10

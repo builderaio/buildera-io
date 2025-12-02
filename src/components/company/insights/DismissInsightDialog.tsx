@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useTranslation } from "react-i18next";
 
 interface DismissInsightDialogProps {
   open: boolean;
@@ -23,19 +24,20 @@ export const DismissInsightDialog = ({
   onOpenChange,
   onConfirm
 }: DismissInsightDialogProps) => {
+  const { t } = useTranslation('marketing');
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
 
   const predefinedReasons = [
-    "Ya no es relevante para mi negocio",
-    "No se alinea con mi estrategia actual",
-    "Ya lo implementé de otra manera",
-    "No tengo recursos para ejecutarlo",
-    "Otro motivo"
+    t('insights.dismiss.reasons.notRelevant'),
+    t('insights.dismiss.reasons.notAligned'),
+    t('insights.dismiss.reasons.alreadyImplemented'),
+    t('insights.dismiss.reasons.noResources'),
+    t('insights.dismiss.reasons.other')
   ];
 
   const handleConfirm = () => {
-    const finalReason = reason === "Otro motivo" ? customReason : reason;
+    const finalReason = reason === t('insights.dismiss.reasons.other') ? customReason : reason;
     if (finalReason) {
       onConfirm(finalReason);
       setReason("");
@@ -47,14 +49,14 @@ export const DismissInsightDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Descartar Insight</DialogTitle>
+          <DialogTitle>{t('insights.dismiss.title')}</DialogTitle>
           <DialogDescription>
-            Ayúdanos a entender por qué este insight no es útil. Esta información nos ayudará a mejorar las recomendaciones futuras.
+            {t('insights.dismiss.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <Label>¿Por qué deseas descartar este insight?</Label>
+          <Label>{t('insights.dismiss.question')}</Label>
           <RadioGroup value={reason} onValueChange={setReason}>
             {predefinedReasons.map((r) => (
               <div key={r} className="flex items-center space-x-2">
@@ -66,12 +68,12 @@ export const DismissInsightDialog = ({
             ))}
           </RadioGroup>
 
-          {reason === "Otro motivo" && (
+          {reason === t('insights.dismiss.reasons.other') && (
             <div className="space-y-2 animate-fade-in">
-              <Label htmlFor="custom">Especifica el motivo</Label>
+              <Label htmlFor="custom">{t('insights.dismiss.specifyReason')}</Label>
               <Textarea
                 id="custom"
-                placeholder="Describe por qué este insight no es útil..."
+                placeholder={t('insights.dismiss.placeholder')}
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
                 className="min-h-[100px]"
@@ -89,14 +91,14 @@ export const DismissInsightDialog = ({
               setCustomReason("");
             }}
           >
-            Cancelar
+            {t('insights.dismiss.cancel')}
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={!reason || (reason === "Otro motivo" && !customReason)}
+            disabled={!reason || (reason === t('insights.dismiss.reasons.other') && !customReason)}
             className="bg-destructive hover:bg-destructive/90"
           >
-            Confirmar Descarte
+            {t('insights.dismiss.confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 import { Filter, TrendingUp, Sparkles } from "lucide-react";
 
 interface InsightsFiltersProps {
@@ -20,20 +21,22 @@ export const InsightsFilters = ({
   onFilterChange,
   counts
 }: InsightsFiltersProps) => {
+  const { t } = useTranslation('marketing');
+  
   const filters = [
-    { id: 'all', label: 'Todos', count: counts.all },
-    { id: 'active', label: 'Activos', count: counts.active },
-    { id: 'completed', label: 'Completados', count: counts.completed },
-    { id: 'dismissed', label: 'Descartados', count: counts.dismissed },
-    { id: 'audience', label: 'Audiencia', count: counts.audience, icon: TrendingUp },
-    { id: 'content_ideas', label: 'Ideas de Contenido', count: counts.content_ideas, icon: Sparkles },
+    { id: 'all', label: t('insights.filters.all'), count: counts.all },
+    { id: 'active', label: t('insights.filters.active'), count: counts.active },
+    { id: 'completed', label: t('insights.filters.completed'), count: counts.completed },
+    { id: 'dismissed', label: t('insights.filters.dismissed'), count: counts.dismissed },
+    { id: 'audience', label: t('insights.filters.audience'), count: counts.audience, icon: TrendingUp },
+    { id: 'content_ideas', label: t('insights.filters.contentIdeas'), count: counts.content_ideas, icon: Sparkles },
   ];
 
   return (
     <div className="flex items-center gap-2 flex-wrap bg-card/50 p-4 rounded-lg border">
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
         <Filter className="w-4 h-4" />
-        Filtrar:
+        {t('insights.filters.label')}
       </div>
       {filters.map((filter) => {
         const Icon = filter.icon;

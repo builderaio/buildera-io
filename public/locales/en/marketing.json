@@ -94,5 +94,81 @@
     "fieldUpdated": "Field updated",
     "updateSuccess": "Changes saved successfully",
     "updateError": "Could not save field"
+  },
+  "insights": {
+    "audienceTitle": "Audience Insights",
+    "audienceSubtitle": "Identified patterns in your audience",
+    "contentTitle": "Content Ideas",
+    "contentSubtitle": "Specific ideas ready to create",
+    "strategy": "Strategy:",
+    "suggestedHashtags": "Suggested hashtags:",
+    "bestTime": "Best time:",
+    "createNow": "Create Now",
+    "schedule": "Schedule",
+    "readyTitle": "Ready to create exceptional content?",
+    "readyDescription": "Use these insights to create content that connects with your audience",
+    "viewMetrics": "View Metrics",
+    "createContent": "Create Content",
+    "filters": {
+      "label": "Filter:",
+      "all": "All",
+      "active": "Active",
+      "completed": "Completed",
+      "dismissed": "Dismissed",
+      "audience": "Audience",
+      "contentIdeas": "Content Ideas"
+    },
+    "priority": {
+      "high": "high",
+      "medium": "medium",
+      "low": "low",
+      "label": "Priority"
+    },
+    "evidence": "Evidence:",
+    "implication": "Implication:",
+    "dismiss": {
+      "title": "Dismiss Insight",
+      "description": "Help us understand why this insight is not useful. This information will help us improve future recommendations.",
+      "question": "Why do you want to dismiss this insight?",
+      "reasons": {
+        "notRelevant": "No longer relevant to my business",
+        "notAligned": "Does not align with my current strategy",
+        "alreadyImplemented": "Already implemented it differently",
+        "noResources": "Don't have resources to execute it",
+        "other": "Other reason"
+      },
+      "specifyReason": "Specify the reason",
+      "placeholder": "Describe why this insight is not useful...",
+      "cancel": "Cancel",
+      "confirm": "Confirm Dismissal"
+    }
+  },
+  "experts": {
+    "verified": "Verified",
+    "sessions": "sessions",
+    "yearsExp": "years exp.",
+    "perHour": "per hour",
+    "loginToView": "Log in",
+    "toViewPrices": "to view prices",
+    "specialties": "Specialties:",
+    "more": "more",
+    "bookSession": "Book Session",
+    "loginToBook": "Log in to book"
+  },
+  "audienceSegment": {
+    "ofYourAudience": "of your audience",
+    "demographics": "Demographics",
+    "years": "years",
+    "interests": "Interests",
+    "activePlatforms": "Active Platforms",
+    "conversionPotential": "Conversion Potential"
+  },
+  "era": {
+    "title": "Era - Buildera AI Assistant",
+    "subtitle": "Optimized your social media content",
+    "originalContent": "Original Content",
+    "optimizedContent": "Era Optimized Content",
+    "useOptimization": "Use Era Optimization",
+    "keepOriginal": "Keep Original"
   }
 }

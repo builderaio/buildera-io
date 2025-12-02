@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useTranslation } from "react-i18next";
 import { 
   Brain, 
   Lightbulb, 
@@ -50,6 +51,7 @@ const InsightsRenderer = ({
   onOpenCalendar, 
   onOpenCreator 
 }: InsightsRendererProps) => {
+  const { t } = useTranslation('marketing');
   
   const parseInsights = (rawInsights: string) => {
     const parsedAudienceInsights: ParsedInsight[] = [];
@@ -217,9 +219,9 @@ const InsightsRenderer = ({
             </div>
             <div>
               <h3 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Insights de Audiencia
+                {t('insights.audienceTitle')}
               </h3>
-              <p className="text-sm text-muted-foreground">Patrones identificados en tu audiencia</p>
+              <p className="text-sm text-muted-foreground">{t('insights.audienceSubtitle')}</p>
             </div>
           </div>
           
@@ -258,9 +260,9 @@ const InsightsRenderer = ({
             </div>
             <div>
               <h3 className="text-2xl font-bold bg-gradient-to-r from-accent-foreground to-accent-foreground/70 bg-clip-text text-transparent">
-                Ideas de Contenido
+                {t('insights.contentTitle')}
               </h3>
-              <p className="text-sm text-muted-foreground">Ideas específicas listas para crear</p>
+              <p className="text-sm text-muted-foreground">{t('insights.contentSubtitle')}</p>
             </div>
           </div>
           
@@ -298,7 +300,7 @@ const InsightsRenderer = ({
                     <div className="bg-muted/30 p-3 rounded-lg">
                       <h5 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
                         <TrendingUp className="h-3.5 w-3.5" />
-                        Estrategia:
+                        {t('insights.strategy')}
                       </h5>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {idea.strategy}
@@ -311,7 +313,7 @@ const InsightsRenderer = ({
                     <div>
                       <h5 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
                         <Hash className="h-3.5 w-3.5" />
-                        Hashtags sugeridos:
+                        {t('insights.suggestedHashtags')}
                       </h5>
                       <div className="flex flex-wrap gap-2">
                         {idea.hashtags.map((tag, tagIndex) => (
@@ -327,7 +329,7 @@ const InsightsRenderer = ({
                   {idea.timing && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 p-2 rounded-md">
                       <Calendar className="h-3.5 w-3.5" />
-                      <span>Mejor momento: {idea.timing}</span>
+                      <span>{t('insights.bestTime')} {idea.timing}</span>
                     </div>
                   )}
 
@@ -339,7 +341,7 @@ const InsightsRenderer = ({
                       className="flex-1"
                     >
                       <PlusCircle className="h-4 w-4 mr-1.5" />
-                      Crear Ahora
+                      {t('insights.createNow')}
                     </Button>
                     <Button 
                       size="sm" 
@@ -347,7 +349,7 @@ const InsightsRenderer = ({
                       onClick={() => onOpenCalendar?.(idea)}
                     >
                       <Calendar className="h-4 w-4 mr-1.5" />
-                      Programar
+                      {t('insights.schedule')}
                     </Button>
                   </div>
                 </CardContent>
@@ -363,9 +365,9 @@ const InsightsRenderer = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-lg font-semibold mb-2">¿Listo para crear contenido excepcional?</h4>
+                <h4 className="text-lg font-semibold mb-2">{t('insights.readyTitle')}</h4>
                 <p className="text-muted-foreground">
-                  Utiliza estos insights para crear contenido que conecte con tu audiencia
+                  {t('insights.readyDescription')}
                 </p>
               </div>
               <div className="flex gap-3">
@@ -374,11 +376,11 @@ const InsightsRenderer = ({
                   onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 >
                   <TrendingUp className="h-4 w-4 mr-2" />
-                  Ver Métricas
+                  {t('insights.viewMetrics')}
                 </Button>
                 <Button onClick={onOpenCreator}>
                   <Lightbulb className="h-4 w-4 mr-2" />
-                  Crear Contenido
+                  {t('insights.createContent')}
                 </Button>
               </div>
             </div>

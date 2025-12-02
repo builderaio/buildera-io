@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import { Brain } from "lucide-react";
 
 interface EraOptimizerDialogProps {
@@ -19,6 +20,8 @@ export function EraOptimizerDialog({
   onAccept,
   onReject
 }: EraOptimizerDialogProps) {
+  const { t } = useTranslation('marketing');
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden bg-gradient-to-br from-white to-purple-50 border-purple-200">
@@ -28,8 +31,8 @@ export function EraOptimizerDialog({
               <Brain className="h-5 w-5 text-purple-600" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-purple-800">Era - Asistente IA de Buildera</h3>
-              <p className="text-sm text-purple-600 font-normal">Ha optimizado tu contenido para redes sociales</p>
+              <h3 className="text-lg font-bold text-purple-800">{t('era.title')}</h3>
+              <p className="text-sm text-purple-600 font-normal">{t('era.subtitle')}</p>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -39,7 +42,7 @@ export function EraOptimizerDialog({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                <h4 className="font-semibold text-gray-700">Contenido Original</h4>
+                <h4 className="font-semibold text-gray-700">{t('era.originalContent')}</h4>
               </div>
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-sm whitespace-pre-wrap max-h-48 overflow-y-auto">
                 {originalText}
@@ -48,7 +51,7 @@ export function EraOptimizerDialog({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"></div>
-                <h4 className="font-semibold text-purple-700">Contenido Optimizado por Era</h4>
+                <h4 className="font-semibold text-purple-700">{t('era.optimizedContent')}</h4>
               </div>
               <div className="p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl border border-purple-200 text-sm whitespace-pre-wrap max-h-48 overflow-y-auto">
                 {optimizedText}
@@ -62,14 +65,14 @@ export function EraOptimizerDialog({
             onClick={onAccept} 
             className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium"
           >
-            ✨ Usar Optimización de Era
+            ✨ {t('era.useOptimization')}
           </Button>
           <Button 
             onClick={onReject} 
             variant="outline" 
             className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50"
           >
-            Mantener Original
+            {t('era.keepOriginal')}
           </Button>
         </div>
       </DialogContent>

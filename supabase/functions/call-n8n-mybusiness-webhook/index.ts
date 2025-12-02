@@ -75,8 +75,26 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('🔐 Preparando autenticación básica');
     
+    // Get N8N credentials from environment
+    const authUser = Deno.env.get('N8N_AUTH_USER');
+    const authPass = Deno.env.get('N8N_AUTH_PASS');
+
+    if (!authUser || !authPass) {
+      console.error('❌ N8N authentication credentials not configured');
+      return new Response(
+        JSON.stringify({ 
+          error: 'N8N authentication credentials not configured',
+          details: 'Missing N8N_AUTH_USER or N8N_AUTH_PASS environment variables'
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+    
     // Create basic auth header
-    const credentials = btoa('innoventum:Innoventum2025*');
+    const credentials = btoa(`${authUser}:${authPass}`);
     const authHeader = `Basic ${credentials}`;
 
     console.log('📤 Enviando request al webhook externo...');

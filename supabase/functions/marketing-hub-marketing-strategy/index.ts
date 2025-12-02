@@ -118,6 +118,17 @@ serve(async (req) => {
     const n8nUser = Deno.env.get('N8N_AUTH_USER');
     const n8nPass = Deno.env.get('N8N_AUTH_PASS');
 
+    if (!n8nUser || !n8nPass) {
+      console.error('❌ N8N authentication credentials not configured');
+      return new Response(JSON.stringify({ 
+        error: 'N8N authentication credentials not configured',
+        details: 'Missing N8N_AUTH_USER or N8N_AUTH_PASS environment variables'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const n8nResponse = await fetch(n8nUrl, {
       method: 'POST',
       headers: {

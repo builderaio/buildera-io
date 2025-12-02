@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
+import { getSystemPrompt, validateLanguage } from '../_shared/prompts.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -19,9 +20,10 @@ serve(async (req) => {
   }
 
   try {
-    const { message, context, userInfo } = await req.json();
+    const { message, context, userInfo, language } = await req.json();
+    const userLanguage = validateLanguage(language);
 
-    console.log('Era chat request:', { message, context, userInfo });
+    console.log('Era chat request:', { message, context, userInfo, language: userLanguage });
 
     if (!message) {
       return new Response(JSON.stringify({ 
@@ -32,36 +34,21 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `Eres Era, el asistente de inteligencia artificial de Buildera. Buildera es una plataforma integral para empresas que incluye:
+    const basePrompt = getSystemPrompt('era-chat', userLanguage);
+    const contextLabel = userLanguage === 'en' ? 'Current context:' : userLanguage === 'pt' ? 'Contexto atual:' : 'Contexto actual:';
+    const userLabel = userLanguage === 'en' ? 'User:' : userLanguage === 'pt' ? 'Usuário:' : 'Usuario:';
+    const instructionLabel = userLanguage === 'en' 
+      ? 'Respond conversationally, helpfully, and always relate your responses to Buildera\'s capabilities that can help the user.'
+      : userLanguage === 'pt'
+      ? 'Responda de forma conversacional, útil e sempre relacionando suas respostas com as capacidades do Buildera que podem ajudar o usuário.'
+      : 'Responde de manera conversacional, útil y siempre relacionando tus respuestas con las capacidades de Buildera que pueden ayudar al usuario.';
 
-PRINCIPALES FUNCIONES DE LA PLATAFORMA:
-1. **ADN Empresa**: Definir misión, visión, propuesta de valor e identidad visual
-2. **Marketplace**: Conectar con expertos especializados para proyectos
-3. **Expertos**: Gestionar colaboradores y especialistas
-4. **Marketing Hub**: Generar contenido optimizado para redes sociales y marketing
-5. **Inteligencia Competitiva**: Analizar competencia y tendencias del mercado
-6. **Academia Buildera**: Acceder a cursos y recursos educativos
-7. **Base de Conocimiento**: Centralizar información y documentos empresariales
-8. **Configuración**: Personalizar la experiencia de la plataforma
+    const systemPrompt = `${basePrompt}
 
-CARACTERÍSTICAS ESPECIALES DE ERA:
-- Optimizas automáticamente contenido empresarial (misión, visión, propuestas de valor, etc.)
-- Generas contenido de marketing contextualizado
-- Ayudas con análisis competitivo
-- Proporcionas insights estratégicos
-- Asistes en la toma de decisiones empresariales
+${contextLabel} ${context || (userLanguage === 'en' ? 'Main dashboard' : userLanguage === 'pt' ? 'Painel principal' : 'Dashboard principal')}
+${userLabel} ${userInfo?.display_name || (userLanguage === 'en' ? 'User' : userLanguage === 'pt' ? 'Usuário' : 'Usuario')}
 
-Tu personalidad es:
-- Profesional pero cercana
-- Proactiva en sugerir mejoras
-- Enfocada en resultados empresariales
-- Inteligente y estratégica
-- Siempre orientada a ayudar al crecimiento del negocio
-
-Contexto actual: ${context || 'Dashboard principal'}
-Usuario: ${userInfo?.display_name || 'Usuario'}
-
-Responde de manera conversacional, útil y siempre relacionando tus respuestas con las capacidades de Buildera que pueden ayudar al usuario.`;
+${instructionLabel}`;
 
     const messages = [
       { role: 'system', content: systemPrompt },

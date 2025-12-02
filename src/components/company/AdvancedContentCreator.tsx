@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ interface GeneratedContent {
 
 export default function AdvancedContentCreator({ profile, topPosts, selectedPlatform }: Props) {
   const { toast } = useToast();
+  const { i18n } = useTranslation();
   
   // Loading states
   const [loadingInsights, setLoadingInsights] = useState(false);
@@ -197,6 +199,7 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
         body: {
           user_id: profile.user_id,
           platform: selectedPlatform !== 'all' ? selectedPlatform : null,
+          language: i18n.language,
           top_posts: topPostsContext
         }
       });

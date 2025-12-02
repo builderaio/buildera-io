@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ interface AudienciasCreateProps {
 
 const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
   const { toast } = useToast();
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(profile?.user_id || null);
   const [companyData, setCompanyData] = useState<any>(null);
@@ -136,7 +138,8 @@ const AudienciasCreate = ({ profile, onSuccess }: AudienciasCreateProps) => {
       const { data, error } = await supabase.functions.invoke('ai-audience-generator', {
         body: {
           user_id: userId,
-          company_id: companyData.id
+          company_id: companyData.id,
+          language: i18n.language
         }
       });
 

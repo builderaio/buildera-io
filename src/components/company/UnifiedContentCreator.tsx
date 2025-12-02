@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { InsightsManager } from "./insights/InsightsManager";
 import SimpleContentPublisher from "./SimpleContentPublisher";
@@ -24,6 +25,7 @@ interface Props {
 
 export default function UnifiedContentCreator({ profile, topPosts = [], selectedPlatform = 'general', prepopulatedContent, onContentUsed }: Props) {
   const { toast } = useToast();
+  const { i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<'insights' | 'create' | 'library'>('insights');
   const [createMode, setCreateMode] = useState<'ai' | 'manual'>('ai');
   
@@ -278,6 +280,7 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
         body: {
           user_id: profile.user_id,
           platform: selectedPlatformLocal !== 'general' ? selectedPlatformLocal : null,
+          language: i18n.language,
           top_posts: topPosts.slice(0, 10).map(post => ({
             platform: post.platform,
             text: post.text,

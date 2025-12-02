@@ -133,6 +133,18 @@ serve(async (req) => {
       }
     }
 
+    // Validate N8N credentials before calling
+    if (!N8N_AUTH_USER || !N8N_AUTH_PASS) {
+      console.error('❌ N8N authentication credentials not configured');
+      return new Response(JSON.stringify({ 
+        error: 'N8N authentication credentials not configured',
+        details: 'Missing N8N_AUTH_USER or N8N_AUTH_PASS environment variables'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // Call N8N Content Calendar API
     console.log('Calling N8N Content Calendar API with input:', input);
 

@@ -53,5 +53,18 @@
       "aiCampaignsCount": "{count} personalized campaigns generated",
       "aiError": "Could not generate campaigns with AI"
     }
+  },
+  "dashboard": {
+    "title": "Smart Campaigns",
+    "subtitle": "Create and manage your AI-powered marketing campaigns",
+    "newCampaign": "New Campaign",
+    "backToCampaigns": "Back to Campaigns",
+    "stats": {
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "performance": "Performance",
+      "avgROI": "Average ROI"
+    },
+    "confirmDelete": "Are you sure you want to delete this campaign in progress?"
   }
 }

@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTranslation } from "react-i18next";
 import { Star, Clock, Globe, Calendar, Award, Lock } from "lucide-react";
 import { Expert } from "@/hooks/useExperts";
 
@@ -11,6 +12,7 @@ interface ExpertCardProps {
 }
 
 export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
+  const { t } = useTranslation('marketing');
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
@@ -48,7 +50,7 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
               {expert.is_verified && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                   <Award className="w-3 h-3 mr-1" />
-                  Verificado
+                  {t('experts.verified')}
                 </Badge>
               )}
             </div>
@@ -59,11 +61,11 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 <span className="font-medium">{expert.rating}</span>
-                <span>({expert.total_sessions} sesiones)</span>
+                <span>({expert.total_sessions} {t('experts.sessions')})</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                <span>{expert.experience_years} años exp.</span>
+                <span>{expert.experience_years} {t('experts.yearsExp')}</span>
               </div>
             </div>
           </div>
@@ -74,13 +76,13 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
                 <div className="text-2xl font-bold text-primary">
                   ${expert.hourly_rate}
                 </div>
-                <div className="text-sm text-muted-foreground">por hora</div>
+                <div className="text-sm text-muted-foreground">{t('experts.perHour')}</div>
               </>
             ) : (
               <div className="text-sm text-muted-foreground bg-muted px-3 py-2 rounded-md text-center">
                 <Lock className="w-4 h-4 mx-auto mb-1" />
-                <div>Inicia sesión</div>
-                <div>para ver precios</div>
+                <div>{t('experts.loginToView')}</div>
+                <div>{t('experts.toViewPrices')}</div>
               </div>
             )}
           </div>
@@ -93,7 +95,7 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
         {/* Especialidades */}
         {expert.specializations && expert.specializations.length > 0 && (
           <div className="mb-4">
-            <div className="text-xs font-medium text-muted-foreground mb-2">Especialidades:</div>
+            <div className="text-xs font-medium text-muted-foreground mb-2">{t('experts.specialties')}</div>
             <div className="flex flex-wrap gap-1">
               {expert.specializations.slice(0, 3).map((spec) => (
                 <Badge 
@@ -106,7 +108,7 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
               ))}
               {expert.specializations.length > 3 && (
                 <Badge variant="outline" className="text-xs">
-                  +{expert.specializations.length - 3} más
+                  +{expert.specializations.length - 3} {t('experts.more')}
                 </Badge>
               )}
             </div>
@@ -129,7 +131,7 @@ export const ExpertCard = ({ expert, onBookSession }: ExpertCardProps) => {
           disabled={!canBookSession}
         >
           <Calendar className="w-4 h-4 mr-2" />
-          {canBookSession ? 'Agendar Sesión' : 'Inicia sesión para agendar'}
+          {canBookSession ? t('experts.bookSession') : t('experts.loginToBook')}
         </Button>
       </CardContent>
     </Card>

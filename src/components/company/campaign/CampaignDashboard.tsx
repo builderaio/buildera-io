@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 import { 
   Plus, 
   Sparkles, 
@@ -20,6 +21,7 @@ interface CampaignDashboardProps {
 }
 
 export const CampaignDashboard = ({ onStartNewCampaign }: CampaignDashboardProps) => {
+  const { t } = useTranslation('campaigns');
   const [showWizard, setShowWizard] = useState(false);
   const [resumingDraft, setResumingDraft] = useState(null);
   
@@ -47,7 +49,7 @@ export const CampaignDashboard = ({ onStartNewCampaign }: CampaignDashboardProps
   };
 
   const handleDeleteDraft = async (draftId: string) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar esta campaña en progreso?')) {
+    if (window.confirm(t('dashboard.confirmDelete'))) {
       await deleteDraft(draftId);
     }
   };
@@ -61,7 +63,7 @@ export const CampaignDashboard = ({ onStartNewCampaign }: CampaignDashboardProps
             onClick={() => setShowWizard(false)}
             className="mb-4"
           >
-            ← Volver a Campañas
+            ← {t('dashboard.backToCampaigns')}
           </Button>
         </div>
         <CampaignWizard 
@@ -80,10 +82,10 @@ export const CampaignDashboard = ({ onStartNewCampaign }: CampaignDashboardProps
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Sparkles className="h-8 w-8 text-primary" />
-            Campañas Inteligentes
+            {t('dashboard.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Crea y gestiona tus campañas de marketing con IA
+            {t('dashboard.subtitle')}
           </p>
         </div>
         
@@ -93,7 +95,7 @@ export const CampaignDashboard = ({ onStartNewCampaign }: CampaignDashboardProps
           size="lg"
         >
           <Plus className="h-5 w-5 mr-2" />
-          Nueva Campaña
+          {t('dashboard.newCampaign')}
         </Button>
       </div>
 
@@ -106,7 +108,7 @@ export const CampaignDashboard = ({ onStartNewCampaign }: CampaignDashboardProps
                 <Clock className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">En Progreso</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.stats.inProgress')}</p>
                 <p className="text-2xl font-bold">{drafts.length}</p>
               </div>
             </div>
@@ -120,7 +122,7 @@ export const CampaignDashboard = ({ onStartNewCampaign }: CampaignDashboardProps
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Completadas</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.stats.completed')}</p>
                 <p className="text-2xl font-bold">0</p>
               </div>
             </div>
@@ -134,7 +136,7 @@ export const CampaignDashboard = ({ onStartNewCampaign }: CampaignDashboardProps
                 <TrendingUp className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Rendimiento</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.stats.performance')}</p>
                 <p className="text-2xl font-bold">--</p>
               </div>
             </div>
@@ -148,7 +150,7 @@ export const CampaignDashboard = ({ onStartNewCampaign }: CampaignDashboardProps
                 <BarChart3 className="h-5 w-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">ROI Promedio</p>
+                <p className="text-sm text-muted-foreground">{t('dashboard.stats.avgROI')}</p>
                 <p className="text-2xl font-bold">--</p>
               </div>
             </div>

@@ -93,5 +93,81 @@
     "fieldUpdated": "Campo actualizado",
     "updateSuccess": "Los cambios se han guardado correctamente",
     "updateError": "No se pudo guardar el campo"
+  },
+  "insights": {
+    "audienceTitle": "Insights de Audiencia",
+    "audienceSubtitle": "Patrones identificados en tu audiencia",
+    "contentTitle": "Ideas de Contenido",
+    "contentSubtitle": "Ideas específicas listas para crear",
+    "strategy": "Estrategia:",
+    "suggestedHashtags": "Hashtags sugeridos:",
+    "bestTime": "Mejor momento:",
+    "createNow": "Crear Ahora",
+    "schedule": "Programar",
+    "readyTitle": "¿Listo para crear contenido excepcional?",
+    "readyDescription": "Utiliza estos insights para crear contenido que conecte con tu audiencia",
+    "viewMetrics": "Ver Métricas",
+    "createContent": "Crear Contenido",
+    "filters": {
+      "label": "Filtrar:",
+      "all": "Todos",
+      "active": "Activos",
+      "completed": "Completados",
+      "dismissed": "Descartados",
+      "audience": "Audiencia",
+      "contentIdeas": "Ideas de Contenido"
+    },
+    "priority": {
+      "high": "alta",
+      "medium": "media",
+      "low": "baja",
+      "label": "Prioridad"
+    },
+    "evidence": "Evidencia:",
+    "implication": "Implicación:",
+    "dismiss": {
+      "title": "Descartar Insight",
+      "description": "Ayúdanos a entender por qué este insight no es útil. Esta información nos ayudará a mejorar las recomendaciones futuras.",
+      "question": "¿Por qué deseas descartar este insight?",
+      "reasons": {
+        "notRelevant": "Ya no es relevante para mi negocio",
+        "notAligned": "No se alinea con mi estrategia actual",
+        "alreadyImplemented": "Ya lo implementé de otra manera",
+        "noResources": "No tengo recursos para ejecutarlo",
+        "other": "Otro motivo"
+      },
+      "specifyReason": "Especifica el motivo",
+      "placeholder": "Describe por qué este insight no es útil...",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar Descarte"
+    }
+  },
+  "experts": {
+    "verified": "Verificado",
+    "sessions": "sesiones",
+    "yearsExp": "años exp.",
+    "perHour": "por hora",
+    "loginToView": "Inicia sesión",
+    "toViewPrices": "para ver precios",
+    "specialties": "Especialidades:",
+    "more": "más",
+    "bookSession": "Agendar Sesión",
+    "loginToBook": "Inicia sesión para agendar"
+  },
+  "audienceSegment": {
+    "ofYourAudience": "de tu audiencia",
+    "demographics": "Demografía",
+    "years": "años",
+    "interests": "Intereses",
+    "activePlatforms": "Plataformas activas",
+    "conversionPotential": "Potencial de conversión"
+  },
+  "era": {
+    "title": "Era - Asistente IA de Buildera",
+    "subtitle": "Ha optimizado tu contenido para redes sociales",
+    "originalContent": "Contenido Original",
+    "optimizedContent": "Contenido Optimizado por Era",
+    "useOptimization": "Usar Optimización de Era",
+    "keepOriginal": "Mantener Original"
   }
 }

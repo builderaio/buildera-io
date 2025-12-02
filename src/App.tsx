@@ -8,6 +8,7 @@ import { SecurityProvider } from "./components/SecurityProvider";
 import VersionUpdateNotification from "./components/VersionUpdateNotification";
 import SupportChatWidget from "./components/SupportChatWidget";
 import CacheManager from "./components/CacheManager";
+import { CompanyProvider } from "./contexts/CompanyContext";
 import { ThemeProvider } from "next-themes";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -100,9 +101,10 @@ const App = () => {
     >
       <AdminAuthProvider>
         <SecurityProvider>
-          <TooltipProvider>
-            <Toaster />
-            <BrowserRouter>
+          <CompanyProvider>
+            <TooltipProvider>
+              <Toaster />
+              <BrowserRouter>
               <VersionUpdateNotification />
               <SupportChatWidget user={null} />
               <CacheManager />
@@ -269,10 +271,11 @@ const App = () => {
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
-        </SecurityProvider>
-      </AdminAuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+        </CompanyProvider>
+      </SecurityProvider>
+    </AdminAuthProvider>
+  </ThemeProvider>
+</QueryClientProvider>
 );
 }
 

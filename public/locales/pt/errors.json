@@ -18,5 +18,13 @@
     "invalid_email": "E-mail inválido",
     "required_field": "Este campo é obrigatório",
     "min_length": "Comprimento mínimo não atendido"
+  },
+  "translation": {
+    "rateLimitTitle": "Limite de tradução atingido",
+    "rateLimitDescription": "Você atingiu o limite de traduções. Por favor, tente novamente mais tarde.",
+    "quotaTitle": "Cota de tradução excedida",
+    "quotaDescription": "Você excedeu sua cota mensal de traduções. Por favor, entre em contato com o suporte.",
+    "translationError": "Erro de tradução",
+    "translationErrorDescription": "Não foi possível traduzir o conteúdo. Tente novamente."
   }
 }

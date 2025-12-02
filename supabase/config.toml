@@ -2,3 +2,6 @@ project_id = "ubhzzppmkhxbuiajfswa"
 
 [functions.marketing-hub-marketing-strategy]
 verify_jwt = true
+
+[functions.translate-content]
+verify_jwt = false

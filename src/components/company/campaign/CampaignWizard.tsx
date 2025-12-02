@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useMarketingDataPersistence } from '@/hooks/useMarketingDataPersistence';
-import { useCompanyManagement } from '@/hooks/useCompanyManagement';
+import { useCompany } from '@/contexts/CompanyContext';
 import { useCampaignDrafts } from '@/hooks/useCampaignDrafts';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -39,11 +39,17 @@ interface CampaignData {
     budget?: number;
   };
   company: {
+    id: string;  // ← CRÍTICO: Siempre debe existir
+    name?: string;
     nombre_empresa: string;
     pais: string;
+    description?: string;
     objetivo_de_negocio: string;
+    propuesta_valor?: string;
     propuesta_de_valor: string;
+    website_url?: string;
     url_sitio_web: string;
+    industry_sector?: string;
     redes_sociales_activas: Array<{
       red: string;
       url: string;
@@ -173,7 +179,7 @@ export const CampaignWizard = ({
   const [aiSuggestions, setAiSuggestions] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { primaryCompany, loading: companyLoading } = useCompanyManagement();
+  const { company, loading: companyLoading } = useCompany();
   const { toast } = useToast();
   const { 
     storeTargetAudienceData, 
@@ -187,46 +193,38 @@ export const CampaignWizard = ({
     saving: draftSaving 
   } = useCampaignDrafts();
 
-  // Populate with real company data when available
+  // Populate with real company data from context when available
   useEffect(() => {
-    if (primaryCompany && !campaignData.company.nombre_empresa) {
-      console.log('📊 [CampaignWizard] Populating company data:', {
-        name: primaryCompany.name,
-        id: primaryCompany.id,
-        hasId: !!primaryCompany.id,
-        hasDescription: !!primaryCompany.description,
-        hasPropuestaValor: !!primaryCompany.propuesta_valor,
-        hasWebsite: !!primaryCompany.website_url,
-        hasIndustry: !!primaryCompany.industry_sector,
-        allKeys: Object.keys(primaryCompany)
+    if (company && !campaignData.company.id) {
+      console.log('📊 [CampaignWizard] Populating company data from context:', {
+        id: company.id,
+        name: company.name,
+        hasAllRequiredData: !!(company.id && company.name)
       });
 
       setCampaignData(prev => ({
         ...prev,
         company: {
           ...prev.company,
-          id: primaryCompany.id, // ← CRÍTICO: Agregar el ID
-          name: primaryCompany.name || '',
-          nombre_empresa: primaryCompany.name || '',
-          description: primaryCompany.description || '',
-          objetivo_de_negocio: primaryCompany.description || '',
-          propuesta_valor: primaryCompany.propuesta_valor || '',
-          propuesta_de_valor: primaryCompany.propuesta_valor || '',
-          website_url: primaryCompany.website_url || '',
-          url_sitio_web: primaryCompany.website_url || '',
-          industry_sector: primaryCompany.industry_sector || '',
-          sector_industria: primaryCompany.industry_sector || '',
-          mision: primaryCompany.mision || '',
-          vision: primaryCompany.vision || '',
-          pais: '',
+          id: company.id,
+          name: company.name || '',
+          nombre_empresa: company.name || '',
+          description: company.description || '',
+          objetivo_de_negocio: company.description || '',
+          propuesta_valor: company.propuesta_valor || '',
+          propuesta_de_valor: company.propuesta_valor || '',
+          website_url: company.website_url || '',
+          url_sitio_web: company.website_url || '',
+          pais: company.country || '',
+          industry_sector: company.industry_sector || '',
           redes_sociales_activas: []
         }
       }));
     }
-  }, [primaryCompany]);
+  }, [company]);
 
   const generateCampaignsWithAI = async () => {
-    if (!primaryCompany?.id) {
+    if (!company?.id) {
       toast({
         title: t('wizard.messages.error'),
         description: t('wizard.messages.companyNotFound'),
@@ -238,7 +236,7 @@ export const CampaignWizard = ({
     setAiGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('campaign-ai-generator', {
-        body: { companyId: primaryCompany.id }
+        body: { companyId: company.id }
       });
 
       if (error) throw error;
@@ -416,6 +414,19 @@ export const CampaignWizard = ({
     return state.completedSteps.includes(stepNumber);
   };
 
+  // Loading gate - no renderizar hasta que tengamos company.id
+  if (companyLoading || !company?.id || !campaignData.company.id) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4">
+        <Card className="max-w-2xl mx-auto mt-8 p-8 text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+          <h3 className="text-xl font-semibold mb-2">Cargando datos de tu empresa...</h3>
+          <p className="text-muted-foreground">Preparando el asistente de campañas</p>
+        </Card>
+      </div>
+    );
+  }
+
   const renderCurrentStep = () => {
     const stepProps = {
       campaignData: {
@@ -455,8 +466,7 @@ export const CampaignWizard = ({
           return updated;
         });
       },
-      loading: loading || isProcessing || companyLoading || draftSaving,
-      companyData: primaryCompany
+      loading: loading || isProcessing || companyLoading || draftSaving
     };
 
     switch(state.currentStep) {

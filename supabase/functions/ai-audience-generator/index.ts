@@ -149,20 +149,6 @@ ${JSON.stringify(context.existingAudiences, null, 2)}
 
 ${generateText}`;
 
-EMPRESA:
-${JSON.stringify(context.company, null, 2)}
-
-ANÁLISIS DE AUDIENCIAS SOCIALES:
-${JSON.stringify(context.audienceAnalysis, null, 2)}
-
-RECOMENDACIONES DE CONTENIDO:
-${JSON.stringify(context.contentRecommendations, null, 2)}
-
-AUDIENCIAS EXISTENTES (NO DUPLICAR):
-${JSON.stringify(context.existingAudiences, null, 2)}
-
-Genera audiencias específicas, diferenciadas y accionables basadas en estos datos reales.`;
-
     console.log('🤖 Llamando a OpenAI GPT-4.1 para generar audiencias...');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {

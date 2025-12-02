@@ -18,5 +18,13 @@
     "invalid_email": "Invalid email",
     "required_field": "This field is required",
     "min_length": "Minimum length not met"
+  },
+  "translation": {
+    "rateLimitTitle": "Translation limit reached",
+    "rateLimitDescription": "You have reached the translation limit. Please try again later.",
+    "quotaTitle": "Translation quota exceeded",
+    "quotaDescription": "You have exceeded your monthly translation quota. Please contact support.",
+    "translationError": "Translation error",
+    "translationErrorDescription": "Could not translate content. Please try again."
   }
 }

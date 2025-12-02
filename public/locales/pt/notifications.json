@@ -1,0 +1,26 @@
+{
+  "success": {
+    "title": "Sucesso!",
+    "saved": "Salvo com sucesso",
+    "created": "Criado com sucesso",
+    "updated": "Atualizado com sucesso",
+    "deleted": "Excluído com sucesso",
+    "sent": "Enviado com sucesso"
+  },
+  "error": {
+    "title": "Erro",
+    "generic": "Ocorreu um erro",
+    "notFound": "Não encontrado",
+    "serverError": "Erro do servidor",
+    "networkError": "Erro de conexão"
+  },
+  "warning": {
+    "title": "Aviso",
+    "unsavedChanges": "Você tem alterações não salvas"
+  },
+  "info": {
+    "title": "Informação",
+    "processing": "Processando...",
+    "loading": "Carregando..."
+  }
+}

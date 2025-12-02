@@ -1,0 +1,14 @@
+{
+  "required": "Campo obrigatório",
+  "email": "E-mail inválido",
+  "minLength": "Mínimo {{count}} caracteres",
+  "maxLength": "Máximo {{count}} caracteres",
+  "pattern": "Formato inválido",
+  "passwordMatch": "As senhas não coincidem",
+  "passwordStrength": "A senha deve conter pelo menos uma letra minúscula, uma maiúscula e um número",
+  "url": "URL inválida",
+  "phone": "Número de telefone inválido",
+  "number": "Deve ser um número",
+  "positive": "Deve ser um número positivo",
+  "integer": "Deve ser um número inteiro"
+}

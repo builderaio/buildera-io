@@ -1,0 +1,16 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "profile": "Perfil",
+    "settings": "Configurações",
+    "logout": "Sair"
+  },
+  "loading": {
+    "data": "Carregando dados...",
+    "please_wait": "Por favor, aguarde..."
+  },
+  "welcome": {
+    "title": "Bem-vindo",
+    "subtitle": "Painel de controle"
+  }
+}

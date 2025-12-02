@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -17,6 +18,7 @@ interface ExpertAuthProps {
 
 const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation('auth');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,16 +30,16 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
   const { toast } = useToast();
 
   const industries = [
-    "Tecnología",
-    "Finanzas",
-    "Salud",
-    "Educación",
-    "Retail",
-    "Manufactura",
-    "Consultoría",
-    "Marketing",
-    "Recursos Humanos",
-    "Otro"
+    t('industries.technology'),
+    t('industries.finance'),
+    t('industries.health'),
+    t('industries.education'),
+    t('industries.retail'),
+    t('industries.manufacturing'),
+    t('industries.consulting'),
+    t('industries.marketing'),
+    t('industries.humanResources'),
+    t('industries.other')
   ];
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -48,8 +50,8 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
       if (mode === "signup") {
         if (password !== confirmPassword) {
           toast({
-            title: "Error",
-            description: "Las contraseñas no coinciden",
+            title: t('errors.general.title'),
+            description: t('messages.passwordMismatch'),
             variant: "destructive",
           });
           setLoading(false);
@@ -70,7 +72,7 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
       }
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('errors.general.title'),
         description: error.message,
         variant: "destructive",
       });
@@ -101,7 +103,7 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
       if (error) throw error;
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('errors.general.title'),
         description: error.message,
         variant: "destructive",
       });
@@ -117,7 +119,7 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
           className="w-full"
         >
           <Mail className="mr-2 h-4 w-4" />
-          Google
+          {t('social.google')}
         </Button>
         <Button
           variant="outline"
@@ -125,7 +127,7 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
           className="w-full"
         >
           <Linkedin className="mr-2 h-4 w-4" />
-          LinkedIn
+          {t('social.linkedin')}
         </Button>
       </div>
 
@@ -135,7 +137,7 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            O continúa con email
+            {t('social.divider')}
           </span>
         </div>
       </div>
@@ -144,21 +146,21 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
         {mode === "signup" && (
           <>
             <div className="space-y-2">
-              <Label htmlFor="fullName">Nombre completo</Label>
+              <Label htmlFor="fullName">{t('form.fullName')}</Label>
               <Input
                 id="fullName"
                 type="text"
-                placeholder="Tu nombre completo"
+                placeholder={t('form.fullNamePlaceholder')}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="industry">Industria principal</Label>
+              <Label htmlFor="industry">{t('form.industry')}</Label>
               <Select value={industry} onValueChange={setIndustry} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona tu industria" />
+                  <SelectValue placeholder={t('form.industryPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {industries.map((ind) => (
@@ -170,22 +172,22 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="expertiseAreas">Áreas de experiencia</Label>
+              <Label htmlFor="expertiseAreas">{t('form.expertiseAreas')}</Label>
               <Input
                 id="expertiseAreas"
                 type="text"
-                placeholder="Estrategia digital, Transformación, IA (separadas por comas)"
+                placeholder={t('form.expertiseAreasPlaceholder')}
                 value={expertiseAreas}
                 onChange={(e) => setExpertiseAreas(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="yearsExperience">Años de experiencia</Label>
+              <Label htmlFor="yearsExperience">{t('form.yearsExperience')}</Label>
               <Input
                 id="yearsExperience"
                 type="number"
-                placeholder="10"
+                placeholder={t('form.yearsExperiencePlaceholder')}
                 value={yearsExperience}
                 onChange={(e) => setYearsExperience(e.target.value)}
                 required
@@ -195,11 +197,11 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
         )}
         
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('form.email')}</Label>
           <Input
             id="email"
             type="email"
-            placeholder="tu@email.com"
+            placeholder={t('form.emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -207,10 +209,10 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="password">Contraseña</Label>
+          <Label htmlFor="password">{t('form.password')}</Label>
           <PasswordInput
             id="password"
-            placeholder="Tu contraseña"
+            placeholder={t('form.passwordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -219,10 +221,10 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
         
         {mode === "signup" && (
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+            <Label htmlFor="confirmPassword">{t('form.confirmPassword')}</Label>
             <PasswordInput
               id="confirmPassword"
-              placeholder="Confirma tu contraseña"
+              placeholder={t('form.confirmPasswordPlaceholder')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -231,7 +233,7 @@ const ExpertAuth = ({ mode, onModeChange }: ExpertAuthProps) => {
         )}
 
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}
+          {loading ? t('buttons.processing') : mode === "signin" ? t('buttons.signin') : t('buttons.signup')}
         </Button>
       </form>
     </div>

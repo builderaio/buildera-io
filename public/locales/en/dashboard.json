@@ -1,0 +1,16 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "loading": {
+    "data": "Loading data...",
+    "please_wait": "Please wait..."
+  },
+  "welcome": {
+    "title": "Welcome",
+    "subtitle": "Control panel"
+  }
+}

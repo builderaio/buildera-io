@@ -1,0 +1,16 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "logout": "Cerrar Sesión"
+  },
+  "loading": {
+    "data": "Cargando datos...",
+    "please_wait": "Por favor espera..."
+  },
+  "welcome": {
+    "title": "Bienvenido",
+    "subtitle": "Panel de control"
+  }
+}

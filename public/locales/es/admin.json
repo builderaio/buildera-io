@@ -1,0 +1,24 @@
+{
+  "navigation": {
+    "panel": "Panel Admin",
+    "users": "Usuarios",
+    "companies": "Empresas",
+    "settings": "Configuración",
+    "analytics": "Analytics",
+    "ai_config": "Configuración IA"
+  },
+  "actions": {
+    "create": "Crear",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar"
+  },
+  "messages": {
+    "created": "Creado exitosamente",
+    "updated": "Actualizado exitosamente",
+    "deleted": "Eliminado exitosamente",
+    "error": "Error en la operación"
+  }
+}

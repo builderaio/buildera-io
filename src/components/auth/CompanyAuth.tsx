@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -22,6 +23,7 @@ interface CompanyAuthProps {
 
 const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation('auth');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -112,8 +114,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
 
         if (password !== confirmPassword) {
           toast({
-            title: "Error",
-            description: "Las contraseñas no coinciden",
+            title: t('messages.passwordMismatch'),
+            description: t('messages.passwordMismatch'),
             variant: "destructive",
           });
           setLoading(false);
@@ -413,11 +415,11 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
               <div className="absolute inset-0 flex items-center">
                 <Separator className="w-full" />
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  O continúa con email
-                </span>
-              </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            {t('social.divider')}
+          </span>
+        </div>
             </div>
           )}
         </>
@@ -543,9 +545,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             </div>
           )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Procesando..." : mode === "signin" ? "Iniciar Sesión" : "Crear Cuenta"}
-          </Button>
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? t('buttons.processing') : mode === "signin" ? t('buttons.signin') : t('buttons.signup')}
+        </Button>
 
           {mode === "signin" && (
             <div className="text-center mt-4">

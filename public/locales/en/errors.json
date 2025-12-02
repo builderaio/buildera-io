@@ -1,0 +1,22 @@
+{
+  "general": {
+    "title": "Error",
+    "unknown": "An unexpected error has occurred",
+    "try_again": "Please try again"
+  },
+  "network": {
+    "connection": "Connection error",
+    "timeout": "Request has timed out",
+    "server": "Server error"
+  },
+  "auth": {
+    "unauthorized": "Unauthorized",
+    "session_expired": "Your session has expired",
+    "invalid_credentials": "Invalid credentials"
+  },
+  "validation": {
+    "invalid_email": "Invalid email",
+    "required_field": "This field is required",
+    "min_length": "Minimum length not met"
+  }
+}

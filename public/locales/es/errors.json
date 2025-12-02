@@ -1,0 +1,22 @@
+{
+  "general": {
+    "title": "Error",
+    "unknown": "Ha ocurrido un error inesperado",
+    "try_again": "Por favor, inténtalo de nuevo"
+  },
+  "network": {
+    "connection": "Error de conexión",
+    "timeout": "La solicitud ha excedido el tiempo de espera",
+    "server": "Error del servidor"
+  },
+  "auth": {
+    "unauthorized": "No autorizado",
+    "session_expired": "Tu sesión ha expirado",
+    "invalid_credentials": "Credenciales inválidas"
+  },
+  "validation": {
+    "invalid_email": "Email inválido",
+    "required_field": "Este campo es requerido",
+    "min_length": "Longitud mínima no cumplida"
+  }
+}

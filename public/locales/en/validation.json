@@ -1,0 +1,14 @@
+{
+  "required": "Required field",
+  "email": "Invalid email",
+  "minLength": "Minimum {{count}} characters",
+  "maxLength": "Maximum {{count}} characters",
+  "pattern": "Invalid format",
+  "passwordMatch": "Passwords do not match",
+  "passwordStrength": "Password must contain at least one lowercase letter, one uppercase letter, and one number",
+  "url": "Invalid URL",
+  "phone": "Invalid phone number",
+  "number": "Must be a number",
+  "positive": "Must be a positive number",
+  "integer": "Must be an integer"
+}

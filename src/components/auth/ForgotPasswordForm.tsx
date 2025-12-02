@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ interface ForgotPasswordFormProps {
 }
 
 export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) => {
+  const { t } = useTranslation('auth');
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -24,8 +26,8 @@ export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) =
     try {
       if (!email.trim()) {
         toast({
-          title: "Error",
-          description: "Por favor ingresa tu email",
+          title: t('errors.general.title'),
+          description: t('messages.emailRequired'),
           variant: "destructive",
         });
         return;
@@ -43,14 +45,14 @@ export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) =
 
       setEmailSent(true);
       toast({
-        title: "Email enviado",
-        description: "Te hemos enviado un enlace para restablecer tu contraseña",
+        title: t('messages.emailSent'),
+        description: t('messages.emailSentDesc'),
       });
 
     } catch (error: any) {
       console.error("Error enviando email de reset:", error);
       toast({
-        title: "Error",
+        title: t('errors.general.title'),
         description: error.message || "No se pudo enviar el email de recuperación",
         variant: "destructive",
       });
@@ -65,10 +67,10 @@ export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) =
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            Email enviado
+            {t('titles.emailSent')}
           </CardTitle>
           <CardDescription>
-            Revisa tu bandeja de entrada
+            {t('titles.emailSentDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -77,16 +79,16 @@ export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) =
               <Mail className="h-8 w-8 text-green-600" />
             </div>
             <div>
-              <p className="font-medium">¡Email enviado correctamente!</p>
+              <p className="font-medium">{t('messages.emailSentSuccessTitle')}</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Hemos enviado un enlace para restablecer tu contraseña a:
+                {t('messages.emailSentSuccessDesc')}
               </p>
               <p className="font-medium text-sm">{email}</p>
             </div>
             <div className="text-sm text-muted-foreground space-y-1">
-              <p>• Revisa tu bandeja de entrada y carpeta de spam</p>
-              <p>• Haz clic en el enlace para restablecer tu contraseña</p>
-              <p>• El enlace expirará en 1 hora</p>
+              <p>• {t('messages.emailInstructions.0')}</p>
+              <p>• {t('messages.emailInstructions.1')}</p>
+              <p>• {t('messages.emailInstructions.2')}</p>
             </div>
           </div>
           
@@ -98,7 +100,7 @@ export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) =
                 setEmail("");
               }}
             >
-              Enviar a otro email
+              {t('buttons.sendToAnotherEmail')}
             </Button>
             <Button
               variant="ghost"
@@ -106,7 +108,7 @@ export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) =
               className="w-full"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver al login
+              {t('buttons.backToLogin')}
             </Button>
           </div>
         </CardContent>
@@ -119,22 +121,22 @@ export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) =
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Mail className="h-5 w-5" />
-          Recuperar contraseña
+          {t('titles.recoverPassword')}
         </CardTitle>
         <CardDescription>
-          Te enviaremos un enlace para restablecer tu contraseña
+          {t('titles.recoverPasswordDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleForgotPassword} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">
-              Correo electrónico <span className="text-destructive">*</span>
+              {t('form.email')} <span className="text-destructive">{t('form.required')}</span>
             </Label>
             <Input
               id="email"
               type="email"
-              placeholder="tu@email.com"
+              placeholder={t('form.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -143,7 +145,7 @@ export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) =
 
           <div className="flex flex-col gap-2">
             <Button type="submit" disabled={loading || !email.trim()}>
-              {loading ? "Enviando..." : "Enviar enlace de recuperación"}
+              {loading ? t('buttons.sending') : t('buttons.sendResetLink')}
             </Button>
             
             <Button
@@ -153,7 +155,7 @@ export const ForgotPasswordForm = ({ onBackToLogin }: ForgotPasswordFormProps) =
               className="w-full"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver al login
+              {t('buttons.backToLogin')}
             </Button>
           </div>
         </form>

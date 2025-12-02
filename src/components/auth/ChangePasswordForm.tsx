@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -11,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Lock, Check } from "lucide-react";
 
 export const ChangePasswordForm = () => {
+  const { t } = useTranslation('auth');
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -33,8 +35,8 @@ export const ChangePasswordForm = () => {
       // Validaciones
       if (newPassword.length < 8) {
         toast({
-          title: "Error",
-          description: "Password must be at least 8 characters long and meet complexity requirements",
+          title: t('errors.general.title'),
+          description: t('messages.passwordTooShort'),
           variant: "destructive",
         });
         return;
@@ -42,8 +44,8 @@ export const ChangePasswordForm = () => {
 
       if (newPassword !== confirmPassword) {
         toast({
-          title: "Error",
-          description: "Las contraseñas no coinciden",
+          title: t('errors.general.title'),
+          description: t('messages.passwordsNotMatch'),
           variant: "destructive",
         });
       return;
@@ -52,8 +54,8 @@ export const ChangePasswordForm = () => {
     // Validar fortaleza de contraseña
     if (!passwordStrength.isValid) {
       toast({
-        title: "Weak password",
-        description: "Please use a stronger password that meets the requirements.",
+        title: t('messages.weakPassword'),
+        description: t('messages.passwordNotStrong'),
         variant: "destructive",
       });
       return;
@@ -61,8 +63,8 @@ export const ChangePasswordForm = () => {
 
       if (currentPassword === newPassword) {
         toast({
-          title: "Error",
-          description: "La nueva contraseña debe ser diferente a la actual",
+          title: t('errors.general.title'),
+          description: t('messages.passwordMustDiffer'),
           variant: "destructive",
         });
         return;
@@ -82,8 +84,8 @@ export const ChangePasswordForm = () => {
 
       if (signInError) {
         toast({
-          title: "Error",
-          description: "La contraseña actual es incorrecta",
+          title: t('errors.general.title'),
+          description: t('messages.incorrectCurrentPassword'),
           variant: "destructive",
         });
         return;
@@ -99,8 +101,8 @@ export const ChangePasswordForm = () => {
       }
 
       toast({
-        title: "¡Contraseña actualizada!",
-        description: "Tu contraseña ha sido cambiada exitosamente",
+        title: t('messages.passwordChanged'),
+        description: t('messages.passwordChangedDesc'),
       });
 
       // Limpiar formulario
@@ -111,7 +113,7 @@ export const ChangePasswordForm = () => {
     } catch (error: any) {
       console.error("Error cambiando contraseña:", error);
       toast({
-        title: "Error",
+        title: t('errors.general.title'),
         description: error.message || "No se pudo cambiar la contraseña",
         variant: "destructive",
       });
@@ -125,21 +127,21 @@ export const ChangePasswordForm = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Lock className="h-5 w-5" />
-          Cambiar contraseña
+          {t('titles.changePassword')}
         </CardTitle>
         <CardDescription>
-          Actualiza tu contraseña para mantener tu cuenta segura
+          {t('titles.changePasswordDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleChangePassword} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="currentPassword">
-              Contraseña actual <span className="text-destructive">*</span>
+              {t('form.currentPassword')} <span className="text-destructive">{t('form.required')}</span>
             </Label>
             <PasswordInput
               id="currentPassword"
-              placeholder="Tu contraseña actual"
+              placeholder={t('form.currentPasswordPlaceholder')}
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
@@ -148,11 +150,11 @@ export const ChangePasswordForm = () => {
 
           <div className="space-y-2">
             <Label htmlFor="newPassword">
-              Nueva contraseña <span className="text-destructive">*</span>
+              {t('form.newPassword')} <span className="text-destructive">{t('form.required')}</span>
             </Label>
             <PasswordInput
               id="newPassword"
-              placeholder="Tu nueva contraseña (mínimo 8 caracteres)"
+              placeholder={t('form.newPasswordPlaceholder')}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
@@ -161,11 +163,11 @@ export const ChangePasswordForm = () => {
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">
-              Confirmar nueva contraseña <span className="text-destructive">*</span>
+              {t('form.confirmNewPassword')} <span className="text-destructive">{t('form.required')}</span>
             </Label>
             <PasswordInput
               id="confirmPassword"
-              placeholder="Confirma tu nueva contraseña"
+              placeholder={t('form.confirmNewPasswordPlaceholder')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -178,11 +180,11 @@ export const ChangePasswordForm = () => {
             disabled={loading || !currentPassword || !newPassword || !confirmPassword}
           >
             {loading ? (
-              "Cambiando contraseña..."
+              t('buttons.changingPassword')
             ) : (
               <>
                 <Check className="mr-2 h-4 w-4" />
-                Cambiar contraseña
+                {t('buttons.changePassword')}
               </>
             )}
           </Button>

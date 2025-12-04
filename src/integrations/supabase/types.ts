@@ -5576,76 +5576,115 @@ export type Database = {
       }
       platform_agents: {
         Row: {
+          agent_type: string | null
+          average_sfia_level: number | null
           category: string
           created_at: string | null
+          created_by: string | null
           credits_per_use: number | null
           description: string | null
           edge_function_name: string | null
           execution_type: string
+          guardrails_config: Json | null
           icon: string | null
           id: string
           input_schema: Json | null
+          instructions: string | null
           internal_code: string
           is_active: boolean | null
           is_onboarding_agent: boolean | null
           is_premium: boolean | null
           min_plan_required: string | null
+          model_name: string | null
           n8n_workflow_id: string | null
           name: string
+          openai_agent_config: Json | null
           openai_assistant_id: string | null
           output_schema: Json | null
+          primary_function: string | null
           sample_output: Json | null
+          sdk_version: string | null
           sfia_skills: Json | null
           sort_order: number | null
+          supports_handoffs: boolean | null
+          tools_config: Json | null
+          tracing_enabled: boolean | null
           updated_at: string | null
+          voice_enabled: boolean | null
         }
         Insert: {
+          agent_type?: string | null
+          average_sfia_level?: number | null
           category?: string
           created_at?: string | null
+          created_by?: string | null
           credits_per_use?: number | null
           description?: string | null
           edge_function_name?: string | null
           execution_type?: string
+          guardrails_config?: Json | null
           icon?: string | null
           id?: string
           input_schema?: Json | null
+          instructions?: string | null
           internal_code: string
           is_active?: boolean | null
           is_onboarding_agent?: boolean | null
           is_premium?: boolean | null
           min_plan_required?: string | null
+          model_name?: string | null
           n8n_workflow_id?: string | null
           name: string
+          openai_agent_config?: Json | null
           openai_assistant_id?: string | null
           output_schema?: Json | null
+          primary_function?: string | null
           sample_output?: Json | null
+          sdk_version?: string | null
           sfia_skills?: Json | null
           sort_order?: number | null
+          supports_handoffs?: boolean | null
+          tools_config?: Json | null
+          tracing_enabled?: boolean | null
           updated_at?: string | null
+          voice_enabled?: boolean | null
         }
         Update: {
+          agent_type?: string | null
+          average_sfia_level?: number | null
           category?: string
           created_at?: string | null
+          created_by?: string | null
           credits_per_use?: number | null
           description?: string | null
           edge_function_name?: string | null
           execution_type?: string
+          guardrails_config?: Json | null
           icon?: string | null
           id?: string
           input_schema?: Json | null
+          instructions?: string | null
           internal_code?: string
           is_active?: boolean | null
           is_onboarding_agent?: boolean | null
           is_premium?: boolean | null
           min_plan_required?: string | null
+          model_name?: string | null
           n8n_workflow_id?: string | null
           name?: string
+          openai_agent_config?: Json | null
           openai_assistant_id?: string | null
           output_schema?: Json | null
+          primary_function?: string | null
           sample_output?: Json | null
+          sdk_version?: string | null
           sfia_skills?: Json | null
           sort_order?: number | null
+          supports_handoffs?: boolean | null
+          tools_config?: Json | null
+          tracing_enabled?: boolean | null
           updated_at?: string | null
+          voice_enabled?: boolean | null
         }
         Relationships: []
       }

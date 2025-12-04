@@ -111,6 +111,40 @@
     "retry": "Retry current step",
     "continue": "Continue to Dashboard",
     "allComplete": "Setup completed!",
-    "allCompleteDesc": "Your business profile is ready"
+    "allCompleteDesc": "Your business profile is ready",
+    "wow": {
+      "analyzing": "Analyzing your business",
+      "strategy": "Generating personalized marketing strategy...",
+      "content": "Designing optimized posts for your social media...",
+      "insights": "Identifying growth opportunities...",
+      "complete": "Done!",
+      "completeDesc": "Your strategy is ready",
+      "progress": "{{progress}}% completed"
+    }
+  },
+  "agents": {
+    "title": "AI Agents",
+    "marketplace": "Agent Marketplace",
+    "myAgents": "My Agents",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "premium": "Premium",
+    "enable": "Enable",
+    "disable": "Disable",
+    "execute": "Execute",
+    "creditsPerUse": "{{credits}} credits/use",
+    "categories": {
+      "marketing": "Marketing",
+      "content": "Content",
+      "analytics": "Analytics",
+      "publishing": "Publishing",
+      "branding": "Branding",
+      "assistant": "Assistant"
+    },
+    "usage": {
+      "totalExecutions": "Total executions",
+      "creditsUsed": "Credits used",
+      "thisMonth": "This month"
+    }
   }
 }

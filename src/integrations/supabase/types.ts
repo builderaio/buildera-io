@@ -787,6 +787,66 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_usage_log: {
+        Row: {
+          agent_id: string | null
+          company_id: string | null
+          created_at: string | null
+          credits_consumed: number | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          input_data: Json | null
+          output_data: Json | null
+          output_summary: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          credits_consumed?: number | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          output_summary?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          credits_consumed?: number | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          output_summary?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_usage_log_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "platform_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_usage_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agents: {
         Row: {
           avatar_url: string | null
@@ -2191,6 +2251,45 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      company_enabled_agents: {
+        Row: {
+          agent_id: string | null
+          company_id: string | null
+          enabled_at: string | null
+          enabled_by: string | null
+          id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          company_id?: string | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+        }
+        Update: {
+          agent_id?: string | null
+          company_id?: string | null
+          enabled_at?: string | null
+          enabled_by?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_enabled_agents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "platform_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_enabled_agents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_external_data: {
         Row: {
@@ -5430,6 +5529,125 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      onboarding_wow_results: {
+        Row: {
+          agents_executed: string[] | null
+          company_id: string | null
+          content_result: Json | null
+          created_at: string | null
+          id: string
+          insights_result: Json | null
+          strategy_result: Json | null
+          total_execution_time_ms: number | null
+          user_id: string | null
+        }
+        Insert: {
+          agents_executed?: string[] | null
+          company_id?: string | null
+          content_result?: Json | null
+          created_at?: string | null
+          id?: string
+          insights_result?: Json | null
+          strategy_result?: Json | null
+          total_execution_time_ms?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          agents_executed?: string[] | null
+          company_id?: string | null
+          content_result?: Json | null
+          created_at?: string | null
+          id?: string
+          insights_result?: Json | null
+          strategy_result?: Json | null
+          total_execution_time_ms?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_wow_results_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_agents: {
+        Row: {
+          category: string
+          created_at: string | null
+          credits_per_use: number | null
+          description: string | null
+          edge_function_name: string | null
+          execution_type: string
+          icon: string | null
+          id: string
+          input_schema: Json | null
+          internal_code: string
+          is_active: boolean | null
+          is_onboarding_agent: boolean | null
+          is_premium: boolean | null
+          min_plan_required: string | null
+          n8n_workflow_id: string | null
+          name: string
+          openai_assistant_id: string | null
+          output_schema: Json | null
+          sample_output: Json | null
+          sfia_skills: Json | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          credits_per_use?: number | null
+          description?: string | null
+          edge_function_name?: string | null
+          execution_type?: string
+          icon?: string | null
+          id?: string
+          input_schema?: Json | null
+          internal_code: string
+          is_active?: boolean | null
+          is_onboarding_agent?: boolean | null
+          is_premium?: boolean | null
+          min_plan_required?: string | null
+          n8n_workflow_id?: string | null
+          name: string
+          openai_assistant_id?: string | null
+          output_schema?: Json | null
+          sample_output?: Json | null
+          sfia_skills?: Json | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          credits_per_use?: number | null
+          description?: string | null
+          edge_function_name?: string | null
+          execution_type?: string
+          icon?: string | null
+          id?: string
+          input_schema?: Json | null
+          internal_code?: string
+          is_active?: boolean | null
+          is_onboarding_agent?: boolean | null
+          is_premium?: boolean | null
+          min_plan_required?: string | null
+          n8n_workflow_id?: string | null
+          name?: string
+          openai_assistant_id?: string | null
+          output_schema?: Json | null
+          sample_output?: Json | null
+          sfia_skills?: Json | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       products: {
         Row: {

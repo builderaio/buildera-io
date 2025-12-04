@@ -1920,6 +1920,75 @@ export type Database = {
         }
         Relationships: []
       }
+      company_agent_configurations: {
+        Row: {
+          agent_id: string
+          company_id: string
+          configuration: Json
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_recurring: boolean | null
+          last_execution_at: string | null
+          last_execution_result: Json | null
+          last_execution_status: string | null
+          next_execution_at: string | null
+          schedule_config: Json | null
+          total_executions: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          company_id: string
+          configuration?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_recurring?: boolean | null
+          last_execution_at?: string | null
+          last_execution_result?: Json | null
+          last_execution_status?: string | null
+          next_execution_at?: string | null
+          schedule_config?: Json | null
+          total_executions?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          company_id?: string
+          configuration?: Json
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_recurring?: boolean | null
+          last_execution_at?: string | null
+          last_execution_result?: Json | null
+          last_execution_status?: string | null
+          next_execution_at?: string | null
+          schedule_config?: Json | null
+          total_executions?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_agent_configurations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "platform_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_agent_configurations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_agents: {
         Row: {
           agent_id: string

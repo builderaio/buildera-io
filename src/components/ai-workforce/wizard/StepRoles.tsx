@@ -29,6 +29,11 @@ const iconMap: Record<string, any> = {
   message: MessageCircle,
 };
 
+const isEmoji = (str: string) => {
+  const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u;
+  return emojiRegex.test(str);
+};
+
 export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) => {
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,8 +74,12 @@ export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) =>
     }
   };
 
-  const getIcon = (iconName: string) => {
-    return iconMap[iconName] || Brain;
+  const renderIcon = (iconName: string) => {
+    if (isEmoji(iconName)) {
+      return <span className="text-2xl">{iconName}</span>;
+    }
+    const Icon = iconMap[iconName] || Brain;
+    return <Icon className="h-6 w-6 text-primary" />;
   };
 
   if (loading) {
@@ -100,8 +109,7 @@ export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) =>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {selected.map((agent, idx) => {
-              const Icon = getIcon(agent.icon);
+              {selected.map((agent, idx) => {
               const skills = agent.tools_config?.key_skills_summary || [];
               return (
                 <motion.div
@@ -128,7 +136,7 @@ export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) =>
                           whileHover={{ scale: 1.1, rotate: 360 }}
                           transition={{ duration: 0.3 }}
                         >
-                          <Icon className="h-6 w-6 text-primary" />
+                          {renderIcon(agent.icon)}
                         </motion.div>
                         <div className="flex-1">
                           <h4 className="font-semibold mb-1">{agent.name}</h4>
@@ -161,7 +169,6 @@ export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) =>
         <h3 className="text-lg font-semibold mb-4">Roles Disponibles ({available.length})</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
           {available.map((agent, idx) => {
-            const Icon = getIcon(agent.icon);
             const skills = agent.tools_config?.key_skills_summary || [];
             return (
               <motion.div
@@ -181,7 +188,7 @@ export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) =>
                         className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"
                         whileHover={{ rotate: 15 }}
                       >
-                        <Icon className="h-6 w-6 text-primary" />
+                        {renderIcon(agent.icon)}
                       </motion.div>
                       <div className="flex-1">
                         <h4 className="font-semibold mb-1">{agent.name}</h4>

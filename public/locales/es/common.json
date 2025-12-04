@@ -14,15 +14,6 @@
     "tryAgain": "Por favor, intenta de nuevo",
     "processingFailed": "Error en el procesamiento"
   },
-  "onboarding": {
-    "checkingData": "Verificando datos de tu empresa...",
-    "welcomeTitle": "¡Bienvenido a Buildera!",
-    "welcomeDescription": "Cuéntanos sobre tu empresa para personalizar tu experiencia",
-    "fillRequiredFields": "Por favor completa los campos obligatorios",
-    "startAnalysis": "Comenzar análisis",
-    "completed": "¡Configuración completada!",
-    "redirecting": "Redirigiendo a tu dashboard..."
-  },
   "header": {
     "home": "Inicio",
     "whyBuildera": "Por qué Buildera",
@@ -141,6 +132,13 @@
     "logout": "Cerrar sesión"
   },
   "onboarding": {
+    "checkingData": "Verificando datos de tu empresa...",
+    "welcomeTitle": "¡Bienvenido a Buildera!",
+    "welcomeDescription": "Cuéntanos sobre tu empresa para personalizar tu experiencia",
+    "fillRequiredFields": "Por favor completa los campos obligatorios",
+    "startAnalysis": "Comenzar análisis",
+    "completed": "¡Configuración completada!",
+    "redirecting": "Redirigiendo a tu dashboard...",
     "title": "Configuración Automática",
     "subtitle": "Estamos configurando tu perfil empresarial",
     "step1": {
@@ -201,5 +199,57 @@
       "creditsUsed": "Créditos usados",
       "thisMonth": "Este mes"
     }
-  }
+  },
+  "agentCategories": {
+    "strategy": "Estrategia",
+    "content": "Contenido",
+    "analytics": "Analytics",
+    "branding": "Branding",
+    "assistant": "Asistente",
+    "publishing": "Publicación"
+  },
+  "credits": "créditos",
+  "execute": "Ejecutar",
+  "enable": "Habilitar",
+  "error": "Error",
+  "missingData": "Faltan datos necesarios",
+  "insufficientCredits": "Créditos insuficientes",
+  "needMoreCredits": "Necesitas más créditos para ejecutar este agente",
+  "cost": "Costo",
+  "available": "Disponible",
+  "executing": "Ejecutando...",
+  "executeAgent": "Ejecutar Agente",
+  "agentNotEnabled": "Este agente no está habilitado para tu empresa",
+  "viewInMarketplace": "Ver en Marketplace",
+  "insufficientCreditsMessage": "No tienes créditos suficientes para ejecutar este agente",
+  "recentExecutions": "Ejecuciones Recientes",
+  "noExecutionsYet": "Aún no has ejecutado este agente",
+  "success": "Éxito",
+  "executedSuccessfully": "ejecutado correctamente",
+  "executionFailed": "No se pudo ejecutar el agente",
+  "agentCentric": "Centro de Agentes IA",
+  "activeAgents": "Agentes Activos",
+  "availableCredits": "Créditos",
+  "executions": "Ejecuciones",
+  "creditUsage": "Uso de Créditos",
+  "thisMonth": "Este mes",
+  "creditsAvailable": "créditos disponibles",
+  "used": "Usados",
+  "total": "Total",
+  "upgradeCredits": "Obtener más créditos",
+  "topAgents": "Agentes Más Usados",
+  "basedOnUsage": "Basado en tu actividad",
+  "viewAll": "Ver todos",
+  "noAgentUsage": "Aún no has ejecutado ningún agente",
+  "exploreAgents": "Explorar Agentes",
+  "recentActivity": "Actividad Reciente",
+  "noRecentActivity": "No hay actividad reciente",
+  "quickActions": "Acciones Rápidas",
+  "createContent": "Crear Contenido",
+  "companyDna": "ADN Empresa",
+  "intelligence": "Inteligencia",
+  "academy": "Academia",
+  "discoverMoreAgents": "Descubre más agentes",
+  "agentsAvailableToEnable": "agentes disponibles para habilitar",
+  "exploreMarketplace": "Explorar Marketplace"
 }

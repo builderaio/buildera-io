@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Building, Bot, Store, Bell, Search, GraduationCap, Users, Settings, User, LogOut, Activity, Target, Sparkles, CreditCard } from 'lucide-react';
+import { Building, Bot, Store, Bell, Search, GraduationCap, Users, Settings, User, LogOut, Activity, Target, Sparkles, CreditCard, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,10 @@ import { SmartNotifications } from '@/components/ui/smart-notifications';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from 'react-i18next';
+import { AgentSidebarSection } from '@/components/agents/AgentSidebarSection';
+import { AgentInteractionPanel } from '@/components/agents/AgentInteractionPanel';
+import { PlatformAgent } from '@/hooks/usePlatformAgents';
+import { useCompanyCredits } from '@/hooks/useCompanyCredits';
 
 interface Profile {
   id: string;
@@ -240,11 +244,16 @@ const CompanyLayout = ({
   const { t } = useTranslation(['common']);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isInOnboarding, setIsInOnboarding] = useState(false);
-  const [creditsAvailable, setCreditsAvailable] = useState<number | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<PlatformAgent | null>(null);
+  const [agentPanelOpen, setAgentPanelOpen] = useState(false);
   const checkOnboardingInFlight = useRef(false);
   const lastOnboardingCheckAt = useRef(0);
   
-  // Check onboarding completion status
+  // Use the credits hook
+  const { availableCredits, refetch: refetchCredits } = useCompanyCredits(companyId || undefined, profile?.user_id);
+  
+  // Check onboarding completion status and load company
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       if (!profile?.user_id) return;
@@ -269,6 +278,17 @@ const CompanyLayout = ({
         
         const hasCompletedOnboarding = data?.onboarding_completed_at || data?.dna_empresarial_completed;
         setOnboardingComplete(!!hasCompletedOnboarding);
+        
+        // Load company ID
+        const { data: company } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('created_by', profile.user_id)
+          .maybeSingle();
+        
+        if (company?.id) {
+          setCompanyId(company.id);
+        }
       } catch (error) {
         console.error('Error in checkOnboardingStatus:', error);
       } finally {
@@ -300,6 +320,12 @@ const CompanyLayout = ({
       window.removeEventListener('onboarding-completed', handleOnboardingComplete);
     };
   }, [profile?.user_id, location.search]);
+  
+  // Handle agent click from sidebar
+  const handleAgentClick = (agent: PlatformAgent) => {
+    setSelectedAgent(agent);
+    setAgentPanelOpen(true);
+  };
   
   const isProfileIncomplete = !profile?.company_name || profile.company_name === 'Mi Negocio' || !profile?.full_name;
   const shouldBlockNavigation = !onboardingComplete && isProfileIncomplete;
@@ -352,7 +378,7 @@ const CompanyLayout = ({
     }
   };
 
-  // Nueva estructura de sidebar agent-centric
+  // Sidebar sections (non-agent items)
   const sidebarMenuItems = [
     {
       category: t('common:sidebar.central', 'Central'),
@@ -364,31 +390,6 @@ const CompanyLayout = ({
           label: t('common:sidebar.dashboard', 'Mi Panel'), 
           icon: Activity, 
           description: t('common:sidebar.dashboardDesc', 'Vista general y KPIs')
-        }
-      ]
-    },
-    {
-      category: t('common:sidebar.aiAgents', 'Agentes IA'),
-      icon: "🤖",
-      highlight: true, // Destacar esta categoría
-      items: [
-        { 
-          id: "ai-workforce", 
-          label: t('common:sidebar.workforce', 'Mis Equipos IA'), 
-          icon: Target, 
-          description: t('common:sidebar.workforceDesc', 'Misiones y equipos de IA')
-        },
-        { 
-          id: "mis-agentes", 
-          label: t('common:sidebar.myAgents', 'Agentes Activos'), 
-          icon: Bot, 
-          description: t('common:sidebar.myAgentsDesc', 'Gestionar agentes habilitados')
-        },
-        { 
-          id: "marketplace", 
-          label: t('common:sidebar.marketplace', 'Marketplace'), 
-          icon: Store, 
-          description: t('common:sidebar.marketplaceDesc', 'Descubrir nuevos agentes')
         }
       ]
     },
@@ -482,14 +483,14 @@ const CompanyLayout = ({
               </div>
             </div>
             
-            {/* Badge de créditos disponibles */}
-            <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
-              <Sparkles className="size-4 text-primary" />
+            {/* Badge de créditos disponibles - Agent Centric */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
+              <Zap className="size-4 text-amber-500" />
               <span className="text-xs font-medium text-sidebar-foreground">
                 {t('common:sidebar.credits', 'Créditos')}:
               </span>
-              <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5">
-                {creditsAvailable !== null ? creditsAvailable : '∞'}
+              <Badge variant="secondary" className="text-xs px-2 py-0.5 h-5 bg-primary/20 text-primary font-bold">
+                {availableCredits} cr
               </Badge>
             </div>
           </SidebarHeader>
@@ -506,16 +507,47 @@ const CompanyLayout = ({
           </div>
             
           <SidebarContent className="px-2 py-4 space-y-1">
-            {sidebarMenuItems.map((category) => (
+            {/* Panel Principal */}
+            <SidebarGroup className="p-0 space-y-1">
+              <SidebarGroupLabel className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider group-data-[state=collapsed]:hidden text-sidebar-muted-foreground">
+                <span className="mr-2">🎯</span>
+                {t('common:sidebar.central', 'Central')}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu className="space-y-1">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={activeView === 'mando-central'}
+                      className="h-auto justify-start group/item relative transition-all duration-200 font-medium text-sm data-[state=expanded]:px-3 data-[state=expanded]:py-2.5 data-[state=expanded]:rounded-lg"
+                      onClick={() => setActiveView('mando-central')}
+                      tooltip={t('common:sidebar.dashboard', 'Mi Panel')}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Activity className="size-5 shrink-0" />
+                        <div className="flex flex-col items-start group-data-[state=collapsed]:hidden">
+                          <span className="font-medium">{t('common:sidebar.dashboard', 'Mi Panel')}</span>
+                          <span className="text-xs text-sidebar-muted-foreground">{t('common:sidebar.dashboardDesc', 'Vista general y KPIs')}</span>
+                        </div>
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            
+            {/* AGENT-CENTRIC SECTION - Main highlight */}
+            <AgentSidebarSection 
+              companyId={companyId || undefined}
+              onAgentClick={handleAgentClick}
+            />
+            
+            {/* Remaining menu items */}
+            {sidebarMenuItems.slice(1).map((category) => (
               <SidebarGroup key={category.category} className="p-0 space-y-1">
                 <SidebarGroupLabel 
                   className={`
                     px-3 py-1.5 text-xs font-semibold uppercase tracking-wider
-                    group-data-[state=collapsed]:hidden
-                    ${category.highlight 
-                      ? 'text-primary bg-gradient-to-r from-primary/10 to-transparent rounded-lg' 
-                      : 'text-sidebar-muted-foreground'
-                    }
+                    group-data-[state=collapsed]:hidden text-sidebar-muted-foreground
                   `}
                 >
                   <span className="mr-2">{category.icon}</span>
@@ -544,7 +576,6 @@ const CompanyLayout = ({
                                   ? "opacity-40 cursor-not-allowed" 
                                   : "hover:bg-sidebar-accent/50"
                               }
-                              ${category.highlight && !isActive ? "hover:bg-primary/10" : ""}
                             `}
                             onClick={isDisabled ? undefined : () => {
                               console.log('🔄 Clicking sidebar item:', item.id);
@@ -553,7 +584,7 @@ const CompanyLayout = ({
                             tooltip={item.label}
                           >
                             <div className="flex items-center gap-3">
-                              <Icon className={`size-5 shrink-0 ${category.highlight ? 'text-primary' : ''}`} />
+                              <Icon className="size-5 shrink-0" />
                               <div className="flex flex-col items-start group-data-[state=collapsed]:hidden">
                                 <span className="font-medium">{item.label}</span>
                                 <span className="text-xs text-sidebar-muted-foreground line-clamp-1">
@@ -650,6 +681,21 @@ const CompanyLayout = ({
           <Outlet />
         </main>
       </SidebarInset>
+      
+      {/* Agent Interaction Panel */}
+      <AgentInteractionPanel
+        agent={selectedAgent}
+        isOpen={agentPanelOpen}
+        onClose={() => {
+          setAgentPanelOpen(false);
+          setSelectedAgent(null);
+        }}
+        isEnabled={true} // TODO: Check from usePlatformAgents
+        creditsAvailable={availableCredits}
+        companyId={companyId || undefined}
+        userId={profile?.user_id}
+        onExecutionComplete={refetchCredits}
+      />
     </div>
   );
 };

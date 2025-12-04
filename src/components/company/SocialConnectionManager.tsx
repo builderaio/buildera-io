@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import EraCoachMark from "@/components/ui/era-coach-mark";
 import { 
   Network, 
   CheckCircle2, 
@@ -78,8 +77,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const [companyData, setCompanyData] = useState<any>(null);
   const [editingUrl, setEditingUrl] = useState<string | null>(null);
   const [urlValues, setUrlValues] = useState<Record<string, string>>({});
-  const [showCoachMark, setShowCoachMark] = useState(false);
-  const [newConnectedPlatforms, setNewConnectedPlatforms] = useState<Set<string>>(new Set());
   const [showConnectionDialog, setShowConnectionDialog] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const { toast } = useToast();
@@ -139,11 +136,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       const list = (data || []) as any[];
       console.log('📥 social_accounts loaded:', list);
       
-      // Detectar nuevas conexiones antes de actualizar
-      if (socialAccounts.length > 0) {
-        await detectNewConnections(list);
-      }
-      
       setSocialAccounts(list);
 
       // Si no hay conexiones visibles, forzar una sincronización desde Upload-Post
@@ -166,43 +158,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       }
     } catch (error) {
       console.error('Error loading social accounts:', error);
-    }
-  };
-
-  // Detectar nuevas conexiones para mostrar coachmarks
-  const detectNewConnections = async (newAccounts: SocialAccount[]) => {
-    const currentConnected = new Set(
-      socialAccounts.filter(acc => acc.is_connected).map(acc => acc.platform)
-    );
-    const newConnected = new Set(
-      newAccounts.filter(acc => acc.is_connected).map(acc => acc.platform)
-    );
-    
-    const newPlatforms = new Set<string>();
-    newConnected.forEach(platform => {
-      if (!currentConnected.has(platform) && platform !== 'upload_post_profile') {
-        newPlatforms.add(platform);
-      }
-    });
-    
-    if (newPlatforms.size > 0) {
-      // Verificar si el usuario ya ha visto el tutorial de Era
-      try {
-        const { data: tutorialData } = await supabase
-          .from('user_tutorials')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('tutorial_name', 'era_introduction')
-          .maybeSingle();
-        
-        // Solo mostrar el coach mark si el usuario NO ha visto el tutorial
-        if (!tutorialData) {
-          setNewConnectedPlatforms(newPlatforms);
-          setShowCoachMark(true);
-        }
-      } catch (error) {
-        console.error('Error verificando tutorial de Era:', error);
-      }
     }
   };
 
@@ -706,15 +661,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
           return (
             <Card key={platform} className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${cardBorderClass}`}>
               <CardContent className="p-4">
-                {/* Coachmark para nuevas conexiones */}
-                {newConnectedPlatforms.has(platform) && isConnected && (
-                  <div className="absolute -top-2 -right-2 z-10 animate-pulse">
-                    <div className="bg-primary text-primary-foreground rounded-full p-1">
-                      <Info className="w-4 h-4" />
-                    </div>
-                  </div>
-                )}
-                
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-lg ${config.color} flex items-center justify-center text-white text-xl`}>
@@ -742,21 +688,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                     <XCircle className="w-5 h-5 text-gray-400" />
                   )}
                 </div>
-                
-                {/* Mensaje de coachmark para nuevas conexiones */}
-                {newConnectedPlatforms.has(platform) && isConnected && (
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-3">
-                    <div className="flex items-start gap-2">
-                      <Info className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                      <div className="text-xs">
-                        <p className="font-medium text-primary">¡Red conectada exitosamente!</p>
-                        <p className="text-muted-foreground mt-1">
-                          Configure la URL del perfil abajo. Esto es esencial para el análisis estratégico de audiencias y contenido en el Hub de Marketing.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 
                 <Badge 
                   variant={isConnected ? "default" : "secondary"}
@@ -1079,16 +1010,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Coachmark para nuevas conexiones */}
-      <EraCoachMark
-        isOpen={showCoachMark}
-        onClose={() => {
-          setShowCoachMark(false);
-          setNewConnectedPlatforms(new Set());
-        }}
-        userId={userId || ''}
-      />
 
     </div>
   );

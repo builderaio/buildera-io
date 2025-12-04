@@ -5,7 +5,6 @@ import { MissionCatalog } from "@/components/ai-workforce/MissionCatalog";
 import { MissionLauncher } from "@/components/ai-workforce/MissionLauncher";
 import { ActiveMissions } from "@/components/ai-workforce/ActiveMissions";
 import { MissionResults } from "@/components/ai-workforce/MissionResults";
-import { AgentDeploymentManager } from "@/components/ai-workforce/AgentDeploymentManager";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -49,11 +48,12 @@ const AIWorkforce = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Count active agents
+      // Count active workforce agents from platform_agents
       const { count: agentsCount } = await supabase
-        .from("ai_workforce_agents")
+        .from("platform_agents")
         .select("*", { count: "exact", head: true })
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .eq("category", "workforce");
 
       // Count completed tasks
       const { count: tasksCount } = await supabase

@@ -9,10 +9,10 @@ import { motion } from "framer-motion";
 
 interface Agent {
   id: string;
-  role_name: string;
-  primary_function: string;
-  key_skills_summary: string[];
-  avatar_icon: string;
+  name: string;
+  instructions: string | null;
+  icon: string;
+  tools_config: any;
 }
 
 interface StepRolesProps {
@@ -41,10 +41,11 @@ export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) =>
   const loadAgents = async () => {
     try {
       const { data, error } = await supabase
-        .from("ai_workforce_agents")
-        .select("*")
+        .from("platform_agents")
+        .select("id, name, instructions, icon, tools_config")
         .eq("is_active", true)
-        .order("role_name");
+        .eq("category", "workforce")
+        .order("name");
 
       if (error) throw error;
       setAvailableAgents(data || []);
@@ -100,7 +101,8 @@ export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) =>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {selected.map((agent, idx) => {
-              const Icon = getIcon(agent.avatar_icon);
+              const Icon = getIcon(agent.icon);
+              const skills = agent.tools_config?.key_skills_summary || [];
               return (
                 <motion.div
                   key={agent.id}
@@ -129,12 +131,12 @@ export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) =>
                           <Icon className="h-6 w-6 text-primary" />
                         </motion.div>
                         <div className="flex-1">
-                          <h4 className="font-semibold mb-1">{agent.role_name}</h4>
+                          <h4 className="font-semibold mb-1">{agent.name}</h4>
                           <p className="text-sm text-muted-foreground mb-2">
-                            {agent.primary_function}
+                            {agent.instructions}
                           </p>
                           <div className="flex flex-wrap gap-1">
-                            {agent.key_skills_summary?.slice(0, 3).map((skill, idx) => (
+                            {skills.slice(0, 3).map((skill, idx) => (
                               <Badge key={idx} variant="secondary" className="text-xs">
                                 {skill}
                               </Badge>
@@ -159,7 +161,8 @@ export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) =>
         <h3 className="text-lg font-semibold mb-4">Roles Disponibles ({available.length})</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
           {available.map((agent, idx) => {
-            const Icon = getIcon(agent.avatar_icon);
+            const Icon = getIcon(agent.icon);
+            const skills = agent.tools_config?.key_skills_summary || [];
             return (
               <motion.div
                 key={agent.id}
@@ -181,12 +184,12 @@ export const StepRoles = ({ selectedAgents, onAgentsChange }: StepRolesProps) =>
                         <Icon className="h-6 w-6 text-primary" />
                       </motion.div>
                       <div className="flex-1">
-                        <h4 className="font-semibold mb-1">{agent.role_name}</h4>
+                        <h4 className="font-semibold mb-1">{agent.name}</h4>
                         <p className="text-sm text-muted-foreground mb-2">
-                          {agent.primary_function}
+                          {agent.instructions}
                         </p>
                         <div className="flex flex-wrap gap-1">
-                          {agent.key_skills_summary?.slice(0, 3).map((skill, idx) => (
+                          {skills.slice(0, 3).map((skill, idx) => (
                             <Badge key={idx} variant="outline" className="text-xs">
                               {skill}
                             </Badge>

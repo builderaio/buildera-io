@@ -577,69 +577,6 @@ export type Database = {
           },
         ]
       }
-      ai_workforce_agents: {
-        Row: {
-          avatar_icon: string | null
-          avatar_url: string | null
-          average_sfia_level: number | null
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          execution_resource_id: string | null
-          execution_type: string | null
-          id: string
-          input_parameters: Json | null
-          internal_id: string
-          is_active: boolean | null
-          is_featured: boolean | null
-          key_skills_summary: string[] | null
-          primary_function: string | null
-          role_name: string
-          sfia_skills: Json | null
-          updated_at: string | null
-        }
-        Insert: {
-          avatar_icon?: string | null
-          avatar_url?: string | null
-          average_sfia_level?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          execution_resource_id?: string | null
-          execution_type?: string | null
-          id?: string
-          input_parameters?: Json | null
-          internal_id: string
-          is_active?: boolean | null
-          is_featured?: boolean | null
-          key_skills_summary?: string[] | null
-          primary_function?: string | null
-          role_name: string
-          sfia_skills?: Json | null
-          updated_at?: string | null
-        }
-        Update: {
-          avatar_icon?: string | null
-          avatar_url?: string | null
-          average_sfia_level?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          execution_resource_id?: string | null
-          execution_type?: string | null
-          id?: string
-          input_parameters?: Json | null
-          internal_id?: string
-          is_active?: boolean | null
-          is_featured?: boolean | null
-          key_skills_summary?: string[] | null
-          primary_function?: string | null
-          role_name?: string
-          sfia_skills?: Json | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       ai_workforce_team_members: {
         Row: {
           agent_id: string
@@ -673,7 +610,7 @@ export type Database = {
             foreignKeyName: "ai_workforce_team_members_agent_id_fkey"
             columns: ["agent_id"]
             isOneToOne: false
-            referencedRelation: "ai_workforce_agents"
+            referencedRelation: "platform_agents"
             referencedColumns: ["id"]
           },
           {
@@ -736,7 +673,7 @@ export type Database = {
             foreignKeyName: "ai_workforce_team_tasks_agent_id_fkey"
             columns: ["agent_id"]
             isOneToOne: false
-            referencedRelation: "ai_workforce_agents"
+            referencedRelation: "platform_agents"
             referencedColumns: ["id"]
           },
           {
@@ -4850,6 +4787,7 @@ export type Database = {
           instructions: string | null
           internal_code: string
           is_active: boolean | null
+          is_featured: boolean | null
           is_onboarding_agent: boolean | null
           is_premium: boolean | null
           min_plan_required: string | null
@@ -4887,6 +4825,7 @@ export type Database = {
           instructions?: string | null
           internal_code: string
           is_active?: boolean | null
+          is_featured?: boolean | null
           is_onboarding_agent?: boolean | null
           is_premium?: boolean | null
           min_plan_required?: string | null
@@ -4924,6 +4863,7 @@ export type Database = {
           instructions?: string | null
           internal_code?: string
           is_active?: boolean | null
+          is_featured?: boolean | null
           is_onboarding_agent?: boolean | null
           is_premium?: boolean | null
           min_plan_required?: string | null

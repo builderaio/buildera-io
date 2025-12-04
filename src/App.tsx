@@ -64,7 +64,6 @@ import WhiteLabelABTesting from "./pages/WhiteLabelABTesting";
 import WhiteLabelDashboard from "./pages/WhiteLabelDashboard";
 import WhiteLabelMarketplace from "./pages/WhiteLabelMarketplace";
 import AIWorkforce from "./pages/AIWorkforce";
-import AdminAIWorkforce from "./pages/AdminAIWorkforce";
 import InviteAccept from "./pages/InviteAccept";
 
 const queryClient = new QueryClient();
@@ -236,11 +235,8 @@ const App = () => {
                     <AdminEmailSystem />
                   </AdminProtectedRoute>
                 } />
-                <Route path="/admin/ai-workforce" element={
-                  <AdminProtectedRoute>
-                    <AdminAIWorkforce />
-                  </AdminProtectedRoute>
-                } />
+                {/* Legacy route redirect */}
+                <Route path="/admin/ai-workforce" element={<Navigate to="/admin/agent-builder" replace />} />
 
                 {/* Onboarding Routes */}
                 <Route path="/auth/onboarding" element={user ? <OnboardingOrchestrator user={user} /> : <div>Loading...</div>} />

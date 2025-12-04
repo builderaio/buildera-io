@@ -25,8 +25,8 @@ export const StepReview = ({ teamData }: StepReviewProps) => {
     if (teamData.selectedAgents.length === 0) return;
 
     const { data } = await supabase
-      .from("ai_workforce_agents")
-      .select("*")
+      .from("platform_agents")
+      .select("id, name, instructions, icon, tools_config")
       .in("id", teamData.selectedAgents);
 
     setAgents(data || []);
@@ -127,28 +127,31 @@ export const StepReview = ({ teamData }: StepReviewProps) => {
                 <h4 className="font-semibold text-lg">Miembros del Equipo ({agents.length})</h4>
               </div>
               <div className="grid grid-cols-1 gap-3 ml-12">
-                {agents.map((agent, idx) => (
-                  <motion.div
-                    key={agent.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.8 + idx * 0.05 }}
-                    className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-lg border border-primary/10"
-                  >
-                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                      <span className="text-2xl">{agent.avatar_icon || "🤖"}</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold">{agent.role_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {agent.primary_function}
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className="bg-primary/10 text-primary">
-                      Nivel {agent.average_sfia_level || "4"}
-                    </Badge>
-                  </motion.div>
-                ))}
+                {agents.map((agent, idx) => {
+                  const sfiaLevel = agent.tools_config?.average_sfia_level || 4;
+                  return (
+                    <motion.div
+                      key={agent.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.8 + idx * 0.05 }}
+                      className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-lg border border-primary/10"
+                    >
+                      <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <span className="text-2xl">{agent.icon || "🤖"}</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold">{agent.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {agent.instructions}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="bg-primary/10 text-primary">
+                        Nivel {sfiaLevel}
+                      </Badge>
+                    </motion.div>
+                  );
+                })}
               </div>
             </motion.div>
           </CardContent>

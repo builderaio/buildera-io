@@ -50,9 +50,9 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from('content_recommendations').delete().eq('user_id', userId);
     await supabaseAdmin.from('instagram_content_analysis').delete().eq('user_id', userId);
     
-    // Eliminar agentes y archivos
-    await supabaseAdmin.from('agent_knowledge_files').delete().eq('user_id', userId);
-    await supabaseAdmin.from('agent_ratings').delete().eq('user_id', userId);
+    // Eliminar configuraciones de agentes (nueva arquitectura)
+    await supabaseAdmin.from('agent_usage_log').delete().eq('user_id', userId);
+    await supabaseAdmin.from('company_agent_configurations').delete().eq('user_id', userId);
     await supabaseAdmin.from('company_agents').delete().eq('user_id', userId);
     
     // Eliminar sesiones de tutorías y aprendizaje

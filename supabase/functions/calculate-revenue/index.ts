@@ -14,7 +14,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
         auth: { persistSession: false }
       }
@@ -32,8 +32,9 @@ serve(async (req) => {
     lastMonthEnd.setDate(0)
     lastMonthEnd.setHours(23, 59, 59, 999)
 
+    // Usar la nueva arquitectura: whitelabel_deployments + whitelabel_agent_templates
     const { data: deployments, error: deploymentsError } = await supabaseClient
-      .from('agent_deployments')
+      .from('whitelabel_deployments')
       .select(`
         *,
         template:whitelabel_agent_templates!inner(
@@ -44,25 +45,33 @@ serve(async (req) => {
         )
       `)
       .gte('created_at', lastMonthStart.toISOString())
-      .lte('last_used_at', lastMonthEnd.toISOString())
+      .lte('last_active_at', lastMonthEnd.toISOString())
 
     if (deploymentsError) throw deploymentsError
 
     const revenueEntries = []
 
-    for (const deployment of deployments) {
+    for (const deployment of deployments || []) {
       const template = deployment.template
       let revenueAmount = 0
 
       // Calcular revenue según el modelo de precio
       if (template.pricing_model === 'subscription') {
-        revenueAmount = template.base_price
+        revenueAmount = template.base_price || 0
       } else if (template.pricing_model === 'usage_based') {
-        revenueAmount = deployment.monthly_usage_count * template.base_price
+        // Contar uso desde agent_usage_log para este deployment
+        const { count } = await supabaseClient
+          .from('agent_usage_log')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', deployment.company_id)
+          .gte('created_at', lastMonthStart.toISOString())
+          .lte('created_at', lastMonthEnd.toISOString())
+        
+        revenueAmount = (count || 0) * (template.base_price || 0)
       }
 
       if (revenueAmount > 0) {
-        const developerShare = (revenueAmount * template.revenue_share_percentage) / 100
+        const developerShare = (revenueAmount * (template.revenue_share_percentage || 70)) / 100
         const platformShare = revenueAmount - developerShare
 
         revenueEntries.push({
@@ -72,7 +81,7 @@ serve(async (req) => {
           company_id: deployment.company_id,
           usage_period_start: lastMonthStart.toISOString(),
           usage_period_end: lastMonthEnd.toISOString(),
-          total_usage_count: deployment.monthly_usage_count,
+          total_usage_count: 0, // Will be updated with actual count
           revenue_amount: revenueAmount,
           developer_share: developerShare,
           platform_share: platformShare,
@@ -90,20 +99,12 @@ serve(async (req) => {
       if (insertError) throw insertError
     }
 
-    // Resetear contadores mensuales
-    const { error: resetError } = await supabaseClient
-      .from('agent_deployments')
-      .update({ monthly_usage_count: 0 })
-      .in('id', deployments.map(d => d.id))
-
-    if (resetError) throw resetError
-
     console.log(`Processed ${revenueEntries.length} revenue entries`)
 
     return new Response(
       JSON.stringify({
         success: true,
-        processed_deployments: deployments.length,
+        processed_deployments: deployments?.length || 0,
         revenue_entries: revenueEntries.length,
         total_revenue: revenueEntries.reduce((sum, entry) => sum + entry.revenue_amount, 0)
       }),

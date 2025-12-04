@@ -23,7 +23,7 @@ import CompanyDashboard from "./pages/CompanyDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
 import DeveloperDashboard from "./pages/DeveloperDashboard";
 import NotFound from "./pages/NotFound";
-import AgentMarketplace from "./pages/AgentMarketplace";
+
 import AgentConfigWizard from "./pages/AgentConfigWizard";
 import DeveloperPortal from "./pages/DeveloperPortal";
 import CompanyAgents from "./pages/CompanyAgents";
@@ -49,11 +49,8 @@ import AdminDatabase from "./pages/AdminDatabase";
 import AdminFunctionConfig from "./pages/AdminFunctionConfig";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import UserProfile from "./pages/UserProfile";
-import AdminAgentTemplates from "./pages/AdminAgentTemplates";
-import AdminCreateAgentTemplate from "./pages/AdminCreateAgentTemplate";
-import AdminAgentTemplateView from "./pages/AdminAgentTemplateView";
-import AdminAgentTemplateEdit from "./pages/AdminAgentTemplateEdit";
-import AdminAgentTemplateVersions from "./pages/AdminAgentTemplateVersions";
+import AdminAgentBuilder from "./pages/AdminAgentBuilder";
+import AgentMarketplaceV2 from "./pages/AgentMarketplaceV2";
 import AdminAPIKeys from "./pages/AdminAPIKeys";
 import AdminEmailSystem from "./pages/AdminEmailSystem";
 import ResponsiveLayout from "./components/ResponsiveLayout";
@@ -144,8 +141,9 @@ const App = () => {
                   <Route path="/expert-dashboard" element={<ExpertDashboard />} />
                   <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
                   <Route path="/profile" element={<UserProfile />} />
-                  <Route path="/marketplace/agents" element={<AgentMarketplace />} />
+                  <Route path="/marketplace/agents" element={<AgentMarketplaceV2 />} />
                   <Route path="/marketplace/whitelabel" element={<WhiteLabelMarketplace />} />
+                  <Route path="/agents" element={<AgentMarketplaceV2 />} />
                   <Route path="/marketplace/agents/:templateId/configure" element={<AgentConfigWizard />} />
                   <Route path="/company/agents" element={<CompanyAgents />} />
                   <Route path="/company/agents/:agentId" element={<CompanyAgentView />} />
@@ -220,31 +218,14 @@ const App = () => {
                     <AdminFunctionConfig />
                   </AdminProtectedRoute>
                 } />
-                <Route path="/admin/agent-templates" element={
+                <Route path="/admin/agent-builder" element={
                   <AdminProtectedRoute>
-                    <AdminAgentTemplates />
+                    <AdminAgentBuilder />
                   </AdminProtectedRoute>
                 } />
-                <Route path="/admin/agent-templates/create" element={
-                  <AdminProtectedRoute>
-                    <AdminCreateAgentTemplate />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/agent-templates/:id" element={
-                  <AdminProtectedRoute>
-                    <AdminAgentTemplateView />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/agent-templates/:id/edit" element={
-                  <AdminProtectedRoute>
-                    <AdminAgentTemplateEdit />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/agent-templates/:id/versions" element={
-                  <AdminProtectedRoute>
-                    <AdminAgentTemplateVersions />
-                  </AdminProtectedRoute>
-                } />
+                {/* Legacy route redirect */}
+                <Route path="/admin/agent-templates" element={<Navigate to="/admin/agent-builder" replace />} />
+                <Route path="/admin/agent-templates/*" element={<Navigate to="/admin/agent-builder" replace />} />
                 <Route path="/admin/api-keys" element={
                   <AdminProtectedRoute>
                     <AdminAPIKeys />

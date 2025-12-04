@@ -16,6 +16,10 @@ export interface PlatformAgent {
   is_onboarding_agent: boolean;
   sort_order: number;
   is_active: boolean;
+  input_schema?: any;
+  output_schema?: any;
+  sample_output?: any;
+  recurring_capable?: boolean;
 }
 
 interface EnabledAgent {

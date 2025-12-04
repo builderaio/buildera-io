@@ -1,12 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Zap, Star, Play, Clock, CheckCircle2, AlertCircle, Loader2, ArrowRight } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Zap, Star, Play, Clock, CheckCircle2, AlertCircle, Loader2, ArrowRight, Settings, History, Calendar } from "lucide-react";
 import { PlatformAgent } from "@/hooks/usePlatformAgents";
+import { useAgentConfiguration, ScheduleConfig } from "@/hooks/useAgentConfiguration";
+import { AgentConfigurationWizard } from "./AgentConfigurationWizard";
+import { AgentResultsView } from "./AgentResultsView";
+import { AgentScheduleManager } from "./AgentScheduleManager";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,14 +26,6 @@ interface AgentInteractionPanelProps {
   onExecutionComplete?: () => void;
 }
 
-interface ExecutionHistory {
-  id: string;
-  created_at: string;
-  status: string;
-  credits_consumed: number;
-  output_summary?: string;
-}
-
 const categoryColors: Record<string, string> = {
   strategy: "from-blue-500 to-indigo-600",
   content: "from-purple-500 to-pink-500",
@@ -36,6 +33,7 @@ const categoryColors: Record<string, string> = {
   branding: "from-amber-500 to-orange-500",
   assistant: "from-cyan-500 to-blue-500",
   publishing: "from-green-500 to-emerald-500",
+  marketing: "from-blue-500 to-cyan-500",
 };
 
 const categoryIcons: Record<string, string> = {
@@ -45,6 +43,7 @@ const categoryIcons: Record<string, string> = {
   branding: "✨",
   assistant: "💬",
   publishing: "📤",
+  marketing: "📣",
 };
 
 export const AgentInteractionPanel = ({
@@ -59,31 +58,34 @@ export const AgentInteractionPanel = ({
 }: AgentInteractionPanelProps) => {
   const { t } = useTranslation(['common']);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
   const [executing, setExecuting] = useState(false);
-  const [recentExecutions, setRecentExecutions] = useState<ExecutionHistory[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState("execute");
+  const [showConfigWizard, setShowConfigWizard] = useState(false);
+  const [latestResult, setLatestResult] = useState<any>(null);
 
-  const loadExecutionHistory = async () => {
-    if (!agent || !userId) return;
-    
-    setLoadingHistory(true);
-    try {
-      const { data, error } = await supabase
-        .from('agent_usage_log')
-        .select('id, created_at, status, credits_consumed, output_summary')
-        .eq('agent_id', agent.id)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(5);
+  const {
+    configuration,
+    executionHistory,
+    loading: configLoading,
+    saving,
+    saveConfiguration,
+    updateSchedule,
+    recordExecution,
+    reload
+  } = useAgentConfiguration(companyId, agent?.id);
 
-      if (error) throw error;
-      setRecentExecutions(data || []);
-    } catch (error) {
-      console.error('Error loading execution history:', error);
-    } finally {
-      setLoadingHistory(false);
+  // Check if agent needs initial configuration
+  const needsConfiguration = !configLoading && !configuration && agent?.input_schema;
+  const hasInputSchema = agent?.input_schema && typeof agent.input_schema === 'object' && Object.keys(agent.input_schema).length > 0;
+  const isRecurringCapable = hasInputSchema && (agent?.input_schema as any)?.recurring_capable === true;
+
+  useEffect(() => {
+    if (isOpen && needsConfiguration && hasInputSchema) {
+      setShowConfigWizard(true);
     }
-  };
+  }, [isOpen, needsConfiguration, hasInputSchema]);
 
   const handleExecute = async () => {
     if (!agent || !userId || !companyId) {
@@ -105,6 +107,8 @@ export const AgentInteractionPanel = ({
     }
 
     setExecuting(true);
+    const startTime = Date.now();
+    
     try {
       // Log the execution start
       const { data: logEntry, error: logError } = await supabase
@@ -115,7 +119,7 @@ export const AgentInteractionPanel = ({
           company_id: companyId,
           credits_consumed: agent.credits_per_use,
           status: 'running',
-          input_data: { triggered_at: new Date().toISOString() }
+          input_data: configuration?.configuration || {}
         })
         .select()
         .single();
@@ -128,11 +132,14 @@ export const AgentInteractionPanel = ({
           companyId,
           userId,
           agentId: agent.id,
-          logId: logEntry.id
+          logId: logEntry.id,
+          configuration: configuration?.configuration || {}
         }
       });
 
       if (error) throw error;
+
+      const executionTime = Date.now() - startTime;
 
       // Update log entry with success
       await supabase
@@ -140,9 +147,29 @@ export const AgentInteractionPanel = ({
         .update({
           status: 'completed',
           output_data: data,
-          output_summary: data?.summary || 'Ejecución completada exitosamente'
+          output_summary: data?.summary || 'Ejecución completada exitosamente',
+          execution_time_ms: executionTime
         })
         .eq('id', logEntry.id);
+
+      // Record execution in configuration
+      await recordExecution(
+        'completed', 
+        data, 
+        data?.summary || 'Ejecución completada',
+        agent.credits_per_use,
+        executionTime
+      );
+
+      setLatestResult({
+        id: logEntry.id,
+        status: 'completed',
+        output_data: data,
+        execution_time_ms: executionTime,
+        created_at: new Date().toISOString()
+      });
+
+      setActiveTab("results");
 
       toast({
         title: t('common:success', 'Éxito'),
@@ -150,9 +177,19 @@ export const AgentInteractionPanel = ({
       });
 
       onExecutionComplete?.();
-      loadExecutionHistory();
+      reload();
     } catch (error) {
       console.error('Error executing agent:', error);
+      
+      await recordExecution(
+        'failed', 
+        null, 
+        (error as Error).message,
+        agent.credits_per_use,
+        Date.now() - startTime,
+        (error as Error).message
+      );
+      
       toast({
         title: t('common:error', 'Error'),
         description: t('common:executionFailed', 'No se pudo ejecutar el agente'),
@@ -163,15 +200,58 @@ export const AgentInteractionPanel = ({
     }
   };
 
+  const handleConfigSave = async (config: Record<string, any>) => {
+    const success = await saveConfiguration(config, false, null);
+    if (success) {
+      setShowConfigWizard(false);
+      toast({
+        title: t('common:success', 'Configuración guardada'),
+        description: t('common:configSaved', 'Puedes ejecutar el agente ahora')
+      });
+    }
+    return success;
+  };
+
+  const handleScheduleUpdate = async (scheduleConfig: ScheduleConfig | null, isActive: boolean) => {
+    const success = await updateSchedule(scheduleConfig, isActive);
+    if (success) {
+      toast({
+        title: t('common:success', 'Programación actualizada'),
+        description: isActive 
+          ? t('common:scheduleEnabled', 'El agente se ejecutará automáticamente')
+          : t('common:schedulePaused', 'La programación ha sido pausada')
+      });
+    }
+    return success;
+  };
+
   if (!agent) return null;
 
   const categoryColor = categoryColors[agent.category] || "from-gray-500 to-gray-600";
-  const categoryIcon = categoryIcons[agent.category] || "🤖";
+  const categoryIcon = categoryIcons[agent.category] || agent.icon || "🤖";
   const hasEnoughCredits = creditsAvailable >= agent.credits_per_use;
+
+  // Show configuration wizard if needed
+  if (showConfigWizard && hasInputSchema) {
+    return (
+      <AgentConfigurationWizard
+        isOpen={isOpen}
+        onClose={() => {
+          setShowConfigWizard(false);
+          if (needsConfiguration) onClose();
+        }}
+        agent={agent}
+        inputSchema={agent.input_schema as any}
+        existingConfig={configuration?.configuration as Record<string, any>}
+        onSave={handleConfigSave}
+        saving={saving}
+      />
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-4">
             <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${categoryColor} flex items-center justify-center text-white text-2xl shadow-lg`}>
@@ -205,7 +285,7 @@ export const AgentInteractionPanel = ({
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">{t('common:available', 'Disponible')}</p>
-                  <p className={`text-lg font-bold ${hasEnoughCredits ? 'text-emerald-600' : 'text-red-500'}`}>
+                  <p className={`text-lg font-bold ${hasEnoughCredits ? 'text-emerald-600' : 'text-destructive'}`}>
                     {creditsAvailable} cr
                   </p>
                 </div>
@@ -213,25 +293,118 @@ export const AgentInteractionPanel = ({
             </CardContent>
           </Card>
 
-          {/* Execute Button */}
           {isEnabled ? (
-            <Button 
-              className="w-full h-12 text-lg"
-              onClick={handleExecute}
-              disabled={executing || !hasEnoughCredits}
-            >
-              {executing ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  {t('common:executing', 'Ejecutando...')}
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5 mr-2" />
-                  {t('common:executeAgent', 'Ejecutar Agente')}
-                </>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="execute" className="flex items-center gap-2">
+                  <Play className="w-4 h-4" />
+                  Ejecutar
+                </TabsTrigger>
+                <TabsTrigger value="results" className="flex items-center gap-2">
+                  <History className="w-4 h-4" />
+                  Resultados
+                </TabsTrigger>
+                {isRecurringCapable && (
+                  <TabsTrigger value="schedule" className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Programar
+                  </TabsTrigger>
+                )}
+              </TabsList>
+
+              <TabsContent value="execute" className="space-y-4 mt-4">
+                {/* Current Configuration */}
+                {configuration && (
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium flex items-center gap-2">
+                          <Settings className="w-4 h-4" />
+                          {t('common:currentConfig', 'Configuración actual')}
+                        </span>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setShowConfigWizard(true)}
+                        >
+                          {t('common:edit', 'Editar')}
+                        </Button>
+                      </div>
+                      <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                        <pre className="whitespace-pre-wrap text-xs">
+                          {JSON.stringify(configuration.configuration, null, 2)}
+                        </pre>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Execute Button */}
+                <Button 
+                  className="w-full h-12 text-lg"
+                  onClick={handleExecute}
+                  disabled={executing || !hasEnoughCredits || configLoading}
+                >
+                  {executing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      {t('common:executing', 'Ejecutando...')}
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5 mr-2" />
+                      {t('common:executeAgent', 'Ejecutar Agente')}
+                    </>
+                  )}
+                </Button>
+
+                {!hasEnoughCredits && (
+                  <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg">
+                    <AlertCircle className="w-5 h-5 text-destructive" />
+                    <p className="text-sm text-destructive">
+                      {t('common:insufficientCreditsMessage', 'No tienes créditos suficientes')}
+                    </p>
+                  </div>
+                )}
+
+                {!configuration && hasInputSchema && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setShowConfigWizard(true)}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    {t('common:configureFirst', 'Configurar antes de ejecutar')}
+                  </Button>
+                )}
+              </TabsContent>
+
+              <TabsContent value="results" className="mt-4">
+                <AgentResultsView
+                  results={executionHistory}
+                  latestResult={latestResult}
+                  agentName={agent.name}
+                  loading={configLoading}
+                />
+              </TabsContent>
+
+              {isRecurringCapable && (
+                <TabsContent value="schedule" className="mt-4">
+                  <AgentScheduleManager
+                    agentName={agent.name}
+                    isRecurringCapable={isRecurringCapable}
+                    currentSchedule={configuration?.schedule_config || null}
+                    isActive={configuration?.is_active || false}
+                    nextExecutionAt={configuration?.next_execution_at || null}
+                    lastExecutionAt={configuration?.last_execution_at || null}
+                    lastExecutionStatus={configuration?.last_execution_status || null}
+                    totalExecutions={configuration?.total_executions || 0}
+                    onUpdateSchedule={handleScheduleUpdate}
+                    saving={saving}
+                  />
+                </TabsContent>
               )}
-            </Button>
+            </Tabs>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg">
@@ -240,66 +413,16 @@ export const AgentInteractionPanel = ({
                   {t('common:agentNotEnabled', 'Este agente no está habilitado para tu empresa')}
                 </p>
               </div>
-              <Button variant="outline" className="w-full" onClick={() => {/* Navigate to marketplace */}}>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => navigate('/marketplace/agents')}
+              >
                 <ArrowRight className="w-4 h-4 mr-2" />
                 {t('common:viewInMarketplace', 'Ver en Marketplace')}
               </Button>
             </div>
           )}
-
-          {!hasEnoughCredits && isEnabled && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-600" />
-              <p className="text-sm text-red-700 dark:text-red-400">
-                {t('common:insufficientCreditsMessage', 'No tienes créditos suficientes para ejecutar este agente')}
-              </p>
-            </div>
-          )}
-
-          <Separator />
-
-          {/* Recent Executions */}
-          <div>
-            <h4 className="font-medium mb-3 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              {t('common:recentExecutions', 'Ejecuciones Recientes')}
-            </h4>
-            
-            {loadingHistory ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : recentExecutions.length > 0 ? (
-              <div className="space-y-2">
-                {recentExecutions.map((exec) => (
-                  <div 
-                    key={exec.id}
-                    className="flex items-center justify-between p-2 rounded-lg bg-muted/50"
-                  >
-                    <div className="flex items-center gap-2">
-                      {exec.status === 'completed' ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                      ) : exec.status === 'failed' ? (
-                        <AlertCircle className="w-4 h-4 text-red-500" />
-                      ) : (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      )}
-                      <span className="text-sm truncate max-w-[200px]">
-                        {exec.output_summary || exec.status}
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(exec.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                {t('common:noExecutionsYet', 'Aún no has ejecutado este agente')}
-              </p>
-            )}
-          </div>
         </div>
       </DialogContent>
     </Dialog>

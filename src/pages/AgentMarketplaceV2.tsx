@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Star, Check, Coins, Zap, Brain, Bot, Lock, Sparkles } from 'lucide-react';
+import { Search, Star, Check, Coins, Zap, Brain, Bot, Lock, Sparkles, Settings, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -296,7 +297,12 @@ interface AgentCardProps {
 }
 
 const AgentCard = ({ agent, isEnabled, onEnable }: AgentCardProps) => {
+  const navigate = useNavigate();
   const config = CATEGORY_CONFIG[agent.category] || CATEGORY_CONFIG.general;
+  
+  const handleConfigure = () => {
+    navigate(`/company/agents/${agent.id}`);
+  };
   
   return (
     <motion.div
@@ -354,29 +360,43 @@ const AgentCard = ({ agent, isEnabled, onEnable }: AgentCardProps) => {
             )}
           </div>
 
-          <Button
-            className="w-full"
-            variant={isEnabled ? "secondary" : "default"}
-            onClick={onEnable}
-            disabled={isEnabled}
-          >
-            {isEnabled ? (
-              <>
-                <Check className="w-4 h-4 mr-2" />
-                Habilitado
-              </>
-            ) : agent.is_premium ? (
-              <>
-                <Lock className="w-4 h-4 mr-2" />
-                Habilitar Premium
-              </>
-            ) : (
-              <>
-                <Zap className="w-4 h-4 mr-2" />
-                Habilitar Agente
-              </>
-            )}
-          </Button>
+          {isEnabled ? (
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                variant="default"
+                onClick={handleConfigure}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Configurar
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleConfigure}
+              >
+                <Play className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              className="w-full"
+              variant="default"
+              onClick={onEnable}
+            >
+              {agent.is_premium ? (
+                <>
+                  <Lock className="w-4 h-4 mr-2" />
+                  Habilitar Premium
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Habilitar Agente
+                </>
+              )}
+            </Button>
+          )}
         </CardContent>
       </Card>
     </motion.div>

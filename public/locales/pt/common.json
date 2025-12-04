@@ -1,4 +1,28 @@
 {
+  "validation": {
+    "required": "Campos obrigatórios"
+  },
+  "company": {
+    "name": "Nome da empresa",
+    "namePlaceholder": "Ex: Minha Empresa Ltda.",
+    "website": "Website",
+    "sector": "Setor / Indústria",
+    "sectorPlaceholder": "Ex: Tecnologia, Varejo, Serviços..."
+  },
+  "errors": {
+    "saveFailed": "Erro ao salvar",
+    "tryAgain": "Por favor, tente novamente",
+    "processingFailed": "Erro no processamento"
+  },
+  "onboarding": {
+    "checkingData": "Verificando dados da sua empresa...",
+    "welcomeTitle": "Bem-vindo ao Buildera!",
+    "welcomeDescription": "Conte-nos sobre sua empresa para personalizar sua experiência",
+    "fillRequiredFields": "Por favor, preencha os campos obrigatórios",
+    "startAnalysis": "Iniciar análise",
+    "completed": "Configuração concluída!",
+    "redirecting": "Redirecionando para seu painel..."
+  },
   "header": {
     "home": "Início",
     "whyBuildera": "Por que Buildera",

@@ -1,4 +1,28 @@
 {
+  "validation": {
+    "required": "Required fields"
+  },
+  "company": {
+    "name": "Company name",
+    "namePlaceholder": "E.g.: My Company Inc.",
+    "website": "Website",
+    "sector": "Industry / Sector",
+    "sectorPlaceholder": "E.g.: Technology, Retail, Services..."
+  },
+  "errors": {
+    "saveFailed": "Save failed",
+    "tryAgain": "Please try again",
+    "processingFailed": "Processing failed"
+  },
+  "onboarding": {
+    "checkingData": "Checking your company data...",
+    "welcomeTitle": "Welcome to Buildera!",
+    "welcomeDescription": "Tell us about your company to personalize your experience",
+    "fillRequiredFields": "Please fill in the required fields",
+    "startAnalysis": "Start analysis",
+    "completed": "Setup completed!",
+    "redirecting": "Redirecting to your dashboard..."
+  },
   "header": {
     "home": "Home",
     "whyBuildera": "Why Buildera",

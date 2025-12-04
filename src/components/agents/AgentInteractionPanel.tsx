@@ -240,7 +240,9 @@ export const AgentInteractionPanel = ({
           setShowConfigWizard(false);
           if (needsConfiguration) onClose();
         }}
-        agent={agent}
+        agentName={agent.name}
+        agentDescription={agent.description}
+        creditsPerUse={agent.credits_per_use}
         inputSchema={agent.input_schema as any}
         existingConfig={configuration?.configuration as Record<string, any>}
         onSave={handleConfigSave}

@@ -579,15 +579,17 @@ const CompanyAgentView = () => {
 
       {/* Configuration Wizard */}
       {hasInputSchema && (
-        <AgentConfigurationWizard
-          isOpen={showConfigWizard}
-          onClose={() => setShowConfigWizard(false)}
-          agent={agent}
-          inputSchema={agent.input_schema as any}
-          existingConfig={configuration?.configuration as Record<string, any>}
-          onSave={handleConfigSave}
-          saving={saving}
-        />
+      <AgentConfigurationWizard
+        isOpen={showConfigWizard}
+        onClose={() => setShowConfigWizard(false)}
+        agentName={agent.name}
+        agentDescription={agent.description}
+        creditsPerUse={agent.credits_per_use}
+        inputSchema={agent.input_schema as any}
+        existingConfig={configuration?.configuration as Record<string, any>}
+        onSave={handleConfigSave}
+        saving={saving}
+      />
       )}
     </div>
   );

@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { Building, Bot, Store, Bell, Search, GraduationCap, Users, Settings, User, LogOut, Activity, Target } from 'lucide-react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Building, Bot, Store, Bell, Search, GraduationCap, Users, Settings, User, LogOut, Activity, Target, Sparkles, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
@@ -14,6 +15,7 @@ import { SmartNotifications } from '@/components/ui/smart-notifications';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from 'react-i18next';
+
 interface Profile {
   id: string;
   user_id: string;
@@ -23,34 +25,30 @@ interface Profile {
   avatar_url?: string;
   company_name?: string;
 }
+
 const ResponsiveLayout = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   useAutoLogout();
+
   useEffect(() => {
     checkAuth();
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
         navigate('/auth');
       }
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
   const checkAuth = async () => {
     console.group('🔐 [ResponsiveLayout] checkAuth');
     console.log('Timestamp:', new Date().toISOString());
     
     try {
-      // Intentar obtener sesión con reintentos (evita expulsión tras OAuth)
       let session = null as any;
       for (let i = 0; i < 6; i++) {
         const { data: { session: s } } = await supabase.auth.getSession();
@@ -70,7 +68,6 @@ const ResponsiveLayout = () => {
       const user = session.user;
       console.log('✅ Session found for user:', user.id);
       
-      // Obtener perfil completo con validación de onboarding
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -81,7 +78,6 @@ const ResponsiveLayout = () => {
         console.error('⚠️ Error fetching profile, using fallback:', profileError);
       }
       
-      // Fallback mínimo si el perfil aún no existe
       const baseProfile: any = profileData ?? {
         user_id: user.id,
         email: user.email,
@@ -90,7 +86,6 @@ const ResponsiveLayout = () => {
         company_name: 'Mi Empresa'
       };
       
-      // Obtener nombre de empresa principal si existe
       const { data: companyMember } = await supabase
         .from('company_members')
         .select(`companies (name)`)
@@ -120,15 +115,14 @@ const ResponsiveLayout = () => {
       setLoading(false);
     }
   };
+
   const handleSignOut = async () => {
     console.log('🚪 [ResponsiveLayout] Signing out and cleaning localStorage');
     try {
-      // Limpiar localStorage de forma exhaustiva
       Object.keys(localStorage).forEach(key => {
         if (
           key.startsWith('supabase.auth.') || 
           key.includes('sb-') ||
-          key.startsWith('simple-era-guide-') ||
           key.includes('era-optimizer-') ||
           key.includes('coach-mark-')
         ) {
@@ -150,61 +144,26 @@ const ResponsiveLayout = () => {
       window.location.href = '/auth';
     }
   };
-  const getActiveView = () => {
-    const path = location.pathname;
-    if (path.includes('/agents')) return 'mis-agentes';
-    if (path.includes('/marketplace')) return 'marketplace';
-    if (path.includes('/profile')) return 'perfil';
-    if (path.includes('/adn-empresa')) return 'adn-empresa';
-    if (path.includes('/base-conocimiento')) return 'base-conocimiento';
-    if (path.includes('/marketing-hub')) return 'marketing-hub';
-    if (path.includes('/inteligencia-competitiva')) return 'inteligencia-competitiva';
-    if (path.includes('/ai-workforce')) return 'ai-workforce';
-    if (path.includes('/academia-buildera')) return 'academia-buildera';
-    if (path.includes('/expertos')) return 'expertos';
-    if (path.includes('/configuracion')) return 'configuracion';
-    return 'mando-central';
-  };
-  const setActiveView = (view: string) => {
-    // Todas las rutas ahora usan query params para consistencia
-    const routes: Record<string, string> = {
-      'mando-central': '/company-dashboard?view=mando-central',
-      'adn-empresa': '/company-dashboard?view=adn-empresa',
-      'base-conocimiento': '/company-dashboard?view=base-conocimiento',
-      'marketing-hub': '/company-dashboard?view=marketing-hub',
-      'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
-      'ai-workforce': '/company-dashboard?view=ai-workforce',
-      'academia-buildera': '/company-dashboard?view=academia-buildera',
-      'expertos': '/company-dashboard?view=expertos',
-      'configuracion': '/company-dashboard?view=configuracion',
-      'mis-agentes': '/company/agents',
-      'marketplace': '/marketplace/agents',
-      'perfil': '/profile'
-    };
-    
-    const targetRoute = routes[view];
-    if (targetRoute) {
-      console.log('🚀 [ResponsiveLayout] Navigating to:', targetRoute);
-      navigate(targetRoute);
-    } else {
-      console.error('❌ No route found for view:', view);
-    }
-  };
+
   if (loading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Cargando...</p>
         </div>
-      </div>;
+      </div>
+    );
   }
+
   if (!profile) {
     return null;
   }
 
   // Layout simplificado para desarrolladores y expertos
   if (profile.user_type !== 'company') {
-    return <div className="min-h-screen bg-background">
+    return (
+      <div className="min-h-screen bg-background">
         <header className="bg-background border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
@@ -255,14 +214,18 @@ const ResponsiveLayout = () => {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Outlet />
         </main>
-      </div>;
+      </div>
+    );
   }
 
-  // Layout con sidebar para empresas
-  return <SidebarProvider>
+  // Layout con sidebar agent-centric para empresas
+  return (
+    <SidebarProvider>
       <CompanyLayout profile={profile} handleSignOut={handleSignOut} />
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 };
+
 const CompanyLayout = ({
   profile,
   handleSignOut
@@ -277,61 +240,18 @@ const CompanyLayout = ({
   const { t } = useTranslation(['common']);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [isInOnboarding, setIsInOnboarding] = useState(false);
-  const [tourCompleted, setTourCompleted] = useState(false);
+  const [creditsAvailable, setCreditsAvailable] = useState<number | null>(null);
   const checkOnboardingInFlight = useRef(false);
   const lastOnboardingCheckAt = useRef(0);
-  const checkTourInFlight = useRef(false);
   
-  // Check tour completion status
-  const checkTourStatus = async () => {
-    if (!profile?.user_id || checkTourInFlight.current) return;
-    
-    // Verificar caché en localStorage primero
-    const cachedTourStatus = localStorage.getItem(`tour-completed-${profile.user_id}`);
-    if (cachedTourStatus === 'true') {
-      console.log('✓ [ResponsiveLayout] Tour completado (desde caché)');
-      setTourCompleted(true);
-      return;
-    }
-    
-    checkTourInFlight.current = true;
-    
-    try {
-      const { data, error } = await supabase
-        .from('user_guided_tour')
-        .select('tour_completed')
-        .eq('user_id', profile.user_id)
-        .maybeSingle();
-        
-      if (error) {
-        console.error('Error checking tour status:', error);
-        return;
-      }
-      
-      const isCompleted = data?.tour_completed || false;
-      setTourCompleted(isCompleted);
-      
-      // Cachear en localStorage
-      if (isCompleted) {
-        localStorage.setItem(`tour-completed-${profile.user_id}`, 'true');
-      }
-      
-      console.log('✓ [ResponsiveLayout] Tour status:', isCompleted);
-    } catch (error) {
-      console.error('Error in checkTourStatus:', error);
-    } finally {
-      checkTourInFlight.current = false;
-    }
-  };
-  
-  // Check onboarding completion status and if user is in onboarding flow
+  // Check onboarding completion status
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       if (!profile?.user_id) return;
 
       const now = Date.now();
       if (checkOnboardingInFlight.current || now - lastOnboardingCheckAt.current < 1000) {
-        return; // Throttle/skip if in-flight or checked <1s ago
+        return;
       }
       checkOnboardingInFlight.current = true;
 
@@ -347,7 +267,6 @@ const CompanyLayout = ({
           return;
         }
         
-        // Usuario completa onboarding si tiene onboarding_completed_at O si tiene dna_empresarial_completed
         const hasCompletedOnboarding = data?.onboarding_completed_at || data?.dna_empresarial_completed;
         setOnboardingComplete(!!hasCompletedOnboarding);
       } catch (error) {
@@ -364,7 +283,6 @@ const CompanyLayout = ({
     setIsInOnboarding(viewParam === 'onboarding');
     
     checkOnboardingStatus();
-    checkTourStatus(); // 🆕 Verificar también el estado del tour
 
     // Listener para detectar cuando se completa el onboarding
     const handleOnboardingComplete = () => {
@@ -372,27 +290,14 @@ const CompanyLayout = ({
       checkOnboardingStatus();
     };
 
-    // 🆕 Listener para detectar cuando se completa el tour
-    const handleTourComplete = (event: any) => {
-      console.log('🎉 [ResponsiveLayout] Tour completado, desbloqueando sidebar', event.detail);
-      setTourCompleted(true);
-      if (profile?.user_id) {
-        localStorage.setItem(`tour-completed-${profile.user_id}`, 'true');
-      }
-    };
-
-    // Escuchar eventos
     window.addEventListener('onboarding-completed', handleOnboardingComplete);
-    window.addEventListener('tour-completed', handleTourComplete);
     
-    // También verificar cuando cambie la URL
     if (urlParams.get('onboarding_completed') === 'true') {
       setTimeout(checkOnboardingStatus, 1000);
     }
 
     return () => {
       window.removeEventListener('onboarding-completed', handleOnboardingComplete);
-      window.removeEventListener('tour-completed', handleTourComplete);
     };
   }, [profile?.user_id, location.search]);
   
@@ -422,6 +327,7 @@ const CompanyLayout = ({
     const routes: Record<string, string> = {
       'mando-central': '/company-dashboard?view=mando-central',
       'adn-empresa': '/company-dashboard?view=adn-empresa',
+      'base-conocimiento': '/company-dashboard?view=base-conocimiento',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
       'inteligencia-competitiva': '/company-dashboard?view=inteligencia-competitiva',
       'ai-workforce': '/company-dashboard?view=ai-workforce',
@@ -446,135 +352,249 @@ const CompanyLayout = ({
     }
   };
 
-  const sidebarMenuItems = [{
-    category: "Central",
-    icon: "🎯",
-    items: [{ id: "mando-central", label: t('common:dashboard.mandoCentral'), icon: Activity, description: "Vista general y KPIs", priority: "high" }]
-  }, {
-    category: "Mi Empresa",
-    icon: "🏢",
-    items: [{ id: "adn-empresa", label: t('common:dashboard.adn'), icon: Building, description: "Datos y configuración", priority: "high" }]
-  }, {
-    category: "Marketing & Ventas",
-    icon: "📈",
-    items: [
-      { id: "marketing-hub", label: t('common:dashboard.marketing'), icon: Bell, description: "Campañas y automatización", priority: "high" }, 
-      { id: "inteligencia-competitiva", label: t('common:dashboard.intelligencia'), icon: Search, description: "Inteligencia de mercado", priority: "medium" }
-    ]
-  }, {
-    category: "Agentes IA",
-    icon: "🤖",
-    items: [
-      { id: "ai-workforce", label: t('common:dashboard.workforce'), icon: Target, description: "Misiones y equipos de IA", priority: "high" },
-      { id: "mis-agentes", label: t('common:dashboard.agents'), icon: Bot, description: "Gestionar agentes creados", priority: "medium" }, 
-      { id: "marketplace", label: t('common:dashboard.marketplace'), icon: Store, description: "Descubrir nuevos agentes", priority: "medium" }
-    ]
-  }, {
-    category: "Aprendizaje",
-    icon: "🎓",
-    items: [{ id: "academia-buildera", label: t('common:dashboard.academy'), icon: GraduationCap, description: "Cursos y certificaciones", priority: "low" }, { id: "expertos", label: t('common:dashboard.experts'), icon: Users, description: "Conectar con especialistas", priority: "low" }]
-  }];
+  // Nueva estructura de sidebar agent-centric
+  const sidebarMenuItems = [
+    {
+      category: t('common:sidebar.central', 'Central'),
+      icon: "🎯",
+      highlight: false,
+      items: [
+        { 
+          id: "mando-central", 
+          label: t('common:sidebar.dashboard', 'Mi Panel'), 
+          icon: Activity, 
+          description: t('common:sidebar.dashboardDesc', 'Vista general y KPIs')
+        }
+      ]
+    },
+    {
+      category: t('common:sidebar.aiAgents', 'Agentes IA'),
+      icon: "🤖",
+      highlight: true, // Destacar esta categoría
+      items: [
+        { 
+          id: "ai-workforce", 
+          label: t('common:sidebar.workforce', 'Mis Equipos IA'), 
+          icon: Target, 
+          description: t('common:sidebar.workforceDesc', 'Misiones y equipos de IA')
+        },
+        { 
+          id: "mis-agentes", 
+          label: t('common:sidebar.myAgents', 'Agentes Activos'), 
+          icon: Bot, 
+          description: t('common:sidebar.myAgentsDesc', 'Gestionar agentes habilitados')
+        },
+        { 
+          id: "marketplace", 
+          label: t('common:sidebar.marketplace', 'Marketplace'), 
+          icon: Store, 
+          description: t('common:sidebar.marketplaceDesc', 'Descubrir nuevos agentes')
+        }
+      ]
+    },
+    {
+      category: t('common:sidebar.myCompany', 'Mi Empresa'),
+      icon: "🏢",
+      highlight: false,
+      items: [
+        { 
+          id: "adn-empresa", 
+          label: t('common:sidebar.companyDna', 'ADN Empresa'), 
+          icon: Building, 
+          description: t('common:sidebar.companyDnaDesc', 'Datos y configuración')
+        },
+        { 
+          id: "base-conocimiento", 
+          label: t('common:sidebar.knowledge', 'Base de Conocimiento'), 
+          icon: Search, 
+          description: t('common:sidebar.knowledgeDesc', 'Documentos y recursos')
+        }
+      ]
+    },
+    {
+      category: t('common:sidebar.marketing', 'Marketing'),
+      icon: "📣",
+      highlight: false,
+      items: [
+        { 
+          id: "marketing-hub", 
+          label: t('common:sidebar.marketingHub', 'Marketing Hub'), 
+          icon: Bell, 
+          description: t('common:sidebar.marketingHubDesc', 'Contenido y campañas')
+        },
+        { 
+          id: "inteligencia-competitiva", 
+          label: t('common:sidebar.intelligence', 'Inteligencia'), 
+          icon: Search, 
+          description: t('common:sidebar.intelligenceDesc', 'Análisis de mercado')
+        }
+      ]
+    },
+    {
+      category: t('common:sidebar.learning', 'Aprendizaje'),
+      icon: "🎓",
+      highlight: false,
+      items: [
+        { 
+          id: "academia-buildera", 
+          label: t('common:sidebar.academy', 'Academia'), 
+          icon: GraduationCap, 
+          description: t('common:sidebar.academyDesc', 'Cursos y certificaciones')
+        },
+        { 
+          id: "expertos", 
+          label: t('common:sidebar.experts', 'Expertos'), 
+          icon: Users, 
+          description: t('common:sidebar.expertsDesc', 'Conectar con especialistas')
+        }
+      ]
+    }
+  ];
 
   const activeView = getActiveView();
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      {/* Ocultar sidebar durante el onboarding Y si el tour no está completado */}
-      {!isInOnboarding && tourCompleted && (
+      {/* Sidebar siempre visible después del onboarding */}
+      {!isInOnboarding && (
         <Sidebar 
           variant="sidebar" 
           collapsible="icon" 
           className="data-[state=expanded]:w-80 data-[state=collapsed]:w-16 border-r bg-sidebar shadow-xl z-40 transition-all duration-300 ease-in-out"
         >
-        {/* Funcionalidad: El "group-data-" asegura que este header reaccione al estado del Sidebar.
-          Estética: Se oculta limpiamente al colapsar.
-        */}
-        <SidebarHeader className="p-6 border-b border-sidebar-border/50 group-data-[state=collapsed]:hidden">
-          <div className="flex items-center gap-4 cursor-pointer" onClick={() => setActiveView('mando-central')}>
-            <div className="flex aspect-square size-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-xl">
-              <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-7 object-contain filter brightness-0 invert" />
+          {/* Header con logo y créditos */}
+          <SidebarHeader className="p-4 border-b border-sidebar-border/50 group-data-[state=collapsed]:hidden">
+            <div className="flex items-center gap-3 cursor-pointer mb-3" onClick={() => setActiveView('mando-central')}>
+              <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg">
+                <img 
+                  src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
+                  alt="Buildera Logo" 
+                  className="size-6 object-contain filter brightness-0 invert" 
+                />
+              </div>
+              <div className="grid flex-1 text-left">
+                <span className="font-heading font-bold text-lg tracking-tight text-sidebar-foreground">
+                  {profile?.company_name || "BUILDERA"}
+                </span>
+                <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide">
+                  AI Business Platform
+                </span>
+              </div>
             </div>
-            <div className="grid flex-1 text-left">
-              <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">{profile?.company_name || "BUILDERA"}</span>
-              <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide uppercase">AI Business Platform</span>
+            
+            {/* Badge de créditos disponibles */}
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
+              <Sparkles className="size-4 text-primary" />
+              <span className="text-xs font-medium text-sidebar-foreground">
+                {t('common:sidebar.credits', 'Créditos')}:
+              </span>
+              <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5">
+                {creditsAvailable !== null ? creditsAvailable : '∞'}
+              </Badge>
             </div>
-          </div>
-        </SidebarHeader>
+          </SidebarHeader>
 
-        {/* Logo colapsado: aparece cuando el group/sidebar está colapsado */}
-        <div className="hidden group-data-[state=collapsed]:flex items-center justify-center p-4 border-b border-sidebar-border/30">
-          <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg">
-            <img src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" alt="Buildera Logo" className="size-5 object-contain filter brightness-0 invert" />
+          {/* Logo colapsado */}
+          <div className="hidden group-data-[state=collapsed]:flex items-center justify-center p-3 border-b border-sidebar-border/30">
+            <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg">
+              <img 
+                src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
+                alt="Buildera Logo" 
+                className="size-5 object-contain filter brightness-0 invert" 
+              />
+            </div>
           </div>
-        </div>
-          
-        <SidebarContent className="px-2 py-6 space-y-2">
-          {sidebarMenuItems.map((category) => (
-            <SidebarGroup key={category.category} className="p-0 space-y-1">
-              <SidebarGroupLabel className="px-4 text-xs font-semibold uppercase text-sidebar-muted-foreground group-data-[state=collapsed]:hidden">
-                {category.category}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu className="space-y-1.5">
-                  {category.items.map(item => {
-                    const Icon = item.icon;
-                    const isActive = activeView === item.id;
-                    const isDisabled = shouldBlockNavigation && item.id !== "adn-empresa";
-                    return (
-                      <SidebarMenuItem key={item.id}>
-                        <SidebarMenuButton
-                          isActive={isActive}
-                          disabled={isDisabled}
-                          className={`
-                            h-auto justify-start
-                            group/item relative transition-all duration-300 font-medium text-sm
-                            data-[state=expanded]:p-3 data-[state=expanded]:rounded-lg
-                            data-[state=collapsed]:h-12 data-[state=collapsed]:w-12 data-[state=collapsed]:rounded-full data-[state=collapsed]:mx-auto
-                            ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-md" : isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-sidebar-accent/50"}
-                          `}
-                          onClick={isDisabled ? undefined : () => {
-                            console.log('🔄 Clicking sidebar item:', item.id, 'isDisabled:', isDisabled);
-                            setActiveView(item.id);
-                          }}
-                          tooltip={item.label}
-                        >
-                          <div className="flex items-center gap-3">
-                            <Icon className="size-5 shrink-0" />
-                            <div className="flex flex-col items-start group-data-[state=collapsed]:hidden">
-                              <span className="font-medium">{item.label}</span>
-                              <span className="text-xs text-sidebar-muted-foreground">{item.description}</span>
+            
+          <SidebarContent className="px-2 py-4 space-y-1">
+            {sidebarMenuItems.map((category) => (
+              <SidebarGroup key={category.category} className="p-0 space-y-1">
+                <SidebarGroupLabel 
+                  className={`
+                    px-3 py-1.5 text-xs font-semibold uppercase tracking-wider
+                    group-data-[state=collapsed]:hidden
+                    ${category.highlight 
+                      ? 'text-primary bg-gradient-to-r from-primary/10 to-transparent rounded-lg' 
+                      : 'text-sidebar-muted-foreground'
+                    }
+                  `}
+                >
+                  <span className="mr-2">{category.icon}</span>
+                  {category.category}
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu className="space-y-1">
+                    {category.items.map(item => {
+                      const Icon = item.icon;
+                      const isActive = activeView === item.id;
+                      const isDisabled = shouldBlockNavigation && item.id !== "adn-empresa";
+                      
+                      return (
+                        <SidebarMenuItem key={item.id}>
+                          <SidebarMenuButton
+                            isActive={isActive}
+                            disabled={isDisabled}
+                            className={`
+                              h-auto justify-start
+                              group/item relative transition-all duration-200 font-medium text-sm
+                              data-[state=expanded]:px-3 data-[state=expanded]:py-2.5 data-[state=expanded]:rounded-lg
+                              data-[state=collapsed]:h-10 data-[state=collapsed]:w-10 data-[state=collapsed]:rounded-lg data-[state=collapsed]:mx-auto
+                              ${isActive 
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-md ring-1 ring-primary/20" 
+                                : isDisabled 
+                                  ? "opacity-40 cursor-not-allowed" 
+                                  : "hover:bg-sidebar-accent/50"
+                              }
+                              ${category.highlight && !isActive ? "hover:bg-primary/10" : ""}
+                            `}
+                            onClick={isDisabled ? undefined : () => {
+                              console.log('🔄 Clicking sidebar item:', item.id);
+                              setActiveView(item.id);
+                            }}
+                            tooltip={item.label}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Icon className={`size-5 shrink-0 ${category.highlight ? 'text-primary' : ''}`} />
+                              <div className="flex flex-col items-start group-data-[state=collapsed]:hidden">
+                                <span className="font-medium">{item.label}</span>
+                                <span className="text-xs text-sidebar-muted-foreground line-clamp-1">
+                                  {item.description}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
-        </SidebarContent>
-        
-        <SidebarFooter className="p-4 border-t border-sidebar-border/50">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => setActiveView('configuracion')} disabled={shouldBlockNavigation} className="justify-start">
-                <Settings className="size-5" />
-                <span className="group-data-[state=collapsed]:hidden">Administración</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
+          </SidebarContent>
+          
+          <SidebarFooter className="p-3 border-t border-sidebar-border/50">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  onClick={() => setActiveView('configuracion')} 
+                  disabled={shouldBlockNavigation} 
+                  className="justify-start"
+                >
+                  <Settings className="size-5" />
+                  <span className="group-data-[state=collapsed]:hidden">
+                    {t('common:sidebar.settings', 'Configuración')}
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </Sidebar>
       )}
 
       {/* Main Content Area */}
       <SidebarInset className="flex-1 overflow-auto">
-        {/* Header solo visible cuando no estamos en onboarding */}
+        {/* Header */}
         {!isInOnboarding && (
-          <header className="flex items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-4 sticky top-0 z-30">
-            <SidebarTrigger className="-ml-2" />
-            <Separator orientation="vertical" className="h-6" />
+          <header className="flex items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 py-3 sticky top-0 z-30">
             <div className="flex-1" />
             <div className="flex items-center gap-3">
               <LanguageSelector />
@@ -584,21 +604,43 @@ const CompanyLayout = ({
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-auto px-2 rounded-full">
                     <div className="flex items-center gap-2">
-                      <Avatar className="size-7"><AvatarImage src={profile.avatar_url} /><AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback></Avatar>
-                      <div className="hidden md:block"><span className="text-sm font-medium truncate max-w-[120px]">{profile?.full_name || "Usuario"}</span></div>
+                      <Avatar className="size-7">
+                        <AvatarImage src={profile.avatar_url} />
+                        <AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback>
+                      </Avatar>
+                      <div className="hidden md:block">
+                        <span className="text-sm font-medium truncate max-w-[120px]">
+                          {profile?.full_name || "Usuario"}
+                        </span>
+                      </div>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="flex items-center justify-start gap-2 p-2">
-                    <Avatar className="size-8"><AvatarImage src={profile.avatar_url} /><AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback></Avatar>
-                    <div className="flex flex-col"><p className="font-medium">{profile?.full_name}</p><p className="w-[200px] truncate text-sm text-muted-foreground">{profile?.email}</p></div>
+                    <Avatar className="size-8">
+                      <AvatarImage src={profile.avatar_url} />
+                      <AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <p className="font-medium">{profile?.full_name}</p>
+                      <p className="w-[200px] truncate text-sm text-muted-foreground">{profile?.email}</p>
+                    </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setActiveView('profile')}><User className="mr-2 h-4 w-4" /><span>Mi Perfil</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={shouldBlockNavigation}><Settings className="mr-2 h-4 w-4" /><span>Administración</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveView('profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>{t('common:sidebar.profile', 'Mi Perfil')}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={shouldBlockNavigation}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>{t('common:sidebar.settings', 'Configuración')}</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive"><LogOut className="mr-2 h-4 w-4" /><span>Cerrar sesión</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{t('common:sidebar.logout', 'Cerrar sesión')}</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -611,4 +653,5 @@ const CompanyLayout = ({
     </div>
   );
 };
+
 export default ResponsiveLayout;

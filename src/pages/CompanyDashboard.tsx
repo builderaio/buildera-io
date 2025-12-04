@@ -4,9 +4,6 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-import { useEraCoachMark } from "@/hooks/useEraCoachMark";
-import EraCoachMark from "@/components/ui/era-coach-mark";
-
 import MandoCentral from "@/components/company/MandoCentral";
 import Dashboard360 from "@/components/company/Dashboard360";
 import ADNEmpresa from "@/components/company/ADNEmpresa";
@@ -26,7 +23,6 @@ import AIWorkforce from "@/pages/AIWorkforce";
 import UserProfile from "./UserProfile";
 import CompanyAgents from "./CompanyAgents";
 import OnboardingOrchestrator from "@/components/OnboardingOrchestrator";
-import SimpleEraGuide from "@/components/SimpleEraGuide";
 import { User } from "@supabase/supabase-js";
 
 const CompanyDashboard = () => {
@@ -35,22 +31,19 @@ const CompanyDashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const [activeView, setActiveView] = useState("mando-central");
   const [loading, setLoading] = useState(true);
-  const [showCoachMarkAfterGuide, setShowCoachMarkAfterGuide] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  
-  const { shouldShowCoachMark, hideCoachMark, showCoachMark } = useEraCoachMark(user?.id);
   const initializedRef = useRef(false);
 
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
+    
     const checkAuth = async () => {
       console.group('🔐 [CompanyDashboard] checkAuth');
       console.log('Timestamp:', new Date().toISOString());
       
-      // Intentar obtener sesión (perfil ya validado por ResponsiveLayout)
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
@@ -63,47 +56,14 @@ const CompanyDashboard = () => {
       console.log('✅ Session found for user:', session.user.id);
       setUser(session.user);
 
-      // Check for view parameter in URL
       const viewParam = searchParams.get('view');
       const onboardingCompletedParam = searchParams.get('onboarding_completed');
       
       console.log('📍 URL params:', { viewParam, onboardingCompletedParam });
       
-      // Si viene con parámetro onboarding, mostrar el flujo de 5 pasos
       if (viewParam === 'onboarding') {
         console.log('🔄 Showing onboarding orchestrator');
         setActiveView('onboarding');
-        setLoading(false);
-        console.groupEnd();
-        return;
-      } else if (viewParam === 'mando-central') {
-        console.log('📊 Showing mando-central');
-        setActiveView('mando-central');
-        setLoading(false);
-        console.groupEnd();
-        return;
-      } else if (viewParam === 'adn-empresa') {
-        console.log('🏢 Showing adn-empresa');
-        setActiveView('adn-empresa');
-        
-        // Cargar el perfil para asegurar que ADNEmpresa pueda obtener datos de la BD
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-        
-        if (profileData) {
-          setProfile(profileData);
-        } else {
-          // Fallback mínimo para disparar el cargue por user_id en el hijo
-          setProfile({ user_id: session.user.id, email: session.user.email });
-        }
-        
-        // ⚠️ DISABLED: Esta lógica causaba loops infinitos al modificar URL continuamente
-        // El SimpleEraGuide ya tiene su propia lógica para detectar si debe mostrarse
-        // basándose en los parámetros de URL y el estado del tour
-        
         setLoading(false);
         console.groupEnd();
         return;
@@ -111,12 +71,12 @@ const CompanyDashboard = () => {
         console.log('🎯 Setting activeView from URL:', viewParam);
         setActiveView(viewParam);
         
-        // Asegurar que el perfil esté cargado para vistas que lo necesitan
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', session.user.id)
           .maybeSingle();
+          
         if (profileData) {
           setProfile(profileData);
         } else {
@@ -128,22 +88,17 @@ const CompanyDashboard = () => {
         return;
       }
 
-      // Solo verificar onboarding si no viene con parámetros específicos
       console.log('🔍 Checking onboarding status');
-      const registrationMethod = session.user.app_metadata?.provider || 'email';
       
-      // Verificar estado de onboarding para usuarios sin parámetros de vista
       const { data: onboardingStatus } = await supabase
         .from('user_onboarding_status')
         .select('onboarding_completed_at, dna_empresarial_completed')
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      // Si el usuario ya completó onboarding, cargar perfil y continuar al dashboard
       if (onboardingStatus?.onboarding_completed_at) {
         console.log('✅ Usuario ya completó onboarding, cargando perfil y continuando');
         
-        // Cargar perfil del usuario
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -162,7 +117,6 @@ const CompanyDashboard = () => {
           });
           setProfile(profileData);
         } else {
-          // Fallback: crear perfil mínimo
           console.log('⚠️ No se encontró perfil, usando fallback mínimo');
           setProfile({ 
             user_id: session.user.id, 
@@ -172,12 +126,10 @@ const CompanyDashboard = () => {
           });
         }
         
-        // IMPORTANTE: Desactivar loading para permitir renderizado
         setLoading(false);
         console.groupEnd();
         return;
       } else {
-        // Solo mostrar onboarding si NO está completado
         const { data: companies } = await supabase
           .from('companies')
           .select('*')
@@ -188,13 +140,11 @@ const CompanyDashboard = () => {
         console.log('🔍 CompanyDashboard onboarding check:', {
           hasCompany,
           companiesLength: companies?.length,
-          registrationMethod,
           userId: session.user.id,
           viewParam,
           onboardingCompleted: !!onboardingStatus?.onboarding_completed_at
         });
 
-        // Si no tiene empresa Y no viene con view param Y no ha completado onboarding
         if (!hasCompany && !viewParam && !onboardingStatus?.onboarding_completed_at) {
           console.log('❌ Usuario sin empresa ni onboarding completado, redirigir a complete-profile');
           navigate('/complete-profile');
@@ -204,7 +154,6 @@ const CompanyDashboard = () => {
         }
       }
       
-      // Buscar perfil de empresa existente (usar maybeSingle para robustez)
       console.log('🔍 Buscando perfil de empresa existente...');
       let { data: profileData, error } = await supabase
         .from('profiles')
@@ -212,7 +161,6 @@ const CompanyDashboard = () => {
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      // Si no existe perfil, crear uno básico para empresa
       if (!profileData) {
         console.log('⚠️ No se encontró perfil, creando uno nuevo para empresa...');
         
@@ -259,7 +207,6 @@ const CompanyDashboard = () => {
         return;
       }
 
-      // Verificar que el perfil sea de tipo empresa
       if (profileData && profileData.user_type !== 'company') {
         console.log('❌ Usuario no es de tipo empresa, redirigiendo');
         toast({
@@ -275,10 +222,8 @@ const CompanyDashboard = () => {
       console.log('✅ Perfil validado y establecido');
       setProfile(profileData);
       
-      // Verificar si la información está completa (solo verificamos info personal ahora)
       const isProfileIncomplete = !profileData?.full_name;
       
-      // Si faltan datos personales y están disponibles en user_metadata, actualizarlos
       if (isProfileIncomplete && session.user.user_metadata) {
         const updateData: any = {};
         
@@ -302,7 +247,6 @@ const CompanyDashboard = () => {
         }
       }
       
-      // Verificar de nuevo si la información está completa después de la actualización
       const stillIncomplete = !profileData?.full_name;
       
       if (stillIncomplete) {
@@ -326,32 +270,14 @@ const CompanyDashboard = () => {
       }
     });
 
-    // Listener para cuando el SimpleEraGuide se complete
-    const handleGuideCompleted = () => {
-      console.log('✅ SimpleEraGuide completado, activando coachmark');
-      setShowCoachMarkAfterGuide(true);
-      setTimeout(() => {
-        showCoachMark();
-      }, 500);
-    };
-
-    window.addEventListener('simple-era-guide-completed', handleGuideCompleted);
-
     return () => {
       subscription.unsubscribe();
-      window.removeEventListener('simple-era-guide-completed', handleGuideCompleted);
     };
   }, []);
 
-  // Sincronizar activeView con cambios en URL (navegación entre vistas)
   useEffect(() => {
     const viewParam = searchParams.get('view');
     if (viewParam && viewParam !== activeView) {
-      console.log('🔄 [URL Sync] searchParams changed:', {
-        viewParam,
-        currentActiveView: activeView,
-        willUpdate: true
-      });
       console.log('🔄 URL changed, updating activeView from:', activeView, 'to:', viewParam);
       setActiveView(viewParam);
     }
@@ -363,24 +289,16 @@ const CompanyDashboard = () => {
   };
 
   const handleProfileUpdate = async (updatedProfile: any) => {
-    // Actualizar el perfil en el estado
     setProfile(updatedProfile);
-    
-    // Detectar si es un usuario registrado por redes sociales (no tiene auth_provider 'email')
-    const isRegisteredViaSocial = profile?.auth_provider !== 'email';
-    
-    // Removed: Webhook logic simplificada - ahora se ejecuta en "Comenzar configuración"
   };
 
   const handleNavigate = (section: string, params?: Record<string, string>) => {
-    console.log('🎯 Navegando desde SimpleEraGuide a:', section, 'con params:', params);
+    console.log('🎯 Navegando a:', section, 'con params:', params);
     setActiveView(section);
     
-    // Usar navigate de react-router para actualizar URL y disparar efectos en hijos
     const nextParams = new URLSearchParams(window.location.search);
     nextParams.set('view', section);
     
-    // Agregar parámetros adicionales si existen
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         nextParams.set(key, value);
@@ -392,14 +310,12 @@ const CompanyDashboard = () => {
   };
 
   const renderContent = () => {
-    console.log('🔄 Rendering content for activeView:', activeView, 'profile:', profile);
-    console.log('🔄 Current URL search params:', searchParams.get('view'));
+    console.log('🔄 Rendering content for activeView:', activeView);
     switch (activeView) {
       case "onboarding":
         return <OnboardingOrchestrator user={user!} />;
       case "mando-central":
       case "dashboard":
-        console.log('📊 Rendering MandoCentral with profile:', profile);
         return <MandoCentral profile={profile} />;
       case "adn-empresa":
         return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;
@@ -448,31 +364,12 @@ const CompanyDashboard = () => {
   }
 
   return (
-    <div className="w-full min-h-full">;
-      {/* Content Area optimizado para sidebar con padding y espaciado correcto */}
+    <div className="w-full min-h-full">
       <div className="animate-fade-in w-full">
         <div className="max-w-full">
           {renderContent()}
         </div>
       </div>
-      
-      {/* CoachMark solo después de completar el SimpleEraGuide */}
-      {shouldShowCoachMark && showCoachMarkAfterGuide && user && (
-        <EraCoachMark
-          isOpen={shouldShowCoachMark}
-          onClose={hideCoachMark}
-          userId={user.id}
-        />
-      )}
-      
-      {/* Guía de Era para experiencia paso a paso */}
-      {user && activeView !== 'onboarding' && (
-        <SimpleEraGuide
-          userId={user.id}
-          currentSection={activeView}
-          onNavigate={handleNavigate}
-        />
-      )}
     </div>
   );
 };

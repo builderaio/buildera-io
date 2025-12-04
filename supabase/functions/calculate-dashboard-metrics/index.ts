@@ -36,22 +36,38 @@ serve(async (req) => {
     const startDate = new Date()
     startDate.setMonth(startDate.getMonth() - 1)
 
-    // 1. Métricas de Agentes
+    // 1. Métricas de Agentes (nueva arquitectura: platform_agents + company_enabled_agents)
     console.log('📈 Calculating agent metrics...')
-    const { data: agents, error: agentsError } = await supabase
-      .from('agent_instances')
-      .select('*')
+    
+    // Obtener compañías del usuario
+    const { data: companyMemberships } = await supabase
+      .from('company_members')
+      .select('company_id')
       .eq('user_id', user.id)
+    
+    const companyIds = companyMemberships?.map(m => m.company_id) || []
+    
+    // Contar agentes habilitados
+    let totalAgents = 0
+    let activeAgents = 0
+    if (companyIds.length > 0) {
+      const { data: enabledAgents } = await supabase
+        .from('company_enabled_agents')
+        .select('id, is_active')
+        .in('company_id', companyIds)
+      
+      totalAgents = enabledAgents?.length || 0
+      activeAgents = enabledAgents?.filter(a => a.is_active).length || 0
+    }
 
-    const { data: missions, error: missionsError } = await supabase
-      .from('agent_missions')
+    // Obtener uso de agentes desde agent_usage_log
+    const { data: agentUsage } = await supabase
+      .from('agent_usage_log')
       .select('*')
       .eq('user_id', user.id)
       .gte('created_at', startDate.toISOString())
 
-    const totalAgents = agents?.length || 0
-    const activeAgents = agents?.filter(a => a.status === 'active').length || 0
-    const agentMissionsCompleted = missions?.filter(m => m.status === 'completed').length || 0
+    const agentMissionsCompleted = agentUsage?.filter(u => u.status === 'completed').length || 0
     const agentHoursSaved = agentMissionsCompleted * 2.5 // Estimación: 2.5 horas por misión
 
     // 2. Métricas de Marketing
@@ -224,7 +240,7 @@ serve(async (req) => {
         user_id: user.id,
         alert_type: 'recommendation',
         title: '🤖 Automatiza tu Negocio',
-        description: 'Crea tu primer agente IA para automatizar tareas repetitivas y ahorrar hasta 20 horas semanales',
+        description: 'Habilita tu primer agente IA para automatizar tareas repetitivas y ahorrar hasta 20 horas semanales',
         priority: 'high',
         action_url: 'marketplace',
         action_text: 'Explorar Agentes'

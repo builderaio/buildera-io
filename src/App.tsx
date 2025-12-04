@@ -24,7 +24,6 @@ import ExpertDashboard from "./pages/ExpertDashboard";
 import DeveloperDashboard from "./pages/DeveloperDashboard";
 import NotFound from "./pages/NotFound";
 
-import AgentConfigWizard from "./pages/AgentConfigWizard";
 import DeveloperPortal from "./pages/DeveloperPortal";
 import CompanyAgents from "./pages/CompanyAgents";
 import CompanyAgentView from "./pages/CompanyAgentView";
@@ -66,7 +65,6 @@ import WhiteLabelDashboard from "./pages/WhiteLabelDashboard";
 import WhiteLabelMarketplace from "./pages/WhiteLabelMarketplace";
 import AIWorkforce from "./pages/AIWorkforce";
 import AdminAIWorkforce from "./pages/AdminAIWorkforce";
-import AgentInstanceView from "./pages/AgentInstanceView";
 import InviteAccept from "./pages/InviteAccept";
 
 const queryClient = new QueryClient();
@@ -144,11 +142,12 @@ const App = () => {
                   <Route path="/marketplace/agents" element={<AgentMarketplaceV2 />} />
                   <Route path="/marketplace/whitelabel" element={<WhiteLabelMarketplace />} />
                   <Route path="/agents" element={<AgentMarketplaceV2 />} />
-                  <Route path="/marketplace/agents/:templateId/configure" element={<AgentConfigWizard />} />
+                  {/* Legacy route redirects to new agent view */}
+                  <Route path="/marketplace/agents/:templateId/configure" element={<Navigate to="/company/agents" replace />} />
                   <Route path="/company/agents" element={<CompanyAgents />} />
                   <Route path="/company/agents/:agentId" element={<CompanyAgentView />} />
                   <Route path="/company/agent-flow-builder" element={<AgentFlowBuilder />} />
-                  <Route path="/company/agent-config/:id" element={<AgentConfigWizard />} />
+                  <Route path="/company/agent-config/:id" element={<Navigate to="/company/agents" replace />} />
                   <Route path="/company/whitelabel-agents" element={<CompanyWhiteLabelAgents />} />
                   <Route path="/developer/portal" element={<DeveloperPortal />} />
                   <Route path="/developer/dashboard" element={<WhiteLabelDashboard />} />
@@ -163,7 +162,8 @@ const App = () => {
                   <Route path="/whitelabel/ab-testing" element={<WhiteLabelABTesting />} />
                   <Route path="/whitelabel/dashboard" element={<WhiteLabelDashboard />} />
                   <Route path="/ai-workforce" element={<AIWorkforce />} />
-                  <Route path="/ai-workforce/:agentId" element={<AgentInstanceView />} />
+                  {/* Legacy route redirect */}
+                  <Route path="/ai-workforce/:agentId" element={<Navigate to="/company/agents" replace />} />
                 </Route>
                 
                 {/* Admin Routes */}

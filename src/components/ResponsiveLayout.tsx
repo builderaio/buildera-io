@@ -413,25 +413,6 @@ const CompanyLayout = ({
       ]
     },
     {
-      category: t('common:sidebar.marketing', 'Marketing'),
-      icon: "📣",
-      highlight: false,
-      items: [
-        { 
-          id: "marketing-hub", 
-          label: t('common:sidebar.marketingHub', 'Marketing Hub'), 
-          icon: Bell, 
-          description: t('common:sidebar.marketingHubDesc', 'Contenido y campañas')
-        },
-        { 
-          id: "inteligencia-competitiva", 
-          label: t('common:sidebar.intelligence', 'Inteligencia'), 
-          icon: Search, 
-          description: t('common:sidebar.intelligenceDesc', 'Análisis de mercado')
-        }
-      ]
-    },
-    {
       category: t('common:sidebar.learning', 'Aprendizaje'),
       icon: "🎓",
       highlight: false,

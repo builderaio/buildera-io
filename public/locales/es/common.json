@@ -111,6 +111,40 @@
     "retry": "Reintentar paso actual",
     "continue": "Continuar al Dashboard",
     "allComplete": "¡Configuración completada!",
-    "allCompleteDesc": "Tu perfil empresarial está listo"
+    "allCompleteDesc": "Tu perfil empresarial está listo",
+    "wow": {
+      "analyzing": "Analizando tu negocio",
+      "strategy": "Generando estrategia de marketing personalizada...",
+      "content": "Diseñando posts optimizados para tus redes...",
+      "insights": "Identificando oportunidades de crecimiento...",
+      "complete": "¡Listo!",
+      "completeDesc": "Tu estrategia está preparada",
+      "progress": "{{progress}}% completado"
+    }
+  },
+  "agents": {
+    "title": "Agentes IA",
+    "marketplace": "Marketplace de Agentes",
+    "myAgents": "Mis Agentes",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "premium": "Premium",
+    "enable": "Habilitar",
+    "disable": "Deshabilitar",
+    "execute": "Ejecutar",
+    "creditsPerUse": "{{credits}} créditos/uso",
+    "categories": {
+      "marketing": "Marketing",
+      "content": "Contenido",
+      "analytics": "Analítica",
+      "publishing": "Publicación",
+      "branding": "Branding",
+      "assistant": "Asistente"
+    },
+    "usage": {
+      "totalExecutions": "Ejecuciones totales",
+      "creditsUsed": "Créditos usados",
+      "thisMonth": "Este mes"
+    }
   }
 }

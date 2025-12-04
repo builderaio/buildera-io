@@ -3,43 +3,53 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Circle, Loader2, Globe, Target, Palette, TrendingUp, Bot } from 'lucide-react';
+import { Loader2, Globe, Building2, Briefcase } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-
-interface OnboardingStep {
-  id: number;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  completed: boolean;
-  loading: boolean;
-}
+import { useAgentExecution } from '@/hooks/useAgentExecution';
+import { OnboardingWowLoader } from '@/components/onboarding/OnboardingWowLoader';
+import { OnboardingWowResults } from '@/components/onboarding/OnboardingWowResults';
 
 interface OnboardingOrchestratorProps {
   user: any;
 }
 
+type OnboardingPhase = 'checking' | 'form' | 'loading' | 'results';
+
+interface CompanyBasicData {
+  id: string;
+  name: string;
+  website_url: string;
+  industry_sector?: string;
+}
+
 const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [companyId, setCompanyId] = useState('');
-  const [companyData, setCompanyData] = useState<any>(null);
-  const [strategyData, setStrategyData] = useState<any>(null);
-  const [companyWebsiteUrl, setCompanyWebsiteUrl] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const [phase, setPhase] = useState<OnboardingPhase>('checking');
+  const [companyData, setCompanyData] = useState<CompanyBasicData | null>(null);
+  const [results, setResults] = useState<any>(null);
+  const [totalTime, setTotalTime] = useState(0);
+  
+  // Form state for companies without data
+  const [formData, setFormData] = useState({
+    name: '',
+    website_url: '',
+    industry_sector: ''
+  });
+
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { t } = useTranslation(['common']);
+  const { t, i18n } = useTranslation(['common']);
+  const { executeOnboardingOrchestrator, isExecuting, progress } = useAgentExecution();
 
-  // Obtener la URL del sitio web de la empresa al cargar
+  // Phase 1: Check if company has basic data
   useEffect(() => {
-    const getCompanyWebsiteUrl = async () => {
+    const checkCompanyData = async () => {
+      if (!user?.id) return;
+
       try {
-        // Obtener la empresa principal del usuario
+        // Get user's primary company
         const { data: companyMembers } = await supabase
           .from('company_members')
           .select('company_id')
@@ -47,347 +57,157 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           .eq('is_primary', true)
           .limit(1);
 
-        if (companyMembers && companyMembers.length > 0) {
-          const { data: company } = await supabase
-            .from('companies')
-            .select('id, website_url')
-            .eq('id', companyMembers[0].company_id)
-            .single();
+        if (!companyMembers || companyMembers.length === 0) {
+          console.log('📋 No company found, showing form');
+          setPhase('form');
+          return;
+        }
 
+        const { data: company } = await supabase
+          .from('companies')
+          .select('id, name, website_url, industry_sector')
+          .eq('id', companyMembers[0].company_id)
+          .single();
+
+        if (company?.name && company?.website_url) {
+          console.log('✅ Company data found, starting orchestration');
+          setCompanyData(company);
+          startOrchestration(company.id);
+        } else {
+          console.log('📋 Company missing data, showing form');
           if (company) {
-            setCompanyId(company.id);
-            setCompanyWebsiteUrl(company.website_url || '');
-            console.log('🌐 URL de empresa obtenida:', company.website_url);
+            setCompanyData(company);
+            setFormData({
+              name: company.name || '',
+              website_url: company.website_url || '',
+              industry_sector: company.industry_sector || ''
+            });
           }
+          setPhase('form');
         }
       } catch (error) {
-        console.error('Error obteniendo URL de empresa:', error);
-        toast({
-          title: "⚠️ Advertencia",
-          description: "No se pudo obtener la información de tu empresa",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
+        console.error('Error checking company data:', error);
+        setPhase('form');
       }
     };
 
-    if (user?.id) {
-      getCompanyWebsiteUrl();
+    checkCompanyData();
+  }, [user?.id]);
+
+  // Save basic company data and start orchestration
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.website_url) {
+      toast({
+        title: t('common:validation.required'),
+        description: t('common:onboarding.fillRequiredFields'),
+        variant: "destructive"
+      });
+      return;
     }
-  }, [user?.id, toast]);
-
-  const [steps, setSteps] = useState<OnboardingStep[]>([
-    {
-      id: 1,
-      title: t('common:onboarding.step1.title'),
-      description: t('common:onboarding.step1.description'),
-      icon: <Globe className="h-5 w-5" />,
-      completed: false,
-      loading: false
-    },
-    {
-      id: 2,
-      title: t('common:onboarding.step2.title'),
-      description: t('common:onboarding.step2.description'),
-      icon: <Target className="h-5 w-5" />,
-      completed: false,
-      loading: false
-    },
-    {
-      id: 3,
-      title: t('common:onboarding.step3.title'),
-      description: t('common:onboarding.step3.description'),
-      icon: <Palette className="h-5 w-5" />,
-      completed: false,
-      loading: false
-    },
-    {
-      id: 4,
-      title: t('common:onboarding.step4.title'),
-      description: t('common:onboarding.step4.description'),
-      icon: <TrendingUp className="h-5 w-5" />,
-      completed: false,
-      loading: false
-    },
-    {
-      id: 5,
-      title: t('common:onboarding.step5.title'),
-      description: t('common:onboarding.step5.description'),
-      icon: <Bot className="h-5 w-5" />,
-      completed: false,
-      loading: false
-    }
-  ]);
-
-  const updateStepStatus = (stepId: number, loading: boolean, completed: boolean = false) => {
-    setSteps(prevSteps => 
-      prevSteps.map(step => 
-        step.id === stepId 
-          ? { ...step, loading, completed: completed || step.completed }
-          : step
-      )
-    );
-  };
-
-  const callOnboardingFunction = async (functionName: string, body: any) => {
-    const { data, error } = await supabase.functions.invoke(functionName, {
-      body,
-      headers: {
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-      }
-    });
-
-    if (error) {
-      console.error(`Error calling ${functionName}:`, error);
-      throw new Error(`Error en ${functionName}: ${error.message}`);
-    }
-
-    return data;
-  };
-
-  const executeStep1 = async () => {
-    updateStepStatus(1, true);
-    setCurrentStep(1);
-    setHasError(false);
 
     try {
-      if (!companyWebsiteUrl) {
-        throw new Error('No se encontró la URL del sitio web de tu empresa');
-      }
+      let companyId = companyData?.id;
 
-      // Ejecutar extracción síncrona directamente
-      const result = await callOnboardingFunction('company-info-extractor', {
-        url: companyWebsiteUrl
-      });
+      if (companyId) {
+        // Update existing company
+        const { error } = await supabase
+          .from('companies')
+          .update({
+            name: formData.name,
+            website_url: formData.website_url,
+            industry_sector: formData.industry_sector || null
+          })
+          .eq('id', companyId);
 
-      console.log('✅ Extracción completada:', result);
-      
-      if (result.success) {
-        setCompanyData(result.data);
-        if (result.companyId) setCompanyId(result.companyId);
-        
-        updateStepStatus(1, false, true);
-        
-        toast({
-          title: "✅ Información extraída",
-          description: "Los datos de tu empresa han sido procesados correctamente"
-        });
-
-        // Auto-advance to step 2
-        setTimeout(() => executeStep2(result.companyId, result.data), 1000);
+        if (error) throw error;
       } else {
-        throw new Error('No se pudieron extraer los datos de la empresa');
-      }
-      
-    } catch (error) {
-      updateStepStatus(1, false);
-      setHasError(true);
-      toast({
-        title: "❌ Error en el paso 1",
-        description: "No pudimos extraer la información de tu empresa. Intenta de nuevo.",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
+        // Create new company
+        const { data: newCompany, error } = await supabase
+          .from('companies')
+          .insert({
+            name: formData.name,
+            website_url: formData.website_url,
+            industry_sector: formData.industry_sector || null,
+            created_by: user.id
+          })
+          .select()
+          .single();
 
+        if (error) throw error;
+        companyId = newCompany.id;
 
-  const executeStep2 = async (companyIdParam?: string, companyDataParam?: any) => {
-    updateStepStatus(2, true);
-    setCurrentStep(2);
-    setHasError(false);
-
-    try {
-      const result = await callOnboardingFunction('company-strategy', {
-        companyId: companyIdParam || companyId,
-        input: { data: companyDataParam || companyData }
-      });
-
-      setStrategyData(result.data_stored);
-      updateStepStatus(2, false, true);
-      
-      toast({
-        title: "✅ Estrategia estructurada",
-        description: "Tu estrategia empresarial ha sido definida"
-      });
-
-      // Auto-advance to step 3
-      setTimeout(() => executeStep3(companyIdParam || companyId, result.data_stored), 1000);
-      
-    } catch (error) {
-      updateStepStatus(2, false);
-      setHasError(true);
-      toast({
-        title: "❌ Error en el paso 2",
-        description: "No pudimos estructurar tu estrategia. Intenta de nuevo.",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
-  const executeStep3 = async (companyIdParam?: string, strategyDataParam?: any) => {
-    updateStepStatus(3, true);
-    setCurrentStep(3);
-    setHasError(false);
-
-    try {
-      const strategy = strategyDataParam || strategyData;
-      const result = await callOnboardingFunction('brand-identity', {
-        companyId: companyIdParam || companyId,
-        nombre_empresa: companyData?.name || 'Tu Empresa',
-        mision: strategy?.mision || '',
-        vision: strategy?.vision || '',
-        propuesta_valor: strategy?.propuesta_valor || ''
-      });
-
-      updateStepStatus(3, false, true);
-      
-      toast({
-        title: "✅ Marca analizada",
-        description: "Tu identidad de marca ha sido creada"
-      });
-
-      // Auto-advance to step 4 (objectives)
-      setTimeout(() => executeStep4(companyIdParam || companyId, strategy), 1000);
-      
-    } catch (error) {
-      updateStepStatus(3, false);
-      setHasError(true);
-      toast({
-        title: "❌ Error en el paso 3",
-        description: "No pudimos analizar tu marca. Intenta de nuevo.",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
-  const executeStep4 = async (companyIdParam?: string, strategyDataParam?: any) => {
-    updateStepStatus(4, true);
-    setCurrentStep(4);
-    setHasError(false);
-
-    try {
-      const strategy = strategyDataParam || strategyData;
-      const company = companyData;
-      
-      const result = await callOnboardingFunction('get-company-objetivos', {
-        companyId: companyIdParam || companyId,
-        companyInfo: {
-          name: company?.name || 'Tu Empresa',
-          industry_sector: company?.industry_sector || 'General',
-          company_size: company?.company_size || 'Pequeña',
-          website_url: company?.website_url || companyWebsiteUrl,
-          description: company?.description || ''
-        },
-        strategyData: strategy
-      });
-
-      updateStepStatus(4, false, true);
-      
-      toast({
-        title: "✅ Objetivos definidos",
-        description: "Tus objetivos de crecimiento han sido establecidos"
-      });
-
-      // Auto-advance to step 5 (agent creation)
-      setTimeout(() => executeStep5(companyIdParam || companyId), 1000);
-      
-    } catch (error) {
-      updateStepStatus(4, false);
-      setHasError(true);
-      toast({
-        title: "❌ Error en el paso 4",
-        description: "No pudimos definir tus objetivos. Intenta de nuevo.",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
-  const executeStep5 = async (companyIdParam?: string) => {
-    updateStepStatus(5, true);
-    setCurrentStep(5);
-    setHasError(false);
-
-    try {
-      // NUEVO: Verificar si ya existe el agente antes de llamar a la función
-      console.log('🔍 Verificando si el agente ERA ya existe...');
-      const { data: existingAgent } = await supabase
-        .from('company_agents')
-        .select('id, agent_id, agent_name')
-        .eq('company_id', companyIdParam || companyId)
-        .maybeSingle();
-
-      if (existingAgent?.agent_id) {
-        console.log('✅ Agente ERA ya existe:', existingAgent);
-        updateStepStatus(5, false, true);
-        
-        toast({
-          title: "✅ Asistente ERA verificado",
-          description: "Tu copiloto empresarial ya estaba listo"
-        });
-
-        // Complete onboarding
-        setTimeout(() => completeOnboarding(), 1000);
-        return;
+        // Add user as company member
+        await supabase
+          .from('company_members')
+          .insert({
+            company_id: companyId,
+            user_id: user.id,
+            role: 'owner',
+            is_primary: true
+          });
       }
 
-      // Si no existe, proceder con la creación
-      console.log('🤖 Creando nuevo agente ERA...');
-      const result = await callOnboardingFunction('create-company-agent', {
-        user_id: user.id,
-        company_id: companyIdParam || companyId
+      setCompanyData({
+        id: companyId!,
+        name: formData.name,
+        website_url: formData.website_url,
+        industry_sector: formData.industry_sector
       });
 
-      updateStepStatus(5, false, true);
-      
-      toast({
-        title: "✅ Asistente ERA creado",
-        description: "Tu copiloto empresarial personalizado está listo"
-      });
-
-      // Complete onboarding
-      setTimeout(() => completeOnboarding(), 1000);
-      
+      startOrchestration(companyId!);
     } catch (error) {
-      // MEJORAR: Verificar si el error es porque ya existe
-      const errorMessage = (error as Error).message;
-      console.error('❌ Error en paso 5:', errorMessage);
-      
-      if (errorMessage.includes('already exists') || 
-          errorMessage.includes('Agent already exists') ||
-          errorMessage.includes('duplicate key')) {
-        console.log('⚠️ Agente ya existe (error capturado), marcando como completado');
-        updateStepStatus(5, false, true);
-        
-        toast({
-          title: "✅ Asistente ERA verificado",
-          description: "Tu copiloto ya estaba creado, continuando..."
-        });
+      console.error('Error saving company data:', error);
+      toast({
+        title: t('common:errors.saveFailed'),
+        description: t('common:errors.tryAgain'),
+        variant: "destructive"
+      });
+    }
+  };
 
-        setTimeout(() => completeOnboarding(), 1000);
+  // Phase 2: Run parallel WOW orchestration
+  const startOrchestration = async (companyId: string) => {
+    setPhase('loading');
+    const startTime = Date.now();
+
+    try {
+      console.log('🚀 Starting WOW orchestration for company:', companyId);
+      
+      const result = await executeOnboardingOrchestrator(
+        user.id, 
+        companyId, 
+        i18n.language
+      );
+
+      const endTime = Date.now();
+      setTotalTime(endTime - startTime);
+
+      if (result?.success) {
+        console.log('✅ Orchestration completed successfully');
+        setResults(result);
+        setPhase('results');
       } else {
-        updateStepStatus(5, false);
-        setHasError(true);
-        toast({
-          title: "❌ Error en el paso 5",
-          description: "No pudimos crear tu asistente ERA. Intenta de nuevo.",
-          variant: "destructive"
-        });
-        throw error;
+        throw new Error('Orchestration failed');
       }
+    } catch (error) {
+      console.error('❌ Orchestration error:', error);
+      toast({
+        title: t('common:errors.processingFailed'),
+        description: t('common:errors.tryAgain'),
+        variant: "destructive"
+      });
+      // Allow retry
+      setPhase('form');
     }
   };
 
-  const completeOnboarding = async () => {
+  // Complete onboarding and redirect
+  const handleContinue = async () => {
     try {
-      console.log('🎯 Completando onboarding para usuario:', user.id);
-      
-      // Mark onboarding as complete in database
-      const { error } = await supabase
+      // Mark onboarding as complete
+      await supabase
         .from('user_onboarding_status')
         .upsert({
           user_id: user.id,
@@ -399,247 +219,140 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           onConflict: 'user_id'
         });
 
-      if (error) {
-        console.error('Error marking onboarding complete:', error);
-        toast({
-          title: "❌ Error final",
-          description: "Hubo un problema al finalizar el onboarding",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      console.log('✅ Onboarding marcado como completado en BD');
-
-      toast({
-        title: "🎉 ¡Onboarding completado!",
-        description: "Configuración finalizada. Redirigiendo a ADN Empresa...",
-        duration: 3000
-      });
-
-      // Redirect to ADN Empresa section with completed onboarding flag
-      console.log('🚀 Redirigiendo a ADN Empresa con onboarding completado...');
-      
-      // Disparar evento personalizado para notificar que se completó el onboarding
+      // Dispatch completion event
       window.dispatchEvent(new CustomEvent('onboarding-completed'));
-      
-      // Navigate to ADN Empresa with flag to show coachmark (usar navigate en lugar de window.location.href)
-      console.log('🚀 [OnboardingOrchestrator] Redirigiendo a ADN Empresa', {
-        userId: user.id,
-        method: 'navigate',
-        url: '/company-dashboard?view=adn-empresa&onboarding_completed=true'
-      });
-      
-      setTimeout(() => {
-        navigate('/company-dashboard?view=adn-empresa&onboarding_completed=true', { replace: true });
-      }, 1500);
 
-    } catch (error) {
-      console.error('Error completing onboarding:', error);
       toast({
-        title: "❌ Error final",
-        description: "Hubo un problema al finalizar el onboarding",
-        variant: "destructive"
+        title: t('common:onboarding.completed'),
+        description: t('common:onboarding.redirecting'),
+        duration: 2000
       });
-      
-      // Even if there's an error, try to redirect to ADN Empresa
-      console.log('🚀 [OnboardingOrchestrator] Redirección de emergencia a ADN Empresa...');
+
+      // Navigate to dashboard
       setTimeout(() => {
         navigate('/company-dashboard?view=adn-empresa&onboarding_completed=true', { replace: true });
       }, 1000);
-    }
-  };
-
-  const startOnboarding = async () => {
-    if (!companyWebsiteUrl) {
-      toast({
-        title: "⚠️ URL no encontrada",
-        description: "No se encontró la URL de tu empresa. Contacta soporte.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      await executeStep1();
     } catch (error) {
-      console.error('Onboarding failed:', error);
+      console.error('Error completing onboarding:', error);
+      navigate('/company-dashboard', { replace: true });
     }
   };
 
-  const retryCurrentStep = async () => {
-    switch (currentStep) {
-      case 1:
-        await executeStep1();
-        break;
-      case 2:
-        await executeStep2();
-        break;
-      case 3:
-        await executeStep3();
-        break;
-      case 4:
-        await executeStep4();
-        break;
-      case 5:
-        await executeStep5();
-        break;
-    }
+  // Determine current phase for loader
+  const getCurrentPhase = (): 'strategy' | 'content' | 'insights' | 'complete' => {
+    if (progress < 30) return 'strategy';
+    if (progress < 60) return 'content';
+    if (progress < 90) return 'insights';
+    return 'complete';
   };
 
-  const getStepIcon = (step: OnboardingStep) => {
-    if (step.loading) {
-      return <Loader2 className="h-5 w-5 animate-spin text-primary" />;
-    }
-    if (step.completed) {
-      return <CheckCircle className="h-5 w-5 text-green-500" />;
-    }
-    return <Circle className="h-5 w-5 text-muted-foreground" />;
-  };
-
-  const allStepsCompleted = steps.every(step => step.completed);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5 p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            ¡Bienvenido a Buildera! 🚀
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Configuremos tu empresa en 5 pasos simples para crear tu asistente ERA
-          </p>
+  // Render based on phase
+  if (phase === 'checking') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">{t('common:onboarding.checkingData')}</p>
         </div>
+      </div>
+    );
+  }
 
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Cargando información de tu empresa...</p>
+  if (phase === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <OnboardingWowLoader 
+          progress={progress} 
+          currentPhase={getCurrentPhase()} 
+        />
+      </div>
+    );
+  }
+
+  if (phase === 'results' && results) {
+    return (
+      <div className="min-h-screen bg-background p-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <OnboardingWowResults
+            results={results.results}
+            summary={results.summary}
+            totalTime={totalTime}
+            onContinue={handleContinue}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Phase: Form - Collect basic company data
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Building2 className="w-8 h-8 text-primary" />
           </div>
-        ) : !companyWebsiteUrl ? (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <Globe className="h-6 w-6" />
-                URL de empresa no encontrada
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                No se encontró la URL del sitio web de tu empresa en el registro. 
-                Por favor contacta a soporte para continuar con el onboarding.
-              </p>
-              <Button onClick={() => navigate('/company-dashboard')} variant="outline">
-                Volver al Dashboard
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-6 w-6" />
-                  Configuración automática
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Detectamos tu sitio web: <strong>{companyWebsiteUrl}</strong>
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Configuraremos automáticamente tu empresa y crearemos tu asistente ERA personalizado.
-                  </p>
-                </div>
-                <Button 
-                  onClick={startOnboarding}
-                  className="w-full"
-                  size="lg"
-                  disabled={steps[0]?.loading || currentStep > 0}
-                >
-                  Comenzar configuración automática
-                </Button>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {currentStep > 0 && (
-          <>
-            <div className="grid gap-4 mb-8">
-              {steps.map((step, index) => (
-                <Card key={step.id} className={`transition-all duration-300 ${
-                  step.completed ? 'border-green-500 bg-green-50/50' :
-                  step.loading ? 'border-primary bg-primary/5' :
-                  'border-border'
-                }`}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="flex-shrink-0">
-                        {getStepIcon(step)}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">
-                          {step.title}
-                        </h3>
-                        <p className="text-muted-foreground text-sm">
-                          {step.description}
-                        </p>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <Badge variant={
-                          step.completed ? 'default' :
-                          step.loading ? 'secondary' :
-                          'outline'
-                        }>
-                         {step.completed ? t('common:onboarding.allComplete') :
-                           step.loading ? t('common:status.processing') :
-                           'Pendiente'}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          <CardTitle className="text-2xl">
+            {t('common:onboarding.welcomeTitle')}
+          </CardTitle>
+          <p className="text-muted-foreground mt-2">
+            {t('common:onboarding.welcomeDescription')}
+          </p>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="flex items-center gap-2">
+                <Building2 className="w-4 h-4" />
+                {t('common:company.name')} *
+              </Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder={t('common:company.namePlaceholder')}
+                required
+              />
             </div>
 
-            {allStepsCompleted && (
-              <Card className="border-green-500 bg-green-50/50">
-                <CardContent className="p-6 text-center">
-                  <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-green-700 mb-2">
-                    {t('common:onboarding.allComplete')}
-                  </h3>
-                  <p className="text-green-600 mb-4">
-                    {t('common:onboarding.allCompleteDesc')}
-                  </p>
-                  <Button
-                    onClick={() => {
-                      // Navegar a ADN Empresa con flag de onboarding completado 
-                      window.location.href = '/company-dashboard?view=adn-empresa&onboarding_completed=true';
-                    }}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {t('common:onboarding.continue')}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="website_url" className="flex items-center gap-2">
+                <Globe className="w-4 h-4" />
+                {t('common:company.website')} *
+              </Label>
+              <Input
+                id="website_url"
+                type="url"
+                value={formData.website_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, website_url: e.target.value }))}
+                placeholder="https://ejemplo.com"
+                required
+              />
+            </div>
 
-            {hasError && currentStep > 0 && !allStepsCompleted && (
-              <div className="text-center">
-                <Button
-                  onClick={retryCurrentStep}
-                  variant="outline"
-                >
-                  {t('common:onboarding.retry')}
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="industry_sector" className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4" />
+                {t('common:company.sector')}
+              </Label>
+              <Input
+                id="industry_sector"
+                value={formData.industry_sector}
+                onChange={(e) => setFormData(prev => ({ ...prev, industry_sector: e.target.value }))}
+                placeholder={t('common:company.sectorPlaceholder')}
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full mt-6"
+              disabled={!formData.name || !formData.website_url}
+            >
+              {t('common:onboarding.startAnalysis')}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

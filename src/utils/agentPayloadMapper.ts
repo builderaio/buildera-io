@@ -64,14 +64,105 @@ export interface AgentPayloadContext {
   language?: string;
 }
 
+export interface ContextRequirements {
+  needsStrategy: boolean;
+  needsAudiences: boolean;
+  needsBranding: boolean;
+}
+
 /**
- * Build the specific payload for each agent's edge function
+ * Interpolate template variables with actual values
+ * Supports syntax like {{company.name}}, {{strategy.mision}}, etc.
  */
-export const buildAgentPayload = (
-  agentCode: string,
+const interpolateTemplate = (
+  template: Record<string, any>,
   context: AgentPayloadContext
 ): Record<string, any> => {
   const { company, strategy, audiences, branding, configuration, userId, language } = context;
+  
+  const contextMap: Record<string, any> = {
+    company,
+    strategy: strategy || {},
+    audiences: audiences || [],
+    branding: branding || {},
+    configuration: configuration || {},
+    userId,
+    language: language || 'es'
+  };
+
+  const interpolateValue = (value: any): any => {
+    if (typeof value === 'string') {
+      // Check for template variable pattern {{path.to.value}}
+      const templatePattern = /\{\{([^}]+)\}\}/g;
+      let result = value;
+      let match;
+      
+      while ((match = templatePattern.exec(value)) !== null) {
+        const path = match[1].trim();
+        const resolvedValue = getNestedValue(contextMap, path);
+        
+        // If the entire string is just a template variable, return the resolved value directly
+        // This preserves types (objects, arrays, etc.)
+        if (match[0] === value) {
+          return resolvedValue;
+        }
+        
+        // Otherwise, do string replacement
+        result = result.replace(match[0], String(resolvedValue ?? ''));
+      }
+      return result;
+    }
+    
+    if (Array.isArray(value)) {
+      return value.map(interpolateValue);
+    }
+    
+    if (typeof value === 'object' && value !== null) {
+      const interpolated: Record<string, any> = {};
+      for (const [key, val] of Object.entries(value)) {
+        interpolated[key] = interpolateValue(val);
+      }
+      return interpolated;
+    }
+    
+    return value;
+  };
+
+  return interpolateValue(template);
+};
+
+/**
+ * Get nested value from object using dot notation
+ */
+const getNestedValue = (obj: Record<string, any>, path: string): any => {
+  const parts = path.split('.');
+  let current: any = obj;
+  
+  for (const part of parts) {
+    if (current == null) return undefined;
+    current = current[part];
+  }
+  
+  return current;
+};
+
+/**
+ * Build the specific payload for each agent's edge function
+ * Supports both dynamic templates and hardcoded legacy mappings
+ */
+export const buildAgentPayload = (
+  agentCode: string,
+  context: AgentPayloadContext,
+  payloadTemplate?: Record<string, any>
+): Record<string, any> => {
+  const { company, strategy, audiences, branding, configuration, userId, language } = context;
+
+  // If a payload template is provided and not empty, use dynamic interpolation
+  if (payloadTemplate && Object.keys(payloadTemplate).length > 0) {
+    return interpolateTemplate(payloadTemplate, context);
+  }
+
+  // Fallback to hardcoded mappings for legacy agents
 
   switch (agentCode) {
     // ============================================
@@ -435,12 +526,26 @@ export const buildAgentPayload = (
 
 /**
  * Get the list of additional data needed for a specific agent
+ * Supports both dynamic configuration and hardcoded legacy mappings
  */
-export const getAgentDataRequirements = (agentCode: string): {
+export const getAgentDataRequirements = (
+  agentCode: string,
+  contextRequirements?: ContextRequirements
+): {
   needsStrategy: boolean;
   needsAudiences: boolean;
   needsBranding: boolean;
 } => {
+  // If context requirements are provided from agent config, use them
+  if (contextRequirements) {
+    return {
+      needsStrategy: contextRequirements.needsStrategy ?? false,
+      needsAudiences: contextRequirements.needsAudiences ?? false,
+      needsBranding: contextRequirements.needsBranding ?? false,
+    };
+  }
+
+  // Fallback to hardcoded mappings for legacy agents
   switch (agentCode) {
     // Strategy + Audiences
     case 'MKTG_STRATEGIST':

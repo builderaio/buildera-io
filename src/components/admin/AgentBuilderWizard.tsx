@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, Save, Bot, Zap, Code, Brain, Shield, Mic } from "lucide-react";
+import { X, Plus, Save, Bot, Zap, Code, Brain, Shield, Database } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -92,6 +92,14 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
     // Status
     is_active: true,
     is_onboarding_agent: false,
+    
+    // Payload mapping (NEW)
+    context_requirements: {
+      needsStrategy: false,
+      needsAudiences: false,
+      needsBranding: false,
+    },
+    payload_template: {} as Record<string, any>,
   });
 
   const [newSkill, setNewSkill] = useState({ skill_code: "", level: 3, custom_description: "" });
@@ -142,6 +150,8 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
         min_plan_required: data.min_plan_required || "starter",
         is_active: data.is_active,
         is_onboarding_agent: data.is_onboarding_agent || false,
+        context_requirements: (data.context_requirements as any) || { needsStrategy: false, needsAudiences: false, needsBranding: false },
+        payload_template: (data.payload_template as any) || {},
       });
     } catch (error) {
       console.error("Error loading agent:", error);
@@ -213,6 +223,8 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
         min_plan_required: formData.min_plan_required,
         is_active: formData.is_active,
         is_onboarding_agent: formData.is_onboarding_agent,
+        context_requirements: formData.context_requirements,
+        payload_template: formData.payload_template,
         created_by: user?.id,
       };
 
@@ -257,7 +269,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
             Básico
@@ -265,6 +277,10 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
           <TabsTrigger value="execution" className="flex items-center gap-2">
             <Zap className="h-4 w-4" />
             Ejecución
+          </TabsTrigger>
+          <TabsTrigger value="payload" className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            Payload
           </TabsTrigger>
           <TabsTrigger value="tools" className="flex items-center gap-2">
             <Code className="h-4 w-4" />
@@ -515,6 +531,119 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
                   </div>
                 </>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* PAYLOAD TAB */}
+        <TabsContent value="payload" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuración de Payload</CardTitle>
+              <CardDescription>
+                Define qué datos de la empresa necesita el agente y cómo mapearlos al edge function
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Context Requirements */}
+              <div>
+                <Label className="text-base font-semibold mb-3 block">Datos de Contexto Requeridos</Label>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Selecciona qué información de la empresa debe cargarse automáticamente antes de ejecutar el agente
+                </p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <Label>🎯 Estrategia</Label>
+                      <p className="text-xs text-muted-foreground">Misión, visión, propuesta de valor</p>
+                    </div>
+                    <Switch
+                      checked={formData.context_requirements.needsStrategy}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        context_requirements: { ...formData.context_requirements, needsStrategy: checked }
+                      })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <Label>👥 Audiencias</Label>
+                      <p className="text-xs text-muted-foreground">Segmentos de audiencia objetivo</p>
+                    </div>
+                    <Switch
+                      checked={formData.context_requirements.needsAudiences}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        context_requirements: { ...formData.context_requirements, needsAudiences: checked }
+                      })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <Label>🎨 Branding</Label>
+                      <p className="text-xs text-muted-foreground">Colores, identidad visual, voz de marca</p>
+                    </div>
+                    <Switch
+                      checked={formData.context_requirements.needsBranding}
+                      onCheckedChange={(checked) => setFormData({
+                        ...formData,
+                        context_requirements: { ...formData.context_requirements, needsBranding: checked }
+                      })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Payload Template */}
+              <div>
+                <Label className="text-base font-semibold mb-2 block">Template de Payload (JSON)</Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Define cómo mapear los datos al payload del edge function. Usa <code className="bg-muted px-1 rounded">{"{{variable.path}}"}</code> para interpolar valores.
+                </p>
+                <div className="bg-muted/50 p-3 rounded-lg mb-3 text-xs font-mono">
+                  <p className="text-muted-foreground mb-2">Variables disponibles:</p>
+                  <ul className="space-y-1">
+                    <li><code>{"{{company.id}}"}</code>, <code>{"{{company.name}}"}</code>, <code>{"{{company.industry_sector}}"}</code></li>
+                    <li><code>{"{{strategy.mision}}"}</code>, <code>{"{{strategy.vision}}"}</code>, <code>{"{{strategy.propuesta_valor}}"}</code></li>
+                    <li><code>{"{{branding.primary_color}}"}</code>, <code>{"{{branding.visual_identity}}"}</code>, <code>{"{{branding.brand_voice}}"}</code></li>
+                    <li><code>{"{{audiences}}"}</code> (array completo), <code>{"{{userId}}"}</code>, <code>{"{{language}}"}</code></li>
+                    <li><code>{"{{configuration.*}}"}</code> (valores configurados por el usuario)</li>
+                  </ul>
+                </div>
+                <Textarea
+                  value={JSON.stringify(formData.payload_template, null, 2) === '{}' ? '' : JSON.stringify(formData.payload_template, null, 2)}
+                  onChange={(e) => {
+                    if (!e.target.value.trim()) {
+                      setFormData({ ...formData, payload_template: {} });
+                      return;
+                    }
+                    try {
+                      const parsed = JSON.parse(e.target.value);
+                      setFormData({ ...formData, payload_template: parsed });
+                    } catch {
+                      // Invalid JSON - keep editing
+                    }
+                  }}
+                  placeholder={`{
+  "companyId": "{{company.id}}",
+  "companyName": "{{company.name}}",
+  "industry": "{{company.industry_sector}}",
+  "propuesta_valor": "{{strategy.propuesta_valor}}",
+  "brand_colors": {
+    "primary": "{{branding.primary_color}}",
+    "secondary": "{{branding.secondary_color}}"
+  },
+  "language": "{{language}}"
+}`}
+                  rows={12}
+                  className="font-mono text-xs"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  💡 Si dejas vacío, se usará el mapeo hardcodeado existente para agentes legacy.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

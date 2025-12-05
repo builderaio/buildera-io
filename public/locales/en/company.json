@@ -9,6 +9,12 @@
     "generateWithAI": "Generate with AI",
     "generating": "Generating..."
   },
+  "enrich": {
+    "success": "Data enriched",
+    "successDesc": "Your company information has been updated from your website",
+    "enrichData": "Enrich data",
+    "enriching": "Enriching..."
+  },
   "errors": {
     "profileCreate": "Could not create business profile. Please try again.",
     "profileAccess": "Could not get profile information.",

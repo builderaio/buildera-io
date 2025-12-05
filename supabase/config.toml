@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.onboarding-agent-orchestrator]
 verify_jwt = true
+
+[functions.generate-next-best-actions]
+verify_jwt = true

@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 
 interface NextBestActionCardProps {
   action: NextBestAction;
-  onAction: (view: string) => void;
+  onAction: (view?: string, agentId?: string) => void;
   featured?: boolean;
 }
 
@@ -82,7 +82,7 @@ export const NextBestActionCard = ({ action, onAction, featured = false }: NextB
               <Button 
                 size="lg" 
                 className="shrink-0"
-                onClick={() => action.action.view && onAction(action.action.view)}
+                onClick={() => onAction(action.action.view, action.action.agentId)}
               >
                 {action.action.label}
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -101,7 +101,7 @@ export const NextBestActionCard = ({ action, onAction, featured = false }: NextB
         transition-all duration-200 hover:shadow-md
         bg-gradient-to-r ${styles.bg} ${styles.border}
       `}
-      onClick={() => action.action.view && onAction(action.action.view)}
+      onClick={() => onAction(action.action.view, action.action.agentId)}
     >
       <div className="w-10 h-10 rounded-lg bg-background/80 flex items-center justify-center text-lg shrink-0">
         {action.icon}
@@ -119,7 +119,7 @@ export const NextBestActionCard = ({ action, onAction, featured = false }: NextB
 
 interface RecommendationsListProps {
   actions: NextBestAction[];
-  onAction: (view: string) => void;
+  onAction: (view?: string, agentId?: string) => void;
   maxItems?: number;
 }
 

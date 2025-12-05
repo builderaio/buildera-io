@@ -179,11 +179,24 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
     }
   };
 
-  const handleNavigate = (view: string) => {
-    if (onNavigate) {
-      onNavigate(view);
-    } else {
-      navigate(`/company-dashboard?view=${view}`);
+  const handleNavigate = (view?: string, agentId?: string) => {
+    // If agentId is provided, find and open the agent
+    if (agentId) {
+      const agent = agents.find(a => a.internal_code === agentId);
+      if (agent) {
+        setSelectedAgent(agent);
+        setAgentPanelOpen(true);
+        return;
+      }
+    }
+    
+    // Otherwise navigate to the view
+    if (view) {
+      if (onNavigate) {
+        onNavigate(view);
+      } else {
+        navigate(`/company-dashboard?view=${view}`);
+      }
     }
   };
 

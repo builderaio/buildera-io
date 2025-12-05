@@ -816,22 +816,40 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
             />
           </div>
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-muted-foreground">Voz de Marca</label>
-              <EraOptimizerButton
-                currentText={typeof brandingData?.brand_voice === 'object' ? JSON.stringify(brandingData?.brand_voice) : (brandingData?.brand_voice || '')}
-                fieldType="voz de marca"
-                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
-                onOptimized={(text) => saveField('brand_voice', text, 'company_branding')}
-                size="sm"
+            <label className="text-xs font-medium text-muted-foreground mb-2 block">Voz de Marca</label>
+            {brandingData?.brand_voice && typeof brandingData.brand_voice === 'object' ? (
+              <div className="space-y-3 p-3 bg-muted/30 rounded-lg">
+                {brandingData.brand_voice.personalidad && (
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground">Personalidad:</span>
+                    <p className="text-sm mt-0.5">{brandingData.brand_voice.personalidad}</p>
+                  </div>
+                )}
+                {brandingData.brand_voice.descripcion && (
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground">Descripción:</span>
+                    <p className="text-sm mt-0.5">{brandingData.brand_voice.descripcion}</p>
+                  </div>
+                )}
+                {brandingData.brand_voice.palabras_clave && Array.isArray(brandingData.brand_voice.palabras_clave) && (
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground">Palabras clave:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {brandingData.brand_voice.palabras_clave.map((palabra: string, idx: number) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">{palabra}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <AutoSaveField
+                value={brandingData?.brand_voice || ''}
+                onSave={(v) => saveField('brand_voice', v, 'company_branding')}
+                type="textarea"
+                placeholder="Describe el tono y estilo de comunicación de tu marca (formal, cercano, técnico, inspirador)..."
               />
-            </div>
-            <AutoSaveField
-              value={typeof brandingData?.brand_voice === 'object' ? JSON.stringify(brandingData?.brand_voice) : (brandingData?.brand_voice || '')}
-              onSave={(v) => saveField('brand_voice', v, 'company_branding')}
-              type="textarea"
-              placeholder="Describe el tono y estilo de comunicación de tu marca (formal, cercano, técnico, inspirador)..."
-            />
+            )}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>

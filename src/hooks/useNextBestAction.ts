@@ -86,10 +86,10 @@ export const useNextBestAction = ({
       nbas.push({
         id: 'generate-insights',
         priority: 'medium',
-        type: 'content',
+        type: 'agent',
         title: 'Genera insights de contenido',
         description: 'No tienes insights activos. Los agentes de análisis pueden identificar oportunidades de crecimiento.',
-        action: { label: 'Generar Insights', view: 'marketing-hub' },
+        action: { label: 'Generar Insights', agentId: 'INSIGHTS_GENERATOR' },
         estimatedImpact: 'Descubre oportunidades ocultas',
         requiredTime: '3 minutos',
         icon: '💡',

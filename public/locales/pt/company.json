@@ -3,6 +3,12 @@
     "profile": "Carregando perfil...",
     "data": "Carregando dados..."
   },
+  "strategy": {
+    "generated": "Estratégia gerada",
+    "generatedDesc": "Sua missão, visão e proposta de valor foram criadas com IA",
+    "generateWithAI": "Gerar com IA",
+    "generating": "Gerando..."
+  },
   "errors": {
     "profileCreate": "Não foi possível criar o perfil empresarial. Tente novamente.",
     "profileAccess": "Não foi possível obter informações do perfil.",

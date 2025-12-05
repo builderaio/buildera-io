@@ -3,6 +3,12 @@
     "profile": "Loading profile...",
     "data": "Loading data..."
   },
+  "strategy": {
+    "generated": "Strategy generated",
+    "generatedDesc": "Your mission, vision and value proposition have been created with AI",
+    "generateWithAI": "Generate with AI",
+    "generating": "Generating..."
+  },
   "errors": {
     "profileCreate": "Could not create business profile. Please try again.",
     "profileAccess": "Could not get profile information.",

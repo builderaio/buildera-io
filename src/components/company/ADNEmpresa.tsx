@@ -731,7 +731,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               <label className="text-xs font-medium text-muted-foreground">Misión</label>
               <EraOptimizerButton
                 currentText={strategyData?.mision || ''}
-                fieldType="misión empresarial"
+                fieldType="misión"
                 context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
                 onOptimized={(text) => saveField('mision', text, 'company_strategy')}
                 size="sm"
@@ -749,7 +749,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               <label className="text-xs font-medium text-muted-foreground">Visión</label>
               <EraOptimizerButton
                 currentText={strategyData?.vision || ''}
-                fieldType="visión empresarial"
+                fieldType="visión"
                 context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
                 onOptimized={(text) => saveField('vision', text, 'company_strategy')}
                 size="sm"
@@ -856,7 +856,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
               <label className="text-xs font-medium text-muted-foreground">Identidad Visual</label>
               <EraOptimizerButton
                 currentText={brandingData?.visual_identity || ''}
-                fieldType="identidad visual de marca"
+                fieldType="identidad visual"
                 context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
                 onOptimized={(text) => saveField('visual_identity', text, 'company_branding')}
                 size="sm"

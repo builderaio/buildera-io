@@ -162,36 +162,49 @@ export const EraOptimizerButton: React.FC<EraOptimizerButtonProps> = ({
 
     } catch (error) {
       console.error('Error optimizing with Era:', error);
-      // Por ahora, simulamos una optimización simple
+      // Fallback: mostrar error claro si no hay optimización disponible
       const fallbackText = enhanceText(currentText, fieldType);
-      console.log('Fallback optimization text:', fallbackText);
-      setOptimizedText(fallbackText);
-      setShowDialog(true);
+      if (fallbackText) {
+        setOptimizedText(fallbackText);
+        setShowDialog(true);
+      } else {
+        const { toast } = await import('@/hooks/use-toast');
+        toast({
+          title: "Error de optimización",
+          description: "No se pudo optimizar el contenido. Intenta de nuevo más tarde.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsOptimizing(false);
     }
   };
 
-  const enhanceText = (text: string, type: string): string => {
-    // Simulación simple de optimización hasta que la API esté lista
-    // IMPORTANTE: Solo devolver el texto optimizado, NO concatenar con el original
-    switch (type.toLowerCase()) {
-      case 'misión':
-        return `Nuestra misión se fundamenta en la excelencia operacional y el compromiso con la satisfacción del cliente, democratizando el acceso a productos de alta calidad y creando valor sostenible para todos nuestros stakeholders.`;
-      case 'visión':
-        return `Aspiramos a ser líderes en innovación y accesibilidad, estableciendo nuevos estándares de calidad y contribuyendo al desarrollo sostenible de nuestra industria.`;
-      case 'propuesta de valor':
-        return `Ofrecemos productos de alta calidad a precios accesibles, democratizando el acceso y garantizando una experiencia excepcional para todos nuestros clientes.`;
-      case 'descripción de producto':
-        return `Este producto ha sido diseñado con tecnología de vanguardia y los más altos estándares de calidad, garantizando una experiencia excepcional y accesible para nuestros usuarios.`;
-      case 'objetivo empresarial':
-      case 'descripción de objetivo':
-      case 'objetivo':
-        return `Lograr un crecimiento sostenible y rentable mediante la implementación de estrategias innovadoras que generen valor agregado para nuestros clientes y stakeholders, optimizando procesos y recursos para alcanzar la excelencia operacional.`;
-      default:
-        // Para cualquier otro tipo, generar texto optimizado sin concatenar el original
-        return `Contenido optimizado con enfoque profesional, mayor claridad comunicacional y estructura mejorada para generar mayor impacto y engagement con la audiencia objetivo.`;
+  const enhanceText = (text: string, type: string): string | null => {
+    // Fallback de optimización con coincidencia flexible usando .includes()
+    const typeLower = type.toLowerCase();
+    
+    if (typeLower.includes('misión')) {
+      return `Nuestra misión se fundamenta en la excelencia operacional y el compromiso con la satisfacción del cliente, democratizando el acceso a productos de alta calidad y creando valor sostenible para todos nuestros stakeholders.`;
     }
+    if (typeLower.includes('visión')) {
+      return `Aspiramos a ser líderes en innovación y accesibilidad, estableciendo nuevos estándares de calidad y contribuyendo al desarrollo sostenible de nuestra industria.`;
+    }
+    if (typeLower.includes('propuesta') || typeLower.includes('valor')) {
+      return `Ofrecemos productos de alta calidad a precios accesibles, democratizando el acceso y garantizando una experiencia excepcional para todos nuestros clientes.`;
+    }
+    if (typeLower.includes('identidad') || typeLower.includes('visual')) {
+      return `Nuestra identidad visual refleja innovación y profesionalismo, con una estética moderna y limpia que transmite confianza y conecta emocionalmente con nuestra audiencia objetivo.`;
+    }
+    if (typeLower.includes('objetivo')) {
+      return `Lograr un crecimiento sostenible y rentable mediante la implementación de estrategias innovadoras que generen valor agregado para nuestros clientes y stakeholders.`;
+    }
+    if (typeLower.includes('producto') || typeLower.includes('descripción')) {
+      return `Este producto ha sido diseñado con tecnología de vanguardia y los más altos estándares de calidad, garantizando una experiencia excepcional para nuestros usuarios.`;
+    }
+    
+    // Si no hay coincidencia, retornar null para mostrar error claro
+    return null;
   };
 
   const handleAccept = () => {

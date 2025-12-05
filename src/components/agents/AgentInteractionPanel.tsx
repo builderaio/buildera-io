@@ -90,7 +90,9 @@ export const AgentInteractionPanel = ({
       
       setContextLoading(true);
       try {
-        const requirements = getAgentDataRequirements(agent.internal_code);
+        // Get requirements from agent config or fallback to hardcoded
+        const agentContextReqs = (agent as any).context_requirements;
+        const requirements = getAgentDataRequirements(agent.internal_code, agentContextReqs);
         
         // Load data in parallel based on requirements
         const [strategyResult, audiencesResult, brandingResult] = await Promise.all([
@@ -182,15 +184,21 @@ export const AgentInteractionPanel = ({
       if (logError) throw logError;
 
       // Build payload using the mapper with full company context
-      const agentPayload = buildAgentPayload(agent.internal_code, {
-        company: companyData,
-        strategy: strategyData,
-        audiences: audiencesData,
-        branding: brandingData,
-        configuration: configuration?.configuration || {},
-        userId: userId,
-        language: i18n.language || 'es'
-      });
+      // Pass payload_template from agent config for dynamic mapping
+      const agentPayloadTemplate = (agent as any).payload_template;
+      const agentPayload = buildAgentPayload(
+        agent.internal_code,
+        {
+          company: companyData,
+          strategy: strategyData,
+          audiences: audiencesData,
+          branding: brandingData,
+          configuration: configuration?.configuration || {},
+          userId: userId,
+          language: i18n.language || 'es'
+        },
+        agentPayloadTemplate
+      );
 
       // Execute the edge function with properly constructed payload
       const { data, error } = await supabase.functions.invoke(agent.edge_function_name, {

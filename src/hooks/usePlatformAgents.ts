@@ -20,6 +20,9 @@ export interface PlatformAgent {
   output_schema?: any;
   sample_output?: any;
   recurring_capable?: boolean;
+  // Dynamic payload mapping fields
+  context_requirements?: any;
+  payload_template?: any;
 }
 
 interface EnabledAgent {

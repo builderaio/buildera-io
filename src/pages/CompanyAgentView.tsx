@@ -82,7 +82,9 @@ const CompanyAgentView = () => {
     const loadAgentContextData = async () => {
       if (!company?.id || !agent) return;
       
-      const requirements = getAgentDataRequirements(agent.internal_code);
+      // Get requirements from agent config or fallback to hardcoded
+      const agentContextReqs = (agent as any).context_requirements;
+      const requirements = getAgentDataRequirements(agent.internal_code, agentContextReqs);
       
       // Load data based on agent requirements
       if (requirements.needsStrategy) {
@@ -155,15 +157,21 @@ const CompanyAgentView = () => {
       if (logError) throw logError;
 
       // Build the specific payload for this agent using the mapper
-      const agentPayload = buildAgentPayload(agent.internal_code, {
-        company: company,
-        strategy: strategyData,
-        audiences: audiencesData,
-        branding: brandingData,
-        configuration: configuration?.configuration || {},
-        userId: userId || undefined,
-        language: 'es'
-      });
+      // Pass payload_template from agent config for dynamic mapping
+      const agentPayloadTemplate = (agent as any).payload_template;
+      const agentPayload = buildAgentPayload(
+        agent.internal_code,
+        {
+          company: company,
+          strategy: strategyData,
+          audiences: audiencesData,
+          branding: brandingData,
+          configuration: configuration?.configuration || {},
+          userId: userId || undefined,
+          language: 'es'
+        },
+        agentPayloadTemplate
+      );
 
       // Add execution metadata
       const fullPayload = {

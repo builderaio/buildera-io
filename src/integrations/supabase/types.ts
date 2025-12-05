@@ -4774,6 +4774,7 @@ export type Database = {
           agent_type: string | null
           average_sfia_level: number | null
           category: string
+          context_requirements: Json | null
           created_at: string | null
           created_by: string | null
           credits_per_use: number | null
@@ -4797,6 +4798,7 @@ export type Database = {
           openai_agent_config: Json | null
           openai_assistant_id: string | null
           output_schema: Json | null
+          payload_template: Json | null
           primary_function: string | null
           sample_output: Json | null
           sdk_version: string | null
@@ -4812,6 +4814,7 @@ export type Database = {
           agent_type?: string | null
           average_sfia_level?: number | null
           category?: string
+          context_requirements?: Json | null
           created_at?: string | null
           created_by?: string | null
           credits_per_use?: number | null
@@ -4835,6 +4838,7 @@ export type Database = {
           openai_agent_config?: Json | null
           openai_assistant_id?: string | null
           output_schema?: Json | null
+          payload_template?: Json | null
           primary_function?: string | null
           sample_output?: Json | null
           sdk_version?: string | null
@@ -4850,6 +4854,7 @@ export type Database = {
           agent_type?: string | null
           average_sfia_level?: number | null
           category?: string
+          context_requirements?: Json | null
           created_at?: string | null
           created_by?: string | null
           credits_per_use?: number | null
@@ -4873,6 +4878,7 @@ export type Database = {
           openai_agent_config?: Json | null
           openai_assistant_id?: string | null
           output_schema?: Json | null
+          payload_template?: Json | null
           primary_function?: string | null
           sample_output?: Json | null
           sdk_version?: string | null

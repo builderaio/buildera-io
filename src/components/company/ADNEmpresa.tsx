@@ -220,6 +220,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const [brandingData, setBrandingData] = useState<any>(null);
   const [objectives, setObjectives] = useState<any[]>([]);
   const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false);
+  const [isEnrichingData, setIsEnrichingData] = useState(false);
   const loadedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -452,6 +453,36 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     }
   }, [companyData?.id, toast, t]);
 
+  const enrichCompanyData = useCallback(async () => {
+    if (!companyData?.id) return;
+    
+    setIsEnrichingData(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('company-info-extractor', {
+        body: { companyId: companyData.id }
+      });
+      
+      if (error) throw error;
+      
+      // Reload company data
+      await loadData();
+      
+      toast({
+        title: t('company:enrich.success', 'Datos enriquecidos'),
+        description: t('company:enrich.successDesc', 'La información de tu empresa ha sido actualizada desde tu sitio web')
+      });
+    } catch (error: any) {
+      console.error('Error enriching data:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo enriquecer los datos",
+        variant: "destructive"
+      });
+    } finally {
+      setIsEnrichingData(false);
+    }
+  }, [companyData?.id, toast, t]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -482,9 +513,30 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       {/* Información Básica */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Building2 className="w-5 h-5 text-primary" />
-            Información Básica
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-lg">
+              <Building2 className="w-5 h-5 text-primary" />
+              Información Básica
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={enrichCompanyData}
+              disabled={isEnrichingData || !companyData?.website_url}
+              title={!companyData?.website_url ? 'Agrega un sitio web primero' : ''}
+            >
+              {isEnrichingData ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                  {t('company:enrich.enriching', 'Enriqueciendo...')}
+                </>
+              ) : (
+                <>
+                  <Globe className="w-4 h-4 mr-1" />
+                  {t('company:enrich.enrichData', 'Enriquecer datos')}
+                </>
+              )}
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

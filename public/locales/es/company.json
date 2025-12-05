@@ -9,6 +9,12 @@
     "generateWithAI": "Generar con IA",
     "generating": "Generando..."
   },
+  "enrich": {
+    "success": "Datos enriquecidos",
+    "successDesc": "La información de tu empresa ha sido actualizada desde tu sitio web",
+    "enrichData": "Enriquecer datos",
+    "enriching": "Enriqueciendo..."
+  },
   "errors": {
     "profileCreate": "No se pudo crear el perfil del negocio. Intente nuevamente.",
     "profileAccess": "No se pudo obtener la información del perfil.",

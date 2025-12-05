@@ -18,17 +18,8 @@ serve(async (req) => {
   }
 
   try {
-    const { url } = await req.json();
+    const { url: inputUrl, companyId } = await req.json();
     
-    if (!url) {
-      return new Response(
-        JSON.stringify({ error: 'URL is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('🔍 Extracting company info from URL:', url);
-
     // Get user from authorization header
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
@@ -47,6 +38,36 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Determine URL: from input or from companyId
+    let url = inputUrl;
+    
+    if (companyId && !url) {
+      console.log('🔍 Fetching website_url from company:', companyId);
+      const { data: company, error: companyError } = await supabase
+        .from('companies')
+        .select('website_url')
+        .eq('id', companyId)
+        .single();
+      
+      if (companyError || !company?.website_url) {
+        return new Response(
+          JSON.stringify({ error: 'Company has no website URL configured' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      url = company.website_url;
+      console.log('✅ Found website_url:', url);
+    }
+    
+    if (!url) {
+      return new Response(
+        JSON.stringify({ error: 'URL or companyId is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('🔍 Extracting company info from URL:', url);
 
     // Execute synchronously now
     const result = await extractCompanyData(url, user.id, token);

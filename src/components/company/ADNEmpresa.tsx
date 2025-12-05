@@ -686,7 +686,20 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Descripción</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-muted-foreground">Descripción</label>
+              <EraOptimizerButton
+                currentText={companyData?.description || ''}
+                fieldType="descripción de empresa"
+                context={{ 
+                  companyName: companyData?.name, 
+                  industry: companyData?.industry_sector,
+                  website: companyData?.website_url 
+                }}
+                onOptimized={(text) => saveField('description', text)}
+                size="sm"
+              />
+            </div>
             <AutoSaveField
               value={companyData?.description || ''}
               onSave={(v) => saveField('description', v)}

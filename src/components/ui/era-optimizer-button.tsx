@@ -27,6 +27,19 @@ interface OptimizationDialogProps {
   onClose: () => void;
 }
 
+// Strip markdown formatting from text
+const stripMarkdown = (text: string): string => {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold **text**
+    .replace(/\*(.*?)\*/g, '$1')     // Remove italic *text*
+    .replace(/__(.*?)__/g, '$1')     // Remove bold __text__
+    .replace(/_(.*?)_/g, '$1')       // Remove italic _text_
+    .replace(/`(.*?)`/g, '$1')       // Remove inline code `text`
+    .replace(/#{1,6}\s?/g, '')       // Remove headers
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links [text](url)
+    .trim();
+};
+
 const OptimizationDialog: React.FC<OptimizationDialogProps> = ({
   isOpen,
   originalText,
@@ -157,7 +170,7 @@ export const EraOptimizerButton: React.FC<EraOptimizerButtonProps> = ({
         throw new Error(data.error || 'Error desconocido de Era');
       }
 
-      setOptimizedText(data.optimizedText);
+      setOptimizedText(stripMarkdown(data.optimizedText));
       setShowDialog(true);
 
     } catch (error) {
@@ -165,7 +178,7 @@ export const EraOptimizerButton: React.FC<EraOptimizerButtonProps> = ({
       // Fallback: mostrar error claro si no hay optimización disponible
       const fallbackText = enhanceText(currentText, fieldType);
       if (fallbackText) {
-        setOptimizedText(fallbackText);
+        setOptimizedText(stripMarkdown(fallbackText));
         setShowDialog(true);
       } else {
         const { toast } = await import('@/hooks/use-toast');

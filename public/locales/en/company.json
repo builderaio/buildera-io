@@ -9,6 +9,12 @@
     "generateWithAI": "Generate with AI",
     "generating": "Generating..."
   },
+  "brand": {
+    "generated": "Brand identity generated",
+    "generatedDesc": "Your brand identity has been created with AI",
+    "generateWithAI": "Generate with AI",
+    "generating": "Generating..."
+  },
   "enrich": {
     "success": "Data enriched",
     "successDesc": "Your company information has been updated from your website",

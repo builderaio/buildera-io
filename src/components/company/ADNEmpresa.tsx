@@ -221,6 +221,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const [objectives, setObjectives] = useState<any[]>([]);
   const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false);
   const [isEnrichingData, setIsEnrichingData] = useState(false);
+  const [isGeneratingBrand, setIsGeneratingBrand] = useState(false);
   const loadedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -483,6 +484,44 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     }
   }, [companyData?.id, toast, t]);
 
+  const generateBrandIdentity = useCallback(async () => {
+    if (!companyData?.id) return;
+    
+    setIsGeneratingBrand(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('brand-identity', {
+        body: { companyId: companyData.id }
+      });
+      
+      if (error) throw error;
+      
+      // Reload branding data
+      const { data: newBranding } = await supabase
+        .from('company_branding')
+        .select('*')
+        .eq('company_id', companyData.id)
+        .maybeSingle();
+      
+      if (newBranding) {
+        setBrandingData(newBranding);
+      }
+      
+      toast({
+        title: t('company:brand.generated', 'Identidad generada'),
+        description: t('company:brand.generatedDesc', 'Tu identidad de marca ha sido creada con IA')
+      });
+    } catch (error: any) {
+      console.error('Error generating brand identity:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo generar la identidad de marca",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingBrand(false);
+    }
+  }, [companyData?.id, toast, t]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -732,9 +771,29 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       {/* Branding */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Palette className="w-5 h-5 text-purple-600" />
-            Identidad de Marca
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-lg">
+              <Palette className="w-5 h-5 text-purple-600" />
+              Identidad de Marca
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={generateBrandIdentity}
+              disabled={isGeneratingBrand || !companyData?.id}
+            >
+              {isGeneratingBrand ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                  {t('company:brand.generating', 'Generando...')}
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  {t('company:brand.generateWithAI', 'Generar con IA')}
+                </>
+              )}
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

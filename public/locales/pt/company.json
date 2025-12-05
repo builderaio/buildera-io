@@ -9,6 +9,12 @@
     "generateWithAI": "Gerar com IA",
     "generating": "Gerando..."
   },
+  "brand": {
+    "generated": "Identidade gerada",
+    "generatedDesc": "Sua identidade de marca foi criada com IA",
+    "generateWithAI": "Gerar com IA",
+    "generating": "Gerando..."
+  },
   "enrich": {
     "success": "Dados enriquecidos",
     "successDesc": "As informações da sua empresa foram atualizadas do seu site",

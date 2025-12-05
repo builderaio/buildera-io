@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bot, Zap, Store, ArrowRight, Clock, CheckCircle2, AlertTriangle, Sparkles } from "lucide-react";
+import { Bot, Zap, Store, ArrowRight, Clock, CheckCircle2, XCircle, Loader2, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,11 +20,103 @@ interface MandoCentralProps {
   onNavigate?: (view: string) => void;
 }
 
+interface ActivityLog {
+  id: string;
+  created_at: string;
+  status: string;
+  output_summary: string | null;
+  error_message: string | null;
+  credits_consumed: number;
+  platform_agents: {
+    name: string;
+    icon: string | null;
+  } | null;
+}
+
+// Helper: Format relative time
+const formatTimeAgo = (dateString: string, t: any): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  
+  if (diffMins < 1) return t('time.now', 'Ahora');
+  if (diffMins < 60) return t('time.minutesAgo', 'Hace {{count}} min', { count: diffMins });
+  if (diffHours < 24) return t('time.hoursAgo', 'Hace {{count}}h', { count: diffHours });
+  return t('time.daysAgo', 'Hace {{count}}d', { count: diffDays });
+};
+
+// Helper: Get contextual activity message
+const getActivityMessage = (activity: ActivityLog, t: any): string => {
+  const agentName = activity.platform_agents?.name || t('common:agent', 'Agente');
+  
+  switch (activity.status) {
+    case 'running':
+      return t('activity.running', '{{agent}} ejecutando...', { agent: agentName });
+    case 'completed':
+      return activity.output_summary || t('activity.completed', '{{agent}} completado', { agent: agentName });
+    case 'failed':
+      return activity.error_message 
+        ? t('activity.failedWithError', 'Error: {{error}}', { error: activity.error_message })
+        : t('activity.failed', 'Falló: {{agent}}', { agent: agentName });
+    case 'pending':
+      return t('activity.pending', '{{agent}} en cola', { agent: agentName });
+    default:
+      return agentName;
+  }
+};
+
+// Helper: Get status icon component
+const StatusIcon = ({ status }: { status: string }) => {
+  switch (status) {
+    case 'completed':
+      return <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />;
+    case 'failed':
+      return <XCircle className="w-5 h-5 text-destructive shrink-0" />;
+    case 'running':
+      return <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" />;
+    case 'pending':
+      return <Clock className="w-5 h-5 text-amber-500 shrink-0" />;
+    default:
+      return <Clock className="w-5 h-5 text-muted-foreground shrink-0" />;
+  }
+};
+
+// Helper: Get status badge variant
+const getStatusBadgeVariant = (status: string): "default" | "destructive" | "secondary" | "outline" => {
+  switch (status) {
+    case 'completed':
+      return 'default';
+    case 'failed':
+      return 'destructive';
+    default:
+      return 'secondary';
+  }
+};
+
+// Helper: Get status badge label
+const getStatusBadgeLabel = (status: string, t: any): string => {
+  switch (status) {
+    case 'completed':
+      return '✓';
+    case 'failed':
+      return '✗';
+    case 'running':
+      return '...';
+    case 'pending':
+      return '◷';
+    default:
+      return '?';
+  }
+};
+
 const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
   const { t } = useTranslation(['common', 'company']);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<PlatformAgent | null>(null);
   const [agentPanelOpen, setAgentPanelOpen] = useState(false);
   const navigate = useNavigate();
@@ -65,12 +157,20 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       if (company?.id) {
         const { data: usageLogs } = await supabase
           .from('agent_usage_log')
-          .select('id, agent_id, created_at, status, output_summary, credits_consumed')
+          .select(`
+            id, 
+            created_at, 
+            status, 
+            output_summary, 
+            error_message,
+            credits_consumed,
+            platform_agents(name, icon)
+          `)
           .eq('company_id', company.id)
           .order('created_at', { ascending: false })
           .limit(5);
 
-        setRecentActivity(usageLogs || []);
+        setRecentActivity((usageLogs as ActivityLog[]) || []);
       }
     } catch (error) {
       console.error('Error loading dashboard:', error);
@@ -187,18 +287,29 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
             </CardHeader>
             <CardContent>
               {recentActivity.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
-                      {activity.status === 'completed' ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                      ) : (
-                        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
-                      )}
+                    <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                      <StatusIcon status={activity.status} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{activity.output_summary || activity.status}</p>
-                        <p className="text-xs text-muted-foreground">{activity.credits_consumed} cr</p>
+                        <p className="text-sm font-medium truncate">
+                          {getActivityMessage(activity, t)}
+                        </p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                          <span>{formatTimeAgo(activity.created_at, t)}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Zap className="w-3 h-3" />
+                            {activity.credits_consumed} cr
+                          </span>
+                        </p>
                       </div>
+                      <Badge 
+                        variant={getStatusBadgeVariant(activity.status)} 
+                        className="shrink-0 text-xs px-1.5"
+                      >
+                        {getStatusBadgeLabel(activity.status, t)}
+                      </Badge>
                     </div>
                   ))}
                 </div>

@@ -282,9 +282,31 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       ]);
 
       setCompanyData(companyRes.data || null);
-      setStrategyData(strategyRes.data || null);
-      setBrandingData(brandingRes.data || null);
       setObjectives(objectivesRes.data || []);
+
+      // Auto-crear registro de estrategia si no existe
+      if (!strategyRes.data && companyId) {
+        const { data: newStrategy } = await supabase
+          .from('company_strategy')
+          .insert({ company_id: companyId })
+          .select()
+          .single();
+        setStrategyData(newStrategy);
+      } else {
+        setStrategyData(strategyRes.data);
+      }
+
+      // Auto-crear registro de branding si no existe
+      if (!brandingRes.data && companyId) {
+        const { data: newBranding } = await supabase
+          .from('company_branding')
+          .insert({ company_id: companyId })
+          .select()
+          .single();
+        setBrandingData(newBranding);
+      } else {
+        setBrandingData(brandingRes.data);
+      }
 
     } catch (error) {
       console.error('Error loading data:', error);
@@ -492,45 +514,43 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       </Card>
 
       {/* Estrategia */}
-      {strategyData && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Target className="w-5 h-5 text-emerald-600" />
-              Estrategia
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Misión</label>
-              <AutoSaveField
-                value={strategyData?.mision || ''}
-                onSave={(v) => saveField('mision', v, 'company_strategy')}
-                type="textarea"
-                placeholder="¿Cuál es la misión de tu empresa?"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Visión</label>
-              <AutoSaveField
-                value={strategyData?.vision || ''}
-                onSave={(v) => saveField('vision', v, 'company_strategy')}
-                type="textarea"
-                placeholder="¿Hacia dónde se dirige tu empresa?"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Propuesta de Valor</label>
-              <AutoSaveField
-                value={strategyData?.propuesta_valor || ''}
-                onSave={(v) => saveField('propuesta_valor', v, 'company_strategy')}
-                type="textarea"
-                placeholder="¿Qué valor único ofreces?"
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Target className="w-5 h-5 text-emerald-600" />
+            Estrategia
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Misión</label>
+            <AutoSaveField
+              value={strategyData?.mision || ''}
+              onSave={(v) => saveField('mision', v, 'company_strategy')}
+              type="textarea"
+              placeholder="Define el propósito fundamental de tu empresa..."
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Visión</label>
+            <AutoSaveField
+              value={strategyData?.vision || ''}
+              onSave={(v) => saveField('vision', v, 'company_strategy')}
+              type="textarea"
+              placeholder="¿Cómo visualizas tu empresa en el futuro?"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Propuesta de Valor</label>
+            <AutoSaveField
+              value={strategyData?.propuesta_valor || ''}
+              onSave={(v) => saveField('propuesta_valor', v, 'company_strategy')}
+              type="textarea"
+              placeholder="¿Qué valor único ofreces a tus clientes?"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Objetivos */}
       <Card>
@@ -572,53 +592,84 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       </Card>
 
       {/* Branding */}
-      {brandingData && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Palette className="w-5 h-5 text-purple-600" />
-              Identidad de Marca
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Palette className="w-5 h-5 text-purple-600" />
+            Identidad de Marca
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Identidad Visual</label>
+            <AutoSaveField
+              value={brandingData?.visual_identity || ''}
+              onSave={(v) => saveField('visual_identity', v, 'company_branding')}
+              type="textarea"
+              placeholder="Describe el estilo visual de tu marca (tipografía, estética, elementos gráficos)..."
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Voz de Marca</label>
+            <AutoSaveField
+              value={typeof brandingData?.brand_voice === 'object' ? JSON.stringify(brandingData?.brand_voice) : (brandingData?.brand_voice || '')}
+              onSave={(v) => saveField('brand_voice', v, 'company_branding')}
+              type="textarea"
+              placeholder="Describe el tono y estilo de comunicación de tu marca (formal, cercano, técnico, inspirador)..."
+            />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Identidad Visual</label>
-              <AutoSaveField
-                value={brandingData?.visual_identity || ''}
-                onSave={(v) => saveField('visual_identity', v, 'company_branding')}
-                type="textarea"
-                placeholder="Describe el estilo visual de tu marca..."
-              />
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Color Primario</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={brandingData?.primary_color || '#3c46b2'}
-                    onChange={(e) => saveField('primary_color', e.target.value, 'company_branding')}
-                    className="w-8 h-8 rounded cursor-pointer"
-                  />
-                  <span className="text-xs text-muted-foreground">{brandingData?.primary_color || '#3c46b2'}</span>
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">Color Secundario</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={brandingData?.secondary_color || '#f15438'}
-                    onChange={(e) => saveField('secondary_color', e.target.value, 'company_branding')}
-                    className="w-8 h-8 rounded cursor-pointer"
-                  />
-                  <span className="text-xs text-muted-foreground">{brandingData?.secondary_color || '#f15438'}</span>
-                </div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Color Primario</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={brandingData?.primary_color || '#3c46b2'}
+                  onChange={(e) => saveField('primary_color', e.target.value, 'company_branding')}
+                  className="w-8 h-8 rounded cursor-pointer"
+                />
+                <span className="text-xs text-muted-foreground">{brandingData?.primary_color || '#3c46b2'}</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Color Secundario</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={brandingData?.secondary_color || '#f15438'}
+                  onChange={(e) => saveField('secondary_color', e.target.value, 'company_branding')}
+                  className="w-8 h-8 rounded cursor-pointer"
+                />
+                <span className="text-xs text-muted-foreground">{brandingData?.secondary_color || '#f15438'}</span>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Complementario 1</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={brandingData?.complementary_color_1 || '#ffffff'}
+                  onChange={(e) => saveField('complementary_color_1', e.target.value, 'company_branding')}
+                  className="w-8 h-8 rounded cursor-pointer border"
+                />
+                <span className="text-xs text-muted-foreground">{brandingData?.complementary_color_1 || '#ffffff'}</span>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Complementario 2</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={brandingData?.complementary_color_2 || '#000000'}
+                  onChange={(e) => saveField('complementary_color_2', e.target.value, 'company_branding')}
+                  className="w-8 h-8 rounded cursor-pointer border"
+                />
+                <span className="text-xs text-muted-foreground">{brandingData?.complementary_color_2 || '#000000'}</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Base de Conocimiento */}
       <BaseConocimiento />

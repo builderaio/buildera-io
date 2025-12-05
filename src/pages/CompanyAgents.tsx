@@ -54,7 +54,7 @@ const CompanyAgents = () => {
   const navigate = useNavigate();
   const { t } = useTranslation(['common']);
   const { toast } = useToast();
-  const { company } = useCompany();
+  const { company, loading: companyLoading } = useCompany();
   
   const { agents, loading: agentsLoading, isAgentEnabled } = usePlatformAgents(company?.id);
   const { availableCredits, loading: creditsLoading, refetch: refetchCredits } = useCompanyCredits(company?.id);
@@ -79,8 +79,11 @@ const CompanyAgents = () => {
   useEffect(() => {
     if (company?.id) {
       loadData();
+    } else if (!companyLoading) {
+      // No hay empresa, terminar loading
+      setLoading(false);
     }
-  }, [company?.id]);
+  }, [company?.id, companyLoading]);
 
   const loadData = async () => {
     if (!company?.id) return;
@@ -163,12 +166,30 @@ const CompanyAgents = () => {
   const enabledAgentsList = getEnabledAgents();
   const scheduledAgentsList = getScheduledAgents();
 
-  if (loading || agentsLoading) {
+  if (loading || agentsLoading || companyLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">{t('common:loading', 'Cargando...')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No company found
+  if (!company) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Bot className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-medium mb-2">No hay empresa configurada</h3>
+          <p className="text-muted-foreground mb-4">
+            Completa la configuración de tu empresa para acceder a los agentes
+          </p>
+          <Button onClick={() => navigate('/company-dashboard?view=adn-empresa')}>
+            Configurar empresa
+          </Button>
         </div>
       </div>
     );

@@ -85,9 +85,15 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         `)
         .eq('user_id', user.id)
         .eq('is_primary', true)
-        .single();
+        .maybeSingle();
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('❌ [CompanyContext] Error fetching company member:', memberError);
+        // Don't throw, just set company to null
+        setCompany(null);
+        setLoading(false);
+        return;
+      }
 
       if (memberData?.companies) {
         const companyBase = memberData.companies as any;

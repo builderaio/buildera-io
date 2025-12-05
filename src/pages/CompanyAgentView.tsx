@@ -28,6 +28,7 @@ import { useCompanyCredits } from '@/hooks/useCompanyCredits';
 import { AgentConfigurationWizard } from '@/components/agents/AgentConfigurationWizard';
 import { AgentResultsView } from '@/components/agents/AgentResultsView';
 import { AgentScheduleManager } from '@/components/agents/AgentScheduleManager';
+import { buildAgentPayload, getAgentDataRequirements } from '@/utils/agentPayloadMapper';
 
 const CompanyAgentView = () => {
   const { agentId } = useParams();
@@ -44,6 +45,11 @@ const CompanyAgentView = () => {
   const [showConfigWizard, setShowConfigWizard] = useState(false);
   const [latestResult, setLatestResult] = useState<any>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  
+  // Additional data for agent payload mapping
+  const [strategyData, setStrategyData] = useState<any>(null);
+  const [audiencesData, setAudiencesData] = useState<any[]>([]);
+  const [brandingData, setBrandingData] = useState<any>(null);
 
   const {
     configuration,
@@ -70,6 +76,45 @@ const CompanyAgentView = () => {
       setAgent(foundAgent || null);
     }
   }, [agentId, agents]);
+
+  // Load additional data needed for agent execution
+  useEffect(() => {
+    const loadAgentContextData = async () => {
+      if (!company?.id || !agent) return;
+      
+      const requirements = getAgentDataRequirements(agent.internal_code);
+      
+      // Load data based on agent requirements
+      if (requirements.needsStrategy) {
+        const { data } = await supabase
+          .from('company_strategy')
+          .select('*')
+          .eq('company_id', company.id)
+          .maybeSingle();
+        setStrategyData(data);
+      }
+      
+      if (requirements.needsAudiences) {
+        const { data } = await supabase
+          .from('company_audiences')
+          .select('*')
+          .eq('company_id', company.id)
+          .eq('is_active', true);
+        setAudiencesData(data || []);
+      }
+      
+      if (requirements.needsBranding) {
+        const { data } = await supabase
+          .from('company_branding')
+          .select('*')
+          .eq('company_id', company.id)
+          .maybeSingle();
+        setBrandingData(data);
+      }
+    };
+    
+    loadAgentContextData();
+  }, [company?.id, agent]);
 
   const handleExecute = async () => {
     if (!agent || !company?.id || !userId) {
@@ -109,14 +154,28 @@ const CompanyAgentView = () => {
 
       if (logError) throw logError;
 
+      // Build the specific payload for this agent using the mapper
+      const agentPayload = buildAgentPayload(agent.internal_code, {
+        company: company,
+        strategy: strategyData,
+        audiences: audiencesData,
+        branding: brandingData,
+        configuration: configuration?.configuration || {},
+        userId: userId || undefined,
+        language: 'es'
+      });
+
+      // Add execution metadata
+      const fullPayload = {
+        ...agentPayload,
+        agentId: agent.id,
+        logId: logEntry.id
+      };
+
+      console.log(`[AgentView] Executing ${agent.internal_code} with payload:`, fullPayload);
+
       const { data, error } = await supabase.functions.invoke(agent.edge_function_name, {
-        body: {
-          companyId: company.id,
-          userId,
-          agentId: agent.id,
-          logId: logEntry.id,
-          configuration: configuration?.configuration || {}
-        }
+        body: fullPayload
       });
 
       if (error) throw error;

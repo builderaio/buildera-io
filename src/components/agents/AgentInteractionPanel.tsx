@@ -14,6 +14,7 @@ import { AgentResultsView } from "./AgentResultsView";
 import { AgentScheduleManager } from "./AgentScheduleManager";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { buildAgentPayload, getAgentDataRequirements } from "@/utils/agentPayloadMapper";
 
 interface AgentInteractionPanelProps {
   agent: PlatformAgent | null;
@@ -56,7 +57,7 @@ export const AgentInteractionPanel = ({
   userId,
   onExecutionComplete
 }: AgentInteractionPanelProps) => {
-  const { t } = useTranslation(['common']);
+  const { t, i18n } = useTranslation(['common']);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -64,6 +65,12 @@ export const AgentInteractionPanel = ({
   const [activeTab, setActiveTab] = useState("execute");
   const [showConfigWizard, setShowConfigWizard] = useState(false);
   const [latestResult, setLatestResult] = useState<any>(null);
+  
+  // Context data states for agent execution
+  const [strategyData, setStrategyData] = useState<any>(null);
+  const [audiencesData, setAudiencesData] = useState<any[]>([]);
+  const [brandingData, setBrandingData] = useState<any>(null);
+  const [contextLoading, setContextLoading] = useState(false);
 
   const {
     configuration,
@@ -75,6 +82,43 @@ export const AgentInteractionPanel = ({
     recordExecution,
     reload
   } = useAgentConfiguration(companyId, agent?.id);
+
+  // Load context data based on agent requirements
+  useEffect(() => {
+    const loadAgentContextData = async () => {
+      if (!companyId || !agent) return;
+      
+      setContextLoading(true);
+      try {
+        const requirements = getAgentDataRequirements(agent.internal_code);
+        
+        // Load data in parallel based on requirements
+        const [strategyResult, audiencesResult, brandingResult] = await Promise.all([
+          requirements.needsStrategy
+            ? supabase.from('company_strategy').select('*').eq('company_id', companyId).maybeSingle()
+            : Promise.resolve({ data: null }),
+          requirements.needsAudiences
+            ? supabase.from('company_audiences').select('*').eq('company_id', companyId).eq('is_active', true)
+            : Promise.resolve({ data: [] }),
+          requirements.needsBranding
+            ? supabase.from('company_branding').select('*').eq('company_id', companyId).maybeSingle()
+            : Promise.resolve({ data: null })
+        ]);
+        
+        setStrategyData(strategyResult.data);
+        setAudiencesData(audiencesResult.data || []);
+        setBrandingData(brandingResult.data);
+      } catch (error) {
+        console.error('Error loading agent context data:', error);
+      } finally {
+        setContextLoading(false);
+      }
+    };
+    
+    if (isOpen) {
+      loadAgentContextData();
+    }
+  }, [companyId, agent, isOpen]);
 
   // Check if agent needs initial configuration
   const needsConfiguration = !configLoading && !configuration && agent?.input_schema;
@@ -110,6 +154,17 @@ export const AgentInteractionPanel = ({
     const startTime = Date.now();
     
     try {
+      // Load company data for payload construction
+      const { data: companyData, error: companyError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', companyId)
+        .single();
+
+      if (companyError) {
+        console.error('Error loading company data:', companyError);
+      }
+
       // Log the execution start
       const { data: logEntry, error: logError } = await supabase
         .from('agent_usage_log')
@@ -126,14 +181,23 @@ export const AgentInteractionPanel = ({
 
       if (logError) throw logError;
 
-      // Execute the edge function
+      // Build payload using the mapper with full company context
+      const agentPayload = buildAgentPayload(agent.internal_code, {
+        company: companyData,
+        strategy: strategyData,
+        audiences: audiencesData,
+        branding: brandingData,
+        configuration: configuration?.configuration || {},
+        userId: userId,
+        language: i18n.language || 'es'
+      });
+
+      // Execute the edge function with properly constructed payload
       const { data, error } = await supabase.functions.invoke(agent.edge_function_name, {
         body: {
-          companyId,
-          userId,
+          ...agentPayload,
           agentId: agent.id,
-          logId: logEntry.id,
-          configuration: configuration?.configuration || {}
+          logId: logEntry.id
         }
       });
 

@@ -192,12 +192,48 @@
       "analytics": "Analítica",
       "publishing": "Publicación",
       "branding": "Branding",
-      "assistant": "Asistente"
+      "assistant": "Asistente",
+      "strategy": "Estrategia",
+      "learning": "Aprendizaje"
     },
     "usage": {
       "totalExecutions": "Ejecuciones totales",
       "creditsUsed": "Créditos usados",
       "thisMonth": "Este mes"
+    },
+    "names": {
+      "LINKEDIN_ANALYST": "Analista de LinkedIn",
+      "INSTAGRAM_ANALYST": "Analista de Instagram",
+      "FACEBOOK_ANALYST": "Analista de Facebook",
+      "TIKTOK_ANALYST": "Analista de TikTok",
+      "BUSINESS_STRATEGIST": "Estratega de Negocio",
+      "CAMPAIGN_GENERATOR": "Generador de Campañas",
+      "REEL_CREATOR": "Creador de Reels",
+      "TEXT_OPTIMIZER": "Optimizador de Texto",
+      "CONTENT_GENERATOR": "Generador de Contenido",
+      "AUDIENCE_INTELLIGENCE": "Inteligencia de Audiencia",
+      "SEMANTIC_ANALYZER": "Analizador Semántico",
+      "PREMIUM_INSIGHTS": "Insights Premium",
+      "LEARNING_TUTOR": "Tutor de Academia",
+      "NBA_ENGINE": "Motor de Recomendaciones",
+      "SOCIAL_ANALYZER": "Analizador Social"
+    },
+    "descriptions": {
+      "LINKEDIN_ANALYST": "Analiza tus posts de LinkedIn y genera insights de engagement profesional",
+      "INSTAGRAM_ANALYST": "Analiza tu contenido de Instagram y optimiza tu estrategia visual",
+      "FACEBOOK_ANALYST": "Analiza tu presencia en Facebook y mejora tu alcance",
+      "TIKTOK_ANALYST": "Analiza tus videos de TikTok y optimiza viralidad",
+      "BUSINESS_STRATEGIST": "Genera misión, visión y propuesta de valor para tu empresa",
+      "CAMPAIGN_GENERATOR": "Crea campañas de marketing completas con IA",
+      "REEL_CREATOR": "Genera scripts y storyboards para reels virales",
+      "TEXT_OPTIMIZER": "Mejora cualquier texto con IA manteniendo tu voz de marca",
+      "CONTENT_GENERATOR": "Genera contenido libre basado en prompts personalizados",
+      "AUDIENCE_INTELLIGENCE": "Análisis profundo de tu audiencia con segmentación avanzada",
+      "SEMANTIC_ANALYZER": "Análisis semántico avanzado de tu contenido",
+      "PREMIUM_INSIGHTS": "Insights avanzados con análisis predictivo",
+      "LEARNING_TUTOR": "Tu tutor personalizado de la Academia Buildera",
+      "NBA_ENGINE": "Genera acciones recomendadas basadas en tu contexto",
+      "SOCIAL_ANALYZER": "Análisis unificado de todas tus redes sociales"
     }
   },
   "agentCategories": {
@@ -206,7 +242,9 @@
     "analytics": "Analytics",
     "branding": "Branding",
     "assistant": "Asistente",
-    "publishing": "Publicación"
+    "publishing": "Publicación",
+    "marketing": "Marketing",
+    "learning": "Aprendizaje"
   },
   "credits": "créditos",
   "execute": "Ejecutar",

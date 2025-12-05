@@ -192,12 +192,48 @@
       "analytics": "Análise",
       "publishing": "Publicação",
       "branding": "Branding",
-      "assistant": "Assistente"
+      "assistant": "Assistente",
+      "strategy": "Estratégia",
+      "learning": "Aprendizado"
     },
     "usage": {
       "totalExecutions": "Execuções totais",
       "creditsUsed": "Créditos usados",
       "thisMonth": "Este mês"
+    },
+    "names": {
+      "LINKEDIN_ANALYST": "Analista de LinkedIn",
+      "INSTAGRAM_ANALYST": "Analista de Instagram",
+      "FACEBOOK_ANALYST": "Analista de Facebook",
+      "TIKTOK_ANALYST": "Analista de TikTok",
+      "BUSINESS_STRATEGIST": "Estrategista de Negócios",
+      "CAMPAIGN_GENERATOR": "Gerador de Campanhas",
+      "REEL_CREATOR": "Criador de Reels",
+      "TEXT_OPTIMIZER": "Otimizador de Texto",
+      "CONTENT_GENERATOR": "Gerador de Conteúdo",
+      "AUDIENCE_INTELLIGENCE": "Inteligência de Audiência",
+      "SEMANTIC_ANALYZER": "Analisador Semântico",
+      "PREMIUM_INSIGHTS": "Insights Premium",
+      "LEARNING_TUTOR": "Tutor da Academia",
+      "NBA_ENGINE": "Motor de Recomendações",
+      "SOCIAL_ANALYZER": "Analisador Social"
+    },
+    "descriptions": {
+      "LINKEDIN_ANALYST": "Analise seus posts do LinkedIn e gere insights de engajamento profissional",
+      "INSTAGRAM_ANALYST": "Analise seu conteúdo do Instagram e otimize sua estratégia visual",
+      "FACEBOOK_ANALYST": "Analise sua presença no Facebook e melhore seu alcance",
+      "TIKTOK_ANALYST": "Analise seus vídeos do TikTok e otimize a viralidade",
+      "BUSINESS_STRATEGIST": "Gere missão, visão e proposta de valor para sua empresa",
+      "CAMPAIGN_GENERATOR": "Crie campanhas de marketing completas com IA",
+      "REEL_CREATOR": "Gere scripts e storyboards para reels virais",
+      "TEXT_OPTIMIZER": "Melhore qualquer texto com IA mantendo a voz da sua marca",
+      "CONTENT_GENERATOR": "Gere conteúdo livre com base em prompts personalizados",
+      "AUDIENCE_INTELLIGENCE": "Análise profunda da sua audiência com segmentação avançada",
+      "SEMANTIC_ANALYZER": "Análise semântica avançada do seu conteúdo",
+      "PREMIUM_INSIGHTS": "Insights avançados com análise preditiva",
+      "LEARNING_TUTOR": "Seu tutor personalizado da Academia Buildera",
+      "NBA_ENGINE": "Gere ações recomendadas com base no seu contexto",
+      "SOCIAL_ANALYZER": "Análise unificada de todas as suas redes sociais"
     }
   },
   "agentCategories": {
@@ -206,7 +242,9 @@
     "analytics": "Analytics",
     "branding": "Branding",
     "assistant": "Assistente",
-    "publishing": "Publicação"
+    "publishing": "Publicação",
+    "marketing": "Marketing",
+    "learning": "Aprendizado"
   },
   "credits": "créditos",
   "execute": "Executar",

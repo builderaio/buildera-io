@@ -3,6 +3,12 @@
     "profile": "Cargando perfil...",
     "data": "Cargando datos..."
   },
+  "strategy": {
+    "generated": "Estrategia generada",
+    "generatedDesc": "Tu misión, visión y propuesta de valor han sido creados con IA",
+    "generateWithAI": "Generar con IA",
+    "generating": "Generando..."
+  },
   "errors": {
     "profileCreate": "No se pudo crear el perfil del negocio. Intente nuevamente.",
     "profileAccess": "No se pudo obtener la información del perfil.",

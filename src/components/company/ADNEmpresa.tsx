@@ -20,7 +20,8 @@ import {
   Users,
   MapPin,
   Plus,
-  Trash2
+  Trash2,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -212,12 +213,13 @@ const ObjectiveItem = ({
 
 const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const { toast } = useToast();
-  const { t } = useTranslation(['marketing']);
+  const { t } = useTranslation(['marketing', 'company']);
   const [loading, setLoading] = useState(true);
   const [companyData, setCompanyData] = useState<any>(null);
   const [strategyData, setStrategyData] = useState<any>(null);
   const [brandingData, setBrandingData] = useState<any>(null);
   const [objectives, setObjectives] = useState<any[]>([]);
+  const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false);
   const loadedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -414,6 +416,42 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     setObjectives(prev => [...prev, newObj]);
   }, []);
 
+  const generateStrategy = useCallback(async () => {
+    if (!companyData?.id) return;
+    
+    setIsGeneratingStrategy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('company-strategy', {
+        body: { companyId: companyData.id }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.data_stored) {
+        setStrategyData((prev: any) => ({
+          ...prev,
+          mision: data.data_stored.mision || prev?.mision,
+          vision: data.data_stored.vision || prev?.vision,
+          propuesta_valor: data.data_stored.propuesta_valor || prev?.propuesta_valor
+        }));
+      }
+      
+      toast({
+        title: t('company:strategy.generated', 'Estrategia generada'),
+        description: t('company:strategy.generatedDesc', 'Tu misión, visión y propuesta de valor han sido creados con IA')
+      });
+    } catch (error: any) {
+      console.error('Error generating strategy:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo generar la estrategia",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingStrategy(false);
+    }
+  }, [companyData?.id, toast, t]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -517,9 +555,29 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       {/* Estrategia */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Target className="w-5 h-5 text-emerald-600" />
-            Estrategia
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2 text-lg">
+              <Target className="w-5 h-5 text-emerald-600" />
+              Estrategia
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={generateStrategy}
+              disabled={isGeneratingStrategy || !companyData?.id}
+            >
+              {isGeneratingStrategy ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                  {t('company:strategy.generating', 'Generando...')}
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  {t('company:strategy.generateWithAI', 'Generar con IA')}
+                </>
+              )}
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

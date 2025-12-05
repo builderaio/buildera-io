@@ -16,7 +16,10 @@ import {
   ChevronRight,
   Zap,
   BarChart3,
-  FileText
+  FileText,
+  Users,
+  Lightbulb,
+  Hash
 } from "lucide-react";
 import { ExecutionResult } from "@/hooks/useAgentConfiguration";
 import { useToast } from "@/hooks/use-toast";
@@ -120,8 +123,73 @@ export const AgentResultsView = ({
       );
     }
 
-    // Try to render structured content
     const data = result.output_data;
+
+    // Handle content-insights-generator response structure
+    if (data.audience_insights || data.content_ideas) {
+      return (
+        <div className="space-y-4">
+          {data.audience_insights?.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-medium flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                Insights de Audiencia ({data.audience_insights.length})
+              </h4>
+              {data.audience_insights.map((insight: any, idx: number) => (
+                <Card key={idx} className="bg-muted/50">
+                  <CardContent className="p-3">
+                    <p className="font-medium text-sm">{insight.title}</p>
+                    {insight.strategy && (
+                      <p className="text-sm text-muted-foreground mt-1">{insight.strategy}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+          
+          {data.content_ideas?.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-medium flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-amber-500" />
+                Ideas de Contenido ({data.content_ideas.length})
+              </h4>
+              {data.content_ideas.map((idea: any, idx: number) => (
+                <Card key={idx} className="bg-muted/50">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      {idea.platform && <Badge>{idea.platform}</Badge>}
+                      {idea.format && <Badge variant="outline">{idea.format}</Badge>}
+                    </div>
+                    <p className="font-medium text-sm">{idea.title}</p>
+                    {idea.strategy && (
+                      <p className="text-sm text-muted-foreground mt-1">{idea.strategy}</p>
+                    )}
+                    {idea.hashtags?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {idea.hashtags.map((tag: string, i: number) => (
+                          <span key={i} className="text-xs text-blue-500 flex items-center">
+                            <Hash className="w-3 h-3" />{tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+          
+          {data.context_analyzed && (
+            <div className="text-xs text-muted-foreground mt-4 p-2 bg-muted rounded flex items-center gap-2">
+              <BarChart3 className="w-3 h-3" />
+              Análisis: {data.context_analyzed.posts_analyzed || 0} posts, 
+              {' '}{data.context_analyzed.audiences_count || 0} audiencias
+            </div>
+          )}
+        </div>
+      );
+    }
 
     // Handle common output structures
     if (data.content) {

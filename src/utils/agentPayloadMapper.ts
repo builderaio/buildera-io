@@ -335,10 +335,8 @@ export const buildAgentPayload = (
     // ============================================
     case 'INSIGHTS_GENERATOR':
       return {
-        userId,
-        companyId: company.id,
+        user_id: userId,  // snake_case as edge function expects
         platform: configuration?.platform || 'all',
-        analysisType: configuration?.analysis_type || 'general',
         language: language || 'es'
       };
 

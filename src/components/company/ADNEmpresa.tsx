@@ -579,6 +579,60 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Logo Upload */}
+          <div className="flex items-start gap-4">
+            <div className="relative group">
+              <div className="w-20 h-20 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center overflow-hidden bg-muted/30">
+                {companyData?.logo_url ? (
+                  <img 
+                    src={companyData.logo_url} 
+                    alt="Logo" 
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <Building2 className="w-8 h-8 text-muted-foreground/40" />
+                )}
+              </div>
+              <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !companyData?.id) return;
+                    
+                    try {
+                      const fileExt = file.name.split('.').pop();
+                      const fileName = `${companyData.id}/logo.${fileExt}`;
+                      
+                      const { error: uploadError } = await supabase.storage
+                        .from('company-logos')
+                        .upload(fileName, file, { upsert: true });
+                      
+                      if (uploadError) throw uploadError;
+                      
+                      const { data: { publicUrl } } = supabase.storage
+                        .from('company-logos')
+                        .getPublicUrl(fileName);
+                      
+                      await saveField('logo_url', publicUrl);
+                      toast({ title: "✓", description: "Logo actualizado", duration: 1500 });
+                    } catch (error: any) {
+                      console.error('Error uploading logo:', error);
+                      toast({ title: "Error", description: "No se pudo subir el logo", variant: "destructive" });
+                    }
+                  }}
+                />
+                <span className="text-white text-xs">Cambiar</span>
+              </label>
+            </div>
+            <div className="flex-1">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Logo de la empresa</label>
+              <p className="text-xs text-muted-foreground/70">Haz clic en la imagen para cambiar el logo</p>
+            </div>
+          </div>
+          
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">

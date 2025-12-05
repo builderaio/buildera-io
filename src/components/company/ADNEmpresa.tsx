@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import BaseConocimiento from "./BaseConocimiento";
+import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { 
   Building2, 
   Target, 
@@ -523,7 +524,16 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Misión</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-muted-foreground">Misión</label>
+              <EraOptimizerButton
+                currentText={strategyData?.mision || ''}
+                fieldType="misión empresarial"
+                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
+                onOptimized={(text) => saveField('mision', text, 'company_strategy')}
+                size="sm"
+              />
+            </div>
             <AutoSaveField
               value={strategyData?.mision || ''}
               onSave={(v) => saveField('mision', v, 'company_strategy')}
@@ -532,7 +542,16 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Visión</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-muted-foreground">Visión</label>
+              <EraOptimizerButton
+                currentText={strategyData?.vision || ''}
+                fieldType="visión empresarial"
+                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
+                onOptimized={(text) => saveField('vision', text, 'company_strategy')}
+                size="sm"
+              />
+            </div>
             <AutoSaveField
               value={strategyData?.vision || ''}
               onSave={(v) => saveField('vision', v, 'company_strategy')}
@@ -541,7 +560,16 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Propuesta de Valor</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-muted-foreground">Propuesta de Valor</label>
+              <EraOptimizerButton
+                currentText={strategyData?.propuesta_valor || ''}
+                fieldType="propuesta de valor"
+                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
+                onOptimized={(text) => saveField('propuesta_valor', text, 'company_strategy')}
+                size="sm"
+              />
+            </div>
             <AutoSaveField
               value={strategyData?.propuesta_valor || ''}
               onSave={(v) => saveField('propuesta_valor', v, 'company_strategy')}
@@ -601,7 +629,16 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Identidad Visual</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-muted-foreground">Identidad Visual</label>
+              <EraOptimizerButton
+                currentText={brandingData?.visual_identity || ''}
+                fieldType="identidad visual de marca"
+                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
+                onOptimized={(text) => saveField('visual_identity', text, 'company_branding')}
+                size="sm"
+              />
+            </div>
             <AutoSaveField
               value={brandingData?.visual_identity || ''}
               onSave={(v) => saveField('visual_identity', v, 'company_branding')}
@@ -610,7 +647,16 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">Voz de Marca</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-muted-foreground">Voz de Marca</label>
+              <EraOptimizerButton
+                currentText={typeof brandingData?.brand_voice === 'object' ? JSON.stringify(brandingData?.brand_voice) : (brandingData?.brand_voice || '')}
+                fieldType="voz de marca"
+                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
+                onOptimized={(text) => saveField('brand_voice', text, 'company_branding')}
+                size="sm"
+              />
+            </div>
             <AutoSaveField
               value={typeof brandingData?.brand_voice === 'object' ? JSON.stringify(brandingData?.brand_voice) : (brandingData?.brand_voice || '')}
               onSave={(v) => saveField('brand_voice', v, 'company_branding')}

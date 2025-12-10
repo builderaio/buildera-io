@@ -1,22 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Play, RotateCcw, AlertTriangle, FlaskConical, Building2, Target, Users, Palette } from "lucide-react";
+import { Play, RotateCcw, AlertTriangle, FlaskConical, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SandboxResultsViewer } from "./SandboxResultsViewer";
-import { 
-  DUMMY_COMPANY, 
-  DUMMY_STRATEGY, 
-  DUMMY_AUDIENCES, 
-  DUMMY_BRANDING,
-  getAllDummyData 
-} from "./SandboxDummyData";
+import { SandboxInputGenerator, extractVariables, getDefaultValue } from "./SandboxInputGenerator";
 
 interface AgentSandboxProps {
   agentConfig: {
@@ -71,17 +62,30 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<SandboxResult | null>(null);
   
-  // Editable dummy data
-  const [companyData, setCompanyData] = useState(JSON.stringify(DUMMY_COMPANY, null, 2));
-  const [strategyData, setStrategyData] = useState(JSON.stringify(DUMMY_STRATEGY, null, 2));
-  const [audiencesData, setAudiencesData] = useState(JSON.stringify(DUMMY_AUDIENCES, null, 2));
-  const [brandingData, setBrandingData] = useState(JSON.stringify(DUMMY_BRANDING, null, 2));
+  // Dynamic input values based on payload_template
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
+
+  // Initialize default values when payload_template changes
+  useEffect(() => {
+    if (agentConfig.payload_template) {
+      const variables = extractVariables(agentConfig.payload_template);
+      const defaults: Record<string, string> = {};
+      variables.forEach(v => {
+        defaults[v.path] = getDefaultValue(v.path);
+      });
+      setInputValues(defaults);
+    }
+  }, [agentConfig.payload_template]);
 
   const resetToDefaults = () => {
-    setCompanyData(JSON.stringify(DUMMY_COMPANY, null, 2));
-    setStrategyData(JSON.stringify(DUMMY_STRATEGY, null, 2));
-    setAudiencesData(JSON.stringify(DUMMY_AUDIENCES, null, 2));
-    setBrandingData(JSON.stringify(DUMMY_BRANDING, null, 2));
+    if (agentConfig.payload_template) {
+      const variables = extractVariables(agentConfig.payload_template);
+      const defaults: Record<string, string> = {};
+      variables.forEach(v => {
+        defaults[v.path] = getDefaultValue(v.path);
+      });
+      setInputValues(defaults);
+    }
     setResult(null);
     toast({ title: "Datos reseteados a valores predeterminados" });
   };
@@ -100,47 +104,42 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
     }
     
     if (!agentConfig.payload_template) {
-      errors.push("Payload Template no definido");
+      errors.push("Payload Template no definido - configúralo en la pestaña 'Payload'");
     }
     
     return errors;
   };
 
-  const parseJsonSafely = (jsonString: string, fieldName: string): any => {
-    try {
-      return JSON.parse(jsonString);
-    } catch (e) {
-      throw new Error(`Error parseando ${fieldName}: ${e}`);
+  const interpolatePayload = (): Record<string, any> => {
+    if (!agentConfig.payload_template) {
+      return {};
     }
-  };
 
-  const interpolateTemplate = (template: string, context: Record<string, any>): Record<string, any> => {
-    let result = template;
+    let template = agentConfig.payload_template;
     
-    // Replace {{variable.path}} with actual values
+    // Replace {{variable.path}} with actual values from inputValues
     const regex = /\{\{([^}]+)\}\}/g;
-    result = result.replace(regex, (match, path) => {
-      const keys = path.trim().split('.');
-      let value: any = context;
+    template = template.replace(regex, (match, path) => {
+      const trimmedPath = path.trim();
+      const value = inputValues[trimmedPath];
       
-      for (const key of keys) {
-        if (value && typeof value === 'object' && key in value) {
-          value = value[key];
-        } else {
-          return match; // Keep original if path not found
+      if (value !== undefined && value !== '') {
+        // Check if value looks like JSON (object or array)
+        if ((value.startsWith('{') && value.endsWith('}')) || 
+            (value.startsWith('[') && value.endsWith(']'))) {
+          return value;
         }
+        // Escape quotes for string values
+        return JSON.stringify(value).slice(1, -1);
       }
-      
-      if (typeof value === 'object') {
-        return JSON.stringify(value);
-      }
-      return String(value);
+      return match; // Keep original if not found
     });
     
     try {
-      return JSON.parse(result);
-    } catch {
-      return { raw: result };
+      return JSON.parse(template);
+    } catch (e) {
+      console.error('Error parsing interpolated payload:', e);
+      return { raw: template, error: 'Invalid JSON after interpolation' };
     }
   };
 
@@ -175,33 +174,9 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
     try {
       addLog('info', 'Iniciando prueba de sandbox...');
       
-      // Parse dummy data
-      const company = parseJsonSafely(companyData, 'Company');
-      const strategy = parseJsonSafely(strategyData, 'Strategy');
-      const audiences = parseJsonSafely(audiencesData, 'Audiences');
-      const branding = parseJsonSafely(brandingData, 'Branding');
-      
-      addLog('info', 'Datos dummy parseados correctamente');
-
-      // Build context
-      const context = {
-        company,
-        strategy,
-        audiences,
-        branding,
-        user: { id: 'sandbox-user-001', email: 'sandbox@test.com' },
-        language: 'es'
-      };
-
-      // Interpolate payload template
-      let payload: Record<string, any>;
-      if (agentConfig.payload_template) {
-        payload = interpolateTemplate(agentConfig.payload_template, context);
-        addLog('info', 'Payload template interpolado');
-      } else {
-        payload = context;
-        addLog('warn', 'No hay payload template, usando contexto completo');
-      }
+      // Build payload from inputValues
+      const payload = interpolatePayload();
+      addLog('info', `Payload construido con ${Object.keys(inputValues).length} variables`);
 
       addLog('info', `Ejecutando agente tipo: ${agentConfig.agent_type}`);
 
@@ -214,7 +189,11 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
           edge_function_name: agentConfig.edge_function_name,
           n8n_config: agentConfig.n8n_config,
           payload,
-          context
+          context: {
+            inputValues,
+            user: { id: 'sandbox-user-001', email: 'sandbox@test.com' },
+            language: 'es'
+          }
         }
       });
       const webhookTime = Date.now() - webhookStart;
@@ -223,7 +202,7 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
         throw error;
       }
 
-      addLog('info', `Webhook ejecutado en ${webhookTime}ms`);
+      addLog('info', `Ejecutado en ${webhookTime}ms`);
 
       // Process output mappings
       const mappings: SandboxResult['mappings'] = [];
@@ -243,18 +222,27 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
       addLog('info', `Prueba completada en ${totalTime}ms`);
 
       setResult({
-        success: true,
+        success: data?.success !== false,
         input: payload,
         output: data?.output || data || {},
         mappings,
-        logs,
+        logs: [...logs, ...(data?.logs || [])],
         timing: {
           total_ms: totalTime,
           webhook_ms: webhookTime
-        }
+        },
+        error: data?.error
       });
 
-      toast({ title: "Prueba ejecutada exitosamente" });
+      if (data?.success === false) {
+        toast({
+          title: "Prueba completada con errores",
+          description: data?.error || "Ver logs para más detalles",
+          variant: "destructive"
+        });
+      } else {
+        toast({ title: "Prueba ejecutada exitosamente" });
+      }
 
     } catch (error: any) {
       const totalTime = Date.now() - startTime;
@@ -262,7 +250,7 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
       
       setResult({
         success: false,
-        input: {},
+        input: interpolatePayload(),
         output: {},
         mappings: [],
         logs,
@@ -282,6 +270,7 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
 
   const configErrors = validateConfig();
   const canRun = configErrors.length === 0;
+  const hasPayloadTemplate = !!agentConfig.payload_template;
 
   return (
     <div className="space-y-6">
@@ -295,7 +284,7 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
             <div>
               <CardTitle>Sandbox de Pruebas</CardTitle>
               <CardDescription>
-                Prueba tu agente con datos dummy antes de publicarlo. Sin consumir créditos ni afectar datos reales.
+                Prueba tu agente con datos de entrada personalizados. Sin consumir créditos ni afectar datos reales.
               </CardDescription>
             </div>
           </div>
@@ -318,113 +307,68 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Dummy Data Editor */}
+        {/* Dynamic Input Generator */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Datos de Prueba</CardTitle>
-              <Button variant="outline" size="sm" onClick={resetToDefaults}>
+              <CardTitle className="text-lg">Datos de Entrada</CardTitle>
+              <Button variant="outline" size="sm" onClick={resetToDefaults} disabled={!hasPayloadTemplate}>
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Resetear
               </Button>
             </div>
+            {hasPayloadTemplate && (
+              <CardDescription className="text-xs">
+                Campos generados automáticamente desde tu payload_template
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="company" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="company" className="text-xs">
-                  <Building2 className="h-3 w-3 mr-1" />
-                  Empresa
-                </TabsTrigger>
-                <TabsTrigger value="strategy" className="text-xs">
-                  <Target className="h-3 w-3 mr-1" />
-                  Estrategia
-                </TabsTrigger>
-                <TabsTrigger value="audiences" className="text-xs">
-                  <Users className="h-3 w-3 mr-1" />
-                  Audiencias
-                </TabsTrigger>
-                <TabsTrigger value="branding" className="text-xs">
-                  <Palette className="h-3 w-3 mr-1" />
-                  Branding
-                </TabsTrigger>
-              </TabsList>
+            {hasPayloadTemplate ? (
+              <>
+                <div className="max-h-[400px] overflow-y-auto pr-2">
+                  <SandboxInputGenerator
+                    payloadTemplate={agentConfig.payload_template || ''}
+                    values={inputValues}
+                    onChange={setInputValues}
+                  />
+                </div>
 
-              <TabsContent value="company" className="mt-4">
-                <Label className="text-xs text-muted-foreground mb-2 block">
-                  Datos de la empresa (JSON)
-                </Label>
-                <Textarea
-                  value={companyData}
-                  onChange={(e) => setCompanyData(e.target.value)}
-                  className="font-mono text-xs h-[300px]"
-                  placeholder="JSON de datos de empresa..."
-                />
-              </TabsContent>
-
-              <TabsContent value="strategy" className="mt-4">
-                <Label className="text-xs text-muted-foreground mb-2 block">
-                  Datos de estrategia (JSON)
-                </Label>
-                <Textarea
-                  value={strategyData}
-                  onChange={(e) => setStrategyData(e.target.value)}
-                  className="font-mono text-xs h-[300px]"
-                  placeholder="JSON de estrategia..."
-                />
-              </TabsContent>
-
-              <TabsContent value="audiences" className="mt-4">
-                <Label className="text-xs text-muted-foreground mb-2 block">
-                  Datos de audiencias (JSON)
-                </Label>
-                <Textarea
-                  value={audiencesData}
-                  onChange={(e) => setAudiencesData(e.target.value)}
-                  className="font-mono text-xs h-[300px]"
-                  placeholder="JSON de audiencias..."
-                />
-              </TabsContent>
-
-              <TabsContent value="branding" className="mt-4">
-                <Label className="text-xs text-muted-foreground mb-2 block">
-                  Datos de branding (JSON)
-                </Label>
-                <Textarea
-                  value={brandingData}
-                  onChange={(e) => setBrandingData(e.target.value)}
-                  className="font-mono text-xs h-[300px]"
-                  placeholder="JSON de branding..."
-                />
-              </TabsContent>
-            </Tabs>
-
-            {/* Run Button */}
-            <div className="mt-4 pt-4 border-t">
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={runSandboxTest}
-                disabled={!canRun || isRunning}
-              >
-                {isRunning ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Ejecutando...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Ejecutar Prueba
-                  </>
-                )}
-              </Button>
-              {!canRun && (
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  Completa la configuración del agente primero
-                </p>
-              )}
-            </div>
+                {/* Run Button */}
+                <div className="mt-4 pt-4 border-t">
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={runSandboxTest}
+                    disabled={!canRun || isRunning}
+                  >
+                    {isRunning ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Ejecutando...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-2" />
+                        Ejecutar Prueba Real
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="font-medium mb-1">Configura el Payload Template primero</p>
+                  <p className="text-sm text-muted-foreground">
+                    Ve a la pestaña "Payload" y define el template con variables como{' '}
+                    <code className="bg-muted px-1 rounded">{'{{company.name}}'}</code>.
+                    Los campos de entrada se generarán automáticamente.
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
           </CardContent>
         </Card>
 

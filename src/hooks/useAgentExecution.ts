@@ -1,12 +1,14 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { saveAgentParameters } from '@/utils/companyParametersSaver';
 
 interface AgentExecutionResult {
   success: boolean;
   data?: any;
   error?: string;
   execution_time_ms?: number;
+  parametersSaved?: string[];
 }
 
 interface OnboardingWowResult {
@@ -118,8 +120,8 @@ export const useAgentExecution = () => {
 
       if (error) throw error;
 
-      // Registrar uso del agente
-      await supabase.from('agent_usage_log').insert({
+      // Register agent usage
+      const { data: usageLog } = await supabase.from('agent_usage_log').insert({
         user_id: userId,
         company_id: companyId,
         agent_id: agent.id,
@@ -128,12 +130,29 @@ export const useAgentExecution = () => {
         output_summary: `Ejecución de ${agent.name}`,
         execution_time_ms: executionTime,
         status: 'completed'
-      });
+      }).select('id').single();
+
+      // Save agent outputs as reusable parameters
+      let parametersSaved: string[] = [];
+      if (data && typeof data === 'object') {
+        const saveResult = await saveAgentParameters(
+          companyId,
+          agentCode,
+          usageLog?.id || null,
+          data,
+          userId
+        );
+        parametersSaved = saveResult.saved;
+        if (saveResult.saved.length > 0) {
+          console.log(`📦 Saved ${saveResult.saved.length} parameters from ${agentCode}:`, saveResult.saved);
+        }
+      }
 
       return {
         success: true,
         data,
-        execution_time_ms: executionTime
+        execution_time_ms: executionTime,
+        parametersSaved
       };
 
     } catch (error) {

@@ -1729,6 +1729,69 @@ export type Database = {
           },
         ]
       }
+      company_parameters: {
+        Row: {
+          category: string
+          company_id: string
+          created_at: string | null
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_current: boolean | null
+          parameter_key: string
+          parameter_value: Json
+          source_agent_code: string | null
+          source_execution_id: string | null
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          category: string
+          company_id: string
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_current?: boolean | null
+          parameter_key: string
+          parameter_value: Json
+          source_agent_code?: string | null
+          source_execution_id?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_current?: boolean | null
+          parameter_key?: string
+          parameter_value?: Json
+          source_agent_code?: string | null
+          source_execution_id?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_parameters_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_parameters_source_execution_id_fkey"
+            columns: ["source_execution_id"]
+            isOneToOne: false
+            referencedRelation: "agent_usage_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_strategy: {
         Row: {
           company_id: string
@@ -7064,6 +7127,54 @@ export type Database = {
       }
     }
     Views: {
+      company_current_parameters: {
+        Row: {
+          category: string | null
+          company_id: string | null
+          parameter_key: string | null
+          parameter_value: Json | null
+          source_agent_code: string | null
+          source_execution_id: string | null
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          category?: string | null
+          company_id?: string | null
+          parameter_key?: string | null
+          parameter_value?: Json | null
+          source_agent_code?: string | null
+          source_execution_id?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          category?: string | null
+          company_id?: string | null
+          parameter_key?: string | null
+          parameter_value?: Json | null
+          source_agent_code?: string | null
+          source_execution_id?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_parameters_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_parameters_source_execution_id_fkey"
+            columns: ["source_execution_id"]
+            isOneToOne: false
+            referencedRelation: "agent_usage_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expert_public_profiles: {
         Row: {
           bio: string | null

@@ -128,7 +128,6 @@ export const StepReview = ({ teamData }: StepReviewProps) => {
               </div>
               <div className="grid grid-cols-1 gap-3 ml-12">
                 {agents.map((agent, idx) => {
-                  const sfiaLevel = agent.tools_config?.average_sfia_level || 4;
                   return (
                     <motion.div
                       key={agent.id}
@@ -146,9 +145,6 @@ export const StepReview = ({ teamData }: StepReviewProps) => {
                           {agent.instructions}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="bg-primary/10 text-primary">
-                        Nivel {sfiaLevel}
-                      </Badge>
                     </motion.div>
                   );
                 })}

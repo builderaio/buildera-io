@@ -28,8 +28,6 @@ interface PlatformAgent {
   min_plan_required: string;
   model_name: string;
   primary_function: string;
-  sfia_skills: any[];
-  average_sfia_level: number | null;
 }
 
 const CATEGORY_CONFIG: Record<string, { label: string; icon: string; gradient: string }> = {
@@ -349,16 +347,11 @@ const AgentCard = ({ agent, isEnabled, onEnable }: AgentCardProps) => {
             {agent.description || agent.primary_function || 'Agente especializado'}
           </CardDescription>
           
-          <div className="flex items-center justify-between text-sm">
+          <div className="text-sm">
             <div className="flex items-center gap-1 text-muted-foreground">
               <Coins className="w-4 h-4" />
               <span>{agent.credits_per_use} crédito{agent.credits_per_use !== 1 ? 's' : ''}</span>
             </div>
-            {agent.average_sfia_level && (
-              <Badge variant="secondary" className="text-xs">
-                SFIA {agent.average_sfia_level}
-              </Badge>
-            )}
           </div>
 
           {isEnabled ? (

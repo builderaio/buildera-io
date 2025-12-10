@@ -27,8 +27,6 @@ interface PlatformAgent {
   is_active: boolean;
   is_onboarding_agent: boolean;
   model_name: string;
-  sfia_skills: any[];
-  average_sfia_level: number | null;
   created_at: string;
 }
 
@@ -264,15 +262,10 @@ export const UnifiedAgentsLibrary = ({ onEditAgent }: UnifiedAgentsLibraryProps)
                   )}
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
+                <div className="text-sm">
                   <span className="text-muted-foreground">
                     {agent.credits_per_use} crédito{agent.credits_per_use !== 1 ? 's' : ''}
                   </span>
-                  {agent.average_sfia_level && (
-                    <span className="text-muted-foreground">
-                      SFIA: {agent.average_sfia_level}
-                    </span>
-                  )}
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t">

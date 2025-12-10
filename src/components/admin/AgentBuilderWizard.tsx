@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, Save, Bot, Zap, Code, Shield, Database, AlertCircle, Link2, FlaskConical } from "lucide-react";
+import { X, Plus, Save, Bot, Zap, Code, Shield, Database, AlertCircle, Link2, FlaskConical, CheckCircle2, Loader2 } from "lucide-react";
 import { PayloadTemplateEditor } from "./PayloadTemplateEditor";
 import { N8NConfigEditor, N8NConfig } from "./N8NConfigEditor";
 import { OutputMappingsEditor, OutputMapping } from "./OutputMappingsEditor";
 import { AgentSandbox } from "./AgentSandbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+// Helper to generate internal_code from name
+const generateInternalCode = (name: string): string => {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, "") // Remove special chars
+    .trim()
+    .replace(/\s+/g, "_"); // Replace spaces with underscores
+};
 
 interface AgentBuilderWizardProps {
   agentId: string | null;
@@ -45,6 +56,8 @@ const AVAILABLE_MODELS = [
 export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWizardProps) => {
   const [activeTab, setActiveTab] = useState("basic");
   const [loading, setLoading] = useState(false);
+  const [checkingCode, setCheckingCode] = useState(false);
+  const [codeIsUnique, setCodeIsUnique] = useState<boolean | null>(null);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -125,6 +138,61 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
     }>,
   });
 
+  // Check if internal_code is unique
+  const checkCodeUniqueness = useCallback(async (code: string) => {
+    if (!code || code.length < 3) {
+      setCodeIsUnique(null);
+      return;
+    }
+    
+    setCheckingCode(true);
+    try {
+      const { data, error } = await supabase
+        .from("platform_agents")
+        .select("id")
+        .eq("internal_code", code)
+        .neq("id", agentId || "00000000-0000-0000-0000-000000000000")
+        .limit(1);
+      
+      if (error) throw error;
+      setCodeIsUnique(data.length === 0);
+    } catch (error) {
+      console.error("Error checking code uniqueness:", error);
+      setCodeIsUnique(null);
+    } finally {
+      setCheckingCode(false);
+    }
+  }, [agentId]);
+
+  // Auto-generate internal_code when name changes (only for new agents)
+  const handleNameChange = async (newName: string) => {
+    setFormData(prev => {
+      const updates: any = { name: newName };
+      
+      // Only auto-generate for new agents (no agentId)
+      if (!agentId && newName.length > 2) {
+        const generatedCode = generateInternalCode(newName);
+        updates.internal_code = generatedCode;
+        // Debounce the uniqueness check
+        setTimeout(() => checkCodeUniqueness(generatedCode), 300);
+      }
+      
+      return { ...prev, ...updates };
+    });
+  };
+
+  // Check uniqueness when internal_code changes manually
+  useEffect(() => {
+    if (formData.internal_code && !agentId) {
+      const timer = setTimeout(() => {
+        checkCodeUniqueness(formData.internal_code);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else if (agentId) {
+      setCodeIsUnique(true); // Existing agent, assume code is valid
+    }
+  }, [formData.internal_code, agentId, checkCodeUniqueness]);
+
   useEffect(() => {
     if (agentId) {
       loadAgent();
@@ -194,6 +262,26 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate internal_code uniqueness for new agents
+    if (!agentId && codeIsUnique === false) {
+      toast({
+        title: "Código duplicado",
+        description: "El código interno ya existe. Por favor modifícalo.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.internal_code) {
+      toast({
+        title: "Código requerido",
+        description: "El código interno es obligatorio.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -324,25 +412,41 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="internal_code">Código Interno *</Label>
-                  <Input
-                    id="internal_code"
-                    value={formData.internal_code}
-                    onChange={(e) => setFormData({ ...formData, internal_code: e.target.value.toUpperCase().replace(/\s+/g, '_') })}
-                    placeholder="MKTG_STRATEGIST"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Identificador único (ej: MKTG_STRATEGIST)</p>
-                </div>
-                <div>
                   <Label htmlFor="name">Nombre del Agente *</Label>
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => handleNameChange(e.target.value)}
                     placeholder="Estratega de Marketing"
                     required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">El código interno se genera automáticamente</p>
+                </div>
+                <div>
+                  <Label htmlFor="internal_code" className="flex items-center gap-2">
+                    Código Interno
+                    {checkingCode && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                    {!checkingCode && codeIsUnique === true && (
+                      <CheckCircle2 className="h-3 w-3 text-green-500" />
+                    )}
+                    {!checkingCode && codeIsUnique === false && (
+                      <AlertCircle className="h-3 w-3 text-destructive" />
+                    )}
+                  </Label>
+                  <Input
+                    id="internal_code"
+                    value={formData.internal_code}
+                    onChange={(e) => setFormData({ ...formData, internal_code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') })}
+                    placeholder="ESTRATEGA_DE_MARKETING"
+                    className={codeIsUnique === false ? "border-destructive" : ""}
+                    readOnly={!!agentId}
+                  />
+                  {codeIsUnique === false && (
+                    <p className="text-xs text-destructive mt-1">Este código ya existe. Modifícalo manualmente.</p>
+                  )}
+                  {codeIsUnique === true && (
+                    <p className="text-xs text-green-600 mt-1">✓ Código disponible</p>
+                  )}
                 </div>
               </div>
 

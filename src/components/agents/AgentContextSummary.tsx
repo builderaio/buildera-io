@@ -14,12 +14,18 @@ import {
   Share2,
   Sparkles,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Download,
+  Instagram,
+  Linkedin,
+  Facebook,
+  Music2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PlatformAgent } from "@/hooks/usePlatformAgents";
 import { getAgentDataRequirements } from "@/utils/agentPayloadMapper";
+import { SocialDataImportDialog } from "./SocialDataImportDialog";
 
 interface AgentContextSummaryProps {
   agent: PlatformAgent;
@@ -49,6 +55,13 @@ interface ContextStatus {
     connected: string[];
     total: number;
   };
+  socialPosts: {
+    instagram: number;
+    linkedin: number;
+    facebook: number;
+    tiktok: number;
+    total: number;
+  };
 }
 
 type StatusType = 'complete' | 'incomplete' | 'empty';
@@ -64,17 +77,26 @@ export const AgentContextSummary = ({
   
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [contextStatus, setContextStatus] = useState<ContextStatus>({
     strategy: { exists: false, isComplete: false, fields: [] },
     audiences: { exists: false, count: 0, names: [] },
     branding: { exists: false, isComplete: false, hasColors: false, hasVoice: false },
-    social: { connected: [], total: 0 }
+    social: { connected: [], total: 0 },
+    socialPosts: { instagram: 0, linkedin: 0, facebook: 0, tiktok: 0, total: 0 }
   });
 
   const requirements = getAgentDataRequirements(
     agent.internal_code, 
     (agent as any).context_requirements
   );
+
+  // Determine if this agent needs social data (analytical agents)
+  const needsSocialData = [
+    'INSIGHTS_GENERATOR', 'AUDIENCE_ANALYST', 'LINKEDIN_ANALYST', 
+    'INSTAGRAM_ANALYST', 'FACEBOOK_ANALYST', 'TIKTOK_ANALYST', 
+    'SOCIAL_ANALYZER', 'COMPETITIVE_INTEL', 'SEMANTIC_ANALYZER'
+  ].includes(agent.internal_code);
 
   useEffect(() => {
     loadContextData();
@@ -85,13 +107,29 @@ export const AgentContextSummary = ({
     
     setLoading(true);
     try {
-      const [strategyResult, audiencesResult, brandingResult, linkedinResult, fbResult, tiktokResult] = await Promise.all([
+      const [
+        strategyResult, 
+        audiencesResult, 
+        brandingResult, 
+        linkedinResult, 
+        fbResult, 
+        tiktokResult,
+        instagramPostsResult,
+        linkedinPostsResult,
+        facebookPostsResult,
+        tiktokPostsResult
+      ] = await Promise.all([
         supabase.from('company_strategy').select('*').eq('company_id', companyId).maybeSingle(),
         supabase.from('company_audiences').select('id, name').eq('company_id', companyId).eq('is_active', true),
         supabase.from('company_branding').select('*').eq('company_id', companyId).maybeSingle(),
         supabase.from('linkedin_connections').select('id').eq('user_id', userId).maybeSingle(),
         supabase.from('facebook_instagram_connections').select('id').eq('user_id', userId).maybeSingle(),
-        supabase.from('tiktok_connections').select('id').eq('user_id', userId).maybeSingle()
+        supabase.from('tiktok_connections').select('id').eq('user_id', userId).maybeSingle(),
+        // Count posts per platform
+        supabase.from('instagram_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('linkedin_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('facebook_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('tiktok_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId)
       ]);
 
       const strategy = strategyResult.data;
@@ -105,6 +143,15 @@ export const AgentContextSummary = ({
         socialConnected.push('Instagram');
       }
       if (tiktokResult.data) socialConnected.push('TikTok');
+
+      const socialPosts = {
+        instagram: instagramPostsResult.count || 0,
+        linkedin: linkedinPostsResult.count || 0,
+        facebook: facebookPostsResult.count || 0,
+        tiktok: tiktokPostsResult.count || 0,
+        total: (instagramPostsResult.count || 0) + (linkedinPostsResult.count || 0) + 
+               (facebookPostsResult.count || 0) + (tiktokPostsResult.count || 0)
+      };
 
       setContextStatus({
         strategy: {
@@ -130,7 +177,8 @@ export const AgentContextSummary = ({
         social: {
           connected: socialConnected,
           total: socialConnected.length
-        }
+        },
+        socialPosts
       });
     } catch (error) {
       console.error('Error loading context data:', error);
@@ -224,13 +272,16 @@ export const AgentContextSummary = ({
   const socialStatus: StatusType = contextStatus.social.total === 0 ? 'empty' 
     : contextStatus.social.total >= 2 ? 'complete' : 'incomplete';
 
+  const socialDataStatus: StatusType = contextStatus.socialPosts.total === 0 ? 'empty'
+    : contextStatus.socialPosts.total >= 10 ? 'complete' : 'incomplete';
+
   // Filter to only show required context items
   const showStrategy = requirements.needsStrategy;
   const showAudiences = requirements.needsAudiences;
   const showBranding = requirements.needsBranding;
   const showSocial = requirements.needsSocialConnection;
 
-  if (!showStrategy && !showAudiences && !showBranding && !showSocial) {
+  if (!showStrategy && !showAudiences && !showBranding && !showSocial && !needsSocialData) {
     return null; // No context requirements for this agent
   }
 
@@ -243,6 +294,18 @@ export const AgentContextSummary = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* Social Data Import Dialog */}
+        <SocialDataImportDialog
+          open={showImportDialog}
+          onOpenChange={setShowImportDialog}
+          userId={userId}
+          companyId={companyId}
+          onSuccess={() => {
+            loadContextData();
+            onDataGenerated?.();
+          }}
+        />
+
         {/* Strategy */}
         {showStrategy && (
           <div className="flex items-start justify-between p-3 bg-muted/30 rounded-lg">
@@ -417,6 +480,69 @@ export const AgentContextSummary = ({
               <Link to="/company/dashboard?tab=configuracion">
                 <ExternalLink className="w-3 h-3" />
               </Link>
+            </Button>
+          </div>
+        )}
+
+        {/* Social Data (Posts) - for analytical agents */}
+        {needsSocialData && (
+          <div className="flex items-start justify-between p-3 bg-muted/30 rounded-lg">
+            <div className="flex items-start gap-3">
+              {getStatusIcon(socialDataStatus)}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Download className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium text-sm">Datos de redes sociales</span>
+                  {getStatusBadge(socialDataStatus)}
+                </div>
+                
+                {/* Posts breakdown by platform */}
+                <div className="text-xs text-muted-foreground space-y-1 mt-2">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1">
+                      <Instagram className="w-3 h-3" />
+                      <span className={contextStatus.socialPosts.instagram > 0 ? 'text-emerald-600' : ''}>
+                        {contextStatus.socialPosts.instagram} posts
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Linkedin className="w-3 h-3" />
+                      <span className={contextStatus.socialPosts.linkedin > 0 ? 'text-emerald-600' : ''}>
+                        {contextStatus.socialPosts.linkedin} posts
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1">
+                      <Facebook className="w-3 h-3" />
+                      <span className={contextStatus.socialPosts.facebook > 0 ? 'text-emerald-600' : ''}>
+                        {contextStatus.socialPosts.facebook} posts
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Music2 className="w-3 h-3" />
+                      <span className={contextStatus.socialPosts.tiktok > 0 ? 'text-emerald-600' : ''}>
+                        {contextStatus.socialPosts.tiktok} posts
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {contextStatus.socialPosts.total === 0 && (
+                  <p className="text-xs text-amber-600 mt-2">
+                    Importa datos de tus redes para obtener insights precisos
+                  </p>
+                )}
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowImportDialog(true)}
+              className="text-xs h-7"
+            >
+              <Download className="w-3 h-3 mr-1" />
+              Importar
             </Button>
           </div>
         )}

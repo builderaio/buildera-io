@@ -54,37 +54,33 @@ export const QuickAgentsGrid = ({ agents, onAgentClick, onViewAll }: QuickAgents
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-3">
+      <CardContent className="pt-0">
+        <div className="space-y-2">
           {displayAgents.map((agent, index) => (
             <motion.div
               key={agent.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
             >
               <button
-                className="w-full p-3 rounded-xl border bg-card hover:bg-accent/50 transition-all duration-200 text-left group"
+                className="w-full p-3 rounded-lg border bg-card hover:bg-accent/50 transition-all duration-200 text-left group flex items-center gap-3"
                 onClick={() => onAgentClick(agent)}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <AgentIconRenderer icon={agent.icon} size="sm" fallback="🤖" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate" title={agent.name}>{agent.name}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Zap className="w-3 h-3 text-amber-500" />
-                        {agent.credits_per_use || 1} cr
-                      </span>
-                      <Badge variant="secondary" className="text-xs gap-1 px-2 py-0.5">
-                        <Play className="w-3 h-3" />
-                        {t('mando.execute')}
-                      </Badge>
-                    </div>
-                  </div>
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <AgentIconRenderer icon={agent.icon} size="sm" fallback="🤖" />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm">{agent.name}</p>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-amber-500" />
+                    {agent.credits_per_use || 1} cr
+                  </span>
+                </div>
+                <Badge variant="secondary" className="text-xs gap-1 px-2 py-1 shrink-0">
+                  <Play className="w-3 h-3" />
+                  {t('mando.execute')}
+                </Badge>
               </button>
             </motion.div>
           ))}

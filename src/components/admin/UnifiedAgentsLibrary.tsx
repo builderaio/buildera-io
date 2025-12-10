@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Trash2, Search, Bot, Zap, Brain, Power, PowerOff, Star } from "lucide-react";
+import { AgentIconRenderer } from "@/components/agents/AgentIconRenderer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -231,8 +232,8 @@ export const UnifiedAgentsLibrary = ({ onEditAgent }: UnifiedAgentsLibraryProps)
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-xl">
-                      {agent.icon || '🤖'}
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <AgentIconRenderer icon={agent.icon} size="lg" fallback="🤖" />
                     </div>
                     <div>
                       <CardTitle className="text-base">{agent.name}</CardTitle>

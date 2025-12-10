@@ -4,17 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Bot, Play, Zap, ArrowRight } from "lucide-react";
 import { PlatformAgent } from "@/hooks/usePlatformAgents";
 import { motion } from "framer-motion";
+import { AgentIconRenderer } from "@/components/agents/AgentIconRenderer";
 
 interface QuickAgentsGridProps {
   agents: PlatformAgent[];
   onAgentClick: (agent: PlatformAgent) => void;
   onViewAll: () => void;
 }
-
-const isEmoji = (str: string) => {
-  const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u;
-  return emojiRegex.test(str);
-};
 
 export const QuickAgentsGrid = ({ agents, onAgentClick, onViewAll }: QuickAgentsGridProps) => {
   const displayAgents = agents.slice(0, 4);
@@ -71,11 +67,7 @@ export const QuickAgentsGrid = ({ agents, onAgentClick, onViewAll }: QuickAgents
               >
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                    {agent.icon && isEmoji(agent.icon) ? (
-                      <span className="text-lg">{agent.icon}</span>
-                    ) : (
-                      <Bot className="w-5 h-5 text-primary" />
-                    )}
+                    <AgentIconRenderer icon={agent.icon} size="md" fallback="🤖" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">{agent.name}</p>

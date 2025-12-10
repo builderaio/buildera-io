@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Star, Check, Coins, Zap, Brain, Bot, Lock, Sparkles, Settings, Play } from 'lucide-react';
+import { AgentIconRenderer } from '@/components/agents/AgentIconRenderer';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -323,8 +324,8 @@ const AgentCard = ({ agent, isEnabled, onEnable }: AgentCardProps) => {
         
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center text-xl shadow-lg`}>
-              {agent.icon || '🤖'}
+            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${config.gradient} flex items-center justify-center shadow-lg text-white`}>
+              <AgentIconRenderer icon={agent.icon} size="lg" fallback={config.icon} />
             </div>
             <div className="flex-1 min-w-0">
               <CardTitle className="text-lg truncate">{agent.name}</CardTitle>

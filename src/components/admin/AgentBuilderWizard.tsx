@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, Save, Bot, Zap, Code, Brain, Shield, Database, AlertCircle } from "lucide-react";
+import { X, Plus, Save, Bot, Zap, Code, Shield, Database, AlertCircle } from "lucide-react";
 import { PayloadTemplateEditor } from "./PayloadTemplateEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -17,12 +17,6 @@ interface AgentBuilderWizardProps {
   agentId: string | null;
   onSave: () => void;
   onCancel: () => void;
-}
-
-interface SfiaSkill {
-  skill_code: string;
-  level: number;
-  custom_description?: string;
 }
 
 const AGENT_CATEGORIES = [
@@ -81,8 +75,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
     tracing_enabled: false,
     voice_enabled: false,
     
-    // SFIA skills
-    sfia_skills: [] as SfiaSkill[],
+    // Function
     primary_function: "",
     
     // Pricing
@@ -113,8 +106,6 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
       actionUrl: string;
     }>,
   });
-
-  const [newSkill, setNewSkill] = useState({ skill_code: "", level: 3, custom_description: "" });
 
   useEffect(() => {
     if (agentId) {
@@ -155,7 +146,6 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
         guardrails_config: (data.guardrails_config as any) || {},
         tracing_enabled: data.tracing_enabled || false,
         voice_enabled: data.voice_enabled || false,
-        sfia_skills: (data.sfia_skills as any) || [],
         primary_function: data.primary_function || "",
         credits_per_use: data.credits_per_use || 1,
         is_premium: data.is_premium || false,
@@ -174,28 +164,6 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
         variant: "destructive",
       });
     }
-  };
-
-  const calculateAverageLevel = (): number | null => {
-    if (formData.sfia_skills.length === 0) return null;
-    const sum = formData.sfia_skills.reduce((acc, skill) => acc + skill.level, 0);
-    return parseFloat((sum / formData.sfia_skills.length).toFixed(1));
-  };
-
-  const handleAddSfiaSkill = () => {
-    if (!newSkill.skill_code) return;
-    setFormData({
-      ...formData,
-      sfia_skills: [...formData.sfia_skills, { ...newSkill }],
-    });
-    setNewSkill({ skill_code: "", level: 3, custom_description: "" });
-  };
-
-  const handleRemoveSfiaSkill = (index: number) => {
-    setFormData({
-      ...formData,
-      sfia_skills: formData.sfia_skills.filter((_, i) => i !== index),
-    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -228,8 +196,6 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
         guardrails_config: formData.guardrails_config as any,
         tracing_enabled: formData.tracing_enabled,
         voice_enabled: formData.voice_enabled,
-        sfia_skills: formData.sfia_skills as any,
-        average_sfia_level: calculateAverageLevel(),
         primary_function: formData.primary_function,
         credits_per_use: formData.credits_per_use,
         is_premium: formData.is_premium,
@@ -283,7 +249,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
             Básico
@@ -303,10 +269,6 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
           <TabsTrigger value="tools" className="flex items-center gap-2">
             <Code className="h-4 w-4" />
             Herramientas
-          </TabsTrigger>
-          <TabsTrigger value="skills" className="flex items-center gap-2">
-            <Brain className="h-4 w-4" />
-            SFIA
           </TabsTrigger>
           <TabsTrigger value="advanced" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
@@ -927,72 +889,6 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
                   className="font-mono text-xs"
                 />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* SFIA TAB */}
-        <TabsContent value="skills" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mapeo de Habilidades SFIA</CardTitle>
-              <CardDescription>Asigna competencias del marco SFIA al agente</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label>Código SFIA</Label>
-                  <Input
-                    value={newSkill.skill_code}
-                    onChange={(e) => setNewSkill({ ...newSkill, skill_code: e.target.value.toUpperCase() })}
-                    placeholder="MKCA"
-                  />
-                </div>
-                <div>
-                  <Label>Nivel (1-7)</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={7}
-                    value={newSkill.level}
-                    onChange={(e) => setNewSkill({ ...newSkill, level: parseInt(e.target.value) })}
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button type="button" onClick={handleAddSfiaSkill}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {formData.sfia_skills.map((skill, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Badge>{skill.skill_code}</Badge>
-                      <Badge variant="outline">Nivel {skill.level}</Badge>
-                      {skill.custom_description && (
-                        <span className="text-sm text-muted-foreground">{skill.custom_description}</span>
-                      )}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveSfiaSkill(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-
-              {formData.sfia_skills.length > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  Nivel promedio: <strong>{calculateAverageLevel()}</strong>
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>

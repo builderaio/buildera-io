@@ -193,6 +193,67 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
     }
   }, [formData.internal_code, agentId, checkCodeUniqueness]);
 
+  // Handle agent type change - reset irrelevant fields
+  const handleAgentTypeChange = (newType: "static" | "dynamic" | "hybrid" | "n8n") => {
+    const updates: Partial<typeof formData> = { agent_type: newType };
+    
+    // If changing to static or n8n, clear OpenAI SDK specific fields
+    if (newType === 'static' || newType === 'n8n') {
+      updates.use_file_search = false;
+      updates.use_web_search = false;
+      updates.use_code_interpreter = false;
+      updates.voice_enabled = false;
+      updates.supports_handoffs = false;
+      updates.guardrails_config = {};
+      updates.tools_config = [];
+    }
+    
+    // If changing to static from n8n, clear n8n config
+    if (newType === 'static') {
+      updates.n8n_config = {
+        webhook_url: "",
+        http_method: "POST",
+        requires_auth: true,
+        timeout_ms: 300000,
+        input_schema: {},
+        output_mappings: [],
+      };
+    }
+    
+    // If changing to n8n from static, clear edge function
+    if (newType === 'n8n') {
+      updates.edge_function_name = '';
+    }
+    
+    // If changing to dynamic, clear edge function and n8n config
+    if (newType === 'dynamic') {
+      updates.edge_function_name = '';
+      updates.n8n_config = {
+        webhook_url: "",
+        http_method: "POST",
+        requires_auth: true,
+        timeout_ms: 300000,
+        input_schema: {},
+        output_mappings: [],
+      };
+      updates.payload_template = {};
+      updates.context_requirements = { needsStrategy: false, needsAudiences: false, needsBranding: false };
+    }
+    
+    // Reset to valid tab if current tab becomes hidden
+    if (newType === 'dynamic' && (activeTab === 'payload' || activeTab === 'n8n')) {
+      setActiveTab('basic');
+    }
+    if ((newType === 'static' || newType === 'n8n') && activeTab === 'tools') {
+      setActiveTab('basic');
+    }
+    if (newType !== 'n8n' && activeTab === 'n8n') {
+      setActiveTab('basic');
+    }
+    
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
+
   useEffect(() => {
     if (agentId) {
       loadAgent();
@@ -365,7 +426,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="flex w-full flex-wrap gap-1">
           <TabsTrigger value="basic" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
             Básico
@@ -374,24 +435,31 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
             <Zap className="h-4 w-4" />
             Ejecución
           </TabsTrigger>
+          {/* N8N Tab - Only for n8n type */}
           {formData.agent_type === 'n8n' && (
             <TabsTrigger value="n8n" className="flex items-center gap-2">
               <Link2 className="h-4 w-4" />
               N8N
             </TabsTrigger>
           )}
-          <TabsTrigger value="payload" className="flex items-center gap-2">
-            <Database className="h-4 w-4" />
-            Payload
-          </TabsTrigger>
+          {/* Payload Tab - Not for pure dynamic (they use Instructions instead) */}
+          {formData.agent_type !== 'dynamic' && (
+            <TabsTrigger value="payload" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Payload
+            </TabsTrigger>
+          )}
           <TabsTrigger value="prerequisites" className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
             Prereq.
           </TabsTrigger>
-          <TabsTrigger value="tools" className="flex items-center gap-2">
-            <Code className="h-4 w-4" />
-            Herramientas
-          </TabsTrigger>
+          {/* Tools Tab - Only for dynamic/hybrid (OpenAI SDK) */}
+          {(formData.agent_type === 'dynamic' || formData.agent_type === 'hybrid') && (
+            <TabsTrigger value="tools" className="flex items-center gap-2">
+              <Code className="h-4 w-4" />
+              Herramientas
+            </TabsTrigger>
+          )}
           <TabsTrigger value="advanced" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
             Avanzado
@@ -572,7 +640,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
                     <Card
                       key={type.value}
                       className={`cursor-pointer transition-all ${formData.agent_type === type.value ? 'ring-2 ring-primary' : ''}`}
-                      onClick={() => setFormData({ ...formData, agent_type: type.value as any })}
+                      onClick={() => handleAgentTypeChange(type.value as any)}
                     >
                       <CardContent className="p-4 text-center">
                         <span className="text-2xl">{type.icon}</span>
@@ -676,7 +744,8 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
           </TabsContent>
         )}
 
-        {/* PAYLOAD TAB */}
+        {/* PAYLOAD TAB - Only for static, hybrid, n8n */}
+        {formData.agent_type !== 'dynamic' && (
         <TabsContent value="payload" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
@@ -746,6 +815,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* PREREQUISITES TAB */}
         <TabsContent value="prerequisites" className="space-y-4 mt-4">
@@ -1043,7 +1113,8 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
           </Card>
         </TabsContent>
 
-        {/* TOOLS TAB */}
+        {/* TOOLS TAB - Only for dynamic/hybrid */}
+        {(formData.agent_type === 'dynamic' || formData.agent_type === 'hybrid') && (
         <TabsContent value="tools" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
@@ -1117,26 +1188,35 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* ADVANCED TAB */}
         <TabsContent value="advanced" className="space-y-4 mt-4">
           <Card>
             <CardHeader>
               <CardTitle>Configuración Avanzada</CardTitle>
-              <CardDescription>Handoffs, guardrails y otras opciones</CardDescription>
+              <CardDescription>
+                {formData.agent_type === 'static' || formData.agent_type === 'n8n' 
+                  ? 'Tracing y configuración de onboarding' 
+                  : 'Handoffs, guardrails y otras opciones'}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <Label>🔄 Soporta Handoffs</Label>
-                  <p className="text-xs text-muted-foreground">Puede delegar a otros agentes</p>
+              {/* Handoffs - Only for dynamic/hybrid */}
+              {(formData.agent_type === 'dynamic' || formData.agent_type === 'hybrid') && (
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <Label>🔄 Soporta Handoffs</Label>
+                    <p className="text-xs text-muted-foreground">Puede delegar a otros agentes</p>
+                  </div>
+                  <Switch
+                    checked={formData.supports_handoffs}
+                    onCheckedChange={(checked) => setFormData({ ...formData, supports_handoffs: checked })}
+                  />
                 </div>
-                <Switch
-                  checked={formData.supports_handoffs}
-                  onCheckedChange={(checked) => setFormData({ ...formData, supports_handoffs: checked })}
-                />
-              </div>
+              )}
 
+              {/* Tracing - All types */}
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <Label>📊 Tracing Habilitado</Label>
@@ -1148,6 +1228,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
                 />
               </div>
 
+              {/* Onboarding Agent - All types */}
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <Label>🎓 Agente de Onboarding</Label>
@@ -1159,23 +1240,26 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
                 />
               </div>
 
-              <div>
-                <Label>Configuración de Guardrails (JSON)</Label>
-                <Textarea
-                  value={JSON.stringify(formData.guardrails_config, null, 2)}
-                  onChange={(e) => {
-                    try {
-                      const parsed = JSON.parse(e.target.value);
-                      setFormData({ ...formData, guardrails_config: parsed });
-                    } catch {
-                      // Invalid JSON
-                    }
-                  }}
-                  placeholder='{"max_tokens": 4000, "blocked_topics": []}'
-                  rows={4}
-                  className="font-mono text-xs"
-                />
-              </div>
+              {/* Guardrails - Only for dynamic/hybrid */}
+              {(formData.agent_type === 'dynamic' || formData.agent_type === 'hybrid') && (
+                <div>
+                  <Label>Configuración de Guardrails (JSON)</Label>
+                  <Textarea
+                    value={JSON.stringify(formData.guardrails_config, null, 2)}
+                    onChange={(e) => {
+                      try {
+                        const parsed = JSON.parse(e.target.value);
+                        setFormData({ ...formData, guardrails_config: parsed });
+                      } catch {
+                        // Invalid JSON
+                      }
+                    }}
+                    placeholder='{"max_tokens": 4000, "blocked_topics": []}'
+                    rows={4}
+                    className="font-mono text-xs"
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -54,6 +54,15 @@ export interface Branding {
   visual_synthesis?: any;
 }
 
+export interface CompanyParameters {
+  strategy: Record<string, any>;
+  content: Record<string, any>;
+  audience: Record<string, any>;
+  branding: Record<string, any>;
+  analytics: Record<string, any>;
+  competitive: Record<string, any>;
+}
+
 export interface AgentPayloadContext {
   company: Company;
   strategy?: Strategy | null;
@@ -62,6 +71,8 @@ export interface AgentPayloadContext {
   configuration?: Record<string, any>;
   userId?: string;
   language?: string;
+  // Centralized parameters from previous agent executions
+  parameters?: CompanyParameters;
 }
 
 export interface ContextRequirements {
@@ -79,7 +90,7 @@ const interpolateTemplate = (
   template: Record<string, any>,
   context: AgentPayloadContext
 ): Record<string, any> => {
-  const { company, strategy, audiences, branding, configuration, userId, language } = context;
+  const { company, strategy, audiences, branding, configuration, userId, language, parameters } = context;
   
   const contextMap: Record<string, any> = {
     company,
@@ -88,7 +99,10 @@ const interpolateTemplate = (
     branding: branding || {},
     configuration: configuration || {},
     userId,
-    language: language || 'es'
+    language: language || 'es',
+    // Add centralized parameters for template interpolation
+    params: parameters || {},
+    parameters: parameters || {}
   };
 
   const interpolateValue = (value: any): any => {

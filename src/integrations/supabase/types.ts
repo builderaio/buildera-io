@@ -4856,6 +4856,7 @@ export type Database = {
           is_premium: boolean | null
           min_plan_required: string | null
           model_name: string | null
+          n8n_config: Json | null
           n8n_workflow_id: string | null
           name: string
           openai_agent_config: Json | null
@@ -4897,6 +4898,7 @@ export type Database = {
           is_premium?: boolean | null
           min_plan_required?: string | null
           model_name?: string | null
+          n8n_config?: Json | null
           n8n_workflow_id?: string | null
           name: string
           openai_agent_config?: Json | null
@@ -4938,6 +4940,7 @@ export type Database = {
           is_premium?: boolean | null
           min_plan_required?: string | null
           model_name?: string | null
+          n8n_config?: Json | null
           n8n_workflow_id?: string | null
           name?: string
           openai_agent_config?: Json | null

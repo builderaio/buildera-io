@@ -117,6 +117,21 @@ serve(async (req) => {
         result = data;
         outputSummary = 'Edge function executed successfully';
 
+      } else if (agent.agent_type === 'n8n' && agent.n8n_config) {
+        // Execute via n8n webhook using the generic executor
+        const { data, error } = await supabase.functions.invoke('execute-n8n-agent', {
+          body: { 
+            agent_id: agent_id, 
+            input_data, 
+            company_id, 
+            user_id 
+          }
+        });
+
+        if (error) throw error;
+        result = data;
+        outputSummary = `N8N workflow executed. Saved ${data.saved_parameters?.length || 0} parameters.`;
+
       } else if (agent.agent_type === 'dynamic' || agent.agent_type === 'hybrid') {
         // Execute via OpenAI API
         result = await executeOpenAIAgent(agent, input_data, context);

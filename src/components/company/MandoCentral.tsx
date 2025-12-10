@@ -42,27 +42,27 @@ const formatTimeAgo = (dateString: string, t: any): string => {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
   
-  if (diffMins < 1) return t('time.now', 'Ahora');
-  if (diffMins < 60) return t('time.minutesAgo', 'Hace {{count}} min', { count: diffMins });
-  if (diffHours < 24) return t('time.hoursAgo', 'Hace {{count}}h', { count: diffHours });
-  return t('time.daysAgo', 'Hace {{count}}d', { count: diffDays });
+  if (diffMins < 1) return t('time.now');
+  if (diffMins < 60) return t('time.minutesAgo', { count: diffMins });
+  if (diffHours < 24) return t('time.hoursAgo', { count: diffHours });
+  return t('time.daysAgo', { count: diffDays });
 };
 
 // Helper: Get contextual activity message
 const getActivityMessage = (activity: ActivityLog, t: any): string => {
-  const agentName = activity.platform_agents?.name || t('common:agent', 'Agente');
+  const agentName = activity.platform_agents?.name || t('agent');
   
   switch (activity.status) {
     case 'running':
-      return t('activity.running', '{{agent}} ejecutando...', { agent: agentName });
+      return t('activity.running', { agent: agentName });
     case 'completed':
-      return activity.output_summary || t('activity.completed', '{{agent}} completado', { agent: agentName });
+      return activity.output_summary || t('activity.completed', { agent: agentName });
     case 'failed':
       return activity.error_message 
-        ? t('activity.failedWithError', 'Error: {{error}}', { error: activity.error_message })
-        : t('activity.failed', 'Falló: {{agent}}', { agent: agentName });
+        ? t('activity.failedWithError', { error: activity.error_message })
+        : t('activity.failed', { agent: agentName });
     case 'pending':
-      return t('activity.pending', '{{agent}} en cola', { agent: agentName });
+      return t('activity.pending', { agent: agentName });
     default:
       return agentName;
   }
@@ -97,7 +97,7 @@ const getStatusBadgeVariant = (status: string): "default" | "destructive" | "sec
 };
 
 // Helper: Get status badge label
-const getStatusBadgeLabel = (status: string, t: any): string => {
+const getStatusBadgeLabel = (status: string): string => {
   switch (status) {
     case 'completed':
       return '✓';
@@ -112,8 +112,19 @@ const getStatusBadgeLabel = (status: string, t: any): string => {
   }
 };
 
+// Helper: Format date based on locale
+const formatLocalizedDate = (language: string): string => {
+  const localeMap: Record<string, string> = {
+    es: 'es-ES',
+    en: 'en-US',
+    pt: 'pt-BR'
+  };
+  const locale = localeMap[language] || 'en-US';
+  return new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+};
+
 const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
-  const { t } = useTranslation(['common', 'company']);
+  const { t, i18n } = useTranslation(['common', 'company']);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
@@ -210,7 +221,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
-          <p className="text-muted-foreground">Cargando tu panel...</p>
+          <p className="text-muted-foreground">{t('mando.loadingPanel')}</p>
         </div>
       </div>
     );
@@ -218,6 +229,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
 
   const featuredAction = nextBestActions[0];
   const otherActions = nextBestActions.slice(1);
+  const userName = profile?.full_name?.split(' ')[0] || "Usuario";
 
   return (
     <div className="space-y-6 pb-12">
@@ -225,16 +237,16 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">
-            ¡Hola, {profile?.full_name?.split(' ')[0] || "Usuario"}! 👋
+            {t('mando.hello', { name: userName })} 👋
           </h1>
           <p className="text-muted-foreground">
-            {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+            {formatLocalizedDate(i18n.language)}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="h-8 px-3 gap-2">
             <Bot className="w-4 h-4" />
-            {enabledAgentIds.length} agentes
+            {enabledAgentIds.length} {t('mando.agents')}
           </Badge>
           <Badge variant="outline" className="h-8 px-3 gap-2 bg-amber-500/10 border-amber-500/30 text-amber-600">
             <Zap className="w-4 h-4" />
@@ -274,7 +286,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-primary" />
-                  Más recomendaciones
+                  {t('mando.moreRecommendations')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -295,7 +307,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                Actividad Reciente
+                {t('mando.recentActivity')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -321,7 +333,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
                         variant={getStatusBadgeVariant(activity.status)} 
                         className="shrink-0 text-xs px-1.5"
                       >
-                        {getStatusBadgeLabel(activity.status, t)}
+                        {getStatusBadgeLabel(activity.status)}
                       </Badge>
                     </div>
                   ))}
@@ -329,7 +341,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
               ) : (
                 <div className="text-center py-6">
                   <Clock className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
-                  <p className="text-sm text-muted-foreground">No hay actividad reciente</p>
+                  <p className="text-sm text-muted-foreground">{t('mando.noRecentActivity')}</p>
                 </div>
               )}
             </CardContent>
@@ -346,7 +358,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
                   <div className="flex-1">
                     <h3 className="font-semibold">Marketplace</h3>
                     <p className="text-sm text-muted-foreground">
-                      {agents.length - enabledAgentIds.length} agentes disponibles
+                      {agents.length - enabledAgentIds.length} {t('mando.agentsAvailable')}
                     </p>
                   </div>
                 </div>
@@ -355,7 +367,7 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
                   variant="secondary"
                   onClick={() => handleNavigate('marketplace')}
                 >
-                  Explorar
+                  {t('mando.explore')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>

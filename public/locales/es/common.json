@@ -85,6 +85,20 @@
     "english": "English",
     "portuguese": "Português"
   },
+  "time": {
+    "now": "Ahora",
+    "minutesAgo": "Hace {{count}} min",
+    "hoursAgo": "Hace {{count}}h",
+    "daysAgo": "Hace {{count}}d"
+  },
+  "activity": {
+    "running": "{{agent}} ejecutando...",
+    "completed": "{{agent}} completado",
+    "failedWithError": "Error: {{error}}",
+    "failed": "Falló: {{agent}}",
+    "pending": "{{agent}} en cola"
+  },
+  "agent": "Agente",
   "dashboard": {
     "mandoCentral": "Mando Central",
     "adn": "ADN del Negocio",
@@ -99,6 +113,40 @@
     "experts": "Expertos",
     "configuration": "Configuración",
     "myProfile": "Mi Perfil"
+  },
+  "mando": {
+    "hello": "¡Hola, {{name}}!",
+    "loadingPanel": "Cargando tu panel...",
+    "agents": "agentes",
+    "moreRecommendations": "Más recomendaciones",
+    "recentActivity": "Actividad Reciente",
+    "noRecentActivity": "No hay actividad reciente",
+    "agentsAvailable": "agentes disponibles",
+    "explore": "Explorar",
+    "companyState": "Estado de tu Empresa",
+    "completed": "Completado",
+    "allGood": "¡Todo en orden!",
+    "noPendingActions": "No hay acciones pendientes por ahora"
+  },
+  "maturity": {
+    "starter": "Iniciando",
+    "growing": "Creciendo",
+    "established": "Establecido",
+    "scaling": "Escalando"
+  },
+  "areas": {
+    "profile": "Perfil",
+    "strategy": "Estrategia",
+    "content": "Contenido",
+    "agents": "Agentes",
+    "audience": "Audiencia",
+    "social": "Social"
+  },
+  "priority": {
+    "critical": "Urgente",
+    "high": "Importante",
+    "medium": "Recomendado",
+    "low": "Sugerencia"
   },
   "sidebar": {
     "central": "Central",
@@ -380,5 +428,70 @@
     "priorityHigh": "Alta",
     "priorityMedium": "Media",
     "priorityLow": "Baja"
+  },
+  "nba": {
+    "completeProfile": {
+      "title": "Completa tu perfil de empresa",
+      "description": "Tu perfil está incompleto. Los agentes IA necesitan esta información para generar mejores resultados.",
+      "action": "Completar Perfil",
+      "impact": "Mejora un 40% la calidad de las recomendaciones",
+      "time": "5 minutos"
+    },
+    "defineStrategy": {
+      "title": "Define tu estrategia de negocio",
+      "description": "Sin misión, visión u objetivos claros, los agentes no pueden alinear sus resultados con tus metas.",
+      "action": "Definir Estrategia",
+      "impact": "Contenido y estrategias más alineadas",
+      "time": "10 minutos"
+    },
+    "enableAgents": {
+      "title": "Activa tu primer agente IA",
+      "description": "No tienes ningún agente activo. Explora el marketplace y habilita agentes para empezar a automatizar.",
+      "action": "Explorar Agentes",
+      "impact": "Comienza a automatizar tareas",
+      "time": "2 minutos"
+    },
+    "generateInsights": {
+      "title": "Genera insights de contenido",
+      "description": "No tienes insights activos. Los agentes de análisis pueden identificar oportunidades de crecimiento.",
+      "action": "Generar Insights",
+      "impact": "Descubre oportunidades ocultas",
+      "time": "3 minutos"
+    },
+    "connectSocial": {
+      "title": "Conecta tus redes sociales",
+      "description": "Sin redes conectadas, no podemos analizar tu audiencia ni publicar contenido automáticamente.",
+      "action": "Conectar Redes",
+      "impact": "Habilita publicación automática",
+      "time": "5 minutos"
+    },
+    "defineAudiences": {
+      "title": "Define tus audiencias objetivo",
+      "description": "Crear perfiles de audiencia ayuda a los agentes a generar contenido más relevante.",
+      "action": "Crear Audiencia",
+      "impact": "Contenido más personalizado",
+      "time": "8 minutos"
+    },
+    "lowCredits": {
+      "title": "Tus créditos están bajos",
+      "description": "Solo tienes {{credits}} créditos. Considera obtener más para seguir usando tus agentes.",
+      "action": "Obtener Créditos",
+      "impact": "Continúa usando tus agentes",
+      "time": "2 minutos"
+    },
+    "discoverAgents": {
+      "title": "Descubre más agentes",
+      "description": "Hay {{count}} agentes disponibles que podrían ayudarte.",
+      "action": "Ver Marketplace",
+      "impact": "Amplía tus capacidades",
+      "time": "5 minutos"
+    },
+    "startLearning": {
+      "title": "Aprende a sacar el máximo provecho",
+      "description": "La Academia Buildera tiene cursos gratuitos para dominar la plataforma.",
+      "action": "Ir a Academia",
+      "impact": "Mejora tus habilidades",
+      "time": "15 minutos"
+    }
   }
 }

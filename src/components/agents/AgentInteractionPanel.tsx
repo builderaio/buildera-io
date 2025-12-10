@@ -9,9 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Zap, Star, Play, Clock, CheckCircle2, AlertCircle, Loader2, ArrowRight, Settings, History, Calendar } from "lucide-react";
 import { PlatformAgent } from "@/hooks/usePlatformAgents";
 import { useAgentConfiguration, ScheduleConfig } from "@/hooks/useAgentConfiguration";
+import { useAgentPrerequisites } from "@/hooks/useAgentPrerequisites";
 import { AgentConfigurationWizard } from "./AgentConfigurationWizard";
 import { AgentResultsView } from "./AgentResultsView";
 import { AgentScheduleManager } from "./AgentScheduleManager";
+import { AgentPrerequisitesAlert } from "./AgentPrerequisitesAlert";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { buildAgentPayload, getAgentDataRequirements } from "@/utils/agentPayloadMapper";
@@ -82,6 +84,13 @@ export const AgentInteractionPanel = ({
     recordExecution,
     reload
   } = useAgentConfiguration(companyId, agent?.id);
+
+  // Check agent prerequisites
+  const prerequisiteStatus = useAgentPrerequisites(
+    agent?.internal_code || null,
+    companyId || null,
+    userId || null
+  );
 
   // Load context data based on agent requirements
   useEffect(() => {
@@ -387,6 +396,9 @@ export const AgentInteractionPanel = ({
               </TabsList>
 
               <TabsContent value="execute" className="space-y-4 mt-4">
+                {/* Prerequisites Alert */}
+                <AgentPrerequisitesAlert status={prerequisiteStatus} onClose={onClose} />
+
                 {/* Current Configuration */}
                 {configuration && (
                   <Card>
@@ -417,7 +429,7 @@ export const AgentInteractionPanel = ({
                 <Button 
                   className="w-full h-12 text-lg"
                   onClick={handleExecute}
-                  disabled={executing || !hasEnoughCredits || configLoading}
+                  disabled={executing || !hasEnoughCredits || configLoading || !prerequisiteStatus.canExecute}
                 >
                   {executing ? (
                     <>

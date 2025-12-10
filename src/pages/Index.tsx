@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 
 import Hero from "@/components/Hero";
+import AgentShowcase from "@/components/home/AgentShowcase";
+import HowItWorks from "@/components/home/HowItWorks";
 import ValueHighlights from "@/components/home/ValueHighlights";
-import ProblemSolution from "@/components/ProblemSolution";
-import EcosystemSolution from "@/components/home/EcosystemSolution";
+import AgentsInAction from "@/components/home/AgentsInAction";
 import UseCases from "@/components/UseCases";
+import EcosystemSolution from "@/components/home/EcosystemSolution";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -33,10 +35,12 @@ const Index = () => {
       <Header />
       <main>
         <Hero />
+        <AgentShowcase />
+        <HowItWorks />
         <ValueHighlights />
-        <ProblemSolution />
-        <EcosystemSolution />
+        <AgentsInAction />
         <UseCases />
+        <EcosystemSolution />
         <FinalCTA />
       </main>
       <Footer />

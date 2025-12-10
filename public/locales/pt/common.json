@@ -59,6 +59,11 @@
     "previous": "Anterior",
     "finish": "Finalizar"
   },
+  "tabs": {
+    "execute": "Executar",
+    "results": "Resultados",
+    "schedule": "Agendar"
+  },
   "status": {
     "loading": "Carregando...",
     "saving": "Salvando...",

@@ -384,16 +384,16 @@ export const AgentInteractionPanel = ({
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="execute" className="flex items-center gap-2">
                   <Play className="w-4 h-4" />
-                  Ejecutar
+                  {t('common:tabs.execute', 'Ejecutar')}
                 </TabsTrigger>
                 <TabsTrigger value="results" className="flex items-center gap-2">
                   <History className="w-4 h-4" />
-                  Resultados
+                  {t('common:tabs.results', 'Resultados')}
                 </TabsTrigger>
                 {isRecurringCapable && (
                   <TabsTrigger value="schedule" className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
-                    Programar
+                    {t('common:tabs.schedule', 'Programar')}
                   </TabsTrigger>
                 )}
               </TabsList>

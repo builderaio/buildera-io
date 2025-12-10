@@ -5,6 +5,7 @@ import { Bot, Play, Zap, ArrowRight } from "lucide-react";
 import { PlatformAgent } from "@/hooks/usePlatformAgents";
 import { motion } from "framer-motion";
 import { AgentIconRenderer } from "@/components/agents/AgentIconRenderer";
+import { useTranslation } from "react-i18next";
 
 interface QuickAgentsGridProps {
   agents: PlatformAgent[];
@@ -13,24 +14,25 @@ interface QuickAgentsGridProps {
 }
 
 export const QuickAgentsGrid = ({ agents, onAgentClick, onViewAll }: QuickAgentsGridProps) => {
+  const { t } = useTranslation(['common']);
   const displayAgents = agents.slice(0, 4);
 
   if (displayAgents.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            🤖 Agentes Rápidos
+      <Card className="h-full">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            🤖 {t('mando.quickAgents')}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-6">
-            <Bot className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
-            <p className="text-muted-foreground text-sm mb-4">
-              No tienes agentes activos
+          <div className="text-center py-8">
+            <Bot className="w-14 h-14 mx-auto text-muted-foreground/50 mb-4" />
+            <p className="text-muted-foreground mb-4">
+              {t('mando.noActiveAgents')}
             </p>
             <Button variant="outline" onClick={onViewAll}>
-              Explorar Marketplace
+              {t('mando.exploreMarketplace')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
@@ -40,20 +42,20 @@ export const QuickAgentsGrid = ({ agents, onAgentClick, onViewAll }: QuickAgents
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="h-full">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            🤖 Agentes Rápidos
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            🤖 {t('mando.quickAgents')}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onViewAll}>
-            Ver todos
+          <Button variant="ghost" size="sm" onClick={onViewAll} className="text-sm">
+            {t('mando.viewAll')}
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {displayAgents.map((agent, index) => (
             <motion.div
               key={agent.id}
@@ -62,27 +64,27 @@ export const QuickAgentsGrid = ({ agents, onAgentClick, onViewAll }: QuickAgents
               transition={{ delay: index * 0.05 }}
             >
               <button
-                className="w-full p-3 rounded-xl border bg-card hover:bg-accent/50 transition-all duration-200 text-left group"
+                className="w-full p-4 rounded-xl border bg-card hover:bg-accent/50 transition-all duration-200 text-left group"
                 onClick={() => onAgentClick(agent)}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                     <AgentIconRenderer icon={agent.icon} size="md" fallback="🤖" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{agent.name}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Zap className="w-3 h-3 text-amber-500" />
-                      <span className="text-xs text-muted-foreground">
+                    <p className="font-semibold text-sm leading-tight line-clamp-2">{agent.name}</p>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <Zap className="w-4 h-4 text-amber-500" />
+                      <span className="text-sm text-muted-foreground">
                         {agent.credits_per_use || 1} cr
                       </span>
                     </div>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center justify-end">
-                  <Badge variant="secondary" className="text-xs gap-1">
-                    <Play className="w-3 h-3" />
-                    Ejecutar
+                <div className="mt-3 flex items-center justify-end">
+                  <Badge variant="secondary" className="text-sm gap-1.5 px-3 py-1">
+                    <Play className="w-3.5 h-3.5" />
+                    {t('mando.execute')}
                   </Badge>
                 </div>
               </button>

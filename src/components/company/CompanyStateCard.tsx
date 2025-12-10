@@ -12,11 +12,11 @@ interface CompanyStateCardProps {
 const StatusIcon = ({ status }: { status: AreaStatus }) => {
   switch (status) {
     case 'complete':
-      return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+      return <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />;
     case 'partial':
-      return <AlertCircle className="w-4 h-4 text-amber-500" />;
+      return <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />;
     default:
-      return <Circle className="w-4 h-4 text-muted-foreground" />;
+      return <Circle className="w-5 h-5 text-muted-foreground shrink-0" />;
   }
 };
 
@@ -51,14 +51,14 @@ export const CompanyStateCard = ({ state }: CompanyStateCardProps) => {
   
   if (state.loading) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardContent className="p-6">
           <div className="animate-pulse space-y-4">
             <div className="h-4 bg-muted rounded w-1/2" />
             <div className="h-8 bg-muted rounded" />
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-12 bg-muted rounded" />
+                <div key={i} className="h-14 bg-muted rounded" />
               ))}
             </div>
           </div>
@@ -68,44 +68,42 @@ export const CompanyStateCard = ({ state }: CompanyStateCardProps) => {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
+    <Card className="h-full">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
             📊 {t('mando.companyState')}
           </CardTitle>
-          <Badge className={`${maturityColors[state.maturityLevel]} text-white`}>
+          <Badge className={`${maturityColors[state.maturityLevel]} text-white text-sm px-3 py-1`}>
             {maturityEmojis[state.maturityLevel]} {getMaturityLabel(state.maturityLevel)}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5">
         {/* Overall Progress */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{t('mando.completed')}</span>
-            <span className="font-semibold">{state.completionScore}%</span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">{t('mando.completed')}</span>
+            <span className="text-lg font-bold">{state.completionScore}%</span>
           </div>
-          <Progress value={state.completionScore} className="h-2" />
+          <Progress value={state.completionScore} className="h-3" />
         </div>
         
         {/* Areas Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-3">
           {Object.entries(state.areas).map(([key, area]) => {
             return (
               <div
                 key={key}
                 className={`
-                  flex items-center gap-2 p-2 rounded-lg border
+                  flex items-center gap-3 p-3 rounded-xl border
                   ${area.status === 'complete' ? 'bg-emerald-500/10 border-emerald-500/20' :
                     area.status === 'partial' ? 'bg-amber-500/10 border-amber-500/20' :
                     'bg-muted/50 border-border'}
                 `}
               >
-                <span className="text-sm">{areaIcons[key]}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium truncate">{getAreaLabel(key)}</p>
-                </div>
+                <span className="text-lg">{areaIcons[key]}</span>
+                <span className="text-sm font-medium flex-1">{getAreaLabel(key)}</span>
                 <StatusIcon status={area.status} />
               </div>
             );

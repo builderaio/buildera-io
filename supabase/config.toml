@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.execute-n8n-agent]
 verify_jwt = true
+
+[functions.sandbox-agent-executor]
+verify_jwt = false

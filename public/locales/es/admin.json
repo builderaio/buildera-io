@@ -20,5 +20,28 @@
     "updated": "Actualizado exitosamente",
     "deleted": "Eliminado exitosamente",
     "error": "Error en la operación"
+  },
+  "sandbox": {
+    "title": "Sandbox de Pruebas",
+    "description": "Prueba tu agente con datos dummy antes de publicarlo",
+    "dummyData": "Datos de Prueba",
+    "company": "Empresa",
+    "strategy": "Estrategia",
+    "audiences": "Audiencias",
+    "branding": "Branding",
+    "resetDefaults": "Resetear valores",
+    "importReal": "Importar empresa real",
+    "runTest": "Ejecutar Prueba",
+    "running": "Ejecutando...",
+    "input": "Payload Enviado",
+    "output": "Respuesta Recibida",
+    "mappings": "Mapeos a Parámetros",
+    "logs": "Logs de Ejecución",
+    "success": "Agente ejecutado exitosamente",
+    "error": "Error en la ejecución",
+    "noWebhook": "Configura un webhook URL primero",
+    "noPayload": "Define un payload template primero",
+    "copied": "Copiado al portapapeles",
+    "resetComplete": "Datos reseteados a valores predeterminados"
   }
 }

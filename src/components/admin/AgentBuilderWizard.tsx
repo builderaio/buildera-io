@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, Save, Bot, Zap, Code, Shield, Database, AlertCircle, Link2 } from "lucide-react";
+import { X, Plus, Save, Bot, Zap, Code, Shield, Database, AlertCircle, Link2, FlaskConical } from "lucide-react";
 import { PayloadTemplateEditor } from "./PayloadTemplateEditor";
 import { N8NConfigEditor, N8NConfig } from "./N8NConfigEditor";
 import { OutputMappingsEditor, OutputMapping } from "./OutputMappingsEditor";
+import { AgentSandbox } from "./AgentSandbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -276,7 +277,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="basic" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
             Básico
@@ -306,6 +307,10 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
           <TabsTrigger value="advanced" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
             Avanzado
+          </TabsTrigger>
+          <TabsTrigger value="sandbox" className="flex items-center gap-2 text-purple-500">
+            <FlaskConical className="h-4 w-4" />
+            Sandbox
           </TabsTrigger>
         </TabsList>
 
@@ -1069,6 +1074,24 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* SANDBOX TAB */}
+        <TabsContent value="sandbox" className="mt-4">
+          <AgentSandbox 
+            agentConfig={{
+              name: formData.name,
+              agent_type: formData.agent_type,
+              edge_function_name: formData.edge_function_name,
+              n8n_config: formData.n8n_config,
+              payload_template: JSON.stringify(formData.payload_template),
+              context_requirements: {
+                needs_strategy: formData.context_requirements?.needsStrategy,
+                needs_audiences: formData.context_requirements?.needsAudiences,
+                needs_branding: formData.context_requirements?.needsBranding,
+              }
+            }}
+          />
         </TabsContent>
       </Tabs>
 

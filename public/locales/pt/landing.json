@@ -18,6 +18,135 @@
       "badge": "Líderes em automação empresarial"
     }
   },
+  "agentShowcase": {
+    "badge": "Ecossistema de 27 Agentes",
+    "title": "Conheça seus Especialistas de IA",
+    "subtitle": "Uma equipe completa de especialistas virtuais prontos para trabalhar pela sua empresa, sem horários ou limites.",
+    "categories": {
+      "strategy": "Estratégia",
+      "content": "Conteúdo",
+      "analytics": "Analytics",
+      "brand": "Marca"
+    },
+    "agents": {
+      "strategist": {
+        "name": "Estrategista de Marketing",
+        "description": "Gera estratégias completas com missão, visão e proposta de valor alinhadas aos seus objetivos."
+      },
+      "content": {
+        "name": "Criador de Conteúdo",
+        "description": "Produz posts, artigos e conteúdo multimídia adaptado a cada plataforma social."
+      },
+      "calendar": {
+        "name": "Planejador de Calendário",
+        "description": "Organiza seu conteúdo em um calendário estratégico com datas e horários ideais."
+      },
+      "insights": {
+        "name": "Gerador de Insights",
+        "description": "Analisa dados e descobre oportunidades ocultas para impulsionar seu crescimento."
+      },
+      "brand": {
+        "name": "Designer de Marca",
+        "description": "Cria identidade visual coerente com paleta de cores, tipografia e guias de estilo."
+      },
+      "image": {
+        "name": "Criador de Imagens",
+        "description": "Gera imagens profissionais e gráficos para redes sociais e marketing."
+      },
+      "audience": {
+        "name": "Analista de Audiência",
+        "description": "Identifica e segmenta seu público-alvo com dados demográficos e comportamentais."
+      },
+      "optimizer": {
+        "name": "Otimizador de Campanhas",
+        "description": "Melhora o desempenho das suas campanhas com recomendações baseadas em dados."
+      }
+    },
+    "cta": "Ver todos os agentes"
+  },
+  "howItWorks": {
+    "badge": "Simples e Rápido",
+    "title": "Como Funciona?",
+    "subtitle": "Três passos para ativar sua equipe de especialistas de IA e começar a ver resultados.",
+    "timeLabel": "Primeiros resultados em",
+    "steps": {
+      "1": {
+        "title": "Registre sua Empresa",
+        "description": "Insira o nome e site da sua empresa. Nossa IA extrai automaticamente as informações relevantes.",
+        "features": {
+          "1": "Registro em 30 segundos",
+          "2": "Sem configuração complexa",
+          "3": "Extração automática de dados"
+        }
+      },
+      "2": {
+        "title": "IA Gera sua Estratégia",
+        "description": "Três agentes trabalham em paralelo: estrategista, criador de conteúdo e analista geram seu kit inicial.",
+        "features": {
+          "1": "Estratégia de marketing completa",
+          "2": "Primeiros conteúdos prontos",
+          "3": "Insights acionáveis"
+        }
+      },
+      "3": {
+        "title": "Ative e Opere",
+        "description": "Acesse seu dashboard com todos os agentes disponíveis. Ative os que precisar conforme seu plano.",
+        "features": {
+          "1": "27 agentes especializados",
+          "2": "Execução sob demanda",
+          "3": "Resultados mensuráveis"
+        }
+      }
+    }
+  },
+  "agentsInAction": {
+    "badge": "Demo ao Vivo",
+    "title": "Agentes em Ação",
+    "subtitle": "Veja como nossos agentes transformam informações básicas em resultados profissionais.",
+    "inputLabel": "Você diz...",
+    "demos": {
+      "strategist": {
+        "agentName": "Estrategista de Marketing",
+        "input": "Minha empresa vende roupas sustentáveis para jovens urbanos que valorizam o meio ambiente.",
+        "output": {
+          "title": "Missão Gerada",
+          "content": "Transformar a indústria da moda com peças que combinam estilo urbano e responsabilidade ambiental, empoderando uma nova geração de consumidores conscientes.",
+          "tags": {
+            "1": "✓ Visão definida",
+            "2": "✓ Proposta de valor",
+            "3": "✓ Objetivos SMART"
+          }
+        }
+      },
+      "content": {
+        "agentName": "Criador de Conteúdo",
+        "input": "Preciso de um post para Instagram sobre nossa nova coleção de verão.",
+        "output": {
+          "title": "Post Gerado",
+          "content": "☀️ O verão chegou com consciência. Nossa nova coleção #EcoSummer combina algodão orgânico + designs que contam histórias. Cada peça é um voto pelo planeta 🌍",
+          "tags": {
+            "1": "✓ Hashtags otimizadas",
+            "2": "✓ Call-to-action",
+            "3": "✓ Tom de marca"
+          }
+        }
+      },
+      "insights": {
+        "agentName": "Gerador de Insights",
+        "input": "Analise o desempenho das minhas últimas 50 publicações nas redes sociais.",
+        "output": {
+          "title": "Insight Descoberto",
+          "content": "Seus posts com pessoas reais geram 3.2x mais engajamento que os de produto somente. Terças às 19h têm 45% mais alcance. Recomendação: aumentar conteúdo lifestyle.",
+          "tags": {
+            "1": "✓ Padrão identificado",
+            "2": "✓ Horário ideal",
+            "3": "✓ Ação recomendada"
+          }
+        }
+      }
+    },
+    "cta": "Experimentar Grátis Agora"
+  },
   "values": {
     "secure": {
       "title": "Seguro por design",

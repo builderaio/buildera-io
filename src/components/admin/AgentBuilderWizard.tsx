@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, Save, Bot, Zap, Code, Shield, Database, AlertCircle } from "lucide-react";
+import { X, Plus, Save, Bot, Zap, Code, Shield, Database, AlertCircle, Link2 } from "lucide-react";
 import { PayloadTemplateEditor } from "./PayloadTemplateEditor";
+import { N8NConfigEditor, N8NConfig } from "./N8NConfigEditor";
+import { OutputMappingsEditor, OutputMapping } from "./OutputMappingsEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -53,9 +55,19 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
     category: "general",
     
     // Agent type
-    agent_type: "dynamic" as "static" | "dynamic" | "hybrid",
+    agent_type: "dynamic" as "static" | "dynamic" | "hybrid" | "n8n",
     execution_type: "openai_response" as string,
     edge_function_name: "",
+    
+    // N8N Config
+    n8n_config: {
+      webhook_url: "",
+      http_method: "POST" as "GET" | "POST",
+      requires_auth: true,
+      timeout_ms: 300000,
+      input_schema: {},
+      output_mappings: [] as OutputMapping[],
+    } as N8NConfig,
     
     // OpenAI SDK Config
     model_name: "gpt-5-mini-2025-08-07",
@@ -139,6 +151,14 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
         agent_type: (data.agent_type as any) || "dynamic",
         execution_type: data.execution_type || "openai_response",
         edge_function_name: data.edge_function_name || "",
+        n8n_config: (data.n8n_config as any) || {
+          webhook_url: "",
+          http_method: "POST",
+          requires_auth: true,
+          timeout_ms: 300000,
+          input_schema: {},
+          output_mappings: [],
+        },
         model_name: data.model_name || "gpt-5-mini-2025-08-07",
         instructions: data.instructions || "",
         sdk_version: data.sdk_version || "response-api",
@@ -185,8 +205,10 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
         icon: formData.icon,
         category: formData.category,
         agent_type: formData.agent_type,
-        execution_type: formData.agent_type === 'static' ? 'edge_function' : formData.execution_type,
+        execution_type: formData.agent_type === 'static' ? 'edge_function' : 
+                        formData.agent_type === 'n8n' ? 'n8n_workflow' : formData.execution_type,
         edge_function_name: formData.agent_type === 'static' ? formData.edge_function_name : null,
+        n8n_config: formData.agent_type === 'n8n' ? formData.n8n_config : null,
         model_name: formData.model_name,
         instructions: formData.instructions,
         sdk_version: formData.sdk_version,
@@ -254,7 +276,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="basic" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
             Básico
@@ -263,6 +285,12 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
             <Zap className="h-4 w-4" />
             Ejecución
           </TabsTrigger>
+          {formData.agent_type === 'n8n' && (
+            <TabsTrigger value="n8n" className="flex items-center gap-2">
+              <Link2 className="h-4 w-4" />
+              N8N
+            </TabsTrigger>
+          )}
           <TabsTrigger value="payload" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
             Payload
@@ -425,11 +453,12 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
             <CardContent className="space-y-4">
               <div>
                 <Label>Tipo de Agente *</Label>
-                <div className="grid grid-cols-3 gap-4 mt-2">
+                <div className="grid grid-cols-4 gap-4 mt-2">
                   {[
                     { value: 'static', label: 'Estático', desc: 'Ejecuta Edge Function', icon: '⚡' },
                     { value: 'dynamic', label: 'Dinámico', desc: 'OpenAI Agents SDK', icon: '🧠' },
                     { value: 'hybrid', label: 'Híbrido', desc: 'Ambos métodos', icon: '🔄' },
+                    { value: 'n8n', label: 'N8N Workflow', desc: 'Webhook n8n.io', icon: '🔗' },
                   ].map((type) => (
                     <Card
                       key={type.value}
@@ -519,6 +548,24 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* N8N TAB - Only visible when agent_type is n8n */}
+        {formData.agent_type === 'n8n' && (
+          <TabsContent value="n8n" className="space-y-4 mt-4">
+            <N8NConfigEditor
+              config={formData.n8n_config}
+              onChange={(config) => setFormData({ ...formData, n8n_config: config })}
+            />
+            
+            <OutputMappingsEditor
+              mappings={formData.n8n_config.output_mappings || []}
+              onChange={(mappings) => setFormData({
+                ...formData,
+                n8n_config: { ...formData.n8n_config, output_mappings: mappings }
+              })}
+            />
+          </TabsContent>
+        )}
 
         {/* PAYLOAD TAB */}
         <TabsContent value="payload" className="space-y-4 mt-4">

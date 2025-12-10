@@ -20,5 +20,28 @@
     "updated": "Updated successfully",
     "deleted": "Deleted successfully",
     "error": "Operation error"
+  },
+  "sandbox": {
+    "title": "Test Sandbox",
+    "description": "Test your agent with dummy data before publishing",
+    "dummyData": "Test Data",
+    "company": "Company",
+    "strategy": "Strategy",
+    "audiences": "Audiences",
+    "branding": "Branding",
+    "resetDefaults": "Reset values",
+    "importReal": "Import real company",
+    "runTest": "Run Test",
+    "running": "Running...",
+    "input": "Sent Payload",
+    "output": "Received Response",
+    "mappings": "Parameter Mappings",
+    "logs": "Execution Logs",
+    "success": "Agent executed successfully",
+    "error": "Execution error",
+    "noWebhook": "Configure a webhook URL first",
+    "noPayload": "Define a payload template first",
+    "copied": "Copied to clipboard",
+    "resetComplete": "Data reset to default values"
   }
 }

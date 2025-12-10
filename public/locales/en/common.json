@@ -126,7 +126,12 @@
     "companyState": "Your Company State",
     "completed": "Completed",
     "allGood": "All good!",
-    "noPendingActions": "No pending actions for now"
+    "noPendingActions": "No pending actions for now",
+    "quickAgents": "Quick Agents",
+    "noActiveAgents": "You don't have active agents",
+    "exploreMarketplace": "Explore Marketplace",
+    "viewAll": "View all",
+    "execute": "Execute"
   },
   "maturity": {
     "starter": "Starting",

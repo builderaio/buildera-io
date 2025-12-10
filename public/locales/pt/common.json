@@ -126,7 +126,12 @@
     "companyState": "Estado da sua Empresa",
     "completed": "Concluído",
     "allGood": "Tudo certo!",
-    "noPendingActions": "Sem ações pendentes por enquanto"
+    "noPendingActions": "Sem ações pendentes por enquanto",
+    "quickAgents": "Agentes Rápidos",
+    "noActiveAgents": "Você não tem agentes ativos",
+    "exploreMarketplace": "Explorar Marketplace",
+    "viewAll": "Ver todos",
+    "execute": "Executar"
   },
   "maturity": {
     "starter": "Iniciando",

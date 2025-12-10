@@ -18,6 +18,135 @@
       "badge": "Leaders in business automation"
     }
   },
+  "agentShowcase": {
+    "badge": "27-Agent Ecosystem",
+    "title": "Meet Your AI Specialists",
+    "subtitle": "A complete team of virtual experts ready to work for your company, with no schedules or limits.",
+    "categories": {
+      "strategy": "Strategy",
+      "content": "Content",
+      "analytics": "Analytics",
+      "brand": "Brand"
+    },
+    "agents": {
+      "strategist": {
+        "name": "Marketing Strategist",
+        "description": "Generates complete strategies with mission, vision, and value proposition aligned to your goals."
+      },
+      "content": {
+        "name": "Content Creator",
+        "description": "Produces posts, articles, and multimedia content adapted to each social platform."
+      },
+      "calendar": {
+        "name": "Calendar Planner",
+        "description": "Organizes your content into a strategic calendar with optimal dates and times."
+      },
+      "insights": {
+        "name": "Insights Generator",
+        "description": "Analyzes data and discovers hidden opportunities to drive your growth."
+      },
+      "brand": {
+        "name": "Brand Designer",
+        "description": "Creates consistent visual identity with color palette, typography, and style guides."
+      },
+      "image": {
+        "name": "Image Creator",
+        "description": "Generates professional images and graphics for social media and marketing."
+      },
+      "audience": {
+        "name": "Audience Analyst",
+        "description": "Identifies and segments your target audience with demographic and behavioral data."
+      },
+      "optimizer": {
+        "name": "Campaign Optimizer",
+        "description": "Improves your campaign performance with data-driven recommendations."
+      }
+    },
+    "cta": "See all agents"
+  },
+  "howItWorks": {
+    "badge": "Simple and Fast",
+    "title": "How Does It Work?",
+    "subtitle": "Three steps to activate your AI specialist team and start seeing results.",
+    "timeLabel": "First results in",
+    "steps": {
+      "1": {
+        "title": "Register Your Company",
+        "description": "Enter your company name and website. Our AI automatically extracts relevant information.",
+        "features": {
+          "1": "30-second registration",
+          "2": "No complex setup",
+          "3": "Automatic data extraction"
+        }
+      },
+      "2": {
+        "title": "AI Generates Your Strategy",
+        "description": "Three agents work in parallel: strategist, content creator, and analyst generate your starter kit.",
+        "features": {
+          "1": "Complete marketing strategy",
+          "2": "First content ready",
+          "3": "Actionable insights"
+        }
+      },
+      "3": {
+        "title": "Activate and Operate",
+        "description": "Access your dashboard with all available agents. Activate what you need based on your plan.",
+        "features": {
+          "1": "27 specialized agents",
+          "2": "On-demand execution",
+          "3": "Measurable results"
+        }
+      }
+    }
+  },
+  "agentsInAction": {
+    "badge": "Live Demo",
+    "title": "Agents in Action",
+    "subtitle": "Watch how our agents transform basic information into professional results.",
+    "inputLabel": "You say...",
+    "demos": {
+      "strategist": {
+        "agentName": "Marketing Strategist",
+        "input": "My company sells sustainable clothing for urban youth who value the environment.",
+        "output": {
+          "title": "Generated Mission",
+          "content": "Transforming the fashion industry with garments that combine urban style and environmental responsibility, empowering a new generation of conscious consumers.",
+          "tags": {
+            "1": "✓ Vision defined",
+            "2": "✓ Value proposition",
+            "3": "✓ SMART objectives"
+          }
+        }
+      },
+      "content": {
+        "agentName": "Content Creator",
+        "input": "I need an Instagram post about our new summer collection.",
+        "output": {
+          "title": "Generated Post",
+          "content": "☀️ Summer arrived with consciousness. Our new #EcoSummer collection combines organic cotton + designs that tell stories. Each garment is a vote for the planet 🌍",
+          "tags": {
+            "1": "✓ Optimized hashtags",
+            "2": "✓ Call-to-action",
+            "3": "✓ Brand tone"
+          }
+        }
+      },
+      "insights": {
+        "agentName": "Insights Generator",
+        "input": "Analyze the performance of my last 50 social media posts.",
+        "output": {
+          "title": "Discovered Insight",
+          "content": "Your posts with real people generate 3.2x more engagement than product-only ones. Tuesdays at 7PM have 45% more reach. Recommendation: increase lifestyle content.",
+          "tags": {
+            "1": "✓ Pattern identified",
+            "2": "✓ Optimal timing",
+            "3": "✓ Recommended action"
+          }
+        }
+      }
+    },
+    "cta": "Try It Free Now"
+  },
   "values": {
     "secure": {
       "title": "Secure by design",

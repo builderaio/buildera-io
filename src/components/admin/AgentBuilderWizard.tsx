@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, Plus, Save, Bot, Zap, Code, Brain, Shield, Database, AlertCircle } from "lucide-react";
+import { PayloadTemplateEditor } from "./PayloadTemplateEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -613,54 +614,12 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
                 </div>
               </div>
 
-              {/* Payload Template */}
-              <div>
-                <Label className="text-base font-semibold mb-2 block">Template de Payload (JSON)</Label>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Define cómo mapear los datos al payload del edge function. Usa <code className="bg-muted px-1 rounded">{"{{variable.path}}"}</code> para interpolar valores.
-                </p>
-                <div className="bg-muted/50 p-3 rounded-lg mb-3 text-xs font-mono">
-                  <p className="text-muted-foreground mb-2">Variables disponibles:</p>
-                  <ul className="space-y-1">
-                    <li><code>{"{{company.id}}"}</code>, <code>{"{{company.name}}"}</code>, <code>{"{{company.industry_sector}}"}</code></li>
-                    <li><code>{"{{strategy.mision}}"}</code>, <code>{"{{strategy.vision}}"}</code>, <code>{"{{strategy.propuesta_valor}}"}</code></li>
-                    <li><code>{"{{branding.primary_color}}"}</code>, <code>{"{{branding.visual_identity}}"}</code>, <code>{"{{branding.brand_voice}}"}</code></li>
-                    <li><code>{"{{audiences}}"}</code> (array completo), <code>{"{{userId}}"}</code>, <code>{"{{language}}"}</code></li>
-                    <li><code>{"{{configuration.*}}"}</code> (valores configurados por el usuario)</li>
-                  </ul>
-                </div>
-                <Textarea
-                  value={JSON.stringify(formData.payload_template, null, 2) === '{}' ? '' : JSON.stringify(formData.payload_template, null, 2)}
-                  onChange={(e) => {
-                    if (!e.target.value.trim()) {
-                      setFormData({ ...formData, payload_template: {} });
-                      return;
-                    }
-                    try {
-                      const parsed = JSON.parse(e.target.value);
-                      setFormData({ ...formData, payload_template: parsed });
-                    } catch {
-                      // Invalid JSON - keep editing
-                    }
-                  }}
-                  placeholder={`{
-  "companyId": "{{company.id}}",
-  "companyName": "{{company.name}}",
-  "industry": "{{company.industry_sector}}",
-  "propuesta_valor": "{{strategy.propuesta_valor}}",
-  "brand_colors": {
-    "primary": "{{branding.primary_color}}",
-    "secondary": "{{branding.secondary_color}}"
-  },
-  "language": "{{language}}"
-}`}
-                  rows={12}
-                  className="font-mono text-xs"
-                />
-                <p className="text-xs text-muted-foreground mt-2">
-                  💡 Si dejas vacío, se usará el mapeo hardcodeado existente para agentes legacy.
-                </p>
-              </div>
+              {/* Payload Template - Using Visual Editor */}
+              <PayloadTemplateEditor
+                value={formData.payload_template}
+                onChange={(template) => setFormData({ ...formData, payload_template: template })}
+                agentCategory={formData.category}
+              />
             </CardContent>
           </Card>
         </TabsContent>

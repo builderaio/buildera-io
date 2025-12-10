@@ -264,11 +264,12 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
         />
       )}
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - State & Recommendations */}
-        <div className="space-y-6 lg:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Main Grid - Full width sections first, then sidebar */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        {/* Main Column */}
+        <div className="space-y-6 xl:col-span-3">
+          {/* Company State & Quick Agents - larger cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Company State */}
             <CompanyStateCard state={companyState} />
             

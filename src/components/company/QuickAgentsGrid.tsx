@@ -55,7 +55,7 @@ export const QuickAgentsGrid = ({ agents, onAgentClick, onViewAll }: QuickAgents
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {displayAgents.map((agent, index) => (
             <motion.div
               key={agent.id}
@@ -64,28 +64,26 @@ export const QuickAgentsGrid = ({ agents, onAgentClick, onViewAll }: QuickAgents
               transition={{ delay: index * 0.05 }}
             >
               <button
-                className="w-full p-4 rounded-xl border bg-card hover:bg-accent/50 transition-all duration-200 text-left group"
+                className="w-full p-3 rounded-xl border bg-card hover:bg-accent/50 transition-all duration-200 text-left group"
                 onClick={() => onAgentClick(agent)}
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                    <AgentIconRenderer icon={agent.icon} size="md" fallback="🤖" />
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <AgentIconRenderer icon={agent.icon} size="sm" fallback="🤖" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm leading-tight line-clamp-2">{agent.name}</p>
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <Zap className="w-4 h-4 text-amber-500" />
-                      <span className="text-sm text-muted-foreground">
+                    <p className="font-medium text-sm truncate" title={agent.name}>{agent.name}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Zap className="w-3 h-3 text-amber-500" />
                         {agent.credits_per_use || 1} cr
                       </span>
+                      <Badge variant="secondary" className="text-xs gap-1 px-2 py-0.5">
+                        <Play className="w-3 h-3" />
+                        {t('mando.execute')}
+                      </Badge>
                     </div>
                   </div>
-                </div>
-                <div className="mt-3 flex items-center justify-end">
-                  <Badge variant="secondary" className="text-sm gap-1.5 px-3 py-1">
-                    <Play className="w-3.5 h-3.5" />
-                    {t('mando.execute')}
-                  </Badge>
                 </div>
               </button>
             </motion.div>

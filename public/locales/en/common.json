@@ -85,6 +85,20 @@
     "english": "English",
     "portuguese": "Português"
   },
+  "time": {
+    "now": "Now",
+    "minutesAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  },
+  "activity": {
+    "running": "{{agent}} running...",
+    "completed": "{{agent}} completed",
+    "failedWithError": "Error: {{error}}",
+    "failed": "Failed: {{agent}}",
+    "pending": "{{agent}} queued"
+  },
+  "agent": "Agent",
   "dashboard": {
     "mandoCentral": "Command Center",
     "adn": "Business DNA",
@@ -99,6 +113,40 @@
     "experts": "Experts",
     "configuration": "Configuration",
     "myProfile": "My Profile"
+  },
+  "mando": {
+    "hello": "Hello, {{name}}!",
+    "loadingPanel": "Loading your panel...",
+    "agents": "agents",
+    "moreRecommendations": "More recommendations",
+    "recentActivity": "Recent Activity",
+    "noRecentActivity": "No recent activity",
+    "agentsAvailable": "agents available",
+    "explore": "Explore",
+    "companyState": "Your Company State",
+    "completed": "Completed",
+    "allGood": "All good!",
+    "noPendingActions": "No pending actions for now"
+  },
+  "maturity": {
+    "starter": "Starting",
+    "growing": "Growing",
+    "established": "Established",
+    "scaling": "Scaling"
+  },
+  "areas": {
+    "profile": "Profile",
+    "strategy": "Strategy",
+    "content": "Content",
+    "agents": "Agents",
+    "audience": "Audience",
+    "social": "Social"
+  },
+  "priority": {
+    "critical": "Urgent",
+    "high": "Important",
+    "medium": "Recommended",
+    "low": "Suggestion"
   },
   "sidebar": {
     "central": "Central",
@@ -380,5 +428,70 @@
     "priorityHigh": "High",
     "priorityMedium": "Medium",
     "priorityLow": "Low"
+  },
+  "nba": {
+    "completeProfile": {
+      "title": "Complete your company profile",
+      "description": "Your profile is incomplete. AI agents need this information to generate better results.",
+      "action": "Complete Profile",
+      "impact": "Improves recommendation quality by 40%",
+      "time": "5 minutes"
+    },
+    "defineStrategy": {
+      "title": "Define your business strategy",
+      "description": "Without clear mission, vision or objectives, agents cannot align their results with your goals.",
+      "action": "Define Strategy",
+      "impact": "More aligned content and strategies",
+      "time": "10 minutes"
+    },
+    "enableAgents": {
+      "title": "Activate your first AI agent",
+      "description": "You have no active agents. Explore the marketplace and enable agents to start automating.",
+      "action": "Explore Agents",
+      "impact": "Start automating tasks",
+      "time": "2 minutes"
+    },
+    "generateInsights": {
+      "title": "Generate content insights",
+      "description": "You have no active insights. Analysis agents can identify growth opportunities.",
+      "action": "Generate Insights",
+      "impact": "Discover hidden opportunities",
+      "time": "3 minutes"
+    },
+    "connectSocial": {
+      "title": "Connect your social networks",
+      "description": "Without connected networks, we cannot analyze your audience or publish content automatically.",
+      "action": "Connect Networks",
+      "impact": "Enable automatic publishing",
+      "time": "5 minutes"
+    },
+    "defineAudiences": {
+      "title": "Define your target audiences",
+      "description": "Creating audience profiles helps agents generate more relevant content.",
+      "action": "Create Audience",
+      "impact": "More personalized content",
+      "time": "8 minutes"
+    },
+    "lowCredits": {
+      "title": "Your credits are low",
+      "description": "You only have {{credits}} credits. Consider getting more to continue using your agents.",
+      "action": "Get Credits",
+      "impact": "Continue using your agents",
+      "time": "2 minutes"
+    },
+    "discoverAgents": {
+      "title": "Discover more agents",
+      "description": "There are {{count}} agents available that could help you.",
+      "action": "View Marketplace",
+      "impact": "Expand your capabilities",
+      "time": "5 minutes"
+    },
+    "startLearning": {
+      "title": "Learn to get the most out of it",
+      "description": "Buildera Academy has free courses to master the platform.",
+      "action": "Go to Academy",
+      "impact": "Improve your skills",
+      "time": "15 minutes"
+    }
   }
 }

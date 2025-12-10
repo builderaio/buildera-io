@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CompanyState } from './useCompanyState';
 
 export type NBAPriority = 'critical' | 'high' | 'medium' | 'low';
@@ -33,6 +34,8 @@ export const useNextBestAction = ({
   enabledAgentsCount,
   totalAgentsCount,
 }: UseNextBestActionParams): NextBestAction[] => {
+  const { t } = useTranslation('common');
+
   const actions = useMemo(() => {
     const nbas: NextBestAction[] = [];
 
@@ -42,11 +45,11 @@ export const useNextBestAction = ({
         id: 'complete-profile',
         priority: 'critical',
         type: 'profile',
-        title: 'Completa tu perfil de empresa',
-        description: 'Tu perfil está incompleto. Los agentes IA necesitan esta información para generar mejores resultados.',
-        action: { label: 'Completar Perfil', view: 'adn-empresa' },
-        estimatedImpact: 'Mejora un 40% la calidad de las recomendaciones',
-        requiredTime: '5 minutos',
+        title: t('nba.completeProfile.title'),
+        description: t('nba.completeProfile.description'),
+        action: { label: t('nba.completeProfile.action'), view: 'adn-empresa' },
+        estimatedImpact: t('nba.completeProfile.impact'),
+        requiredTime: t('nba.completeProfile.time'),
         icon: '🏢',
       });
     }
@@ -57,11 +60,11 @@ export const useNextBestAction = ({
         id: 'define-strategy',
         priority: 'high',
         type: 'profile',
-        title: 'Define tu estrategia de negocio',
-        description: 'Sin misión, visión u objetivos claros, los agentes no pueden alinear sus resultados con tus metas.',
-        action: { label: 'Definir Estrategia', view: 'adn-empresa' },
-        estimatedImpact: 'Contenido y estrategias más alineadas',
-        requiredTime: '10 minutos',
+        title: t('nba.defineStrategy.title'),
+        description: t('nba.defineStrategy.description'),
+        action: { label: t('nba.defineStrategy.action'), view: 'adn-empresa' },
+        estimatedImpact: t('nba.defineStrategy.impact'),
+        requiredTime: t('nba.defineStrategy.time'),
         icon: '🎯',
       });
     }
@@ -72,11 +75,11 @@ export const useNextBestAction = ({
         id: 'enable-agents',
         priority: 'high',
         type: 'agent',
-        title: 'Activa tu primer agente IA',
-        description: 'No tienes ningún agente activo. Explora el marketplace y habilita agentes para empezar a automatizar.',
-        action: { label: 'Explorar Agentes', view: 'marketplace' },
-        estimatedImpact: 'Comienza a automatizar tareas',
-        requiredTime: '2 minutos',
+        title: t('nba.enableAgents.title'),
+        description: t('nba.enableAgents.description'),
+        action: { label: t('nba.enableAgents.action'), view: 'marketplace' },
+        estimatedImpact: t('nba.enableAgents.impact'),
+        requiredTime: t('nba.enableAgents.time'),
         icon: '🤖',
       });
     }
@@ -87,11 +90,11 @@ export const useNextBestAction = ({
         id: 'generate-insights',
         priority: 'medium',
         type: 'agent',
-        title: 'Genera insights de contenido',
-        description: 'No tienes insights activos. Los agentes de análisis pueden identificar oportunidades de crecimiento.',
-        action: { label: 'Generar Insights', agentId: 'INSIGHTS_GENERATOR' },
-        estimatedImpact: 'Descubre oportunidades ocultas',
-        requiredTime: '3 minutos',
+        title: t('nba.generateInsights.title'),
+        description: t('nba.generateInsights.description'),
+        action: { label: t('nba.generateInsights.action'), agentId: 'INSIGHTS_GENERATOR' },
+        estimatedImpact: t('nba.generateInsights.impact'),
+        requiredTime: t('nba.generateInsights.time'),
         icon: '💡',
       });
     }
@@ -102,11 +105,11 @@ export const useNextBestAction = ({
         id: 'connect-social',
         priority: 'medium',
         type: 'social',
-        title: 'Conecta tus redes sociales',
-        description: 'Sin redes conectadas, no podemos analizar tu audiencia ni publicar contenido automáticamente.',
-        action: { label: 'Conectar Redes', view: 'adn-empresa' },
-        estimatedImpact: 'Habilita publicación automática',
-        requiredTime: '5 minutos',
+        title: t('nba.connectSocial.title'),
+        description: t('nba.connectSocial.description'),
+        action: { label: t('nba.connectSocial.action'), view: 'adn-empresa' },
+        estimatedImpact: t('nba.connectSocial.impact'),
+        requiredTime: t('nba.connectSocial.time'),
         icon: '📱',
       });
     }
@@ -117,11 +120,11 @@ export const useNextBestAction = ({
         id: 'define-audiences',
         priority: 'medium',
         type: 'profile',
-        title: 'Define tus audiencias objetivo',
-        description: 'Crear perfiles de audiencia ayuda a los agentes a generar contenido más relevante.',
-        action: { label: 'Crear Audiencia', view: 'adn-empresa' },
-        estimatedImpact: 'Contenido más personalizado',
-        requiredTime: '8 minutos',
+        title: t('nba.defineAudiences.title'),
+        description: t('nba.defineAudiences.description'),
+        action: { label: t('nba.defineAudiences.action'), view: 'adn-empresa' },
+        estimatedImpact: t('nba.defineAudiences.impact'),
+        requiredTime: t('nba.defineAudiences.time'),
         icon: '👥',
       });
     }
@@ -132,11 +135,11 @@ export const useNextBestAction = ({
         id: 'upgrade-credits',
         priority: availableCredits < 10 ? 'high' : 'medium',
         type: 'subscription',
-        title: 'Tus créditos están bajos',
-        description: `Solo tienes ${availableCredits} créditos. Considera obtener más para seguir usando tus agentes.`,
-        action: { label: 'Obtener Créditos', view: 'configuracion' },
-        estimatedImpact: 'Continúa usando tus agentes',
-        requiredTime: '2 minutos',
+        title: t('nba.lowCredits.title'),
+        description: t('nba.lowCredits.description', { credits: availableCredits }),
+        action: { label: t('nba.lowCredits.action'), view: 'configuracion' },
+        estimatedImpact: t('nba.lowCredits.impact'),
+        requiredTime: t('nba.lowCredits.time'),
         icon: '⚡',
       });
     }
@@ -147,11 +150,11 @@ export const useNextBestAction = ({
         id: 'discover-agents',
         priority: 'low',
         type: 'agent',
-        title: 'Descubre más agentes',
-        description: `Hay ${totalAgentsCount - enabledAgentsCount} agentes disponibles que podrían ayudarte.`,
-        action: { label: 'Ver Marketplace', view: 'marketplace' },
-        estimatedImpact: 'Amplía tus capacidades',
-        requiredTime: '5 minutos',
+        title: t('nba.discoverAgents.title'),
+        description: t('nba.discoverAgents.description', { count: totalAgentsCount - enabledAgentsCount }),
+        action: { label: t('nba.discoverAgents.action'), view: 'marketplace' },
+        estimatedImpact: t('nba.discoverAgents.impact'),
+        requiredTime: t('nba.discoverAgents.time'),
         icon: '🛒',
       });
     }
@@ -162,11 +165,11 @@ export const useNextBestAction = ({
         id: 'start-learning',
         priority: 'low',
         type: 'learning',
-        title: 'Aprende a sacar el máximo provecho',
-        description: 'La Academia Buildera tiene cursos gratuitos para dominar la plataforma.',
-        action: { label: 'Ir a Academia', view: 'academia-buildera' },
-        estimatedImpact: 'Mejora tus habilidades',
-        requiredTime: '15 minutos',
+        title: t('nba.startLearning.title'),
+        description: t('nba.startLearning.description'),
+        action: { label: t('nba.startLearning.action'), view: 'academia-buildera' },
+        estimatedImpact: t('nba.startLearning.impact'),
+        requiredTime: t('nba.startLearning.time'),
         icon: '🎓',
       });
     }
@@ -180,7 +183,7 @@ export const useNextBestAction = ({
     };
 
     return nbas.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
-  }, [companyState, availableCredits, enabledAgentsCount, totalAgentsCount]);
+  }, [companyState, availableCredits, enabledAgentsCount, totalAgentsCount, t]);
 
   return actions;
 };

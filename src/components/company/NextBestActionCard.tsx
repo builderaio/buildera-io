@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles, Clock, TrendingUp } from "lucide-react";
 import { NextBestAction, NBAPriority } from "@/hooks/useNextBestAction";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 interface NextBestActionCardProps {
   action: NextBestAction;
@@ -34,15 +35,10 @@ const priorityStyles: Record<NBAPriority, { bg: string; border: string; badge: s
   },
 };
 
-const priorityLabels: Record<NBAPriority, string> = {
-  critical: 'Urgente',
-  high: 'Importante',
-  medium: 'Recomendado',
-  low: 'Sugerencia',
-};
-
 export const NextBestActionCard = ({ action, onAction, featured = false }: NextBestActionCardProps) => {
+  const { t } = useTranslation('common');
   const styles = priorityStyles[action.priority];
+  const priorityLabel = t(`priority.${action.priority}`);
 
   if (featured) {
     return (
@@ -62,7 +58,7 @@ export const NextBestActionCard = ({ action, onAction, featured = false }: NextB
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge className={`${styles.badge} text-white`}>
                       <Sparkles className="w-3 h-3 mr-1" />
-                      {priorityLabels[action.priority]}
+                      {priorityLabel}
                     </Badge>
                   </div>
                   <h3 className="text-xl font-bold">{action.title}</h3>
@@ -124,6 +120,7 @@ interface RecommendationsListProps {
 }
 
 export const RecommendationsList = ({ actions, onAction, maxItems = 4 }: RecommendationsListProps) => {
+  const { t } = useTranslation('common');
   const displayActions = actions.slice(0, maxItems);
 
   if (displayActions.length === 0) {
@@ -132,8 +129,8 @@ export const RecommendationsList = ({ actions, onAction, maxItems = 4 }: Recomme
         <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
           <Sparkles className="w-6 h-6 text-emerald-500" />
         </div>
-        <p className="font-medium">¡Todo en orden!</p>
-        <p className="text-sm text-muted-foreground">No hay acciones pendientes por ahora</p>
+        <p className="font-medium">{t('mando.allGood')}</p>
+        <p className="text-sm text-muted-foreground">{t('mando.noPendingActions')}</p>
       </div>
     );
   }

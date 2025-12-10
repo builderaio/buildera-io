@@ -9,22 +9,6 @@ interface CompanyStateCardProps {
   state: CompanyState;
 }
 
-const maturityLabels: Record<MaturityLevel, { label: string; color: string; emoji: string }> = {
-  starter: { label: 'Iniciando', color: 'bg-slate-500', emoji: '🌱' },
-  growing: { label: 'Creciendo', color: 'bg-emerald-500', emoji: '🌿' },
-  established: { label: 'Establecido', color: 'bg-blue-500', emoji: '🌳' },
-  scaling: { label: 'Escalando', color: 'bg-purple-500', emoji: '🚀' },
-};
-
-const areaLabels: Record<string, { label: string; icon: string }> = {
-  profile: { label: 'Perfil', icon: '🏢' },
-  strategy: { label: 'Estrategia', icon: '🎯' },
-  content: { label: 'Contenido', icon: '📝' },
-  agents: { label: 'Agentes', icon: '🤖' },
-  audience: { label: 'Audiencia', icon: '👥' },
-  social: { label: 'Social', icon: '📱' },
-};
-
 const StatusIcon = ({ status }: { status: AreaStatus }) => {
   switch (status) {
     case 'complete':
@@ -36,9 +20,34 @@ const StatusIcon = ({ status }: { status: AreaStatus }) => {
   }
 };
 
+const areaIcons: Record<string, string> = {
+  profile: '🏢',
+  strategy: '🎯',
+  content: '📝',
+  agents: '🤖',
+  audience: '👥',
+  social: '📱',
+};
+
+const maturityColors: Record<MaturityLevel, string> = {
+  starter: 'bg-slate-500',
+  growing: 'bg-emerald-500',
+  established: 'bg-blue-500',
+  scaling: 'bg-purple-500',
+};
+
+const maturityEmojis: Record<MaturityLevel, string> = {
+  starter: '🌱',
+  growing: '🌿',
+  established: '🌳',
+  scaling: '🚀',
+};
+
 export const CompanyStateCard = ({ state }: CompanyStateCardProps) => {
   const { t } = useTranslation(['common']);
-  const maturity = maturityLabels[state.maturityLevel];
+  
+  const getMaturityLabel = (level: MaturityLevel) => t(`maturity.${level}`);
+  const getAreaLabel = (area: string) => t(`areas.${area}`);
   
   if (state.loading) {
     return (
@@ -63,10 +72,10 @@ export const CompanyStateCard = ({ state }: CompanyStateCardProps) => {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
-            📊 Estado de tu Empresa
+            📊 {t('mando.companyState')}
           </CardTitle>
-          <Badge className={`${maturity.color} text-white`}>
-            {maturity.emoji} {maturity.label}
+          <Badge className={`${maturityColors[state.maturityLevel]} text-white`}>
+            {maturityEmojis[state.maturityLevel]} {getMaturityLabel(state.maturityLevel)}
           </Badge>
         </div>
       </CardHeader>
@@ -74,7 +83,7 @@ export const CompanyStateCard = ({ state }: CompanyStateCardProps) => {
         {/* Overall Progress */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Completado</span>
+            <span className="text-muted-foreground">{t('mando.completed')}</span>
             <span className="font-semibold">{state.completionScore}%</span>
           </div>
           <Progress value={state.completionScore} className="h-2" />
@@ -83,7 +92,6 @@ export const CompanyStateCard = ({ state }: CompanyStateCardProps) => {
         {/* Areas Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {Object.entries(state.areas).map(([key, area]) => {
-            const areaInfo = areaLabels[key];
             return (
               <div
                 key={key}
@@ -94,9 +102,9 @@ export const CompanyStateCard = ({ state }: CompanyStateCardProps) => {
                     'bg-muted/50 border-border'}
                 `}
               >
-                <span className="text-sm">{areaInfo.icon}</span>
+                <span className="text-sm">{areaIcons[key]}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium truncate">{areaInfo.label}</p>
+                  <p className="text-xs font-medium truncate">{getAreaLabel(key)}</p>
                 </div>
                 <StatusIcon status={area.status} />
               </div>

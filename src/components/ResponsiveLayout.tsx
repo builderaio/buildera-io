@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { AgentInteractionPanel } from '@/components/agents/AgentInteractionPanel';
 import { PlatformAgent, usePlatformAgents } from '@/hooks/usePlatformAgents';
 import { useCompanyCredits } from '@/hooks/useCompanyCredits';
+import { useCompany } from '@/contexts/CompanyContext';
 
 interface Profile {
   id: string;
@@ -184,6 +185,62 @@ const ResponsiveLayout = () => {
   );
 };
 
+// Sidebar Logo Header Component with company logo fallback
+const SidebarLogoHeader = ({ 
+  companyName, 
+  onLogoClick 
+}: { 
+  companyName: string; 
+  onLogoClick: () => void;
+}) => {
+  const { company } = useCompany();
+  const defaultLogo = "/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png";
+  const hasCompanyLogo = !!company?.logo_url;
+  
+  return (
+    <div className="flex items-center gap-3 cursor-pointer mb-3" onClick={onLogoClick}>
+      <div className={`flex aspect-square size-10 items-center justify-center rounded-xl shadow-lg overflow-hidden ${
+        hasCompanyLogo ? 'bg-background' : 'bg-gradient-to-br from-primary to-secondary'
+      }`}>
+        <img 
+          src={company?.logo_url || defaultLogo}
+          alt={hasCompanyLogo ? `${company?.name || companyName} Logo` : "Buildera Logo"}
+          className={`${hasCompanyLogo ? 'size-10 object-cover' : 'size-6 object-contain filter brightness-0 invert'}`}
+        />
+      </div>
+      <div className="grid flex-1 text-left">
+        <span className="font-heading font-bold text-lg tracking-tight text-sidebar-foreground">
+          {company?.name || companyName}
+        </span>
+        <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide">
+          AI Business Platform
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// Collapsed Sidebar Logo Component
+const CollapsedSidebarLogo = () => {
+  const { company } = useCompany();
+  const defaultLogo = "/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png";
+  const hasCompanyLogo = !!company?.logo_url;
+  
+  return (
+    <div className="hidden group-data-[state=collapsed]:flex items-center justify-center p-3 border-b border-sidebar-border/30">
+      <div className={`flex aspect-square size-9 items-center justify-center rounded-xl shadow-lg overflow-hidden ${
+        hasCompanyLogo ? 'bg-background' : 'bg-gradient-to-br from-primary to-secondary text-primary-foreground'
+      }`}>
+        <img 
+          src={company?.logo_url || defaultLogo}
+          alt={hasCompanyLogo ? `${company?.name} Logo` : "Buildera Logo"}
+          className={`${hasCompanyLogo ? 'size-9 object-cover' : 'size-5 object-contain filter brightness-0 invert'}`}
+        />
+      </div>
+    </div>
+  );
+};
+
 const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSignOut: () => void }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -280,23 +337,10 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       {!isInOnboarding && (
         <Sidebar variant="sidebar" collapsible="icon" className="border-r bg-sidebar shadow-xl z-40">
           <SidebarHeader className="p-4 border-b border-sidebar-border/50 group-data-[state=collapsed]:hidden">
-            <div className="flex items-center gap-3 cursor-pointer mb-3" onClick={() => setActiveView('mando-central')}>
-              <div className="flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg">
-                <img 
-                  src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
-                  alt="Buildera Logo" 
-                  className="size-6 object-contain filter brightness-0 invert" 
-                />
-              </div>
-              <div className="grid flex-1 text-left">
-                <span className="font-heading font-bold text-lg tracking-tight text-sidebar-foreground">
-                  {profile?.company_name || "BUILDERA"}
-                </span>
-                <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide">
-                  AI Business Platform
-                </span>
-              </div>
-            </div>
+            <SidebarLogoHeader 
+              companyName={profile?.company_name || "BUILDERA"} 
+              onLogoClick={() => setActiveView('mando-central')} 
+            />
             
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
               <Zap className="size-4 text-amber-500" />
@@ -307,15 +351,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
             </div>
           </SidebarHeader>
 
-          <div className="hidden group-data-[state=collapsed]:flex items-center justify-center p-3 border-b border-sidebar-border/30">
-            <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg">
-              <img 
-                src="/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png" 
-                alt="Buildera Logo" 
-                className="size-5 object-contain filter brightness-0 invert" 
-              />
-            </div>
-          </div>
+          <CollapsedSidebarLogo />
             
           <SidebarContent className="px-2 py-4">
             <SidebarGroup className="p-0">

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,12 +48,12 @@ serve(async (req) => {
     let webhookTime = 0;
 
     if (request.agent_type === 'n8n') {
-      // Execute N8N webhook
+      // Execute N8N webhook - REAL EXECUTION
       if (!request.n8n_config?.webhook_url) {
         throw new Error('N8N webhook URL no configurado');
       }
 
-      log(`Llamando webhook: ${request.n8n_config.webhook_url}`);
+      log(`Llamando webhook REAL: ${request.n8n_config.webhook_url}`);
       
       const method = request.n8n_config.http_method?.toUpperCase() || 'POST';
       const timeout = request.n8n_config.timeout_ms || 30000;
@@ -114,34 +115,45 @@ serve(async (req) => {
       }
 
     } else if (request.agent_type === 'static') {
-      // Simulate edge function call
-      log(`Simulando edge function: ${request.edge_function_name}`);
+      // Execute edge function - REAL EXECUTION
+      if (!request.edge_function_name) {
+        throw new Error('Edge function name no configurado');
+      }
+
+      log(`Ejecutando edge function REAL: ${request.edge_function_name}`);
       
-      // For sandbox, we return simulated output based on the function name
-      output = {
-        success: true,
-        message: `[SANDBOX] Edge function '${request.edge_function_name}' ejecutada correctamente`,
-        simulated: true,
-        received_payload: request.payload,
-        timestamp: new Date().toISOString()
-      };
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
       
-      log('Edge function simulada (no ejecutada realmente en sandbox)');
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      const edgeStart = Date.now();
+      
+      const { data, error } = await supabase.functions.invoke(request.edge_function_name, {
+        body: request.payload
+      });
+
+      webhookTime = Date.now() - edgeStart;
+
+      if (error) {
+        log(`Error en edge function: ${error.message}`);
+        throw new Error(`Edge function error: ${error.message}`);
+      }
+
+      output = data || {};
+      log(`Edge function completada en ${webhookTime}ms`);
 
     } else if (request.agent_type === 'dynamic' || request.agent_type === 'hybrid') {
-      // Simulate OpenAI agent
-      log(`Simulando agente ${request.agent_type}`);
+      // Dynamic/Hybrid agents require OpenAI configuration
+      log(`Agente ${request.agent_type} - requiere configuración OpenAI`);
       
       output = {
-        success: true,
-        message: `[SANDBOX] Agente ${request.agent_type} simulado`,
-        simulated: true,
-        note: 'Los agentes dinámicos/híbridos requieren configuración de OpenAI para ejecución real',
+        success: false,
+        message: `Los agentes ${request.agent_type} requieren configuración de OpenAI para ejecución`,
+        note: 'Configura openai_agent_config para habilitar ejecución real',
         received_payload: request.payload,
         timestamp: new Date().toISOString()
       };
-      
-      log('Agente dinámico/híbrido simulado');
     }
 
     const totalTime = Date.now() - startTime;
@@ -174,6 +186,7 @@ serve(async (req) => {
       JSON.stringify({
         success: false,
         error: error.message,
+        output: {},
         metadata: {
           execution_time_ms: totalTime,
           is_sandbox: true,

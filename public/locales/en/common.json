@@ -59,6 +59,11 @@
     "previous": "Previous",
     "finish": "Finish"
   },
+  "tabs": {
+    "execute": "Execute",
+    "results": "Results",
+    "schedule": "Schedule"
+  },
   "status": {
     "loading": "Loading...",
     "saving": "Saving...",

@@ -36,13 +36,15 @@ const AutoSaveField = ({
   onSave, 
   type = "text",
   placeholder = "",
-  className = ""
+  className = "",
+  savingText = ""
 }: { 
   value: string; 
   onSave: (value: string) => void; 
   type?: "text" | "textarea";
   placeholder?: string;
   className?: string;
+  savingText?: string;
 }) => {
   const [localValue, setLocalValue] = useState(value || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -74,7 +76,7 @@ const AutoSaveField = ({
           placeholder={placeholder}
           className={`${baseClassName} min-h-[80px] resize-none`}
         />
-        {isSaving && <span className="absolute right-2 top-2 text-xs text-muted-foreground">Guardando...</span>}
+        {isSaving && <span className="absolute right-2 top-2 text-xs text-muted-foreground">{savingText}</span>}
       </div>
     );
   }
@@ -88,7 +90,7 @@ const AutoSaveField = ({
         placeholder={placeholder}
         className={baseClassName}
       />
-      {isSaving && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Guardando...</span>}
+      {isSaving && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{savingText}</span>}
     </div>
   );
 };
@@ -97,11 +99,22 @@ const AutoSaveField = ({
 const ObjectiveItem = ({ 
   objective, 
   onSave, 
-  onDelete 
+  onDelete,
+  translations
 }: { 
   objective: any;
   onSave: (data: any, id: string) => void;
   onDelete: (id: string) => void;
+  translations: {
+    objectiveTitle: string;
+    objectiveDescription: string;
+    shortTerm: string;
+    mediumTerm: string;
+    longTerm: string;
+    priorityHigh: string;
+    priorityMedium: string;
+    priorityLow: string;
+  };
 }) => {
   const [localData, setLocalData] = useState({
     title: objective.title || '',
@@ -146,7 +159,7 @@ const ObjectiveItem = ({
           value={localData.title}
           onChange={(e) => setLocalData(prev => ({ ...prev, title: e.target.value }))}
           onBlur={handleFieldBlur}
-          placeholder="Título del objetivo"
+          placeholder={translations.objectiveTitle}
           className="bg-transparent border-none font-semibold text-emerald-900 dark:text-emerald-100 focus:ring-1 focus:ring-emerald-500/30"
         />
         <Button
@@ -163,7 +176,7 @@ const ObjectiveItem = ({
         value={localData.description}
         onChange={(e) => setLocalData(prev => ({ ...prev, description: e.target.value }))}
         onBlur={handleFieldBlur}
-        placeholder="Descripción del objetivo"
+        placeholder={translations.objectiveDescription}
         className="bg-transparent border-none min-h-[60px] resize-none text-sm focus:ring-1 focus:ring-emerald-500/30"
       />
       
@@ -176,9 +189,9 @@ const ObjectiveItem = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="short_term">Corto plazo</SelectItem>
-            <SelectItem value="medium_term">Mediano plazo</SelectItem>
-            <SelectItem value="long_term">Largo plazo</SelectItem>
+            <SelectItem value="short_term">{translations.shortTerm}</SelectItem>
+            <SelectItem value="medium_term">{translations.mediumTerm}</SelectItem>
+            <SelectItem value="long_term">{translations.longTerm}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -190,9 +203,9 @@ const ObjectiveItem = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">Alta</SelectItem>
-            <SelectItem value="2">Media</SelectItem>
-            <SelectItem value="3">Baja</SelectItem>
+            <SelectItem value="1">{translations.priorityHigh}</SelectItem>
+            <SelectItem value="2">{translations.priorityMedium}</SelectItem>
+            <SelectItem value="3">{translations.priorityLow}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -213,7 +226,7 @@ const ObjectiveItem = ({
 
 const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const { toast } = useToast();
-  const { t } = useTranslation(['marketing', 'company']);
+  const { t } = useTranslation(['marketing', 'company', 'common']);
   const [loading, setLoading] = useState(true);
   const [companyData, setCompanyData] = useState<any>(null);
   const [strategyData, setStrategyData] = useState<any>(null);
@@ -316,7 +329,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
 
     } catch (error) {
       console.error('Error loading data:', error);
-      toast({ title: "Error", description: "Error al cargar datos", variant: "destructive" });
+      toast({ title: t('common:error'), description: t('common:adn.errorLoadingData'), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -340,12 +353,12 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         setBrandingData((prev: any) => ({ ...prev, [field]: value }));
       }
       
-      toast({ title: "✓", description: "Guardado", duration: 1500 });
+      toast({ title: "✓", description: t('common:adn.saved'), duration: 1500 });
     } catch (error) {
       console.error('Error saving:', error);
-      toast({ title: "Error", description: "No se pudo guardar", variant: "destructive" });
+      toast({ title: t('common:error'), description: t('common:adn.couldNotSave'), variant: "destructive" });
     }
-  }, [companyData?.id, strategyData?.id, brandingData?.id, toast]);
+  }, [companyData?.id, strategyData?.id, brandingData?.id, toast, t]);
 
   const saveObjective = useCallback(async (data: any, objectiveId?: string) => {
     try {
@@ -372,16 +385,16 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         } else {
           setObjectives(prev => [...prev, { id: result.data?.id || result.objectiveId, ...data }]);
         }
-        toast({ title: "✓", description: "Objetivo guardado", duration: 1500 });
+        toast({ title: "✓", description: t('common:adn.objectiveSaved'), duration: 1500 });
       }
     } catch (error) {
       console.error('Error saving objective:', error);
-      toast({ title: "Error", description: "No se pudo guardar el objetivo", variant: "destructive" });
+      toast({ title: t('common:error'), description: t('common:adn.couldNotSaveObjective'), variant: "destructive" });
     }
-  }, [companyData?.id, toast]);
+  }, [companyData?.id, toast, t]);
 
   const deleteObjective = useCallback(async (objectiveId: string) => {
-    if (!confirm('¿Eliminar este objetivo?')) return;
+    if (!confirm(t('common:adn.deleteObjectiveConfirm'))) return;
     
     try {
       const session = await supabase.auth.getSession();
@@ -397,13 +410,13 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       const result = await response.json();
       if (result.success) {
         setObjectives(prev => prev.filter(obj => obj.id !== objectiveId));
-        toast({ title: "✓", description: "Objetivo eliminado", duration: 1500 });
+        toast({ title: "✓", description: t('common:adn.objectiveDeleted'), duration: 1500 });
       }
     } catch (error) {
       console.error('Error deleting objective:', error);
-      toast({ title: "Error", description: "No se pudo eliminar", variant: "destructive" });
+      toast({ title: t('common:error'), description: t('common:adn.couldNotDelete'), variant: "destructive" });
     }
-  }, [companyData?.id, toast]);
+  }, [companyData?.id, toast, t]);
 
   const addNewObjective = useCallback(() => {
     const tempId = `temp-${Date.now()}`;
@@ -888,6 +901,16 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                 objective={objective}
                 onSave={saveObjective}
                 onDelete={deleteObjective}
+                translations={{
+                  objectiveTitle: t('common:adn.objectiveTitle'),
+                  objectiveDescription: t('common:adn.objectiveDescription'),
+                  shortTerm: t('common:adn.shortTerm'),
+                  mediumTerm: t('common:adn.mediumTerm'),
+                  longTerm: t('common:adn.longTerm'),
+                  priorityHigh: t('common:adn.priorityHigh'),
+                  priorityMedium: t('common:adn.priorityMedium'),
+                  priorityLow: t('common:adn.priorityLow'),
+                }}
               />
             ))
           )}

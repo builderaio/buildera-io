@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,46 +15,28 @@ interface StepMissionProps {
   setTeamData: (data: any) => void;
 }
 
-const missionTemplates = [
-  {
-    id: "marketing_campaign",
-    icon: Rocket,
-    title: "Lanzar una campaña de marketing",
-    description: "Planificar y ejecutar una campaña de marketing completa",
-  },
-  {
-    id: "content_generation",
-    icon: PenTool,
-    title: "Generar contenido continuo",
-    description: "Crear contenido regular para redes sociales y blog",
-  },
-  {
-    id: "performance_analysis",
-    icon: TrendingUp,
-    title: "Analizar rendimiento y competencia",
-    description: "Monitorear métricas y analizar la competencia",
-  },
-  {
-    id: "seo_improvement",
-    icon: Search,
-    title: "Mejorar el posicionamiento SEO",
-    description: "Optimizar contenido y estrategia SEO",
-  },
-  {
-    id: "community_management",
-    icon: Users2,
-    title: "Gestionar la comunidad online",
-    description: "Moderar y gestionar la comunidad en redes",
-  },
-  {
-    id: "custom",
-    icon: Sparkles,
-    title: "Objetivo personalizado",
-    description: "Define tu propio objetivo específico",
-  },
+const missionTemplateConfigs = [
+  { id: "marketing_campaign", icon: Rocket },
+  { id: "content_generation", icon: PenTool },
+  { id: "performance_analysis", icon: TrendingUp },
+  { id: "seo_improvement", icon: Search },
+  { id: "community_management", icon: Users2 },
+  { id: "custom", icon: Sparkles },
 ];
 
 export const StepMission = ({ teamData, setTeamData }: StepMissionProps) => {
+  const { t } = useTranslation('common');
+
+  const getMissionTitle = (id: string) => {
+    if (id === 'custom') return t('workforce.customObjective');
+    return t(`workforce.missions.${id}`);
+  };
+
+  const getMissionDescription = (id: string) => {
+    if (id === 'custom') return t('workforce.customObjectiveDesc');
+    return t(`workforce.missions.${id}_desc`);
+  };
+
   return (
     <div className="space-y-6">
       <motion.div
@@ -63,11 +46,11 @@ export const StepMission = ({ teamData, setTeamData }: StepMissionProps) => {
       >
         <Label htmlFor="teamName" className="text-lg font-semibold flex items-center gap-2">
           <Users2 className="h-5 w-5 text-primary" />
-          Nombre del Equipo
+          {t('workforce.teamName')}
         </Label>
         <Input
           id="teamName"
-          placeholder="Ej: Lanzamiento Nuevo Producto Q4"
+          placeholder={t('workforce.teamNamePlaceholder')}
           value={teamData.teamName}
           onChange={(e) => setTeamData({ ...teamData, teamName: e.target.value })}
           className="mt-2 text-lg"
@@ -81,10 +64,10 @@ export const StepMission = ({ teamData, setTeamData }: StepMissionProps) => {
       >
         <Label className="text-lg font-semibold mb-4 block flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
-          ¿Cuál es el objetivo principal de este equipo?
+          {t('workforce.missionObjective')}
         </Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {missionTemplates.map((template, idx) => {
+          {missionTemplateConfigs.map((template, idx) => {
             const Icon = template.icon;
             const isSelected = teamData.missionType === template.id;
             return (
@@ -120,9 +103,9 @@ export const StepMission = ({ teamData, setTeamData }: StepMissionProps) => {
                         <Icon className={`h-6 w-6 ${isSelected ? "text-primary" : "text-primary/70"}`} />
                       </motion.div>
                       <div>
-                        <h3 className="font-semibold mb-1">{template.title}</h3>
+                        <h3 className="font-semibold mb-1">{getMissionTitle(template.id)}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {template.description}
+                          {getMissionDescription(template.id)}
                         </p>
                       </div>
                     </div>
@@ -141,11 +124,11 @@ export const StepMission = ({ teamData, setTeamData }: StepMissionProps) => {
           transition={{ duration: 0.3 }}
         >
           <Label htmlFor="customMission" className="text-base font-semibold">
-            Describe tu objetivo personalizado
+            {t('workforce.describeObjective')}
           </Label>
           <Textarea
             id="customMission"
-            placeholder="Describe en detalle qué quieres lograr con este equipo..."
+            placeholder={t('workforce.describeObjectivePlaceholder')}
             value={teamData.customMission}
             onChange={(e) =>
               setTeamData({ ...teamData, customMission: e.target.value })

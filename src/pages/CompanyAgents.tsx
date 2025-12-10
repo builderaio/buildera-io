@@ -19,6 +19,7 @@ import {
   History,
   Loader2
 } from 'lucide-react';
+import { AgentIconRenderer } from '@/components/agents/AgentIconRenderer';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useCompany } from '@/contexts/CompanyContext';
@@ -269,7 +270,7 @@ const CompanyAgents = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <span className="text-lg">{agent.icon || '🤖'}</span>
+                            <AgentIconRenderer icon={agent.icon} size="md" fallback="🤖" />
                           </div>
                           <div>
                             <CardTitle className="text-lg">{agent.name}</CardTitle>
@@ -360,7 +361,7 @@ const CompanyAgents = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <span className="text-xl">{agent.icon || '🤖'}</span>
+                            <AgentIconRenderer icon={agent.icon} size="lg" fallback="🤖" />
                           </div>
                           <div>
                             <h3 className="font-semibold">{agent.name}</h3>

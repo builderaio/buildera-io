@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Zap, Star, Play, Clock, CheckCircle2, AlertCircle, Loader2, ArrowRight, Settings, History, Calendar } from "lucide-react";
+import { AgentIconRenderer } from "./AgentIconRenderer";
 import { PlatformAgent } from "@/hooks/usePlatformAgents";
 import { useAgentConfiguration, ScheduleConfig } from "@/hooks/useAgentConfiguration";
 import { useAgentPrerequisites } from "@/hooks/useAgentPrerequisites";
@@ -339,8 +340,8 @@ export const AgentInteractionPanel = ({
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${categoryColor} flex items-center justify-center text-white text-2xl shadow-lg`}>
-              {categoryIcon}
+            <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${categoryColor} flex items-center justify-center text-white shadow-lg`}>
+              <AgentIconRenderer icon={agent.icon || categoryIcon} size="xl" fallback={categoryIcon} />
             </div>
             <div className="flex-1">
               <DialogTitle className="text-xl flex items-center gap-2">

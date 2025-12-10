@@ -49,6 +49,8 @@ import AdminFunctionConfig from "./pages/AdminFunctionConfig";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import UserProfile from "./pages/UserProfile";
 import AdminAgentBuilder from "./pages/AdminAgentBuilder";
+import AdminAgentUsage from "./pages/AdminAgentUsage";
+import AdminSubscriptions from "./pages/AdminSubscriptions";
 import AgentMarketplaceV2 from "./pages/AgentMarketplaceV2";
 import AdminAPIKeys from "./pages/AdminAPIKeys";
 import AdminEmailSystem from "./pages/AdminEmailSystem";
@@ -233,6 +235,16 @@ const App = () => {
                 <Route path="/admin/email-system" element={
                   <AdminProtectedRoute>
                     <AdminEmailSystem />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/agent-usage" element={
+                  <AdminProtectedRoute>
+                    <AdminAgentUsage />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/subscriptions" element={
+                  <AdminProtectedRoute>
+                    <AdminSubscriptions />
                   </AdminProtectedRoute>
                 } />
                 {/* Legacy route redirect */}

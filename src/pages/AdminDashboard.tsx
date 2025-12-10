@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   Users, 
   Building2, 
@@ -10,15 +10,24 @@ import {
   Activity,
   DollarSign,
   TrendingUp,
+  TrendingDown,
   Eye,
   UserCheck,
   Database,
   Trophy,
-  Key,
   Brain,
-  Zap,
   Shield,
-  Settings
+  Settings,
+  Zap,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  CreditCard,
+  Bot,
+  ArrowRight,
+  RefreshCw,
+  Mail
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -26,17 +35,46 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
+interface DashboardStats {
+  totalUsers: number;
+  totalCompanies: number;
+  activeSubscriptions: number;
+  mrr: number;
+  totalAgentExecutions: number;
+  successfulExecutions: number;
+  failedExecutions: number;
+  creditsConsumed: number;
+  usersByPlan: Record<string, number>;
+  topAgents: Array<{ name: string; executions: number; successRate: number }>;
+}
+
+interface Alert {
+  id: string;
+  type: 'critical' | 'warning' | 'info';
+  title: string;
+  description: string;
+  action?: { label: string; path: string };
+}
+
 const AdminDashboard = () => {
   const { isAuthenticated } = useAdminAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalCompanies: 0,
-    activeConnections: 0,
-    revenueMetrics: 0
+    activeSubscriptions: 0,
+    mrr: 0,
+    totalAgentExecutions: 0,
+    successfulExecutions: 0,
+    failedExecutions: 0,
+    creditsConsumed: 0,
+    usersByPlan: {},
+    topAgents: []
   });
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -48,40 +86,164 @@ const AdminDashboard = () => {
   }, [isAuthenticated, navigate]);
 
   const loadDashboardStats = async () => {
+    setLoading(true);
     try {
-      // Usar funciones administrativas para obtener estadísticas sin restricciones RLS
-      const { data: userAnalytics, error: userError } = await supabase
-        .rpc('get_admin_user_analytics');
+      // Load all stats in parallel
+      const [
+        profilesResult,
+        companiesResult,
+        subscriptionsResult,
+        plansResult,
+        agentUsageResult,
+        recentActivityResult
+      ] = await Promise.all([
+        supabase.from('profiles').select('id, user_type, created_at'),
+        supabase.from('companies').select('id, is_active, created_at'),
+        supabase.from('user_subscriptions').select('*, subscription_plans(name, price_monthly)'),
+        supabase.from('subscription_plans').select('*'),
+        supabase.from('agent_usage_log').select('*, platform_agents(name)')
+          .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+        supabase.rpc('get_admin_recent_activity')
+      ]);
 
-      if (userError) {
-        console.error('Error con función de analytics, intentando consulta directa:', userError);
-        // Fallback: intentar consulta directa
-        const { data: profiles } = await supabase.from('profiles').select('*');
-        setStats({
-          totalUsers: profiles?.length || 0,
-          totalCompanies: profiles?.filter(p => p.user_type === 'company').length || 0,
-          activeConnections: 0,
-          revenueMetrics: (profiles?.filter(p => p.user_type === 'company').length || 0) * 49
-        });
-      } else {
-        const analytics = userAnalytics?.[0];
-        if (analytics) {
-          setStats({
-            totalUsers: Number(analytics.total_users) || 0,
-            totalCompanies: Number(analytics.companies) || 0,
-            activeConnections: Number(analytics.users_with_linkedin) + 
-                             Number(analytics.users_with_facebook) + 
-                             Number(analytics.users_with_tiktok) || 0,
-            revenueMetrics: Number(analytics.companies) * 49 // Estimado por empresa
+      // Process profiles
+      const profiles = profilesResult.data || [];
+      const companies = companiesResult.data || [];
+      const subscriptions = subscriptionsResult.data || [];
+      const plans = plansResult.data || [];
+      const agentUsage = agentUsageResult.data || [];
+
+      // Calculate MRR from active subscriptions
+      const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
+      const mrr = activeSubscriptions.reduce((sum, sub) => {
+        const plan = sub.subscription_plans as any;
+        return sum + (plan?.price_monthly || 0);
+      }, 0);
+
+      // Users by plan
+      const usersByPlan: Record<string, number> = {};
+      plans.forEach(plan => {
+        usersByPlan[plan.name] = 0;
+      });
+      subscriptions.forEach(sub => {
+        const planName = (sub.subscription_plans as any)?.name;
+        if (planName) {
+          usersByPlan[planName] = (usersByPlan[planName] || 0) + 1;
+        }
+      });
+
+      // Agent usage stats
+      const successfulExecutions = agentUsage.filter(u => u.status === 'completed' || u.status === 'success').length;
+      const failedExecutions = agentUsage.filter(u => u.status === 'failed' || u.status === 'error').length;
+      const creditsConsumed = agentUsage.reduce((sum, u) => sum + (u.credits_consumed || 0), 0);
+
+      // Top agents
+      const agentStats = new Map<string, { name: string; executions: number; successes: number }>();
+      agentUsage.forEach(usage => {
+        const agentName = (usage.platform_agents as any)?.name || 'Unknown';
+        const current = agentStats.get(agentName) || { name: agentName, executions: 0, successes: 0 };
+        current.executions++;
+        if (usage.status === 'completed' || usage.status === 'success') {
+          current.successes++;
+        }
+        agentStats.set(agentName, current);
+      });
+
+      const topAgents = Array.from(agentStats.values())
+        .map(a => ({
+          name: a.name,
+          executions: a.executions,
+          successRate: a.executions > 0 ? Math.round((a.successes / a.executions) * 100) : 0
+        }))
+        .sort((a, b) => b.executions - a.executions)
+        .slice(0, 5);
+
+      setStats({
+        totalUsers: profiles.length,
+        totalCompanies: companies.filter(c => c.is_active !== false).length,
+        activeSubscriptions: activeSubscriptions.length,
+        mrr,
+        totalAgentExecutions: agentUsage.length,
+        successfulExecutions,
+        failedExecutions,
+        creditsConsumed,
+        usersByPlan,
+        topAgents
+      });
+
+      // Process recent activity
+      if (recentActivityResult.data?.[0]) {
+        const activities: any[] = [];
+        const data = recentActivityResult.data[0];
+        
+        if (data.recent_profiles && Array.isArray(data.recent_profiles)) {
+          data.recent_profiles.forEach((profile: any) => {
+            activities.push({
+              type: 'user_registration',
+              timestamp: profile.created_at,
+              icon: Users,
+              color: 'bg-blue-500',
+              title: 'Nuevo usuario',
+              description: `${profile.full_name || profile.email || 'Usuario'} registrado`
+            });
           });
         }
+        
+        activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        setRecentActivity(activities.slice(0, 5));
       }
+
+      // Generate alerts
+      const newAlerts: Alert[] = [];
+      
+      // Check for high error rate
+      const errorRate = stats.totalAgentExecutions > 0 
+        ? (failedExecutions / agentUsage.length) * 100 
+        : 0;
+      if (errorRate > 20) {
+        newAlerts.push({
+          id: 'high_error_rate',
+          type: 'critical',
+          title: 'Alta tasa de errores',
+          description: `${errorRate.toFixed(1)}% de las ejecuciones de agentes fallaron en los últimos 7 días`,
+          action: { label: 'Ver detalles', path: '/admin/agent-usage' }
+        });
+      }
+
+      // Check for inactive users
+      const recentUsers = profiles.filter(p => {
+        const createdAt = new Date(p.created_at);
+        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        return createdAt > weekAgo;
+      });
+      if (recentUsers.length === 0) {
+        newAlerts.push({
+          id: 'no_new_users',
+          type: 'warning',
+          title: 'Sin nuevos usuarios',
+          description: 'No se han registrado nuevos usuarios en los últimos 7 días',
+          action: { label: 'Ver analytics', path: '/admin/analytics' }
+        });
+      }
+
+      // Check for no subscriptions
+      if (activeSubscriptions.length === 0) {
+        newAlerts.push({
+          id: 'no_subscriptions',
+          type: 'warning',
+          title: 'Sin suscripciones activas',
+          description: 'No hay usuarios con suscripciones activas',
+          action: { label: 'Ver suscripciones', path: '/admin/subscriptions' }
+        });
+      }
+
+      setAlerts(newAlerts);
 
     } catch (error: any) {
       console.error('Error cargando estadísticas:', error);
       toast({
         title: "Error",
-        description: `No se pudieron cargar las estadísticas: ${error?.message || 'Error desconocido'}`,
+        description: "No se pudieron cargar las estadísticas",
         variant: "destructive",
       });
     } finally {
@@ -89,6 +251,18 @@ const AdminDashboard = () => {
     }
   };
 
+  const getTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now.getTime() - time.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffDays > 0) return `Hace ${diffDays}d`;
+    if (diffHours > 0) return `Hace ${diffHours}h`;
+    return `Hace ${diffMins}min`;
+  };
 
   if (loading) {
     return (
@@ -103,151 +277,248 @@ const AdminDashboard = () => {
     );
   }
 
-  const statCards = [
-    {
-      title: "Usuarios Totales",
-      value: stats.totalUsers.toString(),
-      icon: Users,
-      color: "bg-blue-500",
-      change: "+12% este mes"
-    },
-    {
-      title: "Empresas Activas", 
-      value: stats.totalCompanies.toString(),
-      icon: Building2,
-      color: "bg-green-500",
-      change: "+8% este mes"
-    },
-    {
-      title: "Conexiones Activas",
-      value: stats.activeConnections.toString(),
-      icon: Activity,
-      color: "bg-purple-500",
-      change: "+15% este mes"
-    },
-    {
-      title: "Revenue Estimado",
-      value: `$${stats.revenueMetrics.toLocaleString()}`,
-      icon: DollarSign,
-      color: "bg-orange-500",
-      change: "+23% este mes"
-    }
-  ];
+  const successRate = stats.totalAgentExecutions > 0 
+    ? Math.round((stats.successfulExecutions / stats.totalAgentExecutions) * 100) 
+    : 0;
 
   const quickActions = [
-    {
-      title: "Gestionar Usuarios",
-      description: "Ver y administrar todos los usuarios del sistema",
-      icon: UserCheck,
-      action: () => navigate('/admin/users')
-    },
-    {
-      title: "Monitoreo IA",
-      description: "Estado y rendimiento de modelos de IA",
-      icon: Activity,
-      action: () => navigate('/admin/ai-monitoring')
-    },
-    {
-      title: "Champion Challenge",
-      description: "Evaluación y comparación de modelos IA",
-      icon: Trophy,
-      action: () => navigate('/admin/champion-challenge')
-    },
-    {
-      title: "Configuración IA",
-      description: "Parametrización de modelos por función",
-      icon: Settings,
-      action: () => navigate('/admin/ai-config')
-    },
-    {
-      title: "Analytics Avanzados", 
-      description: "Reportes detallados y métricas de uso",
-      icon: BarChart3,
-      action: () => navigate('/admin/analytics')
-    },
-    {
-      title: "Base de Datos",
-      description: "Monitoreo y administración de datos",
-      icon: Database,
-      action: () => navigate('/admin/database')
-    },
-    {
-      title: "Configuración de Funciones",
-      description: "Configuración de modelos para funciones específicas",
-      icon: Settings,
-      action: () => navigate('/admin/function-config')
-    },
-    {
-      title: "Plantillas de Agentes",
-      description: "Crear y gestionar agentes autónomos para el marketplace",
-      icon: Brain,
-      action: () => navigate('/admin/agent-templates')
-    }
+    { title: "Usuarios", icon: UserCheck, path: '/admin/users', count: stats.totalUsers },
+    { title: "Empresas", icon: Building2, path: '/admin/companies', count: stats.totalCompanies },
+    { title: "Suscripciones", icon: CreditCard, path: '/admin/subscriptions', count: stats.activeSubscriptions },
+    { title: "Uso de Agentes", icon: Bot, path: '/admin/agent-usage', count: stats.totalAgentExecutions },
+    { title: "Constructor Agentes", icon: Brain, path: '/admin/agent-builder' },
+    { title: "Configuración IA", icon: Settings, path: '/admin/ai-config' },
+    { title: "Monitoreo IA", icon: Eye, path: '/admin/ai-monitoring' },
+    { title: "Base de Datos", icon: Database, path: '/admin/database' },
+    { title: "Email System", icon: Mail, path: '/admin/email-system' },
+    { title: "Analytics", icon: BarChart3, path: '/admin/analytics' },
   ];
 
   return (
     <AdminLayout>
       <AdminPageHeader
         title="Dashboard Principal"
-        subtitle="Monitoreo y gestión del ecosistema Buildera"
+        subtitle="Centro de control ejecutivo de Buildera"
         icon={Shield}
         onRefresh={loadDashboardStats}
         refreshing={loading}
       />
       
       <main className="flex-1 p-3 sm:p-6 overflow-auto">
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statCards.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={index} className="hover:shadow-lg transition-shadow animate-fade-in">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">{stat.title}</p>
-                      <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">{stat.value}</p>
-                      <p className="text-xs sm:text-sm text-green-600 flex items-center mt-1">
-                        <TrendingUp className="w-3 h-3 mr-1 flex-shrink-0" />
-                        <span className="truncate">{stat.change}</span>
-                      </p>
-                    </div>
-                    <div className={`${stat.color} p-2 sm:p-3 rounded-full flex-shrink-0 ml-3`}>
-                      <Icon className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                    </div>
+        {/* Alerts Section */}
+        {alerts.length > 0 && (
+          <div className="mb-6 space-y-3">
+            {alerts.map((alert) => (
+              <div 
+                key={alert.id}
+                className={`flex items-center justify-between p-4 rounded-lg border ${
+                  alert.type === 'critical' 
+                    ? 'bg-destructive/10 border-destructive/20' 
+                    : alert.type === 'warning'
+                    ? 'bg-amber-500/10 border-amber-500/20'
+                    : 'bg-blue-500/10 border-blue-500/20'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className={`w-5 h-5 ${
+                    alert.type === 'critical' ? 'text-destructive' : 'text-amber-500'
+                  }`} />
+                  <div>
+                    <p className="font-medium">{alert.title}</p>
+                    <p className="text-sm text-muted-foreground">{alert.description}</p>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                </div>
+                {alert.action && (
+                  <Button variant="outline" size="sm" onClick={() => navigate(alert.action!.path)}>
+                    {alert.action.label}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Primary KPIs */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Usuarios Totales</p>
+                  <p className="text-3xl font-bold">{stats.totalUsers.toLocaleString()}</p>
+                </div>
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <Users className="w-6 h-6 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Empresas Activas</p>
+                  <p className="text-3xl font-bold">{stats.totalCompanies.toLocaleString()}</p>
+                </div>
+                <div className="p-3 bg-green-500/10 rounded-full">
+                  <Building2 className="w-6 h-6 text-green-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">MRR</p>
+                  <p className="text-3xl font-bold">${stats.mrr.toLocaleString()}</p>
+                </div>
+                <div className="p-3 bg-amber-500/10 rounded-full">
+                  <DollarSign className="w-6 h-6 text-amber-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Suscriptores</p>
+                  <p className="text-3xl font-bold">{stats.activeSubscriptions}</p>
+                </div>
+                <div className="p-3 bg-purple-500/10 rounded-full">
+                  <CreditCard className="w-6 h-6 text-purple-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Quick Actions */}
-        <Card className="mb-8 animate-fade-in">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center text-base sm:text-lg">
-              <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-              Acciones Rápidas
+        {/* Agent Health Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="w-5 h-5" />
+                Salud de Agentes (últimos 7 días)
+              </CardTitle>
+              <CardDescription>Rendimiento y uso de agentes de la plataforma</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Ejecuciones</p>
+                  <p className="text-2xl font-bold">{stats.totalAgentExecutions}</p>
+                </div>
+                <div className="p-4 bg-green-500/10 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Exitosas</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.successfulExecutions}</p>
+                </div>
+                <div className="p-4 bg-destructive/10 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Fallidas</p>
+                  <p className="text-2xl font-bold text-destructive">{stats.failedExecutions}</p>
+                </div>
+                <div className="p-4 bg-primary/10 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Tasa Éxito</p>
+                  <p className="text-2xl font-bold text-primary">{successRate}%</p>
+                </div>
+              </div>
+
+              {/* Top Agents */}
+              <div>
+                <h4 className="font-medium mb-3">Top Agentes</h4>
+                {stats.topAgents.length > 0 ? (
+                  <div className="space-y-2">
+                    {stats.topAgents.map((agent, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className="font-mono">{idx + 1}</Badge>
+                          <span className="font-medium">{agent.name}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm text-muted-foreground">
+                            {agent.executions} ejecuciones
+                          </span>
+                          <Badge className={agent.successRate >= 80 ? 'bg-green-500' : 'bg-amber-500'}>
+                            {agent.successRate}%
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">
+                    No hay datos de uso de agentes
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Users by Plan */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Usuarios por Plan
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(stats.usersByPlan).length > 0 ? (
+                <div className="space-y-3">
+                  {Object.entries(stats.usersByPlan).map(([plan, count]) => (
+                    <div key={plan} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <span className="font-medium">{plan}</span>
+                      <Badge variant="secondary">{count}</Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>Sin suscripciones activas</p>
+                </div>
+              )}
+              
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Créditos consumidos</span>
+                  <span className="font-bold">{stats.creditsConsumed.toLocaleString()}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions Grid */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5" />
+              Acceso Rápido
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-              {quickActions.map((action, index) => {
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {quickActions.map((action, idx) => {
                 const Icon = action.icon;
                 return (
                   <div
-                    key={index}
-                    onClick={action.action}
-                    className="p-3 sm:p-4 border rounded-lg hover:bg-accent/50 active:bg-accent cursor-pointer transition-colors group hover-scale"
+                    key={idx}
+                    onClick={() => navigate(action.path)}
+                    className="p-4 border rounded-lg hover:bg-accent/50 cursor-pointer transition-all group text-center"
                   >
-                    <div className="flex items-start mb-2 sm:mb-3">
-                      <div className="bg-muted p-2 rounded-lg group-hover:bg-muted/80 transition-colors flex-shrink-0">
-                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-                      </div>
-                      <h3 className="ml-2 sm:ml-3 font-semibold text-foreground text-sm sm:text-base leading-tight">{action.title}</h3>
+                    <div className="bg-muted p-3 rounded-full w-fit mx-auto mb-2 group-hover:bg-primary/10 transition-colors">
+                      <Icon className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
                     </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{action.description}</p>
+                    <p className="font-medium text-sm">{action.title}</p>
+                    {action.count !== undefined && (
+                      <Badge variant="secondary" className="mt-1">{action.count}</Badge>
+                    )}
                   </div>
                 );
               })}
@@ -256,137 +527,44 @@ const AdminDashboard = () => {
         </Card>
 
         {/* Recent Activity */}
-        <RecentActivity />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              Actividad Reciente
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentActivity.length > 0 ? (
+              <div className="space-y-3">
+                {recentActivity.map((activity, idx) => {
+                  const Icon = activity.icon;
+                  return (
+                    <div key={idx} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                      <div className={`${activity.color} p-2 rounded-full`}>
+                        <Icon className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{activity.title}</p>
+                        <p className="text-sm text-muted-foreground">{activity.description}</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {getTimeAgo(activity.timestamp)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No hay actividad reciente</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </main>
     </AdminLayout>
-  );
-};
-
-// Componente para mostrar actividad reciente real
-const RecentActivity = () => {
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadRecentActivity();
-  }, []);
-
-  const loadRecentActivity = async () => {
-    try {
-      // Usar función administrativa para obtener actividad reciente
-      const { data: recentData, error } = await supabase
-        .rpc('get_admin_recent_activity');
-
-      if (error) {
-        console.error('Error con función de actividad reciente:', error);
-        setRecentActivity([]);
-        return;
-      }
-
-      const activities = [];
-      
-      // Procesar perfiles recientes
-      if (recentData?.[0]?.recent_profiles && Array.isArray(recentData[0].recent_profiles)) {
-        recentData[0].recent_profiles.forEach((profile: any) => {
-          activities.push({
-            type: 'user_registration',
-            data: profile,
-            timestamp: profile.created_at,
-            icon: Users,
-            color: 'bg-blue-500',
-            bgColor: 'bg-blue-50',
-            title: 'Nuevo registro',
-            description: `${profile.user_type === 'company' ? 'Empresa' : 'Usuario'} registrado: ${profile.full_name || profile.email}`
-          });
-        });
-      }
-
-      // Procesar conexiones recientes
-      if (recentData?.[0]?.recent_connections && Array.isArray(recentData[0].recent_connections)) {
-        recentData[0].recent_connections.forEach((conn: any) => {
-          activities.push({
-            type: 'linkedin_connection',
-            data: conn,
-            timestamp: conn.created_at,
-            icon: Activity,
-            color: 'bg-green-500',
-            bgColor: 'bg-green-50',
-            title: 'Conexión LinkedIn',
-            description: 'Nueva conexión LinkedIn establecida'
-          });
-        });
-      }
-
-      // Ordenar por timestamp más reciente
-      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setRecentActivity(activities.slice(0, 5)); // Solo mostrar las 5 más recientes
-
-    } catch (error) {
-      console.error('Error cargando actividad reciente:', error);
-      setRecentActivity([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffInMs = now.getTime() - time.getTime();
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const diffInDays = Math.floor(diffInHours / 24);
-
-    if (diffInDays > 0) {
-      return `${diffInDays} día${diffInDays > 1 ? 's' : ''} ago`;
-    } else if (diffInHours > 0) {
-      return `${diffInHours} hr${diffInHours > 1 ? 's' : ''} ago`;
-    } else {
-      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-      return `${diffInMinutes || 1} min ago`;
-    }
-  };
-
-  return (
-    <Card className="animate-fade-in">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center text-base sm:text-lg">
-          <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-          Actividad Reciente del Sistema
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex items-center justify-center py-6 sm:py-8">
-            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : recentActivity.length > 0 ? (
-          <div className="space-y-3 sm:space-y-4">
-            {recentActivity.map((activity, index) => {
-              const Icon = activity.icon;
-              return (
-                <div key={index} className={`flex items-start p-3 sm:p-4 ${activity.bgColor} rounded-lg hover-scale`}>
-                  <div className={`${activity.color} p-2 rounded-full mr-3 flex-shrink-0`}>
-                    <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground text-sm sm:text-base">{activity.title}</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{activity.description}</p>
-                  </div>
-                  <span className="ml-2 text-xs text-muted-foreground flex-shrink-0">
-                    {getTimeAgo(activity.timestamp)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-6 sm:py-8">
-            <Activity className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-sm sm:text-base text-muted-foreground">No hay actividad reciente en las últimas 24 horas</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
   );
 };
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ interface CreateCompanyDialogProps {
 }
 
 export const CreateCompanyDialog = ({ open, onOpenChange }: CreateCompanyDialogProps) => {
+  const { t } = useTranslation('common');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -26,36 +28,16 @@ export const CreateCompanyDialog = ({ open, onOpenChange }: CreateCompanyDialogP
   const { createCompany } = useCompanyManagement();
   const { toast } = useToast();
 
-  const companySizes = [
-    "1-10 empleados",
-    "11-50 empleados", 
-    "51-200 empleados",
-    "201-500 empleados",
-    "501-1000 empleados",
-    "1000+ empleados"
-  ];
-
-  const sectors = [
-    "Tecnología",
-    "Finanzas",
-    "Salud",
-    "Educación",
-    "Retail",
-    "Manufactura",
-    "Servicios",
-    "Construcción",
-    "Agricultura",
-    "Energía",
-    "Otro"
-  ];
+  const companySizeKeys = ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'] as const;
+  const sectorKeys = ['technology', 'finance', 'health', 'education', 'retail', 'manufacturing', 'services', 'construction', 'agriculture', 'energy', 'other'] as const;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "El nombre de la empresa es requerido",
+        title: t('error'),
+        description: t('createCompany.nameRequired'),
         variant: "destructive",
       });
       return;
@@ -68,11 +50,10 @@ export const CreateCompanyDialog = ({ open, onOpenChange }: CreateCompanyDialogP
       
       if (result.success) {
         toast({
-          title: "Empresa creada",
-          description: "La empresa ha sido creada exitosamente",
+          title: t('createCompany.created'),
+          description: t('createCompany.createdDesc'),
         });
         
-        // Reset form
         setFormData({
           name: '',
           description: '',
@@ -83,12 +64,12 @@ export const CreateCompanyDialog = ({ open, onOpenChange }: CreateCompanyDialogP
         
         onOpenChange(false);
       } else {
-        throw new Error(result.error?.message || 'Error desconocido');
+        throw new Error(result.error?.message || t('messages.somethingWrong'));
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "No se pudo crear la empresa",
+        title: t('error'),
+        description: error.message || t('messages.somethingWrong'),
         variant: "destructive",
       });
     } finally {
@@ -109,21 +90,21 @@ export const CreateCompanyDialog = ({ open, onOpenChange }: CreateCompanyDialogP
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building className="h-5 w-5" />
-            Crear Nueva Empresa
+            {t('createCompany.title')}
           </DialogTitle>
           <DialogDescription>
-            Agrega una nueva empresa a tu cuenta. Podrás invitar miembros posteriormente.
+            {t('createCompany.description')}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="company-name">
-              Nombre de la empresa <span className="text-destructive">*</span>
+              {t('createCompany.companyName')} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="company-name"
-              placeholder="Mi Empresa S.A.S."
+              placeholder={t('createCompany.companyNamePlaceholder')}
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               required
@@ -131,10 +112,10 @@ export const CreateCompanyDialog = ({ open, onOpenChange }: CreateCompanyDialogP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="company-description">Descripción</Label>
+            <Label htmlFor="company-description">{t('createCompany.companyDescription')}</Label>
             <Textarea
               id="company-description"
-              placeholder="Breve descripción de la empresa..."
+              placeholder={t('createCompany.companyDescriptionPlaceholder')}
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               rows={3}
@@ -142,11 +123,11 @@ export const CreateCompanyDialog = ({ open, onOpenChange }: CreateCompanyDialogP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="company-website">Sitio web</Label>
+            <Label htmlFor="company-website">{t('createCompany.website')}</Label>
             <Input
               id="company-website"
               type="url"
-              placeholder="https://miempresa.com"
+              placeholder={t('createCompany.websitePlaceholder')}
               value={formData.website_url}
               onChange={(e) => handleInputChange('website_url', e.target.value)}
             />
@@ -154,18 +135,18 @@ export const CreateCompanyDialog = ({ open, onOpenChange }: CreateCompanyDialogP
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="company-sector">Sector</Label>
+              <Label htmlFor="company-sector">{t('createCompany.sector')}</Label>
               <Select 
                 value={formData.industry_sector} 
                 onValueChange={(value) => handleInputChange('industry_sector', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar sector" />
+                  <SelectValue placeholder={t('createCompany.sectorPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {sectors.map((sector) => (
-                    <SelectItem key={sector} value={sector}>
-                      {sector}
+                  {sectorKeys.map((key) => (
+                    <SelectItem key={key} value={t(`sectors.${key}`)}>
+                      {t(`sectors.${key}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -173,18 +154,18 @@ export const CreateCompanyDialog = ({ open, onOpenChange }: CreateCompanyDialogP
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="company-size">Tamaño</Label>
+              <Label htmlFor="company-size">{t('createCompany.size')}</Label>
               <Select 
                 value={formData.company_size} 
                 onValueChange={(value) => handleInputChange('company_size', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar tamaño" />
+                  <SelectValue placeholder={t('createCompany.sizePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {companySizes.map((size) => (
-                    <SelectItem key={size} value={size}>
-                      {size}
+                  {companySizeKeys.map((key) => (
+                    <SelectItem key={key} value={t(`companySizes.${key}`)}>
+                      {t(`companySizes.${key}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -198,10 +179,10 @@ export const CreateCompanyDialog = ({ open, onOpenChange }: CreateCompanyDialogP
               variant="outline" 
               onClick={() => onOpenChange(false)}
             >
-              Cancelar
+              {t('actions.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Creando..." : "Crear Empresa"}
+              {loading ? t('createCompany.creating') : t('createCompany.create')}
             </Button>
           </DialogFooter>
         </form>

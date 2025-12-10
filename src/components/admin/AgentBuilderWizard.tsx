@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { X, Plus, Save, Bot, Zap, Code, Brain, Shield, Database } from "lucide-react";
+import { X, Plus, Save, Bot, Zap, Code, Brain, Shield, Database, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -93,13 +93,24 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
     is_active: true,
     is_onboarding_agent: false,
     
-    // Payload mapping (NEW)
+    // Payload mapping
     context_requirements: {
       needsStrategy: false,
       needsAudiences: false,
       needsBranding: false,
     },
     payload_template: {} as Record<string, any>,
+    
+    // Prerequisites
+    prerequisites: [] as Array<{
+      type: 'strategy' | 'audiences' | 'branding' | 'social_connected';
+      required: boolean;
+      fields?: string[];
+      minCount?: number;
+      platforms?: string[];
+      message: string;
+      actionUrl: string;
+    }>,
   });
 
   const [newSkill, setNewSkill] = useState({ skill_code: "", level: 3, custom_description: "" });
@@ -152,6 +163,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
         is_onboarding_agent: data.is_onboarding_agent || false,
         context_requirements: (data.context_requirements as any) || { needsStrategy: false, needsAudiences: false, needsBranding: false },
         payload_template: (data.payload_template as any) || {},
+        prerequisites: (data.prerequisites as any) || [],
       });
     } catch (error) {
       console.error("Error loading agent:", error);
@@ -225,6 +237,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
         is_onboarding_agent: formData.is_onboarding_agent,
         context_requirements: formData.context_requirements,
         payload_template: formData.payload_template,
+        prerequisites: formData.prerequisites,
         created_by: user?.id,
       };
 
@@ -269,7 +282,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="basic" className="flex items-center gap-2">
             <Bot className="h-4 w-4" />
             Básico
@@ -281,6 +294,10 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
           <TabsTrigger value="payload" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
             Payload
+          </TabsTrigger>
+          <TabsTrigger value="prerequisites" className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            Prereq.
           </TabsTrigger>
           <TabsTrigger value="tools" className="flex items-center gap-2">
             <Code className="h-4 w-4" />
@@ -644,6 +661,238 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
                   💡 Si dejas vacío, se usará el mapeo hardcodeado existente para agentes legacy.
                 </p>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* PREREQUISITES TAB */}
+        <TabsContent value="prerequisites" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Prerequisitos del Agente</CardTitle>
+              <CardDescription>
+                Define qué datos necesita el usuario antes de poder ejecutar este agente. 
+                Los prerequisitos obligatorios bloquean la ejecución; los opcionales muestran advertencias.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Add prerequisite buttons */}
+              <div className="flex flex-wrap gap-2">
+                {!formData.prerequisites.find(p => p.type === 'strategy') && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData({
+                      ...formData,
+                      prerequisites: [...formData.prerequisites, {
+                        type: 'strategy',
+                        required: true,
+                        fields: [],
+                        message: 'Define tu estrategia de marketing primero',
+                        actionUrl: '/company/adn'
+                      }]
+                    })}
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Estrategia
+                  </Button>
+                )}
+                {!formData.prerequisites.find(p => p.type === 'audiences') && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData({
+                      ...formData,
+                      prerequisites: [...formData.prerequisites, {
+                        type: 'audiences',
+                        required: true,
+                        minCount: 1,
+                        message: 'Define al menos una audiencia objetivo',
+                        actionUrl: '/company/audiencias'
+                      }]
+                    })}
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Audiencias
+                  </Button>
+                )}
+                {!formData.prerequisites.find(p => p.type === 'branding') && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData({
+                      ...formData,
+                      prerequisites: [...formData.prerequisites, {
+                        type: 'branding',
+                        required: false,
+                        fields: [],
+                        message: 'Configura tu identidad visual para mejores resultados',
+                        actionUrl: '/company/adn'
+                      }]
+                    })}
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Branding
+                  </Button>
+                )}
+                {!formData.prerequisites.find(p => p.type === 'social_connected') && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData({
+                      ...formData,
+                      prerequisites: [...formData.prerequisites, {
+                        type: 'social_connected',
+                        required: false,
+                        platforms: [],
+                        message: 'Conecta tus redes sociales para análisis más precisos',
+                        actionUrl: '/company/redes'
+                      }]
+                    })}
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Redes Sociales
+                  </Button>
+                )}
+              </div>
+
+              {/* List of configured prerequisites */}
+              {formData.prerequisites.length === 0 ? (
+                <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                  <AlertCircle className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">No hay prerequisitos configurados</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Este agente podrá ejecutarse sin verificación de datos previos
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {formData.prerequisites.map((prereq, idx) => (
+                    <Card key={idx} className="bg-muted/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Badge variant={prereq.required ? 'destructive' : 'secondary'}>
+                                {prereq.required ? 'Obligatorio' : 'Recomendado'}
+                              </Badge>
+                              <Badge variant="outline">
+                                {prereq.type === 'strategy' && '🎯 Estrategia'}
+                                {prereq.type === 'audiences' && '👥 Audiencias'}
+                                {prereq.type === 'branding' && '🎨 Branding'}
+                                {prereq.type === 'social_connected' && '📱 Redes Sociales'}
+                              </Badge>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label className="text-xs">Mensaje para el usuario</Label>
+                                <Input
+                                  value={prereq.message}
+                                  onChange={(e) => {
+                                    const updated = [...formData.prerequisites];
+                                    updated[idx].message = e.target.value;
+                                    setFormData({ ...formData, prerequisites: updated });
+                                  }}
+                                  className="text-sm"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs">URL de acción</Label>
+                                <Input
+                                  value={prereq.actionUrl}
+                                  onChange={(e) => {
+                                    const updated = [...formData.prerequisites];
+                                    updated[idx].actionUrl = e.target.value;
+                                    setFormData({ ...formData, prerequisites: updated });
+                                  }}
+                                  placeholder="/company/adn"
+                                  className="text-sm"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={prereq.required}
+                                  onCheckedChange={(checked) => {
+                                    const updated = [...formData.prerequisites];
+                                    updated[idx].required = checked;
+                                    setFormData({ ...formData, prerequisites: updated });
+                                  }}
+                                />
+                                <span className="text-sm">Obligatorio</span>
+                              </div>
+
+                              {prereq.type === 'audiences' && (
+                                <div className="flex items-center gap-2">
+                                  <Label className="text-xs">Mín. audiencias:</Label>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    value={prereq.minCount || 1}
+                                    onChange={(e) => {
+                                      const updated = [...formData.prerequisites];
+                                      updated[idx].minCount = parseInt(e.target.value) || 1;
+                                      setFormData({ ...formData, prerequisites: updated });
+                                    }}
+                                    className="w-16 text-sm"
+                                  />
+                                </div>
+                              )}
+
+                              {(prereq.type === 'strategy' || prereq.type === 'branding') && (
+                                <div className="flex items-center gap-2">
+                                  <Label className="text-xs">Campos requeridos:</Label>
+                                  <Input
+                                    value={(prereq.fields || []).join(', ')}
+                                    onChange={(e) => {
+                                      const updated = [...formData.prerequisites];
+                                      updated[idx].fields = e.target.value.split(',').map(f => f.trim()).filter(Boolean);
+                                      setFormData({ ...formData, prerequisites: updated });
+                                    }}
+                                    placeholder="mision, vision, propuesta_valor"
+                                    className="flex-1 text-sm"
+                                  />
+                                </div>
+                              )}
+
+                              {prereq.type === 'social_connected' && (
+                                <div className="flex items-center gap-2">
+                                  <Label className="text-xs">Plataformas:</Label>
+                                  <Input
+                                    value={(prereq.platforms || []).join(', ')}
+                                    onChange={(e) => {
+                                      const updated = [...formData.prerequisites];
+                                      updated[idx].platforms = e.target.value.split(',').map(f => f.trim()).filter(Boolean);
+                                      setFormData({ ...formData, prerequisites: updated });
+                                    }}
+                                    placeholder="linkedin, instagram, facebook"
+                                    className="flex-1 text-sm"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const updated = formData.prerequisites.filter((_, i) => i !== idx);
+                              setFormData({ ...formData, prerequisites: updated });
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

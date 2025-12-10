@@ -4799,6 +4799,7 @@ export type Database = {
           openai_assistant_id: string | null
           output_schema: Json | null
           payload_template: Json | null
+          prerequisites: Json | null
           primary_function: string | null
           sample_output: Json | null
           sdk_version: string | null
@@ -4839,6 +4840,7 @@ export type Database = {
           openai_assistant_id?: string | null
           output_schema?: Json | null
           payload_template?: Json | null
+          prerequisites?: Json | null
           primary_function?: string | null
           sample_output?: Json | null
           sdk_version?: string | null
@@ -4879,6 +4881,7 @@ export type Database = {
           openai_assistant_id?: string | null
           output_schema?: Json | null
           payload_template?: Json | null
+          prerequisites?: Json | null
           primary_function?: string | null
           sample_output?: Json | null
           sdk_version?: string | null

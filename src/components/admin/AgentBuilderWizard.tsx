@@ -97,13 +97,18 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
     
     // Prerequisites
     prerequisites: [] as Array<{
-      type: 'strategy' | 'audiences' | 'branding' | 'social_connected';
+      type: 'strategy' | 'audiences' | 'branding' | 'social_connected' | 'social_data';
       required: boolean;
       fields?: string[];
       minCount?: number;
+      minPosts?: number;
       platforms?: string[];
       message: string;
       actionUrl: string;
+      alternativeAction?: {
+        type: 'scrape' | 'connect' | 'generate';
+        label: string;
+      };
     }>,
   });
 
@@ -675,6 +680,27 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
                     <Plus className="h-3 w-3 mr-1" /> Redes Sociales
                   </Button>
                 )}
+                {!formData.prerequisites.find(p => p.type === 'social_data') && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData({
+                      ...formData,
+                      prerequisites: [...formData.prerequisites, {
+                        type: 'social_data',
+                        required: true,
+                        minPosts: 5,
+                        platforms: [],
+                        message: 'Necesitas publicaciones importadas para este análisis',
+                        actionUrl: '/company/dashboard?tab=configuracion',
+                        alternativeAction: { type: 'scrape', label: 'Importar datos' }
+                      }]
+                    })}
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Datos Sociales
+                  </Button>
+                )}
               </div>
 
               {/* List of configured prerequisites */}
@@ -702,6 +728,7 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
                                 {prereq.type === 'audiences' && '👥 Audiencias'}
                                 {prereq.type === 'branding' && '🎨 Branding'}
                                 {prereq.type === 'social_connected' && '📱 Redes Sociales'}
+                                {prereq.type === 'social_data' && '📊 Datos Sociales'}
                               </Badge>
                             </div>
                             
@@ -793,6 +820,48 @@ export const AgentBuilderWizard = ({ agentId, onSave, onCancel }: AgentBuilderWi
                                     className="flex-1 text-sm"
                                   />
                                 </div>
+                              )}
+
+                              {prereq.type === 'social_data' && (
+                                <>
+                                  <div className="flex items-center gap-2">
+                                    <Label className="text-xs">Mín. posts:</Label>
+                                    <Input
+                                      type="number"
+                                      min={1}
+                                      value={prereq.minPosts || 5}
+                                      onChange={(e) => {
+                                        const updated = [...formData.prerequisites];
+                                        updated[idx].minPosts = parseInt(e.target.value) || 5;
+                                        setFormData({ ...formData, prerequisites: updated });
+                                      }}
+                                      className="w-16 text-sm"
+                                    />
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Label className="text-xs">Acción alternativa:</Label>
+                                    <Select
+                                      value={prereq.alternativeAction?.type || 'scrape'}
+                                      onValueChange={(value) => {
+                                        const updated = [...formData.prerequisites];
+                                        updated[idx].alternativeAction = {
+                                          type: value as 'scrape' | 'connect' | 'generate',
+                                          label: prereq.alternativeAction?.label || 'Importar datos'
+                                        };
+                                        setFormData({ ...formData, prerequisites: updated });
+                                      }}
+                                    >
+                                      <SelectTrigger className="w-24 text-sm">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="scrape">Scrape</SelectItem>
+                                        <SelectItem value="connect">Conectar</SelectItem>
+                                        <SelectItem value="generate">Generar</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </>
                               )}
                             </div>
                           </div>

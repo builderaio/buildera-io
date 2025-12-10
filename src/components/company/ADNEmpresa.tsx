@@ -222,6 +222,7 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
   const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false);
   const [isEnrichingData, setIsEnrichingData] = useState(false);
   const [isGeneratingBrand, setIsGeneratingBrand] = useState(false);
+  const [isGeneratingObjectives, setIsGeneratingObjectives] = useState(false);
   const loadedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -522,6 +523,37 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     }
   }, [companyData?.id, toast, t]);
 
+  const generateObjectives = useCallback(async () => {
+    if (!companyData?.id) return;
+    
+    setIsGeneratingObjectives(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-business-objectives', {
+        body: { companyId: companyData.id, language: 'es' }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.objectives) {
+        setObjectives(prev => [...prev, ...data.objectives]);
+      }
+      
+      toast({
+        title: t('company:objectives.generated', 'Objetivos generados'),
+        description: t('company:objectives.generatedDesc', `Se han creado ${data?.count || 0} objetivos con IA`)
+      });
+    } catch (error: any) {
+      console.error('Error generating objectives:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron generar los objetivos",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingObjectives(false);
+    }
+  }, [companyData?.id, toast, t]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -807,10 +839,30 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
                 <Badge variant="secondary" className="text-xs">{objectives.length}</Badge>
               )}
             </span>
-            <Button variant="outline" size="sm" onClick={addNewObjective}>
-              <Plus className="w-4 h-4 mr-1" />
-              Agregar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={generateObjectives}
+                disabled={isGeneratingObjectives || !companyData?.id}
+              >
+                {isGeneratingObjectives ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-1" />
+                    Generar con IA
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" size="sm" onClick={addNewObjective}>
+                <Plus className="w-4 h-4 mr-1" />
+                Agregar
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -818,9 +870,16 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
             <div className="text-center py-8 text-muted-foreground">
               <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-40" />
               <p className="text-sm">No hay objetivos definidos</p>
-              <Button variant="link" size="sm" onClick={addNewObjective}>
-                Crear primer objetivo
-              </Button>
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <Button variant="link" size="sm" onClick={generateObjectives} disabled={isGeneratingObjectives}>
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  Generar con IA
+                </Button>
+                <span className="text-muted-foreground">o</span>
+                <Button variant="link" size="sm" onClick={addNewObjective}>
+                  Crear manualmente
+                </Button>
+              </div>
             </div>
           ) : (
             objectives.map((objective) => (

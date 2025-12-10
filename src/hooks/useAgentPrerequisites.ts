@@ -23,6 +23,10 @@ export interface PrerequisiteStatus {
     message: string;
     actionUrl: string;
   }>;
+  completedItems: Array<{
+    type: string;
+    message: string;
+  }>;
   loading: boolean;
 }
 
@@ -47,12 +51,13 @@ export const useAgentPrerequisites = (
     canExecute: true,
     blockers: [],
     warnings: [],
+    completedItems: [],
     loading: true
   });
 
   const checkPrerequisites = useCallback(async () => {
     if (!agentCode || !companyId) {
-      setStatus({ canExecute: true, blockers: [], warnings: [], loading: false });
+      setStatus({ canExecute: true, blockers: [], warnings: [], completedItems: [], loading: false });
       return;
     }
 
@@ -68,14 +73,14 @@ export const useAgentPrerequisites = (
 
       if (agentError || !agentData) {
         console.error('Error fetching agent prerequisites:', agentError);
-        setStatus({ canExecute: true, blockers: [], warnings: [], loading: false });
+        setStatus({ canExecute: true, blockers: [], warnings: [], completedItems: [], loading: false });
         return;
       }
 
       const prerequisites = (agentData.prerequisites as unknown as Prerequisite[]) || [];
       
       if (prerequisites.length === 0) {
-        setStatus({ canExecute: true, blockers: [], warnings: [], loading: false });
+        setStatus({ canExecute: true, blockers: [], warnings: [], completedItems: [], loading: false });
         return;
       }
 
@@ -106,11 +111,25 @@ export const useAgentPrerequisites = (
       // Evaluate each prerequisite
       const blockers: PrerequisiteStatus['blockers'] = [];
       const warnings: PrerequisiteStatus['warnings'] = [];
+      const completedItems: PrerequisiteStatus['completedItems'] = [];
+
+      // Define completed messages for each type
+      const completedMessages: Record<string, string> = {
+        strategy: 'Estrategia empresarial configurada',
+        audiences: 'Audiencias definidas',
+        branding: 'Identidad de marca configurada',
+        social_connected: 'Redes sociales conectadas'
+      };
 
       for (const prereq of prerequisites) {
         const isMet = evaluatePrerequisite(prereq, companyData);
         
-        if (!isMet) {
+        if (isMet) {
+          completedItems.push({
+            type: prereq.type,
+            message: completedMessages[prereq.type] || `${prereq.type} configurado`
+          });
+        } else {
           const issue = {
             type: prereq.type,
             message: prereq.message,
@@ -129,11 +148,12 @@ export const useAgentPrerequisites = (
         canExecute: blockers.length === 0,
         blockers,
         warnings,
+        completedItems,
         loading: false
       });
     } catch (error) {
       console.error('Error checking prerequisites:', error);
-      setStatus({ canExecute: true, blockers: [], warnings: [], loading: false });
+      setStatus({ canExecute: true, blockers: [], warnings: [], completedItems: [], loading: false });
     }
   }, [agentCode, companyId, userId]);
 

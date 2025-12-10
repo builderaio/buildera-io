@@ -68,6 +68,7 @@ export interface ContextRequirements {
   needsStrategy: boolean;
   needsAudiences: boolean;
   needsBranding: boolean;
+  needsSocialConnection: boolean;
 }
 
 /**
@@ -529,17 +530,14 @@ export const buildAgentPayload = (
 export const getAgentDataRequirements = (
   agentCode: string,
   contextRequirements?: ContextRequirements
-): {
-  needsStrategy: boolean;
-  needsAudiences: boolean;
-  needsBranding: boolean;
-} => {
+): ContextRequirements => {
   // If context requirements are provided from agent config, use them
   if (contextRequirements) {
     return {
       needsStrategy: contextRequirements.needsStrategy ?? false,
       needsAudiences: contextRequirements.needsAudiences ?? false,
       needsBranding: contextRequirements.needsBranding ?? false,
+      needsSocialConnection: contextRequirements.needsSocialConnection ?? false,
     };
   }
 
@@ -547,11 +545,11 @@ export const getAgentDataRequirements = (
   switch (agentCode) {
     // Strategy + Audiences
     case 'MKTG_STRATEGIST':
-      return { needsStrategy: true, needsAudiences: true, needsBranding: false };
+      return { needsStrategy: true, needsAudiences: true, needsBranding: false, needsSocialConnection: false };
 
     // Strategy + Audiences + Branding
     case 'CAMPAIGN_GENERATOR':
-      return { needsStrategy: true, needsAudiences: true, needsBranding: true };
+      return { needsStrategy: true, needsAudiences: true, needsBranding: true, needsSocialConnection: false };
 
     // Strategy only
     case 'BUSINESS_STRATEGIST':
@@ -560,7 +558,7 @@ export const getAgentDataRequirements = (
     case 'LEARNING_TUTOR':
     case 'NBA_ENGINE':
     case 'COMPANY_STRATEGY':
-      return { needsStrategy: true, needsAudiences: false, needsBranding: false };
+      return { needsStrategy: true, needsAudiences: false, needsBranding: false, needsSocialConnection: false };
 
     // Strategy + Branding
     case 'CONTENT_CREATOR':
@@ -571,32 +569,35 @@ export const getAgentDataRequirements = (
     case 'CONTENT_GENERATOR':
     case 'BRAND_IDENTITY':
     case 'ERA_OPTIMIZER':
-      return { needsStrategy: true, needsAudiences: false, needsBranding: true };
+      return { needsStrategy: true, needsAudiences: false, needsBranding: true, needsSocialConnection: false };
 
     // Strategy + Audiences
     case 'AUDIENCE_ANALYST':
     case 'AUDIENCE_INTELLIGENCE':
-      return { needsStrategy: true, needsAudiences: true, needsBranding: false };
+      return { needsStrategy: true, needsAudiences: true, needsBranding: false, needsSocialConnection: false };
 
-    // No extra data needed
+    // Require social connection
     case 'LINKEDIN_ANALYST':
     case 'INSTAGRAM_ANALYST':
     case 'FACEBOOK_ANALYST':
     case 'TIKTOK_ANALYST':
     case 'SOCIAL_ANALYZER':
+      return { needsStrategy: false, needsAudiences: false, needsBranding: false, needsSocialConnection: true };
+
+    // No extra data needed
     case 'SEMANTIC_ANALYZER':
     case 'PREMIUM_INSIGHTS':
     case 'CONTENT_PUBLISHER':
     case 'CAMPAIGN_OPTIMIZER':
-      return { needsStrategy: false, needsAudiences: false, needsBranding: false };
+      return { needsStrategy: false, needsAudiences: false, needsBranding: false, needsSocialConnection: false };
 
     // Strategy only (insights)
     case 'INSIGHTS_GENERATOR':
     case 'COMPETITIVE_INTEL':
-      return { needsStrategy: true, needsAudiences: false, needsBranding: false };
+      return { needsStrategy: true, needsAudiences: false, needsBranding: false, needsSocialConnection: false };
 
     default:
-      return { needsStrategy: false, needsAudiences: false, needsBranding: false };
+      return { needsStrategy: false, needsAudiences: false, needsBranding: false, needsSocialConnection: false };
   }
 };
 

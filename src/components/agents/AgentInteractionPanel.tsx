@@ -14,6 +14,8 @@ import { AgentConfigurationWizard } from "./AgentConfigurationWizard";
 import { AgentResultsView } from "./AgentResultsView";
 import { AgentScheduleManager } from "./AgentScheduleManager";
 import { AgentPrerequisitesAlert } from "./AgentPrerequisitesAlert";
+import { AgentContextSummary } from "./AgentContextSummary";
+import { AgentConfigDisplay } from "./AgentConfigDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { buildAgentPayload, getAgentDataRequirements } from "@/utils/agentPayloadMapper";
@@ -396,33 +398,34 @@ export const AgentInteractionPanel = ({
               </TabsList>
 
               <TabsContent value="execute" className="space-y-4 mt-4">
-                {/* Prerequisites Alert */}
-                <AgentPrerequisitesAlert status={prerequisiteStatus} onClose={onClose} />
+                {/* Context Summary - Data used by agent */}
+                {companyId && userId && (
+                  <AgentContextSummary 
+                    agent={agent} 
+                    companyId={companyId} 
+                    userId={userId}
+                    onDataGenerated={() => {
+                      prerequisiteStatus.refresh();
+                      reload();
+                    }}
+                  />
+                )}
 
-                {/* Current Configuration */}
+                {/* Prerequisites Alert */}
+                <AgentPrerequisitesAlert 
+                  status={prerequisiteStatus} 
+                  companyId={companyId}
+                  onClose={onClose} 
+                  onRefresh={prerequisiteStatus.refresh}
+                />
+
+                {/* Current Configuration - Human readable */}
                 {configuration && (
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium flex items-center gap-2">
-                          <Settings className="w-4 h-4" />
-                          {t('common:currentConfig', 'Configuración actual')}
-                        </span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setShowConfigWizard(true)}
-                        >
-                          {t('common:edit', 'Editar')}
-                        </Button>
-                      </div>
-                      <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-                        <pre className="whitespace-pre-wrap text-xs">
-                          {JSON.stringify(configuration.configuration, null, 2)}
-                        </pre>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <AgentConfigDisplay
+                    configuration={configuration.configuration as Record<string, any>}
+                    inputSchema={agent.input_schema as Record<string, any>}
+                    onEdit={() => setShowConfigWizard(true)}
+                  />
                 )}
 
                 {/* Execute Button */}

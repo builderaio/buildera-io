@@ -503,5 +503,103 @@
       "impact": "Melhore suas habilidades",
       "time": "15 minutos"
     }
+  },
+  "common": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "remove": "Remover"
+  },
+  "config": {
+    "title": "Configurações",
+    "subtitle": "Gerencie sua equipe, segurança e preferências da empresa",
+    "tabs": {
+      "team": "Equipe",
+      "security": "Segurança",
+      "plan": "Meu Plano",
+      "notifications": "Notificações"
+    },
+    "team": {
+      "title": "Membros da Equipe",
+      "description": "{{count}} membro(s) na sua empresa",
+      "invite": "Convidar Membro",
+      "roles": {
+        "owner": "Proprietário",
+        "admin": "Administrador",
+        "member": "Membro"
+      },
+      "noActivity": "Sem atividade recente",
+      "lastActivity": {
+        "minutes": "Ativo há {{count}} min",
+        "hours": "Ativo há {{count}}h",
+        "days": "Ativo há {{count}} dias"
+      },
+      "unknownUser": "Usuário desconhecido",
+      "noMembers": "Nenhum membro na sua equipe",
+      "errorLoading": "Erro ao carregar membros",
+      "memberRemoved": "Membro removido com sucesso",
+      "errorRemoving": "Erro ao remover membro",
+      "inviteSent": "Convite enviado com sucesso",
+      "removeConfirm": {
+        "title": "Remover membro?",
+        "description": "Tem certeza de que deseja remover {{name}} da sua equipe? Esta ação não pode ser desfeita."
+      }
+    },
+    "invite": {
+      "title": "Convidar Novo Membro",
+      "description": "Envie um convite por email para se juntar à sua empresa",
+      "emailLabel": "Email do convidado",
+      "emailPlaceholder": "email@exemplo.com",
+      "roleLabel": "Função",
+      "roles": {
+        "memberDesc": "Pode ver e executar agentes",
+        "adminDesc": "Gestão completa da equipe"
+      },
+      "send": "Enviar Convite",
+      "sending": "Enviando...",
+      "noCompany": "Empresa não encontrada",
+      "emailRequired": "Email é obrigatório",
+      "error": "Erro ao enviar convite"
+    },
+    "plan": {
+      "currentPlan": "Plano Atual",
+      "renewsOn": "Renova em {{date}}",
+      "credits": "Créditos",
+      "thisMonth": "este mês",
+      "creditsRemaining": "créditos restantes",
+      "agents": "Agentes",
+      "agentsIncluded": "incluídos no seu plano",
+      "teamMembers": "Membros",
+      "membersIncluded": "incluídos no seu plano",
+      "upgradeTitle": "Melhore seu Plano",
+      "popular": "Popular",
+      "month": "mês",
+      "upgrade": "Melhorar Plano"
+    },
+    "notifications": {
+      "title": "Preferências de Notificações",
+      "description": "Configure como e quando você quer receber notificações",
+      "saved": "Preferências salvas",
+      "saveError": "Erro ao salvar preferências",
+      "emailSection": "Notificações por Email",
+      "emailDescription": "Configure quais emails você deseja receber",
+      "emailSummary": "Resumo de atividade",
+      "emailSummaryDesc": "Receba resumos periódicos da atividade dos seus agentes",
+      "frequency": "Frequência",
+      "daily": "Diário",
+      "weekly": "Semanal",
+      "monthly": "Mensal",
+      "weeklyReports": "Relatórios semanais",
+      "weeklyReportsDesc": "Estatísticas e métricas de desempenho",
+      "agentSection": "Alertas de Agentes",
+      "agentDescription": "Receba notificações sobre seus agentes",
+      "agentAlerts": "Alertas de execução",
+      "agentAlertsDesc": "Notificações quando um agente completa ou falha",
+      "usageSection": "Alertas de Uso",
+      "usageDescription": "Monitore seu consumo de créditos",
+      "creditAlerts": "Alertas de créditos baixos",
+      "creditAlertsDesc": "Receba um alerta quando seus créditos estiverem baixos",
+      "creditThreshold": "Limite de alerta",
+      "remaining": "restante"
+    }
   }
 }

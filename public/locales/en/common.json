@@ -503,5 +503,103 @@
       "impact": "Improve your skills",
       "time": "15 minutes"
     }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "remove": "Remove"
+  },
+  "config": {
+    "title": "Settings",
+    "subtitle": "Manage your team, security and company preferences",
+    "tabs": {
+      "team": "Team",
+      "security": "Security",
+      "plan": "My Plan",
+      "notifications": "Notifications"
+    },
+    "team": {
+      "title": "Team Members",
+      "description": "{{count}} member(s) in your company",
+      "invite": "Invite Member",
+      "roles": {
+        "owner": "Owner",
+        "admin": "Admin",
+        "member": "Member"
+      },
+      "noActivity": "No recent activity",
+      "lastActivity": {
+        "minutes": "Active {{count}} min ago",
+        "hours": "Active {{count}}h ago",
+        "days": "Active {{count}} days ago"
+      },
+      "unknownUser": "Unknown user",
+      "noMembers": "No members in your team",
+      "errorLoading": "Error loading members",
+      "memberRemoved": "Member removed successfully",
+      "errorRemoving": "Error removing member",
+      "inviteSent": "Invitation sent successfully",
+      "removeConfirm": {
+        "title": "Remove member?",
+        "description": "Are you sure you want to remove {{name}} from your team? This action cannot be undone."
+      }
+    },
+    "invite": {
+      "title": "Invite New Member",
+      "description": "Send an email invitation to join your company",
+      "emailLabel": "Guest email",
+      "emailPlaceholder": "email@example.com",
+      "roleLabel": "Role",
+      "roles": {
+        "memberDesc": "Can view and run agents",
+        "adminDesc": "Full team management"
+      },
+      "send": "Send Invitation",
+      "sending": "Sending...",
+      "noCompany": "Company not found",
+      "emailRequired": "Email is required",
+      "error": "Error sending invitation"
+    },
+    "plan": {
+      "currentPlan": "Current Plan",
+      "renewsOn": "Renews on {{date}}",
+      "credits": "Credits",
+      "thisMonth": "this month",
+      "creditsRemaining": "credits remaining",
+      "agents": "Agents",
+      "agentsIncluded": "included in your plan",
+      "teamMembers": "Members",
+      "membersIncluded": "included in your plan",
+      "upgradeTitle": "Upgrade Your Plan",
+      "popular": "Popular",
+      "month": "month",
+      "upgrade": "Upgrade Plan"
+    },
+    "notifications": {
+      "title": "Notification Preferences",
+      "description": "Configure how and when you want to receive notifications",
+      "saved": "Preferences saved",
+      "saveError": "Error saving preferences",
+      "emailSection": "Email Notifications",
+      "emailDescription": "Configure which emails you want to receive",
+      "emailSummary": "Activity summary",
+      "emailSummaryDesc": "Receive periodic summaries of your agents' activity",
+      "frequency": "Frequency",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "weeklyReports": "Weekly reports",
+      "weeklyReportsDesc": "Performance statistics and metrics",
+      "agentSection": "Agent Alerts",
+      "agentDescription": "Receive notifications about your agents",
+      "agentAlerts": "Execution alerts",
+      "agentAlertsDesc": "Notifications when an agent completes or fails",
+      "usageSection": "Usage Alerts",
+      "usageDescription": "Monitor your credit consumption",
+      "creditAlerts": "Low credit alerts",
+      "creditAlertsDesc": "Get an alert when your credits are running low",
+      "creditThreshold": "Alert threshold",
+      "remaining": "remaining"
+    }
   }
 }

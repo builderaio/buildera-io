@@ -1,9 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Shield, CreditCard, Bell } from "lucide-react";
+import { Shield, CreditCard, Bell } from "lucide-react";
 import AuthMethodManager from "@/components/auth/AuthMethodManager";
-import CompanyTeamMembers from "./CompanyTeamMembers";
 import PlanSubscription from "./PlanSubscription";
 import NotificationPreferences from "./NotificationPreferences";
 
@@ -26,12 +25,8 @@ const Configuracion = ({ profile, resetTutorial }: ConfiguracionProps) => {
 
       <Card>
         <CardContent className="p-6 md:p-8">
-          <Tabs defaultValue="team" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
-              <TabsTrigger value="team" className="gap-2">
-                <Users className="w-4 h-4 hidden sm:block" />
-                {t("config.tabs.team")}
-              </TabsTrigger>
+          <Tabs defaultValue="security" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="security" className="gap-2">
                 <Shield className="w-4 h-4 hidden sm:block" />
                 {t("config.tabs.security")}
@@ -45,10 +40,6 @@ const Configuracion = ({ profile, resetTutorial }: ConfiguracionProps) => {
                 {t("config.tabs.notifications")}
               </TabsTrigger>
             </TabsList>
-
-            <TabsContent value="team" className="mt-0">
-              <CompanyTeamMembers />
-            </TabsContent>
 
             <TabsContent value="security" className="mt-0">
               <AuthMethodManager />

@@ -1,233 +1,36 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import BaseConocimiento from "./BaseConocimiento";
-import { EraOptimizerButton } from "@/components/ui/era-optimizer-button";
 import { 
   Building2, 
   Target, 
   Palette, 
-  Globe, 
-  TrendingUp, 
-  RefreshCw,
-  Calendar,
+  Share2,
+  FolderOpen,
   Users,
-  MapPin,
-  Plus,
-  Trash2,
-  Sparkles
+  RefreshCw
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { 
+  ADNInfoTab, 
+  ADNStrategyTab, 
+  ADNBrandTab, 
+  ADNSocialTab, 
+  ADNFilesTab, 
+  ADNTeamTab 
+} from "./adn-tabs";
 
 interface ADNEmpresaProps {
   profile: any;
   onProfileUpdate: (profile: any) => void;
 }
 
-// Componente de campo auto-guardable
-const AutoSaveField = ({ 
-  value, 
-  onSave, 
-  type = "text",
-  placeholder = "",
-  className = "",
-  savingText = ""
-}: { 
-  value: string; 
-  onSave: (value: string) => void; 
-  type?: "text" | "textarea";
-  placeholder?: string;
-  className?: string;
-  savingText?: string;
-}) => {
-  const [localValue, setLocalValue] = useState(value || '');
-  const [isSaving, setIsSaving] = useState(false);
-  const initialValueRef = useRef(value);
-
-  useEffect(() => {
-    setLocalValue(value || '');
-    initialValueRef.current = value;
-  }, [value]);
-
-  const handleBlur = useCallback(async () => {
-    if (localValue !== initialValueRef.current) {
-      setIsSaving(true);
-      await onSave(localValue);
-      initialValueRef.current = localValue;
-      setIsSaving(false);
-    }
-  }, [localValue, onSave]);
-
-  const baseClassName = `bg-transparent border-none focus:ring-1 focus:ring-primary/30 hover:bg-muted/30 transition-colors ${className}`;
-
-  if (type === "textarea") {
-    return (
-      <div className="relative">
-        <Textarea
-          value={localValue}
-          onChange={(e) => setLocalValue(e.target.value)}
-          onBlur={handleBlur}
-          placeholder={placeholder}
-          className={`${baseClassName} min-h-[80px] resize-none`}
-        />
-        {isSaving && <span className="absolute right-2 top-2 text-xs text-muted-foreground">{savingText}</span>}
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative">
-      <Input
-        value={localValue}
-        onChange={(e) => setLocalValue(e.target.value)}
-        onBlur={handleBlur}
-        placeholder={placeholder}
-        className={baseClassName}
-      />
-      {isSaving && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{savingText}</span>}
-    </div>
-  );
-};
-
-// Componente de objetivo simplificado con auto-guardado
-const ObjectiveItem = ({ 
-  objective, 
-  onSave, 
-  onDelete,
-  translations
-}: { 
-  objective: any;
-  onSave: (data: any, id: string) => void;
-  onDelete: (id: string) => void;
-  translations: {
-    objectiveTitle: string;
-    objectiveDescription: string;
-    shortTerm: string;
-    mediumTerm: string;
-    longTerm: string;
-    priorityHigh: string;
-    priorityMedium: string;
-    priorityLow: string;
-  };
-}) => {
-  const [localData, setLocalData] = useState({
-    title: objective.title || '',
-    description: objective.description || '',
-    objective_type: objective.objective_type || 'short_term',
-    priority: objective.priority || 1,
-    target_date: objective.target_date || ''
-  });
-  const initialDataRef = useRef(localData);
-
-  useEffect(() => {
-    const newData = {
-      title: objective.title || '',
-      description: objective.description || '',
-      objective_type: objective.objective_type || 'short_term',
-      priority: objective.priority || 1,
-      target_date: objective.target_date || ''
-    };
-    setLocalData(newData);
-    initialDataRef.current = newData;
-  }, [objective]);
-
-  const handleFieldBlur = useCallback(() => {
-    if (JSON.stringify(localData) !== JSON.stringify(initialDataRef.current)) {
-      onSave(localData, objective.id);
-      initialDataRef.current = localData;
-    }
-  }, [localData, objective.id, onSave]);
-
-  const handleSelectChange = useCallback((field: string, value: string) => {
-    const newData = { ...localData, [field]: field === 'priority' ? parseInt(value) : value };
-    setLocalData(newData);
-    // Auto-guardar inmediatamente para selects
-    onSave(newData, objective.id);
-    initialDataRef.current = newData;
-  }, [localData, objective.id, onSave]);
-
-  return (
-    <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200/50 dark:border-emerald-800/30 space-y-3">
-      <div className="flex items-start gap-2">
-        <Input
-          value={localData.title}
-          onChange={(e) => setLocalData(prev => ({ ...prev, title: e.target.value }))}
-          onBlur={handleFieldBlur}
-          placeholder={translations.objectiveTitle}
-          className="bg-transparent border-none font-semibold text-emerald-900 dark:text-emerald-100 focus:ring-1 focus:ring-emerald-500/30"
-        />
-        <Button
-          variant="ghost"
-          size="sm"
-          className="shrink-0 text-destructive/60 hover:text-destructive hover:bg-destructive/10"
-          onClick={() => onDelete(objective.id)}
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-      
-      <Textarea
-        value={localData.description}
-        onChange={(e) => setLocalData(prev => ({ ...prev, description: e.target.value }))}
-        onBlur={handleFieldBlur}
-        placeholder={translations.objectiveDescription}
-        className="bg-transparent border-none min-h-[60px] resize-none text-sm focus:ring-1 focus:ring-emerald-500/30"
-      />
-      
-      <div className="flex flex-wrap items-center gap-2">
-        <Select 
-          value={localData.objective_type} 
-          onValueChange={(value) => handleSelectChange('objective_type', value)}
-        >
-          <SelectTrigger className="w-[140px] h-8 text-xs bg-transparent border-emerald-200 dark:border-emerald-800">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="short_term">{translations.shortTerm}</SelectItem>
-            <SelectItem value="medium_term">{translations.mediumTerm}</SelectItem>
-            <SelectItem value="long_term">{translations.longTerm}</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select 
-          value={localData.priority.toString()} 
-          onValueChange={(value) => handleSelectChange('priority', value)}
-        >
-          <SelectTrigger className="w-[100px] h-8 text-xs bg-transparent border-emerald-200 dark:border-emerald-800">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">{translations.priorityHigh}</SelectItem>
-            <SelectItem value="2">{translations.priorityMedium}</SelectItem>
-            <SelectItem value="3">{translations.priorityLow}</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Calendar className="w-3 h-3" />
-          <Input
-            type="date"
-            value={localData.target_date}
-            onChange={(e) => setLocalData(prev => ({ ...prev, target_date: e.target.value }))}
-            onBlur={handleFieldBlur}
-            className="w-[130px] h-8 text-xs bg-transparent border-emerald-200 dark:border-emerald-800"
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
+const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const { toast } = useToast();
   const { t } = useTranslation(['marketing', 'company', 'common']);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("info");
   const [companyData, setCompanyData] = useState<any>(null);
   const [strategyData, setStrategyData] = useState<any>(null);
   const [brandingData, setBrandingData] = useState<any>(null);
@@ -256,7 +59,6 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     try {
       setLoading(true);
       
-      // Obtener empresa primaria
       let companyId: string | null = null;
       
       const { data: profileData } = await supabase
@@ -292,7 +94,6 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         return;
       }
 
-      // Cargar datos en paralelo
       const [companyRes, strategyRes, brandingRes, objectivesRes] = await Promise.all([
         supabase.from('companies').select('*').eq('id', companyId).maybeSingle(),
         supabase.from('company_strategy').select('*').eq('company_id', companyId).maybeSingle(),
@@ -303,7 +104,6 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       setCompanyData(companyRes.data || null);
       setObjectives(objectivesRes.data || []);
 
-      // Auto-crear registro de estrategia si no existe
       if (!strategyRes.data && companyId) {
         const { data: newStrategy } = await supabase
           .from('company_strategy')
@@ -315,7 +115,6 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
         setStrategyData(strategyRes.data);
       }
 
-      // Auto-crear registro de branding si no existe
       if (!brandingRes.data && companyId) {
         const { data: newBranding } = await supabase
           .from('company_branding')
@@ -453,14 +252,14 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       }
       
       toast({
-        title: t('company:strategy.generated', 'Estrategia generada'),
-        description: t('company:strategy.generatedDesc', 'Tu misión, visión y propuesta de valor han sido creados con IA')
+        title: t('company:strategy.generated'),
+        description: t('company:strategy.generatedDesc')
       });
     } catch (error: any) {
       console.error('Error generating strategy:', error);
       toast({
-        title: "Error",
-        description: error.message || "No se pudo generar la estrategia",
+        title: t('common:error'),
+        description: error.message || t('common:adn.couldNotGenerateStrategy'),
         variant: "destructive"
       });
     } finally {
@@ -479,18 +278,17 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       
       if (error) throw error;
       
-      // Reload company data
       await loadData();
       
       toast({
-        title: t('company:enrich.success', 'Datos enriquecidos'),
-        description: t('company:enrich.successDesc', 'La información de tu empresa ha sido actualizada desde tu sitio web')
+        title: t('company:enrich.success'),
+        description: t('company:enrich.successDesc')
       });
     } catch (error: any) {
       console.error('Error enriching data:', error);
       toast({
-        title: "Error",
-        description: error.message || "No se pudo enriquecer los datos",
+        title: t('common:error'),
+        description: error.message || t('common:adn.couldNotEnrich'),
         variant: "destructive"
       });
     } finally {
@@ -509,7 +307,6 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       
       if (error) throw error;
       
-      // Reload branding data
       const { data: newBranding } = await supabase
         .from('company_branding')
         .select('*')
@@ -521,14 +318,14 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       }
       
       toast({
-        title: t('company:brand.generated', 'Identidad generada'),
-        description: t('company:brand.generatedDesc', 'Tu identidad de marca ha sido creada con IA')
+        title: t('company:brand.generated'),
+        description: t('company:brand.generatedDesc')
       });
     } catch (error: any) {
       console.error('Error generating brand identity:', error);
       toast({
-        title: "Error",
-        description: error.message || "No se pudo generar la identidad de marca",
+        title: t('common:error'),
+        description: error.message || t('common:adn.couldNotGenerateBrand'),
         variant: "destructive"
       });
     } finally {
@@ -552,14 +349,14 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
       }
       
       toast({
-        title: t('company:objectives.generated', 'Objetivos generados'),
-        description: t('company:objectives.generatedDesc', `Se han creado ${data?.count || 0} objetivos con IA`)
+        title: t('company:objectives.generated'),
+        description: t('company:objectives.generatedDesc', { count: data?.count || 0 })
       });
     } catch (error: any) {
       console.error('Error generating objectives:', error);
       toast({
-        title: "Error",
-        description: error.message || "No se pudieron generar los objetivos",
+        title: t('common:error'),
+        description: error.message || t('common:adn.couldNotGenerateObjectives'),
         variant: "destructive"
       });
     } finally {
@@ -579,482 +376,97 @@ const ADNEmpresa = ({ profile }: ADNEmpresaProps) => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
         <Building2 className="w-12 h-12 mb-4 text-muted-foreground/40" />
-        <p className="text-muted-foreground">No hay información de empresa</p>
-        <p className="text-sm text-muted-foreground/60">Completa el onboarding primero</p>
+        <p className="text-muted-foreground">{t('common:adn.noCompanyInfo')}</p>
+        <p className="text-sm text-muted-foreground/60">{t('common:adn.completeOnboardingFirst')}</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold mb-2">ADN Empresarial</h1>
+    <div className="max-w-5xl mx-auto p-4 space-y-6">
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold mb-2">{t('common:adn.title')}</h1>
         <p className="text-sm text-muted-foreground">
-          Edita directamente cualquier campo. Los cambios se guardan automáticamente.
+          {t('common:adn.subtitle')}
         </p>
       </div>
 
-      {/* Información Básica */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-lg">
-              <Building2 className="w-5 h-5 text-primary" />
-              Información Básica
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={enrichCompanyData}
-              disabled={isEnrichingData || !companyData?.website_url}
-              title={!companyData?.website_url ? 'Agrega un sitio web primero' : ''}
-            >
-              {isEnrichingData ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                  {t('company:enrich.enriching', 'Enriqueciendo...')}
-                </>
-              ) : (
-                <>
-                  <Globe className="w-4 h-4 mr-1" />
-                  {t('company:enrich.enrichData', 'Enriquecer datos')}
-                </>
-              )}
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Logo Upload */}
-          <div className="flex items-start gap-4">
-            <div className="relative group">
-              <div className="w-20 h-20 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center overflow-hidden bg-muted/30">
-                {companyData?.logo_url ? (
-                  <img 
-                    src={companyData.logo_url} 
-                    alt="Logo" 
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <Building2 className="w-8 h-8 text-muted-foreground/40" />
-                )}
-              </div>
-              <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file || !companyData?.id) return;
-                    
-                    try {
-                      const fileExt = file.name.split('.').pop();
-                      const fileName = `${companyData.id}/logo.${fileExt}`;
-                      
-                      const { error: uploadError } = await supabase.storage
-                        .from('company-logos')
-                        .upload(fileName, file, { upsert: true });
-                      
-                      if (uploadError) throw uploadError;
-                      
-                      const { data: { publicUrl } } = supabase.storage
-                        .from('company-logos')
-                        .getPublicUrl(fileName);
-                      
-                      await saveField('logo_url', publicUrl);
-                      toast({ title: "✓", description: "Logo actualizado", duration: 1500 });
-                    } catch (error: any) {
-                      console.error('Error uploading logo:', error);
-                      toast({ title: "Error", description: "No se pudo subir el logo", variant: "destructive" });
-                    }
-                  }}
-                />
-                <span className="text-white text-xs">Cambiar</span>
-              </label>
-            </div>
-            <div className="flex-1">
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Logo de la empresa</label>
-              <p className="text-xs text-muted-foreground/70">Haz clic en la imagen para cambiar el logo</p>
-            </div>
-          </div>
-          
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">
-                <Building2 className="w-3 h-3" /> Nombre
-              </label>
-              <AutoSaveField
-                value={companyData?.name || ''}
-                onSave={(v) => saveField('name', v)}
-                placeholder="Nombre de la empresa"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">
-                <Target className="w-3 h-3" /> Sector
-              </label>
-              <AutoSaveField
-                value={companyData?.industry_sector || ''}
-                onSave={(v) => saveField('industry_sector', v)}
-                placeholder="Ej. Tecnología, Salud..."
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">
-                <Users className="w-3 h-3" /> Tamaño
-              </label>
-              <AutoSaveField
-                value={companyData?.company_size || ''}
-                onSave={(v) => saveField('company_size', v)}
-                placeholder="Ej. 1-10 empleados"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">
-                <MapPin className="w-3 h-3" /> País
-              </label>
-              <AutoSaveField
-                value={companyData?.country || ''}
-                onSave={(v) => saveField('country', v)}
-                placeholder="País"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">
-              <Globe className="w-3 h-3" /> Sitio Web
-            </label>
-            <AutoSaveField
-              value={companyData?.website_url || ''}
-              onSave={(v) => saveField('website_url', v)}
-              placeholder="https://..."
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-muted-foreground">Descripción</label>
-              <EraOptimizerButton
-                currentText={companyData?.description || ''}
-                fieldType="descripción de empresa"
-                context={{ 
-                  companyName: companyData?.name, 
-                  industry: companyData?.industry_sector,
-                  website: companyData?.website_url 
-                }}
-                onOptimized={(text) => saveField('description', text)}
-                size="sm"
-              />
-            </div>
-            <AutoSaveField
-              value={companyData?.description || ''}
-              onSave={(v) => saveField('description', v)}
-              type="textarea"
-              placeholder="Describe brevemente tu empresa..."
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsTrigger value="info" className="flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.info')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="strategy" className="flex items-center gap-2">
+            <Target className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.strategy')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="brand" className="flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.brand')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="social" className="flex items-center gap-2">
+            <Share2 className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.social')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="files" className="flex items-center gap-2">
+            <FolderOpen className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.files')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="team" className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.team')}</span>
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Estrategia */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-lg">
-              <Target className="w-5 h-5 text-emerald-600" />
-              Estrategia
-            </span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={generateStrategy}
-              disabled={isGeneratingStrategy || !companyData?.id}
-            >
-              {isGeneratingStrategy ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                  {t('company:strategy.generating', 'Generando...')}
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-1" />
-                  {t('company:strategy.generateWithAI', 'Generar con IA')}
-                </>
-              )}
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-muted-foreground">Misión</label>
-              <EraOptimizerButton
-                currentText={strategyData?.mision || ''}
-                fieldType="misión"
-                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
-                onOptimized={(text) => saveField('mision', text, 'company_strategy')}
-                size="sm"
-              />
-            </div>
-            <AutoSaveField
-              value={strategyData?.mision || ''}
-              onSave={(v) => saveField('mision', v, 'company_strategy')}
-              type="textarea"
-              placeholder="Define el propósito fundamental de tu empresa..."
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-muted-foreground">Visión</label>
-              <EraOptimizerButton
-                currentText={strategyData?.vision || ''}
-                fieldType="visión"
-                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
-                onOptimized={(text) => saveField('vision', text, 'company_strategy')}
-                size="sm"
-              />
-            </div>
-            <AutoSaveField
-              value={strategyData?.vision || ''}
-              onSave={(v) => saveField('vision', v, 'company_strategy')}
-              type="textarea"
-              placeholder="¿Cómo visualizas tu empresa en el futuro?"
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-muted-foreground">Propuesta de Valor</label>
-              <EraOptimizerButton
-                currentText={strategyData?.propuesta_valor || ''}
-                fieldType="propuesta de valor"
-                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
-                onOptimized={(text) => saveField('propuesta_valor', text, 'company_strategy')}
-                size="sm"
-              />
-            </div>
-            <AutoSaveField
-              value={strategyData?.propuesta_valor || ''}
-              onSave={(v) => saveField('propuesta_valor', v, 'company_strategy')}
-              type="textarea"
-              placeholder="¿Qué valor único ofreces a tus clientes?"
-            />
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="info">
+          <ADNInfoTab
+            companyData={companyData}
+            setCompanyData={setCompanyData}
+            saveField={saveField}
+            isEnrichingData={isEnrichingData}
+            enrichCompanyData={enrichCompanyData}
+          />
+        </TabsContent>
 
-      {/* Objetivos */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-lg">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
-              Objetivos
-              {objectives.length > 0 && (
-                <Badge variant="secondary" className="text-xs">{objectives.length}</Badge>
-              )}
-            </span>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={generateObjectives}
-                disabled={isGeneratingObjectives || !companyData?.id}
-              >
-                {isGeneratingObjectives ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                    Generando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-1" />
-                    Generar con IA
-                  </>
-                )}
-              </Button>
-              <Button variant="outline" size="sm" onClick={addNewObjective}>
-                <Plus className="w-4 h-4 mr-1" />
-                Agregar
-              </Button>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {objectives.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">No hay objetivos definidos</p>
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <Button variant="link" size="sm" onClick={generateObjectives} disabled={isGeneratingObjectives}>
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  Generar con IA
-                </Button>
-                <span className="text-muted-foreground">o</span>
-                <Button variant="link" size="sm" onClick={addNewObjective}>
-                  Crear manualmente
-                </Button>
-              </div>
-            </div>
-          ) : (
-            objectives.map((objective) => (
-              <ObjectiveItem
-                key={objective.id}
-                objective={objective}
-                onSave={saveObjective}
-                onDelete={deleteObjective}
-                translations={{
-                  objectiveTitle: t('common:adn.objectiveTitle'),
-                  objectiveDescription: t('common:adn.objectiveDescription'),
-                  shortTerm: t('common:adn.shortTerm'),
-                  mediumTerm: t('common:adn.mediumTerm'),
-                  longTerm: t('common:adn.longTerm'),
-                  priorityHigh: t('common:adn.priorityHigh'),
-                  priorityMedium: t('common:adn.priorityMedium'),
-                  priorityLow: t('common:adn.priorityLow'),
-                }}
-              />
-            ))
-          )}
-        </CardContent>
-      </Card>
+        <TabsContent value="strategy">
+          <ADNStrategyTab
+            companyData={companyData}
+            strategyData={strategyData}
+            objectives={objectives}
+            saveField={saveField}
+            saveObjective={saveObjective}
+            deleteObjective={deleteObjective}
+            addNewObjective={addNewObjective}
+            generateStrategy={generateStrategy}
+            generateObjectives={generateObjectives}
+            isGeneratingStrategy={isGeneratingStrategy}
+            isGeneratingObjectives={isGeneratingObjectives}
+          />
+        </TabsContent>
 
-      {/* Branding */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-lg">
-              <Palette className="w-5 h-5 text-purple-600" />
-              Identidad de Marca
-            </span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={generateBrandIdentity}
-              disabled={isGeneratingBrand || !companyData?.id}
-            >
-              {isGeneratingBrand ? (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-1 animate-spin" />
-                  {t('company:brand.generating', 'Generando...')}
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-1" />
-                  {t('company:brand.generateWithAI', 'Generar con IA')}
-                </>
-              )}
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-medium text-muted-foreground">Identidad Visual</label>
-              <EraOptimizerButton
-                currentText={brandingData?.visual_identity || ''}
-                fieldType="identidad visual"
-                context={{ companyName: companyData?.name, industry: companyData?.industry_sector }}
-                onOptimized={(text) => saveField('visual_identity', text, 'company_branding')}
-                size="sm"
-              />
-            </div>
-            <AutoSaveField
-              value={brandingData?.visual_identity || ''}
-              onSave={(v) => saveField('visual_identity', v, 'company_branding')}
-              type="textarea"
-              placeholder="Describe el estilo visual de tu marca (tipografía, estética, elementos gráficos)..."
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block">Voz de Marca</label>
-            {brandingData?.brand_voice && typeof brandingData.brand_voice === 'object' ? (
-              <div className="space-y-3 p-3 bg-muted/30 rounded-lg">
-                {brandingData.brand_voice.personalidad && (
-                  <div>
-                    <span className="text-xs font-medium text-muted-foreground">Personalidad:</span>
-                    <p className="text-sm mt-0.5">{brandingData.brand_voice.personalidad}</p>
-                  </div>
-                )}
-                {brandingData.brand_voice.descripcion && (
-                  <div>
-                    <span className="text-xs font-medium text-muted-foreground">Descripción:</span>
-                    <p className="text-sm mt-0.5">{brandingData.brand_voice.descripcion}</p>
-                  </div>
-                )}
-                {brandingData.brand_voice.palabras_clave && Array.isArray(brandingData.brand_voice.palabras_clave) && (
-                  <div>
-                    <span className="text-xs font-medium text-muted-foreground">Palabras clave:</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {brandingData.brand_voice.palabras_clave.map((palabra: string, idx: number) => (
-                        <Badge key={idx} variant="secondary" className="text-xs">{palabra}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <AutoSaveField
-                value={brandingData?.brand_voice || ''}
-                onSave={(v) => saveField('brand_voice', v, 'company_branding')}
-                type="textarea"
-                placeholder="Describe el tono y estilo de comunicación de tu marca (formal, cercano, técnico, inspirador)..."
-              />
-            )}
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Color Primario</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={brandingData?.primary_color || '#3c46b2'}
-                  onChange={(e) => saveField('primary_color', e.target.value, 'company_branding')}
-                  className="w-8 h-8 rounded cursor-pointer"
-                />
-                <span className="text-xs text-muted-foreground">{brandingData?.primary_color || '#3c46b2'}</span>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Color Secundario</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={brandingData?.secondary_color || '#f15438'}
-                  onChange={(e) => saveField('secondary_color', e.target.value, 'company_branding')}
-                  className="w-8 h-8 rounded cursor-pointer"
-                />
-                <span className="text-xs text-muted-foreground">{brandingData?.secondary_color || '#f15438'}</span>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Complementario 1</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={brandingData?.complementary_color_1 || '#ffffff'}
-                  onChange={(e) => saveField('complementary_color_1', e.target.value, 'company_branding')}
-                  className="w-8 h-8 rounded cursor-pointer border"
-                />
-                <span className="text-xs text-muted-foreground">{brandingData?.complementary_color_1 || '#ffffff'}</span>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Complementario 2</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={brandingData?.complementary_color_2 || '#000000'}
-                  onChange={(e) => saveField('complementary_color_2', e.target.value, 'company_branding')}
-                  className="w-8 h-8 rounded cursor-pointer border"
-                />
-                <span className="text-xs text-muted-foreground">{brandingData?.complementary_color_2 || '#000000'}</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="brand">
+          <ADNBrandTab
+            companyData={companyData}
+            brandingData={brandingData}
+            saveField={saveField}
+            generateBrandIdentity={generateBrandIdentity}
+            isGeneratingBrand={isGeneratingBrand}
+          />
+        </TabsContent>
 
-      {/* Base de Conocimiento */}
-      <BaseConocimiento />
+        <TabsContent value="social">
+          <ADNSocialTab profile={profile} />
+        </TabsContent>
+
+        <TabsContent value="files">
+          <ADNFilesTab />
+        </TabsContent>
+
+        <TabsContent value="team">
+          <ADNTeamTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

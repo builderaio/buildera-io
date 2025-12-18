@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,9 +7,8 @@ import { useTranslation } from "react-i18next";
 import { 
   Building2, 
   Target, 
-  Package,
+  Palette,
   Share2,
-  Settings2,
   RefreshCw,
 } from "lucide-react";
 import { 
@@ -21,13 +19,12 @@ import {
   ADNFilesTab, 
   ADNEmailTab,
   ADNTeamTab,
-  ADNScheduleTab,
-  ADNMarketingGoalsTab,
   ADNProductsTab,
-  ADNCommunicationTab,
   ADNCompetitorsTab,
-  ADNAgentPreferencesTab,
-  ADNPlatformSettingsTab
+  ADNChannelsConsolidatedView,
+  ADNVoiceCommunicationTab,
+  ADNScheduleSimplified,
+  ADNAgentPrefsSimplified,
 } from "./adn-tabs";
 
 interface ADNEmpresaProps {
@@ -373,6 +370,9 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
     }
   }, [companyData?.id, toast, t]);
 
+  // Extract brand voice for communication tab
+  const brandVoice = brandingData?.brand_voice as { personalidad?: string; descripcion?: string; palabras_clave?: string[] } | undefined;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -401,30 +401,26 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="empresa" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Empresa</span>
+            <span className="hidden sm:inline">{t('common:adn.tabs.empresa', 'Mi Empresa')}</span>
           </TabsTrigger>
           <TabsTrigger value="estrategia" className="flex items-center gap-2">
             <Target className="w-4 h-4" />
-            <span className="hidden sm:inline">Estrategia</span>
+            <span className="hidden sm:inline">{t('common:adn.tabs.estrategia', 'Estrategia')}</span>
           </TabsTrigger>
-          <TabsTrigger value="productos" className="flex items-center gap-2">
-            <Package className="w-4 h-4" />
-            <span className="hidden sm:inline">Productos</span>
+          <TabsTrigger value="marca" className="flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.marca', 'Marca')}</span>
           </TabsTrigger>
           <TabsTrigger value="canales" className="flex items-center gap-2">
             <Share2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Canales</span>
-          </TabsTrigger>
-          <TabsTrigger value="avanzado" className="flex items-center gap-2">
-            <Settings2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Avanzado</span>
+            <span className="hidden sm:inline">{t('common:adn.tabs.canales', 'Canales')}</span>
           </TabsTrigger>
         </TabsList>
 
-        {/* TAB 1: EMPRESA - Info básica + Equipo */}
+        {/* TAB 1: MI EMPRESA - Info + Team + Products */}
         <TabsContent value="empresa" className="space-y-6">
           <ADNInfoTab
             companyData={companyData}
@@ -434,17 +430,19 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             enrichCompanyData={enrichCompanyData}
           />
           
+          <ADNProductsTab companyId={companyData?.id} />
+          
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Equipo</CardTitle>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">{t('common:adn.team', 'Equipo')}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="py-2 px-4">
               <ADNTeamTab />
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* TAB 2: ESTRATEGIA - Strategy + Brand + Objectives + Marketing Goals */}
+        {/* TAB 2: ESTRATEGIA - Strategy + Objectives + Competitors */}
         <TabsContent value="estrategia" className="space-y-6">
           <ADNStrategyTab
             companyData={companyData}
@@ -460,105 +458,78 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             generateObjectives={generateObjectives}
           />
           
+          <ADNCompetitorsTab companyId={companyData?.id} />
+        </TabsContent>
+
+        {/* TAB 3: MARCA - Brand Identity + Voice/Communication + Agent Preferences */}
+        <TabsContent value="marca" className="space-y-6">
+          <ADNBrandTab
+            companyData={companyData}
+            brandingData={brandingData}
+            saveField={saveField}
+            isGeneratingBrand={isGeneratingBrand}
+            generateBrandIdentity={generateBrandIdentity}
+          />
+          
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Identidad de Marca</CardTitle>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">{t('common:adn.voice_communication', 'Voz y Comunicación')}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ADNBrandTab
-                companyData={companyData}
-                brandingData={brandingData}
-                saveField={saveField}
-                isGeneratingBrand={isGeneratingBrand}
-                generateBrandIdentity={generateBrandIdentity}
+            <CardContent className="py-2 px-4">
+              <ADNVoiceCommunicationTab 
+                companyId={companyData?.id} 
+                brandVoice={brandVoice}
               />
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Objetivos de Marketing</CardTitle>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">{t('common:adn.agent_prefs', 'Preferencias de Agentes')}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ADNMarketingGoalsTab companyId={companyData?.id} />
+            <CardContent className="py-2 px-4">
+              <ADNAgentPrefsSimplified companyId={companyData?.id} />
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* TAB 3: PRODUCTOS - Productos + Competidores */}
-        <TabsContent value="productos" className="space-y-6">
-          <ADNProductsTab companyId={companyData?.id} />
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Competidores</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ADNCompetitorsTab companyId={companyData?.id} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* TAB 4: CANALES - Social + Files */}
+        {/* TAB 4: CANALES - Social Connections + Platform Config + Files + Email */}
         <TabsContent value="canales" className="space-y-6">
-          <ADNSocialTab profile={profile} />
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">{t('common:adn.social_connections', 'Conexiones Sociales')}</CardTitle>
+            </CardHeader>
+            <CardContent className="py-2 px-4">
+              <ADNSocialTab profile={profile} />
+            </CardContent>
+          </Card>
           
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Base de Conocimiento</CardTitle>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">{t('common:adn.platform_config', 'Configuración de Plataformas')}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="py-2 px-4">
+              <ADNChannelsConsolidatedView companyId={companyData?.id} />
+            </CardContent>
+          </Card>
+          
+          <ADNScheduleSimplified companyId={companyData?.id} />
+          
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">{t('common:adn.knowledge_base', 'Base de Conocimiento')}</CardTitle>
+            </CardHeader>
+            <CardContent className="py-2 px-4">
               <ADNFilesTab />
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* TAB 5: AVANZADO - Configuraciones adicionales en acordeón */}
-        <TabsContent value="avanzado">
+          
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Configuración Avanzada</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Ajustes adicionales para personalizar el comportamiento de los agentes y la comunicación.
-              </p>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">{t('common:adn.email_config', 'Configuración de Email')}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Accordion type="multiple" className="w-full">
-                <AccordionItem value="communication">
-                  <AccordionTrigger>Comunicación y Tono</AccordionTrigger>
-                  <AccordionContent className="pt-4">
-                    <ADNCommunicationTab companyId={companyData?.id} />
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="schedule">
-                  <AccordionTrigger>Horarios y Frecuencia</AccordionTrigger>
-                  <AccordionContent className="pt-4">
-                    <ADNScheduleTab companyId={companyData?.id} />
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="platforms">
-                  <AccordionTrigger>Configuración por Plataforma</AccordionTrigger>
-                  <AccordionContent className="pt-4">
-                    <ADNPlatformSettingsTab companyId={companyData?.id} />
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="agents">
-                  <AccordionTrigger>Preferencias de Agentes</AccordionTrigger>
-                  <AccordionContent className="pt-4">
-                    <ADNAgentPreferencesTab companyId={companyData?.id} />
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="email">
-                  <AccordionTrigger>Configuración de Email</AccordionTrigger>
-                  <AccordionContent className="pt-4">
-                    <ADNEmailTab companyData={companyData} />
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+            <CardContent className="py-2 px-4">
+              <ADNEmailTab companyData={companyData} />
             </CardContent>
           </Card>
         </TabsContent>

@@ -5,11 +5,21 @@ export { ADNSocialTab } from './ADNSocialTab';
 export { ADNFilesTab } from './ADNFilesTab';
 export { ADNEmailTab } from './ADNEmailTab';
 export { ADNTeamTab } from './ADNTeamTab';
+export { ADNProductsTab } from './ADNProductsTab';
+export { ADNCompetitorsTab } from './ADNCompetitorsTab';
+
+// New consolidated components
+export { ADNChannelsConsolidatedView } from './ADNChannelsConsolidatedView';
+export { ADNVoiceCommunicationTab } from './ADNVoiceCommunicationTab';
+export { ADNScheduleSimplified } from './ADNScheduleSimplified';
+export { ADNAgentPrefsSimplified } from './ADNAgentPrefsSimplified';
+
+// Shared
+export { AutoSaveField } from './shared/AutoSaveField';
+
+// Legacy (kept for backward compatibility)
 export { ADNScheduleTab } from './ADNScheduleTab';
 export { ADNMarketingGoalsTab } from './ADNMarketingGoalsTab';
-export { ADNProductsTab } from './ADNProductsTab';
 export { ADNCommunicationTab } from './ADNCommunicationTab';
-export { ADNCompetitorsTab } from './ADNCompetitorsTab';
 export { ADNAgentPreferencesTab } from './ADNAgentPreferencesTab';
 export { ADNPlatformSettingsTab } from './ADNPlatformSettingsTab';
-export { AutoSaveField } from './shared/AutoSaveField';

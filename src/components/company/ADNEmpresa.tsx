@@ -11,7 +11,14 @@ import {
   FolderOpen,
   Mail,
   Users,
-  RefreshCw
+  RefreshCw,
+  Clock,
+  TrendingUp,
+  Package,
+  MessageSquare,
+  UsersRound,
+  Bot,
+  Settings
 } from "lucide-react";
 import { 
   ADNInfoTab, 
@@ -20,7 +27,14 @@ import {
   ADNSocialTab, 
   ADNFilesTab, 
   ADNEmailTab,
-  ADNTeamTab 
+  ADNTeamTab,
+  ADNScheduleTab,
+  ADNMarketingGoalsTab,
+  ADNProductsTab,
+  ADNCommunicationTab,
+  ADNCompetitorsTab,
+  ADNAgentPreferencesTab,
+  ADNPlatformSettingsTab
 } from "./adn-tabs";
 
 interface ADNEmpresaProps {
@@ -423,6 +437,34 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             <Users className="w-4 h-4" />
             <span className="hidden sm:inline">{t('common:adn.tabs.team')}</span>
           </TabsTrigger>
+          <TabsTrigger value="schedule" className="flex items-center gap-2">
+            <Clock className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.schedule', 'Horarios')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="marketing" className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.marketing', 'Marketing')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="products" className="flex items-center gap-2">
+            <Package className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.products', 'Productos')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="communication" className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.communication', 'Comunicación')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="competitors" className="flex items-center gap-2">
+            <UsersRound className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.competitors', 'Competencia')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="agents" className="flex items-center gap-2">
+            <Bot className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.agents', 'Agentes')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="platforms" className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.platforms', 'Plataformas')}</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -475,6 +517,34 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
         <TabsContent value="team">
           <ADNTeamTab />
+        </TabsContent>
+
+        <TabsContent value="schedule">
+          <ADNScheduleTab companyId={companyData?.id} />
+        </TabsContent>
+
+        <TabsContent value="marketing">
+          <ADNMarketingGoalsTab companyId={companyData?.id} />
+        </TabsContent>
+
+        <TabsContent value="products">
+          <ADNProductsTab companyId={companyData?.id} />
+        </TabsContent>
+
+        <TabsContent value="communication">
+          <ADNCommunicationTab companyId={companyData?.id} />
+        </TabsContent>
+
+        <TabsContent value="competitors">
+          <ADNCompetitorsTab companyId={companyData?.id} />
+        </TabsContent>
+
+        <TabsContent value="agents">
+          <ADNAgentPreferencesTab companyId={companyData?.id} />
+        </TabsContent>
+
+        <TabsContent value="platforms">
+          <ADNPlatformSettingsTab companyId={companyData?.id} />
         </TabsContent>
       </Tabs>
     </div>

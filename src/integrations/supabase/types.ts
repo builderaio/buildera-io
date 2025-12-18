@@ -1139,6 +1139,62 @@ export type Database = {
           },
         ]
       }
+      company_agent_preferences: {
+        Row: {
+          auto_approve_content: boolean | null
+          company_id: string
+          content_guidelines: string | null
+          created_at: string | null
+          default_content_length: string | null
+          default_creativity_level: number | null
+          id: string
+          max_daily_executions: number | null
+          notification_preferences: Json | null
+          preferred_ai_model: string | null
+          quality_threshold: number | null
+          require_human_review: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_approve_content?: boolean | null
+          company_id: string
+          content_guidelines?: string | null
+          created_at?: string | null
+          default_content_length?: string | null
+          default_creativity_level?: number | null
+          id?: string
+          max_daily_executions?: number | null
+          notification_preferences?: Json | null
+          preferred_ai_model?: string | null
+          quality_threshold?: number | null
+          require_human_review?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_approve_content?: boolean | null
+          company_id?: string
+          content_guidelines?: string | null
+          created_at?: string | null
+          default_content_length?: string | null
+          default_creativity_level?: number | null
+          id?: string
+          max_daily_executions?: number | null
+          notification_preferences?: Json | null
+          preferred_ai_model?: string | null
+          quality_threshold?: number | null
+          require_human_review?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_agent_preferences_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_agents: {
         Row: {
           agent_id: string
@@ -1389,6 +1445,139 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "company_branding_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_communication_settings: {
+        Row: {
+          approved_slogans: string[] | null
+          call_to_action_phrases: string[] | null
+          company_id: string
+          content_pillars: string[] | null
+          created_at: string | null
+          emoji_usage: string | null
+          forbidden_words: string[] | null
+          hashtag_strategy: Json | null
+          id: string
+          language_formality: string | null
+          response_templates: Json | null
+          tone_by_platform: Json | null
+          topics_to_avoid: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          approved_slogans?: string[] | null
+          call_to_action_phrases?: string[] | null
+          company_id: string
+          content_pillars?: string[] | null
+          created_at?: string | null
+          emoji_usage?: string | null
+          forbidden_words?: string[] | null
+          hashtag_strategy?: Json | null
+          id?: string
+          language_formality?: string | null
+          response_templates?: Json | null
+          tone_by_platform?: Json | null
+          topics_to_avoid?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          approved_slogans?: string[] | null
+          call_to_action_phrases?: string[] | null
+          company_id?: string
+          content_pillars?: string[] | null
+          created_at?: string | null
+          emoji_usage?: string | null
+          forbidden_words?: string[] | null
+          hashtag_strategy?: Json | null
+          id?: string
+          language_formality?: string | null
+          response_templates?: Json | null
+          tone_by_platform?: Json | null
+          topics_to_avoid?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_communication_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_competitors: {
+        Row: {
+          company_id: string
+          competitor_name: string
+          created_at: string | null
+          facebook_url: string | null
+          id: string
+          instagram_url: string | null
+          is_direct_competitor: boolean | null
+          linkedin_url: string | null
+          monitor_campaigns: boolean | null
+          monitor_content: boolean | null
+          monitor_pricing: boolean | null
+          notes: string | null
+          priority_level: number | null
+          strengths: string[] | null
+          tiktok_url: string | null
+          twitter_url: string | null
+          updated_at: string | null
+          weaknesses: string[] | null
+          website_url: string | null
+        }
+        Insert: {
+          company_id: string
+          competitor_name: string
+          created_at?: string | null
+          facebook_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          is_direct_competitor?: boolean | null
+          linkedin_url?: string | null
+          monitor_campaigns?: boolean | null
+          monitor_content?: boolean | null
+          monitor_pricing?: boolean | null
+          notes?: string | null
+          priority_level?: number | null
+          strengths?: string[] | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
+          updated_at?: string | null
+          weaknesses?: string[] | null
+          website_url?: string | null
+        }
+        Update: {
+          company_id?: string
+          competitor_name?: string
+          created_at?: string | null
+          facebook_url?: string | null
+          id?: string
+          instagram_url?: string | null
+          is_direct_competitor?: boolean | null
+          linkedin_url?: string | null
+          monitor_campaigns?: boolean | null
+          monitor_content?: boolean | null
+          monitor_pricing?: boolean | null
+          notes?: string | null
+          priority_level?: number | null
+          strengths?: string[] | null
+          tiktok_url?: string | null
+          twitter_url?: string | null
+          updated_at?: string | null
+          weaknesses?: string[] | null
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_competitors_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -1715,6 +1904,65 @@ export type Database = {
           },
         ]
       }
+      company_marketing_goals: {
+        Row: {
+          brand_awareness_target: number | null
+          campaign_budget_monthly: number | null
+          company_id: string
+          created_at: string | null
+          engagement_rate_target: number | null
+          growth_timeline: string | null
+          id: string
+          kpis: Json | null
+          monthly_conversion_target: number | null
+          monthly_lead_target: number | null
+          primary_goal: string | null
+          secondary_goals: string[] | null
+          target_audience_size: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand_awareness_target?: number | null
+          campaign_budget_monthly?: number | null
+          company_id: string
+          created_at?: string | null
+          engagement_rate_target?: number | null
+          growth_timeline?: string | null
+          id?: string
+          kpis?: Json | null
+          monthly_conversion_target?: number | null
+          monthly_lead_target?: number | null
+          primary_goal?: string | null
+          secondary_goals?: string[] | null
+          target_audience_size?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand_awareness_target?: number | null
+          campaign_budget_monthly?: number | null
+          company_id?: string
+          created_at?: string | null
+          engagement_rate_target?: number | null
+          growth_timeline?: string | null
+          id?: string
+          kpis?: Json | null
+          monthly_conversion_target?: number | null
+          monthly_lead_target?: number | null
+          primary_goal?: string | null
+          secondary_goals?: string[] | null
+          target_audience_size?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_marketing_goals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_members: {
         Row: {
           company_id: string
@@ -1856,6 +2104,186 @@ export type Database = {
             columns: ["source_execution_id"]
             isOneToOne: false
             referencedRelation: "agent_usage_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_platform_settings: {
+        Row: {
+          analytics_tracking: boolean | null
+          auto_publish: boolean | null
+          character_limit_override: number | null
+          company_id: string
+          created_at: string | null
+          custom_settings: Json | null
+          default_visibility: string | null
+          hashtag_limit: number | null
+          id: string
+          is_active: boolean | null
+          max_posts_per_day: number | null
+          platform: string
+          preferred_content_types: string[] | null
+          require_approval: boolean | null
+          scheduling_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          analytics_tracking?: boolean | null
+          auto_publish?: boolean | null
+          character_limit_override?: number | null
+          company_id: string
+          created_at?: string | null
+          custom_settings?: Json | null
+          default_visibility?: string | null
+          hashtag_limit?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_posts_per_day?: number | null
+          platform: string
+          preferred_content_types?: string[] | null
+          require_approval?: boolean | null
+          scheduling_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          analytics_tracking?: boolean | null
+          auto_publish?: boolean | null
+          character_limit_override?: number | null
+          company_id?: string
+          created_at?: string | null
+          custom_settings?: Json | null
+          default_visibility?: string | null
+          hashtag_limit?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_posts_per_day?: number | null
+          platform?: string
+          preferred_content_types?: string[] | null
+          require_approval?: boolean | null
+          scheduling_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_platform_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_products: {
+        Row: {
+          benefits: string[] | null
+          category: string | null
+          company_id: string
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          keywords: string[] | null
+          landing_url: string | null
+          name: string
+          price: number | null
+          target_audience: string | null
+          updated_at: string | null
+          value_proposition: string | null
+        }
+        Insert: {
+          benefits?: string[] | null
+          category?: string | null
+          company_id: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          keywords?: string[] | null
+          landing_url?: string | null
+          name: string
+          price?: number | null
+          target_audience?: string | null
+          updated_at?: string | null
+          value_proposition?: string | null
+        }
+        Update: {
+          benefits?: string[] | null
+          category?: string | null
+          company_id?: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          keywords?: string[] | null
+          landing_url?: string | null
+          name?: string
+          price?: number | null
+          target_audience?: string | null
+          updated_at?: string | null
+          value_proposition?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_schedule_config: {
+        Row: {
+          business_hours_end: string | null
+          business_hours_start: string | null
+          company_id: string
+          content_frequency: Json | null
+          created_at: string | null
+          id: string
+          preferred_posting_times: Json | null
+          timezone: string | null
+          updated_at: string | null
+          working_days: number[] | null
+        }
+        Insert: {
+          business_hours_end?: string | null
+          business_hours_start?: string | null
+          company_id: string
+          content_frequency?: Json | null
+          created_at?: string | null
+          id?: string
+          preferred_posting_times?: Json | null
+          timezone?: string | null
+          updated_at?: string | null
+          working_days?: number[] | null
+        }
+        Update: {
+          business_hours_end?: string | null
+          business_hours_start?: string | null
+          company_id?: string
+          content_frequency?: Json | null
+          created_at?: string | null
+          id?: string
+          preferred_posting_times?: Json | null
+          timezone?: string | null
+          updated_at?: string | null
+          working_days?: number[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_schedule_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]

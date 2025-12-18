@@ -1471,6 +1471,74 @@ export type Database = {
         }
         Relationships: []
       }
+      company_email_config: {
+        Row: {
+          billing_email: string | null
+          company_id: string
+          created_at: string
+          from_email: string | null
+          from_name: string | null
+          general_email: string | null
+          id: string
+          is_active: boolean | null
+          marketing_email: string | null
+          notifications_email: string | null
+          smtp_host: string | null
+          smtp_password: string | null
+          smtp_port: number | null
+          smtp_secure: boolean | null
+          smtp_user: string | null
+          support_email: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_email?: string | null
+          company_id: string
+          created_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          general_email?: string | null
+          id?: string
+          is_active?: boolean | null
+          marketing_email?: string | null
+          notifications_email?: string | null
+          smtp_host?: string | null
+          smtp_password?: string | null
+          smtp_port?: number | null
+          smtp_secure?: boolean | null
+          smtp_user?: string | null
+          support_email?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_email?: string | null
+          company_id?: string
+          created_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          general_email?: string | null
+          id?: string
+          is_active?: boolean | null
+          marketing_email?: string | null
+          notifications_email?: string | null
+          smtp_host?: string | null
+          smtp_password?: string | null
+          smtp_port?: number | null
+          smtp_secure?: boolean | null
+          smtp_user?: string | null
+          support_email?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_email_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_enabled_agents: {
         Row: {
           agent_id: string | null

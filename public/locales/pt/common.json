@@ -435,6 +435,7 @@
       "brand": "Marca",
       "social": "Redes",
       "files": "Arquivos",
+      "email": "Email",
       "team": "Equipe"
     },
     "saved": "Salvo",
@@ -494,7 +495,46 @@
     "couldNotGenerateStrategy": "Não foi possível gerar a estratégia",
     "couldNotEnrich": "Não foi possível enriquecer os dados",
     "couldNotGenerateBrand": "Não foi possível gerar a identidade de marca",
-    "couldNotGenerateObjectives": "Não foi possível gerar os objetivos"
+    "couldNotGenerateObjectives": "Não foi possível gerar os objetivos",
+    "email": {
+      "title": "Configuração de Email",
+      "subtitle": "Configure o servidor de email e caixas de correio da sua empresa",
+      "smtpSection": "Servidor SMTP",
+      "smtpDescription": "Configure o servidor de email de saída para enviar emails",
+      "smtpHost": "Host do servidor",
+      "smtpPort": "Porta",
+      "smtpUser": "Usuário",
+      "smtpPassword": "Senha",
+      "smtpSecure": "Conexão segura (TLS/SSL)",
+      "mailboxesSection": "Caixas de Correio da Empresa",
+      "mailboxesDescription": "Configure caixas de correio para diferentes propósitos",
+      "senderSection": "Configuração de Envio",
+      "senderDescription": "Defina o remetente padrão para os emails",
+      "fromName": "Nome do remetente",
+      "fromEmail": "Email do remetente",
+      "activeSending": "Envios ativos",
+      "testConnection": "Testar Conexão",
+      "testMissingFields": "Complete o host e usuário SMTP primeiro",
+      "connectionSuccess": "Conexão bem-sucedida",
+      "connectionError": "Erro de conexão",
+      "connectionFailed": "Falha na conexão",
+      "connected": "Conectado",
+      "saved": "Configuração salva",
+      "saveError": "Erro ao salvar a configuração",
+      "saveConfig": "Salvar Configuração",
+      "mailboxes": {
+        "billing": "Faturamento",
+        "billingDesc": "Faturas, cobranças e pagamentos",
+        "notifications": "Notificações",
+        "notificationsDesc": "Alertas e avisos do sistema",
+        "support": "Suporte",
+        "supportDesc": "Atendimento ao cliente",
+        "marketing": "Marketing",
+        "marketingDesc": "Campanhas e promoções",
+        "general": "Geral",
+        "generalDesc": "Caixa de correio principal de contato"
+      }
+    }
   },
   "nba": {
     "completeProfile": {

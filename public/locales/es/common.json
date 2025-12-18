@@ -435,6 +435,7 @@
       "brand": "Marca",
       "social": "Redes",
       "files": "Archivos",
+      "email": "Email",
       "team": "Equipo"
     },
     "saved": "Guardado",
@@ -494,7 +495,46 @@
     "couldNotGenerateStrategy": "No se pudo generar la estrategia",
     "couldNotEnrich": "No se pudo enriquecer los datos",
     "couldNotGenerateBrand": "No se pudo generar la identidad de marca",
-    "couldNotGenerateObjectives": "No se pudieron generar los objetivos"
+    "couldNotGenerateObjectives": "No se pudieron generar los objetivos",
+    "email": {
+      "title": "Configuración de Email",
+      "subtitle": "Configura el servidor de correo y buzones de tu empresa",
+      "smtpSection": "Servidor SMTP",
+      "smtpDescription": "Configura el servidor de correo saliente para enviar emails",
+      "smtpHost": "Host del servidor",
+      "smtpPort": "Puerto",
+      "smtpUser": "Usuario",
+      "smtpPassword": "Contraseña",
+      "smtpSecure": "Conexión segura (TLS/SSL)",
+      "mailboxesSection": "Buzones de la Empresa",
+      "mailboxesDescription": "Configura los buzones de correo para diferentes propósitos",
+      "senderSection": "Configuración de Envío",
+      "senderDescription": "Define el remitente predeterminado para los emails",
+      "fromName": "Nombre del remitente",
+      "fromEmail": "Email del remitente",
+      "activeSending": "Envíos activos",
+      "testConnection": "Probar Conexión",
+      "testMissingFields": "Completa el host y usuario SMTP primero",
+      "connectionSuccess": "Conexión exitosa",
+      "connectionError": "Error de conexión",
+      "connectionFailed": "Conexión fallida",
+      "connected": "Conectado",
+      "saved": "Configuración guardada",
+      "saveError": "Error al guardar la configuración",
+      "saveConfig": "Guardar Configuración",
+      "mailboxes": {
+        "billing": "Facturación",
+        "billingDesc": "Facturas, cobros y pagos",
+        "notifications": "Notificaciones",
+        "notificationsDesc": "Alertas y avisos del sistema",
+        "support": "Soporte",
+        "supportDesc": "Atención al cliente",
+        "marketing": "Marketing",
+        "marketingDesc": "Campañas y promociones",
+        "general": "General",
+        "generalDesc": "Buzón principal de contacto"
+      }
+    }
   },
   "nba": {
     "completeProfile": {

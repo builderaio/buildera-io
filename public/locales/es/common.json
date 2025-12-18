@@ -533,6 +533,48 @@
         "marketingDesc": "Campañas y promociones",
         "general": "General",
         "generalDesc": "Buzón principal de contacto"
+      },
+      "outbound": {
+        "title": "Emails Salientes",
+        "description": "Configuración para envío de emails"
+      },
+      "inbound": {
+        "title": "Emails Entrantes",
+        "setupRequired": "Configuración de Buzones de Entrada",
+        "setupDescription": "Los buzones de entrada permitirán que agentes de IA procesen emails automáticamente (facturas, soporte, etc.). Requiere integración con SendGrid Inbound Parse.",
+        "mailboxesSection": "Buzones de Entrada",
+        "mailboxesDescription": "Configura direcciones para recibir emails y habilita procesamiento por IA",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "emails": "emails",
+        "agentProcessing": "IA",
+        "billingPurpose": "Facturas, recibos, estados de cuenta para control financiero",
+        "notificationsPurpose": "Alertas del sistema, confirmaciones, actualizaciones",
+        "supportPurpose": "Consultas de clientes, tickets de soporte",
+        "marketingPurpose": "Respuestas a campañas, suscripciones, leads",
+        "generalPurpose": "Comunicaciones generales de la empresa",
+        "integrationSection": "Integración SendGrid",
+        "integrationDescription": "Configuración para recibir emails vía SendGrid Inbound Parse",
+        "comingSoon": "Próximamente",
+        "comingSoonDescription": "La integración con SendGrid Inbound Parse estará disponible próximamente. Por ahora, puedes configurar las direcciones de email que planeas usar.",
+        "parseDomain": "Dominio de Parse",
+        "webhookSecret": "Webhook Secret",
+        "enableInbound": "Activar recepción de emails",
+        "retention": "Retención",
+        "days": "días",
+        "archived": "Email archivado",
+        "aiFeatures": "Funciones de IA",
+        "aiFeaturesDescription": "Capacidades de procesamiento automático por agentes",
+        "features": {
+          "billing": "Control Financiero",
+          "billingDesc": "Extracción automática de datos de facturas, recibos y estados de cuenta",
+          "support": "Soporte Inteligente",
+          "supportDesc": "Categorización y respuestas automáticas a consultas de clientes",
+          "notifications": "Gestión de Alertas",
+          "notificationsDesc": "Filtrado y priorización de notificaciones importantes",
+          "marketing": "Análisis de Campañas",
+          "marketingDesc": "Seguimiento de respuestas y métricas de campañas de email"
+        }
       }
     }
   },

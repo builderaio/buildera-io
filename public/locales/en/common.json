@@ -533,6 +533,48 @@
         "marketingDesc": "Campaigns and promotions",
         "general": "General",
         "generalDesc": "Main contact mailbox"
+      },
+      "outbound": {
+        "title": "Outgoing Emails",
+        "description": "Email sending configuration"
+      },
+      "inbound": {
+        "title": "Incoming Emails",
+        "setupRequired": "Inbound Mailbox Setup",
+        "setupDescription": "Inbound mailboxes will allow AI agents to automatically process emails (invoices, support, etc.). Requires SendGrid Inbound Parse integration.",
+        "mailboxesSection": "Inbound Mailboxes",
+        "mailboxesDescription": "Configure addresses to receive emails and enable AI processing",
+        "active": "Active",
+        "inactive": "Inactive",
+        "emails": "emails",
+        "agentProcessing": "AI",
+        "billingPurpose": "Invoices, receipts, statements for financial control",
+        "notificationsPurpose": "System alerts, confirmations, updates",
+        "supportPurpose": "Customer inquiries, support tickets",
+        "marketingPurpose": "Campaign responses, subscriptions, leads",
+        "generalPurpose": "General company communications",
+        "integrationSection": "SendGrid Integration",
+        "integrationDescription": "Configuration to receive emails via SendGrid Inbound Parse",
+        "comingSoon": "Coming Soon",
+        "comingSoonDescription": "SendGrid Inbound Parse integration will be available soon. For now, you can configure the email addresses you plan to use.",
+        "parseDomain": "Parse Domain",
+        "webhookSecret": "Webhook Secret",
+        "enableInbound": "Enable email reception",
+        "retention": "Retention",
+        "days": "days",
+        "archived": "Email archived",
+        "aiFeatures": "AI Features",
+        "aiFeaturesDescription": "Automatic processing capabilities by agents",
+        "features": {
+          "billing": "Financial Control",
+          "billingDesc": "Automatic extraction of data from invoices, receipts and statements",
+          "support": "Smart Support",
+          "supportDesc": "Categorization and automatic responses to customer inquiries",
+          "notifications": "Alert Management",
+          "notificationsDesc": "Filtering and prioritization of important notifications",
+          "marketing": "Campaign Analysis",
+          "marketingDesc": "Tracking responses and email campaign metrics"
+        }
       }
     }
   },

@@ -9,6 +9,7 @@ import {
   Palette, 
   Share2,
   FolderOpen,
+  Mail,
   Users,
   RefreshCw
 } from "lucide-react";
@@ -18,6 +19,7 @@ import {
   ADNBrandTab, 
   ADNSocialTab, 
   ADNFilesTab, 
+  ADNEmailTab,
   ADNTeamTab 
 } from "./adn-tabs";
 
@@ -392,7 +394,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 mb-6">
+        <TabsList className="grid w-full grid-cols-7 mb-6">
           <TabsTrigger value="info" className="flex items-center gap-2">
             <Building2 className="w-4 h-4" />
             <span className="hidden sm:inline">{t('common:adn.tabs.info')}</span>
@@ -412,6 +414,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
           <TabsTrigger value="files" className="flex items-center gap-2">
             <FolderOpen className="w-4 h-4" />
             <span className="hidden sm:inline">{t('common:adn.tabs.files')}</span>
+          </TabsTrigger>
+          <TabsTrigger value="email" className="flex items-center gap-2">
+            <Mail className="w-4 h-4" />
+            <span className="hidden sm:inline">{t('common:adn.tabs.email')}</span>
           </TabsTrigger>
           <TabsTrigger value="team" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
@@ -461,6 +467,10 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
 
         <TabsContent value="files">
           <ADNFilesTab />
+        </TabsContent>
+
+        <TabsContent value="email">
+          <ADNEmailTab companyData={companyData} />
         </TabsContent>
 
         <TabsContent value="team">

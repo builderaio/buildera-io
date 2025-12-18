@@ -435,6 +435,7 @@
       "brand": "Brand",
       "social": "Social",
       "files": "Files",
+      "email": "Email",
       "team": "Team"
     },
     "saved": "Saved",
@@ -494,7 +495,46 @@
     "couldNotGenerateStrategy": "Could not generate strategy",
     "couldNotEnrich": "Could not enrich data",
     "couldNotGenerateBrand": "Could not generate brand identity",
-    "couldNotGenerateObjectives": "Could not generate objectives"
+    "couldNotGenerateObjectives": "Could not generate objectives",
+    "email": {
+      "title": "Email Configuration",
+      "subtitle": "Configure your company's email server and mailboxes",
+      "smtpSection": "SMTP Server",
+      "smtpDescription": "Configure the outgoing mail server for sending emails",
+      "smtpHost": "Server host",
+      "smtpPort": "Port",
+      "smtpUser": "User",
+      "smtpPassword": "Password",
+      "smtpSecure": "Secure connection (TLS/SSL)",
+      "mailboxesSection": "Company Mailboxes",
+      "mailboxesDescription": "Configure mailboxes for different purposes",
+      "senderSection": "Sender Configuration",
+      "senderDescription": "Define the default sender for emails",
+      "fromName": "Sender name",
+      "fromEmail": "Sender email",
+      "activeSending": "Active sending",
+      "testConnection": "Test Connection",
+      "testMissingFields": "Complete the SMTP host and user first",
+      "connectionSuccess": "Connection successful",
+      "connectionError": "Connection error",
+      "connectionFailed": "Connection failed",
+      "connected": "Connected",
+      "saved": "Configuration saved",
+      "saveError": "Error saving configuration",
+      "saveConfig": "Save Configuration",
+      "mailboxes": {
+        "billing": "Billing",
+        "billingDesc": "Invoices, charges and payments",
+        "notifications": "Notifications",
+        "notificationsDesc": "System alerts and notices",
+        "support": "Support",
+        "supportDesc": "Customer service",
+        "marketing": "Marketing",
+        "marketingDesc": "Campaigns and promotions",
+        "general": "General",
+        "generalDesc": "Main contact mailbox"
+      }
+    }
   },
   "nba": {
     "completeProfile": {

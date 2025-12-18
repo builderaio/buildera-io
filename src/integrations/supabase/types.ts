@@ -1851,6 +1851,203 @@ export type Database = {
         }
         Relationships: []
       }
+      company_inbound_email_config: {
+        Row: {
+          auto_categorize: boolean | null
+          billing_agent_processing: boolean | null
+          billing_email: string | null
+          billing_forwarding_enabled: boolean | null
+          company_id: string
+          created_at: string
+          general_agent_processing: boolean | null
+          general_email: string | null
+          general_forwarding_enabled: boolean | null
+          id: string
+          is_active: boolean | null
+          marketing_agent_processing: boolean | null
+          marketing_email: string | null
+          marketing_forwarding_enabled: boolean | null
+          notifications_agent_processing: boolean | null
+          notifications_email: string | null
+          notifications_forwarding_enabled: boolean | null
+          retention_days: number | null
+          sendgrid_inbound_enabled: boolean | null
+          sendgrid_parse_domain: string | null
+          sendgrid_webhook_secret: string | null
+          support_agent_processing: boolean | null
+          support_email: string | null
+          support_forwarding_enabled: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          auto_categorize?: boolean | null
+          billing_agent_processing?: boolean | null
+          billing_email?: string | null
+          billing_forwarding_enabled?: boolean | null
+          company_id: string
+          created_at?: string
+          general_agent_processing?: boolean | null
+          general_email?: string | null
+          general_forwarding_enabled?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          marketing_agent_processing?: boolean | null
+          marketing_email?: string | null
+          marketing_forwarding_enabled?: boolean | null
+          notifications_agent_processing?: boolean | null
+          notifications_email?: string | null
+          notifications_forwarding_enabled?: boolean | null
+          retention_days?: number | null
+          sendgrid_inbound_enabled?: boolean | null
+          sendgrid_parse_domain?: string | null
+          sendgrid_webhook_secret?: string | null
+          support_agent_processing?: boolean | null
+          support_email?: string | null
+          support_forwarding_enabled?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          auto_categorize?: boolean | null
+          billing_agent_processing?: boolean | null
+          billing_email?: string | null
+          billing_forwarding_enabled?: boolean | null
+          company_id?: string
+          created_at?: string
+          general_agent_processing?: boolean | null
+          general_email?: string | null
+          general_forwarding_enabled?: boolean | null
+          id?: string
+          is_active?: boolean | null
+          marketing_agent_processing?: boolean | null
+          marketing_email?: string | null
+          marketing_forwarding_enabled?: boolean | null
+          notifications_agent_processing?: boolean | null
+          notifications_email?: string | null
+          notifications_forwarding_enabled?: boolean | null
+          retention_days?: number | null
+          sendgrid_inbound_enabled?: boolean | null
+          sendgrid_parse_domain?: string | null
+          sendgrid_webhook_secret?: string | null
+          support_agent_processing?: boolean | null
+          support_email?: string | null
+          support_forwarding_enabled?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_inbound_email_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_inbound_emails: {
+        Row: {
+          agent_actions_taken: Json | null
+          agent_analysis: Json | null
+          agent_id: string | null
+          attachments: Json | null
+          body_html: string | null
+          body_text: string | null
+          category: string | null
+          company_id: string
+          created_at: string
+          from_email: string
+          from_name: string | null
+          id: string
+          is_archived: boolean | null
+          is_read: boolean | null
+          is_starred: boolean | null
+          mailbox_type: string
+          notes: string | null
+          priority: string | null
+          processed_at: string | null
+          processing_status: string | null
+          raw_headers: Json | null
+          received_at: string
+          sendgrid_event_id: string | null
+          subject: string | null
+          tags: string[] | null
+          to_email: string
+          updated_at: string
+        }
+        Insert: {
+          agent_actions_taken?: Json | null
+          agent_analysis?: Json | null
+          agent_id?: string | null
+          attachments?: Json | null
+          body_html?: string | null
+          body_text?: string | null
+          category?: string | null
+          company_id: string
+          created_at?: string
+          from_email: string
+          from_name?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_read?: boolean | null
+          is_starred?: boolean | null
+          mailbox_type: string
+          notes?: string | null
+          priority?: string | null
+          processed_at?: string | null
+          processing_status?: string | null
+          raw_headers?: Json | null
+          received_at?: string
+          sendgrid_event_id?: string | null
+          subject?: string | null
+          tags?: string[] | null
+          to_email: string
+          updated_at?: string
+        }
+        Update: {
+          agent_actions_taken?: Json | null
+          agent_analysis?: Json | null
+          agent_id?: string | null
+          attachments?: Json | null
+          body_html?: string | null
+          body_text?: string | null
+          category?: string | null
+          company_id?: string
+          created_at?: string
+          from_email?: string
+          from_name?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_read?: boolean | null
+          is_starred?: boolean | null
+          mailbox_type?: string
+          notes?: string | null
+          priority?: string | null
+          processed_at?: string | null
+          processing_status?: string | null
+          raw_headers?: Json | null
+          received_at?: string
+          sendgrid_event_id?: string | null
+          subject?: string | null
+          tags?: string[] | null
+          to_email?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_inbound_emails_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "platform_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_inbound_emails_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_invitations: {
         Row: {
           accepted_at: string | null

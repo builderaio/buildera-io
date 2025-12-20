@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface CRMActivity {
   id: string;
@@ -15,7 +16,7 @@ export interface CRMActivity {
   due_date?: string;
   is_completed: boolean;
   completed_at?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Json;
   created_by_user_id?: string;
   ai_generated: boolean;
   related_email_id?: string;
@@ -32,7 +33,7 @@ export interface CreateActivityInput {
   subject?: string;
   description?: string;
   due_date?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Json;
   ai_generated?: boolean;
 }
 
@@ -70,12 +71,14 @@ export const useCRMActivities = (companyId: string | undefined, contactId?: stri
     mutationFn: async (input: CreateActivityInput) => {
       const { data: user } = await supabase.auth.getUser();
       
+      const activityData = {
+        ...input,
+        created_by_user_id: user.user?.id,
+      };
+      
       const { data, error } = await supabase
         .from('crm_activities')
-        .insert({
-          ...input,
-          created_by_user_id: user.user?.id,
-        })
+        .insert([activityData])
         .select()
         .single();
       if (error) throw error;

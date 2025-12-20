@@ -5,14 +5,14 @@ import { useCRMContacts } from '@/hooks/useCRMContacts';
 import { useCRMDeals } from '@/hooks/useCRMDeals';
 import { useCRMAccounts } from '@/hooks/useCRMAccounts';
 import { useCRMActivities } from '@/hooks/useCRMActivities';
-import { useCompanyData } from '@/hooks/useCompanyData';
+import { useCompanyManagement } from '@/hooks/useCompanyManagement';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const CRMDashboard = () => {
   const { t } = useTranslation();
-  const { primaryCompany } = useCompanyData();
+  const { primaryCompany } = useCompanyManagement();
   const companyId = primaryCompany?.id;
 
   const { contacts, isLoading: contactsLoading } = useCRMContacts(companyId);
@@ -33,7 +33,7 @@ export const CRMDashboard = () => {
 
   const stats = [
     {
-      title: t('crm.dashboard.totalContacts'),
+      title: t('crm.dashboard.totalContacts', 'Total Contactos'),
       value: totalContacts,
       subtitle: `${b2bContacts} B2B · ${b2cContacts} B2C`,
       icon: Users,
@@ -41,25 +41,25 @@ export const CRMDashboard = () => {
       bgColor: 'bg-blue-500/10',
     },
     {
-      title: t('crm.dashboard.accounts'),
+      title: t('crm.dashboard.accounts', 'Cuentas'),
       value: accounts.length,
-      subtitle: t('crm.dashboard.activeAccounts'),
+      subtitle: t('crm.dashboard.activeAccounts', 'Cuentas activas'),
       icon: Building2,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',
     },
     {
-      title: t('crm.dashboard.pipelineValue'),
+      title: t('crm.dashboard.pipelineValue', 'Valor Pipeline'),
       value: `$${pipelineValue.toLocaleString()}`,
-      subtitle: `${openDeals.length} ${t('crm.dashboard.openDeals')}`,
+      subtitle: `${openDeals.length} ${t('crm.dashboard.openDeals', 'deals abiertos')}`,
       icon: DollarSign,
       color: 'text-green-500',
       bgColor: 'bg-green-500/10',
     },
     {
-      title: t('crm.dashboard.wonThisMonth'),
+      title: t('crm.dashboard.wonThisMonth', 'Ganado este mes'),
       value: `$${wonValue.toLocaleString()}`,
-      subtitle: `${wonDeals.length} ${t('crm.dashboard.deals')}`,
+      subtitle: `${wonDeals.length} ${t('crm.dashboard.deals', 'deals')}`,
       icon: Target,
       color: 'text-orange-500',
       bgColor: 'bg-orange-500/10',
@@ -132,13 +132,13 @@ export const CRMDashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
-              {t('crm.dashboard.recentActivity')}
+              {t('crm.dashboard.recentActivity', 'Actividad Reciente')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {activities.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
-                {t('crm.dashboard.noActivity')}
+                {t('crm.dashboard.noActivity', 'No hay actividad reciente')}
               </p>
             ) : (
               <div className="space-y-4">
@@ -163,13 +163,13 @@ export const CRMDashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              {t('crm.dashboard.pendingTasks')}
+              {t('crm.dashboard.pendingTasks', 'Tareas Pendientes')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {pendingTasks.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
-                {t('crm.dashboard.noTasks')}
+                {t('crm.dashboard.noTasks', 'No hay tareas pendientes')}
               </p>
             ) : (
               <div className="space-y-4">
@@ -179,7 +179,7 @@ export const CRMDashboard = () => {
                       <p className="text-sm font-medium">{task.subject}</p>
                       {task.due_date && (
                         <p className="text-xs text-muted-foreground">
-                          {t('crm.dashboard.dueDate')}: {format(new Date(task.due_date), "d MMM", { locale: es })}
+                          {t('crm.dashboard.dueDate', 'Vence')}: {format(new Date(task.due_date), "d MMM", { locale: es })}
                         </p>
                       )}
                     </div>

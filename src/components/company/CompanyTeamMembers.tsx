@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,30 +34,61 @@ interface TeamMember {
 
 const CompanyTeamMembers = () => {
   const { t } = useTranslation("common");
-  const { company, loading: companyLoading } = useCompany();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      // Wait for company context to finish loading
-      if (companyLoading) return;
-      
-      if (!company?.id) {
-        console.log('🔍 [CompanyTeamMembers] No company available');
-        setLoading(false);
-        return;
-      }
-
-      console.log('🔍 [CompanyTeamMembers] Fetching members for company:', company.id);
-
+    const fetchCompanyAndMembers = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        setCurrentUserId(user?.id || null);
+        
+        if (!user) {
+          console.log('🔍 [CompanyTeamMembers] No authenticated user');
+          setLoading(false);
+          return;
+        }
+
+        setCurrentUserId(user.id);
+
+        // Fetch company directly from company_members
+        const { data: memberData } = await supabase
+          .from("company_members")
+          .select("company_id, role")
+          .eq("user_id", user.id)
+          .eq("is_primary", true)
+          .maybeSingle();
+
+        let currentCompanyId = memberData?.company_id;
+        let userRole = memberData?.role;
+
+        // Fallback: any company membership
+        if (!currentCompanyId) {
+          const { data: fallbackData } = await supabase
+            .from("company_members")
+            .select("company_id, role")
+            .eq("user_id", user.id)
+            .limit(1)
+            .maybeSingle();
+          
+          currentCompanyId = fallbackData?.company_id;
+          userRole = fallbackData?.role;
+        }
+
+        if (!currentCompanyId) {
+          console.log('🔍 [CompanyTeamMembers] No company found for user');
+          setLoading(false);
+          return;
+        }
+
+        setCompanyId(currentCompanyId);
+        setIsOwner(userRole === "owner");
+
+        console.log('🔍 [CompanyTeamMembers] Fetching members for company:', currentCompanyId);
 
         const { data: membersData, error } = await supabase
           .from("company_members")
@@ -68,7 +98,7 @@ const CompanyTeamMembers = () => {
             role,
             joined_at
           `)
-          .eq("company_id", company.id)
+          .eq("company_id", currentCompanyId)
           .order("joined_at", { ascending: true });
 
         if (error) throw error;
@@ -81,8 +111,8 @@ const CompanyTeamMembers = () => {
             const { data: profile } = await supabase
               .from("profiles")
               .select("full_name, email, avatar_url, updated_at")
-              .eq("id", member.user_id)
-              .single();
+              .eq("user_id", member.user_id)
+              .maybeSingle();
 
             return {
               ...member,
@@ -92,10 +122,6 @@ const CompanyTeamMembers = () => {
         );
 
         setMembers(membersWithProfiles);
-        
-        // Check if current user is owner
-        const currentMember = membersWithProfiles.find(m => m.user_id === user?.id);
-        setIsOwner(currentMember?.role === "owner");
       } catch (error) {
         console.error("Error fetching team members:", error);
         toast.error(t("config.team.errorLoading"));
@@ -104,8 +130,16 @@ const CompanyTeamMembers = () => {
       }
     };
 
-    fetchMembers();
-  }, [company?.id, companyLoading, t]);
+    fetchCompanyAndMembers();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      setLoading(true);
+      fetchCompanyAndMembers();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [t]);
 
   const handleRemoveMember = async () => {
     if (!memberToRemove) return;
@@ -175,7 +209,7 @@ const CompanyTeamMembers = () => {
     return "?";
   };
 
-  if (loading || companyLoading) {
+  if (loading) {
     return (
       <div className="space-y-4">
         {[1, 2].map((i) => (
@@ -191,7 +225,7 @@ const CompanyTeamMembers = () => {
     );
   }
 
-  if (!company?.id) {
+  if (!companyId) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         {t("config.team.noCompany", "No hay empresa configurada")}
@@ -265,7 +299,7 @@ const CompanyTeamMembers = () => {
       <InviteUserDialog
         open={inviteDialogOpen}
         onOpenChange={setInviteDialogOpen}
-        companyId={company?.id}
+        companyId={companyId}
         onInviteSent={() => {
           toast.success(t("config.team.inviteSent"));
         }}

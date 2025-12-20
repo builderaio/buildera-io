@@ -125,7 +125,7 @@ serve(async (req) => {
           company_id,
           agent_id: agent.id,
           credits_consumed: agent.credits_per_use,
-          output_summary: `Onboarding WOW - ${agent.name}`,
+          output_summary: agent.name,
           execution_time_ms: result.execution_time_ms,
           status: 'completed'
         });

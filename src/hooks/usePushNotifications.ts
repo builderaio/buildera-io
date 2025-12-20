@@ -120,9 +120,10 @@ export const usePushNotifications = (): UsePushNotificationsReturn => {
       const registration = await navigator.serviceWorker.ready;
 
       // Subscribe to push manager
+      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: applicationServerKey as BufferSource,
       });
 
       // Get user info
@@ -174,7 +175,7 @@ export const usePushNotifications = (): UsePushNotificationsReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, [isSupported, requestPermission, toast, primaryCompany]);
+  }, [isSupported, requestPermission, toast]);
 
   // Unsubscribe from push notifications
   const unsubscribe = useCallback(async (): Promise<boolean> => {

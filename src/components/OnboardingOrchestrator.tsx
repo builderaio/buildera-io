@@ -149,6 +149,12 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           });
       }
 
+      // Sync primary_company_id in profiles
+      await supabase
+        .from('profiles')
+        .update({ primary_company_id: companyId })
+        .eq('user_id', user.id);
+
       setCompanyData({
         id: companyId!,
         name: formData.name,

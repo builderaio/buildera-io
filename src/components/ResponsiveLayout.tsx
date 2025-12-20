@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Building, Bot, Store, Settings, User, LogOut, Activity, Zap } from 'lucide-react';
+import { Building, Bot, Store, Settings, User, LogOut, Activity, Zap, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, useSidebar } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
@@ -414,6 +414,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       <SidebarInset className="flex-1 overflow-auto w-full">
         {!isInOnboarding && (
           <header className="flex items-center gap-2 sm:gap-4 border-b bg-background/95 backdrop-blur px-3 sm:px-6 py-2 sm:py-3 sticky top-0 z-30">
+            <SidebarTrigger className="md:hidden" />
             <div className="flex-1" />
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="hidden sm:block">

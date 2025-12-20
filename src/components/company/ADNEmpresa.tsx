@@ -67,38 +67,79 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       
       let companyId: string | null = null;
       
-      const { data: profileData } = await supabase
+      // Step 1: Try primary_company_id from profiles
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('primary_company_id')
         .eq('user_id', profile.user_id)
         .maybeSingle();
       
-      companyId = profileData?.primary_company_id || null;
+      if (profileError) {
+        console.error('🔴 [ADNEmpresa] Error fetching profile:', profileError);
+      }
       
+      companyId = profileData?.primary_company_id || null;
+      console.log('🔍 [ADNEmpresa] Step 1 - primary_company_id:', companyId);
+      
+      // Step 2: Fallback to company_members with is_primary = true
       if (!companyId) {
-        const { data: member } = await supabase
+        const { data: member, error: memberError } = await supabase
           .from('company_members')
           .select('company_id')
           .eq('user_id', profile.user_id)
           .eq('is_primary', true)
           .maybeSingle();
+        
+        if (memberError) {
+          console.error('🔴 [ADNEmpresa] Error fetching primary member:', memberError);
+        }
+        
         companyId = member?.company_id || null;
+        console.log('🔍 [ADNEmpresa] Step 2 - primary company_member:', companyId);
+        
+        // If found via company_members, sync to profiles for future queries
+        if (companyId) {
+          console.log('🔄 [ADNEmpresa] Syncing primary_company_id to profiles');
+          await supabase
+            .from('profiles')
+            .update({ primary_company_id: companyId })
+            .eq('user_id', profile.user_id);
+        }
       }
       
+      // Step 3: Fallback to any company membership
       if (!companyId) {
-        const { data: firstMember } = await supabase
+        const { data: firstMember, error: firstMemberError } = await supabase
           .from('company_members')
           .select('company_id')
           .eq('user_id', profile.user_id)
           .limit(1)
           .maybeSingle();
+        
+        if (firstMemberError) {
+          console.error('🔴 [ADNEmpresa] Error fetching any member:', firstMemberError);
+        }
+        
         companyId = firstMember?.company_id || null;
+        console.log('🔍 [ADNEmpresa] Step 3 - any company_member:', companyId);
+        
+        // Sync to profiles
+        if (companyId) {
+          console.log('🔄 [ADNEmpresa] Syncing company_id to profiles');
+          await supabase
+            .from('profiles')
+            .update({ primary_company_id: companyId })
+            .eq('user_id', profile.user_id);
+        }
       }
       
       if (!companyId) {
+        console.warn('⚠️ [ADNEmpresa] No company found for user:', profile.user_id);
         setLoading(false);
         return;
       }
+      
+      console.log('✅ [ADNEmpresa] Using company:', companyId);
 
       const [companyRes, strategyRes, brandingRes, objectivesRes] = await Promise.all([
         supabase.from('companies').select('*').eq('id', companyId).maybeSingle(),

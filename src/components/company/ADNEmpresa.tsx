@@ -433,31 +433,31 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-4 space-y-6">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold mb-2">{t('common:adn.title')}</h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="max-w-5xl mx-auto px-2 sm:px-4 space-y-4 sm:space-y-6">
+      <div className="text-center mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">{t('common:adn.title')}</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           {t('common:adn.subtitle')}
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
-          <TabsTrigger value="empresa" className="flex items-center gap-2">
-            <Building2 className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('common:adn.tabs.empresa', 'Mi Empresa')}</span>
+        <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 h-auto p-1">
+          <TabsTrigger value="empresa" className="flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <Building2 className="w-4 h-4 shrink-0" />
+            <span className="hidden xs:inline sm:inline">{t('common:adn.tabs.empresa', 'Mi Empresa')}</span>
           </TabsTrigger>
-          <TabsTrigger value="estrategia" className="flex items-center gap-2">
-            <Target className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('common:adn.tabs.estrategia', 'Estrategia')}</span>
+          <TabsTrigger value="estrategia" className="flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <Target className="w-4 h-4 shrink-0" />
+            <span className="hidden xs:inline sm:inline">{t('common:adn.tabs.estrategia', 'Estrategia')}</span>
           </TabsTrigger>
-          <TabsTrigger value="marca" className="flex items-center gap-2">
-            <Palette className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('common:adn.tabs.marca', 'Marca')}</span>
+          <TabsTrigger value="marca" className="flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <Palette className="w-4 h-4 shrink-0" />
+            <span className="hidden xs:inline sm:inline">{t('common:adn.tabs.marca', 'Marca')}</span>
           </TabsTrigger>
-          <TabsTrigger value="canales" className="flex items-center gap-2">
-            <Share2 className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('common:adn.tabs.canales', 'Canales')}</span>
+          <TabsTrigger value="canales" className="flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <Share2 className="w-4 h-4 shrink-0" />
+            <span className="hidden xs:inline sm:inline">{t('common:adn.tabs.canales', 'Canales')}</span>
           </TabsTrigger>
         </TabsList>
 

@@ -35,7 +35,7 @@ interface TeamMember {
 
 const CompanyTeamMembers = () => {
   const { t } = useTranslation("common");
-  const { company } = useCompany();
+  const { company, loading: companyLoading } = useCompany();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -45,7 +45,16 @@ const CompanyTeamMembers = () => {
 
   useEffect(() => {
     const fetchMembers = async () => {
-      if (!company?.id) return;
+      // Wait for company context to finish loading
+      if (companyLoading) return;
+      
+      if (!company?.id) {
+        console.log('🔍 [CompanyTeamMembers] No company available');
+        setLoading(false);
+        return;
+      }
+
+      console.log('🔍 [CompanyTeamMembers] Fetching members for company:', company.id);
 
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -63,6 +72,8 @@ const CompanyTeamMembers = () => {
           .order("joined_at", { ascending: true });
 
         if (error) throw error;
+
+        console.log('🔍 [CompanyTeamMembers] Found members:', membersData?.length);
 
         // Fetch profiles for each member
         const membersWithProfiles: TeamMember[] = await Promise.all(
@@ -94,7 +105,7 @@ const CompanyTeamMembers = () => {
     };
 
     fetchMembers();
-  }, [company?.id, t]);
+  }, [company?.id, companyLoading, t]);
 
   const handleRemoveMember = async () => {
     if (!memberToRemove) return;
@@ -164,7 +175,7 @@ const CompanyTeamMembers = () => {
     return "?";
   };
 
-  if (loading) {
+  if (loading || companyLoading) {
     return (
       <div className="space-y-4">
         {[1, 2].map((i) => (
@@ -176,6 +187,14 @@ const CompanyTeamMembers = () => {
             </div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (!company?.id) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        {t("config.team.noCompany", "No hay empresa configurada")}
       </div>
     );
   }

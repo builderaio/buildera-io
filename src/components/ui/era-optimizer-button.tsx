@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Check, X, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface EraOptimizerButtonProps {
   currentText: string;
@@ -151,9 +153,6 @@ export const EraOptimizerButton: React.FC<EraOptimizerButtonProps> = ({
     setIsOptimizing(true);
     
     try {
-      // Usar la edge function correcta de Supabase
-      const { supabase } = await import('@/integrations/supabase/client');
-      
       const { data, error } = await supabase.functions.invoke('era-content-optimizer', {
         body: {
           text: currentText,
@@ -181,7 +180,6 @@ export const EraOptimizerButton: React.FC<EraOptimizerButtonProps> = ({
         setOptimizedText(stripMarkdown(fallbackText));
         setShowDialog(true);
       } else {
-        const { toast } = await import('@/hooks/use-toast');
         toast({
           title: "Error de optimización",
           description: "No se pudo optimizar el contenido. Intenta de nuevo más tarde.",

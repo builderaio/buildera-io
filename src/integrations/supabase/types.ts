@@ -5443,6 +5443,387 @@ export type Database = {
         }
         Relationships: []
       }
+      journey_definitions: {
+        Row: {
+          allow_re_enrollment: boolean | null
+          company_id: string
+          conversion_rate: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          entry_segment_conditions: Json | null
+          exit_conditions: Json | null
+          goal_conditions: Json | null
+          goal_type: string | null
+          id: string
+          is_template: boolean | null
+          max_enrollments_per_contact: number | null
+          name: string
+          re_enrollment_delay_days: number | null
+          status: Database["public"]["Enums"]["journey_status"]
+          tags: string[] | null
+          template_category: string | null
+          total_completed: number | null
+          total_enrolled: number | null
+          total_goal_reached: number | null
+          trigger_conditions: Json | null
+          trigger_type: Database["public"]["Enums"]["journey_trigger_type"]
+          updated_at: string
+        }
+        Insert: {
+          allow_re_enrollment?: boolean | null
+          company_id: string
+          conversion_rate?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entry_segment_conditions?: Json | null
+          exit_conditions?: Json | null
+          goal_conditions?: Json | null
+          goal_type?: string | null
+          id?: string
+          is_template?: boolean | null
+          max_enrollments_per_contact?: number | null
+          name: string
+          re_enrollment_delay_days?: number | null
+          status?: Database["public"]["Enums"]["journey_status"]
+          tags?: string[] | null
+          template_category?: string | null
+          total_completed?: number | null
+          total_enrolled?: number | null
+          total_goal_reached?: number | null
+          trigger_conditions?: Json | null
+          trigger_type: Database["public"]["Enums"]["journey_trigger_type"]
+          updated_at?: string
+        }
+        Update: {
+          allow_re_enrollment?: boolean | null
+          company_id?: string
+          conversion_rate?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          entry_segment_conditions?: Json | null
+          exit_conditions?: Json | null
+          goal_conditions?: Json | null
+          goal_type?: string | null
+          id?: string
+          is_template?: boolean | null
+          max_enrollments_per_contact?: number | null
+          name?: string
+          re_enrollment_delay_days?: number | null
+          status?: Database["public"]["Enums"]["journey_status"]
+          tags?: string[] | null
+          template_category?: string | null
+          total_completed?: number | null
+          total_enrolled?: number | null
+          total_goal_reached?: number | null
+          trigger_conditions?: Json | null
+          trigger_type?: Database["public"]["Enums"]["journey_trigger_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_definitions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_enrollments: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          contact_id: string
+          context: Json | null
+          created_at: string
+          current_step_id: string | null
+          emails_clicked: number | null
+          emails_opened: number | null
+          emails_sent: number | null
+          enrolled_at: string
+          enrolled_by: string | null
+          enrollment_source: string | null
+          exit_reason: string | null
+          exited_at: string | null
+          goal_reached_at: string | null
+          id: string
+          journey_id: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["journey_enrollment_status"]
+          steps_completed: number | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          contact_id: string
+          context?: Json | null
+          created_at?: string
+          current_step_id?: string | null
+          emails_clicked?: number | null
+          emails_opened?: number | null
+          emails_sent?: number | null
+          enrolled_at?: string
+          enrolled_by?: string | null
+          enrollment_source?: string | null
+          exit_reason?: string | null
+          exited_at?: string | null
+          goal_reached_at?: string | null
+          id?: string
+          journey_id: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["journey_enrollment_status"]
+          steps_completed?: number | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          contact_id?: string
+          context?: Json | null
+          created_at?: string
+          current_step_id?: string | null
+          emails_clicked?: number | null
+          emails_opened?: number | null
+          emails_sent?: number | null
+          enrolled_at?: string
+          enrolled_by?: string | null
+          enrollment_source?: string | null
+          exit_reason?: string | null
+          exited_at?: string | null
+          goal_reached_at?: string | null
+          id?: string
+          journey_id?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["journey_enrollment_status"]
+          steps_completed?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_enrollments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_enrollments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "crm_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_enrollments_current_step_id_fkey"
+            columns: ["current_step_id"]
+            isOneToOne: false
+            referencedRelation: "journey_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_enrollments_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journey_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_step_executions: {
+        Row: {
+          created_at: string
+          decision_made: string | null
+          decision_reason: string | null
+          email_clicked_at: string | null
+          email_message_id: string | null
+          email_opened_at: string | null
+          email_status: string | null
+          enrollment_id: string
+          error_message: string | null
+          executed_at: string | null
+          id: string
+          max_retries: number | null
+          result: Json | null
+          retry_count: number | null
+          scheduled_for: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["journey_execution_status"]
+          step_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          decision_made?: string | null
+          decision_reason?: string | null
+          email_clicked_at?: string | null
+          email_message_id?: string | null
+          email_opened_at?: string | null
+          email_status?: string | null
+          enrollment_id: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          max_retries?: number | null
+          result?: Json | null
+          retry_count?: number | null
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["journey_execution_status"]
+          step_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          decision_made?: string | null
+          decision_reason?: string | null
+          email_clicked_at?: string | null
+          email_message_id?: string | null
+          email_opened_at?: string | null
+          email_status?: string | null
+          enrollment_id?: string
+          error_message?: string | null
+          executed_at?: string | null
+          id?: string
+          max_retries?: number | null
+          result?: Json | null
+          retry_count?: number | null
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["journey_execution_status"]
+          step_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_step_executions_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "journey_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_step_executions_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "journey_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      journey_steps: {
+        Row: {
+          ai_options: Json | null
+          ai_prompt: string | null
+          condition_false_step_id: string | null
+          condition_true_step_id: string | null
+          created_at: string
+          delay_unit: string | null
+          delay_value: number | null
+          description: string | null
+          email_content: string | null
+          email_subject: string | null
+          email_template_id: string | null
+          failed_executions: number | null
+          id: string
+          journey_id: string
+          name: string
+          next_step_id: string | null
+          position: number
+          position_x: number | null
+          position_y: number | null
+          step_config: Json
+          step_type: Database["public"]["Enums"]["journey_step_type"]
+          successful_executions: number | null
+          total_executions: number | null
+          updated_at: string
+        }
+        Insert: {
+          ai_options?: Json | null
+          ai_prompt?: string | null
+          condition_false_step_id?: string | null
+          condition_true_step_id?: string | null
+          created_at?: string
+          delay_unit?: string | null
+          delay_value?: number | null
+          description?: string | null
+          email_content?: string | null
+          email_subject?: string | null
+          email_template_id?: string | null
+          failed_executions?: number | null
+          id?: string
+          journey_id: string
+          name: string
+          next_step_id?: string | null
+          position?: number
+          position_x?: number | null
+          position_y?: number | null
+          step_config?: Json
+          step_type: Database["public"]["Enums"]["journey_step_type"]
+          successful_executions?: number | null
+          total_executions?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ai_options?: Json | null
+          ai_prompt?: string | null
+          condition_false_step_id?: string | null
+          condition_true_step_id?: string | null
+          created_at?: string
+          delay_unit?: string | null
+          delay_value?: number | null
+          description?: string | null
+          email_content?: string | null
+          email_subject?: string | null
+          email_template_id?: string | null
+          failed_executions?: number | null
+          id?: string
+          journey_id?: string
+          name?: string
+          next_step_id?: string | null
+          position?: number
+          position_x?: number | null
+          position_y?: number | null
+          step_config?: Json
+          step_type?: Database["public"]["Enums"]["journey_step_type"]
+          successful_executions?: number | null
+          total_executions?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journey_steps_condition_false_step_id_fkey"
+            columns: ["condition_false_step_id"]
+            isOneToOne: false
+            referencedRelation: "journey_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_steps_condition_true_step_id_fkey"
+            columns: ["condition_true_step_id"]
+            isOneToOne: false
+            referencedRelation: "journey_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_steps_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journey_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journey_steps_next_step_id_fkey"
+            columns: ["next_step_id"]
+            isOneToOne: false
+            referencedRelation: "journey_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_badges: {
         Row: {
           badge_image_url: string | null
@@ -8855,6 +9236,45 @@ export type Database = {
         | "tiktok_intelligent_analysis"
         | "content_analysis"
         | "marketing_analysis"
+      journey_enrollment_status:
+        | "active"
+        | "completed"
+        | "goal_reached"
+        | "exited"
+        | "failed"
+        | "paused"
+      journey_execution_status:
+        | "pending"
+        | "scheduled"
+        | "executing"
+        | "executed"
+        | "failed"
+        | "skipped"
+      journey_status: "draft" | "active" | "paused" | "archived"
+      journey_step_type:
+        | "send_email"
+        | "delay"
+        | "condition"
+        | "ai_decision"
+        | "update_contact"
+        | "create_activity"
+        | "move_deal_stage"
+        | "add_tag"
+        | "remove_tag"
+        | "webhook"
+        | "enroll_in_journey"
+        | "exit"
+      journey_trigger_type:
+        | "lifecycle_change"
+        | "manual"
+        | "tag_added"
+        | "deal_created"
+        | "deal_stage_changed"
+        | "form_submit"
+        | "inbound_email"
+        | "ai_triggered"
+        | "contact_created"
+        | "activity_completed"
       user_type: "developer" | "expert" | "company"
     }
     CompositeTypes: {
@@ -9006,6 +9426,49 @@ export const Constants = {
         "tiktok_intelligent_analysis",
         "content_analysis",
         "marketing_analysis",
+      ],
+      journey_enrollment_status: [
+        "active",
+        "completed",
+        "goal_reached",
+        "exited",
+        "failed",
+        "paused",
+      ],
+      journey_execution_status: [
+        "pending",
+        "scheduled",
+        "executing",
+        "executed",
+        "failed",
+        "skipped",
+      ],
+      journey_status: ["draft", "active", "paused", "archived"],
+      journey_step_type: [
+        "send_email",
+        "delay",
+        "condition",
+        "ai_decision",
+        "update_contact",
+        "create_activity",
+        "move_deal_stage",
+        "add_tag",
+        "remove_tag",
+        "webhook",
+        "enroll_in_journey",
+        "exit",
+      ],
+      journey_trigger_type: [
+        "lifecycle_change",
+        "manual",
+        "tag_added",
+        "deal_created",
+        "deal_stage_changed",
+        "form_submit",
+        "inbound_email",
+        "ai_triggered",
+        "contact_created",
+        "activity_completed",
       ],
       user_type: ["developer", "expert", "company"],
     },

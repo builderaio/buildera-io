@@ -6798,6 +6798,53 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          device_info: Json | null
+          endpoint: string
+          id: string
+          is_active: boolean | null
+          keys_auth: string
+          keys_p256dh: string
+          last_used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          device_info?: Json | null
+          endpoint: string
+          id?: string
+          is_active?: boolean | null
+          keys_auth: string
+          keys_p256dh: string
+          last_used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          device_info?: Json | null
+          endpoint?: string
+          id?: string
+          is_active?: boolean | null
+          keys_auth?: string
+          keys_p256dh?: string
+          last_used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_tracking: {
         Row: {
           company_id: string
@@ -8109,6 +8156,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_credentials: {
+        Row: {
+          counter: number | null
+          created_at: string | null
+          credential_id: string
+          device_name: string | null
+          device_type: string | null
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          public_key: string
+          transports: string[] | null
+          user_id: string
+        }
+        Insert: {
+          counter?: number | null
+          created_at?: string | null
+          credential_id: string
+          device_name?: string | null
+          device_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          public_key: string
+          transports?: string[] | null
+          user_id: string
+        }
+        Update: {
+          counter?: number | null
+          created_at?: string | null
+          credential_id?: string
+          device_name?: string | null
+          device_type?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          public_key?: string
+          transports?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_gamification: {
         Row: {

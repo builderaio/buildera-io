@@ -336,16 +336,16 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     <div className="min-h-screen flex w-full bg-background">
       {!isInOnboarding && (
         <Sidebar variant="sidebar" collapsible="icon" className="border-r bg-sidebar shadow-xl z-40">
-          <SidebarHeader className="p-4 border-b border-sidebar-border/50 group-data-[state=collapsed]:hidden">
+          <SidebarHeader className="p-3 sm:p-4 border-b border-sidebar-border/50 group-data-[state=collapsed]:hidden">
             <SidebarLogoHeader 
               companyName={profile?.company_name || "BUILDERA"} 
               onLogoClick={() => setActiveView('mando-central')} 
             />
             
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
-              <Zap className="size-4 text-amber-500" />
-              <span className="text-xs font-medium text-sidebar-foreground">Créditos:</span>
-              <Badge variant="secondary" className="text-xs px-2 py-0.5 h-5 bg-primary/20 text-primary font-bold">
+            <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
+              <Zap className="size-3 sm:size-4 text-amber-500" />
+              <span className="text-[10px] sm:text-xs font-medium text-sidebar-foreground">Créditos:</span>
+              <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 sm:py-0.5 h-4 sm:h-5 bg-primary/20 text-primary font-bold">
                 {availableCredits} cr
               </Badge>
             </div>
@@ -411,12 +411,14 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
         </Sidebar>
       )}
 
-      <SidebarInset className="flex-1 overflow-auto">
+      <SidebarInset className="flex-1 overflow-auto w-full">
         {!isInOnboarding && (
-          <header className="flex items-center gap-4 border-b bg-background/95 backdrop-blur px-6 py-3 sticky top-0 z-30">
+          <header className="flex items-center gap-2 sm:gap-4 border-b bg-background/95 backdrop-blur px-3 sm:px-6 py-2 sm:py-3 sticky top-0 z-30">
             <div className="flex-1" />
-            <div className="flex items-center gap-3">
-              <LanguageSelector />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="hidden sm:block">
+                <LanguageSelector />
+              </div>
               <ThemeSelector />
               <SmartNotifications />
               <DropdownMenu>
@@ -463,7 +465,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
             </div>
           </header>
         )}
-        <main className={isInOnboarding ? "flex-1" : "flex-1 p-6"}>
+        <main className={isInOnboarding ? "flex-1" : "flex-1 p-3 sm:p-4 md:p-6"}>
           <Outlet />
         </main>
       </SidebarInset>

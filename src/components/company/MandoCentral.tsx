@@ -232,24 +232,24 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
   const userName = profile?.full_name?.split(' ')[0] || "Usuario";
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-4 sm:space-y-6 pb-8 sm:pb-12">
       {/* Welcome Header - Compact */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">
+      <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold truncate">
             {t('mando.hello', { name: userName })} 👋
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {formatLocalizedDate(i18n.language)}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Badge variant="outline" className="h-8 px-3 gap-2">
-            <Bot className="w-4 h-4" />
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <Badge variant="outline" className="h-7 sm:h-8 px-2 sm:px-3 gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <Bot className="w-3 h-3 sm:w-4 sm:h-4" />
             {enabledAgentIds.length} {t('mando.agents')}
           </Badge>
-          <Badge variant="outline" className="h-8 px-3 gap-2 bg-amber-500/10 border-amber-500/30 text-amber-600">
-            <Zap className="w-4 h-4" />
+          <Badge variant="outline" className="h-7 sm:h-8 px-2 sm:px-3 gap-1.5 sm:gap-2 text-xs sm:text-sm bg-amber-500/10 border-amber-500/30 text-amber-600">
+            <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
             {availableCredits} cr
           </Badge>
         </div>
@@ -265,11 +265,11 @@ const MandoCentral = ({ profile, onNavigate }: MandoCentralProps) => {
       )}
 
       {/* Main Grid - Full width sections first, then sidebar */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6">
         {/* Main Column */}
-        <div className="space-y-6 xl:col-span-3">
+        <div className="space-y-4 sm:space-y-6 xl:col-span-3">
           {/* Company State & Quick Agents - larger cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Company State */}
             <CompanyStateCard state={companyState} />
             

@@ -9,14 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCRMDeals, CreateDealInput } from '@/hooks/useCRMDeals';
 import { useCRMContacts } from '@/hooks/useCRMContacts';
-import { useCompanyData } from '@/hooks/useCompanyData';
-import { Plus, DollarSign, Calendar, User, MoreHorizontal } from 'lucide-react';
+import { useCompanyManagement } from '@/hooks/useCompanyManagement';
+import { Plus, DollarSign, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const PipelineKanban = () => {
   const { t } = useTranslation();
-  const { primaryCompany } = useCompanyData();
+  const { primaryCompany } = useCompanyManagement();
   const companyId = primaryCompany?.id;
   
   const {
@@ -108,30 +108,30 @@ export const PipelineKanban = () => {
   if (pipelines.length === 0 && !isLoading) {
     return (
       <Card className="p-8 text-center">
-        <h3 className="text-lg font-medium mb-2">{t('crm.pipeline.noPipelines')}</h3>
-        <p className="text-muted-foreground mb-4">{t('crm.pipeline.createFirst')}</p>
+        <h3 className="text-lg font-medium mb-2">{t('crm.pipeline.noPipelines', 'No hay pipelines')}</h3>
+        <p className="text-muted-foreground mb-4">{t('crm.pipeline.createFirst', 'Crea tu primer pipeline de ventas')}</p>
         <Dialog open={isCreatePipelineOpen} onOpenChange={setIsCreatePipelineOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              {t('crm.pipeline.create')}
+              {t('crm.pipeline.create', 'Crear Pipeline')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{t('crm.pipeline.createNew')}</DialogTitle>
+              <DialogTitle>{t('crm.pipeline.createNew', 'Nuevo Pipeline')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>{t('crm.pipeline.name')}</Label>
+                <Label>{t('crm.pipeline.name', 'Nombre')}</Label>
                 <Input
                   value={newPipelineName}
                   onChange={(e) => setNewPipelineName(e.target.value)}
-                  placeholder={t('crm.pipeline.namePlaceholder')}
+                  placeholder={t('crm.pipeline.namePlaceholder', 'Ej: Pipeline de Ventas')}
                 />
               </div>
               <Button onClick={handleCreatePipeline} className="w-full" disabled={!newPipelineName}>
-                {t('crm.pipeline.create')}
+                {t('crm.pipeline.create', 'Crear Pipeline')}
               </Button>
             </div>
           </DialogContent>
@@ -150,7 +150,7 @@ export const PipelineKanban = () => {
             onValueChange={setSelectedPipelineId}
           >
             <SelectTrigger className="w-48">
-              <SelectValue placeholder={t('crm.pipeline.select')} />
+              <SelectValue placeholder={t('crm.pipeline.select', 'Seleccionar pipeline')} />
             </SelectTrigger>
             <SelectContent>
               {pipelines.map((pipeline) => (
@@ -166,16 +166,16 @@ export const PipelineKanban = () => {
           <DialogTrigger asChild>
             <Button disabled={!selectedPipelineId}>
               <Plus className="h-4 w-4 mr-2" />
-              {t('crm.deals.add')}
+              {t('crm.deals.add', 'Agregar Deal')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{t('crm.deals.addNew')}</DialogTitle>
+              <DialogTitle>{t('crm.deals.addNew', 'Nuevo Deal')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>{t('crm.deals.name')} *</Label>
+                <Label>{t('crm.deals.name', 'Nombre')} *</Label>
                 <Input
                   value={newDeal.deal_name || ''}
                   onChange={(e) => setNewDeal(prev => ({ ...prev, deal_name: e.target.value }))}
@@ -183,13 +183,13 @@ export const PipelineKanban = () => {
               </div>
               
               <div className="space-y-2">
-                <Label>{t('crm.deals.contact')}</Label>
+                <Label>{t('crm.deals.contact', 'Contacto')}</Label>
                 <Select
                   value={newDeal.contact_id || ''}
                   onValueChange={(value) => setNewDeal(prev => ({ ...prev, contact_id: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t('crm.deals.selectContact')} />
+                    <SelectValue placeholder={t('crm.deals.selectContact', 'Seleccionar contacto')} />
                   </SelectTrigger>
                   <SelectContent>
                     {contacts.map((contact) => (
@@ -202,7 +202,7 @@ export const PipelineKanban = () => {
               </div>
               
               <div className="space-y-2">
-                <Label>{t('crm.deals.amount')}</Label>
+                <Label>{t('crm.deals.amount', 'Monto')}</Label>
                 <Input
                   type="number"
                   value={newDeal.amount || ''}
@@ -215,7 +215,7 @@ export const PipelineKanban = () => {
                 className="w-full"
                 disabled={!newDeal.deal_name || createDeal.isPending}
               >
-                {createDeal.isPending ? t('status.saving') : t('crm.deals.create')}
+                {createDeal.isPending ? t('status.saving', 'Guardando...') : t('crm.deals.create', 'Crear Deal')}
               </Button>
             </div>
           </DialogContent>
@@ -274,7 +274,7 @@ export const PipelineKanban = () => {
                 
                 {getDealsForStage(stage.id).length === 0 && (
                   <p className="text-center text-muted-foreground text-sm py-4">
-                    {t('crm.pipeline.noDeals')}
+                    {t('crm.pipeline.noDeals', 'Sin deals')}
                   </p>
                 )}
               </CardContent>

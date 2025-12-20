@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface CRMAccount {
   id: string;
@@ -24,8 +25,8 @@ export interface CRMAccount {
   billing_currency: string;
   primary_contact_id?: string;
   owner_user_id?: string;
-  ai_enrichment?: Record<string, unknown>;
-  custom_fields?: Record<string, unknown>;
+  ai_enrichment?: Json;
+  custom_fields?: Json;
   tags?: string[];
   is_active: boolean;
   created_at: string;
@@ -71,7 +72,7 @@ export const useCRMAccounts = (companyId: string | undefined) => {
     mutationFn: async (input: CreateAccountInput) => {
       const { data, error } = await supabase
         .from('crm_accounts')
-        .insert(input)
+        .insert([input])
         .select()
         .single();
       if (error) throw error;
@@ -88,9 +89,12 @@ export const useCRMAccounts = (companyId: string | undefined) => {
 
   const updateAccount = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<CRMAccount> & { id: string }) => {
+      // Convert to database-compatible format
+      const dbUpdates: Record<string, unknown> = { ...updates };
+      
       const { data, error } = await supabase
         .from('crm_accounts')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .select()
         .single();

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface CRMContact {
   id: string;
@@ -24,15 +25,15 @@ export interface CRMContact {
   city?: string;
   country?: string;
   source: string;
-  source_details?: Record<string, unknown>;
+  source_details?: Json;
   lifetime_value: number;
   acquisition_cost: number;
   engagement_score: number;
-  ai_enrichment?: Record<string, unknown>;
+  ai_enrichment?: Json;
   ai_tags?: string[];
   ai_next_best_action?: string;
   last_ai_analysis?: string;
-  custom_fields?: Record<string, unknown>;
+  custom_fields?: Json;
   tags?: string[];
   is_subscribed_email: boolean;
   is_subscribed_sms: boolean;
@@ -57,7 +58,7 @@ export interface CreateContactInput {
   department?: string;
   source?: string;
   tags?: string[];
-  custom_fields?: Record<string, unknown>;
+  custom_fields?: Json;
 }
 
 export interface ContactFilters {
@@ -109,7 +110,7 @@ export const useCRMContacts = (companyId: string | undefined) => {
     mutationFn: async (input: CreateContactInput) => {
       const { data, error } = await supabase
         .from('crm_contacts')
-        .insert(input)
+        .insert([input])
         .select()
         .single();
       if (error) throw error;
@@ -126,9 +127,12 @@ export const useCRMContacts = (companyId: string | undefined) => {
 
   const updateContact = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<CRMContact> & { id: string }) => {
+      // Convert to database-compatible format
+      const dbUpdates: Record<string, unknown> = { ...updates };
+      
       const { data, error } = await supabase
         .from('crm_contacts')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .select()
         .single();

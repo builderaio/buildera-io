@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface CRMDeal {
   id: string;
@@ -20,10 +21,10 @@ export interface CRMDeal {
   probability: number;
   weighted_amount: number;
   loss_reason?: string;
-  products?: unknown[];
+  products?: Json;
   owner_user_id?: string;
-  ai_predictions?: Record<string, unknown>;
-  custom_fields?: Record<string, unknown>;
+  ai_predictions?: Json;
+  custom_fields?: Json;
   tags?: string[];
   created_at: string;
   updated_at: string;
@@ -51,7 +52,7 @@ export interface CRMPipelineStage {
   position: number;
   stage_type: 'open' | 'won' | 'lost';
   default_probability: number;
-  auto_actions?: Record<string, unknown>;
+  auto_actions?: Json;
   created_at: string;
   updated_at: string;
 }
@@ -135,19 +136,19 @@ export const useCRMDeals = (companyId: string | undefined) => {
     mutationFn: async (input: { company_id: string; name: string; pipeline_type?: string; is_default?: boolean }) => {
       const { data, error } = await supabase
         .from('crm_pipelines')
-        .insert(input)
+        .insert([input])
         .select()
         .single();
       if (error) throw error;
 
       // Create default stages
       const defaultStages = [
-        { pipeline_id: data.id, name: 'Nuevo', position: 0, stage_type: 'open', default_probability: 10, color: '#6B7280' },
-        { pipeline_id: data.id, name: 'Contactado', position: 1, stage_type: 'open', default_probability: 25, color: '#3B82F6' },
-        { pipeline_id: data.id, name: 'Propuesta', position: 2, stage_type: 'open', default_probability: 50, color: '#8B5CF6' },
-        { pipeline_id: data.id, name: 'Negociación', position: 3, stage_type: 'open', default_probability: 75, color: '#F59E0B' },
-        { pipeline_id: data.id, name: 'Ganado', position: 4, stage_type: 'won', default_probability: 100, color: '#10B981' },
-        { pipeline_id: data.id, name: 'Perdido', position: 5, stage_type: 'lost', default_probability: 0, color: '#EF4444' },
+        { pipeline_id: data.id, name: 'Nuevo', position: 0, stage_type: 'open' as const, default_probability: 10, color: '#6B7280' },
+        { pipeline_id: data.id, name: 'Contactado', position: 1, stage_type: 'open' as const, default_probability: 25, color: '#3B82F6' },
+        { pipeline_id: data.id, name: 'Propuesta', position: 2, stage_type: 'open' as const, default_probability: 50, color: '#8B5CF6' },
+        { pipeline_id: data.id, name: 'Negociación', position: 3, stage_type: 'open' as const, default_probability: 75, color: '#F59E0B' },
+        { pipeline_id: data.id, name: 'Ganado', position: 4, stage_type: 'won' as const, default_probability: 100, color: '#10B981' },
+        { pipeline_id: data.id, name: 'Perdido', position: 5, stage_type: 'lost' as const, default_probability: 0, color: '#EF4444' },
       ];
 
       await supabase.from('crm_pipeline_stages').insert(defaultStages);
@@ -167,19 +168,19 @@ export const useCRMDeals = (companyId: string | undefined) => {
     mutationFn: async (input: CreateDealInput) => {
       const { data, error } = await supabase
         .from('crm_deals')
-        .insert(input)
+        .insert([input])
         .select()
         .single();
       if (error) throw error;
 
       // Log activity
-      await supabase.from('crm_activities').insert({
+      await supabase.from('crm_activities').insert([{
         company_id: input.company_id,
         contact_id: input.contact_id,
         deal_id: data.id,
         activity_type: 'deal_created',
         subject: `Deal creado: ${input.deal_name}`,
-      });
+      }]);
 
       return data;
     },
@@ -195,9 +196,12 @@ export const useCRMDeals = (companyId: string | undefined) => {
   // Update deal / move stage
   const updateDeal = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<CRMDeal> & { id: string }) => {
+      // Convert to database-compatible format
+      const dbUpdates: Record<string, unknown> = { ...updates };
+      
       const { data, error } = await supabase
         .from('crm_deals')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .select()
         .single();
@@ -205,14 +209,14 @@ export const useCRMDeals = (companyId: string | undefined) => {
 
       // Log stage change if applicable
       if (updates.stage_id) {
-        await supabase.from('crm_activities').insert({
+        await supabase.from('crm_activities').insert([{
           company_id: data.company_id,
           contact_id: data.contact_id,
           deal_id: id,
           activity_type: 'stage_change',
           subject: 'Etapa cambiada',
-          metadata: { new_stage_id: updates.stage_id },
-        });
+          metadata: { new_stage_id: updates.stage_id } as Json,
+        }]);
       }
 
       return data;
@@ -228,7 +232,7 @@ export const useCRMDeals = (companyId: string | undefined) => {
   // Close deal (won/lost)
   const closeDeal = useMutation({
     mutationFn: async ({ id, status, loss_reason }: { id: string; status: 'won' | 'lost'; loss_reason?: string }) => {
-      const updates: Partial<CRMDeal> = {
+      const updates: Record<string, unknown> = {
         status,
         actual_close_date: new Date().toISOString().split('T')[0],
         probability: status === 'won' ? 100 : 0,
@@ -243,14 +247,14 @@ export const useCRMDeals = (companyId: string | undefined) => {
         .single();
       if (error) throw error;
 
-      await supabase.from('crm_activities').insert({
+      await supabase.from('crm_activities').insert([{
         company_id: data.company_id,
         contact_id: data.contact_id,
         deal_id: id,
         activity_type: status === 'won' ? 'deal_won' : 'deal_lost',
         subject: status === 'won' ? 'Deal ganado' : 'Deal perdido',
-        metadata: { loss_reason },
-      });
+        metadata: { loss_reason } as Json,
+      }]);
 
       return data;
     },

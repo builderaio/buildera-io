@@ -35,6 +35,7 @@ const ResponsiveLayout = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation(['common']);
   useAutoLogout();
 
   useEffect(() => {
@@ -108,7 +109,7 @@ const ResponsiveLayout = () => {
       });
       
       await supabase.auth.signOut({ scope: 'global' });
-      toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente" });
+      toast({ title: t('common:sidebar.logout'), description: t('common:messages.saveSuccess') });
       window.location.href = '/auth';
     } catch (error) {
       window.location.href = '/auth';
@@ -120,7 +121,7 @@ const ResponsiveLayout = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando...</p>
+          <p className="text-muted-foreground">{t('common:status.loading')}</p>
         </div>
       </div>
     );
@@ -158,12 +159,12 @@ const ResponsiveLayout = () => {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate('/profile')}>
                       <User className="mr-2 h-4 w-4" />
-                      <span>Mi Perfil</span>
+                      <span>{t('common:sidebar.profile')}</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
-                      <span>Cerrar Sesión</span>
+                      <span>{t('common:sidebar.logout')}</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -300,6 +301,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     if (viewParam) return viewParam;
     if (location.pathname.includes('/company/agents')) return 'mis-agentes';
     if (location.pathname.includes('/marketplace/agents')) return 'marketplace';
+    if (location.pathname.includes('/marketing')) return 'marketing-hub';
     return 'mando-central';
   };
 
@@ -308,6 +310,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
     const routes: Record<string, string> = {
       'mando-central': '/company-dashboard?view=mando-central',
+      'marketing-hub': '/company-dashboard?view=marketing-hub',
       'mis-agentes': '/company-dashboard?view=mis-agentes',
       'marketplace': '/marketplace/agents',
       'adn-empresa': '/company-dashboard?view=adn-empresa',
@@ -324,9 +327,10 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   const activeView = getActiveView();
 
-  // Simplified sidebar items - only 5 main sections
+  // Complete sidebar navigation with all main sections
   const sidebarItems = [
     { id: 'mando-central', label: t('common:sidebar.dashboard', 'Mi Panel'), icon: Activity, emoji: '🏠' },
+    { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Activity, emoji: '📣' },
     { id: 'mis-agentes', label: t('common:sidebar.myAgents', 'Mis Agentes'), icon: Bot, emoji: '🤖' },
     { id: 'marketplace', label: t('common:sidebar.marketplace', 'Marketplace'), icon: Store, emoji: '🛒' },
     { id: 'adn-empresa', label: t('common:sidebar.companyDna', 'Mi Empresa'), icon: Building, emoji: '🏢' },
@@ -355,8 +359,8 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
             
           <SidebarContent className="px-2 py-4">
             <SidebarGroup className="p-0">
-              <SidebarGroupLabel className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider group-data-[state=collapsed]:hidden text-sidebar-muted-foreground">
-                Navegación
+            <SidebarGroupLabel className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider group-data-[state=collapsed]:hidden text-sidebar-muted-foreground">
+                {t('common:sidebar.central')}
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-1">

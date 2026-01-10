@@ -8,7 +8,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAgentExecution } from '@/hooks/useAgentExecution';
 import { OnboardingWowLoader } from '@/components/onboarding/OnboardingWowLoader';
 import { OnboardingWowResults } from '@/components/onboarding/OnboardingWowResults';
 
@@ -30,6 +29,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const [companyData, setCompanyData] = useState<CompanyBasicData | null>(null);
   const [results, setResults] = useState<any>(null);
   const [totalTime, setTotalTime] = useState(0);
+  const [progress, setProgress] = useState(0);
   
   // Form state for companies without data
   const [formData, setFormData] = useState({
@@ -40,8 +40,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
 
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation(['common']);
-  const { executeOnboardingOrchestrator, isExecuting, progress } = useAgentExecution();
+  const { t } = useTranslation(['common']);
 
   // Phase 1: Check if company has basic data
   useEffect(() => {
@@ -70,9 +69,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           .single();
 
         if (company?.name && company?.website_url) {
-          console.log('✅ Company data found, starting orchestration');
+          console.log('✅ Company data found, starting extraction');
           setCompanyData(company);
-          startOrchestration(company.id);
+          startExtraction(company.id);
         } else {
           console.log('📋 Company missing data, showing form');
           if (company) {
@@ -94,7 +93,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     checkCompanyData();
   }, [user?.id]);
 
-  // Save basic company data and start orchestration
+  // Save basic company data and start extraction
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -162,7 +161,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         industry_sector: formData.industry_sector
       });
 
-      startOrchestration(companyId!);
+      startExtraction(companyId!);
     } catch (error) {
       console.error('Error saving company data:', error);
       toast({
@@ -173,40 +172,84 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     }
   };
 
-  // Phase 2: Run parallel WOW orchestration
-  const startOrchestration = async (companyId: string) => {
+  // Phase 2: Run company-info-extractor directly (NO other agents!)
+  const startExtraction = async (companyId: string) => {
     setPhase('loading');
+    setProgress(10);
     const startTime = Date.now();
 
     try {
-      console.log('🚀 Starting WOW orchestration for company:', companyId);
+      console.log('🚀 Starting company-info-extractor for company:', companyId);
       
-      const result = await executeOnboardingOrchestrator(
-        user.id, 
-        companyId, 
-        i18n.language
-      );
+      // Simulate progress while extraction runs
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev < 30) return prev + 5;
+          if (prev < 60) return prev + 3;
+          if (prev < 85) return prev + 2;
+          return prev;
+        });
+      }, 1500);
+
+      // Call company-info-extractor directly
+      const { data, error } = await supabase.functions.invoke('company-info-extractor', {
+        body: { companyId }
+      });
+
+      clearInterval(progressInterval);
+      setProgress(100);
 
       const endTime = Date.now();
       setTotalTime(endTime - startTime);
 
-      if (result?.success) {
-        console.log('✅ Orchestration completed successfully');
-        setResults(result);
+      if (error) throw error;
+
+      if (data?.success) {
+        console.log('✅ Extraction completed successfully:', data);
+        
+        // Transform data for OnboardingWowResults
+        const transformedResults = transformExtractorResults(data);
+        setResults(transformedResults);
         setPhase('results');
       } else {
-        throw new Error('Orchestration failed');
+        throw new Error(data?.error || 'Extraction failed');
       }
     } catch (error) {
-      console.error('❌ Orchestration error:', error);
+      console.error('❌ Extraction error:', error);
       toast({
         title: t('common:errors.processingFailed'),
         description: t('common:errors.tryAgain'),
         variant: "destructive"
       });
-      // Allow retry
       setPhase('form');
+      setProgress(0);
     }
+  };
+
+  // Transform company-info-extractor results to display format
+  const transformExtractorResults = (data: any) => {
+    const bp = data.business_profile || {};
+    const sp = data.social_presence || {};
+    const diag = data.diagnosis || {};
+
+    return {
+      success: true,
+      // Raw data for display
+      business_profile: bp,
+      social_presence: sp,
+      diagnosis: diag,
+      // Legacy format for summary header
+      summary: {
+        title: bp.identity?.company_name || companyData?.name || 'Tu Empresa',
+        description: diag.executive_summary || bp.seo?.description?.[0] || 'Análisis completo de tu presencia digital',
+        highlights: [
+          bp.identity?.slogan ? `"${bp.identity.slogan}"` : null,
+          bp.trust?.rating ? `⭐ ${bp.trust.rating} Rating` : null,
+          sp.activity?.active_platforms?.length ? `${sp.activity.active_platforms.length} plataformas activas` : null,
+          diag.prioritized_actions?.length ? `${diag.prioritized_actions.length} acciones recomendadas` : null
+        ].filter(Boolean)
+      }
+    };
   };
 
   // Complete onboarding and redirect
@@ -245,10 +288,10 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   };
 
   // Determine current phase for loader
-  const getCurrentPhase = (): 'strategy' | 'content' | 'insights' | 'complete' => {
-    if (progress < 30) return 'strategy';
-    if (progress < 60) return 'content';
-    if (progress < 90) return 'insights';
+  const getCurrentPhase = (): 'analyzing' | 'evaluating' | 'diagnosing' | 'complete' => {
+    if (progress < 30) return 'analyzing';
+    if (progress < 60) return 'evaluating';
+    if (progress < 90) return 'diagnosing';
     return 'complete';
   };
 
@@ -280,7 +323,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       <div className="min-h-screen bg-background p-4 py-8">
         <div className="max-w-4xl mx-auto">
           <OnboardingWowResults
-            results={results.results}
+            results={results}
             summary={results.summary}
             totalTime={totalTime}
             onContinue={handleContinue}

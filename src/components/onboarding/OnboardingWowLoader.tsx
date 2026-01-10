@@ -2,49 +2,58 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Palette, Lightbulb, CheckCircle2, Loader2 } from 'lucide-react';
+import { Globe, Search, FileSearch, CheckCircle2, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface OnboardingWowLoaderProps {
   progress: number;
-  currentPhase: 'strategy' | 'content' | 'insights' | 'complete';
+  currentPhase: 'analyzing' | 'evaluating' | 'diagnosing' | 'complete';
 }
 
 const phases = [
   { 
-    id: 'strategy', 
-    icon: Brain, 
-    title: 'Analizando tu negocio',
-    description: 'Generando estrategia de marketing personalizada...'
+    id: 'analyzing', 
+    icon: Globe, 
+    titleKey: 'onboarding.phases.analyzing.title',
+    descriptionKey: 'onboarding.phases.analyzing.description',
+    fallbackTitle: 'Analizando tu sitio web',
+    fallbackDescription: 'Extrayendo información de tu empresa...'
   },
   { 
-    id: 'content', 
-    icon: Palette, 
-    title: 'Creando contenido',
-    description: 'Diseñando posts optimizados para tus redes...'
+    id: 'evaluating', 
+    icon: Search, 
+    titleKey: 'onboarding.phases.evaluating.title',
+    descriptionKey: 'onboarding.phases.evaluating.description',
+    fallbackTitle: 'Evaluando presencia digital',
+    fallbackDescription: 'Analizando redes sociales y posicionamiento...'
   },
   { 
-    id: 'insights', 
-    icon: Lightbulb, 
-    title: 'Generando insights',
-    description: 'Identificando oportunidades de crecimiento...'
+    id: 'diagnosing', 
+    icon: FileSearch, 
+    titleKey: 'onboarding.phases.diagnosing.title',
+    descriptionKey: 'onboarding.phases.diagnosing.description',
+    fallbackTitle: 'Generando diagnóstico',
+    fallbackDescription: 'Creando plan de acción personalizado...'
   },
   { 
     id: 'complete', 
     icon: CheckCircle2, 
-    title: '¡Listo!',
-    description: 'Tu estrategia está preparada'
+    titleKey: 'onboarding.phases.complete.title',
+    descriptionKey: 'onboarding.phases.complete.description',
+    fallbackTitle: '¡Análisis Completo!',
+    fallbackDescription: 'Tu diagnóstico está listo'
   }
 ];
 
 export const OnboardingWowLoader = ({ progress, currentPhase }: OnboardingWowLoaderProps) => {
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
+  const { t } = useTranslation(['common']);
 
   useEffect(() => {
     const index = phases.findIndex(p => p.id === currentPhase);
     if (index >= 0) setCurrentPhaseIndex(index);
   }, [currentPhase]);
 
-  // Determinar fase automáticamente basada en progreso
   useEffect(() => {
     if (progress < 30) setCurrentPhaseIndex(0);
     else if (progress < 60) setCurrentPhaseIndex(1);
@@ -53,12 +62,13 @@ export const OnboardingWowLoader = ({ progress, currentPhase }: OnboardingWowLoa
   }, [progress]);
 
   const CurrentIcon = phases[currentPhaseIndex].icon;
+  const currentPhaseData = phases[currentPhaseIndex];
 
   return (
     <Card className="w-full max-w-lg mx-auto overflow-hidden">
       <CardContent className="pt-8 pb-6">
         <div className="text-center space-y-6">
-          {/* Icono animado */}
+          {/* Animated icon */}
           <div className="relative w-24 h-24 mx-auto">
             <motion.div
               className="absolute inset-0 rounded-full bg-primary/20"
@@ -104,7 +114,7 @@ export const OnboardingWowLoader = ({ progress, currentPhase }: OnboardingWowLoa
             </div>
           </div>
 
-          {/* Título y descripción */}
+          {/* Title and description */}
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPhaseIndex}
@@ -115,23 +125,23 @@ export const OnboardingWowLoader = ({ progress, currentPhase }: OnboardingWowLoa
               className="space-y-2"
             >
               <h3 className="text-xl font-semibold text-foreground">
-                {phases[currentPhaseIndex].title}
+                {t(`common:${currentPhaseData.titleKey}`, currentPhaseData.fallbackTitle)}
               </h3>
               <p className="text-muted-foreground">
-                {phases[currentPhaseIndex].description}
+                {t(`common:${currentPhaseData.descriptionKey}`, currentPhaseData.fallbackDescription)}
               </p>
             </motion.div>
           </AnimatePresence>
 
-          {/* Barra de progreso */}
+          {/* Progress bar */}
           <div className="space-y-2">
             <Progress value={progress} className="h-2" />
             <p className="text-sm text-muted-foreground">
-              {progress}% completado
+              {progress}% {t('common:status.completed', 'completado')}
             </p>
           </div>
 
-          {/* Indicadores de fase */}
+          {/* Phase indicators */}
           <div className="flex justify-center gap-3 pt-2">
             {phases.slice(0, 3).map((phase, index) => {
               const Icon = phase.icon;

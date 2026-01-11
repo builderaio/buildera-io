@@ -134,17 +134,43 @@ const SocialCallback = () => {
 
         const hasCompany = !!(companyMemberships && companyMemberships.length > 0);
 
+        // Verificar estado de onboarding
+        const { data: onboardingStatus } = await supabase
+          .from('user_onboarding_status')
+          .select('first_login_completed, onboarding_completed_at')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        console.log('📊 Estado onboarding:', { 
+          hasCompany, 
+          first_login_completed: onboardingStatus?.first_login_completed,
+          onboarding_completed: !!onboardingStatus?.onboarding_completed_at
+        });
+
         // Reglas de redirección inmediatas post OAuth
-        // 1) Si no hay user_type en perfil o es company sin empresa -> ir a complete-profile
-        if (!profile.user_type || (profile.user_type === 'company' && !hasCompany)) {
+        // 1) Si no hay user_type en perfil -> ir a complete-profile
+        if (!profile.user_type) {
           await new Promise(resolve => setTimeout(resolve, 500));
-          const qs = !profile.user_type && userType ? `?user_type=${encodeURIComponent(userType)}` : '';
+          const qs = userType ? `?user_type=${encodeURIComponent(userType)}` : '';
           navigate(`/complete-profile${qs}`, { replace: true });
           return;
         }
 
-        // 2) Si ya está completamente configurado, redirigir al dashboard correspondiente
-        // IMPORTANTE: Esperar 500ms para que la sesión se guarde completamente en localStorage
+        // 2) Si es company sin empresa -> ir a complete-profile
+        if (profile.user_type === 'company' && !hasCompany) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          navigate('/complete-profile', { replace: true });
+          return;
+        }
+
+        // 3) Si tiene empresa pero no completó onboarding -> ir al onboarding
+        if (profile.user_type === 'company' && hasCompany && !onboardingStatus?.onboarding_completed_at) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          navigate('/company-dashboard?view=onboarding&first_login=true', { replace: true });
+          return;
+        }
+
+        // 4) Si ya está completamente configurado, redirigir al dashboard correspondiente
         await new Promise(resolve => setTimeout(resolve, 500));
         
         switch (profile.user_type) {

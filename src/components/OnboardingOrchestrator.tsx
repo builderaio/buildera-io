@@ -240,11 +240,22 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       console.error('❌ Extraction error:', error);
       toast({
         title: t('common:errors.processingFailed'),
-        description: t('common:errors.tryAgain'),
+        description: 'Error al analizar tu empresa. El análisis será reintentado.',
         variant: "destructive"
       });
-      setPhase('form');
+      // En lugar de volver al form, mostrar un estado de error con opción de reintentar
+      // No redirigir a ningún lado - mantener al usuario en onboarding
       setProgress(0);
+      // Si ya tenemos datos de empresa, permitir reintentar
+      if (companyData?.id) {
+        // Mostrar toast con opción de reintentar
+        toast({
+          title: "¿Reintentar análisis?",
+          description: "Haz clic en el botón para intentar nuevamente",
+          duration: 10000
+        });
+      }
+      setPhase('form');
     }
   };
 

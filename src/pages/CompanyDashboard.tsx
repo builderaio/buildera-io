@@ -145,9 +145,25 @@ const CompanyDashboard = () => {
           onboardingCompleted: !!onboardingStatus?.onboarding_completed_at
         });
 
+        // Solo redirigir a complete-profile si NO tiene empresa Y no está intentando hacer onboarding
+        // Verificar también first_login_completed para evitar loops
         if (!hasCompany && !viewParam && !onboardingStatus?.onboarding_completed_at) {
-          console.log('❌ Usuario sin empresa ni onboarding completado, redirigir a complete-profile');
-          navigate('/complete-profile');
+          // Verificar si el usuario tiene first_login_completed (ya pasó por complete-profile)
+          const { data: fullOnboarding } = await supabase
+            .from('user_onboarding_status')
+            .select('first_login_completed')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          if (!fullOnboarding?.first_login_completed) {
+            console.log('❌ Usuario sin empresa ni first_login completado, redirigir a complete-profile');
+            navigate('/complete-profile');
+          } else {
+            // Ya pasó por complete-profile pero algo falló en la creación de empresa
+            // Mostrar el onboarding para que pueda reintentar
+            console.log('⚠️ Usuario completó first_login pero sin empresa, mostrar onboarding');
+            setActiveView('onboarding');
+          }
           console.groupEnd();
           setLoading(false);
           return;

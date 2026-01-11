@@ -15,7 +15,6 @@ import {
   Linkedin,
   Facebook,
   Twitter,
-  Youtube,
   Target,
   TrendingUp,
   Clock,
@@ -25,18 +24,43 @@ import {
   Phone,
   MapPin,
   Tag,
-  MessageSquare,
   XCircle,
-  CheckCircle
+  CheckCircle,
+  Users,
+  Calendar,
+  Zap,
+  Shield
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
 interface OnboardingWowResultsProps {
   results: {
-    business_profile?: any;
-    social_presence?: any;
-    diagnosis?: any;
+    basic_info?: {
+      identity?: any;
+      seo?: any;
+      products?: any;
+      contact?: any;
+      market?: any;
+      audience?: any;
+    };
+    digital_presence?: {
+      digital_footprint_summary?: string;
+      what_is_working?: string[];
+      what_is_missing?: string[];
+      key_risks?: string[];
+      competitive_positioning?: string;
+      action_plan?: {
+        short_term?: any[];
+        mid_term?: any[];
+        long_term?: any[];
+      };
+      executive_diagnosis?: {
+        current_state?: string;
+        primary_constraint?: string;
+        highest_leverage_focus?: string;
+      };
+    };
   };
   summary: {
     title: string;
@@ -52,8 +76,20 @@ const platformIcons: Record<string, any> = {
   linkedin: Linkedin,
   facebook: Facebook,
   twitter: Twitter,
-  youtube: Youtube,
+  youtube: Globe2,
   tiktok: Globe2
+};
+
+// Helper to extract platform name from URL
+const getPlatformFromUrl = (url: string): string => {
+  const lower = url.toLowerCase();
+  if (lower.includes('linkedin')) return 'linkedin';
+  if (lower.includes('instagram')) return 'instagram';
+  if (lower.includes('facebook')) return 'facebook';
+  if (lower.includes('twitter') || lower.includes('x.com')) return 'twitter';
+  if (lower.includes('youtube')) return 'youtube';
+  if (lower.includes('tiktok')) return 'tiktok';
+  return 'other';
 };
 
 export const OnboardingWowResults = ({ 
@@ -65,9 +101,18 @@ export const OnboardingWowResults = ({
   const [activeTab, setActiveTab] = useState('profile');
   const { t } = useTranslation(['common']);
 
-  const bp = results.business_profile || {};
-  const sp = results.social_presence || {};
-  const diag = results.diagnosis || {};
+  const basicInfo = results.basic_info || {};
+  const digitalPresence = results.digital_presence || {};
+  
+  const identity = basicInfo.identity || {};
+  const seo = basicInfo.seo || {};
+  const products = basicInfo.products || {};
+  const contact = basicInfo.contact || {};
+  const market = basicInfo.market || {};
+  const audience = basicInfo.audience || {};
+  
+  const execDiag = digitalPresence.executive_diagnosis || {};
+  const actionPlan = digitalPresence.action_plan || {};
 
   return (
     <motion.div
@@ -124,7 +169,7 @@ export const OnboardingWowResults = ({
         </CardContent>
       </Card>
 
-      {/* Tabs for results */}
+      {/* Tabs for results - NEW structure: Perfil, Presencia, Diagnóstico */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile" className="flex items-center gap-2">
@@ -141,7 +186,7 @@ export const OnboardingWowResults = ({
           </TabsTrigger>
         </TabsList>
 
-        {/* Tab: Business Profile */}
+        {/* Tab: Perfil - Identity, SEO, Products, Contact, Market, Audience */}
         <TabsContent value="profile" className="space-y-4 mt-4">
           {/* Identity Card */}
           <Card>
@@ -153,37 +198,68 @@ export const OnboardingWowResults = ({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-4">
-                {bp.identity?.logo && (
+                {identity.logo && (
                   <img 
-                    src={bp.identity.logo} 
+                    src={identity.logo} 
                     alt="Logo" 
                     className="w-16 h-16 rounded-lg object-contain bg-muted p-2"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                 )}
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{bp.identity?.company_name}</h3>
-                  {bp.identity?.slogan && (
-                    <p className="text-muted-foreground italic">"{bp.identity.slogan}"</p>
+                  <h3 className="font-semibold text-lg">{identity.company_name}</h3>
+                  {identity.slogan && (
+                    <p className="text-muted-foreground italic">"{identity.slogan}"</p>
                   )}
-                  {bp.identity?.founding_date && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Fundada en {bp.identity.founding_date}
+                  {identity.founding_date && (
+                    <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      Fundada en {identity.founding_date}
                     </p>
                   )}
                 </div>
-                {bp.trust?.rating && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                    {bp.trust.rating}
-                  </Badge>
-                )}
               </div>
             </CardContent>
           </Card>
 
+          {/* SEO Info */}
+          {seo.title && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Target className="w-5 h-5 text-primary" />
+                  {t('common:onboarding.seoInfo', 'SEO & Posicionamiento')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Título SEO</p>
+                  <p className="text-sm">{seo.title}</p>
+                </div>
+                {seo.description && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Meta Descripción</p>
+                    <p className="text-sm">{seo.description}</p>
+                  </div>
+                )}
+                {seo.keywords?.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Keywords</p>
+                    <div className="flex flex-wrap gap-1">
+                      {seo.keywords.slice(0, 10).map((kw: string, idx: number) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {kw}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Contact Info */}
-          {bp.contact && (
+          {(contact.emails?.length > 0 || contact.phones?.length > 0 || contact.addresses?.length > 0) && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -192,22 +268,43 @@ export const OnboardingWowResults = ({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {bp.contact.email?.length > 0 && (
+                {contact.emails?.length > 0 && (
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span>{bp.contact.email[0]}</span>
+                    <span>{contact.emails[0]}</span>
                   </div>
                 )}
-                {bp.contact.phone?.length > 0 && (
+                {contact.phones?.length > 0 && (
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>{bp.contact.phone[0]}</span>
+                    <span>{contact.phones[0]}</span>
                   </div>
                 )}
-                {bp.contact.address?.length > 0 && (
+                {contact.addresses?.length > 0 && (
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span>{bp.contact.address[0]}</span>
+                    <span>{contact.addresses[0]}</span>
+                  </div>
+                )}
+                {/* Social Links */}
+                {contact.social_links?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {contact.social_links.map((link: string, idx: number) => {
+                      const platform = getPlatformFromUrl(link);
+                      const Icon = platformIcons[platform] || Globe2;
+                      return (
+                        <a
+                          key={idx}
+                          href={link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 bg-muted rounded-lg px-2 py-1 text-xs hover:bg-muted/80 transition-colors"
+                        >
+                          <Icon className="w-3 h-3" />
+                          <span className="capitalize">{platform}</span>
+                        </a>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -215,7 +312,7 @@ export const OnboardingWowResults = ({
           )}
 
           {/* Services */}
-          {bp.products?.services?.length > 0 && (
+          {products.services?.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -225,37 +322,242 @@ export const OnboardingWowResults = ({
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {bp.products.services.slice(0, 8).map((service: string, idx: number) => (
+                  {products.services.slice(0, 10).map((service: string, idx: number) => (
                     <Badge key={idx} variant="outline" className="py-1 px-3">
                       {service}
                     </Badge>
                   ))}
-                  {bp.products.services.length > 8 && (
-                    <Badge variant="secondary">+{bp.products.services.length - 8} más</Badge>
+                  {products.services.length > 10 && (
+                    <Badge variant="secondary">+{products.services.length - 10} más</Badge>
                   )}
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* FAQs */}
-          {bp.faqs?.length > 0 && (
+          {/* Audience */}
+          {(audience.segments?.length > 0 || audience.professions?.length > 0 || audience.target_users?.length > 0) && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-primary" />
-                  {t('common:onboarding.faqs', 'Preguntas Frecuentes')}
+                  <Users className="w-5 h-5 text-primary" />
+                  {t('common:onboarding.audience', 'Audiencia Objetivo')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {audience.segments?.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Segmentos</p>
+                    <div className="flex flex-wrap gap-1">
+                      {audience.segments.map((seg: string, idx: number) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">{seg}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {audience.professions?.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Profesiones</p>
+                    <div className="flex flex-wrap gap-1">
+                      {audience.professions.map((prof: string, idx: number) => (
+                        <Badge key={idx} variant="outline" className="text-xs">{prof}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {audience.target_users?.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Tipo de Usuario</p>
+                    <div className="flex flex-wrap gap-1">
+                      {audience.target_users.map((user: string, idx: number) => (
+                        <Badge key={idx} variant="default" className="text-xs">{user}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Market */}
+          {(market.countries?.length > 0 || market.cities?.length > 0) && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Globe2 className="w-5 h-5 text-primary" />
+                  {t('common:onboarding.market', 'Mercado')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {market.countries?.map((country: string, idx: number) => (
+                    <Badge key={`c-${idx}`} variant="secondary">{country}</Badge>
+                  ))}
+                  {market.cities?.map((city: string, idx: number) => (
+                    <Badge key={`ci-${idx}`} variant="outline">{city}</Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Tab: Presencia Digital - what_is_working, what_is_missing, key_risks */}
+        <TabsContent value="presence" className="space-y-4 mt-4">
+          {/* Digital Footprint Summary */}
+          {digitalPresence.digital_footprint_summary && (
+            <Card className="bg-primary/5 border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Globe2 className="w-5 h-5 text-primary" />
+                  {t('common:onboarding.digitalFootprint', 'Huella Digital')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">{digitalPresence.digital_footprint_summary}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* What is Working */}
+          {digitalPresence.what_is_working?.length > 0 && (
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  {t('common:onboarding.whatIsWorking', 'Lo que Funciona Bien')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {digitalPresence.what_is_working.map((item: string, idx: number) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 shrink-0" />
+                      <span className="text-sm text-muted-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* What is Missing */}
+          {digitalPresence.what_is_missing?.length > 0 && (
+            <Card className="border-l-4 border-l-yellow-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                  {t('common:onboarding.whatIsMissing', 'Lo que Falta')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {digitalPresence.what_is_missing.map((item: string, idx: number) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-yellow-500 mt-1 shrink-0" />
+                      <span className="text-sm text-muted-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Key Risks */}
+          {digitalPresence.key_risks?.length > 0 && (
+            <Card className="border-l-4 border-l-red-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-red-500" />
+                  {t('common:onboarding.keyRisks', 'Riesgos Principales')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {digitalPresence.key_risks.map((risk: string, idx: number) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <XCircle className="w-4 h-4 text-red-500 mt-1 shrink-0" />
+                      <span className="text-sm text-muted-foreground">{risk}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Competitive Positioning */}
+          {digitalPresence.competitive_positioning && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  {t('common:onboarding.competitivePositioning', 'Posicionamiento Competitivo')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">{digitalPresence.competitive_positioning}</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Tab: Diagnóstico - executive_diagnosis, action_plan */}
+        <TabsContent value="diagnosis" className="space-y-4 mt-4">
+          {/* Executive Diagnosis */}
+          {(execDiag.current_state || execDiag.primary_constraint || execDiag.highest_leverage_focus) && (
+            <Card className="bg-primary/5 border-primary/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <FileSearch className="w-5 h-5 text-primary" />
+                  {t('common:onboarding.executiveDiagnosis', 'Diagnóstico Ejecutivo')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {execDiag.current_state && (
+                  <div>
+                    <p className="text-sm font-medium text-primary mb-1">Estado Actual</p>
+                    <p className="text-sm text-muted-foreground">{execDiag.current_state}</p>
+                  </div>
+                )}
+                {execDiag.primary_constraint && (
+                  <div>
+                    <p className="text-sm font-medium text-yellow-600 mb-1">Restricción Principal</p>
+                    <p className="text-sm text-muted-foreground">{execDiag.primary_constraint}</p>
+                  </div>
+                )}
+                {execDiag.highest_leverage_focus && (
+                  <div>
+                    <p className="text-sm font-medium text-green-600 mb-1">Foco de Mayor Impacto</p>
+                    <p className="text-sm text-muted-foreground">{execDiag.highest_leverage_focus}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Action Plan - Short Term */}
+          {actionPlan.short_term?.length > 0 && (
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-green-500" />
+                  {t('common:onboarding.shortTermActions', 'Acciones Inmediatas')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <Accordion type="single" collapsible className="w-full">
-                  {bp.faqs.slice(0, 3).map((faq: any, idx: number) => (
-                    <AccordionItem key={idx} value={`faq-${idx}`}>
+                  {actionPlan.short_term.map((action: any, idx: number) => (
+                    <AccordionItem key={idx} value={`short-${idx}`}>
                       <AccordionTrigger className="text-left text-sm">
-                        {faq.question}
+                        <div className="flex items-center gap-2">
+                          <span className="bg-green-100 text-green-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                            {idx + 1}
+                          </span>
+                          {action.action}
+                        </div>
                       </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground text-sm">
-                        {faq.answer}
+                      <AccordionContent className="text-muted-foreground text-sm pl-7">
+                        {action.reason}
                       </AccordionContent>
                     </AccordionItem>
                   ))}
@@ -264,296 +566,64 @@ export const OnboardingWowResults = ({
             </Card>
           )}
 
-          {/* Pricing */}
-          {bp.pricing?.price_range && (
-            <Card>
+          {/* Action Plan - Mid Term */}
+          {actionPlan.mid_term?.length > 0 && (
+            <Card className="border-l-4 border-l-blue-500">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary" />
-                  {t('common:onboarding.pricing', 'Precios')}
+                  <TrendingUp className="w-5 h-5 text-blue-500" />
+                  {t('common:onboarding.midTermActions', 'Acciones a Mediano Plazo')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold text-primary">{bp.pricing.price_range}</p>
-                {bp.pricing.payment_methods?.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {bp.pricing.payment_methods.map((method: string, idx: number) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {method}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Tab: Social Presence */}
-        <TabsContent value="presence" className="space-y-4 mt-4">
-          {/* Activity Overview */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Globe2 className="w-5 h-5 text-primary" />
-                {t('common:onboarding.socialActivity', 'Actividad en Redes')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t('common:onboarding.activityLevel', 'Nivel de actividad')}</span>
-                <Badge variant={
-                  sp.activity?.overall_activity_level === 'high' ? 'default' :
-                  sp.activity?.overall_activity_level === 'medium' ? 'secondary' : 'outline'
-                }>
-                  {sp.activity?.overall_activity_level || 'N/A'}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">{t('common:onboarding.consistency', 'Consistencia')}</span>
-                <Badge variant="outline">{sp.activity?.consistency || 'N/A'}</Badge>
-              </div>
-              {sp.confidence_score && (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t('common:onboarding.confidenceScore', 'Score de confianza')}</span>
-                  <span className="font-semibold">{Math.round(sp.confidence_score * 100)}%</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Active Platforms */}
-          {sp.activity?.active_platforms?.length > 0 && (
-            <Card className="border-l-4 border-l-green-500">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  {t('common:onboarding.activePlatforms', 'Plataformas Activas')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  {sp.activity.active_platforms.map((platform: string, idx: number) => {
-                    const Icon = platformIcons[platform.toLowerCase()] || Globe2;
-                    return (
-                      <div key={idx} className="flex items-center gap-2 bg-green-500/10 rounded-lg px-3 py-2">
-                        <Icon className="w-5 h-5 text-green-600" />
-                        <span className="capitalize font-medium">{platform}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Inactive Platforms */}
-          {sp.activity?.inactive_platforms?.length > 0 && (
-            <Card className="border-l-4 border-l-muted">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <XCircle className="w-5 h-5 text-muted-foreground" />
-                  {t('common:onboarding.inactivePlatforms', 'Plataformas Sin Actividad')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  {sp.activity.inactive_platforms.map((platform: string, idx: number) => {
-                    const Icon = platformIcons[platform.toLowerCase()] || Globe2;
-                    return (
-                      <div key={idx} className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 opacity-60">
-                        <Icon className="w-5 h-5" />
-                        <span className="capitalize">{platform}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Tone */}
-          {sp.tone && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">{t('common:onboarding.communicationTone', 'Tono de Comunicación')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Badge className="capitalize">{sp.tone.primary}</Badge>
-                {sp.tone.secondary?.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {sp.tone.secondary.map((tone: string, idx: number) => (
-                      <Badge key={idx} variant="outline" className="capitalize">
-                        {tone.replace(/_/g, ' ')}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Content Themes */}
-          {sp.content?.themes?.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">{t('common:onboarding.contentThemes', 'Temas de Contenido')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {sp.content.themes.map((theme: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-primary mt-1 shrink-0" />
-                      <span className="text-muted-foreground">{theme}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* Tab: Diagnosis */}
-        <TabsContent value="diagnosis" className="space-y-4 mt-4">
-          {/* Executive Summary */}
-          {diag.executive_summary && (
-            <Card className="bg-primary/5 border-primary/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileSearch className="w-5 h-5 text-primary" />
-                  {t('common:onboarding.executiveSummary', 'Resumen Ejecutivo')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{diag.executive_summary}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Strengths */}
-          {diag.brand_identity_and_offering?.strengths?.length > 0 && (
-            <Card className="border-l-4 border-l-green-500">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
-                  {t('common:onboarding.strengths', 'Fortalezas')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {diag.brand_identity_and_offering.strengths.map((strength: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-green-500 mt-1 shrink-0" />
-                      <span className="text-muted-foreground">{strength}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Gaps */}
-          {diag.brand_identity_and_offering?.gaps?.length > 0 && (
-            <Card className="border-l-4 border-l-yellow-500">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                  {t('common:onboarding.areasToImprove', 'Áreas de Mejora')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {diag.brand_identity_and_offering.gaps.map((gap: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-yellow-500 mt-1 shrink-0" />
-                      <span className="text-muted-foreground">{gap}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Risks */}
-          {diag.summary_of_risks?.principal_risks?.length > 0 && (
-            <Card className="border-l-4 border-l-red-500">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
-                  {t('common:onboarding.risks', 'Riesgos Principales')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {diag.summary_of_risks.principal_risks.map((risk: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <XCircle className="w-4 h-4 text-red-500 mt-1 shrink-0" />
-                      <span className="text-muted-foreground">{risk}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Prioritized Actions */}
-          {diag.prioritized_actions?.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                  {t('common:onboarding.prioritizedActions', 'Acciones Priorizadas')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {diag.prioritized_actions.slice(0, 5).map((action: any, idx: number) => (
-                    <div key={idx} className="border rounded-lg p-4 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="font-medium">{action.action}</h4>
-                        <div className="flex gap-1 shrink-0">
-                          <Badge variant={action.impact === 'Alto' ? 'default' : 'secondary'} className="text-xs">
-                            {action.impact}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {action.timeline}
-                          </Badge>
+                <Accordion type="single" collapsible className="w-full">
+                  {actionPlan.mid_term.map((action: any, idx: number) => (
+                    <AccordionItem key={idx} value={`mid-${idx}`}>
+                      <AccordionTrigger className="text-left text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-blue-100 text-blue-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                            {idx + 1}
+                          </span>
+                          {action.action}
                         </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{action.rationale}</p>
-                      {action.outcome_metrics?.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {action.outcome_metrics.slice(0, 3).map((metric: string, mIdx: number) => (
-                            <Badge key={mIdx} variant="outline" className="text-xs">
-                              📊 {metric}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground text-sm pl-7">
+                        {action.reason}
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </div>
+                </Accordion>
               </CardContent>
             </Card>
           )}
 
-          {/* KPIs */}
-          {diag.metrics_and_kpis?.length > 0 && (
-            <Card>
+          {/* Action Plan - Long Term */}
+          {actionPlan.long_term?.length > 0 && (
+            <Card className="border-l-4 border-l-purple-500">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary" />
-                  {t('common:onboarding.recommendedKpis', 'KPIs Recomendados')}
+                  <Star className="w-5 h-5 text-purple-500" />
+                  {t('common:onboarding.longTermActions', 'Acciones a Largo Plazo')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {diag.metrics_and_kpis.map((kpi: string, idx: number) => (
-                    <Badge key={idx} variant="secondary" className="py-1 px-3">
-                      {kpi}
-                    </Badge>
+                <Accordion type="single" collapsible className="w-full">
+                  {actionPlan.long_term.map((action: any, idx: number) => (
+                    <AccordionItem key={idx} value={`long-${idx}`}>
+                      <AccordionTrigger className="text-left text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-purple-100 text-purple-700 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                            {idx + 1}
+                          </span>
+                          {action.action}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground text-sm pl-7">
+                        {action.reason}
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </div>
+                </Accordion>
               </CardContent>
             </Card>
           )}

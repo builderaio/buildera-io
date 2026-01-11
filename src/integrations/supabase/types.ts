@@ -1660,6 +1660,62 @@ export type Database = {
         }
         Relationships: []
       }
+      company_digital_presence: {
+        Row: {
+          action_plan: Json | null
+          analyzed_social_links: Json | null
+          company_id: string
+          competitive_positioning: string | null
+          created_at: string
+          digital_footprint_summary: string | null
+          executive_diagnosis: Json | null
+          id: string
+          key_risks: Json | null
+          source_url: string | null
+          updated_at: string
+          what_is_missing: Json | null
+          what_is_working: Json | null
+        }
+        Insert: {
+          action_plan?: Json | null
+          analyzed_social_links?: Json | null
+          company_id: string
+          competitive_positioning?: string | null
+          created_at?: string
+          digital_footprint_summary?: string | null
+          executive_diagnosis?: Json | null
+          id?: string
+          key_risks?: Json | null
+          source_url?: string | null
+          updated_at?: string
+          what_is_missing?: Json | null
+          what_is_working?: Json | null
+        }
+        Update: {
+          action_plan?: Json | null
+          analyzed_social_links?: Json | null
+          company_id?: string
+          competitive_positioning?: string | null
+          created_at?: string
+          digital_footprint_summary?: string | null
+          executive_diagnosis?: Json | null
+          id?: string
+          key_risks?: Json | null
+          source_url?: string | null
+          updated_at?: string
+          what_is_missing?: Json | null
+          what_is_working?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_digital_presence_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_email_config: {
         Row: {
           billing_email: string | null

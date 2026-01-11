@@ -172,45 +172,48 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     }
   };
 
-  // Phase 2: Run company-info-extractor directly (NO other agents!)
-  // This API can take up to 3 minutes, so we show progressive feedback
+  // Phase 2: Run extraction with NEW optimized APIs
+  // API 1 (company-info-extractor): ~1 min - basic info
+  // API 2 (company-digital-presence): ~2 min - digital analysis
+  // Total: ~3 minutes with better feedback
   const startExtraction = async (companyId: string) => {
     setPhase('loading');
     setProgress(5);
     const startTime = Date.now();
 
     try {
-      console.log('🚀 Starting company-info-extractor for company:', companyId);
+      console.log('🚀 Starting company extraction for company:', companyId);
       
-      // Simulate progress more realistically for ~3 minute operation
-      // Total expected time: 180 seconds
-      // Progress milestones: 0-30 (analyzing), 30-60 (evaluating), 60-90 (diagnosing), 90-100 (completing)
+      // Progress simulation for ~3 minute operation with NEW phases:
+      // Phase 1 (0-40%): Extracting basic info (~60s)
+      // Phase 2 (40-80%): Analyzing digital presence (~90s)
+      // Phase 3 (80-95%): Generating executive diagnosis (~30s)
       const progressInterval = setInterval(() => {
         const elapsedSeconds = (Date.now() - startTime) / 1000;
         
         setProgress(prev => {
-          // Phase 1: 0-30% in first 60 seconds (analyzing)
+          // Phase 1: 0-40% in first 60 seconds (extracting basic info)
           if (elapsedSeconds < 60) {
-            const target = Math.min(30, (elapsedSeconds / 60) * 30);
+            const target = Math.min(40, (elapsedSeconds / 60) * 40);
             return Math.max(prev, Math.floor(target));
           }
-          // Phase 2: 30-60% in 60-120 seconds (evaluating)
-          if (elapsedSeconds < 120) {
-            const target = 30 + ((elapsedSeconds - 60) / 60) * 30;
+          // Phase 2: 40-80% in 60-150 seconds (analyzing digital presence)
+          if (elapsedSeconds < 150) {
+            const target = 40 + ((elapsedSeconds - 60) / 90) * 40;
             return Math.max(prev, Math.floor(target));
           }
-          // Phase 3: 60-85% in 120-180 seconds (diagnosing)
+          // Phase 3: 80-95% in 150-180 seconds (generating diagnosis)
           if (elapsedSeconds < 180) {
-            const target = 60 + ((elapsedSeconds - 120) / 60) * 25;
+            const target = 80 + ((elapsedSeconds - 150) / 30) * 15;
             return Math.max(prev, Math.floor(target));
           }
-          // After 180s, slowly approach 90 but never reach 100 until done
-          if (prev < 90) return prev + 1;
+          // After 180s, slowly approach 95 but never reach 100 until done
+          if (prev < 95) return prev + 0.5;
           return prev;
         });
-      }, 2000);
+      }, 1500);
 
-      // Call company-info-extractor directly
+      // Call company-info-extractor directly (handles both APIs internally)
       const { data, error } = await supabase.functions.invoke('company-info-extractor', {
         body: { companyId }
       });
@@ -226,7 +229,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       if (data?.success) {
         console.log('✅ Extraction completed successfully:', data);
         
-        // Transform data for OnboardingWowResults
+        // Transform data for OnboardingWowResults with NEW structure
         const transformedResults = transformExtractorResults(data);
         setResults(transformedResults);
         setPhase('results');
@@ -245,27 +248,77 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     }
   };
 
-  // Transform company-info-extractor results to display format
+  // Transform NEW API structure to display format
   const transformExtractorResults = (data: any) => {
-    const bp = data.business_profile || {};
-    const sp = data.social_presence || {};
-    const diag = data.diagnosis || {};
+    const basicInfo = data.basic_info || {};
+    const digitalPresence = data.digital_presence || {};
+
+    // Map from NEW structure (identity, seo, products, contact, market, audience)
+    const identity = basicInfo.identity || {};
+    const seo = basicInfo.seo || {};
+    const products = basicInfo.products || {};
+    const contact = basicInfo.contact || {};
+    const market = basicInfo.market || {};
+    const audience = basicInfo.audience || {};
+
+    // Map from digital presence (what_is_working, what_is_missing, executive_diagnosis, action_plan)
+    const execDiag = digitalPresence.executive_diagnosis || {};
 
     return {
       success: true,
-      // Raw data for display
-      business_profile: bp,
-      social_presence: sp,
-      diagnosis: diag,
-      // Legacy format for summary header
+      // NEW structure for tabs
+      basic_info: {
+        identity: {
+          company_name: identity.company_name,
+          legal_name: identity.legal_name,
+          slogan: identity.slogan,
+          founding_date: identity.founding_date,
+          logo: identity.logo,
+          url: identity.url
+        },
+        seo: {
+          title: seo.title,
+          description: seo.description,
+          keywords: seo.keyword || []
+        },
+        products: {
+          services: products.service || [],
+          offers: products.offer || []
+        },
+        contact: {
+          emails: contact.email || [],
+          phones: contact.phone || [],
+          addresses: contact.address || [],
+          social_links: contact.social_links || []
+        },
+        market: {
+          countries: market.country || [],
+          cities: market.city || []
+        },
+        audience: {
+          segments: audience.segment || [],
+          professions: audience.profession || [],
+          target_users: audience.target_user || []
+        }
+      },
+      digital_presence: {
+        digital_footprint_summary: digitalPresence.digital_footprint_summary,
+        what_is_working: digitalPresence.what_is_working || [],
+        what_is_missing: digitalPresence.what_is_missing || [],
+        key_risks: digitalPresence.key_risks || [],
+        competitive_positioning: digitalPresence.competitive_positioning,
+        action_plan: digitalPresence.action_plan || {},
+        executive_diagnosis: execDiag
+      },
+      // Summary for header
       summary: {
-        title: bp.identity?.company_name || companyData?.name || 'Tu Empresa',
-        description: diag.executive_summary || bp.seo?.description?.[0] || 'Análisis completo de tu presencia digital',
+        title: identity.company_name || companyData?.name || 'Tu Empresa',
+        description: execDiag.current_state || seo.description || 'Análisis completo de tu presencia digital',
         highlights: [
-          bp.identity?.slogan ? `"${bp.identity.slogan}"` : null,
-          bp.trust?.rating ? `⭐ ${bp.trust.rating} Rating` : null,
-          sp.activity?.active_platforms?.length ? `${sp.activity.active_platforms.length} plataformas activas` : null,
-          diag.prioritized_actions?.length ? `${diag.prioritized_actions.length} acciones recomendadas` : null
+          identity.slogan ? `"${identity.slogan}"` : null,
+          products.service?.length ? `${products.service.length} servicios` : null,
+          digitalPresence.what_is_working?.length ? `${digitalPresence.what_is_working.length} fortalezas` : null,
+          digitalPresence.action_plan?.short_term?.length ? `${digitalPresence.action_plan.short_term.length} acciones inmediatas` : null
         ].filter(Boolean)
       }
     };
@@ -306,11 +359,11 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     }
   };
 
-  // Determine current phase for loader
+  // Determine current phase for loader - NEW phases
   const getCurrentPhase = (): 'analyzing' | 'evaluating' | 'diagnosing' | 'complete' => {
-    if (progress < 30) return 'analyzing';
-    if (progress < 60) return 'evaluating';
-    if (progress < 90) return 'diagnosing';
+    if (progress < 40) return 'analyzing';      // Extracting basic info
+    if (progress < 80) return 'evaluating';     // Analyzing digital presence
+    if (progress < 95) return 'diagnosing';     // Generating executive diagnosis
     return 'complete';
   };
 
@@ -331,7 +384,8 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <OnboardingWowLoader 
           progress={progress} 
-          currentPhase={getCurrentPhase()} 
+          currentPhase={getCurrentPhase()}
+          estimatedTotalSeconds={180}
         />
       </div>
     );

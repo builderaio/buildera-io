@@ -89,6 +89,136 @@ serve(async (req) => {
   }
 });
 
+// Get N8N authentication headers
+function getN8NAuthHeaders() {
+  const authUser = Deno.env.get('N8N_AUTH_USER');
+  const authPass = Deno.env.get('N8N_AUTH_PASS');
+  
+  if (!authUser || !authPass) {
+    throw new Error('N8N authentication credentials not configured');
+  }
+  
+  const credentials = btoa(`${authUser}:${authPass}`);
+  return {
+    'Authorization': `Basic ${credentials}`,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
+}
+
+// Call the NEW company-info-extractor API (returns identity, seo, products, contact, market, audience)
+async function callCompanyInfoExtractorAPI(normalizedUrl: string): Promise<any> {
+  console.log('📡 Calling company-info-extractor API...');
+  
+  const apiUrl = `https://buildera.app.n8n.cloud/webhook/company-info-extractor?URL=${encodeURIComponent(normalizedUrl)}`;
+  console.log('🔗 API URL:', apiUrl);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 120000); // 2 min timeout
+  
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: getN8NAuthHeaders(),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`API ${response.status}: ${errText.slice(0, 300)}`);
+    }
+
+    const rawBody = await response.text();
+    console.log('🧪 company-info-extractor raw response (truncated):', rawBody.slice(0, 1000));
+
+    // Parse the response - NEW structure is [{ output: { identity, seo, products, contact, market, audience } }]
+    let parsed = null;
+    try {
+      parsed = JSON.parse(rawBody);
+    } catch {
+      console.warn('⚠️ Failed to parse JSON, attempting extraction...');
+    }
+
+    // Extract the output from array
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const firstItem = parsed[0];
+      if (firstItem?.output) {
+        console.log('✅ Extracted output from array[0].output');
+        return firstItem.output;
+      }
+      return firstItem;
+    }
+
+    if (parsed?.output) {
+      return parsed.output;
+    }
+
+    return parsed;
+  } catch (err) {
+    clearTimeout(timeout);
+    throw new Error(`company-info-extractor API error: ${(err as Error).message}`);
+  }
+}
+
+// Call the NEW company-digital-presence API (returns digital_footprint_summary, action_plan, executive_diagnosis, etc.)
+async function callDigitalPresenceAPI(name: string, url: string, socialLinks: string[]): Promise<any> {
+  console.log('📡 Calling company-digital-presence API...');
+  
+  const apiUrl = 'https://buildera.app.n8n.cloud/webhook/company-digital-presence';
+  console.log('🔗 API URL:', apiUrl);
+
+  const payload = {
+    Name: name,
+    URL: url,
+    social_links: socialLinks || []
+  };
+  console.log('📦 Payload:', JSON.stringify(payload));
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 180000); // 3 min timeout
+  
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: getN8NAuthHeaders(),
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`API ${response.status}: ${errText.slice(0, 300)}`);
+    }
+
+    const rawBody = await response.text();
+    console.log('🧪 company-digital-presence raw response (truncated):', rawBody.slice(0, 1000));
+
+    // Parse the response - structure is [{ digital_footprint_summary, what_is_working, ... }]
+    let parsed = null;
+    try {
+      parsed = JSON.parse(rawBody);
+    } catch {
+      console.warn('⚠️ Failed to parse digital-presence JSON');
+      return null;
+    }
+
+    // Extract from array
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      console.log('✅ Extracted digital presence from array[0]');
+      return parsed[0];
+    }
+
+    return parsed;
+  } catch (err) {
+    clearTimeout(timeout);
+    console.error('❌ Digital presence API error:', err);
+    // Don't throw - this is optional, we can continue without it
+    return null;
+  }
+}
+
 async function extractCompanyData(url: string, userId: string, token: string, existingCompanyId?: string) {
   console.log('🔄 Starting extraction for URL:', url);
   try {
@@ -96,262 +226,67 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
     const normalizedUrl = /^(https?:)\/\//i.test(url) ? url : `https://${url}`;
     const domain = normalizedUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
 
-    // Call external API to extract company info
-    console.log('📡 Calling N8N API for company data extraction...');
-    let apiData = null;
+    // STEP 1: Call company-info-extractor API (basic company data)
+    console.log('📋 STEP 1: Extracting basic company info...');
+    const basicInfo = await callCompanyInfoExtractorAPI(normalizedUrl);
     
-    try {
-      const apiUrl = `https://buildera.app.n8n.cloud/webhook/company-info-extractor?URL=${encodeURIComponent(normalizedUrl)}`;
-      console.log('🔗 API URL:', apiUrl);
-      
-      // Get authentication credentials from environment
-      const authUser = Deno.env.get('N8N_AUTH_USER');
-      const authPass = Deno.env.get('N8N_AUTH_PASS');
-      
-      if (!authUser || !authPass) {
-        console.error('❌ N8N authentication credentials not found');
-        throw new Error('N8N authentication credentials not configured');
-      }
-      
-      // Create basic auth header
-      const credentials = btoa(`${authUser}:${authPass}`);
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 250000);
-      const apiResponse = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Basic ${credentials}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-      }).catch((err) => {
-        throw new Error(`Network error calling N8N: ${(err as Error).message}`);
-      });
-      clearTimeout(timeout);
-
-      const contentType = apiResponse.headers.get('content-type') || '';
-      console.log(`📊 API Response status: ${apiResponse.status} ${apiResponse.statusText}, content-type: ${contentType}`);
-
-      if (!apiResponse.ok) {
-        const errText = await apiResponse.text().catch(() => '');
-        throw new Error(`API ${apiResponse.status} ${apiResponse.statusText}: ${errText.slice(0,300)}`);
-      }
-
-      const rawBody = await apiResponse.text().catch(() => '');
-      console.log('🧪 N8N raw body sample (truncated 2KB):', rawBody.slice(0, 2000));
-
-      const safeParse = (txt: string) => {
-        try { return JSON.parse(txt); } catch { return null; }
-      };
-      
-      // Helper function to clean streaming JSON data
-      const cleanStreamingJson = (text: string): string => {
-        const lines = text.split('\n').filter(line => {
-          const trimmed = line.trim();
-          if (!trimmed) return false;
-          try {
-            const parsed = JSON.parse(trimmed);
-            if (parsed.type === 'begin' || parsed.type === 'item' || parsed.type === 'end') {
-              return false;
-            }
-            return true;
-          } catch {
-            return true;
-          }
-        });
-        return lines.join('\n');
-      };
-
-      const cleanedBody = cleanStreamingJson(rawBody);
-      let apiResult = safeParse(cleanedBody);
-
-      if (!apiResult) {
-        apiResult = safeParse(rawBody);
-      }
-
-      // Extract balanced array/object
-      const extractBalanced = (text: string, startIndex: number, openChar: string, closeChar: string) => {
-        let depth = 0;
-        let start = -1;
-        for (let i = startIndex; i < text.length; i++) {
-          const ch = text[i];
-          if (ch === openChar) { if (start === -1) start = i; depth++; }
-          else if (ch === closeChar) { depth--; if (depth === 0 && start !== -1) return text.slice(start, i + 1); }
-        }
-        return null;
-      };
-
-      if (!apiResult) {
-        const firstArr = cleanedBody.indexOf('[');
-        if (firstArr !== -1) {
-          const arrStr = extractBalanced(cleanedBody, firstArr, '[', ']');
-          apiResult = arrStr ? safeParse(arrStr) : null;
-        }
-      }
-
-      console.log('🧩 Parsed shape:', Array.isArray(apiResult) ? `array(len=${apiResult.length})` : typeof apiResult);
-
-      // Handle NEW n8n response structure: [{ business_profile, social_presence, diagnosis }]
-      let extracted: any = null;
-      
-      if (Array.isArray(apiResult) && apiResult.length > 0) {
-        const firstItem = apiResult[0];
-        console.log('🔎 First array item keys:', firstItem && typeof firstItem === 'object' ? Object.keys(firstItem) : typeof firstItem);
-        
-        // NEW STRUCTURE: Check for business_profile, social_presence, diagnosis
-        if (firstItem?.business_profile || firstItem?.social_presence || firstItem?.diagnosis) {
-          console.log('✅ Detected NEW n8n structure with business_profile, social_presence, diagnosis');
-          extracted = firstItem;
-        }
-        // OLD STRUCTURE: item has { url, fetch_date, data }
-        else if (firstItem?.data) {
-          extracted = firstItem.data;
-          console.log('✅ Extracted company data from array[0].data (OLD structure)');
-        }
-        else {
-          extracted = firstItem;
-          console.log('⚠️ Using array[0] as fallback');
-        }
-      } else if (apiResult && typeof apiResult === 'object') {
-        extracted = apiResult;
-        console.log('✅ Extracted from single object response');
-      }
-
-      if (!extracted) {
-        console.warn('⚠️ N8N response had no structured data');
-        extracted = null;
-      }
-      
-      apiData = extracted || null;
-      console.log('🎯 Final extracted data keys:', apiData && typeof apiData === 'object' ? Object.keys(apiData) : typeof apiData);
-
-    } catch (error) {
-      console.error('💥 Error calling external API:', error);
-      throw error;
+    if (!basicInfo) {
+      throw new Error('Failed to extract basic company info');
     }
+    
+    console.log('✅ Basic info extracted:', Object.keys(basicInfo));
 
-    // Determine if we have the NEW structure or OLD structure
-    const isNewStructure = apiData?.business_profile || apiData?.social_presence || apiData?.diagnosis;
-    console.log('📦 Response structure type:', isNewStructure ? 'NEW (business_profile/social_presence/diagnosis)' : 'OLD (flat structure)');
+    // Extract company data from NEW structure
+    const identity = basicInfo.identity || {};
+    const seo = basicInfo.seo || {};
+    const products = basicInfo.products || {};
+    const contact = basicInfo.contact || {};
+    const market = basicInfo.market || {};
+    const audience = basicInfo.audience || {};
 
-    // Extract data based on structure type
-    let companyData: any;
-    let fullApiResponse: any;
+    // Helper to find social URL from array
+    const socialLinks = contact.social_links || [];
+    const findSocialUrl = (platform: string) => {
+      return socialLinks.find((u: string) => u?.toLowerCase().includes(platform)) || null;
+    };
 
-    if (isNewStructure) {
-      // NEW STRUCTURE: business_profile, social_presence, diagnosis
-      const bp = apiData.business_profile || {};
-      const sp = apiData.social_presence || {};
-      const diag = apiData.diagnosis?.diagnosis || apiData.diagnosis || {};
-      
-      // Extract social links
-      const socialLinks = bp.contact?.social_links || [];
-      const findSocialUrl = (platform: string) => {
-        return socialLinks.find((url: string) => url?.toLowerCase().includes(platform)) || null;
-      };
-
-      companyData = {
-        name: bp.identity?.company_name || bp.identity?.legal_name || domain.split('.')[0],
-        description: diag.executive_summary || bp.seo?.description?.[0] || `Empresa basada en ${domain}`,
-        website_url: bp.identity?.url || normalizedUrl,
-        industry_sector: bp.products?.services?.[0] || 'General',
-        country: bp.market?.country?.[0] || bp.market?.area_served?.[0] || null,
-        logo_url: bp.identity?.logo || null,
-        linkedin_url: findSocialUrl('linkedin'),
-        facebook_url: findSocialUrl('facebook'),
-        twitter_url: findSocialUrl('twitter'),
-        instagram_url: findSocialUrl('instagram'),
-        youtube_url: findSocialUrl('youtube'),
-        tiktok_url: findSocialUrl('tiktok'),
-        webhook_data: {
-          raw_api_response: apiData,
-          processed_at: new Date().toISOString(),
-          structure_type: 'new',
-          // Structured data for easy access
-          business_profile: bp,
-          social_presence: sp,
-          diagnosis: diag,
-          // Quick access fields
-          identity: bp.identity || {},
-          contact: bp.contact || {},
-          market: bp.market || {},
-          seo: bp.seo || {},
-          products: bp.products || {},
-          pricing: bp.pricing || {},
-          trust: bp.trust || {},
-          faqs: bp.faqs || []
-        },
-        webhook_processed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      fullApiResponse = apiData;
-
-    } else {
-      // OLD STRUCTURE: flat company data
-      const fallbackName = domain.split('.')[0];
-      
-      function extractCountryFromAddress(address: string): string | null {
-        if (!address) return null;
-        const parts = address.split(',');
-        return parts[parts.length - 1]?.trim() || null;
-      }
-
-      companyData = {
-        name: apiData?.company_name || apiData?.legal_name || fallbackName,
-        description: apiData?.business_description || `Empresa líder en el sector de ${fallbackName}`,
-        website_url: apiData?.website || normalizedUrl,
-        industry_sector: Array.isArray(apiData?.industries) && apiData.industries.length > 0 
-          ? apiData.industries.join(', ') 
-          : 'General',
-        company_size: apiData?.num_employees ? 
-          (parseInt(String(apiData.num_employees).replace(/[^0-9]/g, '')) > 250 ? 'large' : 
-           parseInt(String(apiData.num_employees).replace(/[^0-9]/g, '')) > 50 ? 'medium' : 'small') : null,
-        country: apiData?.address ? extractCountryFromAddress(apiData.address) : null,
-        logo_url: apiData?.logo_url || null,
-        linkedin_url: apiData?.social_links?.linkedin || null,
-        facebook_url: apiData?.social_links?.facebook || null,
-        twitter_url: apiData?.social_links?.twitter || null,
-        instagram_url: apiData?.social_links?.instagram || null,
-        youtube_url: apiData?.social_links?.youtube || null,
-        tiktok_url: apiData?.social_links?.tiktok || null,
-        webhook_data: apiData ? {
-          raw_api_response: apiData,
-          processed_at: new Date().toISOString(),
-          structure_type: 'old',
-          tax_id: apiData.tax_id || null,
-          phone: apiData.phone || null,
-          email: apiData.email || null,
-          founded_date: apiData.founded_date || null,
-          annual_revenue: apiData.annual_revenue || null,
-          revenue_currency: apiData.revenue_currency || null,
-          value_proposition: apiData.value_proposition || null,
-          address: apiData.address || null,
-          products_services: apiData.products_services || null,
-          key_people: apiData.key_people || null,
-          corporate_values: apiData.corporate_values || null,
-          legal_name: apiData.legal_name || null
-        } : null,
-        webhook_processed_at: apiData ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString()
-      };
-
-      fullApiResponse = apiData;
-    }
+    // Map to company table structure
+    const companyData = {
+      name: identity.company_name || identity.legal_name || domain.split('.')[0],
+      description: seo.description || `Empresa basada en ${domain}`,
+      website_url: identity.url || normalizedUrl,
+      industry_sector: products.service?.[0] || products.offer?.[0] || 'General',
+      country: market.country?.[0] || null,
+      logo_url: identity.logo || null,
+      linkedin_url: findSocialUrl('linkedin'),
+      facebook_url: findSocialUrl('facebook'),
+      twitter_url: findSocialUrl('twitter'),
+      instagram_url: findSocialUrl('instagram'),
+      youtube_url: findSocialUrl('youtube'),
+      tiktok_url: findSocialUrl('tiktok'),
+      webhook_data: {
+        raw_api_response: basicInfo,
+        processed_at: new Date().toISOString(),
+        structure_type: 'new_v2',
+        identity,
+        seo,
+        products,
+        contact,
+        market,
+        audience
+      },
+      webhook_processed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
 
     console.log('📋 Mapped company data:', {
       name: companyData.name,
-      description: companyData.description?.substring(0, 100) + '...',
       website_url: companyData.website_url,
       industry_sector: companyData.industry_sector,
-      logo_url: companyData.logo_url,
-      hasWebhookData: !!companyData.webhook_data,
-      structureType: isNewStructure ? 'NEW' : 'OLD'
+      logo_url: companyData.logo_url
     });
 
-    // Check for existing company or use provided companyId
+    // STEP 2: Create or update company in database
     let companyId = existingCompanyId;
     
     if (!companyId) {
@@ -379,8 +314,6 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
         })
       );
       
-      console.log('📝 Updating company with fields:', Object.keys(updateFields));
-      
       const { error: updateError } = await supabase
         .from('companies')
         .update(updateFields)
@@ -390,8 +323,6 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
         console.error('❌ Error updating company:', updateError);
         throw updateError;
       }
-
-      console.log('✅ Company updated successfully with API data');
     } else {
       console.log('🆕 Creating new company');
       
@@ -413,27 +344,51 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
       console.log('✅ Created new company:', companyId);
     }
 
-    // NEW: Save detailed parameters to company_parameters table
-    if (isNewStructure && companyId) {
-      await saveCompanyParameters(companyId, apiData, userId);
+    // STEP 3: Call company-digital-presence API (optional, runs in parallel conceptually)
+    console.log('📋 STEP 2: Analyzing digital presence...');
+    const digitalPresence = await callDigitalPresenceAPI(
+      companyData.name,
+      normalizedUrl,
+      socialLinks
+    );
+
+    // STEP 4: Save digital presence to new table
+    if (digitalPresence && companyId) {
+      console.log('💾 Saving digital presence data...');
+      await saveDigitalPresence(companyId, digitalPresence, normalizedUrl, socialLinks);
     }
 
-    // NEW: Update or create company_strategy
-    if (isNewStructure && companyId) {
-      await saveCompanyStrategy(companyId, apiData);
-    }
+    // STEP 5: Save parameters to company_parameters table
+    await saveCompanyParameters(companyId!, basicInfo, digitalPresence, userId);
+
+    // STEP 6: Update company_strategy
+    await saveCompanyStrategy(companyId!, basicInfo, digitalPresence);
 
     console.log('🎉 Extraction completed successfully for:', url);
     
-    // Return data in format expected by onboarding
+    // Return data in format expected by onboarding - NEW STRUCTURE
     return {
       success: true,
       companyId,
-      data: fullApiResponse,
-      // NEW: Include structured data for immediate display
-      business_profile: isNewStructure ? apiData.business_profile : null,
-      social_presence: isNewStructure ? apiData.social_presence : null,
-      diagnosis: isNewStructure ? (apiData.diagnosis?.diagnosis || apiData.diagnosis) : null,
+      // Basic info from first API (identity, seo, products, contact, market, audience)
+      basic_info: {
+        identity,
+        seo,
+        products,
+        contact,
+        market,
+        audience
+      },
+      // Digital presence from second API
+      digital_presence: digitalPresence ? {
+        digital_footprint_summary: digitalPresence.digital_footprint_summary,
+        what_is_working: digitalPresence.what_is_working || [],
+        what_is_missing: digitalPresence.what_is_missing || [],
+        key_risks: digitalPresence.key_risks || [],
+        competitive_positioning: digitalPresence.competitive_positioning,
+        action_plan: digitalPresence.action_plan || {},
+        executive_diagnosis: digitalPresence.executive_diagnosis || {}
+      } : null,
       message: 'Información de empresa procesada exitosamente'
     };
 
@@ -443,79 +398,100 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
   }
 }
 
+// Save digital presence to dedicated table
+async function saveDigitalPresence(companyId: string, data: any, sourceUrl: string, socialLinks: string[]) {
+  try {
+    // Check if record exists
+    const { data: existing } = await supabase
+      .from('company_digital_presence')
+      .select('id')
+      .eq('company_id', companyId)
+      .maybeSingle();
+
+    const presenceData = {
+      company_id: companyId,
+      digital_footprint_summary: data.digital_footprint_summary || null,
+      what_is_working: data.what_is_working || [],
+      what_is_missing: data.what_is_missing || [],
+      key_risks: data.key_risks || [],
+      competitive_positioning: data.competitive_positioning || null,
+      action_plan: data.action_plan || {},
+      executive_diagnosis: data.executive_diagnosis || {},
+      source_url: sourceUrl,
+      analyzed_social_links: socialLinks || [],
+      updated_at: new Date().toISOString()
+    };
+
+    if (existing) {
+      await supabase
+        .from('company_digital_presence')
+        .update(presenceData)
+        .eq('id', existing.id);
+      console.log('✅ Updated digital presence record');
+    } else {
+      await supabase
+        .from('company_digital_presence')
+        .insert(presenceData);
+      console.log('✅ Created digital presence record');
+    }
+  } catch (err) {
+    console.warn('⚠️ Failed to save digital presence:', err);
+  }
+}
+
 // Helper function to save detailed parameters
-async function saveCompanyParameters(companyId: string, apiData: any, userId: string) {
+async function saveCompanyParameters(companyId: string, basicInfo: any, digitalPresence: any, userId: string) {
   console.log('💾 Saving company parameters...');
   
-  const bp = apiData.business_profile || {};
-  const sp = apiData.social_presence || {};
-  const diag = apiData.diagnosis?.diagnosis || apiData.diagnosis || {};
+  const identity = basicInfo?.identity || {};
+  const seo = basicInfo?.seo || {};
+  const products = basicInfo?.products || {};
+  const contact = basicInfo?.contact || {};
+  const market = basicInfo?.market || {};
+  const audience = basicInfo?.audience || {};
+  const dp = digitalPresence || {};
   
   const parameters = [
     // Identity
-    { category: 'identity', key: 'company_name', value: bp.identity?.company_name },
-    { category: 'identity', key: 'slogan', value: bp.identity?.slogan },
-    { category: 'identity', key: 'email', value: bp.identity?.email },
-    { category: 'identity', key: 'logo', value: bp.identity?.logo },
-    { category: 'identity', key: 'founding_date', value: bp.identity?.founding_date },
-    
-    // Contact
-    { category: 'contact', key: 'emails', value: bp.contact?.email },
-    { category: 'contact', key: 'phones', value: bp.contact?.phone },
-    { category: 'contact', key: 'addresses', value: bp.contact?.address },
-    { category: 'contact', key: 'social_links', value: bp.contact?.social_links },
-    
-    // Market
-    { category: 'market', key: 'area_served', value: bp.market?.area_served },
-    { category: 'market', key: 'city', value: bp.market?.city },
-    { category: 'market', key: 'country', value: bp.market?.country },
+    { category: 'identity', key: 'company_name', value: identity.company_name },
+    { category: 'identity', key: 'legal_name', value: identity.legal_name },
+    { category: 'identity', key: 'slogan', value: identity.slogan },
+    { category: 'identity', key: 'founding_date', value: identity.founding_date },
+    { category: 'identity', key: 'logo', value: identity.logo },
+    { category: 'identity', key: 'url', value: identity.url },
     
     // SEO
-    { category: 'seo', key: 'title', value: bp.seo?.title },
-    { category: 'seo', key: 'description', value: bp.seo?.description },
-    { category: 'seo', key: 'keywords', value: bp.seo?.keywords },
+    { category: 'seo', key: 'title', value: seo.title },
+    { category: 'seo', key: 'description', value: seo.description },
+    { category: 'seo', key: 'keywords', value: seo.keyword },
     
     // Products
-    { category: 'products', key: 'services', value: bp.products?.services },
-    { category: 'products', key: 'offers', value: bp.products?.offers },
+    { category: 'products', key: 'services', value: products.service },
+    { category: 'products', key: 'offers', value: products.offer },
     
-    // Pricing
-    { category: 'pricing', key: 'price_range', value: bp.pricing?.price_range },
-    { category: 'pricing', key: 'currency', value: bp.pricing?.currency },
-    { category: 'pricing', key: 'payment_methods', value: bp.pricing?.payment_methods },
+    // Contact
+    { category: 'contact', key: 'emails', value: contact.email },
+    { category: 'contact', key: 'phones', value: contact.phone },
+    { category: 'contact', key: 'addresses', value: contact.address },
+    { category: 'contact', key: 'social_links', value: contact.social_links },
     
-    // Trust
-    { category: 'trust', key: 'rating', value: bp.trust?.rating },
-    { category: 'trust', key: 'reviews', value: bp.trust?.reviews },
+    // Market
+    { category: 'market', key: 'country', value: market.country },
+    { category: 'market', key: 'city', value: market.city },
     
-    // FAQs
-    { category: 'content', key: 'faqs', value: bp.faqs },
+    // Audience
+    { category: 'audience', key: 'segments', value: audience.segment },
+    { category: 'audience', key: 'professions', value: audience.profession },
+    { category: 'audience', key: 'target_users', value: audience.target_user },
     
-    // Social Presence
-    { category: 'social', key: 'active_platforms', value: sp.activity?.active_platforms },
-    { category: 'social', key: 'inactive_platforms', value: sp.activity?.inactive_platforms },
-    { category: 'social', key: 'activity_level', value: sp.activity?.overall_activity_level },
-    { category: 'social', key: 'consistency', value: sp.activity?.consistency },
-    { category: 'social', key: 'tone', value: sp.tone },
-    { category: 'social', key: 'content_themes', value: sp.content?.themes },
-    { category: 'social', key: 'confidence_score', value: sp.confidence_score },
-    { category: 'social', key: 'evidence', value: sp.evidence },
-    { category: 'social', key: 'objectives', value: sp.objectives },
-    
-    // Diagnosis
-    { category: 'diagnosis', key: 'executive_summary', value: diag.executive_summary },
-    { category: 'diagnosis', key: 'brand_strengths', value: diag.brand_identity_and_offering?.strengths },
-    { category: 'diagnosis', key: 'brand_gaps', value: diag.brand_identity_and_offering?.gaps },
-    { category: 'diagnosis', key: 'trust_strengths', value: diag.trust_and_reputation?.strengths },
-    { category: 'diagnosis', key: 'trust_gaps', value: diag.trust_and_reputation?.gaps },
-    { category: 'diagnosis', key: 'seo_strengths', value: diag.seo_and_digital_presence?.strengths },
-    { category: 'diagnosis', key: 'seo_gaps', value: diag.seo_and_digital_presence?.gaps },
-    { category: 'diagnosis', key: 'social_summary', value: diag.social_presence_and_activity },
-    { category: 'diagnosis', key: 'pricing_info', value: diag.pricing_and_value_prop },
-    { category: 'diagnosis', key: 'offers_services', value: diag.offers_and_services },
-    { category: 'diagnosis', key: 'risks', value: diag.summary_of_risks?.principal_risks },
-    { category: 'diagnosis', key: 'prioritized_actions', value: diag.prioritized_actions },
-    { category: 'diagnosis', key: 'metrics_kpis', value: diag.metrics_and_kpis },
+    // Digital Presence Analysis
+    { category: 'digital_presence', key: 'footprint_summary', value: dp.digital_footprint_summary },
+    { category: 'digital_presence', key: 'what_is_working', value: dp.what_is_working },
+    { category: 'digital_presence', key: 'what_is_missing', value: dp.what_is_missing },
+    { category: 'digital_presence', key: 'key_risks', value: dp.key_risks },
+    { category: 'digital_presence', key: 'competitive_positioning', value: dp.competitive_positioning },
+    { category: 'digital_presence', key: 'action_plan', value: dp.action_plan },
+    { category: 'digital_presence', key: 'executive_diagnosis', value: dp.executive_diagnosis },
   ];
 
   // Filter out null/undefined values and insert
@@ -551,7 +527,7 @@ async function saveCompanyParameters(companyId: string, apiData: any, userId: st
           parameter_value: typeof param.value === 'object' ? param.value : { value: param.value },
           is_current: true,
           version: (existing?.version || 0) + 1,
-          source_agent_code: 'company-info-extractor',
+          source_agent_code: 'company-info-extractor-v2',
           created_by: userId
         });
     } catch (err) {
@@ -563,22 +539,18 @@ async function saveCompanyParameters(companyId: string, apiData: any, userId: st
 }
 
 // Helper function to save/update company strategy
-async function saveCompanyStrategy(companyId: string, apiData: any) {
+async function saveCompanyStrategy(companyId: string, basicInfo: any, digitalPresence: any) {
   console.log('💾 Saving company strategy...');
   
-  const bp = apiData.business_profile || {};
-  const diag = apiData.diagnosis?.diagnosis || apiData.diagnosis || {};
+  const identity = basicInfo?.identity || {};
+  const seo = basicInfo?.seo || {};
+  const dp = digitalPresence || {};
+  const execDiag = dp.executive_diagnosis || {};
   
-  // Extract strategy information
-  const propuestaValor = bp.identity?.slogan || 
-    diag.brand_identity_and_offering?.strengths?.[0] ||
-    diag.executive_summary?.substring(0, 500);
-  
-  const mision = diag.executive_summary?.substring(0, 1000) || 
-    `Democratizar el acceso a ${bp.products?.services?.[0] || 'servicios'} de alta calidad`;
-  
-  const vision = diag.prioritized_actions?.[0]?.action ||
-    'Ser líder en innovación y excelencia en nuestro sector';
+  // Extract strategy information from new structure
+  const propuestaValor = identity.slogan || seo.description || 'Innovación y excelencia en nuestro sector';
+  const mision = execDiag.current_state || seo.description || 'Democratizar el acceso a servicios de alta calidad';
+  const vision = execDiag.highest_leverage_focus || 'Ser líder en innovación y excelencia en nuestro sector';
 
   try {
     // Check if strategy exists

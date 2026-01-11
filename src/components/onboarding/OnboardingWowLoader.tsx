@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Search, FileSearch, CheckCircle2, Loader2 } from 'lucide-react';
+import { Globe, Search, FileSearch, CheckCircle2, Loader2, Clock, Sparkles, Brain, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface OnboardingWowLoaderProps {
   progress: number;
   currentPhase: 'analyzing' | 'evaluating' | 'diagnosing' | 'complete';
+  estimatedTotalSeconds?: number; // Optional: default 180 (3 min)
 }
 
 const phases = [
@@ -45,9 +46,40 @@ const phases = [
   }
 ];
 
-export const OnboardingWowLoader = ({ progress, currentPhase }: OnboardingWowLoaderProps) => {
+// Tips to show while waiting
+const waitingTips = [
+  { icon: Brain, text: 'Nuestros agentes de IA están analizando más de 50 puntos de tu presencia digital' },
+  { icon: Sparkles, text: 'Estamos identificando oportunidades únicas para tu negocio' },
+  { icon: Zap, text: 'Un análisis manual tomaría horas - nosotros lo hacemos en minutos' },
+  { icon: Globe, text: 'Analizamos tu web, redes sociales y competencia simultáneamente' },
+  { icon: Search, text: 'Buscando las mejores estrategias para tu industria' },
+];
+
+export const OnboardingWowLoader = ({ 
+  progress, 
+  currentPhase,
+  estimatedTotalSeconds = 180 
+}: OnboardingWowLoaderProps) => {
   const [currentPhaseIndex, setCurrentPhaseIndex] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const { t } = useTranslation(['common']);
+
+  // Track elapsed time
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedSeconds(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Rotate tips every 8 seconds
+  useEffect(() => {
+    const tipTimer = setInterval(() => {
+      setCurrentTipIndex(prev => (prev + 1) % waitingTips.length);
+    }, 8000);
+    return () => clearInterval(tipTimer);
+  }, []);
 
   useEffect(() => {
     const index = phases.findIndex(p => p.id === currentPhase);
@@ -61,8 +93,27 @@ export const OnboardingWowLoader = ({ progress, currentPhase }: OnboardingWowLoa
     else setCurrentPhaseIndex(3);
   }, [progress]);
 
+  // Calculate remaining time estimate
+  const timeInfo = useMemo(() => {
+    const estimatedRemaining = Math.max(0, estimatedTotalSeconds - elapsedSeconds);
+    const minutes = Math.floor(estimatedRemaining / 60);
+    const seconds = estimatedRemaining % 60;
+    
+    const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+    const elapsedSecs = elapsedSeconds % 60;
+    
+    return {
+      remaining: { minutes, seconds },
+      elapsed: { minutes: elapsedMinutes, seconds: elapsedSecs },
+      isLongWait: elapsedSeconds > 60,
+      isVeryLongWait: elapsedSeconds > 120
+    };
+  }, [elapsedSeconds, estimatedTotalSeconds]);
+
   const CurrentIcon = phases[currentPhaseIndex].icon;
   const currentPhaseData = phases[currentPhaseIndex];
+  const currentTip = waitingTips[currentTipIndex];
+  const TipIcon = currentTip.icon;
 
   return (
     <Card className="w-full max-w-lg mx-auto overflow-hidden">
@@ -140,6 +191,56 @@ export const OnboardingWowLoader = ({ progress, currentPhase }: OnboardingWowLoa
               {progress}% {t('common:status.completed', 'completado')}
             </p>
           </div>
+
+          {/* Time indicator */}
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Clock className="w-4 h-4" />
+            <span>
+              {timeInfo.elapsed.minutes > 0 
+                ? `${timeInfo.elapsed.minutes}m ${timeInfo.elapsed.seconds}s`
+                : `${timeInfo.elapsed.seconds}s`
+              }
+              {timeInfo.remaining.minutes > 0 && (
+                <span className="text-muted-foreground/70">
+                  {' '}• ~{timeInfo.remaining.minutes}m restantes
+                </span>
+              )}
+            </span>
+          </div>
+
+          {/* Rotating tips for long waits */}
+          {timeInfo.isLongWait && (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentTipIndex}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4 }}
+                className="bg-muted/50 rounded-lg p-4 border border-border/50"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <TipIcon className="w-5 h-5 text-primary" />
+                  </div>
+                  <p className="text-sm text-muted-foreground text-left">
+                    {currentTip.text}
+                  </p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          )}
+
+          {/* Patience message for very long waits */}
+          {timeInfo.isVeryLongWait && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-xs text-muted-foreground/70 italic"
+            >
+              El análisis profundo puede tomar hasta 3 minutos. ¡Vale la pena la espera!
+            </motion.p>
+          )}
 
           {/* Phase indicators */}
           <div className="flex justify-center gap-3 pt-2">

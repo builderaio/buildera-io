@@ -173,23 +173,42 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   };
 
   // Phase 2: Run company-info-extractor directly (NO other agents!)
+  // This API can take up to 3 minutes, so we show progressive feedback
   const startExtraction = async (companyId: string) => {
     setPhase('loading');
-    setProgress(10);
+    setProgress(5);
     const startTime = Date.now();
 
     try {
       console.log('🚀 Starting company-info-extractor for company:', companyId);
       
-      // Simulate progress while extraction runs
+      // Simulate progress more realistically for ~3 minute operation
+      // Total expected time: 180 seconds
+      // Progress milestones: 0-30 (analyzing), 30-60 (evaluating), 60-90 (diagnosing), 90-100 (completing)
       const progressInterval = setInterval(() => {
+        const elapsedSeconds = (Date.now() - startTime) / 1000;
+        
         setProgress(prev => {
-          if (prev < 30) return prev + 5;
-          if (prev < 60) return prev + 3;
-          if (prev < 85) return prev + 2;
+          // Phase 1: 0-30% in first 60 seconds (analyzing)
+          if (elapsedSeconds < 60) {
+            const target = Math.min(30, (elapsedSeconds / 60) * 30);
+            return Math.max(prev, Math.floor(target));
+          }
+          // Phase 2: 30-60% in 60-120 seconds (evaluating)
+          if (elapsedSeconds < 120) {
+            const target = 30 + ((elapsedSeconds - 60) / 60) * 30;
+            return Math.max(prev, Math.floor(target));
+          }
+          // Phase 3: 60-85% in 120-180 seconds (diagnosing)
+          if (elapsedSeconds < 180) {
+            const target = 60 + ((elapsedSeconds - 120) / 60) * 25;
+            return Math.max(prev, Math.floor(target));
+          }
+          // After 180s, slowly approach 90 but never reach 100 until done
+          if (prev < 90) return prev + 1;
           return prev;
         });
-      }, 1500);
+      }, 2000);
 
       // Call company-info-extractor directly
       const { data, error } = await supabase.functions.invoke('company-info-extractor', {

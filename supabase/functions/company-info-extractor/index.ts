@@ -179,10 +179,14 @@ async function callCompanyInfoExtractorAPI(normalizedUrl: string): Promise<any> 
   }
 }
 
-// Call the NEW company-digital-presence API (returns digital_footprint_summary, action_plan, executive_diagnosis, etc.)
+// Call the NEW company-digital-presence API with retry logic
 // NOTE: n8n webhook expects GET request with query parameters
-async function callDigitalPresenceAPI(name: string, url: string, socialLinks: string[]): Promise<any> {
-  console.log('📡 Calling company-digital-presence API...');
+async function callDigitalPresenceAPI(name: string, url: string, socialLinks: string[], retryAttempt = 0): Promise<any> {
+  const MAX_RETRIES = 3;
+  const TIMEOUT_MS = 300000; // 5 min timeout (increased from 3 min)
+  const RETRY_DELAYS = [5000, 15000, 30000]; // 5s, 15s, 30s backoff
+  
+  console.log(`📡 Calling company-digital-presence API (attempt ${retryAttempt + 1}/${MAX_RETRIES + 1})...`);
   
   // Build URL with query parameters (n8n expects GET request)
   const baseUrl = 'https://buildera.app.n8n.cloud/webhook/company-digital-presence';
@@ -196,7 +200,7 @@ async function callDigitalPresenceAPI(name: string, url: string, socialLinks: st
   console.log('📦 Query params:', { Name: name, URL: url, social_links: socialLinks });
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 180000); // 3 min timeout
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   
   try {
     const response = await fetch(apiUrl, {
@@ -208,7 +212,15 @@ async function callDigitalPresenceAPI(name: string, url: string, socialLinks: st
 
     if (!response.ok) {
       const errText = await response.text().catch(() => '');
-      throw new Error(`API ${response.status}: ${errText.slice(0, 300)}`);
+      const error = new Error(`API ${response.status}: ${errText.slice(0, 300)}`);
+      
+      // Retry on 5xx errors or specific 4xx that might be transient
+      if (response.status >= 500 || response.status === 429 || response.status === 408) {
+        throw error; // Will be caught and retried
+      }
+      
+      console.error('❌ Non-retryable error:', error.message);
+      return null;
     }
 
     const rawBody = await response.text();
@@ -221,10 +233,14 @@ async function callDigitalPresenceAPI(name: string, url: string, socialLinks: st
 
     if (!rawBody || rawBody.trim().length === 0) {
       console.warn('⚠️ Empty response from digital-presence API');
+      // Empty response might be transient - retry
+      if (retryAttempt < MAX_RETRIES) {
+        throw new Error('Empty response - will retry');
+      }
       return null;
     }
 
-    // Parse the response - structure is [{ digital_footprint_summary, what_is_working, ... }] or { output: {...} }
+    // Parse the response
     let parsed: any = null;
     try {
       parsed = JSON.parse(rawBody);
@@ -236,7 +252,6 @@ async function callDigitalPresenceAPI(name: string, url: string, socialLinks: st
     // Extract from array if needed
     if (Array.isArray(parsed) && parsed.length > 0) {
       const firstItem = parsed[0];
-      // Check for output wrapper
       if (firstItem?.output) {
         console.log('✅ Extracted digital presence from array[0].output');
         return firstItem.output;
@@ -245,17 +260,29 @@ async function callDigitalPresenceAPI(name: string, url: string, socialLinks: st
       return firstItem;
     }
 
-    // Check for output wrapper at root
     if (parsed?.output) {
       console.log('✅ Extracted digital presence from output');
       return parsed.output;
     }
 
     return parsed;
-  } catch (err) {
+  } catch (err: any) {
     clearTimeout(timeout);
-    console.error('❌ Digital presence API error:', err);
-    // Don't throw - this is optional, we can continue without it
+    
+    const isTimeout = err.name === 'AbortError' || err.message?.includes('abort');
+    const errorType = isTimeout ? 'Timeout' : 'Error';
+    console.error(`❌ Digital presence API ${errorType} (attempt ${retryAttempt + 1}):`, err.message || err);
+    
+    // Retry logic
+    if (retryAttempt < MAX_RETRIES) {
+      const delay = RETRY_DELAYS[retryAttempt] || 30000;
+      console.log(`🔄 Retrying in ${delay / 1000}s...`);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return callDigitalPresenceAPI(name, url, socialLinks, retryAttempt + 1);
+    }
+    
+    console.error(`❌ All ${MAX_RETRIES + 1} attempts failed for digital-presence API`);
     return null;
   }
 }

@@ -22,6 +22,21 @@ interface ADNDiagnosticTabProps {
   webhookData: any;
 }
 
+// Helper to ensure we always have an array
+const toArray = (value: any): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') return [value];
+  if (typeof value === 'object') return Object.values(value).flat().filter(Boolean) as string[];
+  return [];
+};
+
+// Helper to check if has valid data
+const hasData = (value: any): boolean => {
+  const arr = toArray(value);
+  return arr.length > 0;
+};
+
 export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
   const { t } = useTranslation(['common', 'company']);
 
@@ -284,7 +299,7 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
       )}
 
       {/* Market Section */}
-      {market && (market.country?.length > 0 || market.city?.length > 0) && (
+      {market && (hasData(market.country) || hasData(market.city)) && (
         <Card>
           <CardHeader className="py-3 px-4">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -294,11 +309,11 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
           </CardHeader>
           <CardContent className="py-2 px-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              {market.country && market.country.length > 0 && (
+              {hasData(market.country) && (
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground font-medium">{t('common:adn.diagnostic.countries', 'Países')}</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {market.country.map((country: string, idx: number) => (
+                    {toArray(market.country).map((country: string, idx: number) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
                         {country}
                       </Badge>
@@ -306,11 +321,11 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
                   </div>
                 </div>
               )}
-              {market.city && market.city.length > 0 && (
+              {hasData(market.city) && (
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground font-medium">{t('common:adn.diagnostic.cities', 'Ciudades')}</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {market.city.map((city: string, idx: number) => (
+                    {toArray(market.city).map((city: string, idx: number) => (
                       <Badge key={idx} variant="outline" className="text-xs">
                         {city}
                       </Badge>
@@ -324,7 +339,7 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
       )}
 
       {/* Audience Section */}
-      {audience && (audience.segment?.length > 0 || audience.profession?.length > 0 || audience.target_user?.length > 0) && (
+      {audience && (hasData(audience.segment) || hasData(audience.profession) || hasData(audience.target_user)) && (
         <Card>
           <CardHeader className="py-3 px-4">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -333,14 +348,14 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="py-2 px-4 space-y-3">
-            {audience.segment && audience.segment.length > 0 && (
+            {hasData(audience.segment) && (
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                   <Target className="w-3 h-3" />
                   {t('common:adn.diagnostic.segments', 'Segmentos')}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {audience.segment.map((seg: string, idx: number) => (
+                  {toArray(audience.segment).map((seg: string, idx: number) => (
                     <Badge key={idx} className="text-xs bg-amber-100 text-amber-800 border-amber-300">
                       {seg}
                     </Badge>
@@ -348,11 +363,11 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
                 </div>
               </div>
             )}
-            {audience.profession && audience.profession.length > 0 && (
+            {hasData(audience.profession) && (
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium">{t('common:adn.diagnostic.professions', 'Profesiones')}</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {audience.profession.map((prof: string, idx: number) => (
+                  {toArray(audience.profession).map((prof: string, idx: number) => (
                     <Badge key={idx} variant="secondary" className="text-xs">
                       {prof}
                     </Badge>
@@ -360,11 +375,11 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
                 </div>
               </div>
             )}
-            {audience.target_user && audience.target_user.length > 0 && (
+            {hasData(audience.target_user) && (
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium">{t('common:adn.diagnostic.targetUsers', 'Usuarios Objetivo')}</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {audience.target_user.map((user: string, idx: number) => (
+                  {toArray(audience.target_user).map((user: string, idx: number) => (
                     <Badge key={idx} variant="outline" className="text-xs">
                       {user}
                     </Badge>

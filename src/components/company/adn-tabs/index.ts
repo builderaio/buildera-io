@@ -7,6 +7,8 @@ export { ADNEmailTab } from './ADNEmailTab';
 export { ADNTeamTab } from './ADNTeamTab';
 export { ADNProductsTab } from './ADNProductsTab';
 export { ADNCompetitorsTab } from './ADNCompetitorsTab';
+export { ADNDiagnosticTab } from './ADNDiagnosticTab';
+export { ADNDiagnosticHistory } from './ADNDiagnosticHistory';
 
 // New consolidated components
 export { ADNChannelsConsolidatedView } from './ADNChannelsConsolidatedView';

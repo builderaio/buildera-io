@@ -10,6 +10,7 @@ import {
   Palette,
   Share2,
   RefreshCw,
+  FileSearch,
 } from "lucide-react";
 import { 
   ADNInfoTab, 
@@ -25,6 +26,8 @@ import {
   ADNVoiceCommunicationTab,
   ADNScheduleSimplified,
   ADNAgentPrefsSimplified,
+  ADNDiagnosticTab,
+  ADNDiagnosticHistory,
 } from "./adn-tabs";
 
 interface ADNEmpresaProps {
@@ -36,7 +39,7 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
   const { toast } = useToast();
   const { t } = useTranslation(['marketing', 'company', 'common']);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("empresa");
+  const [activeTab, setActiveTab] = useState("diagnostico");
   const [companyData, setCompanyData] = useState<any>(null);
   const [strategyData, setStrategyData] = useState<any>(null);
   const [brandingData, setBrandingData] = useState<any>(null);
@@ -442,7 +445,11 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-5 mb-4 sm:mb-6 h-auto p-1">
+          <TabsTrigger value="diagnostico" className="flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <FileSearch className="w-4 h-4 shrink-0" />
+            <span className="hidden xs:inline sm:inline">{t('common:adn.tabs.diagnostico', 'Diagnóstico')}</span>
+          </TabsTrigger>
           <TabsTrigger value="empresa" className="flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm">
             <Building2 className="w-4 h-4 shrink-0" />
             <span className="hidden xs:inline sm:inline">{t('common:adn.tabs.empresa', 'Mi Empresa')}</span>
@@ -460,6 +467,30 @@ const ADNEmpresa = ({ profile, onProfileUpdate }: ADNEmpresaProps) => {
             <span className="hidden xs:inline sm:inline">{t('common:adn.tabs.canales', 'Canales')}</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* TAB 0: DIAGNÓSTICO - All API data + History */}
+        <TabsContent value="diagnostico" className="space-y-6">
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FileSearch className="w-4 h-4 text-primary" />
+                {t('common:adn.diagnostic.title', 'Información Capturada')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-2 px-4">
+              <ADNDiagnosticTab webhookData={companyData?.webhook_data} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">{t('common:adn.diagnostic.evolution', 'Evolución Digital')}</CardTitle>
+            </CardHeader>
+            <CardContent className="py-2 px-4">
+              <ADNDiagnosticHistory companyId={companyData?.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* TAB 1: MI EMPRESA - Info + Team + Products */}
         <TabsContent value="empresa" className="space-y-6">

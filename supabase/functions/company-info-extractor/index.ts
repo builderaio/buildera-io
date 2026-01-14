@@ -180,27 +180,28 @@ async function callCompanyInfoExtractorAPI(normalizedUrl: string): Promise<any> 
 }
 
 // Call the NEW company-digital-presence API (returns digital_footprint_summary, action_plan, executive_diagnosis, etc.)
+// NOTE: n8n webhook expects GET request with query parameters
 async function callDigitalPresenceAPI(name: string, url: string, socialLinks: string[]): Promise<any> {
   console.log('📡 Calling company-digital-presence API...');
   
-  const apiUrl = 'https://buildera.app.n8n.cloud/webhook/company-digital-presence';
-  console.log('🔗 API URL:', apiUrl);
-
-  const payload = {
+  // Build URL with query parameters (n8n expects GET request)
+  const baseUrl = 'https://buildera.app.n8n.cloud/webhook/company-digital-presence';
+  const params = new URLSearchParams({
     Name: name,
     URL: url,
-    social_links: socialLinks || []
-  };
-  console.log('📦 Payload:', JSON.stringify(payload));
+    social_links: JSON.stringify(socialLinks || [])
+  });
+  const apiUrl = `${baseUrl}?${params.toString()}`;
+  console.log('🔗 API URL:', apiUrl);
+  console.log('📦 Query params:', { Name: name, URL: url, social_links: socialLinks });
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 180000); // 3 min timeout
   
   try {
     const response = await fetch(apiUrl, {
-      method: 'POST',
+      method: 'GET',
       headers: getN8NAuthHeaders(),
-      body: JSON.stringify(payload),
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -211,10 +212,20 @@ async function callDigitalPresenceAPI(name: string, url: string, socialLinks: st
     }
 
     const rawBody = await response.text();
-    console.log('🧪 company-digital-presence raw response (truncated):', rawBody.slice(0, 1000));
+    console.log('📨 company-digital-presence response meta:', {
+      status: response.status,
+      contentType: response.headers.get('content-type') ?? '',
+      bodyChars: rawBody?.length ?? 0,
+    });
+    console.log('🧪 company-digital-presence raw response (truncated):', (rawBody ?? '').slice(0, 1000));
 
-    // Parse the response - structure is [{ digital_footprint_summary, what_is_working, ... }]
-    let parsed = null;
+    if (!rawBody || rawBody.trim().length === 0) {
+      console.warn('⚠️ Empty response from digital-presence API');
+      return null;
+    }
+
+    // Parse the response - structure is [{ digital_footprint_summary, what_is_working, ... }] or { output: {...} }
+    let parsed: any = null;
     try {
       parsed = JSON.parse(rawBody);
     } catch {
@@ -222,10 +233,22 @@ async function callDigitalPresenceAPI(name: string, url: string, socialLinks: st
       return null;
     }
 
-    // Extract from array
+    // Extract from array if needed
     if (Array.isArray(parsed) && parsed.length > 0) {
+      const firstItem = parsed[0];
+      // Check for output wrapper
+      if (firstItem?.output) {
+        console.log('✅ Extracted digital presence from array[0].output');
+        return firstItem.output;
+      }
       console.log('✅ Extracted digital presence from array[0]');
-      return parsed[0];
+      return firstItem;
+    }
+
+    // Check for output wrapper at root
+    if (parsed?.output) {
+      console.log('✅ Extracted digital presence from output');
+      return parsed.output;
     }
 
     return parsed;

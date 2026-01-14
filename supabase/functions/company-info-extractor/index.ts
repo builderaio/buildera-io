@@ -130,14 +130,32 @@ async function callCompanyInfoExtractorAPI(normalizedUrl: string): Promise<any> 
     }
 
     const rawBody = await response.text();
-    console.log('🧪 company-info-extractor raw response (truncated):', rawBody.slice(0, 1000));
+    const contentType = response.headers.get('content-type') ?? '';
+    const contentLength = response.headers.get('content-length') ?? 'unknown';
+
+    console.log('📨 company-info-extractor response meta:', {
+      status: response.status,
+      contentType,
+      contentLength,
+      bodyChars: rawBody?.length ?? 0,
+    });
+    console.log('🧪 company-info-extractor raw response (truncated):', (rawBody ?? '').slice(0, 1000));
+
+    if (!rawBody || rawBody.trim().length === 0) {
+      throw new Error(
+        'Empty response body from n8n company-info-extractor webhook. ' +
+          'In n8n, ensure the Webhook response is configured to return the JSON payload (e.g., Response Mode: "Last Node" or a "Respond to Webhook" node).'
+      );
+    }
 
     // Parse the response - NEW structure is [{ output: { identity, seo, products, contact, market, audience } }]
-    let parsed = null;
+    let parsed: any;
     try {
       parsed = JSON.parse(rawBody);
-    } catch {
-      console.warn('⚠️ Failed to parse JSON, attempting extraction...');
+    } catch (e) {
+      throw new Error(
+        `Invalid JSON from n8n company-info-extractor webhook: ${(e as Error).message}. Body (truncated): ${rawBody.slice(0, 300)}`
+      );
     }
 
     // Extract the output from array

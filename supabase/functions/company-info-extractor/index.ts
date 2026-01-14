@@ -383,6 +383,36 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
 
       companyId = newCompany.id;
       console.log('✅ Created new company:', companyId);
+
+      // CRITICAL: Create company_members relationship
+      console.log('👤 Creating company membership for user:', userId);
+      const { error: memberError } = await supabase
+        .from('company_members')
+        .insert({
+          company_id: companyId,
+          user_id: userId,
+          role: 'owner',
+          is_primary: true
+        });
+
+      if (memberError) {
+        console.error('⚠️ Error creating company member (non-fatal):', memberError);
+      } else {
+        console.log('✅ Created company membership');
+      }
+
+      // CRITICAL: Update profiles.primary_company_id
+      console.log('📝 Updating profile primary_company_id');
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ primary_company_id: companyId })
+        .eq('user_id', userId);
+
+      if (profileError) {
+        console.error('⚠️ Error updating profile primary_company_id (non-fatal):', profileError);
+      } else {
+        console.log('✅ Updated profile primary_company_id');
+      }
     }
 
     // STEP 3: Call company-digital-presence API (optional, runs in parallel conceptually)

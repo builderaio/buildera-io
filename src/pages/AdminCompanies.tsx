@@ -4,18 +4,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Building2, 
   Search, 
   Users,
   Calendar,
   Mail,
-  Globe,
+  ExternalLink,
   Activity,
   Power,
   PowerOff,
   AlertTriangle,
-  ExternalLink
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -31,14 +42,13 @@ interface CompanyProfile {
   industry_sector?: string;
   company_size?: string;
   country?: string;
-  location?: string;
   logo_url?: string;
   created_at: string;
   is_active: boolean;
   deactivated_at?: string;
-  member_count?: number;
-  owner_name?: string;
-  owner_email?: string;
+  member_count: number;
+  owner_name: string;
+  owner_email: string;
 }
 
 const AdminCompanies = () => {
@@ -50,6 +60,9 @@ const AdminCompanies = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<CompanyProfile | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -66,47 +79,30 @@ const AdminCompanies = () => {
 
   const loadCompanies = async () => {
     try {
-      // Obtener empresas
-      const { data: companiesData, error: companiesError } = await supabase
-        .from('companies')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Usar la función RPC segura que bypasea RLS para admins
+      const { data, error } = await supabase.rpc('get_all_companies_admin');
 
-      if (companiesError) throw companiesError;
+      if (error) throw error;
 
-      // Obtener miembros de empresas
-      const { data: membersData, error: membersError } = await supabase
-        .from('company_members')
-        .select('company_id, user_id, role');
+      const companiesData = (data || []).map((company: any) => ({
+        id: company.id,
+        name: company.name,
+        description: company.description,
+        website_url: company.website_url,
+        industry_sector: company.industry_sector,
+        company_size: company.company_size,
+        country: company.country,
+        logo_url: company.logo_url,
+        created_at: company.created_at,
+        is_active: company.is_active,
+        deactivated_at: company.deactivated_at,
+        member_count: Number(company.member_count) || 0,
+        owner_name: company.owner_name || 'Sin propietario',
+        owner_email: company.owner_email || '',
+      }));
 
-      // Obtener perfiles de usuarios
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, email');
-
-      if (membersError) {
-        console.warn('Error obteniendo miembros:', membersError);
-      }
-
-      if (profilesError) {
-        console.warn('Error obteniendo perfiles:', profilesError);
-      }
-
-      const companiesWithMembers = companiesData?.map(company => {
-        const companyMembers = membersData?.filter(m => m.company_id === company.id) || [];
-        const ownerMember = companyMembers.find(m => m.role === 'owner');
-        const ownerProfile = profilesData?.find(p => p.user_id === ownerMember?.user_id);
-        
-        return {
-          ...company,
-          member_count: companyMembers.length,
-          owner_name: ownerProfile?.full_name || 'Sin propietario',
-          owner_email: ownerProfile?.email || '',
-        };
-      }) || [];
-
-      setCompanies(companiesWithMembers);
-    } catch (error) {
+      setCompanies(companiesData);
+    } catch (error: any) {
       console.error('Error cargando empresas:', error);
       toast({
         title: "Error",
@@ -151,13 +147,49 @@ const AdminCompanies = () => {
       });
 
       loadCompanies();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cambiando estado de empresa:', error);
       toast({
         title: "Error",
         description: `Error al cambiar estado: ${error.message}`,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDeleteClick = (company: CompanyProfile) => {
+    setCompanyToDelete(company);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!companyToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const { data, error } = await supabase.rpc('delete_company_cascade', { 
+        target_company_id: companyToDelete.id 
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Empresa eliminada",
+        description: `"${companyToDelete.name}" y todos sus datos han sido eliminados permanentemente.`,
+      });
+
+      setDeleteDialogOpen(false);
+      setCompanyToDelete(null);
+      loadCompanies();
+    } catch (error: any) {
+      console.error('Error eliminando empresa:', error);
+      toast({
+        title: "Error al eliminar",
+        description: error.message || 'No se pudo eliminar la empresa',
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -275,9 +307,16 @@ const AdminCompanies = () => {
                         
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs sm:text-sm text-muted-foreground mb-2">
                           <div className="flex items-center min-w-0">
-                            <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">{company.owner_email}</span>
+                            <Users className="w-3 h-3 mr-1 flex-shrink-0" />
+                            <span className="truncate font-medium">{company.owner_name}</span>
                           </div>
+                          
+                          {company.owner_email && (
+                            <div className="flex items-center min-w-0">
+                              <Mail className="w-3 h-3 mr-1 flex-shrink-0" />
+                              <span className="truncate">{company.owner_email}</span>
+                            </div>
+                          )}
                           
                           {company.industry_sector && (
                             <div className="flex items-center min-w-0">
@@ -305,10 +344,10 @@ const AdminCompanies = () => {
                           </p>
                         )}
 
-                        <div className="flex items-center gap-2 mt-3">
+                        <div className="flex items-center gap-2 mt-3 flex-wrap">
                           <Button
                             size="sm"
-                            variant={company.is_active ? "destructive" : "default"}
+                            variant={company.is_active ? "outline" : "default"}
                             onClick={() => handleToggleStatus(company.id, company.is_active)}
                             className="text-xs"
                           >
@@ -323,6 +362,16 @@ const AdminCompanies = () => {
                                 Reactivar
                               </>
                             )}
+                          </Button>
+                          
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteClick(company)}
+                            className="text-xs"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Eliminar
                           </Button>
                         </div>
 
@@ -350,6 +399,54 @@ const AdminCompanies = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              ¿Eliminar empresa permanentemente?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Estás a punto de eliminar <strong>"{companyToDelete?.name}"</strong> y todos sus datos asociados:
+              </p>
+              <ul className="list-disc list-inside text-sm space-y-1 bg-destructive/10 p-3 rounded-md">
+                <li>Agentes y configuraciones</li>
+                <li>Branding y estrategia</li>
+                <li>Audiencias y competidores</li>
+                <li>Emails y comunicaciones</li>
+                <li>Métricas y dashboards</li>
+                <li>Membresías de usuarios</li>
+              </ul>
+              <p className="font-semibold text-destructive">
+                Esta acción NO se puede deshacer.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Eliminar permanentemente
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };

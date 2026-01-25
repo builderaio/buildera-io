@@ -9575,6 +9575,10 @@ export type Database = {
         Returns: boolean
       }
       deactivate_user: { Args: { target_user_id: string }; Returns: boolean }
+      delete_company_cascade: {
+        Args: { target_company_id: string }
+        Returns: boolean
+      }
       expire_old_invitations: { Args: never; Returns: undefined }
       extract_hashtags: { Args: { caption: string }; Returns: string[] }
       extract_mentions: { Args: { caption: string }; Returns: string[] }
@@ -9643,6 +9647,25 @@ export type Database = {
           presence_penalty: number
           temperature: number
           top_p: number
+        }[]
+      }
+      get_all_companies_admin: {
+        Args: never
+        Returns: {
+          company_size: string
+          country: string
+          created_at: string
+          deactivated_at: string
+          description: string
+          id: string
+          industry_sector: string
+          is_active: boolean
+          logo_url: string
+          member_count: number
+          name: string
+          owner_email: string
+          owner_name: string
+          website_url: string
         }[]
       }
       get_all_profiles_admin: {

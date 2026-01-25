@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCompanyCompetitors, CompanyCompetitor } from '@/hooks/useCompanyCompetitors';
-import { Users, Plus, Trash2, Globe, Loader2, Sparkles, Search } from 'lucide-react';
+import { Users, Plus, Trash2, Globe, Loader2, Sparkles, Search, Eye, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CompetitorAnalysisResults } from './CompetitorAnalysisResults';
@@ -125,13 +125,21 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
     }
   };
 
-  const handleAnalyzeSingleCompetitor = async (competitor: CompanyCompetitor) => {
+  const handleAnalyzeSingleCompetitor = async (competitor: CompanyCompetitor, forceReanalyze = false) => {
     if (!competitor.website_url) {
       toast({ 
         title: 'URL requerida',
         description: 'Este competidor no tiene sitio web configurado',
         variant: 'destructive' 
       });
+      return;
+    }
+
+    // If we have cached analysis and not forcing re-analyze, show cached data
+    if (!forceReanalyze && competitor.ai_analysis) {
+      setSingleCompetitorData(competitor.ai_analysis);
+      setSingleCompetitorName(competitor.competitor_name);
+      setSingleCompetitorModalOpen(true);
       return;
     }
 
@@ -149,9 +157,13 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
         setSingleCompetitorData(data.competitor);
         setSingleCompetitorModalOpen(true);
         
-        // Optionally update the competitor with enriched data
-        const enrichedData: Partial<CompanyCompetitor> = {};
+        // Save the full analysis to the database
+        const enrichedData: Partial<CompanyCompetitor> = {
+          ai_analysis: data.competitor,
+          last_analyzed_at: new Date().toISOString(),
+        };
         
+        // Also update social URLs if found
         if (data.competitor.social_networks?.linkedin) {
           enrichedData.linkedin_url = data.competitor.social_networks.linkedin;
         }
@@ -168,20 +180,7 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
           enrichedData.tiktok_url = data.competitor.social_networks.tiktok;
         }
         
-        // Update notes with analysis summary
-        const analysisNotes = [
-          competitor.notes || '',
-          '\n--- Análisis IA ---',
-          data.competitor.description ? `Descripción: ${data.competitor.description}` : '',
-          data.competitor.products?.services?.length ? `Servicios: ${data.competitor.products.services.join(', ')}` : '',
-          data.competitor.market?.differentiators?.length ? `Diferenciadores: ${data.competitor.market.differentiators.join(', ')}` : '',
-        ].filter(Boolean).join('\n');
-        
-        enrichedData.notes = analysisNotes.trim();
-        
-        if (Object.keys(enrichedData).length > 0) {
-          await updateCompetitor(competitor.id, enrichedData);
-        }
+        await updateCompetitor(competitor.id, enrichedData);
         
         toast({ 
           title: 'Análisis completado',
@@ -200,6 +199,15 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
     } finally {
       setAnalyzingCompetitorId(null);
     }
+  };
+
+  const handleViewOrAnalyze = (competitor: CompanyCompetitor) => {
+    // If has cached analysis, show it; otherwise analyze
+    handleAnalyzeSingleCompetitor(competitor, false);
+  };
+
+  const handleReanalyze = (competitor: CompanyCompetitor) => {
+    handleAnalyzeSingleCompetitor(competitor, true);
   };
 
   if (loading) {
@@ -307,29 +315,57 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    {/* View/Analyze Button */}
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button 
                             variant="ghost" 
                             size="icon"
-                            onClick={() => handleAnalyzeSingleCompetitor(competitor)}
+                            onClick={() => handleViewOrAnalyze(competitor)}
                             disabled={analyzingCompetitorId === competitor.id || !competitor.website_url}
                           >
                             {analyzingCompetitorId === competitor.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : competitor.ai_analysis ? (
+                              <Eye className="h-4 w-4 text-green-600" />
                             ) : (
                               <Search className="h-4 w-4 text-primary" />
                             )}
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          {competitor.website_url 
-                            ? 'Analizar competidor con IA' 
-                            : 'Agrega un sitio web para analizar'}
+                          {!competitor.website_url 
+                            ? 'Agrega un sitio web para analizar'
+                            : competitor.ai_analysis
+                              ? 'Ver análisis guardado'
+                              : 'Analizar competidor con IA'
+                          }
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
+                    
+                    {/* Re-analyze Button (only if already analyzed) */}
+                    {competitor.ai_analysis && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => handleReanalyze(competitor)}
+                              disabled={analyzingCompetitorId === competitor.id || !competitor.website_url}
+                            >
+                              <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Re-analizar competidor
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    
                     <Button variant="ghost" size="icon" onClick={() => handleDelete(competitor.id)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>

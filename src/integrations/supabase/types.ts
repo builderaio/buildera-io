@@ -1513,6 +1513,7 @@ export type Database = {
       }
       company_competitors: {
         Row: {
+          ai_analysis: Json | null
           company_id: string
           competitor_name: string
           created_at: string | null
@@ -1520,6 +1521,7 @@ export type Database = {
           id: string
           instagram_url: string | null
           is_direct_competitor: boolean | null
+          last_analyzed_at: string | null
           linkedin_url: string | null
           monitor_campaigns: boolean | null
           monitor_content: boolean | null
@@ -1534,6 +1536,7 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          ai_analysis?: Json | null
           company_id: string
           competitor_name: string
           created_at?: string | null
@@ -1541,6 +1544,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_direct_competitor?: boolean | null
+          last_analyzed_at?: string | null
           linkedin_url?: string | null
           monitor_campaigns?: boolean | null
           monitor_content?: boolean | null
@@ -1555,6 +1559,7 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          ai_analysis?: Json | null
           company_id?: string
           competitor_name?: string
           created_at?: string | null
@@ -1562,6 +1567,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           is_direct_competitor?: boolean | null
+          last_analyzed_at?: string | null
           linkedin_url?: string | null
           monitor_campaigns?: boolean | null
           monitor_content?: boolean | null

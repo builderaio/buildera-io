@@ -11,6 +11,10 @@ import UnifiedAgentsView from "@/components/company/UnifiedAgentsView";
 import MarketingHub from "@/components/company/MarketingHubWow";
 import AcademiaBuildiera from "@/components/company/AcademiaBuildera";
 
+// Strategy components
+import PlayToWinModule from "@/components/strategy/PlayToWinModule";
+import FounderPTWSimplified from "@/components/strategy/founder/FounderPTWSimplified";
+
 // Legacy components (for backwards compatibility during transition)
 import MisArchivos from "@/components/company/BaseConocimiento";
 import { ContentAnalysisDashboard } from "@/components/company/ContentAnalysisDashboard";
@@ -18,6 +22,7 @@ import { ContentAnalysisDashboard } from "@/components/company/ContentAnalysisDa
 import UserProfile from "./UserProfile";
 import OnboardingOrchestrator from "@/components/OnboardingOrchestrator";
 import { User } from "@supabase/supabase-js";
+import { useCompany } from "@/contexts/CompanyContext";
 
 const CompanyDashboard = () => {
   const { t } = useTranslation(['company', 'common']);
@@ -325,6 +330,26 @@ const CompanyDashboard = () => {
       // Onboarding
       case "onboarding":
         return <OnboardingOrchestrator user={user!} />;
+      
+      // === STRATEGY VIEWS ===
+      // Play to Win Full (5 steps)
+      case "estrategia-ptw":
+        return (
+          <PlayToWinModule 
+            companyId={profile?.primary_company_id} 
+            companyName={profile?.company_name}
+          />
+        );
+      
+      // Founder PTW Simplified (3 steps) - for new businesses
+      case "founder-ptw":
+        return (
+          <FounderPTWSimplified 
+            companyId={profile?.primary_company_id}
+            companyName={profile?.company_name}
+            onComplete={() => handleNavigate('mando-central')}
+          />
+        );
       
       // === NEW CONSOLIDATED VIEWS ===
       // Panel Principal (Centro de Comando Estratégico)

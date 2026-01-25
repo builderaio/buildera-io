@@ -276,9 +276,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         duration: 2000
       });
 
-      // Navigate to Play to Win wizard
+      // Navigate to Founder PTW Simplified wizard (3 steps for new businesses)
       setTimeout(() => {
-        navigate('/company-dashboard?view=estrategia-ptw&onboarding_completed=true', { replace: true });
+        navigate('/company-dashboard?view=founder-ptw&onboarding_completed=true', { replace: true });
       }, 1000);
     } catch (error) {
       console.error('Error completing onboarding:', error);

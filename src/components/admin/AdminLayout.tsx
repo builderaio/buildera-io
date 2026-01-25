@@ -21,19 +21,12 @@ import {
 import { 
   Shield, 
   LogOut,
-  Home,
+  LayoutDashboard,
   Users, 
   Activity,
-  BarChart3,
-  Database,
-  Trophy,
   Settings,
   Brain,
-  Eye,
-  Mail,
-  Building2,
-  CreditCard,
-  Key,
+  Bot,
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -60,34 +53,29 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const navigationItems = [
     {
-      group: "Principal",
+      group: 'Negocio',
       items: [
-        { icon: Home, label: "Dashboard", path: "/admin/dashboard" },
-        { icon: Users, label: "Usuarios", path: "/admin/users" },
-        { icon: Building2, label: "Empresas", path: "/admin/companies" },
-        { icon: BarChart3, label: "Analytics", path: "/admin/analytics" },
-        { icon: CreditCard, label: "Suscripciones", path: "/admin/subscriptions" },
+        { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+        { icon: Users, label: 'Clientes', path: '/admin/customers' },
       ]
     },
     {
-      group: "Agentes",
+      group: 'Agentes',
       items: [
-        { icon: Brain, label: "Constructor de Agentes", path: "/admin/agent-builder" },
-        { icon: Activity, label: "Uso de Agentes", path: "/admin/agent-usage" },
+        { icon: Bot, label: 'Constructor', path: '/admin/agent-builder' },
+        { icon: Activity, label: 'Rendimiento', path: '/admin/agent-performance' },
       ]
     },
     {
-      group: "Inteligencia Artificial",
+      group: 'Plataforma',
       items: [
-        { icon: Settings, label: "Configuración IA", path: "/admin/ai-config" },
-        { icon: Eye, label: "Monitoreo IA", path: "/admin/ai-monitoring" },
-        { icon: Key, label: "API Keys", path: "/admin/api-keys" },
-        { icon: Trophy, label: "Champion Challenge", path: "/admin/champion-challenge" },
+        { icon: Brain, label: 'Configuración IA', path: '/admin/ai-config' },
+        { icon: Settings, label: 'Sistema', path: '/admin/system' },
       ]
-    },
-    {
-      group: "Sistema",
-      items: [
+    }
+  ];
+
+  if (!isAuthenticated) {
         { icon: Database, label: "Base de Datos", path: "/admin/database" },
         { icon: Mail, label: "Sistema de Email", path: "/admin/email-system" },
       ]

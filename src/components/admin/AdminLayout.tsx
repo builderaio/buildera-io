@@ -27,6 +27,7 @@ import {
   Settings,
   Brain,
   Bot,
+  User,
 } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -71,13 +72,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       items: [
         { icon: Brain, label: 'Configuración IA', path: '/admin/ai-config' },
         { icon: Settings, label: 'Sistema', path: '/admin/system' },
-      ]
-    }
-  ];
-
-  if (!isAuthenticated) {
-        { icon: Database, label: "Base de Datos", path: "/admin/database" },
-        { icon: Mail, label: "Sistema de Email", path: "/admin/email-system" },
       ]
     }
   ];
@@ -140,7 +134,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             <div className="p-2 space-y-2">
               <div className="flex items-center gap-3 p-2">
                 <div className="bg-primary/10 p-2 rounded-full">
-                  <Eye className="w-4 h-4 text-primary" />
+                  <User className="w-4 h-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">

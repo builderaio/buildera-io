@@ -506,6 +506,9 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
     // STEP 6: Update company_strategy
     await saveCompanyStrategy(companyId!, basicInfo, digitalPresence);
 
+    // STEP 7: Save products/services to company_products table
+    await saveCompanyProducts(companyId!, products);
+
     console.log('🎉 Extraction completed successfully for:', url);
     
     // Return data in format expected by onboarding - NEW STRUCTURE
@@ -728,5 +731,84 @@ async function saveCompanyStrategy(companyId: string, basicInfo: any, digitalPre
     }
   } catch (err) {
     console.warn('⚠️ Failed to save company strategy:', err);
+  }
+}
+
+// Save products/services to company_products table
+async function saveCompanyProducts(companyId: string, products: any) {
+  console.log('💾 Saving company products/services...');
+  
+  if (!products) {
+    console.log('⚠️ No products data to save');
+    return;
+  }
+
+  try {
+    // Helper to normalize array input
+    const toArray = (val: any): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.filter(v => v && typeof v === 'string');
+      if (typeof val === 'string') return val.split(',').map(s => s.trim()).filter(Boolean);
+      return [];
+    };
+
+    const services = toArray(products.service);
+    const offers = toArray(products.offer);
+    
+    console.log('📦 Products to save:', { services: services.length, offers: offers.length });
+
+    // Get existing products for this company
+    const { data: existingProducts } = await supabase
+      .from('company_products')
+      .select('id, name, category')
+      .eq('company_id', companyId);
+
+    const existingNames = new Set((existingProducts || []).map(p => p.name.toLowerCase()));
+
+    const productsToInsert: any[] = [];
+
+    // Add services
+    for (const service of services) {
+      if (!existingNames.has(service.toLowerCase())) {
+        productsToInsert.push({
+          company_id: companyId,
+          name: service,
+          category: 'service',
+          is_active: true,
+          is_featured: false
+        });
+        existingNames.add(service.toLowerCase());
+      }
+    }
+
+    // Add offers/products
+    for (const offer of offers) {
+      if (!existingNames.has(offer.toLowerCase())) {
+        productsToInsert.push({
+          company_id: companyId,
+          name: offer,
+          category: 'product',
+          is_active: true,
+          is_featured: false
+        });
+        existingNames.add(offer.toLowerCase());
+      }
+    }
+
+    if (productsToInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from('company_products')
+        .insert(productsToInsert);
+
+      if (insertError) {
+        console.error('❌ Error inserting products:', insertError);
+      } else {
+        console.log(`✅ Inserted ${productsToInsert.length} products/services`);
+      }
+    } else {
+      console.log('ℹ️ No new products to insert (all already exist)');
+    }
+  } catch (err) {
+    console.warn('⚠️ Failed to save company products:', err);
   }
 }

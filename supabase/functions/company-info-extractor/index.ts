@@ -509,6 +509,12 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
     // STEP 7: Save products/services to company_products table
     await saveCompanyProducts(companyId!, products);
 
+    // STEP 8: Save contact emails to company_email_config table
+    await saveCompanyEmails(companyId!, contact);
+
+    // STEP 9: Save audience data to company_audiences table
+    await saveCompanyAudiences(companyId!, audience, userId);
+
     console.log('🎉 Extraction completed successfully for:', url);
     
     // Return data in format expected by onboarding - NEW STRUCTURE
@@ -810,5 +816,206 @@ async function saveCompanyProducts(companyId: string, products: any) {
     }
   } catch (err) {
     console.warn('⚠️ Failed to save company products:', err);
+  }
+}
+
+// Save contact emails to company_email_config table
+async function saveCompanyEmails(companyId: string, contact: any) {
+  console.log('💾 Saving company emails...');
+  
+  if (!contact) {
+    console.log('⚠️ No contact data to save');
+    return;
+  }
+
+  try {
+    // Helper to normalize array input and get first/primary value
+    const toArray = (val: any): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.filter(v => v && typeof v === 'string');
+      if (typeof val === 'string') return val.split(',').map(s => s.trim()).filter(Boolean);
+      return [];
+    };
+
+    const emails = toArray(contact.email);
+    
+    if (emails.length === 0) {
+      console.log('ℹ️ No emails found in contact data');
+      return;
+    }
+
+    console.log('📧 Emails to save:', emails);
+
+    // Check if config exists
+    const { data: existing } = await supabase
+      .from('company_email_config')
+      .select('id')
+      .eq('company_id', companyId)
+      .maybeSingle();
+
+    // Categorize emails based on common patterns
+    const categorizeEmail = (email: string): string => {
+      const lower = email.toLowerCase();
+      if (lower.includes('soporte') || lower.includes('support') || lower.includes('ayuda') || lower.includes('help')) return 'support';
+      if (lower.includes('ventas') || lower.includes('sales') || lower.includes('comercial')) return 'marketing';
+      if (lower.includes('billing') || lower.includes('factura') || lower.includes('pago') || lower.includes('cobranza')) return 'billing';
+      if (lower.includes('info') || lower.includes('contacto') || lower.includes('contact')) return 'general';
+      if (lower.includes('notif') || lower.includes('alert') || lower.includes('aviso')) return 'notifications';
+      return 'general';
+    };
+
+    const emailConfig: Record<string, string | null> = {
+      general_email: null,
+      support_email: null,
+      billing_email: null,
+      marketing_email: null,
+      notifications_email: null
+    };
+
+    // Assign emails to categories
+    for (const email of emails) {
+      const category = categorizeEmail(email);
+      const key = `${category}_email`;
+      if (!emailConfig[key]) {
+        emailConfig[key] = email;
+      }
+    }
+
+    // If we have emails but none categorized as general, use the first one
+    if (!emailConfig.general_email && emails.length > 0) {
+      emailConfig.general_email = emails[0];
+    }
+
+    const updateData = {
+      company_id: companyId,
+      ...emailConfig,
+      updated_at: new Date().toISOString()
+    };
+
+    if (existing) {
+      // Only update non-null values to avoid overwriting existing data
+      const filteredUpdate = Object.fromEntries(
+        Object.entries(updateData).filter(([key, val]) => val !== null || key === 'updated_at')
+      );
+      
+      await supabase
+        .from('company_email_config')
+        .update(filteredUpdate)
+        .eq('id', existing.id);
+      console.log('✅ Updated company email config');
+    } else {
+      await supabase
+        .from('company_email_config')
+        .insert(updateData);
+      console.log('✅ Created company email config');
+    }
+  } catch (err) {
+    console.warn('⚠️ Failed to save company emails:', err);
+  }
+}
+
+// Save audience data to company_audiences table
+async function saveCompanyAudiences(companyId: string, audience: any, userId: string) {
+  console.log('💾 Saving company audiences...');
+  
+  if (!audience) {
+    console.log('⚠️ No audience data to save');
+    return;
+  }
+
+  try {
+    // Helper to normalize array input
+    const toArray = (val: any): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.filter(v => v && typeof v === 'string');
+      if (typeof val === 'string') return val.split(',').map(s => s.trim()).filter(Boolean);
+      return [];
+    };
+
+    const segments = toArray(audience.segment);
+    const professions = toArray(audience.profession);
+    const targetUsers = toArray(audience.target_user);
+    
+    console.log('👥 Audience data:', { segments: segments.length, professions: professions.length, targetUsers: targetUsers.length });
+
+    if (segments.length === 0 && professions.length === 0 && targetUsers.length === 0) {
+      console.log('ℹ️ No audience segments found');
+      return;
+    }
+
+    // Get existing audiences for this company
+    const { data: existingAudiences } = await supabase
+      .from('company_audiences')
+      .select('id, name')
+      .eq('company_id', companyId);
+
+    const existingNames = new Set((existingAudiences || []).map(a => a.name.toLowerCase()));
+
+    const audiencesToInsert: any[] = [];
+
+    // Create audience for each segment
+    for (const segment of segments) {
+      if (!existingNames.has(segment.toLowerCase())) {
+        audiencesToInsert.push({
+          company_id: companyId,
+          user_id: userId,
+          name: segment,
+          description: `Segmento de audiencia: ${segment}`,
+          tags: ['auto-detected', 'segment'],
+          is_active: true,
+          ai_insights: { source: 'diagnostic', type: 'segment' }
+        });
+        existingNames.add(segment.toLowerCase());
+      }
+    }
+
+    // Create audience for each profession
+    for (const profession of professions) {
+      if (!existingNames.has(profession.toLowerCase())) {
+        audiencesToInsert.push({
+          company_id: companyId,
+          user_id: userId,
+          name: profession,
+          description: `Perfil profesional: ${profession}`,
+          job_titles: { primary: [profession] },
+          tags: ['auto-detected', 'profession'],
+          is_active: true,
+          ai_insights: { source: 'diagnostic', type: 'profession' }
+        });
+        existingNames.add(profession.toLowerCase());
+      }
+    }
+
+    // Create audience for each target user type
+    for (const targetUser of targetUsers) {
+      if (!existingNames.has(targetUser.toLowerCase())) {
+        audiencesToInsert.push({
+          company_id: companyId,
+          user_id: userId,
+          name: targetUser,
+          description: `Usuario objetivo: ${targetUser}`,
+          tags: ['auto-detected', 'target-user'],
+          is_active: true,
+          ai_insights: { source: 'diagnostic', type: 'target_user' }
+        });
+        existingNames.add(targetUser.toLowerCase());
+      }
+    }
+
+    if (audiencesToInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from('company_audiences')
+        .insert(audiencesToInsert);
+
+      if (insertError) {
+        console.error('❌ Error inserting audiences:', insertError);
+      } else {
+        console.log(`✅ Inserted ${audiencesToInsert.length} audience segments`);
+      }
+    } else {
+      console.log('ℹ️ No new audiences to insert (all already exist)');
+    }
+  } catch (err) {
+    console.warn('⚠️ Failed to save company audiences:', err);
   }
 }

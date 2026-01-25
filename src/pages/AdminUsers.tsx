@@ -16,8 +16,8 @@ import {
   Activity,
   Power,
   PowerOff,
-  Trash2,
-  AlertTriangle
+  AlertTriangle,
+  ShieldAlert
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -181,33 +181,8 @@ const AdminUsers = () => {
     }
   };
 
-  const handleDeleteUser = async (userId: string, userEmail: string) => {
-    if (!confirm(`¿Está seguro de eliminar permanentemente al usuario ${userEmail}? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase.functions.invoke('delete-user', {
-        body: { userId }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Éxito",
-        description: "Usuario eliminado exitosamente",
-      });
-
-      loadUsers();
-    } catch (error) {
-      console.error('Error eliminando usuario:', error);
-      toast({
-        title: "Error",
-        description: `Error al eliminar usuario: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  };
+  // Eliminación deshabilitada por seguridad - usar solo activar/desactivar
+  // La eliminación requiere proceso manual en base de datos con cascada apropiada
 
   if (loading) {
     return (
@@ -429,7 +404,7 @@ const AdminUsers = () => {
                             <div className="flex items-center gap-2 mt-3">
                               <Button
                                 size="sm"
-                                variant={user.is_active === false ? "default" : "destructive"}
+                                variant={user.is_active === false ? "default" : "outline"}
                                 onClick={() => handleToggleStatus(user.user_id, user.is_active !== false)}
                                 className="text-xs"
                               >
@@ -445,16 +420,10 @@ const AdminUsers = () => {
                                   </>
                                 )}
                               </Button>
-                              
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleDeleteUser(user.user_id, user.email)}
-                                className="text-xs"
-                              >
-                                <Trash2 className="w-3 h-3 mr-1" />
-                                Eliminar
-                              </Button>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <ShieldAlert className="w-3 h-3" />
+                                <span>Eliminación solo vía DB</span>
+                              </div>
                             </div>
 
                             {user.is_active === false && user.deactivated_at && (

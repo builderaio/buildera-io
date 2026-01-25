@@ -430,10 +430,14 @@
     "title": "DNA Empresarial",
     "subtitle": "Gerencie todas as informações e configurações da sua empresa",
     "tabs": {
+      "perfil": "Perfil",
       "info": "Informação",
       "strategy": "Estratégia",
+      "estrategia": "Estratégia",
       "brand": "Marca",
+      "marca": "Marca",
       "social": "Redes",
+      "canales": "Canais",
       "files": "Arquivos",
       "email": "Email",
       "team": "Equipe"
@@ -578,6 +582,19 @@
       }
     }
   },
+  "intelligence": {
+    "title": "Inteligência",
+    "subtitle": "Diagnósticos, análise de concorrência e relatórios de mercado",
+    "tabs": {
+      "diagnostic": "Diagnóstico",
+      "competitors": "Concorrentes",
+      "market": "Mercado"
+    },
+    "market": {
+      "comingSoon": "Em Breve",
+      "description": "Análise de tendências do setor, oportunidades de mercado e insights de audiência."
+    }
+  },
   "nba": {
     "completeProfile": {
       "title": "Complete seu perfil de empresa",
@@ -654,8 +671,9 @@
     "tabs": {
       "team": "Equipe",
       "security": "Segurança",
+      "agents": "Agentes",
       "plan": "Meu Plano",
-      "notifications": "Notificações"
+      "notifications": "Alertas"
     },
     "team": {
       "title": "Membros da Equipe",

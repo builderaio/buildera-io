@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Building, Bot, Store, Settings, User, LogOut, Activity, Zap, Menu } from 'lucide-react';
+import { Building, Bot, Store, Settings, User, LogOut, Activity, Zap, Menu, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -312,6 +312,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       'mando-central': '/company-dashboard?view=mando-central',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
       'mis-agentes': '/company-dashboard?view=mis-agentes',
+      'inteligencia': '/company-dashboard?view=inteligencia',
       'marketplace': '/marketplace/agents',
       'adn-empresa': '/company-dashboard?view=adn-empresa',
       'configuracion': '/company-dashboard?view=configuracion',
@@ -332,6 +333,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     { id: 'mando-central', label: t('common:sidebar.dashboard', 'Mi Panel'), icon: Activity, emoji: '🏠' },
     { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Activity, emoji: '📣' },
     { id: 'mis-agentes', label: t('common:sidebar.myAgents', 'Mis Agentes'), icon: Bot, emoji: '🤖' },
+    { id: 'inteligencia', label: t('common:sidebar.intelligence', 'Inteligencia'), icon: Brain, emoji: '🧠' },
     { id: 'marketplace', label: t('common:sidebar.marketplace', 'Marketplace'), icon: Store, emoji: '🛒' },
     { id: 'adn-empresa', label: t('common:sidebar.companyDna', 'Mi Empresa'), icon: Building, emoji: '🏢' },
   ];

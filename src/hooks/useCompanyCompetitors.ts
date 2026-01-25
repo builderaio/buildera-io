@@ -19,6 +19,8 @@ export interface CompanyCompetitor {
   notes: string | null;
   strengths: string[] | null;
   weaknesses: string[] | null;
+  ai_analysis: any | null;
+  last_analyzed_at: string | null;
   created_at: string;
   updated_at: string;
 }

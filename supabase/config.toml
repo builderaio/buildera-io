@@ -1,5 +1,8 @@
 project_id = "ubhzzppmkhxbuiajfswa"
 
+[functions.analyze-competitors]
+verify_jwt = false
+
 [functions.marketing-hub-marketing-strategy]
 verify_jwt = true
 

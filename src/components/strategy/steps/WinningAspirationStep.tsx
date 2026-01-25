@@ -202,7 +202,7 @@ export default function WinningAspirationStep({ strategy, onUpdate, isSaving }: 
             {timelineOptions.map((option) => (
               <button
                 key={option.value}
-                onClick={() => handleTimelineChange(option.value)}
+                onClick={() => handleTimelineChange(option.value as '1_year' | '3_years' | '5_years')}
                 className={cn(
                   "p-4 rounded-lg border-2 text-left transition-all",
                   timeline === option.value

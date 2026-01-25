@@ -1209,6 +1209,9 @@ export type Database = {
           industry_sector: string | null
           instagram_url: string | null
           is_active: boolean | null
+          journey_completed_at: string | null
+          journey_current_step: number | null
+          journey_type: string | null
           linkedin_url: string | null
           logo_url: string | null
           name: string
@@ -1233,6 +1236,9 @@ export type Database = {
           industry_sector?: string | null
           instagram_url?: string | null
           is_active?: boolean | null
+          journey_completed_at?: string | null
+          journey_current_step?: number | null
+          journey_type?: string | null
           linkedin_url?: string | null
           logo_url?: string | null
           name: string
@@ -1257,6 +1263,9 @@ export type Database = {
           industry_sector?: string | null
           instagram_url?: string | null
           is_active?: boolean | null
+          journey_completed_at?: string | null
+          journey_current_step?: number | null
+          journey_type?: string | null
           linkedin_url?: string | null
           logo_url?: string | null
           name?: string

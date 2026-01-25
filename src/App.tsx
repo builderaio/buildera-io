@@ -38,22 +38,14 @@ import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import { AdminAuthProvider } from "./hooks/useAdminAuth";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
-import AdminUsers from "./pages/AdminUsers";
-import AdminCompanies from "./pages/AdminCompanies";
-import AdminAIMonitoring from "./pages/AdminAIMonitoring";
-import AdminChampionChallenge from "./pages/AdminChampionChallenge";
+import AdminCustomers from "./pages/AdminCustomers";
 import AdminAIConfig from "./pages/AdminAIConfig";
-import AdminAnalytics from "./pages/AdminAnalytics";
-import AdminDatabase from "./pages/AdminDatabase";
-import AdminFunctionConfig from "./pages/AdminFunctionConfig";
 import AdminProtectedRoute from "./components/AdminProtectedRoute";
 import UserProfile from "./pages/UserProfile";
 import AdminAgentBuilder from "./pages/AdminAgentBuilder";
-import AdminAgentUsage from "./pages/AdminAgentUsage";
-import AdminSubscriptions from "./pages/AdminSubscriptions";
+import AdminAgentPerformance from "./pages/AdminAgentPerformance";
+import AdminSystem from "./pages/AdminSystem";
 import AgentMarketplaceV2 from "./pages/AgentMarketplaceV2";
-import AdminAPIKeys from "./pages/AdminAPIKeys";
-import AdminEmailSystem from "./pages/AdminEmailSystem";
 import ResponsiveLayout from "./components/ResponsiveLayout";
 import AgentFlowBuilder from "./pages/AgentFlowBuilder";
 import CompanyWhiteLabelAgents from "./pages/CompanyWhiteLabelAgents";
@@ -179,24 +171,9 @@ const App = () => {
                     <AdminDashboard />
                   </AdminProtectedRoute>
                 } />
-                <Route path="/admin/users" element={
+                <Route path="/admin/customers" element={
                   <AdminProtectedRoute>
-                    <AdminUsers />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/companies" element={
-                  <AdminProtectedRoute>
-                    <AdminCompanies />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/ai-monitoring" element={
-                  <AdminProtectedRoute>
-                    <AdminAIMonitoring />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/champion-challenge" element={
-                  <AdminProtectedRoute>
-                    <AdminChampionChallenge />
+                    <AdminCustomers />
                   </AdminProtectedRoute>
                 } />
                 <Route path="/admin/ai-config" element={
@@ -204,50 +181,35 @@ const App = () => {
                     <AdminAIConfig />
                   </AdminProtectedRoute>
                 } />
-                <Route path="/admin/analytics" element={
-                  <AdminProtectedRoute>
-                    <AdminAnalytics />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/database" element={
-                  <AdminProtectedRoute>
-                    <AdminDatabase />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/function-config" element={
-                  <AdminProtectedRoute>
-                    <AdminFunctionConfig />
-                  </AdminProtectedRoute>
-                } />
                 <Route path="/admin/agent-builder" element={
                   <AdminProtectedRoute>
                     <AdminAgentBuilder />
                   </AdminProtectedRoute>
                 } />
-                {/* Legacy route redirect */}
+                <Route path="/admin/agent-performance" element={
+                  <AdminProtectedRoute>
+                    <AdminAgentPerformance />
+                  </AdminProtectedRoute>
+                } />
+                <Route path="/admin/system" element={
+                  <AdminProtectedRoute>
+                    <AdminSystem />
+                  </AdminProtectedRoute>
+                } />
+                {/* Legacy route redirects */}
+                <Route path="/admin/users" element={<Navigate to="/admin/customers" replace />} />
+                <Route path="/admin/companies" element={<Navigate to="/admin/customers" replace />} />
+                <Route path="/admin/subscriptions" element={<Navigate to="/admin/customers" replace />} />
+                <Route path="/admin/analytics" element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="/admin/api-keys" element={<Navigate to="/admin/ai-config" replace />} />
+                <Route path="/admin/ai-monitoring" element={<Navigate to="/admin/ai-config" replace />} />
+                <Route path="/admin/champion-challenge" element={<Navigate to="/admin/ai-config" replace />} />
+                <Route path="/admin/function-config" element={<Navigate to="/admin/ai-config" replace />} />
+                <Route path="/admin/database" element={<Navigate to="/admin/system" replace />} />
+                <Route path="/admin/email-system" element={<Navigate to="/admin/system" replace />} />
+                <Route path="/admin/agent-usage" element={<Navigate to="/admin/agent-performance" replace />} />
                 <Route path="/admin/agent-templates" element={<Navigate to="/admin/agent-builder" replace />} />
                 <Route path="/admin/agent-templates/*" element={<Navigate to="/admin/agent-builder" replace />} />
-                <Route path="/admin/api-keys" element={
-                  <AdminProtectedRoute>
-                    <AdminAPIKeys />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/email-system" element={
-                  <AdminProtectedRoute>
-                    <AdminEmailSystem />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/agent-usage" element={
-                  <AdminProtectedRoute>
-                    <AdminAgentUsage />
-                  </AdminProtectedRoute>
-                } />
-                <Route path="/admin/subscriptions" element={
-                  <AdminProtectedRoute>
-                    <AdminSubscriptions />
-                  </AdminProtectedRoute>
-                } />
-                {/* Legacy route redirect */}
                 <Route path="/admin/ai-workforce" element={<Navigate to="/admin/agent-builder" replace />} />
 
                 {/* Onboarding Routes */}

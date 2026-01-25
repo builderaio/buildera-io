@@ -11,9 +11,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Settings, RefreshCw, Key, Bot, Cog, CheckCircle, Circle, Zap, FileText, Wrench } from "lucide-react";
+import { Plus, Settings, RefreshCw, Key, Bot, Cog, CheckCircle, Circle, Zap, FileText, Wrench, Activity, Trophy } from "lucide-react";
 import AIFunctionConfigurationPanel from "./ai-config/AIFunctionConfigurationPanel";
 import AIToolsConfigurationPanel from "./ai-config/AIToolsConfigurationPanel";
+import AIModelMonitoring from "./AIModelMonitoring";
+import ChampionChallenge from "./ChampionChallenge";
+
 interface AIProvider {
   id: string;
   name: string;
@@ -298,22 +301,30 @@ export default function UnifiedAIConfiguration() {
   }
   return (
     <Tabs defaultValue="functions" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-flex">
         <TabsTrigger value="functions" className="flex items-center gap-2">
           <Zap className="h-4 w-4" />
-          Funciones
+          <span className="hidden sm:inline">Funciones</span>
         </TabsTrigger>
         <TabsTrigger value="tools" className="flex items-center gap-2">
           <Wrench className="h-4 w-4" />
-          Herramientas
+          <span className="hidden sm:inline">Herramientas</span>
         </TabsTrigger>
         <TabsTrigger value="providers" className="flex items-center gap-2">
           <Bot className="h-4 w-4" />
-          Proveedores
+          <span className="hidden sm:inline">Proveedores</span>
         </TabsTrigger>
         <TabsTrigger value="keys" className="flex items-center gap-2">
           <Key className="h-4 w-4" />
-          API Keys
+          <span className="hidden sm:inline">API Keys</span>
+        </TabsTrigger>
+        <TabsTrigger value="monitoring" className="flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          <span className="hidden sm:inline">Monitoreo</span>
+        </TabsTrigger>
+        <TabsTrigger value="champion" className="flex items-center gap-2">
+          <Trophy className="h-4 w-4" />
+          <span className="hidden sm:inline">Challenge</span>
         </TabsTrigger>
       </TabsList>
 
@@ -325,6 +336,16 @@ export default function UnifiedAIConfiguration() {
       {/* Tools Tab - Tool Compatibility Matrix */}
       <TabsContent value="tools">
         <AIToolsConfigurationPanel />
+      </TabsContent>
+
+      {/* Monitoring Tab */}
+      <TabsContent value="monitoring">
+        <AIModelMonitoring />
+      </TabsContent>
+
+      {/* Champion Challenge Tab */}
+      <TabsContent value="champion">
+        <ChampionChallenge />
       </TabsContent>
 
       {/* Providers Tab - Existing Provider Management */}

@@ -46,10 +46,10 @@ serve(async (req) => {
       );
     }
 
-    // Get company data from database
+    // Get company data from database (including webhook_data from diagnostic)
     const { data: company, error: companyError } = await supabase
       .from('companies')
-      .select('name, website_url, logo_url, description')
+      .select('name, website_url, logo_url, description, industry_sector, country, webhook_data')
       .eq('id', companyId)
       .single();
 
@@ -61,7 +61,7 @@ serve(async (req) => {
     }
 
     // Get company strategy (mission, vision, value proposition) - get the latest one
-    const { data: strategy, error: strategyError } = await supabase
+    const { data: strategy } = await supabase
       .from('company_strategies')
       .select('mision, vision, propuesta_valor')
       .eq('company_id', companyId)
@@ -69,17 +69,97 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    console.log('📋 Company data:', company);
-    console.log('📋 Strategy data:', strategy);
+    // Get digital presence data (executive diagnosis, what works, risks)
+    const { data: digitalPresence } = await supabase
+      .from('company_digital_presence')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
+    // Get audiences data
+    const { data: audiences } = await supabase
+      .from('company_audiences')
+      .select('name, description, age_ranges, interests, pain_points, goals')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .limit(5);
+
+    // Get products/services data
+    const { data: products } = await supabase
+      .from('company_products')
+      .select('name, description, category, key_benefits, target_audience')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .limit(10);
+
+    console.log('📋 Company data:', company.name);
+    console.log('📋 Strategy data:', strategy ? 'Found' : 'None');
+    console.log('📋 Digital presence:', digitalPresence ? 'Found' : 'None');
+    console.log('📋 Audiences:', audiences?.length || 0);
+    console.log('📋 Products:', products?.length || 0);
+
+    // Extract diagnostic data from webhook_data
+    const webhookData = company.webhook_data || {};
+    const diagnosticIdentity = webhookData.identity || {};
+    const diagnosticSeo = webhookData.seo || {};
+    const diagnosticMarket = webhookData.market || {};
+    const diagnosticAudience = webhookData.audience || {};
+    const diagnosticProducts = webhookData.products || {};
+
+    // Build comprehensive payload for brand identity generation
     const companyData = {
+      // Basic company info
       nombre_empresa: company.name,
-      descripcion_empresa: company.description || '',
+      descripcion_empresa: company.description || diagnosticSeo.description || '',
       sitio_web: company.website_url || '',
-      logo: company.logo_url || '',
+      logo: company.logo_url || diagnosticIdentity.logo || '',
+      sector_industria: company.industry_sector || '',
+      pais: company.country || diagnosticMarket.country?.[0] || '',
+      
+      // Strategy
       mision: strategy?.mision || '',
       vision: strategy?.vision || '',
-      propuesta_valor: strategy?.propuesta_valor || ''
+      propuesta_valor: strategy?.propuesta_valor || '',
+      
+      // From diagnostic - SEO & Keywords
+      keywords: diagnosticSeo.keywords || [],
+      meta_description: diagnosticSeo.description || '',
+      
+      // From diagnostic - Market positioning
+      posicionamiento_competitivo: digitalPresence?.competitive_positioning || '',
+      fortalezas: digitalPresence?.what_is_working || [],
+      debilidades: digitalPresence?.what_is_missing || [],
+      riesgos: digitalPresence?.key_risks || [],
+      diagnostico_ejecutivo: digitalPresence?.executive_diagnosis || {},
+      
+      // From diagnostic - Target audience
+      audiencia_objetivo: diagnosticAudience.target_audience || [],
+      segmentos_audiencia: audiences?.map(a => ({
+        nombre: a.name,
+        descripcion: a.description,
+        edades: a.age_ranges,
+        intereses: a.interests,
+        puntos_dolor: a.pain_points,
+        objetivos: a.goals
+      })) || [],
+      
+      // From diagnostic - Products/Services
+      productos_servicios: products?.map(p => ({
+        nombre: p.name,
+        descripcion: p.description,
+        categoria: p.category,
+        beneficios: p.key_benefits,
+        audiencia_objetivo: p.target_audience
+      })) || diagnosticProducts.offer || [],
+      
+      // Company personality hints from diagnostic
+      personalidad_marca: {
+        slogan: diagnosticIdentity.slogan || '',
+        valores: diagnosticIdentity.values || [],
+        tono_comunicacion: diagnosticSeo.tone || ''
+      }
     };
 
     console.log('🎨 Generating brand identity for:', company.name);

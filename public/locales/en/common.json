@@ -758,5 +758,40 @@
       "creditThreshold": "Alert threshold",
       "remaining": "remaining"
     }
+  },
+  "journey": {
+    "selector": {
+      "badge": "Personalized experience",
+      "title": "Welcome to Buildera!",
+      "titleWithName": "Welcome, {{name}}!",
+      "subtitle": "Let's personalize your experience to maximize your business results",
+      "helpText": "Not sure? Don't worry, you can adjust your experience later.",
+      "newBusiness": {
+        "title": "I'm just starting",
+        "description": "I have a business idea and want to define my strategy from scratch",
+        "cta": "Start my strategy",
+        "feature1": "Define your vision and purpose",
+        "feature2": "Identify your ideal customer",
+        "feature3": "Build your differentiator"
+      },
+      "existingBusiness": {
+        "title": "My business already exists",
+        "description": "I have an active business and want to grow with data and AI",
+        "cta": "Diagnose my business",
+        "feature1": "Deep digital diagnosis",
+        "feature2": "Gap analysis vs goals",
+        "feature3": "Prioritized action plan"
+      }
+    },
+    "founder": {
+      "step1Title": "Tell us about your vision",
+      "step2Title": "Define your winning strategy",
+      "step3Title": "Your first steps"
+    },
+    "growth": {
+      "step1Title": "Deep diagnosis",
+      "step2Title": "Gap analysis",
+      "step3Title": "Prioritized action plan"
+    }
   }
 }

@@ -10,23 +10,31 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { OnboardingWowLoader } from '@/components/onboarding/OnboardingWowLoader';
 import { OnboardingWowResults } from '@/components/onboarding/OnboardingWowResults';
+import JourneySelector, { JourneyType } from '@/components/onboarding/JourneySelector';
 
 interface OnboardingOrchestratorProps {
   user: any;
 }
 
-type OnboardingPhase = 'checking' | 'form' | 'loading' | 'results';
+type OnboardingPhase = 
+  | 'checking' 
+  | 'journey-selection'  // NEW: Bifurcation step
+  | 'form' 
+  | 'loading' 
+  | 'results';
 
 interface CompanyBasicData {
   id: string;
   name: string;
   website_url: string;
   industry_sector?: string;
+  journey_type?: JourneyType;
 }
 
 const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const [phase, setPhase] = useState<OnboardingPhase>('checking');
   const [companyData, setCompanyData] = useState<CompanyBasicData | null>(null);
+  const [selectedJourney, setSelectedJourney] = useState<JourneyType | null>(null);
   const [results, setResults] = useState<any>(null);
   const [totalTime, setTotalTime] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -42,7 +50,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation(['common']);
 
-  // Phase 1: Check if company has basic data
+  // Phase 1: Check if company has basic data and journey type
   useEffect(() => {
     const checkCompanyData = async () => {
       if (!user?.id) return;
@@ -57,25 +65,45 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           .limit(1);
 
         if (!companyMembers || companyMembers.length === 0) {
-          console.log('📋 No company found, showing form');
-          setPhase('form');
+          console.log('📋 No company found, showing journey selection');
+          setPhase('journey-selection');
           return;
         }
 
         const { data: company } = await supabase
           .from('companies')
-          .select('id, name, website_url, industry_sector')
+          .select('id, name, website_url, industry_sector, journey_type')
           .eq('id', companyMembers[0].company_id)
           .single();
 
+        // Check if journey type has been selected
+        if (!company?.journey_type || company.journey_type === 'new_business') {
+          // For new businesses or unselected, check if we need journey selection
+          if (!company?.name || !company?.website_url) {
+            console.log('📋 Company missing data, showing journey selection');
+            if (company) {
+              setCompanyData(company as CompanyBasicData);
+              setFormData({
+                name: company.name || '',
+                website_url: company.website_url || '',
+                industry_sector: company.industry_sector || ''
+              });
+            }
+            setPhase('journey-selection');
+            return;
+          }
+        }
+
+        // If company has data and journey type, proceed based on journey
         if (company?.name && company?.website_url) {
-          console.log('✅ Company data found, starting extraction');
-          setCompanyData(company);
+          console.log('✅ Company data found, journey:', company.journey_type);
+          setCompanyData(company as CompanyBasicData);
+          setSelectedJourney((company.journey_type as JourneyType) || 'existing_business');
           startExtraction(company.id);
         } else {
           console.log('📋 Company missing data, showing form');
           if (company) {
-            setCompanyData(company);
+            setCompanyData(company as CompanyBasicData);
             setFormData({
               name: company.name || '',
               website_url: company.website_url || '',
@@ -86,12 +114,32 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         }
       } catch (error) {
         console.error('Error checking company data:', error);
-        setPhase('form');
+        setPhase('journey-selection');
       }
     };
 
     checkCompanyData();
   }, [user?.id]);
+
+  // Handle journey selection
+  const handleJourneySelect = async (journeyType: JourneyType) => {
+    console.log('🎯 Journey selected:', journeyType);
+    setSelectedJourney(journeyType);
+    
+    // If company exists, update journey type
+    if (companyData?.id) {
+      await supabase
+        .from('companies')
+        .update({ 
+          journey_type: journeyType,
+          journey_current_step: 1
+        })
+        .eq('id', companyData.id);
+    }
+    
+    // Move to form phase
+    setPhase('form');
+  };
 
   // Save basic company data and start extraction
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -122,13 +170,15 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
 
         if (error) throw error;
       } else {
-        // Create new company
+        // Create new company with journey type
         const { data: newCompany, error } = await supabase
           .from('companies')
           .insert({
             name: formData.name,
             website_url: formData.website_url,
             industry_sector: formData.industry_sector || null,
+            journey_type: selectedJourney || 'existing_business',
+            journey_current_step: 1,
             created_by: user.id
           })
           .select()
@@ -387,6 +437,16 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           <p className="text-muted-foreground">{t('common:onboarding.checkingData')}</p>
         </div>
       </div>
+    );
+  }
+
+  // NEW: Journey selection phase
+  if (phase === 'journey-selection') {
+    return (
+      <JourneySelector 
+        onSelect={handleJourneySelect}
+        companyName={companyData?.name}
+      />
     );
   }
 

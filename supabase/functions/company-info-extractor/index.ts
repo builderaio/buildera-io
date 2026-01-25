@@ -391,6 +391,50 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
         console.error('❌ Error updating company:', updateError);
         throw updateError;
       }
+
+      // CRITICAL: Ensure primary_company_id is synced for existing companies too
+      console.log('🔄 Checking primary_company_id sync for existing company...');
+      const { data: profileCheck } = await supabase
+        .from('profiles')
+        .select('primary_company_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!profileCheck?.primary_company_id) {
+        console.log('📝 Syncing primary_company_id for existing company');
+        
+        // Ensure company_member exists
+        const { data: memberCheck } = await supabase
+          .from('company_members')
+          .select('id')
+          .eq('company_id', companyId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (!memberCheck) {
+          console.log('👤 Creating missing company membership');
+          await supabase.from('company_members').insert({
+            company_id: companyId,
+            user_id: userId,
+            role: 'owner',
+            is_primary: true
+          });
+        }
+
+        // Sync primary_company_id
+        const { error: syncError } = await supabase
+          .from('profiles')
+          .update({ primary_company_id: companyId })
+          .eq('user_id', userId);
+
+        if (syncError) {
+          console.error('⚠️ Error syncing primary_company_id (non-fatal):', syncError);
+        } else {
+          console.log('✅ Synced primary_company_id for existing company');
+        }
+      } else {
+        console.log('✅ primary_company_id already set:', profileCheck.primary_company_id);
+      }
     } else {
       console.log('🆕 Creating new company');
       

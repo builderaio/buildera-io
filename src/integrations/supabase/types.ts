@@ -2686,6 +2686,104 @@ export type Database = {
           },
         ]
       }
+      company_play_to_win: {
+        Row: {
+          aspiration_metrics: Json | null
+          aspiration_timeline: string | null
+          capability_roadmap: Json | null
+          channels_focus: Json | null
+          company_id: string
+          competitive_advantage: string | null
+          completion_percentage: number | null
+          created_at: string | null
+          current_step: number | null
+          differentiation_factors: Json | null
+          generated_with_ai: boolean | null
+          geographic_focus: Json | null
+          governance_model: Json | null
+          id: string
+          kpi_definitions: Json | null
+          last_review_date: string | null
+          moat_type: string | null
+          next_review_date: string | null
+          okrs: Json | null
+          required_capabilities: Json | null
+          review_cadence: string | null
+          status: string | null
+          target_markets: Json | null
+          target_segments: Json | null
+          updated_at: string | null
+          value_proposition_canvas: Json | null
+          winning_aspiration: string | null
+        }
+        Insert: {
+          aspiration_metrics?: Json | null
+          aspiration_timeline?: string | null
+          capability_roadmap?: Json | null
+          channels_focus?: Json | null
+          company_id: string
+          competitive_advantage?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          current_step?: number | null
+          differentiation_factors?: Json | null
+          generated_with_ai?: boolean | null
+          geographic_focus?: Json | null
+          governance_model?: Json | null
+          id?: string
+          kpi_definitions?: Json | null
+          last_review_date?: string | null
+          moat_type?: string | null
+          next_review_date?: string | null
+          okrs?: Json | null
+          required_capabilities?: Json | null
+          review_cadence?: string | null
+          status?: string | null
+          target_markets?: Json | null
+          target_segments?: Json | null
+          updated_at?: string | null
+          value_proposition_canvas?: Json | null
+          winning_aspiration?: string | null
+        }
+        Update: {
+          aspiration_metrics?: Json | null
+          aspiration_timeline?: string | null
+          capability_roadmap?: Json | null
+          channels_focus?: Json | null
+          company_id?: string
+          competitive_advantage?: string | null
+          completion_percentage?: number | null
+          created_at?: string | null
+          current_step?: number | null
+          differentiation_factors?: Json | null
+          generated_with_ai?: boolean | null
+          geographic_focus?: Json | null
+          governance_model?: Json | null
+          id?: string
+          kpi_definitions?: Json | null
+          last_review_date?: string | null
+          moat_type?: string | null
+          next_review_date?: string | null
+          okrs?: Json | null
+          required_capabilities?: Json | null
+          review_cadence?: string | null
+          status?: string | null
+          target_markets?: Json | null
+          target_segments?: Json | null
+          updated_at?: string | null
+          value_proposition_canvas?: Json | null
+          winning_aspiration?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_play_to_win_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_products: {
         Row: {
           benefits: string[] | null
@@ -2750,6 +2848,75 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_ptw_reviews: {
+        Row: {
+          action_items: Json | null
+          adjustments: Json | null
+          challenges: string[] | null
+          company_id: string
+          created_at: string | null
+          decisions_made: Json | null
+          id: string
+          learnings: string[] | null
+          metrics_snapshot: Json | null
+          okr_progress_snapshot: Json | null
+          ptw_id: string
+          review_date: string
+          review_type: string
+          reviewed_by: string | null
+          wins: string[] | null
+        }
+        Insert: {
+          action_items?: Json | null
+          adjustments?: Json | null
+          challenges?: string[] | null
+          company_id: string
+          created_at?: string | null
+          decisions_made?: Json | null
+          id?: string
+          learnings?: string[] | null
+          metrics_snapshot?: Json | null
+          okr_progress_snapshot?: Json | null
+          ptw_id: string
+          review_date: string
+          review_type: string
+          reviewed_by?: string | null
+          wins?: string[] | null
+        }
+        Update: {
+          action_items?: Json | null
+          adjustments?: Json | null
+          challenges?: string[] | null
+          company_id?: string
+          created_at?: string | null
+          decisions_made?: Json | null
+          id?: string
+          learnings?: string[] | null
+          metrics_snapshot?: Json | null
+          okr_progress_snapshot?: Json | null
+          ptw_id?: string
+          review_date?: string
+          review_type?: string
+          reviewed_by?: string | null
+          wins?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_ptw_reviews_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_ptw_reviews_ptw_id_fkey"
+            columns: ["ptw_id"]
+            isOneToOne: false
+            referencedRelation: "company_play_to_win"
             referencedColumns: ["id"]
           },
         ]

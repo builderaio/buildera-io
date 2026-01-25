@@ -1,18 +1,34 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCompanyCompetitors, CompanyCompetitor } from '@/hooks/useCompanyCompetitors';
-import { Users, Plus, Trash2, Globe, Loader2 } from 'lucide-react';
+import { Users, Plus, Trash2, Globe, Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { CompetitorAnalysisResults } from './CompetitorAnalysisResults';
 
 interface ADNCompetitorsTabProps {
   companyId: string;
+}
+
+interface CompetitorData {
+  nombre: string;
+  descripcion: string;
+  ubicacion: string;
+  sitio_web: string;
+  motivo: string;
+}
+
+interface CompetitorAnalysis {
+  competidores_locales: CompetitorData[];
+  competidores_regionales: CompetitorData[];
+  referentes: CompetitorData[];
 }
 
 const PRIORITY_OPTIONS = [
@@ -24,7 +40,10 @@ const PRIORITY_OPTIONS = [
 export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { competitors, loading, saving, addCompetitor, updateCompetitor, deleteCompetitor } = useCompanyCompetitors(companyId);
+  const { competitors, loading, saving, addCompetitor, updateCompetitor, deleteCompetitor, refetch } = useCompanyCompetitors(companyId);
+  
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<CompetitorAnalysis | null>(null);
 
   const handleAdd = async () => {
     try {
@@ -52,6 +71,52 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
     }
   };
 
+  const handleAnalyzeWithAI = async () => {
+    setAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-competitors', {
+        body: { companyId }
+      });
+
+      if (error) throw error;
+
+      if (data?.analysis) {
+        setAnalysisResults(data.analysis);
+        toast({ 
+          title: 'Análisis completado',
+          description: 'Se encontraron competidores relevantes para tu empresa'
+        });
+      }
+    } catch (error) {
+      console.error('Error analyzing competitors:', error);
+      toast({ 
+        title: 'Error al analizar',
+        description: 'No se pudo completar el análisis de competidores',
+        variant: 'destructive' 
+      });
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleAddFromAnalysis = async (competitor: CompetitorData) => {
+    try {
+      await addCompetitor({
+        competitor_name: competitor.nombre,
+        website_url: competitor.sitio_web,
+        notes: `${competitor.descripcion}\n\nUbicación: ${competitor.ubicacion}\nMotivo: ${competitor.motivo}`,
+        is_direct_competitor: true,
+        priority_level: 2,
+      });
+      toast({ 
+        title: 'Competidor agregado',
+        description: `${competitor.nombre} fue agregado a tu lista`
+      });
+    } catch {
+      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -72,23 +137,56 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
             {t('company.competitors.desc', 'Los agentes de inteligencia competitiva monitorearán estos competidores')}
           </p>
         </div>
-        <Button onClick={handleAdd} disabled={saving}>
-          <Plus className="h-4 w-4 mr-2" />
-          {t('company.competitors.add', 'Agregar')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={handleAnalyzeWithAI} 
+            disabled={analyzing}
+            variant="outline"
+            className="gap-2"
+          >
+            {analyzing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {analyzing ? 'Analizando...' : 'Generar con IA'}
+          </Button>
+          <Button onClick={handleAdd} disabled={saving}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t('company.competitors.add', 'Agregar')}
+          </Button>
+        </div>
       </div>
 
-      {competitors.length === 0 ? (
+      {/* AI Analysis Results */}
+      {analysisResults && (
+        <CompetitorAnalysisResults 
+          analysis={analysisResults}
+          onAddCompetitor={handleAddFromAnalysis}
+        />
+      )}
+
+      {/* Manual Competitors List */}
+      {competitors.length === 0 && !analysisResults ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            {t('company.competitors.empty', 'No hay competidores configurados')}
+            <div className="space-y-3">
+              <Users className="h-12 w-12 mx-auto opacity-50" />
+              <p>{t('company.competitors.empty', 'No hay competidores configurados')}</p>
+              <p className="text-sm">
+                Usa "Generar con IA" para descubrir competidores automáticamente
+              </p>
+            </div>
           </CardContent>
         </Card>
-      ) : (
+      ) : competitors.length > 0 && (
         <div className="space-y-4">
+          <h4 className="font-medium text-sm text-muted-foreground">
+            Mis Competidores ({competitors.length})
+          </h4>
           {competitors.map(competitor => (
             <Card key={competitor.id}>
-              <CardHeader className="pb-3">
+              <CardContent className="pt-4 space-y-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 space-y-2">
                     <Input
@@ -127,8 +225,7 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
@@ -166,6 +263,7 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                     />
                   </div>
                 </div>
+                
                 <div className="space-y-2">
                   <Label>{t('company.competitors.notes', 'Notas')}</Label>
                   <Textarea
@@ -175,6 +273,7 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                     rows={2}
                   />
                 </div>
+                
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
                     <Switch

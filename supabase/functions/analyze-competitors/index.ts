@@ -64,15 +64,28 @@ serve(async (req) => {
       );
     }
 
-    // Extract competitor info from webhook_data if available
+    // Extract competitor info and products from webhook_data if available
     let diagnosticCompetitors: string[] = [];
+    let diagnosticProducts: string[] = [];
+    
     if (company.webhook_data) {
       const webhookData = company.webhook_data as Record<string, any>;
+      
+      // Extract competitors
       if (webhookData.market?.competitors) {
         if (Array.isArray(webhookData.market.competitors)) {
           diagnosticCompetitors = webhookData.market.competitors;
         } else if (typeof webhookData.market.competitors === 'string') {
           diagnosticCompetitors = webhookData.market.competitors.split(',').map((c: string) => c.trim());
+        }
+      }
+      
+      // Extract products/services from diagnostic
+      if (webhookData.products?.services_offered) {
+        if (Array.isArray(webhookData.products.services_offered)) {
+          diagnosticProducts = webhookData.products.services_offered;
+        } else if (typeof webhookData.products.services_offered === 'string') {
+          diagnosticProducts = webhookData.products.services_offered.split(',').map((p: string) => p.trim());
         }
       }
     }
@@ -93,6 +106,7 @@ serve(async (req) => {
         youtube: company.youtube_url || '',
       },
       diagnostic_competitors: diagnosticCompetitors,
+      diagnostic_products: diagnosticProducts,
     };
 
     console.log('Sending payload to n8n:', JSON.stringify(payload, null, 2));

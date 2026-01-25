@@ -1,37 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import { 
-  Sparkles, BarChart3, Calendar, TrendingUp, Users, Heart, MessageCircle, ArrowRight, Plus, 
-  ChevronRight, Zap, Eye, Target, Brain, Rocket, Star, Activity, PieChart, LineChart, 
-  CheckCircle2, PlayCircle, Image, Video, PenTool, Globe, Wand2, Camera, TrendingDown, 
-  Hash, Clock, Award, Network, Share2, Download, Upload, RefreshCw, Filter, Search, 
-  Settings, History as HistoryIcon, Linkedin, Instagram, Facebook, Music 
+  Sparkles, BarChart3, Calendar, TrendingUp, Users, Heart, ArrowRight, Plus, 
+  Zap, Target, Brain, Rocket, PenTool, Network, MessageCircle, Video, Image,
+  FolderOpen
 } from "lucide-react";
-import { SOCIAL_PLATFORMS, getPlatform, getPlatformDisplayName, getPlatformIcon } from '@/lib/socialPlatforms';
-import { SocialConnectionManager } from './SocialConnectionManager';
+import { getPlatformDisplayName } from '@/lib/socialPlatforms';
 import ContentCreatorTab from './ContentCreatorTab';
 import ContentLibraryTab from './ContentLibraryTab';
 import { ScheduledPostsManager } from './ScheduledPostsManager';
 import { UploadHistory } from './UploadHistory';
-import MarketingHubOrchestrator from './MarketingHubOrchestrator';
 import AudienciasManager from './AudienciasManager';
-import { ContentAnalysisDashboard } from './ContentAnalysisDashboard';
 import { CampaignDashboard } from './campaign/CampaignDashboard';
 import ContentCalendar from './ContentCalendar';
+import AudienceHighlightsWidget from './AudienceHighlightsWidget';
+import ConnectionStatusBar from './ConnectionStatusBar';
 
 interface MarketingHubWowProps {
   profile: any;
@@ -75,11 +66,12 @@ interface WorkflowState {
 
 const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   // Initialize activeTab from URL BEFORE first render to avoid race condition
   const getInitialTab = () => {
     const tab = searchParams.get('tab');
-    const allowed = new Set(['dashboard', 'create', 'analyze', 'content', 'history', 'campaigns', 'calendar', 'configuracion']);
+    const allowed = new Set(['dashboard', 'create', 'content', 'campaigns', 'calendar']);
     
     if (tab && allowed.has(tab)) {
       console.log('🎯 [MarketingHubWow] Estado inicial del tab desde URL:', tab);
@@ -100,7 +92,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     console.log('🔍 [MarketingHubWow] URL params changed:', { tab, view, currentTab: activeTab });
     
     if (tab) {
-      const allowed = new Set(['dashboard', 'create', 'analyze', 'content', 'history', 'campaigns', 'calendar', 'configuracion']);
+      const allowed = new Set(['dashboard', 'create', 'content', 'campaigns', 'calendar']);
       if (allowed.has(tab) && tab !== activeTab) {
         console.log('✅ [MarketingHubWow] Actualizando tab a:', tab);
         setActiveTab(tab);
@@ -736,7 +728,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         }} 
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-8 lg:w-fit lg:grid-cols-8 mb-6">
+        <TabsList className="grid w-full grid-cols-5 lg:w-fit lg:grid-cols-5 mb-6">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -744,10 +736,6 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           <TabsTrigger value="create" className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Crear</span>
-          </TabsTrigger>
-          <TabsTrigger value="analyze" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">Audiencias</span>
           </TabsTrigger>
           <TabsTrigger value="campaigns" className="flex items-center gap-2">
             <Rocket className="w-4 h-4" />
@@ -758,138 +746,133 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             <span className="hidden sm:inline">Calendario</span>
           </TabsTrigger>
           <TabsTrigger value="content" className="flex items-center gap-2">
-            <PenTool className="w-4 h-4" />
-            <span className="hidden sm:inline">Contenido</span>
-          </TabsTrigger>
-          <TabsTrigger value="history" className="flex items-center gap-2">
-            <HistoryIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Historial</span>
-          </TabsTrigger>
-          <TabsTrigger value="configuracion" className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            <span className="hidden sm:inline">Config</span>
+            <FolderOpen className="w-4 h-4" />
+            <span className="hidden sm:inline">Biblioteca</span>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
-          <div className="space-y-6">
-            {/* Enhanced Content Analysis - Full Width for Wow Effect */}
-            {/* DISABLED: Comentado para evitar que aparezca el modal de análisis automáticamente
-            <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-blue-50 via-white to-purple-50">
-              <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <PieChart className="w-6 h-6" />
-                  Análisis Inteligente de Contenido
+          {/* Connection Status Bar */}
+          <ConnectionStatusBar connections={socialConnections} />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Performance by Platform - 2 columns */}
+            <Card className="lg:col-span-2 overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
+                <CardTitle className="flex items-center gap-2">
+                  <Network className="w-5 h-5" />
+                  Rendimiento por Plataforma
                 </CardTitle>
-                <p className="text-blue-100">Insights avanzados sobre el rendimiento de tu contenido</p>
               </CardHeader>
               <CardContent className="p-6">
-                <ContentAnalysisDashboard profile={profile} />
-              </CardContent>
-            </Card>
-            */}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Enhanced Network Analysis */}
-              <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-green-50 via-white to-emerald-50">
-                <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
-                  <CardTitle className="flex items-center gap-2">
-                    <Network className="w-5 h-5" />
-                    Rendimiento por Plataforma
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    {Object.entries(platformStats)
-                      .filter(([platform]) => (socialConnections as any)[platform as keyof typeof socialConnections])
-                      .map(([platform, stats]) => {
-                        const platformInfo = getPlatformInfo(platform as keyof typeof platformStats);
-                        const engagementRate = stats.posts > 0 ? (stats.engagement / stats.posts).toFixed(1) : '0';
-                        return (
-                          <div key={platform} className="relative overflow-hidden p-4 bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-lg">
-                                  {platformInfo.icon}
-                                </div>
-                                <div>
-                                  <p className="font-semibold text-gray-900">{platformInfo.name}</p>
-                                  <p className="text-sm text-gray-500">{stats.posts} publicaciones</p>
-                                </div>
+                <div className="space-y-4">
+                  {Object.entries(platformStats)
+                    .filter(([platform]) => (socialConnections as any)[platform as keyof typeof socialConnections])
+                    .map(([platform, stats]) => {
+                      const platformInfo = getPlatformInfo(platform as keyof typeof platformStats);
+                      const engagementRate = stats.posts > 0 ? (stats.engagement / stats.posts).toFixed(1) : '0';
+                      return (
+                        <div key={platform} className="relative overflow-hidden p-4 bg-muted/50 rounded-lg border hover:shadow-md transition-shadow">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-lg">
+                                {platformInfo.icon}
                               </div>
-                              <div className="text-right">
-                                <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                                  {formatNumber(stats.engagement)}
-                                </p>
-                                <p className="text-xs text-gray-500">total engagement</p>
-                                {stats.posts > 0 && (
-                                  <p className="text-xs font-medium text-blue-600">{engagementRate} avg/post</p>
-                                )}
+                              <div>
+                                <p className="font-semibold">{platformInfo.name}</p>
+                                <p className="text-sm text-muted-foreground">{stats.posts} publicaciones</p>
                               </div>
                             </div>
-                            {stats.posts > 0 && (
-                              <div className="mt-3">
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                  <div 
-                                    className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
-                                    style={{ width: `${Math.min((stats.engagement / 1000) * 100, 100)}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            )}
+                            <div className="text-right">
+                              <p className="text-2xl font-bold text-primary">
+                                {formatNumber(stats.engagement)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">total engagement</p>
+                              {stats.posts > 0 && (
+                                <p className="text-xs font-medium text-blue-600">{engagementRate} avg/post</p>
+                              )}
+                            </div>
                           </div>
-                        );
-                      })}
-                  </div>
-                </CardContent>
-              </Card>
+                        </div>
+                      );
+                    })}
+                  {Object.values(socialConnections).every(v => !v) && (
+                    <div className="text-center py-8">
+                      <Network className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground mb-4">Conecta tus redes sociales para ver métricas</p>
+                      <Button 
+                        variant="outline"
+                        onClick={() => navigate('/company-dashboard?view=adn-empresa&tab=canales')}
+                      >
+                        Conectar Redes
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Quick Actions Card */}
-              <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-purple-50 via-white to-pink-50">
-                <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                  <CardTitle className="flex items-center gap-2">
-                    <Rocket className="w-5 h-5" />
-                    Acciones Rápidas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 gap-3">
-                    <Button 
-                      onClick={() => setActiveTab('create')}
-                      className="w-full justify-start bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-                    >
-                      <PenTool className="w-4 h-4 mr-2" />
-                      Crear Contenido
-                    </Button>
-                    <Button 
-                      onClick={() => setActiveTab('analyze')}
-                      variant="outline"
-                      className="w-full justify-start border-purple-300 hover:bg-purple-50"
-                    >
-                      <Users className="w-4 h-4 mr-2" />
-                      Gestionar Audiencias
-                    </Button>
-                    <Button 
-                      onClick={() => setActiveTab('campaigns')}
-                      variant="outline"
-                      className="w-full justify-start border-blue-300 hover:bg-blue-50"
-                    >
-                      <Rocket className="w-4 h-4 mr-2" />
-                      Ver Campañas
-                    </Button>
-                    <Button 
-                      onClick={() => setActiveTab('history')}
-                      variant="outline"
-                      className="w-full justify-start border-green-300 hover:bg-green-50"
-                    >
-                      <HistoryIcon className="w-4 h-4 mr-2" />
-                      Ver Historial
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            {/* Audiences Widget - 1 column */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-pink-600 to-purple-600 text-white">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Tus Audiencias
+                </CardTitle>
+                <CardDescription className="text-pink-100">
+                  Segmentos identificados
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4">
+                <AudienceHighlightsWidget userId={userId || undefined} />
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Quick Actions */}
+          <Card className="overflow-hidden border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Rocket className="w-5 h-5 text-primary" />
+                Acciones Rápidas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Button 
+                  onClick={() => setActiveTab('create')}
+                  className="h-auto py-4 flex-col gap-2"
+                >
+                  <PenTool className="w-5 h-5" />
+                  <span className="text-sm">Crear Contenido</span>
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab('campaigns')}
+                  variant="outline"
+                  className="h-auto py-4 flex-col gap-2"
+                >
+                  <Target className="w-5 h-5" />
+                  <span className="text-sm">Nueva Campaña</span>
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab('calendar')}
+                  variant="outline"
+                  className="h-auto py-4 flex-col gap-2"
+                >
+                  <Calendar className="w-5 h-5" />
+                  <span className="text-sm">Ver Calendario</span>
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab('content')}
+                  variant="outline"
+                  className="h-auto py-4 flex-col gap-2"
+                >
+                  <FolderOpen className="w-5 h-5" />
+                  <span className="text-sm">Biblioteca</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="create" className="space-y-6">
@@ -898,23 +881,6 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             topPosts={recentActivity || []}
             selectedPlatform={selectedPlatform}
           />
-        </TabsContent>
-
-        <TabsContent value="analyze" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
-                Mis Audiencias
-              </CardTitle>
-              <p className="text-muted-foreground">
-                Gestiona y analiza tus audiencias objetivo para campañas más efectivas
-              </p>
-            </CardHeader>
-            <CardContent>
-              <AudienciasManager profile={profile} />
-            </CardContent>
-          </Card>
         </TabsContent>
 
         <TabsContent value="campaigns" className="space-y-6">
@@ -926,28 +892,15 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         </TabsContent>
 
         <TabsContent value="content" className="space-y-6">
-          <ContentLibraryTab profile={profile} />
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <UploadHistory profile={profile} />
-            <ScheduledPostsManager profile={profile} />
+          {/* Consolidated Library: Content + History + Scheduled */}
+          <div className="space-y-6">
+            <ContentLibraryTab profile={profile} />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <UploadHistory profile={profile} />
+              <ScheduledPostsManager profile={profile} />
+            </div>
           </div>
-        </TabsContent>
-
-        <TabsContent value="configuracion" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Configuración del Marketing Hub
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <SocialConnectionManager profile={profile} />
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>

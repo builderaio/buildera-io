@@ -45,6 +45,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [userId, setUserId] = useState<string | null>(profile?.user_id || null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [audiences, setAudiences] = useState<AudienceSegment[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedAudience, setSelectedAudience] = useState<AudienceSegment | null>(null);
@@ -52,8 +53,8 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
   // Effect to reload when navigating back with reload param
   useEffect(() => {
     const reloadParam = searchParams.get('reload');
-    if (reloadParam && userId) {
-      loadAudiences(userId);
+    if (reloadParam && companyId) {
+      loadAudiences();
     }
   }, [searchParams]);
 
@@ -68,7 +69,35 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
         }
         
         if (uid) {
-          await loadAudiences(uid);
+          // Get the user's primary company
+          const { data: member, error: memberError } = await supabase
+            .from('company_members')
+            .select('company_id')
+            .eq('user_id', uid)
+            .eq('is_primary', true)
+            .maybeSingle();
+          
+          if (memberError) {
+            console.error('Error getting company membership:', memberError);
+          }
+          
+          if (member?.company_id) {
+            setCompanyId(member.company_id);
+            await loadAudiences(member.company_id);
+          } else {
+            // Fallback: try to find any company membership
+            const { data: anyMember } = await supabase
+              .from('company_members')
+              .select('company_id')
+              .eq('user_id', uid)
+              .limit(1)
+              .maybeSingle();
+            
+            if (anyMember?.company_id) {
+              setCompanyId(anyMember.company_id);
+              await loadAudiences(anyMember.company_id);
+            }
+          }
         }
       } catch (e) {
         console.error('Error inicializando:', e);
@@ -77,16 +106,17 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     init();
   }, [profile?.user_id, userId]);
 
-  const loadAudiences = async (uid?: string) => {
-    const resolvedUid = uid || profile?.user_id || userId;
-    if (!resolvedUid) return;
+  const loadAudiences = async (companyIdParam?: string) => {
+    const resolvedCompanyId = companyIdParam || companyId;
+    if (!resolvedCompanyId) return;
 
     try {
       setLoading(true);
+      // Query by company_id to get all audiences including those from diagnostic
       const { data, error } = await supabase
         .from('company_audiences')
         .select('*')
-        .eq('user_id', resolvedUid)
+        .eq('company_id', resolvedCompanyId)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
@@ -114,7 +144,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
         .from('company_audiences')
         .delete()
         .eq('id', audienceId)
-        .eq('user_id', userId);
+        .eq('company_id', companyId);
 
       if (error) throw error;
 

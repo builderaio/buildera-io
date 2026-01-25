@@ -781,13 +781,21 @@
     },
     "founder": {
       "step1Title": "Cuéntanos sobre tu visión",
+      "step1Description": "Empecemos por lo básico de tu negocio",
       "step2Title": "Define tu estrategia ganadora",
-      "step3Title": "Tus primeros pasos"
+      "step3Title": "Tus primeros pasos",
+      "businessName": "Nombre de tu negocio",
+      "businessNamePlaceholder": "Ej: Mi Startup",
+      "noWebsiteHint": "¿Aún no tienes sitio web? No hay problema, te ayudaremos a construir tu estrategia desde cero.",
+      "startStrategyWithoutWeb": "Comenzar sin sitio web",
+      "analyzeAndStart": "Analizar y comenzar",
+      "redirectToPTW": "Vamos a definir tu estrategia"
     },
     "growth": {
       "step1Title": "Diagnóstico profundo",
       "step2Title": "Análisis de gaps",
       "step3Title": "Plan de acción priorizado"
     }
-  }
+  },
+  "optional": "opcional"
 }

@@ -141,14 +141,28 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     setPhase('form');
   };
 
-  // Save basic company data and start extraction
+  // Check if website is required based on journey type
+  const isWebsiteRequired = selectedJourney === 'existing_business';
+
+  // Save basic company data and start extraction or go to PTW
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.website_url) {
+    // Name is always required, website only for existing businesses
+    if (!formData.name) {
       toast({
         title: t('common:validation.required'),
         description: t('common:onboarding.fillRequiredFields'),
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // For existing businesses, website is required
+    if (isWebsiteRequired && !formData.website_url) {
+      toast({
+        title: t('common:validation.required'),
+        description: t('common:onboarding.websiteRequired'),
         variant: "destructive"
       });
       return;
@@ -163,8 +177,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           .from('companies')
           .update({
             name: formData.name,
-            website_url: formData.website_url,
-            industry_sector: formData.industry_sector || null
+            website_url: formData.website_url || null,
+            industry_sector: formData.industry_sector || null,
+            journey_type: selectedJourney
           })
           .eq('id', companyId);
 
@@ -175,9 +190,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           .from('companies')
           .insert({
             name: formData.name,
-            website_url: formData.website_url,
+            website_url: formData.website_url || null,
             industry_sector: formData.industry_sector || null,
-            journey_type: selectedJourney || 'existing_business',
+            journey_type: selectedJourney || 'new_business',
             journey_current_step: 1,
             created_by: user.id
           })
@@ -211,7 +226,15 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         industry_sector: formData.industry_sector
       });
 
-      startExtraction(companyId!);
+      // Decide next step based on journey and website availability
+      if (selectedJourney === 'new_business' && !formData.website_url) {
+        // New business without website: skip diagnostic, complete onboarding
+        // and redirect to Play to Win wizard
+        await completeOnboardingAndRedirectToPTW(companyId!);
+      } else {
+        // Has website: run diagnostic extraction
+        startExtraction(companyId!);
+      }
     } catch (error) {
       console.error('Error saving company data:', error);
       toast({
@@ -219,6 +242,47 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         description: t('common:errors.tryAgain'),
         variant: "destructive"
       });
+    }
+  };
+
+  // Complete onboarding without diagnostic and redirect to PTW
+  const completeOnboardingAndRedirectToPTW = async (companyId: string) => {
+    try {
+      // Mark onboarding as complete (partial - no diagnostic)
+      await supabase
+        .from('user_onboarding_status')
+        .upsert({
+          user_id: user.id,
+          onboarding_completed_at: new Date().toISOString(),
+          dna_empresarial_completed: true,
+          first_login_completed: true,
+          current_step: 5
+        }, {
+          onConflict: 'user_id'
+        });
+
+      // Update company journey step
+      await supabase
+        .from('companies')
+        .update({ journey_current_step: 2 })
+        .eq('id', companyId);
+
+      // Dispatch completion event
+      window.dispatchEvent(new CustomEvent('onboarding-completed'));
+
+      toast({
+        title: t('common:onboarding.completed'),
+        description: t('common:journey.founder.redirectToPTW', 'Vamos a definir tu estrategia'),
+        duration: 2000
+      });
+
+      // Navigate to Play to Win wizard
+      setTimeout(() => {
+        navigate('/company-dashboard?view=estrategia-ptw&onboarding_completed=true', { replace: true });
+      }, 1000);
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      navigate('/company-dashboard', { replace: true });
     }
   };
 
@@ -478,6 +542,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   }
 
   // Phase: Form - Collect basic company data
+  // Form adapts based on selected journey
+  const isNewBusiness = selectedJourney === 'new_business';
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -486,10 +553,16 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
             <Building2 className="w-8 h-8 text-primary" />
           </div>
           <CardTitle className="text-2xl">
-            {t('common:onboarding.welcomeTitle')}
+            {isNewBusiness 
+              ? t('common:journey.founder.step1Title', 'Cuéntanos sobre tu visión')
+              : t('common:onboarding.welcomeTitle')
+            }
           </CardTitle>
           <p className="text-muted-foreground mt-2">
-            {t('common:onboarding.welcomeDescription')}
+            {isNewBusiness
+              ? t('common:journey.founder.step1Description', 'Empecemos por lo básico de tu negocio')
+              : t('common:onboarding.welcomeDescription')
+            }
           </p>
         </CardHeader>
         <CardContent>
@@ -497,13 +570,19 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
             <div className="space-y-2">
               <Label htmlFor="name" className="flex items-center gap-2">
                 <Building2 className="w-4 h-4" />
-                {t('common:company.name')} *
+                {isNewBusiness 
+                  ? t('common:journey.founder.businessName', 'Nombre de tu negocio')
+                  : t('common:company.name')
+                } *
               </Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder={t('common:company.namePlaceholder')}
+                placeholder={isNewBusiness 
+                  ? t('common:journey.founder.businessNamePlaceholder', 'Ej: Mi Startup')
+                  : t('common:company.namePlaceholder')
+                }
                 required
               />
             </div>
@@ -511,7 +590,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
             <div className="space-y-2">
               <Label htmlFor="website_url" className="flex items-center gap-2">
                 <Globe className="w-4 h-4" />
-                {t('common:company.website')} *
+                {t('common:company.website')} {isWebsiteRequired ? '*' : `(${t('common:optional', 'opcional')})`}
               </Label>
               <Input
                 id="website_url"
@@ -519,8 +598,13 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
                 value={formData.website_url}
                 onChange={(e) => setFormData(prev => ({ ...prev, website_url: e.target.value }))}
                 placeholder="https://ejemplo.com"
-                required
+                required={isWebsiteRequired}
               />
+              {isNewBusiness && (
+                <p className="text-xs text-muted-foreground">
+                  {t('common:journey.founder.noWebsiteHint', '¿Aún no tienes sitio web? No hay problema, te ayudaremos a construir tu estrategia desde cero.')}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -539,9 +623,24 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
             <Button 
               type="submit" 
               className="w-full mt-6"
-              disabled={!formData.name || !formData.website_url}
+              disabled={!formData.name || (isWebsiteRequired && !formData.website_url)}
             >
-              {t('common:onboarding.startAnalysis')}
+              {isNewBusiness && !formData.website_url
+                ? t('common:journey.founder.startStrategyWithoutWeb', 'Comenzar sin sitio web')
+                : isNewBusiness
+                  ? t('common:journey.founder.analyzeAndStart', 'Analizar y comenzar')
+                  : t('common:onboarding.startAnalysis')
+              }
+            </Button>
+
+            {/* Back button to journey selection */}
+            <Button 
+              type="button"
+              variant="ghost" 
+              className="w-full"
+              onClick={() => setPhase('journey-selection')}
+            >
+              {t('common:actions.back')}
             </Button>
           </form>
         </CardContent>

@@ -146,14 +146,14 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
                 <p className="text-sm text-muted-foreground">{seo.description}</p>
               </div>
             )}
-            {seo.keyword && seo.keyword.length > 0 && (
+            {hasData(seo.keyword) && (
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                   <Hash className="w-3 h-3" />
-                  {t('common:adn.diagnostic.keywords', 'Palabras Clave')} ({seo.keyword.length})
+                  {t('common:adn.diagnostic.keywords', 'Palabras Clave')} ({toArray(seo.keyword).length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {seo.keyword.map((keyword: string, idx: number) => (
+                  {toArray(seo.keyword).map((keyword: string, idx: number) => (
                     <Badge key={idx} variant="secondary" className="text-xs">
                       {keyword}
                     </Badge>
@@ -166,7 +166,7 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
       )}
 
       {/* Products & Services Section */}
-      {products && (products.service?.length > 0 || products.offer?.length > 0) && (
+      {products && (hasData(products.service) || hasData(products.offer)) && (
         <Card>
           <CardHeader className="py-3 px-4">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -175,13 +175,13 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="py-2 px-4 space-y-3">
-            {products.service && products.service.length > 0 && (
+            {hasData(products.service) && (
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium">
-                  {t('common:adn.diagnostic.services', 'Servicios')} ({products.service.length})
+                  {t('common:adn.diagnostic.services', 'Servicios')} ({toArray(products.service).length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {products.service.map((service: string, idx: number) => (
+                  {toArray(products.service).map((service: string, idx: number) => (
                     <Badge key={idx} variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
                       {service}
                     </Badge>
@@ -189,13 +189,13 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
                 </div>
               </div>
             )}
-            {products.offer && products.offer.length > 0 && (
+            {hasData(products.offer) && (
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground font-medium">
-                  {t('common:adn.diagnostic.offers', 'Ofertas Destacadas')} ({products.offer.length})
+                  {t('common:adn.diagnostic.offers', 'Ofertas Destacadas')} ({toArray(products.offer).length})
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {products.offer.map((offer: string, idx: number) => (
+                  {toArray(products.offer).map((offer: string, idx: number) => (
                     <Badge key={idx} className="text-xs bg-primary/10 text-primary border-primary/30">
                       {offer}
                     </Badge>
@@ -218,14 +218,14 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
           </CardHeader>
           <CardContent className="py-2 px-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              {contact.email && contact.email.length > 0 && (
+              {hasData(contact.email) && (
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                     <Mail className="w-3 h-3" />
                     {t('common:adn.diagnostic.emails', 'Emails')}
                   </p>
                   <div className="space-y-0.5">
-                    {contact.email.map((email: string, idx: number) => (
+                    {toArray(contact.email).map((email: string, idx: number) => (
                       <a 
                         key={idx} 
                         href={`mailto:${email}`}
@@ -237,40 +237,40 @@ export const ADNDiagnosticTab = ({ webhookData }: ADNDiagnosticTabProps) => {
                   </div>
                 </div>
               )}
-              {contact.phone && contact.phone.length > 0 && (
+              {hasData(contact.phone) && (
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                     <Phone className="w-3 h-3" />
                     {t('common:adn.diagnostic.phones', 'Teléfonos')}
                   </p>
                   <div className="space-y-0.5">
-                    {contact.phone.map((phone: string, idx: number) => (
+                    {toArray(contact.phone).map((phone: string, idx: number) => (
                       <p key={idx} className="text-sm">{phone}</p>
                     ))}
                   </div>
                 </div>
               )}
-              {contact.address && contact.address.length > 0 && (
+              {hasData(contact.address) && (
                 <div className="space-y-1 sm:col-span-2">
                   <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
                     {t('common:adn.diagnostic.addresses', 'Direcciones')}
                   </p>
                   <div className="space-y-0.5">
-                    {contact.address.map((addr: string, idx: number) => (
+                    {toArray(contact.address).map((addr: string, idx: number) => (
                       <p key={idx} className="text-sm">{addr}</p>
                     ))}
                   </div>
                 </div>
               )}
-              {contact.social_links && contact.social_links.length > 0 && (
+              {hasData(contact.social_links) && (
                 <div className="space-y-1 sm:col-span-2">
                   <p className="text-xs text-muted-foreground font-medium flex items-center gap-1">
                     <Link className="w-3 h-3" />
-                    {t('common:adn.diagnostic.socialLinks', 'Redes Sociales')} ({contact.social_links.length})
+                    {t('common:adn.diagnostic.socialLinks', 'Redes Sociales')} ({toArray(contact.social_links).length})
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {contact.social_links.map((link: string, idx: number) => {
+                    {toArray(contact.social_links).map((link: string, idx: number) => {
                       const platform = link.includes('linkedin') ? 'LinkedIn' :
                                        link.includes('instagram') ? 'Instagram' :
                                        link.includes('tiktok') ? 'TikTok' :

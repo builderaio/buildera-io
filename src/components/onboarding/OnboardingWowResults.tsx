@@ -145,6 +145,16 @@ export const OnboardingWowResults = ({
         return false;
       };
 
+      // Calculate text height without drawing
+      const getTextHeight = (text: string, fontSize: number, maxWidth?: number): number => {
+        pdf.setFontSize(fontSize);
+        if (maxWidth) {
+          const lines = pdf.splitTextToSize(text, maxWidth);
+          return lines.length * (fontSize * 0.4);
+        }
+        return fontSize * 0.4;
+      };
+
       const drawText = (text: string, x: number, y: number, options: { 
         fontSize?: number; 
         color?: [number, number, number]; 
@@ -390,70 +400,87 @@ export const OnboardingWowResults = ({
         rightY += h + 8;
       }
 
-      // === ACTION PLAN (new page if needed) ===
+      // === ACTION PLAN (new page for clean layout) ===
       yPos = Math.max(leftY, rightY) + 15;
       
       if (actionPlan.short_term?.length || actionPlan.mid_term?.length || actionPlan.long_term?.length) {
-        checkPageBreak(60);
+        // Always start action plan on a new page for clean layout
+        addPage();
         
-        drawText('PLAN DE ACCIÓN', margin, yPos, { fontSize: 12, color: accentColor, fontStyle: 'bold' });
-        yPos += 8;
+        drawText('PLAN DE ACCIÓN', margin, yPos, { fontSize: 14, color: accentColor, fontStyle: 'bold' });
+        yPos += 10;
         
         pdf.setDrawColor(...accentColor);
-        pdf.line(margin, yPos, margin + 30, yPos);
-        yPos += 10;
+        pdf.setLineWidth(1);
+        pdf.line(margin, yPos, margin + 35, yPos);
+        yPos += 15;
 
-        const planColWidth = (contentWidth - 20) / 3;
+        const planColWidth = (contentWidth - 16) / 3;
+        const col1X = margin;
+        const col2X = margin + planColWidth + 8;
+        const col3X = margin + (planColWidth + 8) * 2;
+        const startY = yPos;
 
-        // Short term - show ALL
+        // Calculate heights for each column to render them properly
+        let col1Y = startY;
+        let col2Y = startY;
+        let col3Y = startY;
+
+        // Short term column
         if (actionPlan.short_term?.length > 0) {
-          let planY = yPos;
-          drawText('CORTO PLAZO', margin, planY, { fontSize: 9, color: [22, 163, 74], fontStyle: 'bold' });
-          planY += 6;
+          drawText('CORTO PLAZO', col1X, col1Y, { fontSize: 10, color: [22, 163, 74], fontStyle: 'bold' });
+          col1Y += 8;
+          
           actionPlan.short_term.forEach((action: any, idx: number) => {
-            checkPageBreak(15);
-            drawText(`${idx + 1}. ${action.action || action}`, margin, planY, { fontSize: 8, fontStyle: 'bold', maxWidth: planColWidth });
-            planY += 5;
+            const actionText = action.action || action;
+            drawText(`${idx + 1}. ${actionText}`, col1X, col1Y, { fontSize: 8, fontStyle: 'bold', maxWidth: planColWidth - 2 });
+            const actionHeight = getTextHeight(`${idx + 1}. ${actionText}`, 8, planColWidth - 2);
+            col1Y += actionHeight + 3;
+            
             if (action.reason) {
-              const h = drawText(action.reason, margin + 3, planY, { fontSize: 7, color: lightGray, maxWidth: planColWidth - 5 });
-              planY += h + 3;
+              const reasonHeight = drawText(action.reason, col1X, col1Y, { fontSize: 7, color: lightGray, maxWidth: planColWidth - 2 });
+              col1Y += reasonHeight + 5;
             }
           });
         }
 
-        // Mid term - show ALL
+        // Mid term column
         if (actionPlan.mid_term?.length > 0) {
-          let planY = yPos;
-          const midCol = margin + planColWidth + 10;
-          drawText('MEDIANO PLAZO', midCol, planY, { fontSize: 9, color: [37, 99, 235], fontStyle: 'bold' });
-          planY += 6;
+          drawText('MEDIANO PLAZO', col2X, col2Y, { fontSize: 10, color: [37, 99, 235], fontStyle: 'bold' });
+          col2Y += 8;
+          
           actionPlan.mid_term.forEach((action: any, idx: number) => {
-            checkPageBreak(15);
-            drawText(`${idx + 1}. ${action.action || action}`, midCol, planY, { fontSize: 8, fontStyle: 'bold', maxWidth: planColWidth });
-            planY += 5;
+            const actionText = action.action || action;
+            drawText(`${idx + 1}. ${actionText}`, col2X, col2Y, { fontSize: 8, fontStyle: 'bold', maxWidth: planColWidth - 2 });
+            const actionHeight = getTextHeight(`${idx + 1}. ${actionText}`, 8, planColWidth - 2);
+            col2Y += actionHeight + 3;
+            
             if (action.reason) {
-              const h = drawText(action.reason, midCol + 3, planY, { fontSize: 7, color: lightGray, maxWidth: planColWidth - 5 });
-              planY += h + 3;
+              const reasonHeight = drawText(action.reason, col2X, col2Y, { fontSize: 7, color: lightGray, maxWidth: planColWidth - 2 });
+              col2Y += reasonHeight + 5;
             }
           });
         }
 
-        // Long term - show ALL
+        // Long term column
         if (actionPlan.long_term?.length > 0) {
-          let planY = yPos;
-          const longCol = margin + (planColWidth + 10) * 2;
-          drawText('LARGO PLAZO', longCol, planY, { fontSize: 9, color: [147, 51, 234], fontStyle: 'bold' });
-          planY += 6;
+          drawText('LARGO PLAZO', col3X, col3Y, { fontSize: 10, color: [147, 51, 234], fontStyle: 'bold' });
+          col3Y += 8;
+          
           actionPlan.long_term.forEach((action: any, idx: number) => {
-            checkPageBreak(15);
-            drawText(`${idx + 1}. ${action.action || action}`, longCol, planY, { fontSize: 8, fontStyle: 'bold', maxWidth: planColWidth });
-            planY += 5;
+            const actionText = action.action || action;
+            drawText(`${idx + 1}. ${actionText}`, col3X, col3Y, { fontSize: 8, fontStyle: 'bold', maxWidth: planColWidth - 2 });
+            const actionHeight = getTextHeight(`${idx + 1}. ${actionText}`, 8, planColWidth - 2);
+            col3Y += actionHeight + 3;
+            
             if (action.reason) {
-              const h = drawText(action.reason, longCol + 3, planY, { fontSize: 7, color: lightGray, maxWidth: planColWidth - 5 });
-              planY += h + 3;
+              const reasonHeight = drawText(action.reason, col3X, col3Y, { fontSize: 7, color: lightGray, maxWidth: planColWidth - 2 });
+              col3Y += reasonHeight + 5;
             }
           });
         }
+
+        yPos = Math.max(col1Y, col2Y, col3Y) + 10;
       }
 
       // === FOOTER ===

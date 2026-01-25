@@ -26,3 +26,6 @@ verify_jwt = true
 
 [functions.sandbox-agent-executor]
 verify_jwt = false
+
+[functions.openai-responses-handler]
+verify_jwt = false

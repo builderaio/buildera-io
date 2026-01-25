@@ -8,9 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Settings, RefreshCw, Key, Bot, Cog, CheckCircle, Circle } from "lucide-react";
+import { Plus, Settings, RefreshCw, Key, Bot, Cog, CheckCircle, Circle, Zap, FileText, Wrench } from "lucide-react";
+import AIFunctionConfigurationPanel from "./ai-config/AIFunctionConfigurationPanel";
+import AIToolsConfigurationPanel from "./ai-config/AIToolsConfigurationPanel";
 interface AIProvider {
   id: string;
   name: string;
@@ -293,13 +296,40 @@ export default function UnifiedAIConfiguration() {
   if (loading) {
     return <div className="flex justify-center p-8">Cargando configuración...</div>;
   }
-  return <div className="space-y-6">
-      <div>
-        
-        
-      </div>
+  return (
+    <Tabs defaultValue="functions" className="space-y-6">
+      <TabsList className="grid w-full grid-cols-4">
+        <TabsTrigger value="functions" className="flex items-center gap-2">
+          <Zap className="h-4 w-4" />
+          Funciones
+        </TabsTrigger>
+        <TabsTrigger value="tools" className="flex items-center gap-2">
+          <Wrench className="h-4 w-4" />
+          Herramientas
+        </TabsTrigger>
+        <TabsTrigger value="providers" className="flex items-center gap-2">
+          <Bot className="h-4 w-4" />
+          Proveedores
+        </TabsTrigger>
+        <TabsTrigger value="keys" className="flex items-center gap-2">
+          <Key className="h-4 w-4" />
+          API Keys
+        </TabsTrigger>
+      </TabsList>
 
-      <div className="grid gap-6">
+      {/* Functions Tab - New Responses API Configuration */}
+      <TabsContent value="functions">
+        <AIFunctionConfigurationPanel />
+      </TabsContent>
+
+      {/* Tools Tab - Tool Compatibility Matrix */}
+      <TabsContent value="tools">
+        <AIToolsConfigurationPanel />
+      </TabsContent>
+
+      {/* Providers Tab - Existing Provider Management */}
+      <TabsContent value="providers">
+        <div className="grid gap-6">
         {/* Proveedores Section */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -501,6 +531,48 @@ export default function UnifiedAIConfiguration() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </div>;
+        </div>
+      </TabsContent>
+
+      {/* API Keys Tab - Key Management */}
+      <TabsContent value="keys">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              Gestión de API Keys
+            </CardTitle>
+            <CardDescription>
+              Administra las claves de API para cada proveedor
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              {apiKeys.map(key => (
+                <div key={key.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Key className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">{key.api_key_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {key.provider} • ****{key.key_last_four}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant={key.status === 'active' ? 'default' : 'secondary'}>
+                    {key.status}
+                  </Badge>
+                </div>
+              ))}
+              {apiKeys.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  No hay API keys configuradas. Agrega una desde la pestaña de Proveedores.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  );
 }

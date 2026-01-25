@@ -214,6 +214,90 @@ export type Database = {
           },
         ]
       }
+      ai_function_configurations: {
+        Row: {
+          api_version: string | null
+          category: string
+          created_at: string | null
+          custom_functions: Json | null
+          description: string | null
+          display_name: string
+          function_name: string
+          id: string
+          instructions: string | null
+          is_active: boolean | null
+          max_output_tokens: number | null
+          model_name: string
+          parallel_tool_calls: boolean | null
+          provider: string
+          reasoning_effort: string | null
+          reasoning_enabled: boolean | null
+          requires_web_search: boolean | null
+          supports_streaming: boolean | null
+          system_prompt: string | null
+          temperature: number | null
+          tool_choice: string | null
+          tools_config: Json | null
+          tools_enabled: Json | null
+          top_p: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          api_version?: string | null
+          category?: string
+          created_at?: string | null
+          custom_functions?: Json | null
+          description?: string | null
+          display_name: string
+          function_name: string
+          id?: string
+          instructions?: string | null
+          is_active?: boolean | null
+          max_output_tokens?: number | null
+          model_name?: string
+          parallel_tool_calls?: boolean | null
+          provider?: string
+          reasoning_effort?: string | null
+          reasoning_enabled?: boolean | null
+          requires_web_search?: boolean | null
+          supports_streaming?: boolean | null
+          system_prompt?: string | null
+          temperature?: number | null
+          tool_choice?: string | null
+          tools_config?: Json | null
+          tools_enabled?: Json | null
+          top_p?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          api_version?: string | null
+          category?: string
+          created_at?: string | null
+          custom_functions?: Json | null
+          description?: string | null
+          display_name?: string
+          function_name?: string
+          id?: string
+          instructions?: string | null
+          is_active?: boolean | null
+          max_output_tokens?: number | null
+          model_name?: string
+          parallel_tool_calls?: boolean | null
+          provider?: string
+          reasoning_effort?: string | null
+          reasoning_enabled?: boolean | null
+          requires_web_search?: boolean | null
+          supports_streaming?: boolean | null
+          system_prompt?: string | null
+          temperature?: number | null
+          tool_choice?: string | null
+          tools_config?: Json | null
+          tools_enabled?: Json | null
+          top_p?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ai_model_assignments: {
         Row: {
           ai_model_id: string | null
@@ -364,6 +448,60 @@ export type Database = {
           response_time?: number
           status?: string
           uptime?: number
+        }
+        Relationships: []
+      }
+      ai_model_tool_compatibility: {
+        Row: {
+          context_window: number | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          is_active: boolean | null
+          max_output_tokens: number | null
+          model_name: string
+          notes: string | null
+          provider: string
+          supports_code_interpreter: boolean | null
+          supports_file_search: boolean | null
+          supports_image_generation: boolean | null
+          supports_reasoning: boolean | null
+          supports_responses_api: boolean | null
+          supports_web_search: boolean | null
+        }
+        Insert: {
+          context_window?: number | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_output_tokens?: number | null
+          model_name: string
+          notes?: string | null
+          provider?: string
+          supports_code_interpreter?: boolean | null
+          supports_file_search?: boolean | null
+          supports_image_generation?: boolean | null
+          supports_reasoning?: boolean | null
+          supports_responses_api?: boolean | null
+          supports_web_search?: boolean | null
+        }
+        Update: {
+          context_window?: number | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_output_tokens?: number | null
+          model_name?: string
+          notes?: string | null
+          provider?: string
+          supports_code_interpreter?: boolean | null
+          supports_file_search?: boolean | null
+          supports_image_generation?: boolean | null
+          supports_reasoning?: boolean | null
+          supports_responses_api?: boolean | null
+          supports_web_search?: boolean | null
         }
         Relationships: []
       }

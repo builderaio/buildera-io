@@ -121,7 +121,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         
         console.log('🔍 [CompanyContext] Fallback result:', { anyMember, anyMemberError });
         
-        if (anyMember?.companies) {
+      if (anyMember?.companies) {
           companyBase = anyMember.companies as any;
           // Mark this member as primary for future queries
           await supabase
@@ -129,6 +129,13 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
             .update({ is_primary: true })
             .eq('user_id', user.id)
             .eq('company_id', anyMember.company_id);
+          
+          // CRITICAL: Sync primary_company_id in profiles
+          console.log('🔄 [CompanyContext] Syncing primary_company_id via fallback');
+          await supabase
+            .from('profiles')
+            .update({ primary_company_id: anyMember.company_id })
+            .eq('user_id', user.id);
         }
       }
 

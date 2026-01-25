@@ -785,13 +785,21 @@
     },
     "founder": {
       "step1Title": "Tell us about your vision",
+      "step1Description": "Let's start with the basics of your business",
       "step2Title": "Define your winning strategy",
-      "step3Title": "Your first steps"
+      "step3Title": "Your first steps",
+      "businessName": "Your business name",
+      "businessNamePlaceholder": "E.g.: My Startup",
+      "noWebsiteHint": "Don't have a website yet? No problem, we'll help you build your strategy from scratch.",
+      "startStrategyWithoutWeb": "Start without website",
+      "analyzeAndStart": "Analyze and start",
+      "redirectToPTW": "Let's define your strategy"
     },
     "growth": {
       "step1Title": "Deep diagnosis",
       "step2Title": "Gap analysis",
       "step3Title": "Prioritized action plan"
     }
-  }
+  },
+  "optional": "optional"
 }

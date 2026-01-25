@@ -4,25 +4,18 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-import MandoCentral from "@/components/company/MandoCentral";
-import Dashboard360 from "@/components/company/Dashboard360";
-import ADNEmpresa from "@/components/company/ADNEmpresa";
+// New consolidated components
+import BusinessHealthDashboard from "@/components/company/BusinessHealthDashboard";
+import BusinessConfigurationHub from "@/components/company/BusinessConfigurationHub";
+import UnifiedAgentsView from "@/components/company/UnifiedAgentsView";
 import MarketingHub from "@/components/company/MarketingHubWow";
-import InteligenciaHub from "@/components/company/InteligenciaHub";
-import InteligenciaCompetitiva from "@/components/company/InteligenciaCompetitiva";
-import MisArchivos from "@/components/company/BaseConocimiento";
 import AcademiaBuildiera from "@/components/company/AcademiaBuildera";
-import Marketplace from "@/components/company/Marketplace";
-import Expertos from "@/components/company/Expertos";
-import Configuracion from "@/components/company/Configuracion";
-import AudienciasManager from "@/components/company/AudienciasManager";
-import AudienciasAnalysis from "@/components/company/AudienciasAnalysis";
-import AudienciasCreate from "@/components/company/AudienciasCreate";
+
+// Legacy components (for backwards compatibility during transition)
+import MisArchivos from "@/components/company/BaseConocimiento";
 import { ContentAnalysisDashboard } from "@/components/company/ContentAnalysisDashboard";
-import AIWorkforce from "@/pages/AIWorkforce";
 
 import UserProfile from "./UserProfile";
-import CompanyAgents from "./CompanyAgents";
 import OnboardingOrchestrator from "@/components/OnboardingOrchestrator";
 import { User } from "@supabase/supabase-js";
 
@@ -329,45 +322,57 @@ const CompanyDashboard = () => {
   const renderContent = () => {
     console.log('🔄 Rendering content for activeView:', activeView);
     switch (activeView) {
+      // Onboarding
       case "onboarding":
         return <OnboardingOrchestrator user={user!} />;
+      
+      // === NEW CONSOLIDATED VIEWS ===
+      // Panel Principal (Centro de Comando Estratégico)
+      case "panel":
       case "mando-central":
       case "dashboard":
-        return <MandoCentral profile={profile} />;
-      case "adn-empresa":
-        return <ADNEmpresa profile={profile} onProfileUpdate={handleProfileUpdate} />;
-      case "inteligencia":
-        return <InteligenciaHub profile={profile} />;
-      case "base-conocimiento":
-        return <MisArchivos />;
+      case "dashboard-360":
+        return <BusinessHealthDashboard profile={profile} />;
+      
+      // Marketing Hub (Simplificado)
+      case "marketing":
       case "marketing-hub":
         return <MarketingHub profile={profile} />;
+      
+      // Mis Agentes (Unificado: habilitados + marketplace)
+      case "agentes":
+      case "mis-agentes":
+      case "marketplace":
+      case "ai-workforce":
+        return <UnifiedAgentsView profile={profile} />;
+      
+      // Mi Negocio (ADN + Configuración consolidada)
+      case "negocio":
+      case "adn-empresa":
+      case "configuracion":
+      case "inteligencia":
       case "inteligencia-competitiva":
-        return <InteligenciaCompetitiva />;
       case "audiencias-manager":
-        return <AudienciasManager profile={profile} />;
       case "audiencias-analysis":
-        return <AudienciasAnalysis profile={profile} />;
       case "audiencias-create":
-        return <AudienciasCreate profile={profile} />;
-      case "content-analysis-dashboard":
-        return <ContentAnalysisDashboard profile={profile} />;
+        return <BusinessConfigurationHub profile={profile} onProfileUpdate={handleProfileUpdate} />;
+      
+      // Academia
+      case "academia":
       case "academia-buildera":
         return <AcademiaBuildiera />;
-      case "expertos":
-        return <Expertos />;
-      case "configuracion":
-        return <Configuracion profile={profile} />;
-      case "marketplace":
-        return <Marketplace />;
-      case "ai-workforce":
-        return <AIWorkforce />;
-      case "mis-agentes":
-        return <CompanyAgents />;
+      
+      // === LEGACY VIEWS (backwards compatibility) ===
+      case "base-conocimiento":
+        return <MisArchivos />;
+      case "content-analysis-dashboard":
+        return <ContentAnalysisDashboard profile={profile} />;
       case "profile":
         return <UserProfile />;
+      
+      // Default: Panel Principal
       default:
-        return <MandoCentral profile={profile} />;
+        return <BusinessHealthDashboard profile={profile} />;
     }
   };
 

@@ -306,20 +306,23 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   };
 
   const setActiveView = (view: string) => {
-    if (shouldBlockNavigation && view !== "adn-empresa") return;
+    if (shouldBlockNavigation && view !== "negocio") return;
 
     const routes: Record<string, string> = {
-      'mando-central': '/company-dashboard?view=mando-central',
+      'panel': '/company-dashboard?view=panel',
+      'mando-central': '/company-dashboard?view=panel', // redirect legacy
       'marketing-hub': '/company-dashboard?view=marketing-hub',
-      'mis-agentes': '/company-dashboard?view=mis-agentes',
-      'inteligencia': '/company-dashboard?view=inteligencia',
-      'marketplace': '/marketplace/agents',
-      'adn-empresa': '/company-dashboard?view=adn-empresa',
-      'configuracion': '/company-dashboard?view=configuracion',
+      'agentes': '/company-dashboard?view=agentes',
+      'mis-agentes': '/company-dashboard?view=agentes', // redirect legacy
+      'marketplace': '/company-dashboard?view=agentes', // consolidate
+      'negocio': '/company-dashboard?view=negocio',
+      'adn-empresa': '/company-dashboard?view=negocio', // redirect legacy
+      'configuracion': '/company-dashboard?view=negocio', // consolidate
+      'inteligencia': '/company-dashboard?view=negocio', // consolidate
       'profile': '/profile'
     };
     
-    const targetRoute = routes[view];
+    const targetRoute = routes[view] || routes['panel'];
     if (targetRoute) {
       navigate(targetRoute);
       if (isMobile) setTimeout(() => setOpenMobile(false), 100);
@@ -328,14 +331,12 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   const activeView = getActiveView();
 
-  // Complete sidebar navigation with all main sections
+  // Simplified sidebar navigation - 5 main sections
   const sidebarItems = [
-    { id: 'mando-central', label: t('common:sidebar.dashboard', 'Mi Panel'), icon: Activity, emoji: '🏠' },
-    { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Activity, emoji: '📣' },
-    { id: 'mis-agentes', label: t('common:sidebar.myAgents', 'Mis Agentes'), icon: Bot, emoji: '🤖' },
-    { id: 'inteligencia', label: t('common:sidebar.intelligence', 'Inteligencia'), icon: Brain, emoji: '🧠' },
-    { id: 'marketplace', label: t('common:sidebar.marketplace', 'Marketplace'), icon: Store, emoji: '🛒' },
-    { id: 'adn-empresa', label: t('common:sidebar.companyDna', 'Mi Empresa'), icon: Building, emoji: '🏢' },
+    { id: 'panel', label: t('common:sidebar.dashboard', 'Comando'), icon: Activity, emoji: '🏠' },
+    { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing'), icon: Activity, emoji: '📣' },
+    { id: 'agentes', label: t('common:sidebar.myAgents', 'Agentes'), icon: Bot, emoji: '🤖' },
+    { id: 'negocio', label: t('common:sidebar.companyDna', 'Mi Negocio'), icon: Building, emoji: '🏢' },
   ];
 
   return (

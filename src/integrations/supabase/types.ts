@@ -1098,6 +1098,68 @@ export type Database = {
           },
         ]
       }
+      business_health_snapshots: {
+        Row: {
+          agent_executions: number | null
+          agent_hours_saved: number | null
+          company_id: string
+          content_engagement: number | null
+          created_at: string
+          credits_consumed: number | null
+          detailed_metrics: Json | null
+          digital_reach: number | null
+          efficiency_score: number | null
+          engagement_rate: number | null
+          estimated_conversions: number | null
+          id: string
+          posts_published: number | null
+          snapshot_date: string
+          snapshot_type: string | null
+        }
+        Insert: {
+          agent_executions?: number | null
+          agent_hours_saved?: number | null
+          company_id: string
+          content_engagement?: number | null
+          created_at?: string
+          credits_consumed?: number | null
+          detailed_metrics?: Json | null
+          digital_reach?: number | null
+          efficiency_score?: number | null
+          engagement_rate?: number | null
+          estimated_conversions?: number | null
+          id?: string
+          posts_published?: number | null
+          snapshot_date: string
+          snapshot_type?: string | null
+        }
+        Update: {
+          agent_executions?: number | null
+          agent_hours_saved?: number | null
+          company_id?: string
+          content_engagement?: number | null
+          created_at?: string
+          credits_consumed?: number | null
+          detailed_metrics?: Json | null
+          digital_reach?: number | null
+          efficiency_score?: number | null
+          engagement_rate?: number | null
+          estimated_conversions?: number | null
+          id?: string
+          posts_published?: number | null
+          snapshot_date?: string
+          snapshot_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_health_snapshots_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buyer_personas: {
         Row: {
           campaign_id: string
@@ -2391,6 +2453,60 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_objective_progress: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          last_calculated_at: string | null
+          metrics_snapshot: Json | null
+          notes: string | null
+          objective_id: string | null
+          progress_percentage: number | null
+          trend: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          last_calculated_at?: string | null
+          metrics_snapshot?: Json | null
+          notes?: string | null
+          objective_id?: string | null
+          progress_percentage?: number | null
+          trend?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          last_calculated_at?: string | null
+          metrics_snapshot?: Json | null
+          notes?: string | null
+          objective_id?: string | null
+          progress_percentage?: number | null
+          trend?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_objective_progress_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_objective_progress_objective_id_fkey"
+            columns: ["objective_id"]
+            isOneToOne: false
+            referencedRelation: "company_objectives"
             referencedColumns: ["id"]
           },
         ]

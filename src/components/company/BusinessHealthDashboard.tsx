@@ -1,0 +1,540 @@
+import { useState, useEffect } from "react";
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  Minus, 
+  Target, 
+  Zap, 
+  Bot,
+  ArrowRight,
+  Sparkles,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  BarChart3,
+  Users,
+  MessageSquare,
+  ShoppingCart,
+  RefreshCw,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { usePlatformAgents, PlatformAgent } from "@/hooks/usePlatformAgents";
+import { useCompanyCredits } from "@/hooks/useCompanyCredits";
+import { useCompanyState } from "@/hooks/useCompanyState";
+import { useNextBestAction } from "@/hooks/useNextBestAction";
+import { useBusinessHealth, BusinessHealthKPI, ObjectiveProgress } from "@/hooks/useBusinessHealth";
+import { AgentInteractionPanel } from "@/components/agents/AgentInteractionPanel";
+import { cn } from "@/lib/utils";
+
+interface BusinessHealthDashboardProps {
+  profile: any;
+  onNavigate?: (view: string) => void;
+}
+
+// KPI Card Component
+const KPICard = ({ kpi, icon: Icon }: { kpi: BusinessHealthKPI; icon: React.ElementType }) => {
+  const TrendIcon = kpi.trend === 'up' ? TrendingUp : kpi.trend === 'down' ? TrendingDown : Minus;
+  const trendColor = kpi.trend === 'up' ? 'text-emerald-500' : kpi.trend === 'down' ? 'text-destructive' : 'text-muted-foreground';
+  
+  return (
+    <Card className="relative overflow-hidden">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">{kpi.label}</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl sm:text-2xl font-bold">
+                {typeof kpi.value === 'number' ? kpi.value.toLocaleString() : kpi.value}
+              </span>
+              {kpi.unit && <span className="text-sm text-muted-foreground">{kpi.unit}</span>}
+            </div>
+          </div>
+          <div className={cn(
+            "p-2 sm:p-2.5 rounded-xl",
+            kpi.trend === 'up' ? 'bg-emerald-500/10' : kpi.trend === 'down' ? 'bg-destructive/10' : 'bg-muted'
+          )}>
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          </div>
+        </div>
+        
+        {kpi.trendPercentage > 0 && (
+          <div className={cn("flex items-center gap-1 mt-2 text-xs", trendColor)}>
+            <TrendIcon className="w-3 h-3" />
+            <span>{kpi.trendPercentage}% vs. mes anterior</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+// Objective Progress Card
+const ObjectiveCard = ({ objective }: { objective: ObjectiveProgress }) => {
+  const trendColor = objective.trend === 'improving' 
+    ? 'bg-emerald-500' 
+    : objective.trend === 'declining' 
+      ? 'bg-destructive' 
+      : 'bg-amber-500';
+
+  return (
+    <div className="p-3 sm:p-4 rounded-lg border bg-card hover:bg-accent/30 transition-colors">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-medium text-sm truncate">{objective.title}</h4>
+          {objective.description && (
+            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+              {objective.description}
+            </p>
+          )}
+        </div>
+        <div className={cn("w-2 h-2 rounded-full shrink-0 mt-1.5", trendColor)} />
+      </div>
+      
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">Progreso</span>
+          <span className="font-medium">{Math.round(objective.progress)}%</span>
+        </div>
+        <Progress value={objective.progress} className="h-1.5" />
+      </div>
+    </div>
+  );
+};
+
+// Activity Item
+interface ActivityLog {
+  id: string;
+  created_at: string;
+  status: string;
+  output_summary: string | null;
+  error_message: string | null;
+  credits_consumed: number;
+  platform_agents: { name: string; icon: string | null } | null;
+}
+
+const ActivityItem = ({ activity, t }: { activity: ActivityLog; t: any }) => {
+  const StatusIcon = activity.status === 'completed' 
+    ? CheckCircle2 
+    : activity.status === 'failed' 
+      ? XCircle 
+      : activity.status === 'running'
+        ? Loader2
+        : Clock;
+
+  const statusColor = activity.status === 'completed' 
+    ? 'text-emerald-500' 
+    : activity.status === 'failed' 
+      ? 'text-destructive' 
+      : activity.status === 'running'
+        ? 'text-primary animate-spin'
+        : 'text-amber-500';
+
+  const formatTimeAgo = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) return 'Ahora';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    return `${diffDays}d`;
+  };
+
+  return (
+    <div className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+      <StatusIcon className={cn("w-4 h-4 shrink-0", statusColor)} />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">
+          {activity.platform_agents?.name || 'Agente'}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {formatTimeAgo(activity.created_at)} • {activity.credits_consumed} cr
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// Main Dashboard Component
+const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboardProps) => {
+  const { t, i18n } = useTranslation(['common', 'company']);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<PlatformAgent | null>(null);
+  const [agentPanelOpen, setAgentPanelOpen] = useState(false);
+  const [primaryObjective, setPrimaryObjective] = useState<string | null>(null);
+
+  const { agents, enabledAgents: enabledAgentIds } = usePlatformAgents(companyId || undefined);
+  const { availableCredits, refetch: refetchCredits } = useCompanyCredits(companyId || undefined, profile?.user_id);
+  const companyState = useCompanyState(companyId || undefined, profile?.user_id);
+  const businessHealth = useBusinessHealth(companyId || undefined);
+  
+  const enabledAgentsList = agents.filter(agent => enabledAgentIds.includes(agent.id));
+  
+  const nextBestActions = useNextBestAction({
+    companyState,
+    availableCredits,
+    enabledAgentsCount: enabledAgentIds.length,
+    totalAgentsCount: agents.length,
+  });
+
+  useEffect(() => {
+    if (profile?.user_id) {
+      loadDashboardData();
+    } else {
+      setLoading(false);
+    }
+  }, [profile?.user_id]);
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('created_by', profile.user_id)
+        .maybeSingle();
+      
+      setCompanyId(company?.id || null);
+
+      if (company?.id) {
+        // Load activity and primary objective in parallel
+        const [usageLogs, objectivesData] = await Promise.all([
+          supabase
+            .from('agent_usage_log')
+            .select(`
+              id, created_at, status, output_summary, error_message, credits_consumed,
+              platform_agents(name, icon)
+            `)
+            .eq('company_id', company.id)
+            .order('created_at', { ascending: false })
+            .limit(5),
+          supabase
+            .from('company_objectives')
+            .select('title')
+            .eq('company_id', company.id)
+            .eq('priority', 1)
+            .maybeSingle(),
+        ]);
+
+        setRecentActivity((usageLogs.data as ActivityLog[]) || []);
+        setPrimaryObjective(objectivesData.data?.[0]?.title || null);
+      }
+    } catch (error) {
+      console.error('Error loading dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNavigate = (view?: string, agentId?: string) => {
+    if (agentId) {
+      const agent = agents.find(a => a.internal_code === agentId);
+      if (agent) {
+        setSelectedAgent(agent);
+        setAgentPanelOpen(true);
+        return;
+      }
+    }
+    
+    if (view) {
+      if (onNavigate) {
+        onNavigate(view);
+      } else {
+        navigate(`/company-dashboard?view=${view}`);
+      }
+    }
+  };
+
+  const handleAgentClick = (agent: PlatformAgent) => {
+    setSelectedAgent(agent);
+    setAgentPanelOpen(true);
+  };
+
+  const formatLocalizedDate = (language: string): string => {
+    const localeMap: Record<string, string> = { es: 'es-ES', en: 'en-US', pt: 'pt-BR' };
+    return new Date().toLocaleDateString(localeMap[language] || 'en-US', { 
+      weekday: 'long', day: 'numeric', month: 'long' 
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">{t('common:status.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const userName = profile?.full_name?.split(' ')[0] || "Usuario";
+  const featuredAction = nextBestActions[0];
+  const topAgents = enabledAgentsList.slice(0, 4);
+
+  return (
+    <div className="space-y-4 sm:space-y-6 pb-8">
+      {/* Header with context */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">
+            {t('common:mando.hello', { name: userName })} 👋
+          </h1>
+          <p className="text-sm text-muted-foreground capitalize">
+            {formatLocalizedDate(i18n.language)}
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className="h-7 px-2.5 gap-1.5 text-xs">
+            <Bot className="w-3.5 h-3.5" />
+            {enabledAgentIds.length} agentes
+          </Badge>
+          <Badge variant="outline" className="h-7 px-2.5 gap-1.5 text-xs bg-amber-500/10 border-amber-500/30 text-amber-600">
+            <Zap className="w-3.5 h-3.5" />
+            {availableCredits} créditos
+          </Badge>
+        </div>
+      </div>
+
+      {/* Primary Objective Banner */}
+      {primaryObjective && (
+        <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
+          <CardContent className="py-3 px-4 flex items-center gap-3">
+            <Target className="w-5 h-5 text-primary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="text-xs text-muted-foreground">Objetivo Estratégico:</span>
+              <p className="text-sm font-medium truncate">{primaryObjective}</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="shrink-0"
+              onClick={() => handleNavigate('negocio')}
+            >
+              Editar
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* KPIs Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <KPICard kpi={businessHealth.kpis.efficiency} icon={BarChart3} />
+        <KPICard kpi={businessHealth.kpis.reach} icon={Users} />
+        <KPICard kpi={businessHealth.kpis.engagement} icon={MessageSquare} />
+        <KPICard kpi={businessHealth.kpis.conversions} icon={ShoppingCart} />
+      </div>
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Left Column - Objectives & Recommendations */}
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+          {/* Objectives Progress */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  Progreso de Objetivos
+                </CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => handleNavigate('negocio')}
+                >
+                  Ver todos
+                  <ArrowRight className="w-3 h-3 ml-1" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {businessHealth.objectives.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {businessHealth.objectives.slice(0, 4).map((obj) => (
+                    <ObjectiveCard key={obj.id} objective={obj} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Target className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                  <p className="text-sm text-muted-foreground mb-3">
+                    No tienes objetivos definidos
+                  </p>
+                  <Button size="sm" onClick={() => handleNavigate('negocio')}>
+                    Definir Objetivos
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Featured Recommendation */}
+          {featuredAction && (
+            <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <Badge variant="secondary" className="mb-2 text-xs">
+                      Recomendación destacada
+                    </Badge>
+                    <h3 className="font-semibold text-sm sm:text-base">{featuredAction.title}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
+                      {featuredAction.description}
+                    </p>
+                    <Button 
+                      size="sm" 
+                      className="mt-3"
+                      onClick={() => handleNavigate(featuredAction.action.view, featuredAction.action.agentId)}
+                    >
+                      {featuredAction.action.label}
+                      <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quick Agents */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-primary" />
+                  Agentes Rápidos
+                </CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs"
+                  onClick={() => handleNavigate('agentes')}
+                >
+                  Ver todos
+                  <ArrowRight className="w-3 h-3 ml-1" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                {topAgents.map((agent) => (
+                  <Button
+                    key={agent.id}
+                    variant="outline"
+                    className="h-auto flex-col py-3 px-2 gap-2 hover:bg-primary/5 hover:border-primary/30"
+                    onClick={() => handleAgentClick(agent)}
+                  >
+                    <span className="text-xl">{agent.icon || '🤖'}</span>
+                    <span className="text-xs font-medium text-center line-clamp-1">
+                      {agent.name}
+                    </span>
+                  </Button>
+                ))}
+                {topAgents.length === 0 && (
+                  <div className="col-span-full text-center py-6">
+                    <Bot className="w-8 h-8 mx-auto text-muted-foreground/30 mb-2" />
+                    <p className="text-sm text-muted-foreground">No hay agentes habilitados</p>
+                    <Button 
+                      size="sm" 
+                      variant="link"
+                      onClick={() => handleNavigate('agentes')}
+                    >
+                      Explorar agentes
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column - Activity */}
+        <div className="space-y-4 sm:space-y-6">
+          {/* Recent Activity */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Actividad Reciente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentActivity.length > 0 ? (
+                <div className="space-y-1">
+                  {recentActivity.map((activity) => (
+                    <ActivityItem key={activity.id} activity={activity} t={t} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Clock className="w-8 h-8 mx-auto text-muted-foreground/30 mb-2" />
+                  <p className="text-sm text-muted-foreground">Sin actividad reciente</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Business Health Score */}
+          <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-primary/20">
+            <CardContent className="p-5">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-2">Puntuación de Salud</p>
+                <div className="text-4xl font-bold text-primary mb-1">
+                  {businessHealth.overallScore}
+                </div>
+                <p className="text-xs text-muted-foreground">de 100 puntos</p>
+              </div>
+              <Progress value={businessHealth.overallScore} className="mt-4 h-2" />
+              <Button 
+                variant="secondary" 
+                className="w-full mt-4" 
+                size="sm"
+                onClick={() => handleNavigate('inteligencia')}
+              >
+                Ver Diagnóstico Completo
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Agent Interaction Panel */}
+      <AgentInteractionPanel
+        agent={selectedAgent}
+        isOpen={agentPanelOpen}
+        onClose={() => {
+          setAgentPanelOpen(false);
+          setSelectedAgent(null);
+        }}
+        isEnabled={true}
+        creditsAvailable={availableCredits}
+        companyId={companyId || undefined}
+        userId={profile?.user_id}
+        onExecutionComplete={() => {
+          refetchCredits();
+          loadDashboardData();
+          businessHealth.refresh();
+        }}
+      />
+    </div>
+  );
+};
+
+export default BusinessHealthDashboard;

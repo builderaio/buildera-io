@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,7 @@ const AudienceHighlightsWidget = ({
   userId,
   maxItems = 3 
 }: AudienceHighlightsWidgetProps) => {
+  const { t } = useTranslation(['marketing', 'common']);
   const navigate = useNavigate();
   const [audiences, setAudiences] = useState<AudienceSegment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,14 +92,14 @@ const AudienceHighlightsWidget = ({
           <Users className="w-6 h-6 text-muted-foreground" />
         </div>
         <p className="text-sm text-muted-foreground mb-3">
-          No hay audiencias definidas aún
+          {t('audiences.noData')}
         </p>
         <Button 
           variant="outline" 
           size="sm"
           onClick={() => navigate('/company-dashboard?view=marketing-hub&tab=analyze')}
         >
-          Crear Audiencia
+          {t('audiences.create', 'Crear Audiencia')}
         </Button>
       </div>
     );
@@ -117,7 +119,7 @@ const AudienceHighlightsWidget = ({
             <p className="font-medium text-sm truncate">{audience.name}</p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {audience.estimated_size && (
-                <span>{(audience.estimated_size / 1000).toFixed(1)}K usuarios</span>
+                <span>{(audience.estimated_size / 1000).toFixed(1)}K {t('common:users', 'usuarios')}</span>
               )}
               {audience.conversion_potential && (
                 <Badge variant="secondary" className="text-xs">
@@ -139,7 +141,7 @@ const AudienceHighlightsWidget = ({
         className="w-full text-primary"
         onClick={() => navigate('/company-dashboard?view=marketing-hub&tab=analyze')}
       >
-        Ver todas las audiencias
+        {t('audiences.viewAll', 'Ver todas las audiencias')}
         <ArrowRight className="w-4 h-4 ml-2" />
       </Button>
     </div>

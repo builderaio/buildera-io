@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCompanyCompetitors, CompanyCompetitor } from '@/hooks/useCompanyCompetitors';
-import { Users, Plus, Trash2, Globe, Loader2, Sparkles } from 'lucide-react';
+import { Users, Plus, Trash2, Globe, Loader2, Sparkles, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CompetitorAnalysisResults } from './CompetitorAnalysisResults';
+import { CompetitorAnalysisModal } from './CompetitorAnalysisModal';
 
 interface ADNCompetitorsTabProps {
   companyId: string;
@@ -44,6 +46,12 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
   
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<CompetitorAnalysis | null>(null);
+  
+  // Single competitor analysis state
+  const [analyzingCompetitorId, setAnalyzingCompetitorId] = useState<string | null>(null);
+  const [singleCompetitorData, setSingleCompetitorData] = useState<any | null>(null);
+  const [singleCompetitorModalOpen, setSingleCompetitorModalOpen] = useState(false);
+  const [singleCompetitorName, setSingleCompetitorName] = useState('');
 
   const handleAdd = async () => {
     try {
@@ -114,6 +122,83 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
       });
     } catch {
       toast({ title: t('company.email.save_error'), variant: 'destructive' });
+    }
+  };
+
+  const handleAnalyzeSingleCompetitor = async (competitor: CompanyCompetitor) => {
+    if (!competitor.website_url) {
+      toast({ 
+        title: 'URL requerida',
+        description: 'Este competidor no tiene sitio web configurado',
+        variant: 'destructive' 
+      });
+      return;
+    }
+
+    setAnalyzingCompetitorId(competitor.id);
+    setSingleCompetitorName(competitor.competitor_name);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-single-competitor', {
+        body: { websiteUrl: competitor.website_url }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.competitor) {
+        setSingleCompetitorData(data.competitor);
+        setSingleCompetitorModalOpen(true);
+        
+        // Optionally update the competitor with enriched data
+        const enrichedData: Partial<CompanyCompetitor> = {};
+        
+        if (data.competitor.social_networks?.linkedin) {
+          enrichedData.linkedin_url = data.competitor.social_networks.linkedin;
+        }
+        if (data.competitor.social_networks?.instagram) {
+          enrichedData.instagram_url = data.competitor.social_networks.instagram;
+        }
+        if (data.competitor.social_networks?.facebook) {
+          enrichedData.facebook_url = data.competitor.social_networks.facebook;
+        }
+        if (data.competitor.social_networks?.twitter) {
+          enrichedData.twitter_url = data.competitor.social_networks.twitter;
+        }
+        if (data.competitor.social_networks?.tiktok) {
+          enrichedData.tiktok_url = data.competitor.social_networks.tiktok;
+        }
+        
+        // Update notes with analysis summary
+        const analysisNotes = [
+          competitor.notes || '',
+          '\n--- Análisis IA ---',
+          data.competitor.description ? `Descripción: ${data.competitor.description}` : '',
+          data.competitor.products?.services?.length ? `Servicios: ${data.competitor.products.services.join(', ')}` : '',
+          data.competitor.market?.differentiators?.length ? `Diferenciadores: ${data.competitor.market.differentiators.join(', ')}` : '',
+        ].filter(Boolean).join('\n');
+        
+        enrichedData.notes = analysisNotes.trim();
+        
+        if (Object.keys(enrichedData).length > 0) {
+          await updateCompetitor(competitor.id, enrichedData);
+        }
+        
+        toast({ 
+          title: 'Análisis completado',
+          description: `Se analizó la información de ${data.competitor.name || competitor.competitor_name}`
+        });
+      } else {
+        throw new Error('No se pudo obtener información del competidor');
+      }
+    } catch (error) {
+      console.error('Error analyzing single competitor:', error);
+      toast({ 
+        title: 'Error al analizar',
+        description: 'No se pudo completar el análisis del competidor',
+        variant: 'destructive' 
+      });
+    } finally {
+      setAnalyzingCompetitorId(null);
     }
   };
 
@@ -221,9 +306,34 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                       </div>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(competitor.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => handleAnalyzeSingleCompetitor(competitor)}
+                            disabled={analyzingCompetitorId === competitor.id || !competitor.website_url}
+                          >
+                            {analyzingCompetitorId === competitor.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Search className="h-4 w-4 text-primary" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {competitor.website_url 
+                            ? 'Analizar competidor con IA' 
+                            : 'Agrega un sitio web para analizar'}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(competitor.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -302,6 +412,14 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
           ))}
         </div>
       )}
+
+      {/* Single Competitor Analysis Modal */}
+      <CompetitorAnalysisModal
+        open={singleCompetitorModalOpen}
+        onOpenChange={setSingleCompetitorModalOpen}
+        competitorData={singleCompetitorData}
+        competitorName={singleCompetitorName}
+      />
     </div>
   );
 };

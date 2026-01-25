@@ -430,10 +430,14 @@
     "title": "Business DNA",
     "subtitle": "Manage all your company information and settings",
     "tabs": {
+      "perfil": "Profile",
       "info": "Information",
       "strategy": "Strategy",
+      "estrategia": "Strategy",
       "brand": "Brand",
+      "marca": "Brand",
       "social": "Social",
+      "canales": "Channels",
       "files": "Files",
       "email": "Email",
       "team": "Team"
@@ -578,6 +582,19 @@
       }
     }
   },
+  "intelligence": {
+    "title": "Intelligence",
+    "subtitle": "Diagnostics, competitive analysis and market reports",
+    "tabs": {
+      "diagnostic": "Diagnostic",
+      "competitors": "Competitors",
+      "market": "Market"
+    },
+    "market": {
+      "comingSoon": "Coming Soon",
+      "description": "Industry trend analysis, market opportunities and audience insights."
+    }
+  },
   "nba": {
     "completeProfile": {
       "title": "Complete your company profile",
@@ -654,8 +671,9 @@
     "tabs": {
       "team": "Team",
       "security": "Security",
+      "agents": "Agents",
       "plan": "My Plan",
-      "notifications": "Notifications"
+      "notifications": "Alerts"
     },
     "team": {
       "title": "Team Members",

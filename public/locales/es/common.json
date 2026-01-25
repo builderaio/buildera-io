@@ -578,6 +578,19 @@
       }
     }
   },
+  "intelligence": {
+    "title": "Inteligencia",
+    "subtitle": "Diagnósticos, análisis de competencia y reportes de mercado",
+    "tabs": {
+      "diagnostic": "Diagnóstico",
+      "competitors": "Competidores",
+      "market": "Mercado"
+    },
+    "market": {
+      "comingSoon": "Próximamente",
+      "description": "Análisis de tendencias del sector, oportunidades de mercado e insights de audiencia."
+    }
+  },
   "nba": {
     "completeProfile": {
       "title": "Completa tu perfil de empresa",
@@ -654,8 +667,9 @@
     "tabs": {
       "team": "Equipo",
       "security": "Seguridad",
+      "agents": "Agentes",
       "plan": "Mi Plan",
-      "notifications": "Notificaciones"
+      "notifications": "Alertas"
     },
     "team": {
       "title": "Miembros del Equipo",

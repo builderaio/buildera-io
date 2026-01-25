@@ -12,6 +12,91 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
+// Helper to build diagnostic context from all available data
+function buildDiagnosticContext(webhookData: any, digitalPresence: any, audiences: any[], products: any[]): string {
+  const sections: string[] = [];
+
+  // Extract webhook diagnostic data
+  if (webhookData) {
+    // Identity/SEO data
+    if (webhookData.seo) {
+      const seo = webhookData.seo;
+      if (seo.keyword && Array.isArray(seo.keyword) && seo.keyword.length > 0) {
+        sections.push(`Keywords principales: ${seo.keyword.slice(0, 5).join(', ')}`);
+      }
+      if (seo.strength && Array.isArray(seo.strength) && seo.strength.length > 0) {
+        sections.push(`Fortalezas SEO: ${seo.strength.slice(0, 3).join(', ')}`);
+      }
+      if (seo.weakness && Array.isArray(seo.weakness) && seo.weakness.length > 0) {
+        sections.push(`Debilidades SEO: ${seo.weakness.slice(0, 3).join(', ')}`);
+      }
+    }
+
+    // Market data
+    if (webhookData.market) {
+      const market = webhookData.market;
+      if (market.competitor && Array.isArray(market.competitor) && market.competitor.length > 0) {
+        sections.push(`Competidores identificados: ${market.competitor.slice(0, 5).join(', ')}`);
+      }
+      if (market.trend && Array.isArray(market.trend) && market.trend.length > 0) {
+        sections.push(`Tendencias del mercado: ${market.trend.slice(0, 3).join(', ')}`);
+      }
+      if (market.opportunity && Array.isArray(market.opportunity) && market.opportunity.length > 0) {
+        sections.push(`Oportunidades detectadas: ${market.opportunity.slice(0, 3).join(', ')}`);
+      }
+    }
+  }
+
+  // Digital presence diagnostic
+  if (digitalPresence) {
+    if (digitalPresence.digital_footprint_summary) {
+      sections.push(`Resumen presencia digital: ${digitalPresence.digital_footprint_summary}`);
+    }
+    if (digitalPresence.what_is_working && Array.isArray(digitalPresence.what_is_working)) {
+      sections.push(`Lo que funciona: ${digitalPresence.what_is_working.slice(0, 3).join(', ')}`);
+    }
+    if (digitalPresence.what_is_missing && Array.isArray(digitalPresence.what_is_missing)) {
+      sections.push(`Áreas de mejora: ${digitalPresence.what_is_missing.slice(0, 3).join(', ')}`);
+    }
+    if (digitalPresence.key_risks && Array.isArray(digitalPresence.key_risks)) {
+      sections.push(`Riesgos clave: ${digitalPresence.key_risks.slice(0, 3).join(', ')}`);
+    }
+    if (digitalPresence.competitive_positioning) {
+      sections.push(`Posicionamiento competitivo: ${digitalPresence.competitive_positioning}`);
+    }
+  }
+
+  // Audiences
+  if (audiences && audiences.length > 0) {
+    const audienceNames = audiences.map(a => a.name).join(', ');
+    sections.push(`Audiencias objetivo: ${audienceNames}`);
+    
+    const allPainPoints = audiences.flatMap(a => a.pain_points || []).slice(0, 5);
+    if (allPainPoints.length > 0) {
+      sections.push(`Puntos de dolor de audiencia: ${allPainPoints.join(', ')}`);
+    }
+    
+    const allGoals = audiences.flatMap(a => a.goals || []).slice(0, 5);
+    if (allGoals.length > 0) {
+      sections.push(`Metas de audiencia: ${allGoals.join(', ')}`);
+    }
+  }
+
+  // Products/Services
+  if (products && products.length > 0) {
+    const productList = products.map(p => `${p.name} (${p.category})`).join(', ');
+    sections.push(`Productos/Servicios: ${productList}`);
+  }
+
+  if (sections.length === 0) {
+    return '';
+  }
+
+  return `--- DATOS DEL DIAGNÓSTICO ---
+${sections.join('\n')}
+--- FIN DIAGNÓSTICO ---`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -42,10 +127,10 @@ serve(async (req) => {
 
     console.log('👤 User authenticated:', user.id);
 
-    // Get company data
+    // Get company data including webhook diagnostic data
     const { data: company, error: companyError } = await supabase
       .from('companies')
-      .select('name, description, industry_sector, website_url')
+      .select('name, description, industry_sector, website_url, company_size, country, webhook_data')
       .eq('id', companyId)
       .single();
 
@@ -60,7 +145,35 @@ serve(async (req) => {
       .eq('company_id', companyId)
       .maybeSingle();
 
+    // Get digital presence diagnostic
+    const { data: digitalPresence } = await supabase
+      .from('company_digital_presence')
+      .select('digital_footprint_summary, what_is_working, what_is_missing, key_risks, competitive_positioning, action_plan')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // Get company audiences
+    const { data: audiences } = await supabase
+      .from('company_audiences')
+      .select('name, description, pain_points, goals, challenges')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .limit(5);
+
+    // Get company products/services
+    const { data: products } = await supabase
+      .from('company_products')
+      .select('name, description, category')
+      .eq('company_id', companyId)
+      .eq('is_active', true)
+      .limit(10);
+
     console.log('📋 Company data loaded:', company.name);
+    console.log('📊 Diagnostic data:', digitalPresence ? 'available' : 'not available');
+    console.log('👥 Audiences:', audiences?.length || 0);
+    console.log('📦 Products:', products?.length || 0);
 
     // Generate objectives using OpenAI
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
@@ -112,15 +225,23 @@ Respond ONLY with valid JSON in this exact format:
   ]
 }`;
 
+    // Build context from diagnostic data
+    const webhookData = company.webhook_data || {};
+    const diagnosticContext = buildDiagnosticContext(webhookData, digitalPresence, audiences, products);
+
     const userPrompt = `Empresa: ${company.name}
 Industria: ${company.industry_sector || 'No especificada'}
 Descripción: ${company.description || 'No disponible'}
 Sitio web: ${company.website_url || 'No disponible'}
+Tamaño: ${company.company_size || 'No especificado'}
+País: ${company.country || 'No especificado'}
 ${strategy?.mision ? `Misión: ${strategy.mision}` : ''}
 ${strategy?.vision ? `Visión: ${strategy.vision}` : ''}
 ${strategy?.propuesta_valor ? `Propuesta de valor: ${strategy.propuesta_valor}` : ''}
 
-Genera objetivos empresariales estratégicos basados en esta información.`;
+${diagnosticContext}
+
+Genera objetivos empresariales estratégicos basados en esta información completa del diagnóstico.`;
 
     console.log('🤖 Calling OpenAI API...');
 

@@ -11,9 +11,11 @@ const SocialCallback = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    if (isProcessing) return; // Prevenir múltiples ejecuciones
+    let cancelled = false;
     
     const handleSocialAuthCallback = async () => {
+      if (isProcessing) return;
+      setIsProcessing(true);
       setIsProcessing(true);
       try {
         console.log("🔄 Procesando callback de autenticación social...");
@@ -189,16 +191,8 @@ const SocialCallback = () => {
         }
 
       } catch (error: any) {
-        setIsProcessing(false);
+        if (cancelled) return;
         console.error("❌ Error en callback social:", error);
-        
-        // Logs adicionales para debugging
-        console.log("🔍 Estado del localStorage:");
-        const keys = Object.keys(localStorage);
-        const supabaseKeys = keys.filter(key => key.includes('supabase') || key.includes('sb-'));
-        supabaseKeys.forEach(key => {
-          console.log(`🔑 ${key}:`, localStorage.getItem(key));
-        });
         
         toast({
           title: "Error de Sesión",
@@ -206,13 +200,13 @@ const SocialCallback = () => {
           variant: "destructive",
         });
         window.location.href = '/auth?mode=signin';
-      } finally {
-        setIsProcessing(false);
       }
     };
 
     handleSocialAuthCallback();
-  }, [navigate, toast, sendWelcomeEmail, isProcessing]);
+    
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">

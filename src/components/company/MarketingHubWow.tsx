@@ -26,6 +26,7 @@ import { UTMDashboard } from './marketing/UTMDashboard';
 import { ReportBuilder } from './marketing/ReportBuilder';
 import { SocialAutomationRules } from './marketing/SocialAutomationRules';
 import { ContentApprovalPanel } from './marketing/ContentApprovalPanel';
+import { AutopilotDashboard } from './marketing/AutopilotDashboard';
 
 interface MarketingHubWowProps {
   profile: any;
@@ -48,7 +49,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   
   const getInitialTab = () => {
     const tab = searchParams.get('tab');
-    const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening', 'utm', 'reports', 'automation', 'approvals']);
+    const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening', 'utm', 'reports', 'automation', 'approvals', 'autopilot']);
     if (tab && allowed.has(tab)) return tab;
     return 'dashboard';
   };
@@ -59,7 +60,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab) {
-      const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening', 'utm', 'reports', 'automation', 'approvals']);
+      const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening', 'utm', 'reports', 'automation', 'approvals', 'autopilot']);
       if (allowed.has(tab) && tab !== activeTab) setActiveTab(tab);
     }
   }, [searchParams]);
@@ -396,6 +397,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             <CheckCircle className="w-4 h-4" />
             <span className="hidden sm:inline">{t("hub.tabs.approvals")}</span>
           </TabsTrigger>
+          <TabsTrigger value="autopilot" className="flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            <span className="hidden sm:inline">{t("hub.tabs.autopilot")}</span>
+          </TabsTrigger>
           <TabsTrigger value="calendar" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             <span className="hidden sm:inline">{t("hub.tabs.calendar")}</span>
@@ -550,6 +555,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         {/* Approvals Tab */}
         <TabsContent value="approvals" className="space-y-6">
           <ContentApprovalPanel companyId={profile?.company_id} />
+        </TabsContent>
+
+        {/* Autopilot Tab */}
+        <TabsContent value="autopilot" className="space-y-6">
+          <AutopilotDashboard companyId={profile?.company_id} profile={profile} />
         </TabsContent>
 
         {/* Campaigns Tab */}

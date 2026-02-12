@@ -93,6 +93,24 @@ serve(async (req) => {
       case 'validate_token':
         result = await validateToken(data);
         break;
+      case 'get_current_user':
+        result = await getCurrentUser(uploadPostApiKey);
+        break;
+      case 'get_instagram_media':
+        result = await getInstagramMedia(uploadPostApiKey, data);
+        break;
+      case 'get_instagram_comments':
+        result = await getInstagramComments(uploadPostApiKey, data);
+        break;
+      case 'reply_instagram_comment':
+        result = await replyInstagramComment(uploadPostApiKey, data);
+        break;
+      case 'send_instagram_dm':
+        result = await sendInstagramDM(uploadPostApiKey, data);
+        break;
+      case 'get_instagram_conversations':
+        result = await getInstagramConversations(uploadPostApiKey, data);
+        break;
       default:
         return new Response(
           JSON.stringify({ error: 'Acción no válida' }),
@@ -591,9 +609,9 @@ async function updateLinkedInPage(supabaseClient: any, userId: string, data: any
 // Platform filtering based on Upload-Post API restrictions
 function filterPlatformsByPostType(platforms: string[], postType: string): string[] {
   const supportedPlatforms = {
-    text: ['linkedin', 'x', 'facebook', 'threads', 'reddit'],
-    photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'x', 'threads', 'pinterest'],
-    video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'twitter', 'threads', 'pinterest']
+    text: ['linkedin', 'x', 'facebook', 'threads', 'reddit', 'bluesky'],
+    photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'x', 'threads', 'pinterest', 'bluesky'],
+    video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'twitter', 'threads', 'pinterest', 'bluesky']
   };
 
   // Convert twitter to x for text and photo posts
@@ -740,8 +758,8 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
         formData.set('title', `${title}\n\n${content.trim()}`);
       }
       
-      console.log('🎥 Sending video post to /api/upload');
-      response = await fetch('https://api.upload-post.com/api/upload', {
+      console.log('🎥 Sending video post to /api/upload_videos');
+      response = await fetch('https://api.upload-post.com/api/upload_videos', {
         method: 'POST',
         headers: {
           'Authorization': `Apikey ${apiKey}`,
@@ -960,7 +978,163 @@ async function validateToken(data: any) {
   const { token } = data || {};
   if (!token) {
     return { success: false, error: 'Missing token' };
+}
+
+// ============= NEW API INTEGRATIONS =============
+
+async function getCurrentUser(apiKey: string) {
+  console.log('👤 Getting current user info from Upload-Post');
+  try {
+    const response = await fetch('https://api.upload-post.com/api/uploadposts/me', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Apikey ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error getting current user: ${response.status} - ${errorText}`);
+    }
+    const result = await response.json();
+    console.log('✅ Current user retrieved:', result);
+    return { success: true, ...result };
+  } catch (error) {
+    console.error('Error in getCurrentUser:', error);
+    throw error;
   }
+}
+
+async function getInstagramMedia(apiKey: string, data: any) {
+  const { profile } = data || {};
+  if (!profile) throw new Error('Missing profile parameter');
+  console.log(`📷 Getting Instagram media for profile: ${profile}`);
+  try {
+    const response = await fetch(`https://api.upload-post.com/api/uploadposts/media?profile=${profile}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Apikey ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error getting Instagram media: ${response.status} - ${errorText}`);
+    }
+    const result = await response.json();
+    console.log(`✅ Instagram media retrieved: ${result.data?.length || 0} items`);
+    return { success: true, ...result };
+  } catch (error) {
+    console.error('Error in getInstagramMedia:', error);
+    throw error;
+  }
+}
+
+async function getInstagramComments(apiKey: string, data: any) {
+  const { media_id, post_url, profile } = data || {};
+  if (!media_id && !post_url) throw new Error('Missing media_id or post_url parameter');
+  const params = new URLSearchParams();
+  if (media_id) params.append('media_id', media_id);
+  if (post_url) params.append('post_url', post_url);
+  if (profile) params.append('profile', profile);
+  console.log(`💬 Getting Instagram comments:`, { media_id, post_url, profile });
+  try {
+    const response = await fetch(`https://api.upload-post.com/api/uploadposts/comments?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Apikey ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error getting Instagram comments: ${response.status} - ${errorText}`);
+    }
+    const result = await response.json();
+    console.log(`✅ Comments retrieved: ${result.data?.length || 0} comments`);
+    return { success: true, ...result };
+  } catch (error) {
+    console.error('Error in getInstagramComments:', error);
+    throw error;
+  }
+}
+
+async function replyInstagramComment(apiKey: string, data: any) {
+  const { media_id, comment_id, message, profile } = data || {};
+  if (!comment_id || !message) throw new Error('Missing comment_id or message parameter');
+  console.log(`↩️ Replying to Instagram comment:`, { media_id, comment_id, profile });
+  try {
+    const response = await fetch('https://api.upload-post.com/api/uploadposts/comments/reply', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Apikey ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ media_id, comment_id, message, profile }),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error replying to comment: ${response.status} - ${errorText}`);
+    }
+    const result = await response.json();
+    console.log('✅ Reply sent successfully');
+    return { success: true, ...result };
+  } catch (error) {
+    console.error('Error in replyInstagramComment:', error);
+    throw error;
+  }
+}
+
+async function sendInstagramDM(apiKey: string, data: any) {
+  const { recipient_id, message, profile } = data || {};
+  if (!recipient_id || !message) throw new Error('Missing recipient_id or message parameter');
+  console.log(`📨 Sending Instagram DM to:`, { recipient_id, profile });
+  try {
+    const response = await fetch('https://api.upload-post.com/api/uploadposts/dms/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Apikey ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ recipient_id, message, profile }),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error sending DM: ${response.status} - ${errorText}`);
+    }
+    const result = await response.json();
+    console.log('✅ DM sent successfully');
+    return { success: true, ...result };
+  } catch (error) {
+    console.error('Error in sendInstagramDM:', error);
+    throw error;
+  }
+}
+
+async function getInstagramConversations(apiKey: string, data: any) {
+  const { profile } = data || {};
+  if (!profile) throw new Error('Missing profile parameter');
+  console.log(`📬 Getting Instagram conversations for: ${profile}`);
+  try {
+    const response = await fetch(`https://api.upload-post.com/api/uploadposts/dms/conversations?profile=${profile}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Apikey ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error getting conversations: ${response.status} - ${errorText}`);
+    }
+    const result = await response.json();
+    console.log(`✅ Conversations retrieved: ${result.data?.length || 0} conversations`);
+    return { success: true, ...result };
+  } catch (error) {
+    console.error('Error in getInstagramConversations:', error);
+    throw error;
+  }
+}
   try {
     const response = await fetch('https://api.upload-post.com/api/uploadposts/users/validate-jwt', {
       method: 'POST',

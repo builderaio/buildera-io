@@ -1,228 +1,187 @@
 
+# Marketing Hub: Journey y Experiencia AI-Based para Automatizacion Autonoma
 
-# Elementos Clave Faltantes en el Marketing Hub de Buildera
+## Diagnostico del Estado Actual
 
-## Resumen Ejecutivo
+Tras auditar exhaustivamente el codebase, identifico que Buildera tiene **todas las piezas individuales** pero le falta el **cerebro orquestador** que las conecte en un flujo autonomo de toma de decisiones en tiempo real.
 
-Tras investigar las plataformas lideres del mercado (HubSpot Marketing Hub, Hootsuite, Klaviyo, Drip, Leadpages) y auditar exhaustivamente el codebase actual de Buildera, se identificaron **7 areas de oportunidad** que faltan para tener un Marketing Hub de clase mundial enfocado en crecimiento exponencial automatizado.
+### Lo que EXISTE (piezas sueltas)
+- 27 agentes individuales ejecutables bajo demanda
+- Publicacion multi-plataforma via upload-post-manager
+- Generacion de contenido con IA (posts, campanas, videos, reels)
+- Analytics por plataforma (Instagram, LinkedIn, Facebook, TikTok)
+- Social Listening con sentimiento
+- Content Calendar y Scheduled Posts
+- Journey Builder con pasos sociales (social_reply, social_dm, create_post)
+- Social Automation Rules (triggers/acciones en memoria, no persistidas)
+- Next Best Action engine (rule-based)
+- Content Approvals (workflow de revision)
+- Company State analysis (maturity scoring)
+- Platform Settings con auto_publish por plataforma
+- pg_cron habilitado (solo usado para AI model monitoring cada 15 min)
 
-Buildera ya tiene una base solida (publicacion multi-plataforma, IA generativa, calendario, Instagram Community Manager, analytics social), pero le faltan los elementos que **cierran el ciclo completo de marketing**: captura de leads, nurture automatizado, tracking de conversiones, y workflows inteligentes.
+### Lo que FALTA (el gap critico)
 
----
+```text
++-------------------------------------------------------------+
+|                   ESTADO ACTUAL                               |
+|                                                               |
+|  [Agente 1] [Agente 2] [Agente 3] ... [Agente 27]           |
+|      |           |           |              |                 |
+|      v           v           v              v                 |
+|  (ejecucion manual, uno por uno, usuario decide cuando)       |
+|                                                               |
+|  NO HAY:                                                      |
+|  - Ciclo autonomo de evaluacion -> decision -> accion         |
+|  - Cron jobs que disparen agentes automaticamente             |
+|  - Guardrails que protejan la marca en tiempo real            |
+|  - Feedback loop que aprenda del performance                  |
+|  - Orquestador que coordine multiples agentes                 |
++-------------------------------------------------------------+
 
-## Estado Actual vs Industria
-
-| Capacidad | HubSpot | Hootsuite | Buildera | Estado |
-|---|---|---|---|---|
-| Publicacion multi-plataforma | Si | Si | Si | Completo |
-| Generacion contenido IA | Si | Si | Si | Completo |
-| Calendario editorial | Si | Si | Si | Completo |
-| Community Manager (IG) | No | Si | Si | Completo |
-| Analytics social | Si | Si | Si | Completo |
-| Busqueda influencers | No | Si | Si | Completo |
-| A/B Testing contenido | Si | No | Si | Completo |
-| Journey Builder (email) | Si | No | Si | Existe pero aislado |
-| **Landing Pages / Forms** | Si | No | **No** | Faltante critico |
-| **Email campaigns masivas** | Si | No | **No** | Faltante critico |
-| **Lead scoring / CRM** | Si | No | **No** | Faltante |
-| **UTM Tracking** | Si | Si | **No** | Faltante |
-| **Social Listening** | Si | Si | **Parcial** | Solo datos, sin UI |
-| **Reportes exportables** | Si | Si | **No** | Faltante |
-| **Workflows automatizados** | Si | No | **Parcial** | Journey existe, falta integracion |
-| **Flujo aprobaciones** | Si | Si | **No** | Faltante |
-
----
-
-## Las 7 Oportunidades Priorizadas
-
-### 1. Email Marketing integrado en el Hub (PRIORIDAD ALTA)
-
-**Problema**: Buildera ya tiene un Journey Builder con ReactFlow y un sistema de email con templates, pero estan completamente aislados del Marketing Hub. El usuario no sabe que existen.
-
-**Solucion**: Integrar el email marketing como un camino mas dentro del Marketing Hub, no como feature separada.
-
-**Elementos a implementar**:
-- Acceso directo al Journey Builder desde el tab "Crear" del Marketing Hub (4to camino: "Secuencia de Email")
-- Dashboard de metricas de email (opens, clicks, bounces) dentro del tab Panel
-- Selector de audiencia/segmento al crear una secuencia
-- Templates de email pre-diseñados para casos comunes (bienvenida, promo, reengagement)
-
-**Impacto**: Conecta creacion de contenido social con nurture por email, cerrando el ciclo de conversion.
-
----
-
-### 2. Captura de Leads: Smart Links y Micro-Landing Pages (PRIORIDAD ALTA)
-
-**Problema**: No hay forma de capturar leads desde las publicaciones sociales. El usuario publica contenido pero no tiene donde enviar al trafico.
-
-**Solucion**: Sistema de "Smart Links" con micro-landing pages generadas por IA.
-
-**Elementos a implementar**:
-- Generador de micro-landing pages (1 pagina, 1 formulario, 1 CTA)
-- Templates por objetivo (captura email, descarga recurso, agendar cita, cupon)
-- Formularios embebibles con campos personalizados
-- Cada landing page genera un link corto trackeable
-- Integracion: al crear un post en el Hub, opcion de "adjuntar Smart Link"
-- Base de contactos donde se almacenan los leads capturados
-
-**Impacto**: Convierte seguidores en leads cualificados, habilitando el funnel completo.
++-------------------------------------------------------------+
+|                   ESTADO DESEADO                              |
+|                                                               |
+|  [Marketing Autopilot Engine] -- ejecuta cada 6h via cron     |
+|      |                                                        |
+|      +-> Fase 1: SENSE (analizar performance + listening)     |
+|      +-> Fase 2: THINK (decidir que acciones tomar)           |
+|      +-> Fase 3: ACT (ejecutar agentes automaticamente)       |
+|      +-> Fase 4: GUARD (validar contra brand guidelines)      |
+|      +-> Fase 5: LEARN (registrar resultados, ajustar)        |
+|                                                               |
+|  Todo con approval gates configurables por empresa            |
++-------------------------------------------------------------+
+```
 
 ---
 
-### 3. UTM Tracking y Attribution (PRIORIDAD ALTA)
+## Arquitectura Propuesta: Marketing Autopilot Engine
 
-**Problema**: El usuario publica en 9+ plataformas pero no sabe cual genera resultados reales.
+### El Ciclo Autonomo (SENSE -> THINK -> ACT -> GUARD -> LEARN)
 
-**Solucion**: Sistema automatico de UTM que se inyecta en cada link publicado.
+**Fase 1 - SENSE (Percibir)**
+- Recopilar metricas de todas las plataformas conectadas
+- Analizar Social Listening (menciones, sentimiento, tendencias)
+- Evaluar performance de contenido reciente (que funciono, que no)
+- Revisar estado de campanas activas
+- Detectar oportunidades y amenazas en tiempo real
 
-**Elementos a implementar**:
-- Auto-generacion de UTMs en cada publicacion (source=instagram, medium=social, campaign=nombre_campana)
-- Dashboard de attribution: que plataforma/campana genera mas clicks, leads, conversiones
-- Link shortener integrado con analytics (clicks por dia, ubicacion, dispositivo)
-- Integracion con Smart Links: tracking completo desde publicacion hasta conversion
+**Fase 2 - THINK (Decidir)**
+- IA analiza todo el contexto y genera un "plan de accion" priorizado
+- Considera: objetivos de negocio, calendario editorial, presupuesto de creditos, historial de performance
+- Genera decisiones tipo: "publicar contenido sobre X", "ajustar campana Y", "responder mencion Z"
+- Cada decision incluye urgencia, impacto estimado, y riesgo
 
-**Impacto**: Permite tomar decisiones basadas en datos reales de ROI por canal.
+**Fase 3 - ACT (Ejecutar)**
+- Orquesta los agentes necesarios automaticamente
+- CONTENT_CREATOR para generar posts, CAMPAIGN_OPTIMIZER para ajustar campanas
+- Programa publicaciones en horarios optimos (usando datos historicos)
+- Responde comentarios/menciones via community manager
 
----
+**Fase 4 - GUARD (Proteger)**
+- Valida todo contenido generado contra: palabras prohibidas, tono de marca, limites de publicacion
+- Revisa si requiere aprobacion humana (segun config de la empresa)
+- Si auto_publish=false, envia a cola de aprobacion
+- Si auto_publish=true y pasa guardrails, publica directamente
 
-### 4. Social Listening y Brand Monitoring (PRIORIDAD MEDIA)
-
-**Problema**: Los datos de menciones y ads de competidores ya se obtienen via RapidAPI (type=mentions, type=ads) pero no hay UI para consumirlos.
-
-**Solucion**: Panel de Social Listening dentro del Marketing Hub.
-
-**Elementos a implementar**:
-- Seccion "Escucha Social" en el tab Panel del Marketing Hub
-- Feed en tiempo real de menciones de la marca
-- Analisis de sentimiento por IA (positivo/negativo/neutro)
-- Tracker de ads de competidores (usando type=ads de RapidAPI)
-- Alertas configurables (notificar si mencion negativa, si competidor lanza campana)
-- Trending topics del nicho (usando datos de contenido exitoso)
-
-**Impacto**: Permite reaccionar rapidamente a oportunidades y amenazas del mercado.
-
----
-
-### 5. Reportes Exportables y Analytics Consolidado (PRIORIDAD MEDIA)
-
-**Problema**: Los datos de analytics existen pero estan fragmentados y no son exportables.
-
-**Solucion**: Sistema de reportes automatizados.
-
-**Elementos a implementar**:
-- "Report Builder" con templates: Reporte semanal, mensual, de campana
-- Exportacion a PDF con branding de la empresa
-- Metricas consolidadas cross-platform (total reach, engagement rate, growth)
-- Comparativas temporales (este mes vs anterior)
-- Benchmarks de industria (usando datos de competidores de RapidAPI)
-- Envio automatico por email (semanal/mensual usando el sistema interno de email)
-
-**Impacto**: Profesionaliza la presentacion de resultados y automatiza el reporting.
+**Fase 5 - LEARN (Aprender)**
+- Registra toda accion tomada con contexto y resultado esperado
+- Despues de 24-48h, evalua resultado real vs esperado
+- Alimenta modelo de preferencias de la empresa
+- Ajusta parametros para proximas decisiones
 
 ---
 
-### 6. Workflows de Automatizacion Social (PRIORIDAD MEDIA)
+## Plan de Implementacion
 
-**Problema**: El Journey Builder existe para email pero no conecta con acciones sociales.
+### 1. Edge Function: `marketing-autopilot-engine`
+El cerebro central. Se ejecuta via pg_cron cada 6 horas (configurable por empresa). Flujo:
 
-**Solucion**: Extender los workflows para incluir triggers y acciones de redes sociales.
+1. Obtiene lista de empresas con autopilot habilitado
+2. Para cada empresa, ejecuta el ciclo SENSE-THINK-ACT-GUARD-LEARN
+3. Usa `universal-ai-handler` con functionName `marketing_autopilot` para las decisiones
+4. Registra todo en nueva tabla `autopilot_execution_log`
 
-**Elementos a implementar**:
-- Nuevos triggers: "Nuevo comentario en post", "Nuevo follower", "Mencion de marca"
-- Nuevas acciones: "Responder comentario con IA", "Enviar DM automatico", "Crear post de respuesta"
-- Reglas de auto-publicacion: "Cuando se genera insight, crear post automaticamente"
-- Auto-respuesta inteligente: Analizar comentarios con IA y responder segun ADN de empresa
-- Conexion campana-workflow: Al completar campana, activar secuencia de seguimiento
+### 2. Base de datos: Nuevas tablas
 
-**Impacto**: Automatizacion real del community management y nurture social.
+**`company_autopilot_config`**: Configuracion por empresa
+- autopilot_enabled, execution_frequency (2h/6h/12h/24h)
+- max_posts_per_day, max_credits_per_cycle
+- require_human_approval (boolean)
+- allowed_actions (array: create_content, publish, reply_comments, adjust_campaigns)
+- brand_guardrails (JSON: forbidden_words, tone_rules, topic_restrictions)
+- active_hours (JSON: cuando puede publicar)
+
+**`autopilot_execution_log`**: Historial de cada ciclo
+- company_id, cycle_id, phase (sense/think/act/guard/learn)
+- decisions_made (JSON array), actions_taken (JSON array)
+- content_generated, content_approved, content_rejected
+- credits_consumed, execution_time_ms
+
+**`autopilot_decisions`**: Cada decision individual
+- cycle_id, decision_type, priority, description
+- action_taken (que agente se ejecuto)
+- guardrail_result (passed/blocked/sent_to_approval)
+- expected_impact, actual_impact (rellenado en fase LEARN)
+
+### 3. Persistencia de Automation Rules
+Las SocialAutomationRules actuales solo viven en estado React (memoria). Crear tabla `social_automation_rules` para persistirlas y que el autopilot las ejecute.
+
+### 4. pg_cron Job
+Registrar un cron job que invoque `marketing-autopilot-engine` cada hora. La edge function internamente filtra empresas segun su frecuencia configurada.
+
+### 5. UI: Autopilot Dashboard
+Nuevo tab "Autopilot" en Marketing Hub que muestre:
+- Toggle ON/OFF con configuracion
+- Timeline de acciones tomadas automaticamente
+- Metricas de impacto (contenido generado, engagement ganado)
+- Cola de aprobacion pendiente (si require_human_approval=true)
+- Guardrails configurables (palabras prohibidas, limites, horarios)
+
+### 6. Brand Guardrails Service
+Funcion reutilizable que valida cualquier contenido contra:
+- company_communication_settings (palabras prohibidas, eslogan aprobado)
+- company_branding (tono, personalidad)
+- platform_settings (limites diarios, auto_publish flag)
+- Retorna: approved / blocked (con razon) / needs_review
+
+### 7. i18n
+Todas las claves nuevas en ES/EN/PT para autopilot dashboard, configuracion, logs.
 
 ---
 
-### 7. Flujo de Aprobaciones y Colaboracion (PRIORIDAD BAJA)
+## Secuencia de Implementacion
 
-**Problema**: No hay revision antes de publicar. En equipos, esto es riesgoso.
-
-**Solucion**: Sistema simple de aprobacion de contenido.
-
-**Elementos a implementar**:
-- Estados de contenido: borrador -> en revision -> aprobado -> publicado
-- Asignar revisor al crear contenido
-- Notificacion al revisor cuando hay contenido pendiente
-- Comentarios inline en borradores
-- Calendario con vista de "pendientes de aprobacion"
-
-**Impacto**: Permite escalar equipos de marketing sin perder control de calidad.
+| Paso | Componente | Dependencias |
+|------|-----------|-------------|
+| 1 | Migracion DB (tablas autopilot + automation rules) | Ninguna |
+| 2 | Edge Function `marketing-autopilot-engine` | Tablas creadas |
+| 3 | Persistencia de SocialAutomationRules en DB | Tabla social_automation_rules |
+| 4 | Brand Guardrails validation logic (dentro del engine) | Communication settings existentes |
+| 5 | pg_cron job registration | Edge function desplegada |
+| 6 | Autopilot Dashboard UI (tab en Marketing Hub) | Todo lo anterior |
+| 7 | i18n keys (ES/EN/PT) | UI creada |
 
 ---
 
-## Recomendacion de Implementacion
+## Guardrails y Proteccion de Marca
 
-### Fase 1 - Cerrar el Funnel (Semanas 1-2)
-- Integrar Journey Builder/Email en Marketing Hub
-- Smart Links con micro-landing pages
-- UTM tracking automatico en publicaciones
+El sistema NUNCA publicara contenido que:
+- Contenga palabras de la lista prohibida (company_communication_settings.forbidden_words)
+- Viole el tono configurado en company_branding
+- Exceda el limite de posts diarios por plataforma
+- Este fuera del horario activo de la empresa
+- Use temas restringidos por la empresa
 
-### Fase 2 - Inteligencia de Mercado (Semanas 3-4)
-- Panel de Social Listening
-- Reportes exportables PDF
-- Benchmarks de competidores
-
-### Fase 3 - Automatizacion Total (Semanas 5-6)
-- Workflows de automatizacion social
-- Auto-respuestas inteligentes
-- Flujo de aprobaciones
+Cuando require_human_approval=true, todo contenido generado va a la cola de ContentApprovalPanel existente antes de publicarse.
 
 ---
 
-## Detalles Tecnicos
+## Detalles Tecnicos Clave
 
-### Fase 1: Email + Smart Links + UTM
-
-**Integracion Email en Marketing Hub**:
-- Modificar `MarketingHubWow.tsx` para agregar acceso al Journey Builder en tab "Crear" (4to camino)
-- Crear `EmailCampaignQuickStart.tsx` que simplifique la creacion de secuencias de email
-- Agregar metricas de email al dashboard del Hub consultando `email_send_history`
-
-**Smart Links**:
-- Nueva tabla `smart_links` (id, company_id, slug, destination_url, title, template_type, form_fields, utm_params, clicks, leads_captured)
-- Nueva tabla `smart_link_leads` (id, link_id, email, name, phone, custom_fields, source_platform, captured_at)
-- Edge function `smart-link-manager` para CRUD y analytics
-- Componente `SmartLinkBuilder.tsx` con templates por objetivo
-- Componente `MicroLandingPreview.tsx` para preview en tiempo real
-- Integracion en el flujo de creacion de posts: checkbox "Adjuntar Smart Link"
-
-**UTM Tracking**:
-- Modificar `upload-post-manager` para auto-inyectar UTMs en links de publicaciones
-- Componente `UTMDashboard.tsx` con metricas de clicks por source/medium/campaign
-- Almacenar clicks en tabla `utm_click_events`
-
-### Fase 2: Social Listening + Reportes
-
-**Social Listening**:
-- Crear `SocialListeningPanel.tsx` que consuma datos de `analyze-social-content` (type=mentions)
-- Edge function `brand-monitoring` para programar checks periodicos
-- Componente `SentimentAnalysis.tsx` que use IA para clasificar menciones
-- `CompetitorAdTracker.tsx` usando type=ads de RapidAPI
-
-**Reportes**:
-- Edge function `generate-marketing-report` que compile metricas de todas las fuentes
-- Componente `ReportBuilder.tsx` con selector de periodo y metricas
-- Exportacion PDF usando jsPDF (ya instalado) con branding de empresa
-- Programacion de envio via `send-buildera-email`
-
-### Fase 3: Workflows + Aprobaciones
-
-**Workflows Sociales**:
-- Extender `useJourneyBuilder.ts` con nuevos step types: `social_reply`, `social_dm`, `create_post`
-- Nuevos triggers en Journey Builder: `new_comment`, `new_mention`, `new_follower`
-- Componente `SocialAutomationRules.tsx` para reglas simples sin el builder completo
-
-**Aprobaciones**:
-- Nueva tabla `content_approvals` (id, content_id, content_type, status, reviewer_id, comments, approved_at)
-- Modificar flujo de publicacion para verificar aprobacion si la empresa tiene la feature activa
-- Badge en calendario mostrando items pendientes de aprobacion
-
-### i18n
-- Todas las nuevas claves en `marketing.json` (ES/EN/PT)
-- Cero strings hardcodeados
-
+- El autopilot engine usa el `universal-ai-handler` existente para decisiones, no crea un nuevo pipeline de IA
+- Los agentes se ejecutan via la misma infraestructura de `useAgentExecution` (creditos, logging, parametros)
+- El ciclo LEARN usa los analytics existentes (instagram_posts, linkedin_posts, etc.) para evaluar impacto
+- La frecuencia del cron es horaria, pero cada empresa configura su ritmo (el engine filtra internamente)
+- El dashboard muestra datos en real-time via polling o Supabase Realtime sobre autopilot_execution_log

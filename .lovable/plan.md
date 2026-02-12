@@ -1,184 +1,191 @@
 
-# Rediseno del Marketing Hub - Flujo de Experiencia de Usuario
 
-## Diagnostico: Problemas Identificados
+# Maximizar el Uso de la API de Upload-Post
 
-### 1. Dashboard sin guia de accion (Tab "Dashboard")
-El dashboard muestra metricas (Insights, Engagement, Campanas, Automatizacion) pero cuando un usuario nuevo llega, ve todo en ceros y no hay un flujo guiado que le diga **por donde empezar**. Las "Acciones Rapidas" son 4 botones genericos sin contexto ni priorizacion.
+## Analisis Comparativo: APIs Disponibles vs Implementadas
 
-### 2. Tab "Crear" es confuso y fragmentado
-- Muestra un banner del "Content Studio IA - Version Avanzada" que compite visualmente con el creador simple
-- El creador simple tiene 2 sub-tabs (Generacion IA / Manual) pero no conecta con las campanas ni con Creatify
-- No hay acceso a la generacion de video (Creatify) desde esta pestaña
-- El usuario no sabe si crear contenido suelto o dentro de una campana
-
-### 3. Creatify Studio completamente aislado
-CreatifyStudio solo es accesible via `?view=creatify-studio` en CompanyDashboard, pero **no aparece en ningun menu del Marketing Hub**. El usuario no puede descubrir las capacidades de video/banner/avatar a menos que conozca la URL exacta.
-
-### 4. Tab "Campanas" no muestra campanas activas
-CampaignDashboard solo muestra borradores y un boton para crear nueva campana. No hay visualizacion de campanas completadas ni su rendimiento. El wizard de 7 pasos es robusto pero el usuario no sabe que existe.
-
-### 5. Calendario desconectado del flujo de creacion
-ContentCalendar muestra posts programados pero no tiene forma de crear contenido directamente desde el calendario. El flujo natural seria: ver hueco en calendario -> crear contenido -> programar.
-
-### 6. Biblioteca sin valor agregado
-ContentLibraryTab + UploadHistory + ScheduledPostsManager se muestran apilados sin un flujo coherente. No se muestran los assets de Creatify aqui.
-
-### 7. Hardcoded strings (i18n violation)
-Todo el MarketingHubWow tiene docenas de strings hardcodeados en espanol: "Insights Generados", "Engagement Total", "Rendimiento por Plataforma", "Acciones Rapidas", "Cargando Marketing Hub", etc.
+| API | Endpoint | Estado | Valor para el usuario |
+|---|---|---|---|
+| Video Upload | `POST /api/upload_videos` | Parcial (usa `/api/upload` legacy) | Publicar videos en 9 plataformas |
+| Photo Upload | `POST /api/upload_photos` | Implementado | Publicar fotos/carruseles |
+| Text Upload | `POST /api/upload_text` | Implementado | Publicar texto |
+| Upload Status | `GET /api/uploadposts/status` | Implementado | Monitoreo de publicaciones |
+| Upload History | `GET /api/uploadposts/history` | Implementado | Historial |
+| Schedule Management | `GET/DELETE /api/uploadposts/schedule` | Implementado | Programar/cancelar |
+| Analytics | `GET /api/analytics/{profile}` | Implementado | Metricas por plataforma |
+| Facebook Pages | `GET /api/uploadposts/facebook/pages` | Implementado | Seleccion de pagina |
+| LinkedIn Pages | `GET /api/uploadposts/linkedin/pages` | Implementado | Seleccion de pagina |
+| Pinterest Boards | `GET /api/uploadposts/pinterest/boards` | Implementado | Seleccion de tablero |
+| User Profiles | `POST/GET/DELETE` | Implementado | Gestion de perfiles |
+| JWT / Validate | `POST generate-jwt / validate-jwt` | Implementado | Autenticacion |
+| **Instagram Media List** | `GET /api/uploadposts/media` | **NO IMPLEMENTADO** | Ver posts de Instagram |
+| **Instagram Comments** | `GET/POST /api/uploadposts/comments` | **NO IMPLEMENTADO** | Leer y responder comentarios |
+| **Instagram DMs** | `POST/GET /api/uploadposts/dms` | **NO IMPLEMENTADO** | Mensajes directos |
+| **Current User / Me** | `GET /api/uploadposts/me` | **NO IMPLEMENTADO** | Validar plan y API key |
 
 ---
 
-## Solucion Propuesta: Marketing Hub Guiado por Valor
+## APIs Sin Aprovechar y su Valor
 
-### Principio rector
-Convertir el Marketing Hub de un "panel de datos" a un **flujo guiado de generacion de valor** con 3 caminos claros:
+### 1. Instagram Interactions (ALTO IMPACTO)
 
-```text
-+------------------------------------------+
-|          MARKETING HUB                   |
-|                                          |
-|  [Estado Actual: Metricas + Conexiones]  |
-|                                          |
-|  3 Caminos de Valor:                     |
-|  +----------+ +----------+ +----------+ |
-|  | Campana  | | Contenido| | Estudio  | |
-|  | Completa | | Rapido   | | Creativo | |
-|  | (Wizard) | | (Post)   | | (Video)  | |
-|  +----------+ +----------+ +----------+ |
-|                                          |
-|  [Calendario] [Biblioteca]               |
-+------------------------------------------+
-```
+Estas 3 APIs representan la mayor oportunidad sin explotar. Permiten construir un **Community Manager automatizado** directamente dentro de Buildera:
 
-### Cambio 1: Dashboard con "Getting Started" inteligente
+**Instagram Media List** (`GET /api/uploadposts/media`)
+- Listar posts, reels y carruseles recientes de la cuenta de Instagram
+- Obtener media IDs, captions, permalinks, timestamps
+- Base para todas las demas interacciones de Instagram
 
-Cuando no hay metricas/campanas, mostrar un **onboarding contextual** en lugar de metricas vacias:
+**Instagram Comments** (`GET /api/uploadposts/comments` + `POST /api/uploadposts/comments/reply`)
+- Leer comentarios de cualquier post de Instagram
+- Enviar respuestas privadas (DMs) a quienes comentan
+- Requiere permiso `instagram_business_manage_comments`
+- Caso de uso: responder automaticamente con IA a comentarios, detectar oportunidades de venta
 
-```text
-Bienvenido al Marketing Hub
------------------------------
-Tu progreso: [===>--------] 30%
+**Instagram DMs** (`POST /api/uploadposts/dms/send` + `GET /api/uploadposts/dms/conversations`)
+- Enviar mensajes directos a usuarios por IGSID
+- Recuperar conversaciones de DMs
+- Ventana de 24 horas de Instagram para mensajes
+- Caso de uso: seguimiento a leads, soporte al cliente, nurturing
 
-[ ] 1. Conectar redes sociales       [Ir ->]
-[x] 2. Completar ADN de empresa      [Hecho]
-[ ] 3. Crear primera campana         [Ir ->]
-[ ] 4. Generar primer video          [Ir ->]
-[ ] 5. Programar primer publicacion  [Ir ->]
-```
+### 2. Current User API (BAJO ESFUERZO)
 
-Cuando **si hay datos**, mostrar el dashboard actual con metricas reales.
+`GET /api/uploadposts/me` permite validar la API key y verificar el plan de suscripcion. Util para:
+- Mostrar al usuario su plan actual y limites
+- Validar que la API key sigue activa antes de operaciones costosas
+- Prevenir errores silenciosos por API key expirada
 
-### Cambio 2: Reestructurar tabs de 5 a 5 (renombrar + integrar Creatify)
+### 3. Video Upload Endpoint Incorrecto
 
-| Tab Actual | Tab Nuevo | Contenido |
-|---|---|---|
-| Dashboard | **Panel** | Metricas + Getting Started inteligente |
-| Crear | **Crear** | 3 opciones claras: Post Rapido, Campana Completa, Estudio Creativo (Creatify) |
-| Campanas | **Campanas** | Dashboard de campanas existente |
-| Calendario | **Calendario** | Sin cambios, agregar boton "Crear desde aqui" |
-| Biblioteca | **Biblioteca** | Unificar: content library + Creatify gallery + historial |
+El codigo actual usa `/api/upload` (legacy) en lugar de `/api/upload_videos` (documentado). Esto podria causar incompatibilidades con plataformas nuevas como Bluesky y Pinterest para video.
 
-### Cambio 3: Tab "Crear" rediseñado con 3 caminos claros
+### 4. Plataformas faltantes en el filtrado
 
-En lugar del creador fragmentado actual, mostrar 3 cards de accion:
+El filtrado de plataformas en `filterPlatformsByPostType` no incluye **Bluesky** ni **Reddit** para texto, ni **Bluesky** para fotos/videos, a pesar de que Upload-Post las soporta.
 
-**Camino 1: Post Rapido**
-- Para cuando el usuario quiere publicar algo ya
-- Generacion IA o manual -> Optimizar con Era -> Publicar/Programar
-- Es el ContentCreatorTab actual pero simplificado
+---
 
-**Camino 2: Campana Completa**
-- El wizard de 7 pasos existente
-- Para estrategias de marketing completas
-- Acceso directo al CampaignWizard
+## Plan de Implementacion
 
-**Camino 3: Estudio Creativo (Creatify)**
-- Video Ads desde URL del sitio web
-- Videos con Avatar AI
-- Clonar anuncios de competidores
-- Banners IAB en todos los tamanos
-- Es el CreatifyStudio integrado directamente
+### Fase 1: Correcciones rapidas (bajo esfuerzo, alto impacto)
 
-### Cambio 4: Biblioteca unificada
+**1.1 Corregir endpoint de video**
+- Cambiar `/api/upload` a `/api/upload_videos` en `postContent()`
+- Archivo: `supabase/functions/upload-post-manager/index.ts` linea 744
 
-Consolidar en una sola vista con filtros:
-- Contenido generado (texto)
-- Imagenes generadas
-- Videos Creatify (desde creatify_jobs)
-- Posts publicados (historial Upload-Post)
-- Posts programados
+**1.2 Agregar plataformas faltantes al filtrado**
+- Agregar `bluesky` a text, photo y video
+- Agregar `reddit` a text
+- Archivo: `supabase/functions/upload-post-manager/index.ts` lineas 593-597
 
-### Cambio 5: Internacionalizacion
+**1.3 Agregar accion `get_current_user`**
+- Nueva accion en el switch del edge function
+- Llama a `GET /api/uploadposts/me`
+- Se usa en el Marketing Hub para mostrar estado de la cuenta Upload-Post
 
-Mover todos los strings hardcodeados a `marketing.json` en los 3 idiomas (ES, EN, PT).
+### Fase 2: Instagram Community Manager (alto impacto)
+
+**2.1 Nuevas acciones en `upload-post-manager`**
+
+Agregar 4 acciones al switch existente:
+- `get_instagram_media` -> `GET /api/uploadposts/media?profile={username}`
+- `get_instagram_comments` -> `GET /api/uploadposts/comments?media_id={id}` o `?post_url={url}`
+- `reply_instagram_comment` -> `POST /api/uploadposts/comments/reply` (envia DM al comentarista)
+- `send_instagram_dm` -> `POST /api/uploadposts/dms/send`
+- `get_instagram_conversations` -> `GET /api/uploadposts/dms/conversations?profile={username}`
+
+**2.2 Nuevo componente: `InstagramCommunityManager.tsx`**
+
+Interfaz con 3 secciones:
+- **Posts recientes**: Grid de los ultimos posts con metricas (likes, comments)
+- **Comentarios**: Al hacer click en un post, ver comentarios con opcion de responder (reply publico via DM)
+- **Bandeja de DMs**: Lista de conversaciones activas con respuesta inline
+
+**2.3 Integracion en el Marketing Hub**
+
+Agregar como nueva seccion dentro del tab "Panel" o como un sub-tab en "Biblioteca":
+- Accesible cuando Instagram esta conectado
+- Muestra badge de notificacion con comentarios sin responder
+- Opcion de respuesta asistida por IA (usar el ADN de la empresa para generar respuestas on-brand)
+
+### Fase 3: i18n
+
+Agregar todas las nuevas claves de traduccion a `marketing.json` en ES, EN y PT para:
+- Labels del Community Manager
+- Estados de conexion
+- Mensajes de error y confirmacion
 
 ---
 
 ## Detalles Tecnicos
 
-### Archivos a modificar:
+### Cambios en `upload-post-manager/index.ts`
 
-1. **`src/components/company/MarketingHubWow.tsx`** (archivo principal - 910 lineas)
-   - Agregar logica de "Getting Started" basada en estado del usuario
-   - Reestructurar tab "Crear" con las 3 opciones
-   - Integrar CreatifyStudio en el tab "Crear" como opcion
-   - Integrar CreatifyGallery en tab "Biblioteca"
-   - Reemplazar ~60 strings hardcodeados con claves i18n
+Agregar al switch (linea 50-100):
+```text
+case 'get_current_user':
+  result = await getCurrentUser(apiKey);
+  break;
+case 'get_instagram_media':
+  result = await getInstagramMedia(apiKey, data);
+  break;
+case 'get_instagram_comments':
+  result = await getInstagramComments(apiKey, data);
+  break;
+case 'reply_instagram_comment':
+  result = await replyInstagramComment(apiKey, data);
+  break;
+case 'send_instagram_dm':
+  result = await sendInstagramDM(apiKey, data);
+  break;
+case 'get_instagram_conversations':
+  result = await getInstagramConversations(apiKey, data);
+  break;
+```
 
-2. **`src/components/company/ContentCreatorTab.tsx`** (692 lineas)
-   - Simplificar eliminando el banner del "Advanced Creator" que confunde
-   - Convertir en la opcion "Post Rapido" dentro del nuevo tab Crear
+### Nuevas funciones en el edge function
 
-3. **`src/components/company/ContentCalendar.tsx`** (465 lineas)
-   - Agregar boton de "Crear contenido" al hacer click en un dia vacio
+- `getCurrentUser(apiKey)` -> `GET /api/uploadposts/me`
+- `getInstagramMedia(apiKey, data)` -> `GET /api/uploadposts/media?profile={username}`
+- `getInstagramComments(apiKey, data)` -> `GET /api/uploadposts/comments?media_id={id}&profile={username}`
+- `replyInstagramComment(apiKey, data)` -> `POST /api/uploadposts/comments/reply` con `{ media_id, comment_id, message, profile }`
+- `sendInstagramDM(apiKey, data)` -> `POST /api/uploadposts/dms/send` con `{ recipient_id, message, profile }`
+- `getInstagramConversations(apiKey, data)` -> `GET /api/uploadposts/dms/conversations?profile={username}`
 
-4. **`public/locales/es/marketing.json`** - Crear traducciones ES
-5. **`public/locales/en/marketing.json`** - Crear traducciones EN
-6. **`public/locales/pt/marketing.json`** - Crear traducciones PT
+### Nuevos archivos
 
-### Nuevo componente: `MarketingGettingStarted.tsx`
-Widget de onboarding que evalua el estado actual del usuario:
-- Redes conectadas? (social_accounts)
-- ADN completo? (company_branding)
-- Primera campana? (marketing_campaigns)
-- Primer video? (creatify_jobs)
-- Primera publicacion? (scheduled_posts / upload history)
+1. `src/components/company/instagram/InstagramCommunityManager.tsx` - Componente contenedor
+2. `src/components/company/instagram/InstagramPostGrid.tsx` - Grid de posts recientes
+3. `src/components/company/instagram/InstagramCommentViewer.tsx` - Visor de comentarios con respuesta
+4. `src/components/company/instagram/InstagramDMInbox.tsx` - Bandeja de mensajes directos
 
-### Nuevo componente: `CrearContentHub.tsx`
-Las 3 tarjetas de accion para el tab "Crear":
-- Post Rapido (abre ContentCreatorTab inline)
-- Campana Completa (navega a tab campanas/wizard)
-- Estudio Creativo (abre CreatifyStudio inline)
+### Archivos a modificar
 
-### Nuevo componente: `UnifiedLibrary.tsx`
-Vista consolidada de todos los assets:
-- Query content_library + creatify_jobs (done) + generated_content
-- Filtros por tipo (texto, imagen, video, banner)
-- Acciones: descargar, publicar, programar, eliminar
+1. `supabase/functions/upload-post-manager/index.ts` - Agregar 6 acciones nuevas + corregir video endpoint + ampliar plataformas
+2. `src/components/company/MarketingHubWow.tsx` - Integrar Instagram Community Manager
+3. `public/locales/es/marketing.json` - Traducciones ES
+4. `public/locales/en/marketing.json` - Traducciones EN
+5. `public/locales/pt/marketing.json` - Traducciones PT
 
-### Impacto en navegacion
-- Eliminar `creatify-studio` como vista separada en CompanyDashboard (se accede desde Marketing Hub)
-- Mantener la ruta `?view=creatify-studio` como redirect al Marketing Hub tab "Crear"
+### Componente InstagramCommunityManager - Estructura
 
----
+```text
++--------------------------------------------+
+|  Instagram Community Manager               |
+|                                            |
+|  [Posts] [Comentarios] [Mensajes]          |
+|                                            |
+|  +--------+ +--------+ +--------+         |
+|  | Post 1 | | Post 2 | | Post 3 |         |
+|  | 24 com | | 12 com | | 8 com  |         |
+|  +--------+ +--------+ +--------+         |
+|                                            |
+|  Comentarios de Post 1:                    |
+|  - @user1: "Me encanta!"  [Responder DM]  |
+|  - @user2: "Precio?"      [Responder DM]  |
+|  - @user3: "Disponible?"  [Responder DM]  |
+|                                            |
+|  [Sugerir respuesta con IA]               |
++--------------------------------------------+
+```
 
-## Plan de Ejecucion
-
-### Fase 1: Infraestructura i18n + Getting Started
-1. Crear archivos de traduccion `marketing.json` (ES/EN/PT)
-2. Crear componente `MarketingGettingStarted.tsx`
-3. Integrar Getting Started en el dashboard del Marketing Hub
-
-### Fase 2: Reestructurar Tab "Crear"
-4. Crear componente `CrearContentHub.tsx` con las 3 opciones
-5. Integrar CreatifyStudio como opcion dentro del tab Crear
-6. Simplificar ContentCreatorTab (remover banner Advanced confuso)
-
-### Fase 3: Biblioteca Unificada
-7. Crear componente `UnifiedLibrary.tsx`
-8. Integrar CreatifyGallery + ContentLibrary + UploadHistory
-
-### Fase 4: Refactor i18n completo
-9. Reemplazar todos los strings hardcodeados en MarketingHubWow.tsx
-10. Internacionalizar ContentCreatorTab, ContentCalendar, ConnectionStatusBar

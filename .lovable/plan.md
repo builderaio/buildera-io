@@ -1,186 +1,245 @@
 
+# Integracion de Creatify AI en el Marketing Hub de Buildera
 
-# Validacion Integral de Flujos Funcionales - Buildera
+## Resumen
 
-## Resumen Ejecutivo
-
-Tras una revision exhaustiva del codigo fuente, base de datos, funciones RPC, edge functions y configuraciones, se identificaron **14 problemas** que afectan el funcionamiento correcto de la plataforma. A continuacion se presenta cada hallazgo con su solucion propuesta.
-
----
-
-## Problemas Identificados y Soluciones
-
-### 1. Error de Build: `pushManager` no existe en TypeScript
-**Archivo:** `src/hooks/usePushNotifications.ts`
-**Severidad:** CRITICA (bloquea el build)
-**Problema:** TypeScript no reconoce `pushManager` en `ServiceWorkerRegistration` porque falta el tipo `WebWorker` en la configuracion.
-**Solucion:** Agregar un cast `as any` en las 3 lineas afectadas (59, 124, 185) para evitar el error de tipos sin cambiar funcionalidad.
+Creatify.ai es una plataforma de generacion de video publicitario con IA. Integraremos sus 7 APIs principales en el Marketing Hub para que cada empresa registrada pueda generar contenido de video, imagenes publicitarias y assets creativos directamente desde Buildera.
 
 ---
 
-### 2. `supabase/config.toml` sin configuracion de Edge Functions
-**Archivo:** `supabase/config.toml`
-**Severidad:** ALTA
-**Problema:** El archivo solo contiene `project_id`. Se eliminaron todas las configuraciones de `[functions.*]` (verify_jwt, etc.) en el ultimo diff. Esto puede causar que funciones que necesitan bypass de JWT no funcionen correctamente.
-**Solucion:** Restaurar las configuraciones de `verify_jwt` para las edge functions que lo requieren (sandbox-agent-executor, analyze-competitors, translate-content, openai-responses-handler con `verify_jwt = false`, y las demas con `verify_jwt = true`).
+## APIs de Creatify a Integrar
+
+| API | Funcion | Costo (creditos) | Uso en Buildera |
+|---|---|---|---|
+| **URL to Video** | Convierte URL de producto en video publicitario | 5 cr/30s | Paso 5 "Creacion de Contenido" - generar video ads desde el sitio web de la empresa |
+| **AI Avatar (Lipsync v2)** | Videos con avatares AI hablando un script | 5 cr/30s | Generar portavoces virtuales para la marca |
+| **Ad Clone** | Recrea anuncios ganadores con los productos de la empresa | 3 cr/5s del video referencia | Clonar anuncios exitosos de competidores |
+| **Image Ad (IAB)** | Genera banners publicitarios en todos los tamanos IAB | 2 cr/request | Banners para campanas display/mobile |
+| **Asset Generator** | Genera imagenes/videos con modelos como Kling, etc. | Variable | Imagenes de producto, videos cortos |
+| **AI Scripts** | Genera scripts para videos | 1 cr/request | Pre-generar guiones antes de crear videos |
+| **Text to Speech** | Convierte texto a audio | 1 cr/30s | Voiceovers para contenido |
 
 ---
 
-### 3. Registro (CompanyAuth): Sitio web obligatorio contradice el flujo de Founder Journey
-**Archivo:** `src/components/auth/CompanyAuth.tsx` (lineas 70-78)
-**Severidad:** ALTA
-**Problema:** En el formulario de registro, `websiteUrl` se valida como **obligatorio** para TODOS los usuarios empresa. Sin embargo, el Founder Journey (nuevo negocio sin sitio web) fue disenado especificamente para usuarios sin website. Un usuario nuevo no puede registrarse sin sitio web.
-**Solucion:** Hacer el campo `websiteUrl` opcional en el registro de CompanyAuth, removiendo la validacion obligatoria.
+## Arquitectura Tecnica
 
----
+### Autenticacion
+Creatify usa dos headers: `X-API-ID` y `X-API-KEY` (obtenidos desde el dashboard de Creatify). Se almacenaran como secrets de Supabase: `CREATIFY_API_ID` y `CREATIFY_API_KEY`.
 
-### 4. CompleteProfile: Sitio web obligatorio para tipo "company"
-**Archivo:** `src/pages/CompleteProfile.tsx` (linea 366)
-**Severidad:** ALTA
-**Problema:** El campo `websiteUrl` tiene `required` para usuarios tipo company, bloqueando a fundadores sin sitio web.
-**Solucion:** Eliminar el atributo `required` del campo website en CompleteProfile para usuarios company.
+### Patron Asincrono
+Todas las APIs de Creatify siguen un patron asincrono:
+1. `POST` para crear la tarea (retorna un `id`)
+2. `GET` para consultar el estado (polling hasta `status: done`)
+3. Opcion de `webhook_url` para recibir notificacion cuando termine
 
----
-
-### 5. `delete_company_cascade` no elimina ~20 tablas con `company_id`
-**Severidad:** ALTA
-**Problema:** La funcion RPC `delete_company_cascade` solo elimina datos de ~15 tablas, pero existen ~45 tablas con columna `company_id`. Faltan tablas criticas como:
-- `company_play_to_win`, `company_ptw_reviews`
-- `company_products`, `company_parameters`, `company_current_parameters`
-- `company_objectives`, `company_objective_progress`
-- `company_marketing_goals`, `marketing_campaigns`, `marketing_strategies`
-- `competitive_intelligence`, `crm_*` (accounts, contacts, deals, pipelines, tags, activities, custom_fields)
-- `content_calendar_items`, `content_library`, `content_insights`, `content_clusters`
-- `social_accounts`, `social_*_analysis`
-- `onboarding_wow_results`, `push_subscriptions`
-- `journey_definitions`, `journey_enrollments`
-- `whitelabel_deployments`, `whitelabel_reviews`
-- `company_platform_settings`, `company_schedule_config`, `company_external_data`
-- `revenue_tracking`
-
-**Solucion:** Crear una migracion SQL que reemplace `delete_company_cascade` con una version completa que elimine todas las tablas con `company_id`.
-
----
-
-### 6. `agent-sdk-executor`: Referencia a tabla `company_credits` que no existe
-**Archivo:** `supabase/functions/agent-sdk-executor/index.ts` (linea 78)
-**Severidad:** MEDIA
-**Problema:** La funcion consulta `company_credits` y llama `deduct_company_credits` RPC, pero ninguna de estas existe en la base de datos. La ejecucion de agentes con creditos siempre fallara.
-**Solucion:** Crear la tabla `company_credits` y la funcion RPC `deduct_company_credits`, o eliminar la logica de creditos temporalmente hasta que se implemente el sistema de facturacion.
-
----
-
-### 7. AdminDashboard: `get_admin_recent_activity` puede fallar silenciosamente
-**Archivo:** `src/pages/AdminDashboard.tsx` (linea 106)
-**Severidad:** MEDIA
-**Problema:** La llamada a `supabase.rpc('get_admin_recent_activity')` se incluye en el `Promise.all` pero no se verifica si la funcion existe o retorna datos validos. Si falla, puede bloquear la carga de todo el dashboard.
-**Solucion:** Mover la llamada fuera del `Promise.all` principal y manejar su error de forma independiente.
-
----
-
-### 8. OnboardingOrchestrator: Logica de bifurcacion incompleta para empresas existentes con website
-**Archivo:** `src/components/OnboardingOrchestrator.tsx` (lineas 80-94)
-**Severidad:** MEDIA
-**Problema:** En la verificacion inicial (linea 80), si `journey_type` es `existing_business` y la empresa tiene nombre y website, se salta directamente al `startExtraction` sin verificar si la extraccion ya fue completada. Esto puede causar re-ejecuciones innecesarias del diagnostico.
-**Solucion:** Agregar verificacion de `onboarding_wow_results` antes de re-ejecutar la extraccion.
-
----
-
-### 9. Hardcoded strings en Auth y multiples componentes
-**Archivos:** `src/pages/Auth.tsx`, `src/components/auth/CompanyAuth.tsx`, `src/pages/CompleteProfile.tsx`
-**Severidad:** MEDIA (viola requisito de i18n)
-**Problema:** Multiples textos en espanol estan hardcodeados sin usar el sistema i18n, violando la directriz de internacionalizacion obligatoria. Ejemplos: "Volver al Inicio", "Iniciar Sesion", "Registrarse", "Nombre del contacto", "El nombre es requerido", etc.
-**Solucion:** Reemplazar todos los strings hardcodeados con claves de traduccion usando `t()` y agregar las traducciones correspondientes en los 3 idiomas (ES, EN, PT).
-
----
-
-### 10. `delete-user` edge function no elimina todas las tablas
-**Archivo:** `supabase/functions/delete-user/index.ts`
-**Severidad:** MEDIA
-**Problema:** Similar al problema de `delete_company_cascade`, la funcion de eliminacion de usuario solo cubre un subconjunto de tablas. Faltan tablas como `company_play_to_win`, `marketing_campaigns`, CRM, etc.
-**Solucion:** Actualizar la funcion para cubrir todas las tablas que referencian `user_id`.
-
----
-
-### 11. AuthenticatedLayout redirect infinito para company users
-**Archivo:** `src/components/AuthenticatedLayout.tsx` (linea 139)
-**Severidad:** MEDIA
-**Problema:** Si un usuario company accede via una ruta que usa AuthenticatedLayout como wrapper, se ejecuta `window.location.href = '/company-dashboard'` lo cual puede causar un redirect loop ya que CompanyDashboard esta dentro de `<ResponsiveLayout />` no `AuthenticatedLayout`.
-**Solucion:** Este codigo es legacy y el redirect puede ser removido ya que las rutas company usan ResponsiveLayout directamente.
-
----
-
-### 12. FounderPTWSimplified: `onComplete` navega a ruta inexistente
-**Archivo:** `src/components/strategy/founder/FounderPTWSimplified.tsx` (linea 100)
-**Severidad:** BAJA
-**Problema:** `handleGoToDashboard` navega a `?view=comando` pero el CompanyDashboard no tiene un case para "comando", lo que mostraria el default (BusinessHealthDashboard). Funciona pero semanticamente es incorrecto.
-**Solucion:** Cambiar a `?view=mando-central` que es el case correcto.
-
----
-
-### 13. Falta tabla `company_credits` para sistema de creditos de agentes
-**Severidad:** MEDIA
-**Problema:** El `agent-sdk-executor` y el modelo de negocio de Buildera dependen de un sistema de creditos por agente, pero la tabla `company_credits` y la funcion `deduct_company_credits` no existen en la base de datos.
-**Solucion:** Crear la tabla y la funcion RPC correspondiente o deshabilitar temporalmente la verificacion de creditos.
-
----
-
-### 14. `company_dashboard_metrics` se elimina por `user_id` en cascade pero tabla puede tener `company_id`
-**Severidad:** BAJA
-**Problema:** En `delete_company_cascade`, la linea `DELETE FROM company_dashboard_metrics WHERE user_id = ANY(member_user_ids)` usa `user_id` pero la tabla podria tener un `company_id` directo.
-**Solucion:** Verificar esquema y usar la columna correcta.
+Usaremos **polling** desde el frontend con intervalos de 5 segundos, ya que los webhooks requieren URL publica y agregan complejidad innecesaria en esta fase.
 
 ---
 
 ## Plan de Implementacion
 
-### Fase 1: Correccion Critica (Build + Bloqueos)
-1. Fix build error de `pushManager` en `usePushNotifications.ts`
-2. Hacer `websiteUrl` opcional en `CompanyAuth.tsx` y `CompleteProfile.tsx`
-3. Restaurar `config.toml` con configuraciones de edge functions
+### Fase 1: Infraestructura Base
 
-### Fase 2: Integridad de Datos (Admin Portal)
-4. Actualizar `delete_company_cascade` para cubrir TODAS las tablas con `company_id` (~45 tablas)
-5. Actualizar `delete-user` edge function para cubrir todas las tablas con `user_id`
-6. Separar `get_admin_recent_activity` del `Promise.all` en AdminDashboard
+**1.1 Configuracion de Secrets**
+- Solicitar al usuario sus credenciales `CREATIFY_API_ID` y `CREATIFY_API_KEY`
+- Almacenarlas como secrets de Supabase
 
-### Fase 3: Logica de Negocio
-7. Crear tabla `company_credits` y funcion `deduct_company_credits` (o deshabilitar verificacion)
-8. Fix ruta "comando" -> "mando-central" en FounderPTW
-9. Fix logica de re-extraccion en OnboardingOrchestrator
+**1.2 Edge Function central: `creatify-proxy`**
+- Una sola edge function que actua como proxy hacia todas las APIs de Creatify
+- Recibe `action` (create-link, url-to-video, avatar-video, ad-clone, iab-images, asset-generator, check-status) y `params`
+- Valida autenticacion del usuario
+- Agrega headers `X-API-ID` / `X-API-KEY`
+- Retorna la respuesta de Creatify
 
-### Fase 4: Internacionalizacion
-10. Reemplazar hardcoded strings con claves i18n en Auth, CompanyAuth, CompleteProfile
+```text
+Estructura del Edge Function:
+
+POST /creatify-proxy
+Body: {
+  action: "create-link" | "url-to-video" | "check-video-status" | 
+          "avatar-video" | "check-avatar-status" |
+          "ad-clone" | "check-clone-status" |
+          "iab-images" | "check-iab-status" |
+          "asset-generator" | "check-asset-status" |
+          "get-avatars" | "get-voices",
+  params: { ... }
+}
+```
+
+**1.3 Tabla de base de datos: `creatify_jobs`**
+```text
+creatify_jobs:
+  - id (uuid, PK)
+  - company_id (uuid, FK -> companies)
+  - user_id (uuid, FK -> auth.users)
+  - job_type (text: url_to_video | avatar | ad_clone | iab_images | asset_generator)
+  - creatify_job_id (text - el ID devuelto por Creatify)
+  - status (text: pending | in_queue | running | done | failed)
+  - input_params (jsonb - parametros enviados)
+  - output_data (jsonb - respuesta final con URLs de video/imagen)
+  - credits_used (integer)
+  - campaign_id (uuid, FK -> marketing_campaigns, nullable)
+  - calendar_item_id (uuid, FK -> content_calendar_items, nullable)
+  - created_at, updated_at
+```
+
+**1.4 API Client en frontend: `src/lib/api/creatify.ts`**
+- Funciones tipadas para cada operacion
+- Hook `useCreatifyJob` con polling automatico de estado
+- Manejo de errores y reintentos
+
+---
+
+### Fase 2: Integracion en el Marketing Hub (Paso 5: Creacion de Contenido)
+
+**2.1 Nuevo componente: `CreatifyVideoCreator`**
+Se integrara dentro de `ContentCreation.tsx` (paso 5 del wizard) como una opcion adicional de creacion de contenido. El usuario podra elegir entre:
+- Generacion de copy (existente)
+- **Generar Video Ad** (nuevo - URL to Video)
+- **Generar Video con Avatar** (nuevo - AI Avatar)
+- **Clonar Anuncio** (nuevo - Ad Clone)
+- **Generar Banners** (nuevo - IAB Images)
+
+**2.2 Flujo URL to Video**
+1. Se toma automaticamente el `website_url` de la empresa
+2. Se crea un Link via `POST /api/links/`
+3. Se enriquece con logo, imagenes y descripcion del ADN de la empresa
+4. Se genera el video con parametros pre-configurados segun la estrategia:
+   - `target_audience`: del buyer persona definido en paso 2
+   - `target_platform`: de la red social del item del calendario
+   - `language`: del idioma del usuario (es/en/pt)
+   - `script_style`: mapeado desde el objetivo de la campana
+   - `aspect_ratio`: segun plataforma (9x16 para TikTok/Reels, 16x9 para YouTube, 1x1 para Feed)
+5. Polling de estado con indicador de progreso visual
+6. Al completar, se muestra preview del video y se guarda en `generated_assets`
+
+**2.3 Flujo AI Avatar**
+1. El usuario selecciona un avatar de la galeria (1500+ opciones)
+2. Se usa el script generado en el paso de estrategia o se escribe uno nuevo
+3. Se selecciona voz y acento
+4. Se configura fondo (imagen de producto o color de marca)
+5. Se genera el video multi-escena
+6. Preview y guardado
+
+**2.4 Flujo Ad Clone**
+1. El usuario pega la URL de un anuncio de la competencia (o se sugiere desde competitive intelligence)
+2. Se crea un Link con los assets de SU empresa
+3. Se genera un clon del anuncio con los productos de la empresa
+4. Preview y guardado
+
+**2.5 Flujo IAB Banners**
+1. Se selecciona una imagen de producto o del branding de la empresa
+2. Se generan automaticamente 12 tamanos IAB (mobile + desktop)
+3. Se muestran todos los tamanos en una grilla con opcion de descarga individual o por lote
+
+---
+
+### Fase 3: Componentes UI
+
+**3.1 `CreatifyStudio` (componente contenedor)**
+- Tab interface con las 4 herramientas: Video Ad | Avatar | Ad Clone | Banners
+- Historial de generaciones previas de la empresa
+- Indicador de creditos restantes
+
+**3.2 `VideoGenerationForm`**
+- Formulario con los parametros configurables
+- Selectors para visual_style, script_style, aspect_ratio
+- Preview del link scrapeado antes de generar
+- Barra de progreso durante generacion
+
+**3.3 `AvatarSelector`**
+- Galeria de avatares con filtros (genero, etnia, estilo)
+- Selector de voz con preview de audio
+- Editor de script multi-escena
+
+**3.4 `GenerationStatusTracker`**
+- Componente reutilizable para mostrar estado de cualquier job
+- Animacion de loading con porcentaje
+- Auto-refresh cada 5 segundos
+- Manejo de errores con opcion de reintento
+
+**3.5 `CreatifyGallery`**
+- Galeria de todos los assets generados por la empresa
+- Filtros por tipo (video, imagen, banner)
+- Acciones: descargar, usar en calendario, eliminar
+
+---
+
+### Fase 4: i18n
+
+Todos los nuevos componentes usaran el sistema de traduccion existente con claves en `creatify.json` para ES, EN y PT. Incluira traducciones para:
+- Labels de formularios
+- Nombres de estilos visuales y de script
+- Mensajes de estado
+- Errores
 
 ---
 
 ## Detalles Tecnicos
 
-### Migracion SQL para `delete_company_cascade` (tablas faltantes)
-Se agregaran DELETE statements para las siguientes tablas adicionales:
-- `company_play_to_win`, `company_ptw_reviews`, `company_products`
-- `company_parameters`, `company_current_parameters`
-- `company_objectives`, `company_objective_progress`
-- `company_marketing_goals`, `marketing_campaigns`
-- `competitive_intelligence`, `competitor_profiles`
-- `content_calendar_items`, `content_library`, `content_insights`, `content_clusters`, `content_embeddings`
-- `crm_pipelines` (y dependientes: `crm_pipeline_stages`, `crm_deals`, `crm_activities`, `crm_contacts`, `crm_accounts`, `crm_tags`, `crm_custom_fields`)
-- `social_accounts`, `social_activity_analysis`, `social_analysis`, `social_content_analysis`, `social_retrospective_analysis`
-- `onboarding_wow_results`, `push_subscriptions`
-- `journey_steps` y `journey_step_executions` (dependientes de `journey_definitions`)
-- `journey_enrollments`, `journey_definitions`
-- `whitelabel_deployments`, `whitelabel_reviews`
-- `company_platform_settings`, `company_schedule_config`, `company_external_data`
-- `revenue_tracking`, `company_files`, `generated_content`, `generated_assets`
-- `marketing_strategies`, `marketing_insights`, `marketing_actionables`
-- `scheduled_posts`, `scheduled_social_posts`
+### Edge Function `creatify-proxy/index.ts`
+- Valida JWT del usuario
+- Lee `CREATIFY_API_ID` y `CREATIFY_API_KEY` de env
+- Redirige la llamada a `https://api.creatify.ai/api/...` con los headers correctos
+- Para acciones de tipo "check-status", acepta el `job_id` y consulta la API correspondiente
+- Actualiza la tabla `creatify_jobs` con cada cambio de estado
 
-### Fix `usePushNotifications.ts`
-```typescript
-const registration = await navigator.serviceWorker.ready;
-const subscription = await (registration as any).pushManager.getSubscription();
+### Hook `useCreatifyJob`
+```text
+useCreatifyJob(jobId):
+  - Polling cada 5 segundos mientras status != done/failed
+  - Retorna { status, progress, output, error, isLoading }
+  - Se detiene automaticamente al completar
+  - Timeout de 10 minutos maximo
 ```
 
-### Fix `CompanyAuth.tsx` - Remover validacion obligatoria de website
-Se eliminan las lineas 70-78 que bloquean el registro sin sitio web.
+### Mapeo de plataformas a aspect_ratio
+```text
+TikTok, Instagram Reels, YouTube Shorts -> 9x16
+YouTube, LinkedIn Video -> 16x9
+Instagram Feed, Facebook Feed -> 1x1
+```
 
+### Mapeo de objetivos de campana a script_style
+```text
+brand_awareness -> BrandStoryV2
+lead_generation -> CallToActionV2
+sales -> SpecialOffersV2
+engagement -> DiscoveryWriter
+education -> HowToV2
+```
+
+---
+
+## Archivos a Crear/Modificar
+
+### Nuevos archivos:
+1. `supabase/functions/creatify-proxy/index.ts` - Edge function proxy
+2. `src/lib/api/creatify.ts` - API client tipado
+3. `src/hooks/useCreatifyJob.ts` - Hook de polling
+4. `src/components/company/creatify/CreatifyStudio.tsx` - Contenedor principal
+5. `src/components/company/creatify/VideoGenerationForm.tsx` - Form URL to Video
+6. `src/components/company/creatify/AvatarVideoForm.tsx` - Form Avatar
+7. `src/components/company/creatify/AdCloneForm.tsx` - Form Ad Clone
+8. `src/components/company/creatify/IABBannerForm.tsx` - Form Banners
+9. `src/components/company/creatify/GenerationStatusTracker.tsx` - Status tracker
+10. `src/components/company/creatify/CreatifyGallery.tsx` - Galeria de assets
+11. `public/locales/es/creatify.json` - Traducciones ES
+12. `public/locales/en/creatify.json` - Traducciones EN
+13. `public/locales/pt/creatify.json` - Traducciones PT
+14. Migracion SQL para tabla `creatify_jobs`
+
+### Archivos a modificar:
+1. `src/components/company/campaign/steps/ContentCreation.tsx` - Agregar opciones de Creatify
+2. `supabase/config.toml` - Agregar config de `creatify-proxy`
+3. `src/integrations/supabase/types.ts` - Agregar tipos de la nueva tabla
+4. `src/pages/CompanyDashboard.tsx` - Agregar vista de "Estudio Creatify" como opcion del dashboard
+
+---
+
+## Prerequisitos
+
+Antes de implementar, se necesitara que el propietario del proyecto:
+1. Cree una cuenta en [Creatify.ai](https://app.creatify.ai/) con un plan API (desde $99/mes)
+2. Obtenga las credenciales `X-API-ID` y `X-API-KEY` desde el API Dashboard
+3. Las proporcione para almacenarlas como secrets de Supabase

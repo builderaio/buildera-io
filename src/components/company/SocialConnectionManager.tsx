@@ -633,7 +633,8 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const connectedWithoutUsername = socialAccounts.filter(
     acc => acc.is_connected && acc.platform !== 'upload_post_profile' && !acc.platform_username
   );
-  const hasCompleteSetup = connectedCount > 0 && configuredUrlCount > 0 && connectedWithoutUsername.length === 0;
+  // Setup is complete when all connected accounts have platform_username (auto-synced from Upload Post API)
+  const hasCompleteSetup = connectedCount > 0 && connectedWithoutUsername.length === 0;
 
   if (loading && socialAccounts.length === 0) {
     return (
@@ -695,29 +696,32 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         </CardHeader>
       </Card>
 
-      {/* URL Configuration Help Banner */}
-      {connectedCount > 0 && (configuredUrlCount < connectedCount || connectedWithoutUsername.length > 0) && (
-        <Alert className="border-destructive/30 bg-destructive/5">
-          <Info className="w-4 h-4 text-destructive" />
+      {/* Auto-sync info banner - only show if connected accounts missing username */}
+      {connectedWithoutUsername.length > 0 && (
+        <Alert className="border-amber-300/50 bg-amber-50/50">
+          <Info className="w-4 h-4 text-amber-600" />
           <AlertDescription className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-destructive">
-                {connectedWithoutUsername.length > 0 
-                  ? '⚠️ Acción requerida: Configura las URLs de tus perfiles'
-                  : 'Configura las URLs de tus perfiles'
-                }
+              <p className="font-medium text-amber-700">
+                🔄 Sincronizando nombres de usuario...
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                {connectedWithoutUsername.length > 0
-                  ? `Las plataformas ${connectedWithoutUsername.map(a => {
-                      const cfg = platformConfig[a.platform as keyof typeof platformConfig];
-                      return cfg?.name || a.platform;
-                    }).join(', ')} necesitan la URL del perfil para que el Autopilot pueda analizar e importar tu contenido. Ingresa la URL y el sistema extraerá el nombre de usuario automáticamente.`
-                  : `Has configurado ${configuredUrlCount} de ${connectedCount} URLs. Completa las restantes para un análisis más completo.`
-                }
+                {`Las plataformas ${connectedWithoutUsername.map(a => {
+                    const cfg = platformConfig[a.platform as keyof typeof platformConfig];
+                    return cfg?.name || a.platform;
+                  }).join(', ')} aún no tienen nombre de usuario. Pulsa "Actualizar" para sincronizar desde Upload Post, o ingresa la URL del perfil manualmente.`}
               </p>
             </div>
-            <SocialURLHelpDialog />
+            <Button
+              onClick={refreshConnections}
+              variant="outline"
+              size="sm"
+              disabled={loading}
+              className="shrink-0"
+            >
+              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
+              Sincronizar
+            </Button>
           </AlertDescription>
         </Alert>
       )}
@@ -730,9 +734,9 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
           
           const hasUrl = urlValues[platform] && urlValues[platform].trim() !== '';
           const hasPlatformUsername = !!accountInfo?.platform_username;
-          const needsAttention = isConnected && (!hasUrl || !hasPlatformUsername);
+          const needsAttention = isConnected && !hasPlatformUsername;
           const cardBorderClass = isConnected 
-            ? (hasUrl && hasPlatformUsername ? 'border-green-500 bg-green-50/50' : 'border-destructive/50 bg-destructive/5')
+            ? (hasPlatformUsername ? 'border-green-500 bg-green-50/50' : 'border-amber-400/50 bg-amber-50/30')
             : 'border-muted bg-muted/30';
           
           return (
@@ -756,10 +760,10 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                   </div>
                   
                   {isConnected ? (
-                    hasUrl && hasPlatformUsername ? (
+                    hasPlatformUsername ? (
                       <CheckCircle2 className="w-5 h-5 text-green-600" />
                     ) : (
-                      <Info className="w-5 h-5 text-destructive" />
+                      <Info className="w-5 h-5 text-amber-500" />
                     )
                   ) : (
                     <XCircle className="w-5 h-5 text-muted-foreground" />
@@ -770,14 +774,16 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                   variant={isConnected ? "default" : "secondary"}
                   className={`w-full justify-center ${
                     isConnected 
-                      ? (hasUrl && hasPlatformUsername 
+                      ? (hasPlatformUsername 
                           ? 'bg-green-100 text-green-700 border-green-200' 
-                          : 'bg-destructive/10 text-destructive border-destructive/20')
+                          : 'bg-amber-100 text-amber-700 border-amber-200')
                       : ''
                   }`}
                 >
                   {isConnected 
-                    ? (hasUrl && hasPlatformUsername ? '✓ Conectado y configurado' : '⚠ URL del perfil requerida')
+                    ? (hasPlatformUsername 
+                        ? `✓ @${accountInfo?.platform_username}` 
+                        : '🔄 Sincronizando usuario...')
                     : 'No conectado'
                   }
                 </Badge>
@@ -811,7 +817,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-semibold flex items-center gap-1">
-                        URL del perfil {needsAttention && <span className="text-destructive">*</span>}
+                        URL del perfil <span className="text-muted-foreground font-normal">(opcional)</span>
                       </Label>
                       <SocialURLHelpDialog>
                         <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
@@ -859,15 +865,11 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                         <div className={`text-sm flex-1 truncate px-2 py-1.5 rounded ${
                           hasUrl 
                             ? 'text-foreground bg-muted/50' 
-                            : 'text-muted-foreground italic bg-destructive/5 border border-destructive/20'
+                            : 'text-muted-foreground italic bg-muted/30'
                         }`}>
                           {hasUrl 
-                            ? (hasPlatformUsername 
-                                ? `${urlValues[platform]} (👤 ${accountInfo?.platform_username})` 
-                                : urlValues[platform])
-                            : (isConnected 
-                                ? '⚠️ Ingresa la URL de tu perfil para activar el Autopilot →' 
-                                : 'Haz clic en el lápiz para agregar →')
+                            ? urlValues[platform]
+                            : 'Sin URL configurada'
                           }
                         </div>
                         <Button
@@ -924,7 +926,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 <AlertDescription>
                   {connectedCount === 0 
                     ? "Conecte al menos una red social para continuar."
-                    : "Configure las URLs de sus perfiles para completar la configuración."
+                    : "Algunos perfiles aún no tienen nombre de usuario sincronizado. Pulse 'Actualizar' para obtenerlos desde Upload Post."
                   }
                 </AlertDescription>
               </Alert>

@@ -823,5 +823,28 @@
       "step3Title": "Prioritized action plan"
     }
   },
-  "optional": "optional"
+  "optional": "optional",
+  "enterprise": {
+    "department_unlocked": "Department unlocked: {{department}}",
+    "department_unlocked_desc": "A new enterprise capability has been automatically unlocked thanks to your business growth.",
+    "departments": {
+      "marketing": "Marketing",
+      "sales": "Sales",
+      "finance": "Finance",
+      "legal": "Legal",
+      "hr": "Human Resources",
+      "operations": "Operations"
+    },
+    "maturity": {
+      "starter": "Starter",
+      "growing": "Growing",
+      "established": "Established",
+      "scaling": "Scaling"
+    },
+    "autopilot_active": "Autopilot Active",
+    "autopilot_inactive": "Autopilot Inactive",
+    "locked": "Locked",
+    "unlocked": "Unlocked",
+    "requires_maturity": "Requires level: {{level}}"
+  }
 }

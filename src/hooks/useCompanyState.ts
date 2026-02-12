@@ -20,22 +20,41 @@ export interface CompanyState {
     agents: AreaState;
     audience: AreaState;
     social: AreaState;
+    // Enterprise areas
+    sales: AreaState;
+    finance: AreaState;
+    legal: AreaState;
+    hr: AreaState;
+    operations: AreaState;
   };
   loading: boolean;
 }
+
+const emptyArea: AreaState = { status: 'incomplete', score: 0, missing: [] };
 
 const initialState: CompanyState = {
   maturityLevel: 'starter',
   completionScore: 0,
   areas: {
-    profile: { status: 'incomplete', score: 0, missing: [] },
-    strategy: { status: 'incomplete', score: 0, missing: [] },
-    content: { status: 'incomplete', score: 0, missing: [] },
-    agents: { status: 'incomplete', score: 0, missing: [] },
-    audience: { status: 'incomplete', score: 0, missing: [] },
-    social: { status: 'incomplete', score: 0, missing: [] },
+    profile: { ...emptyArea },
+    strategy: { ...emptyArea },
+    content: { ...emptyArea },
+    agents: { ...emptyArea },
+    audience: { ...emptyArea },
+    social: { ...emptyArea },
+    sales: { ...emptyArea },
+    finance: { ...emptyArea },
+    legal: { ...emptyArea },
+    hr: { ...emptyArea },
+    operations: { ...emptyArea },
   },
   loading: true,
+};
+
+const getStatus = (score: number): AreaStatus => {
+  if (score >= 80) return 'complete';
+  if (score >= 40) return 'partial';
+  return 'incomplete';
 };
 
 export const useCompanyState = (companyId?: string, userId?: string) => {
@@ -50,7 +69,9 @@ export const useCompanyState = (companyId?: string, userId?: string) => {
     setState(prev => ({ ...prev, loading: true }));
 
     try {
-      // Fetch all relevant data in parallel
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      // Fetch all relevant data in parallel (original + enterprise)
       const [
         companyRes,
         strategyRes,
@@ -61,16 +82,28 @@ export const useCompanyState = (companyId?: string, userId?: string) => {
         insightsRes,
         socialRes,
         brandingRes,
+        // Enterprise data
+        crmDealsRes,
+        crmContactsRes,
+        crmActivitiesRes,
+        deptConfigRes,
+        deptLogsRes,
       ] = await Promise.all([
         supabase.from('companies').select('*').eq('id', companyId).maybeSingle(),
         supabase.from('company_strategy').select('*').eq('company_id', companyId).maybeSingle(),
         supabase.from('company_objectives').select('id').eq('company_id', companyId),
         supabase.from('company_audiences').select('id').eq('company_id', companyId),
         supabase.from('company_enabled_agents').select('id').eq('company_id', companyId),
-        supabase.from('agent_usage_log').select('id').eq('company_id', companyId).gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from('agent_usage_log').select('id').eq('company_id', companyId).gte('created_at', thirtyDaysAgo),
         supabase.from('content_insights').select('id').eq('user_id', userId).eq('status', 'active'),
         supabase.from('social_accounts').select('id').eq('user_id', userId),
         supabase.from('company_branding').select('*').eq('company_id', companyId).maybeSingle(),
+        // Enterprise queries
+        supabase.from('crm_deals').select('id, stage, amount').eq('company_id', companyId),
+        supabase.from('crm_contacts').select('id').eq('company_id', companyId),
+        supabase.from('crm_activities').select('id').eq('company_id', companyId).gte('created_at', thirtyDaysAgo),
+        supabase.from('company_department_config').select('*').eq('company_id', companyId),
+        supabase.from('department_execution_log').select('id, department').eq('company_id', companyId).gte('created_at', thirtyDaysAgo),
       ]);
 
       const company = companyRes.data;
@@ -82,8 +115,15 @@ export const useCompanyState = (companyId?: string, userId?: string) => {
       const insights = insightsRes.data || [];
       const social = socialRes.data || [];
       const branding = brandingRes.data;
+      const crmDeals = crmDealsRes.data || [];
+      const crmContacts = crmContactsRes.data || [];
+      const crmActivities = crmActivitiesRes.data || [];
+      const deptConfigs = deptConfigRes.data || [];
+      const deptLogs = deptLogsRes.data || [];
 
-      // Analyze Profile
+      // === Original Areas ===
+
+      // Profile
       const profileMissing: string[] = [];
       if (!company?.name) profileMissing.push('company_name');
       if (!company?.website_url) profileMissing.push('website');
@@ -92,7 +132,7 @@ export const useCompanyState = (companyId?: string, userId?: string) => {
       if (!company?.logo_url) profileMissing.push('logo');
       const profileScore = Math.round(((5 - profileMissing.length) / 5) * 100);
 
-      // Analyze Strategy
+      // Strategy
       const strategyMissing: string[] = [];
       if (!strategy?.mision) strategyMissing.push('mission');
       if (!strategy?.vision) strategyMissing.push('vision');
@@ -100,30 +140,67 @@ export const useCompanyState = (companyId?: string, userId?: string) => {
       if (objectives.length === 0) strategyMissing.push('objectives');
       const strategyScore = Math.round(((4 - strategyMissing.length) / 4) * 100);
 
-      // Analyze Content
+      // Content
       const contentScore = Math.min(100, insights.length * 20);
       const contentMissing: string[] = insights.length === 0 ? ['no_insights'] : [];
 
-      // Analyze Agents
+      // Agents
       const agentsMissing: string[] = [];
       if (enabledAgents.length === 0) agentsMissing.push('no_enabled_agents');
       if (usageLogs.length === 0) agentsMissing.push('no_executions');
       const agentsScore = Math.min(100, (enabledAgents.length * 15) + (usageLogs.length * 5));
 
-      // Analyze Audience
+      // Audience
       const audienceMissing: string[] = audiences.length === 0 ? ['no_audiences'] : [];
       const audienceScore = Math.min(100, audiences.length * 33);
 
-      // Analyze Social
+      // Social
       const socialMissing: string[] = social.length === 0 ? ['no_social_connections'] : [];
       const socialScore = Math.min(100, social.length * 25);
 
-      // Calculate overall completion
-      const completionScore = Math.round(
-        (profileScore + strategyScore + contentScore + agentsScore + audienceScore + socialScore) / 6
-      );
+      // === Enterprise Areas ===
 
-      // Determine maturity level
+      // Sales (CRM health)
+      const salesMissing: string[] = [];
+      if (crmDeals.length === 0) salesMissing.push('no_deals');
+      if (crmContacts.length === 0) salesMissing.push('no_contacts');
+      if (crmActivities.length === 0) salesMissing.push('no_recent_activities');
+      const salesScore = Math.min(100, (crmDeals.length * 10) + (crmContacts.length * 5) + (crmActivities.length * 3));
+
+      // Finance (credit usage tracking)
+      const financeConfig = deptConfigs.find((d: any) => d.department === 'finance');
+      const financeMissing: string[] = [];
+      if (!financeConfig) financeMissing.push('no_finance_config');
+      if (usageLogs.length === 0) financeMissing.push('no_credit_activity');
+      const financeScore = Math.min(100, (financeConfig ? 40 : 0) + (usageLogs.length * 3));
+
+      // Legal
+      const legalConfig = deptConfigs.find((d: any) => d.department === 'legal');
+      const legalLogs = deptLogs.filter((l: any) => l.department === 'legal');
+      const legalMissing: string[] = [];
+      if (!legalConfig) legalMissing.push('no_legal_config');
+      const legalScore = Math.min(100, (legalConfig ? 40 : 0) + (legalLogs.length * 15));
+
+      // HR
+      const hrConfig = deptConfigs.find((d: any) => d.department === 'hr');
+      const hrLogs = deptLogs.filter((l: any) => l.department === 'hr');
+      const hrMissing: string[] = [];
+      if (!hrConfig) hrMissing.push('no_hr_config');
+      const hrScore = Math.min(100, (hrConfig ? 40 : 0) + (hrLogs.length * 15));
+
+      // Operations
+      const opsConfig = deptConfigs.find((d: any) => d.department === 'operations');
+      const opsLogs = deptLogs.filter((l: any) => l.department === 'operations');
+      const opsMissing: string[] = [];
+      if (!opsConfig) opsMissing.push('no_ops_config');
+      const opsScore = Math.min(100, (opsConfig ? 40 : 0) + (opsLogs.length * 15));
+
+      // Overall completion (original 6 areas weighted more heavily)
+      const coreScore = (profileScore + strategyScore + contentScore + agentsScore + audienceScore + socialScore) / 6;
+      const enterpriseScore = (salesScore + financeScore + legalScore + hrScore + opsScore) / 5;
+      const completionScore = Math.round(coreScore * 0.7 + enterpriseScore * 0.3);
+
+      // Maturity level
       let maturityLevel: MaturityLevel = 'starter';
       if (completionScore >= 80 && usageLogs.length >= 20) {
         maturityLevel = 'scaling';
@@ -132,12 +209,6 @@ export const useCompanyState = (companyId?: string, userId?: string) => {
       } else if (completionScore >= 30 && usageLogs.length >= 3) {
         maturityLevel = 'growing';
       }
-
-      const getStatus = (score: number): AreaStatus => {
-        if (score >= 80) return 'complete';
-        if (score >= 40) return 'partial';
-        return 'incomplete';
-      };
 
       setState({
         maturityLevel,
@@ -149,6 +220,11 @@ export const useCompanyState = (companyId?: string, userId?: string) => {
           agents: { status: getStatus(agentsScore), score: agentsScore, missing: agentsMissing },
           audience: { status: getStatus(audienceScore), score: audienceScore, missing: audienceMissing },
           social: { status: getStatus(socialScore), score: socialScore, missing: socialMissing },
+          sales: { status: getStatus(salesScore), score: salesScore, missing: salesMissing },
+          finance: { status: getStatus(financeScore), score: financeScore, missing: financeMissing },
+          legal: { status: getStatus(legalScore), score: legalScore, missing: legalMissing },
+          hr: { status: getStatus(hrScore), score: hrScore, missing: hrMissing },
+          operations: { status: getStatus(opsScore), score: opsScore, missing: opsMissing },
         },
         loading: false,
       });

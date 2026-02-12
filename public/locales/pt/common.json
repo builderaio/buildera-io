@@ -823,5 +823,28 @@
       "step3Title": "Plano de ação priorizado"
     }
   },
-  "optional": "opcional"
+  "optional": "opcional",
+  "enterprise": {
+    "department_unlocked": "Departamento desbloqueado: {{department}}",
+    "department_unlocked_desc": "Uma nova capacidade empresarial foi desbloqueada automaticamente graças ao crescimento do seu negócio.",
+    "departments": {
+      "marketing": "Marketing",
+      "sales": "Comercial",
+      "finance": "Finanças",
+      "legal": "Jurídico",
+      "hr": "Recursos Humanos",
+      "operations": "Operações"
+    },
+    "maturity": {
+      "starter": "Inicial",
+      "growing": "Em Crescimento",
+      "established": "Estabelecido",
+      "scaling": "Escalando"
+    },
+    "autopilot_active": "Autopilot Ativo",
+    "autopilot_inactive": "Autopilot Inativo",
+    "locked": "Bloqueado",
+    "unlocked": "Desbloqueado",
+    "requires_maturity": "Requer nível: {{level}}"
+  }
 }

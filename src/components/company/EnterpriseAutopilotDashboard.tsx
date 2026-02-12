@@ -64,6 +64,12 @@ interface Capability {
   is_active: boolean;
   activated_at: string | null;
   required_maturity: string;
+  status?: string;
+  source?: string;
+  auto_activate?: boolean;
+  proposed_reason?: string;
+  gap_evidence?: any;
+  trial_expires_at?: string;
 }
 
 interface IntelSignal {
@@ -110,7 +116,7 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
           .select('id, department, phase, status, created_at, execution_time_ms, content_generated, content_approved, content_rejected, error_message')
           .eq('company_id', companyId).order('created_at', { ascending: false }).limit(30),
         supabase.from('autopilot_capabilities')
-          .select('id, department, capability_code, capability_name, description, is_active, activated_at, required_maturity')
+          .select('id, department, capability_code, capability_name, description, is_active, activated_at, required_maturity, status, source, auto_activate, proposed_reason, gap_evidence, trial_expires_at')
           .eq('company_id', companyId).order('department'),
         supabase.from('external_intelligence_cache')
           .select('id, source, data, structured_signals, relevance_score, fetched_at')
@@ -165,7 +171,34 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
   const totalLessons = memoryEntries.length;
   const activatedCaps = capabilities.filter(c => c.is_active).length;
   const totalCaps = capabilities.length;
+  const proposedCaps = capabilities.filter(c => (c as any).status === 'proposed' || (c as any).status === 'trial');
   const iqScore = Math.min(100, Math.round((totalCycles * 2 + totalLessons * 5 + activatedCaps * 10)));
+
+  const handleActivateCapability = async (capId: string, mode: 'trial' | 'active') => {
+    try {
+      const { error } = await supabase.from('autopilot_capabilities')
+        .update({ status: mode, is_active: mode === 'active' } as any)
+        .eq('id', capId);
+      if (error) throw error;
+      toast({ title: mode === 'trial' ? t('enterprise.autopilot.genesis.trialStarted') : t('enterprise.autopilot.genesis.activated') });
+      loadData();
+    } catch {
+      toast({ title: t('common:errors.processingFailed'), variant: 'destructive' });
+    }
+  };
+
+  const handleRejectCapability = async (capId: string) => {
+    try {
+      const { error } = await supabase.from('autopilot_capabilities')
+        .update({ status: 'deprecated', is_active: false } as any)
+        .eq('id', capId);
+      if (error) throw error;
+      toast({ title: t('enterprise.autopilot.genesis.rejected') });
+      loadData();
+    } catch {
+      toast({ title: t('common:errors.processingFailed'), variant: 'destructive' });
+    }
+  };
 
   if (deptsLoading || loadingData) {
     return (
@@ -291,8 +324,15 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
       </div>
 
       {/* Tabs: Intelligence / Lessons / Capabilities */}
-      <Tabs defaultValue="intelligence" className="space-y-4">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+      <Tabs defaultValue={proposedCaps.length > 0 ? "suggested" : "intelligence"} className="space-y-4">
+        <TabsList className="grid grid-cols-4 w-full max-w-lg">
+          <TabsTrigger value="suggested" className="text-xs relative">
+            <Sparkles className="w-3.5 h-3.5 mr-1" />
+            {t('enterprise.autopilot.genesis.tab')}
+            {proposedCaps.length > 0 && (
+              <Badge className="ml-1 text-[9px] px-1 py-0 bg-destructive text-destructive-foreground">{proposedCaps.length}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="intelligence" className="text-xs">
             <Globe className="w-3.5 h-3.5 mr-1" />
             {t('enterprise.autopilot.intelligence')}
@@ -306,6 +346,110 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
             {t('enterprise.autopilot.capabilitiesTab')}
           </TabsTrigger>
         </TabsList>
+
+        {/* Suggested Capabilities (Capability Genesis) */}
+        <TabsContent value="suggested">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                {t('enterprise.autopilot.genesis.title')}
+                {proposedCaps.length > 0 && (
+                  <Badge variant="secondary" className="ml-auto text-xs">{proposedCaps.length} {t('enterprise.autopilot.genesis.newLabel')}</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {proposedCaps.length > 0 ? (
+                <ScrollArea className="max-h-[500px]">
+                  <div className="space-y-3">
+                    {proposedCaps.map((cap) => {
+                      const Icon = DEPT_ICONS[cap.department as DepartmentType] || Settings2;
+                      const isTrialCap = (cap as any).status === 'trial';
+                      const gapEvidence = (cap as any).gap_evidence as any;
+                      const evidenceCount = gapEvidence ? 
+                        (gapEvidence.unmapped_agents?.length || 0) + (gapEvidence.recurring_blocks?.length || 0) +
+                        (gapEvidence.unhandled_signals?.length || 0) + (gapEvidence.repeated_patterns?.length || 0) : 0;
+
+                      return (
+                        <div key={cap.id} className="p-4 rounded-lg border bg-gradient-to-br from-primary/5 to-transparent space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 rounded-lg bg-primary/10">
+                                <Icon className="w-4 h-4 text-primary" />
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-semibold">{cap.capability_name}</h4>
+                                <p className="text-xs text-muted-foreground mt-0.5">{cap.description}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {(cap as any).source === 'ai_generated' && (
+                                <Badge className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                                  <Sparkles className="w-2.5 h-2.5 mr-0.5" />
+                                  {t('enterprise.autopilot.genesis.aiSuggested')}
+                                </Badge>
+                              )}
+                              {isTrialCap && (
+                                <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-600">
+                                  {t('enterprise.autopilot.genesis.trial')}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          {(cap as any).proposed_reason && (
+                            <div className="text-xs text-muted-foreground bg-muted/50 rounded-md p-2">
+                              <span className="font-medium">{t('enterprise.autopilot.genesis.reason')}:</span> {(cap as any).proposed_reason}
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-[10px]">
+                                {t(`enterprise.departments.${cap.department}`)}
+                              </Badge>
+                              {evidenceCount > 0 && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  {evidenceCount} {t('enterprise.autopilot.genesis.evidencePoints')}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              {!isTrialCap && (
+                                <>
+                                  <Button size="sm" variant="outline" className="text-xs h-7 px-2"
+                                    onClick={() => handleActivateCapability(cap.id, 'trial')}>
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    {t('enterprise.autopilot.genesis.startTrial')}
+                                  </Button>
+                                  <Button size="sm" className="text-xs h-7 px-2"
+                                    onClick={() => handleActivateCapability(cap.id, 'active')}>
+                                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                                    {t('enterprise.autopilot.genesis.activate')}
+                                  </Button>
+                                </>
+                              )}
+                              <Button size="sm" variant="ghost" className="text-xs h-7 px-2 text-destructive hover:text-destructive"
+                                onClick={() => handleRejectCapability(cap.id)}>
+                                <XCircle className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <div className="text-center py-8">
+                  <Sparkles className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                  <p className="text-sm text-muted-foreground">{t('enterprise.autopilot.genesis.noSuggestions')}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Intelligence Feed */}
         <TabsContent value="intelligence">
@@ -426,7 +570,11 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
                           <p className="text-xs text-muted-foreground truncate">{cap.description}</p>
                         </div>
                         {cap.is_active ? (
-                          <Badge className="text-[10px] bg-primary/10 text-primary border-primary/20">{t('enterprise.autopilot.active')}</Badge>
+                          <Badge className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                            {(cap as any).status === 'trial' ? t('enterprise.autopilot.genesis.trial') : t('enterprise.autopilot.active')}
+                          </Badge>
+                        ) : (cap as any).status === 'deprecated' ? (
+                          <Badge variant="outline" className="text-[10px] opacity-50">{t('enterprise.autopilot.genesis.deprecated')}</Badge>
                         ) : (
                           <Badge variant="outline" className="text-[10px]">{t('enterprise.autopilot.pending')}</Badge>
                         )}

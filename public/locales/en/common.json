@@ -868,7 +868,23 @@
       "noLessons": "No lessons learned yet. The system learns after several execution cycles.",
       "noLesson": "No lesson recorded for this decision.",
       "active": "Active",
-      "pending": "Pending"
+      "pending": "Pending",
+      "genesis": {
+        "tab": "Suggested",
+        "title": "AI-Suggested Capabilities",
+        "newLabel": "new",
+        "aiSuggested": "AI Suggested",
+        "trial": "Trial",
+        "deprecated": "Deprecated",
+        "reason": "Reason",
+        "evidencePoints": "evidence points",
+        "startTrial": "Trial 7d",
+        "activate": "Activate",
+        "activated": "Capability activated successfully",
+        "trialStarted": "Trial period started (7 days)",
+        "rejected": "Capability rejected",
+        "noSuggestions": "No capability suggestions yet. The system analyzes gaps in each execution cycle."
+      }
     },
     "welcome": {
       "title": "Your Enterprise Brain is Ready",

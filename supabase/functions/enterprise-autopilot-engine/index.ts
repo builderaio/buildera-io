@@ -595,7 +595,8 @@ async function logExecution(companyId: string, cycleId: string, department: stri
 
 async function evaluateCapabilities(companyId: string) {
   const { data: caps } = await supabase.from('autopilot_capabilities')
-    .select('*').eq('company_id', companyId).eq('is_active', false);
+    .select('*').eq('company_id', companyId).eq('is_active', false)
+    .in('status', ['seeded', 'proposed'] as any[]);
 
   if (!caps?.length) return [];
 
@@ -605,7 +606,6 @@ async function evaluateCapabilities(companyId: string) {
     const cond = cap.trigger_condition as any;
     let shouldActivate = false;
 
-    // Evaluate trigger conditions dynamically
     if (cond.min_deals) {
       const { count } = await supabase.from('crm_deals').select('id', { count: 'exact', head: true }).eq('company_id', companyId);
       if ((count || 0) >= cond.min_deals) shouldActivate = true;
@@ -626,15 +626,224 @@ async function evaluateCapabilities(companyId: string) {
     if (shouldActivate) {
       await supabase.from('autopilot_capabilities').update({
         is_active: true,
+        status: 'active',
         activated_at: new Date().toISOString(),
         activation_reason: `Trigger conditions met: ${JSON.stringify(cond)}`,
         last_evaluated_at: new Date().toISOString(),
-      }).eq('id', cap.id);
+      } as any).eq('id', cap.id);
       activated.push(cap.capability_code);
     }
   }
 
   return activated;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CAPABILITY GENESIS ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+interface GapReport {
+  unmapped_agents: { decision_type: string; count: number }[];
+  recurring_blocks: { decision_type: string; block_reason: string; count: number }[];
+  unhandled_signals: { source: string; signal_count: number }[];
+  repeated_patterns: { decision_type: string; success_count: number }[];
+}
+
+async function detectCapabilityGaps(companyId: string, department: string): Promise<GapReport> {
+  console.log(`🔍 [${department}] Detecting capability gaps...`);
+
+  // Get last 50 decisions for this department
+  const { data: recentDecisions } = await supabase.from('autopilot_decisions')
+    .select('decision_type, agent_to_execute, guardrail_result, guardrail_details, action_taken, created_at')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const decisions = recentDecisions || [];
+
+  // 1. Decisions without mapped agent
+  const unmappedMap = new Map<string, number>();
+  for (const d of decisions) {
+    if (d.guardrail_result === 'passed' && !d.action_taken) {
+      unmappedMap.set(d.decision_type, (unmappedMap.get(d.decision_type) || 0) + 1);
+    }
+  }
+  const unmapped_agents = Array.from(unmappedMap.entries())
+    .map(([decision_type, count]) => ({ decision_type, count }))
+    .filter(g => g.count >= 2);
+
+  // 2. Recurring guardrail blocks
+  const blockMap = new Map<string, { reason: string; count: number }>();
+  for (const d of decisions) {
+    if (d.guardrail_result === 'blocked') {
+      const key = d.decision_type;
+      const existing = blockMap.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        blockMap.set(key, { reason: d.guardrail_details || 'unknown', count: 1 });
+      }
+    }
+  }
+  const recurring_blocks = Array.from(blockMap.entries())
+    .map(([decision_type, v]) => ({ decision_type, block_reason: v.reason, count: v.count }))
+    .filter(b => b.count >= 3);
+
+  // 3. External signals without corresponding capabilities
+  const { data: recentIntel } = await supabase.from('external_intelligence_cache')
+    .select('source, structured_signals')
+    .eq('company_id', companyId)
+    .gte('fetched_at', new Date(Date.now() - 7 * 86400000).toISOString())
+    .limit(20);
+
+  const { data: existingCaps } = await supabase.from('autopilot_capabilities')
+    .select('capability_code')
+    .eq('company_id', companyId);
+
+  const capCodes = new Set((existingCaps || []).map(c => c.capability_code));
+  const unhandled_signals: { source: string; signal_count: number }[] = [];
+
+  for (const intel of (recentIntel || [])) {
+    const signals = Array.isArray(intel.structured_signals) ? intel.structured_signals : [];
+    const highImpact = signals.filter((s: any) => s.impact === 'high' && s.category === 'threat');
+    if (highImpact.length > 0) {
+      unhandled_signals.push({ source: intel.source, signal_count: highImpact.length });
+    }
+  }
+
+  // 4. Repeated successful patterns
+  const { data: memoryData } = await supabase.from('autopilot_memory')
+    .select('decision_type, outcome_evaluation')
+    .eq('company_id', companyId)
+    .eq('department', department)
+    .eq('outcome_evaluation', 'positive')
+    .limit(50);
+
+  const patternMap = new Map<string, number>();
+  for (const m of (memoryData || [])) {
+    patternMap.set(m.decision_type, (patternMap.get(m.decision_type) || 0) + 1);
+  }
+  const repeated_patterns = Array.from(patternMap.entries())
+    .map(([decision_type, success_count]) => ({ decision_type, success_count }))
+    .filter(p => p.success_count >= 3);
+
+  const report: GapReport = { unmapped_agents, recurring_blocks, unhandled_signals, repeated_patterns };
+  const totalGaps = unmapped_agents.length + recurring_blocks.length + unhandled_signals.length + repeated_patterns.length;
+  console.log(`🔍 [${department}] Found ${totalGaps} capability gaps`);
+
+  return report;
+}
+
+async function proposeNewCapabilities(companyId: string, department: string, gapReport: GapReport) {
+  const totalGaps = gapReport.unmapped_agents.length + gapReport.recurring_blocks.length +
+    gapReport.unhandled_signals.length + gapReport.repeated_patterns.length;
+
+  if (totalGaps < 2) {
+    console.log(`💡 [${department}] Not enough gaps (${totalGaps}) to propose new capabilities`);
+    return [];
+  }
+
+  console.log(`💡 [${department}] Proposing new capabilities for ${totalGaps} gaps...`);
+
+  // Get company profile
+  const { data: company } = await supabase.from('companies')
+    .select('name, industry_sector, country, description')
+    .eq('id', companyId).single();
+
+  // Get existing capabilities to avoid duplicates
+  const { data: existingCaps } = await supabase.from('autopilot_capabilities')
+    .select('capability_code, capability_name')
+    .eq('company_id', companyId);
+
+  const existingCodes = (existingCaps || []).map(c => c.capability_code);
+
+  const aiRes = await fetch(`${supabaseUrl}/functions/v1/openai-responses-handler`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      functionName: 'capability_genesis',
+      input: JSON.stringify({
+        company: { name: company?.name, industry: company?.industry_sector, country: company?.country },
+        department,
+        gap_report: gapReport,
+        existing_capabilities: existingCodes,
+      }),
+      overrides: {
+        systemPrompt: `You are a Capability Genesis AI. Given a company profile, department, and gap analysis, propose 1-3 NEW capabilities that would address the identified gaps.
+
+Each capability must be a JSON object with:
+- code: snake_case unique identifier (e.g. "competitive_response_engine")
+- name: Human-readable name (in Spanish)
+- description: Brief description of what this capability does (in Spanish)
+- department: The department this belongs to
+- trigger_condition: JSON object with activation conditions (e.g. {"min_signals": 3})
+- required_maturity: "starter" | "growing" | "established" | "scaling"
+- auto_activate: true for low-risk analytics/monitoring, false for action-heavy capabilities
+- proposed_reason: Why this capability is needed based on the gaps (in Spanish)
+
+IMPORTANT: 
+- Do NOT duplicate existing capabilities: ${existingCodes.join(', ')}
+- Focus on gaps that have the highest business impact
+- Respond ONLY with a valid JSON array of capability objects`,
+      },
+    }),
+  });
+
+  const aiResult = await aiRes.json();
+  if (!aiResult.success) {
+    console.error('Capability proposal AI failed:', aiResult.error);
+    return [];
+  }
+
+  const proposed = tryParseJson(aiResult.output || aiResult.response || '');
+  if (!proposed?.length) return [];
+
+  // Insert proposed capabilities
+  const inserted: string[] = [];
+  for (const cap of proposed.slice(0, 3)) {
+    if (existingCodes.includes(cap.code)) continue;
+
+    const { error } = await supabase.from('autopilot_capabilities').insert({
+      company_id: companyId,
+      capability_code: cap.code,
+      capability_name: cap.name,
+      description: cap.description,
+      department: cap.department || department,
+      trigger_condition: cap.trigger_condition || {},
+      required_maturity: cap.required_maturity || 'growing',
+      is_active: false,
+      status: 'proposed',
+      source: 'ai_generated',
+      auto_activate: cap.auto_activate || false,
+      proposed_reason: cap.proposed_reason || 'AI-generated based on gap analysis',
+      gap_evidence: gapReport,
+    } as any);
+
+    if (!error) {
+      inserted.push(cap.code);
+      console.log(`✨ [${department}] Proposed new capability: ${cap.code}`);
+
+      // Auto-activate low-risk capabilities
+      if (cap.auto_activate) {
+        await supabase.from('autopilot_capabilities').update({
+          status: 'trial',
+        } as any).eq('company_id', companyId).eq('capability_code', cap.code);
+        console.log(`🚀 [${department}] Auto-activated (trial): ${cap.code}`);
+      }
+    }
+  }
+
+  return inserted;
+}
+
+async function manageCapabilityLifecycle(companyId: string) {
+  // 1. Promote trial -> active (expired trials)
+  await supabase.rpc('promote_trial_capabilities' as any);
+
+  // 2. Deprecate unused ai_generated capabilities (30 days no execution)
+  await supabase.rpc('deprecate_unused_capabilities' as any);
+
+  console.log(`♻️ Lifecycle management completed for company ${companyId}`);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -695,6 +904,14 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
     console.log(`📚 [${department}] LEARN`);
     await learnPhase(companyId, department, cycleId, actions, Date.now() - startTime);
 
+    // CAPABILITY GENESIS (Gap Detection + Proposal)
+    console.log(`🧬 [${department}] CAPABILITY GENESIS`);
+    const gapReport = await detectCapabilityGaps(companyId, department);
+    const proposedCaps = await proposeNewCapabilities(companyId, department, gapReport);
+    if (proposedCaps.length > 0) {
+      console.log(`✨ [${department}] Proposed ${proposedCaps.length} new capabilities: ${proposedCaps.join(', ')}`);
+    }
+
     console.log(`✅ [${department}] Cycle ${cycleId} done in ${Date.now() - startTime}ms`);
     return { department, cycle_id: cycleId, total_decisions: decisions.length, passed, blocked, pending_review: pending, execution_time_ms: Date.now() - startTime };
   } catch (error) {
@@ -753,11 +970,12 @@ serve(async (req) => {
       return (now - new Date(c.last_execution_at).getTime()) >= (freqMs[c.execution_frequency] || 21600000);
     });
 
-    // Group by company for capability evaluation
+    // Group by company for capability evaluation + lifecycle management
     const companies = [...new Set(eligible.map(c => c.company_id))];
     const capResults: Record<string, string[]> = {};
     for (const cId of companies) {
       capResults[cId] = await evaluateCapabilities(cId);
+      await manageCapabilityLifecycle(cId);
     }
 
     // Run cycles

@@ -27,6 +27,10 @@ import { ReportBuilder } from './marketing/ReportBuilder';
 import { SocialAutomationRules } from './marketing/SocialAutomationRules';
 import { ContentApprovalPanel } from './marketing/ContentApprovalPanel';
 import { AutopilotDashboard } from './marketing/AutopilotDashboard';
+import { SocialConnectionManager } from './SocialConnectionManager';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 
 interface MarketingHubWowProps {
   profile: any;
@@ -153,6 +157,18 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       const mapped = tabMapping[tab] || tab;
       const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'autopilot']);
       if (allowed.has(mapped) && mapped !== activeTab) setActiveTab(mapped);
+    }
+  }, [searchParams]);
+
+  const [showConnectDialog, setShowConnectDialog] = useState(false);
+
+  // Handle action=connect deep link
+  useEffect(() => {
+    if (searchParams.get('action') === 'connect') {
+      setShowConnectDialog(true);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('action');
+      setSearchParams(nextParams, { replace: true });
     }
   }, [searchParams]);
 
@@ -479,7 +495,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           
           {dashboardSubTab === 'overview' && (
             <>
-              <ConnectionStatusBar connections={socialConnections} />
+              <ConnectionStatusBar connections={socialConnections} onConnectClick={() => setShowConnectDialog(true)} />
               
               {userId && (
                 <MarketingGettingStarted userId={userId} onNavigateTab={handleTabChange} />
@@ -528,7 +544,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                         <div className="text-center py-8">
                           <Network className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                           <p className="text-muted-foreground mb-4">{t("hub.connectToSeeMetrics")}</p>
-                          <Button variant="outline" onClick={() => navigate('/company-dashboard?view=marketing-hub')}>
+                          <Button variant="outline" onClick={() => setShowConnectDialog(true)}>
                             {t("hub.connectNetworks")}
                           </Button>
                         </div>
@@ -638,6 +654,25 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           <ContentCalendar profile={profile} />
         </TabsContent>
       </Tabs>
+
+      {/* Social Connection Dialog */}
+      <Dialog open={showConnectDialog} onOpenChange={(open) => {
+        setShowConnectDialog(open);
+        if (!open) loadConnections();
+      }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t("hub.connectNetworksTitle", "Conectar Redes Sociales")}</DialogTitle>
+            <DialogDescription>{t("hub.connectNetworksDesc", "Conecta tus redes sociales para publicar contenido y analizar métricas.")}</DialogDescription>
+          </DialogHeader>
+          <SocialConnectionManager 
+            profile={profile} 
+            onConnectionsUpdated={() => {
+              loadConnections();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

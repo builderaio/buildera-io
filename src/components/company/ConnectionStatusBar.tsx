@@ -18,6 +18,7 @@ interface ConnectionStatusBarProps {
     facebook: boolean;
     tiktok: boolean;
   };
+  onConnectClick?: () => void;
 }
 
 const platforms = [
@@ -27,7 +28,7 @@ const platforms = [
   { key: 'tiktok', label: 'TikTok', icon: Music, color: 'from-gray-900 to-gray-800' },
 ] as const;
 
-const ConnectionStatusBar = ({ connections }: ConnectionStatusBarProps) => {
+const ConnectionStatusBar = ({ connections, onConnectClick }: ConnectionStatusBarProps) => {
   const navigate = useNavigate();
   const connectedCount = Object.values(connections).filter(Boolean).length;
 
@@ -68,7 +69,7 @@ const ConnectionStatusBar = ({ connections }: ConnectionStatusBarProps) => {
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => navigate('/company-dashboard?view=adn-empresa&tab=canales')}
+          onClick={() => onConnectClick ? onConnectClick() : navigate('/company-dashboard?view=marketing-hub')}
           className="gap-2"
         >
           <Plus className="w-4 h-4" />

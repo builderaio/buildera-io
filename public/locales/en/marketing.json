@@ -636,6 +636,12 @@
     "activeHoursStart": "Active hours start",
     "activeHoursEnd": "Active hours end",
     "smartConfigApplied": "Smart configuration applied",
-    "smartConfigDesc": "We've pre-configured Autopilot with your brand data. Review the settings and adjust as needed."
+    "smartConfigDesc": "We've pre-configured Autopilot with your brand data. Review the settings and adjust as needed.",
+    "prerequisites": {
+      "title": "Requirements not met",
+      "socialRequired": "You need to connect at least one social network or import at least 5 posts to activate the marketing autopilot.",
+      "connectNow": "Connect social networks",
+      "importData": "Import social data"
+    }
   }
 }

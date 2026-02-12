@@ -10,12 +10,16 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Brain, Zap, Shield, BookOpen, Eye, Settings, Play, Pause,
   CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp,
-  Activity, BarChart3, RefreshCw
+  Activity, BarChart3, RefreshCw, Link2, Upload
 } from "lucide-react";
 
 interface AutopilotDashboardProps {
@@ -143,16 +147,48 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
     }
   };
 
+  const [showPrereqDialog, setShowPrereqDialog] = useState(false);
+
+  const checkMarketingPrerequisites = async (): Promise<boolean> => {
+    if (!companyId) return false;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const [socialRes, igCount, liCount, fbCount, tkCount] = await Promise.all([
+        supabase.from('social_accounts').select('id, platform').eq('user_id', user.id).eq('is_connected', true),
+        supabase.from('instagram_posts' as any).select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('linkedin_posts' as any).select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('facebook_posts' as any).select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('tiktok_posts' as any).select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      ]);
+      const realAccounts = (socialRes.data || []).filter((a: any) => a.platform !== 'upload_post_profile');
+      const totalPosts = (igCount.count || 0) + (liCount.count || 0) + (fbCount.count || 0) + (tkCount.count || 0);
+
+      return realAccounts.length > 0 || totalPosts >= 5;
+    } catch {
+      return false;
+    }
+  };
+
   const toggleAutopilot = async () => {
     const newState = !config?.autopilot_enabled;
     
+    // When activating, check prerequisites first
+    if (newState) {
+      const hasPrereqs = await checkMarketingPrerequisites();
+      if (!hasPrereqs) {
+        setShowPrereqDialog(true);
+        return;
+      }
+    }
+
     // Smart pre-configuration when activating for the first time
     if (newState && !config?.id) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user || !companyId) return;
 
-        // Fetch existing company data for smart defaults
         const [commRes, brandRes, socialRes, companyRes] = await Promise.all([
           supabase.from('company_communication_settings').select('forbidden_words, language_formality, approved_slogans, tone_by_platform, topics_to_avoid').eq('company_id', companyId).maybeSingle(),
           supabase.from('company_branding').select('brand_voice').eq('company_id', companyId).maybeSingle(),
@@ -160,7 +196,6 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
           supabase.from('companies').select('country').eq('id', companyId).single(),
         ]);
 
-        // Build smart guardrails from existing brand data
         const brandGuardrails: any = {};
         if (commRes.data?.forbidden_words) brandGuardrails.forbidden_words = commRes.data.forbidden_words;
         if (commRes.data?.language_formality) brandGuardrails.tone = commRes.data.language_formality;
@@ -169,18 +204,16 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
         if (commRes.data?.topics_to_avoid) brandGuardrails.topics_to_avoid = commRes.data.topics_to_avoid;
         if (brandRes.data?.brand_voice) brandGuardrails.brand_voice = brandRes.data.brand_voice;
 
-        // Determine allowed actions based on connected networks
         const hasSocial = (socialRes.data?.length || 0) > 0;
         const allowedActions = hasSocial 
           ? ['create_content', 'publish', 'reply_comments', 'adjust_campaigns']
           : ['create_content'];
 
-        // Set default active hours (9-21 local time)
         const activeHours = { start: '09:00', end: '21:00' };
 
         await saveConfig({
           autopilot_enabled: true,
-          require_human_approval: true, // Start in supervised mode
+          require_human_approval: true,
           brand_guardrails: Object.keys(brandGuardrails).length > 0 ? brandGuardrails : null,
           allowed_actions: allowedActions,
           active_hours: activeHours,
@@ -519,6 +552,40 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Prerequisite Dialog */}
+      <Dialog open={showPrereqDialog} onOpenChange={setShowPrereqDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              {t('autopilot.prerequisites.title')}
+            </DialogTitle>
+            <DialogDescription>{t('autopilot.prerequisites.socialRequired')}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+              setShowPrereqDialog(false);
+              window.dispatchEvent(new CustomEvent('navigate-to-adn-tab', { detail: 'social' }));
+            }}>
+              <Link2 className="w-4 h-4" />
+              {t('autopilot.prerequisites.connectNow')}
+            </Button>
+            <Button variant="outline" className="w-full justify-start gap-2" onClick={() => {
+              setShowPrereqDialog(false);
+              window.dispatchEvent(new CustomEvent('navigate-to-adn-tab', { detail: 'social' }));
+            }}>
+              <Upload className="w-4 h-4" />
+              {t('autopilot.prerequisites.importData')}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowPrereqDialog(false)}>
+              {t('actions.cancel', 'Cancelar')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

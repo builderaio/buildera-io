@@ -635,6 +635,12 @@
     "activeHoursStart": "Hora início ativa",
     "activeHoursEnd": "Hora fim ativa",
     "smartConfigApplied": "Configuração inteligente aplicada",
-    "smartConfigDesc": "Pré-configuramos o Autopilot com os dados da sua marca. Revise as configurações e ajuste conforme necessário."
+    "smartConfigDesc": "Pré-configuramos o Autopilot com os dados da sua marca. Revise as configurações e ajuste conforme necessário.",
+    "prerequisites": {
+      "title": "Requisitos não atendidos",
+      "socialRequired": "Você precisa conectar pelo menos uma rede social ou importar pelo menos 5 publicações para ativar o autopilot de marketing.",
+      "connectNow": "Conectar redes sociais",
+      "importData": "Importar dados de redes"
+    }
   }
 }

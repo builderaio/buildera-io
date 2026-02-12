@@ -901,6 +901,17 @@
     "locked": "Bloqueado",
     "unlocked": "Desbloqueado",
     "requires_maturity": "Requiere nivel: {{level}}",
+    "prerequisites": {
+      "title": "Requisitos no cumplidos",
+      "socialRequired": "Necesitas conectar al menos una red social o importar al menos 5 publicaciones para activar el autopilot de marketing.",
+      "salesRequired": "Necesitas al menos un deal o contacto en el CRM para activar el autopilot de ventas.",
+      "connectNow": "Conectar redes sociales",
+      "importData": "Importar datos de redes",
+      "setupCRM": "Configurar CRM"
+    },
+    "preflight": {
+      "aborted": "Ciclo abortado: datos insuficientes"
+    },
     "autopilot": {
       "title": "Enterprise Autopilot Brain",
       "subtitle": "Centro de comando autónomo multi-departamental",

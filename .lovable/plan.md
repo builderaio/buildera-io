@@ -1,149 +1,145 @@
 
 
-# Integracion del Enterprise Autopilot Brain al Post-Onboarding
+# Capability Genesis: Creacion Dinamica de Capacidades en Tiempo Real
 
-## Estado Actual y Gaps Identificados
+## Diagnostico del Gap
 
-### Lo que existe
-1. **Onboarding**: `OnboardingOrchestrator` maneja el flujo de registro y diagnostico inicial, al completar marca `onboarding_completed_at` y dispara evento `onboarding-completed`
-2. **Journey Progression**: `useJourneyProgression` define 5 pasos: Registration -> Onboarding -> Social Connected -> First Publish -> Autopilot Activated
-3. **Marketing Getting Started**: `MarketingGettingStarted` muestra checklist progresivo (Level 1: social, brand, campaign... -> Level 2: guardrails, supervised, autonomous)
-4. **Enterprise Autopilot Dashboard**: Existe en `/company-dashboard?view=autopilot` pero es accesible solo manualmente
-5. **Department Unlocking**: `useDepartmentUnlocking` auto-crea configs en `company_department_config` pero NO esta montado en ningun componente principal (solo dentro del propio dashboard)
+El sistema actual tiene un conjunto **fijo de 16 capabilities** pre-definidas en una migracion SQL. La funcion `evaluateCapabilities` solo evalua condiciones de activacion (`min_deals`, `min_posts`, etc.) para esas 16 capabilities existentes.
 
-### Gaps Criticos para una experiencia seamless
-
-| Gap | Impacto |
-|-----|---------|
-| `useDepartmentUnlocking` solo corre dentro de `EnterpriseAutopilotDashboard` - si el usuario nunca visita esa vista, nunca se desbloquean departamentos | Departamentos permanecen bloqueados |
-| Journey step 5 solo se alcanza al activar `company_autopilot_config` (marketing), no contempla enterprise autopilot | Journey nunca "completa" con enterprise |
-| No hay seed automatico de `autopilot_capabilities` por empresa | Dashboard muestra 0 capabilities |
-| No hay transicion guiada desde el onboarding al Enterprise Autopilot | Usuario no sabe que existe |
-| `BusinessHealthDashboard` (Centro de Comando) solo muestra el Marketing Autopilot status card, no el Enterprise | Enterprise invisible |
-| Sidebar no tiene entrada para Enterprise Autopilot | Inaccesible sin URL directa |
-| `MarketingGettingStarted` tiene step "activateAutopilot" que apunta al marketing autopilot viejo, no al enterprise | Desalineado |
+**Lo que NO puede hacer hoy:**
+- Detectar que una empresa necesita una capacidad que no existe en el catalogo
+- Crear nuevas capabilities basadas en patrones emergentes de uso
+- Proponer capacidades derivadas de inteligencia externa (ej: nueva regulacion requiere capability `gdpr_compliance_monitor` que no existia)
+- Aprender de empresas similares y replicar capabilities exitosas
 
 ---
 
-## Plan de Implementacion
+## Solucion: Capability Genesis Engine
 
-### Paso 1: Montar `useDepartmentUnlocking` en el layout principal
+Un sistema de 3 capas que permite al Autopilot Brain **inventar, proponer y activar** nuevas capabilities en tiempo real.
 
-**Archivo**: `src/components/ResponsiveLayout.tsx`
+### Capa 1: Deteccion de Necesidades (Capability Gap Detector)
 
-Montar el hook a nivel de `ResponsiveLayout` (que envuelve toda la app autenticada) para que se ejecute siempre que el usuario tenga un `companyId`. Esto garantiza que los departamentos se desbloqueen automaticamente sin importar que vista este viendo el usuario.
+Dentro de la fase LEARN del enterprise-autopilot-engine, agregar logica que analiza:
 
-- Importar `useDepartmentUnlocking` y `useCompanyState`
-- Ejecutar el hook con `companyId` y `maturityLevel` del state
-- Los toasts de "departamento desbloqueado" aparecen de forma natural en cualquier vista
+1. **Decisiones sin agente mapeado** (`no_agent_mapped`): Si el engine genera decisiones que ningun agente puede ejecutar, es senal de que falta una capability
+2. **Decisiones bloqueadas recurrentes**: Si guardrails bloquean repetidamente el mismo tipo de accion, puede indicar que se necesita una capability de compliance o gestion
+3. **Senales externas sin respuesta**: Si `external_intelligence_cache` detecta cambios (regulatorios, competitivos) pero no hay capability para reaccionar
+4. **Patrones de uso**: Si un departamento ejecuta el mismo decision_type repetidamente con exito, podria beneficiarse de una capability automatizada
 
-### Paso 2: Seed automatico de `autopilot_capabilities` por empresa
+### Capa 2: Generacion de Capabilities via IA (Capability Proposer)
 
-**Archivo**: `supabase/migrations/[new].sql`
+Una nueva funcion `proposeNewCapabilities` que:
 
-Crear una funcion SQL `seed_company_capabilities(p_company_id UUID)` que inserte las 16 capabilities predefinidas para una empresa si no existen aun. Llamarla:
-- Desde `useDepartmentUnlocking` cuando se desbloquea el primer departamento
-- O como trigger en la tabla `company_department_config` (ON INSERT)
+1. Recopila los gaps detectados en la capa anterior
+2. Llama a `openai-responses-handler` con un prompt especializado:
+   - "Dada esta empresa con industria X, estos gaps detectados, y estas senales externas, propone 1-3 nuevas capabilities con: codigo, nombre, descripcion, trigger_condition, departamento, maturity requerido"
+3. La IA genera capabilities personalizadas para esa empresa especifica
+4. Se insertan en `autopilot_capabilities` con status `proposed` (nuevo campo)
 
-Alternativa mas simple: Agregar logica en el hook `useDepartmentUnlocking` que al insertar configs de departamento, tambien inserte las capabilities correspondientes a ese departamento.
+### Capa 3: Activacion Gobernada
 
-### Paso 3: Actualizar `BusinessHealthDashboard` (Centro de Comando)
+Las capabilities propuestas por IA pasan por un flujo de gobernanza:
 
-**Archivo**: `src/components/company/BusinessHealthDashboard.tsx`
-
-Reemplazar/extender el `AutopilotStatusCard` actual (que solo muestra marketing) con un `EnterpriseAutopilotStatusCard` que:
-- Muestre cuantos departamentos estan activos de cuantos desbloqueados
-- Muestre el IQ Score del autopilot
-- Tenga un CTA prominente: "Configurar Autopilot Empresarial" que navegue a `?view=autopilot`
-- Si el usuario recien completo onboarding, muestre un badge "NUEVO" con animacion
-
-### Paso 4: Agregar entrada en el Sidebar
-
-**Archivo**: `src/components/ResponsiveLayout.tsx` (seccion del sidebar)
-
-Agregar un item de navegacion "Autopilot Brain" o "Cerebro Empresarial" debajo de las entradas existentes:
-- Icono: Brain
-- Ruta: `?view=autopilot`
-- Badge: numero de departamentos activos (si > 0)
-- Tooltip: maturity level actual
-
-### Paso 5: Extender `useJourneyProgression` para enterprise
-
-**Archivo**: `src/hooks/useJourneyProgression.ts`
-
-Actualizar la logica de `checkAndAdvance` para considerar el enterprise autopilot:
-- Step 5 ahora se alcanza si ANY departamento tiene `autopilot_enabled=true` en `company_department_config` (no solo marketing)
-- Agregar un Step 6 (opcional): "Enterprise Autopilot con 3+ departamentos activos" -> marca `journey_completed_at`
-
-### Paso 6: Post-onboarding welcome al Enterprise Autopilot
-
-**Archivo**: Nuevo componente `src/components/company/EnterpriseAutopilotWelcome.tsx`
-
-Crear un componente de bienvenida que se muestre una sola vez tras completar el onboarding:
-- Se muestra en el `BusinessHealthDashboard` si `onboarding_completed_at` existe pero `company_department_config` esta vacio
-- Explica el concepto: "Tu empresa ahora tiene un cerebro autonomo que crece contigo"
-- Muestra los 6 departamentos con su estado (desbloqueados segun maturity)
-- CTA principal: "Activar tu primer departamento" -> navega a `?view=autopilot`
-- Se marca como vista en `user_guided_tour` o similar
-
-### Paso 7: Actualizar `MarketingGettingStarted` Level 2
-
-**Archivo**: `src/components/company/MarketingGettingStarted.tsx`
-
-Actualizar el step "activateAutopilot" para que apunte al enterprise autopilot en vez del marketing-only:
-- Cambiar la accion de `onNavigateTab("autopilot")` a `navigate("/company-dashboard?view=autopilot")`
-- Agregar un nuevo step en Level 2: "Explorar Cerebro Empresarial" que lleve al Enterprise Dashboard
-
-### Paso 8: i18n completo
-
-**Archivos**: `public/locales/[es|en|pt]/common.json`
-
-Agregar todas las cadenas nuevas:
-- `enterprise.welcome.title`: "Tu Cerebro Empresarial esta listo"
-- `enterprise.welcome.description`: "A medida que tu negocio crece..."
-- `enterprise.welcome.cta`: "Explorar Autopilot Empresarial"
-- `sidebar.enterpriseBrain`: "Cerebro Empresarial"
-- Y demas cadenas para el componente de bienvenida
+- **Auto-activacion**: Si la capability tiene `auto_activate=true` (cuando el riesgo es bajo, ej: analytics)
+- **Aprobacion humana**: Si requiere accion costosa o riesgosa (ej: contratar servicio externo), se crea entrada en `content_approvals`
+- **Periodo de prueba**: Capabilities nuevas entran en modo `trial` por 7 dias antes de ser permanentes
 
 ---
 
-## Flujo Post-Onboarding Resultante
+## Implementacion Tecnica
+
+### 1. Migrar tabla `autopilot_capabilities` (nuevos campos)
+
+Agregar columnas:
+- `status`: `seeded | proposed | trial | active | deprecated` (reemplaza el booleano `is_active`)
+- `source`: `system_seed | ai_generated | external_signal | pattern_detected`
+- `auto_activate`: booleano para capabilities de bajo riesgo
+- `trial_expires_at`: fecha de fin del periodo de prueba
+- `proposed_reason`: texto explicando por que la IA propuso esta capability
+- `gap_evidence`: JSONB con los datos que justifican la necesidad
+
+### 2. Capability Gap Detector (nueva funcion en el engine)
+
+Se ejecuta al final de cada ciclo LEARN. Analiza:
+- Ultimas 50 decisiones del departamento
+- Busca patrones: decision_types sin agente, bloqueos recurrentes, senales externas sin respuesta
+- Genera un `gap_report` JSONB con las necesidades detectadas
+
+### 3. Capability Proposer (nueva funcion en el engine)
+
+Se ejecuta si el gap detector encuentra 2+ gaps consistentes. Llama a la IA con:
+- Perfil de la empresa (industria, maturity, departamentos activos)
+- Gap report
+- Inteligencia externa reciente
+- Capabilities existentes (para no duplicar)
+
+La IA responde con un JSON de capabilities nuevas que se insertan como `proposed`.
+
+### 4. Capability Lifecycle Manager
+
+Logica que gestiona el ciclo de vida:
+- `proposed` -> `trial` (cuando se auto-activa o el usuario aprueba)
+- `trial` -> `active` (cuando pasan 7 dias sin problemas)
+- `active` -> `deprecated` (cuando no se usa en 30 dias)
+- Dashboard muestra capabilities propuestas con CTA "Activar" / "Rechazar"
+
+### 5. UI: Panel de Capabilities Propuestas
+
+En el `EnterpriseAutopilotDashboard`, agregar seccion "Capabilities Sugeridas":
+- Cards con icono, nombre, descripcion, y razon de la propuesta
+- Badge "IA Sugerida" o "Senal Externa"
+- Botones: Activar / Periodo de Prueba / Rechazar
+- Indicador de evidencia (cuantos gaps respaldan la sugerencia)
+
+### 6. i18n
+
+Cadenas para ES/EN/PT cubriendo:
+- Estados de capabilities (proposed, trial, active, deprecated)
+- Panel de sugerencias
+- Notificaciones de nuevas capabilities propuestas
+
+---
+
+## Flujo Completo
 
 ```text
-ONBOARDING COMPLETO
+CICLO AUTOPILOT (LEARN Phase)
         |
         v
-BUSINESS HEALTH DASHBOARD
-  - Enterprise Welcome Card (primera vez)
-  - Enterprise Status Card (permanente)
-  - Sidebar: "Cerebro Empresarial" visible
+GAP DETECTOR
+  - "3 decisiones sin agente mapeado tipo 'competitor_response'"
+  - "Senal externa: nuevo competidor detectado, sin capability para reaccionar"
         |
         v
-USUARIO VISITA ENTERPRISE AUTOPILOT
-  - Departamentos auto-desbloqueados segun maturity
-  - Capabilities seeded para su empresa
-  - Puede activar departamentos con toggle
+CAPABILITY PROPOSER (IA)
+  - Input: gaps + perfil empresa + intel externa
+  - Output: { code: "competitive_response_engine", 
+               name: "Motor de Respuesta Competitiva",
+               department: "marketing",
+               trigger: { min_competitor_signals: 3 },
+               auto_activate: true }
         |
         v
-EMPRESA CRECE (mas datos, mas ejecuciones)
-  - Maturity sube automaticamente
-  - Nuevos departamentos se desbloquean (toast)
-  - Nuevas capabilities se activan
-  - Journey progression avanza
+INSERT autopilot_capabilities (status: 'proposed')
+        |
+        v
+AUTO-ACTIVATE o APPROVAL HUMANO
+        |
+        v
+TRIAL (7 dias) -> ACTIVE
 ```
 
 ---
 
 ## Secuencia de Implementacion
 
-| Orden | Paso | Prioridad |
-|-------|------|-----------|
-| 1 | Montar `useDepartmentUnlocking` en layout principal | Alta |
-| 2 | Seed de capabilities al crear departamento | Alta |
-| 3 | Sidebar: entrada de navegacion al Enterprise Autopilot | Alta |
-| 4 | Enterprise Status Card en Centro de Comando | Alta |
-| 5 | Extender `useJourneyProgression` | Media |
-| 6 | Enterprise Welcome post-onboarding | Media |
-| 7 | Actualizar `MarketingGettingStarted` | Baja |
-| 8 | i18n completo ES/EN/PT | Baja |
+| Orden | Entregable | Prioridad |
+|-------|-----------|-----------|
+| 1 | Migracion: nuevos campos en autopilot_capabilities | Alta |
+| 2 | Capability Gap Detector en LEARN phase | Alta |
+| 3 | Capability Proposer (llamada IA) | Alta |
+| 4 | Capability Lifecycle Manager (trial/active/deprecated) | Media |
+| 5 | UI: Panel de Capabilities Sugeridas en Dashboard | Media |
+| 6 | i18n ES/EN/PT | Baja |
 

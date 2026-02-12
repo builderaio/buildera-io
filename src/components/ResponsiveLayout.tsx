@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User } from 'lucide-react';
+import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,8 @@ import { AgentInteractionPanel } from '@/components/agents/AgentInteractionPanel
 import { PlatformAgent, usePlatformAgents } from '@/hooks/usePlatformAgents';
 import { useCompanyCredits } from '@/hooks/useCompanyCredits';
 import { useCompany } from '@/contexts/CompanyContext';
+import { useCompanyState } from '@/hooks/useCompanyState';
+import { useDepartmentUnlocking } from '@/hooks/useDepartmentUnlocking';
 
 interface Profile {
   id: string;
@@ -292,6 +294,10 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   const { enabledAgents } = usePlatformAgents(companyId || undefined);
   const { availableCredits, refetch: refetchCredits } = useCompanyCredits(companyId || undefined, profile?.user_id);
   
+  // Global department unlocking based on maturity
+  const companyState = useCompanyState(companyId || undefined, profile?.user_id);
+  const { departments } = useDepartmentUnlocking(companyId, companyState.maturityLevel);
+  
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       if (!profile?.user_id || checkOnboardingInFlight.current) return;
@@ -346,6 +352,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       'panel': '/company-dashboard?view=panel',
       'mando-central': '/company-dashboard?view=panel',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
+      'autopilot': '/company-dashboard?view=autopilot',
       'agentes': '/company-dashboard?view=agentes',
       'mis-agentes': '/company-dashboard?view=agentes',
       'marketplace': '/company-dashboard?view=agentes',
@@ -366,11 +373,14 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   const activeView = getActiveView();
 
   // Sidebar navigation with Lucide icons (no emojis)
+  const activeDeptCount = departments.filter(d => d.autopilot_enabled).length;
+
   const sidebarItems = [
-    { id: 'panel', label: t('common:sidebar.commandCenter', 'Centro de Comando'), icon: Activity },
-    { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Megaphone },
-    { id: 'agentes', label: t('common:sidebar.aiAgents', 'Agentes IA'), icon: Bot },
-    { id: 'negocio', label: t('common:sidebar.myCompany', 'Mi Negocio'), icon: Building },
+    { id: 'panel', label: t('common:sidebar.commandCenter', 'Centro de Comando'), icon: Activity, badge: null },
+    { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Megaphone, badge: null },
+    { id: 'autopilot', label: t('common:sidebar.enterpriseBrain', 'Cerebro Empresarial'), icon: Brain, badge: activeDeptCount > 0 ? `${activeDeptCount}` : null },
+    { id: 'agentes', label: t('common:sidebar.aiAgents', 'Agentes IA'), icon: Bot, badge: null },
+    { id: 'negocio', label: t('common:sidebar.myCompany', 'Mi Negocio'), icon: Building, badge: null },
   ];
 
   return (
@@ -427,6 +437,11 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                           <div className="flex items-center gap-3">
                             <Icon className="size-5 shrink-0" />
                             <span className="font-medium group-data-[state=collapsed]:hidden">{item.label}</span>
+                            {item.badge && (
+                              <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 h-4 group-data-[state=collapsed]:hidden">
+                                {item.badge}
+                              </Badge>
+                            )}
                           </div>
                         </SidebarMenuButton>
                       </SidebarMenuItem>

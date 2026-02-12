@@ -187,7 +187,8 @@
         "configureGuardrails": "Configurar guardrails da marca",
         "supervisedMode": "Ativar modo supervisionado",
         "reviewDecisions": "Revisar decisões do Autopilot",
-        "autonomousMode": "Graduar para modo autônomo"
+        "autonomousMode": "Graduar para modo autônomo",
+        "exploreEnterpriseBrain": "Explorar Cérebro Empresarial"
       }
     },
     "tabs": {

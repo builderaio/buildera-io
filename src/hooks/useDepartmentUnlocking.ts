@@ -76,6 +76,63 @@ const isMaturitySufficient = (current: MaturityLevel, required: MaturityLevel): 
   return MATURITY_ORDER.indexOf(current) >= MATURITY_ORDER.indexOf(required);
 };
 
+const CAPABILITY_SEEDS: Record<string, { code: string; name: string; required_maturity: string; trigger: Record<string, any> }[]> = {
+  marketing: [
+    { code: 'content_optimization', name: 'Content A/B Testing', required_maturity: 'starter', trigger: { type: 'schedule', interval: 'weekly' } },
+    { code: 'audience_segmentation', name: 'Smart Audience Segmentation', required_maturity: 'growing', trigger: { type: 'data_threshold', min_followers: 500 } },
+    { code: 'ab_testing_auto', name: 'Automated A/B Testing', required_maturity: 'established', trigger: { type: 'performance', min_posts: 20 } },
+  ],
+  sales: [
+    { code: 'lead_scoring', name: 'AI Lead Scoring', required_maturity: 'starter', trigger: { type: 'data_available', source: 'crm' } },
+    { code: 'predictive_churn', name: 'Predictive Churn Detection', required_maturity: 'growing', trigger: { type: 'data_threshold', min_customers: 50 } },
+  ],
+  finance: [
+    { code: 'credit_monitoring', name: 'Credit Consumption Monitoring', required_maturity: 'starter', trigger: { type: 'schedule', interval: 'daily' } },
+    { code: 'budget_forecasting', name: 'Budget Forecasting', required_maturity: 'growing', trigger: { type: 'data_threshold', min_transactions: 30 } },
+  ],
+  legal: [
+    { code: 'compliance_check', name: 'Content Compliance Check', required_maturity: 'growing', trigger: { type: 'on_publish' } },
+    { code: 'regulatory_monitor', name: 'Regulatory Change Monitor', required_maturity: 'established', trigger: { type: 'schedule', interval: 'weekly' } },
+  ],
+  hr: [
+    { code: 'profile_generation', name: 'Job Profile Generation', required_maturity: 'established', trigger: { type: 'manual' } },
+    { code: 'climate_analysis', name: 'Work Climate Analysis', required_maturity: 'established', trigger: { type: 'schedule', interval: 'monthly' } },
+  ],
+  operations: [
+    { code: 'process_optimization', name: 'Process Optimization', required_maturity: 'established', trigger: { type: 'schedule', interval: 'weekly' } },
+    { code: 'sla_monitoring', name: 'SLA Monitoring', required_maturity: 'established', trigger: { type: 'schedule', interval: 'daily' } },
+  ],
+};
+
+const seedCapabilities = async (companyId: string, departments: DepartmentDefinition[]) => {
+  // Check existing capabilities to avoid duplicates
+  const { data: existing } = await supabase
+    .from('autopilot_capabilities')
+    .select('capability_code')
+    .eq('company_id', companyId);
+
+  const existingCodes = new Set((existing || []).map(e => e.capability_code));
+
+  const capabilities = departments.flatMap(def => {
+    const seeds = CAPABILITY_SEEDS[def.department] || [];
+    return seeds
+      .filter(seed => !existingCodes.has(seed.code))
+      .map(seed => ({
+        company_id: companyId,
+        department: def.department,
+        capability_code: seed.code,
+        capability_name: seed.name,
+        required_maturity: seed.required_maturity,
+        trigger_condition: seed.trigger,
+        is_active: false,
+      }));
+  });
+
+  if (capabilities.length > 0) {
+    await supabase.from('autopilot_capabilities').insert(capabilities);
+  }
+};
+
 export const useDepartmentUnlocking = (
   companyId: string | null,
   maturityLevel: MaturityLevel
@@ -154,6 +211,9 @@ export const useDepartmentUnlocking = (
           description: t('enterprise.department_unlocked_desc'),
         });
       });
+
+      // Seed autopilot capabilities for newly unlocked departments
+      await seedCapabilities(companyId, toUnlock);
 
       // Log unlock event in company_parameters
       await supabase.from('company_parameters').insert(

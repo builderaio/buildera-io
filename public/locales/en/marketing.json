@@ -188,7 +188,8 @@
         "configureGuardrails": "Configure brand guardrails",
         "supervisedMode": "Activate supervised mode",
         "reviewDecisions": "Review Autopilot decisions",
-        "autonomousMode": "Graduate to autonomous mode"
+        "autonomousMode": "Graduate to autonomous mode",
+        "exploreEnterpriseBrain": "Explore Enterprise Brain"
       }
     },
     "tabs": {

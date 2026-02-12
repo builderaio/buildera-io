@@ -197,7 +197,8 @@
     "platformTagline": "Marketing Autopilot",
     "autopilot": "Autopilot",
     "autopilotActive": "Ativo",
-    "autopilotInactive": "Inativo"
+    "autopilotInactive": "Inativo",
+    "enterpriseBrain": "Cérebro Empresarial"
   },
   "dashboard": {
     "vsPreviousMonth": "vs. mês anterior",
@@ -868,6 +869,11 @@
       "noLesson": "Sem lição registrada para esta decisão.",
       "active": "Ativa",
       "pending": "Pendente"
+    },
+    "welcome": {
+      "title": "Seu Cérebro Empresarial está pronto",
+      "description": "À medida que seu negócio cresce, novos departamentos são desbloqueados automaticamente para automatizar mais áreas da sua empresa.",
+      "cta": "Explorar Autopilot Empresarial"
     }
-  }
+  },
 }

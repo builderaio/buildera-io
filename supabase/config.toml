@@ -1,1 +1,73 @@
 project_id = "ubhzzppmkhxbuiajfswa"
+
+[functions.sandbox-agent-executor]
+verify_jwt = false
+
+[functions.analyze-competitors]
+verify_jwt = false
+
+[functions.translate-content]
+verify_jwt = false
+
+[functions.openai-responses-handler]
+verify_jwt = false
+
+[functions.agent-sdk-executor]
+verify_jwt = false
+
+[functions.delete-user]
+verify_jwt = false
+
+[functions.execute-n8n-agent]
+verify_jwt = false
+
+[functions.onboarding-agent-orchestrator]
+verify_jwt = false
+
+[functions.company-info-extractor]
+verify_jwt = false
+
+[functions.send-buildera-email]
+verify_jwt = false
+
+[functions.send-verification-email]
+verify_jwt = false
+
+[functions.send-password-reset-email]
+verify_jwt = false
+
+[functions.process-inbound-email]
+verify_jwt = false
+
+[functions.handle-subscription-webhook]
+verify_jwt = false
+
+[functions.create-subscription-checkout]
+verify_jwt = false
+
+[functions.facebook-instagram-auth]
+verify_jwt = false
+
+[functions.linkedin-oauth-callback]
+verify_jwt = false
+
+[functions.tiktok-auth]
+verify_jwt = false
+
+[functions.webauthn-login-options]
+verify_jwt = false
+
+[functions.webauthn-login-verify]
+verify_jwt = false
+
+[functions.webauthn-register-options]
+verify_jwt = false
+
+[functions.webauthn-register-verify]
+verify_jwt = false
+
+[functions.accept-company-invitation]
+verify_jwt = false
+
+[functions.send-company-invitation]
+verify_jwt = false

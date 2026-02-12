@@ -99,7 +99,20 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           console.log('✅ Company data found, journey:', company.journey_type);
           setCompanyData(company as CompanyBasicData);
           setSelectedJourney((company.journey_type as JourneyType) || 'existing_business');
-          startExtraction(company.id);
+          
+          // Check if extraction was already completed to avoid re-running
+          const { data: existingResults } = await supabase
+            .from('onboarding_wow_results')
+            .select('id')
+            .eq('company_id', company.id)
+            .limit(1);
+          
+          if (existingResults && existingResults.length > 0) {
+            console.log('📊 Extraction already completed, showing results');
+            setPhase('results');
+          } else {
+            startExtraction(company.id);
+          }
         } else {
           console.log('📋 Company missing data, showing form');
           if (company) {

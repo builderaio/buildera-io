@@ -97,7 +97,7 @@ export default function FounderPTWSimplified({
     if (onComplete) {
       onComplete();
     } else {
-      navigate('/company-dashboard?view=comando');
+      navigate('/company-dashboard?view=mando-central');
     }
   };
 

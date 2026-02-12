@@ -133,12 +133,7 @@ const AuthenticatedLayout = () => {
     return null;
   }
 
-  // Solo mostrar sidebar para usuarios tipo empresa - ahora usando ResponsiveLayout
-  if (profile.user_type === 'company') {
-    // Redirigir al ResponsiveLayout
-    window.location.href = '/company-dashboard';
-    return null;
-  }
+  // Company users use ResponsiveLayout directly via routing, no redirect needed
 
   // Layout simplificado para desarrolladores y expertos
   return (

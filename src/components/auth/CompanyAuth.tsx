@@ -49,7 +49,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         if (!fullName.trim()) {
           toast({
             title: "Error",
-            description: "El nombre es requerido",
+            description: t('messages.nameRequired'),
             variant: "destructive",
           });
           setLoading(false);
@@ -59,28 +59,18 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         if (!companyName.trim()) {
           toast({
             title: "Error", 
-            description: "El nombre del negocio es requerido",
+            description: t('messages.companyRequired'),
             variant: "destructive",
           });
           setLoading(false);
           return;
         }
 
-
-        if (!websiteUrl.trim()) {
-          toast({
-            title: "Error",
-            description: "El sitio web es requerido",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
 
         if (!country.trim()) {
           toast({
             title: "Error",
-            description: "El país es requerido",
+            description: t('messages.countryRequired'),
             variant: "destructive",
           });
           setLoading(false);
@@ -94,8 +84,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         
         if (password.length < 8) {
           toast({
-            title: "Contraseña débil",
-            description: "La contraseña debe tener al menos 8 caracteres",
+            title: t('messages.weakPassword'),
+            description: t('messages.weakPasswordDesc'),
             variant: "destructive",
           });
           setLoading(false);
@@ -104,8 +94,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
 
         if (!hasLowerCase || !hasUpperCase || !hasNumber) {
           toast({
-            title: "Contraseña débil",
-            description: "La contraseña debe contener al menos: una letra minúscula (a-z), una letra mayúscula (A-Z) y un número (0-9)",
+            title: t('messages.weakPassword'),
+            description: t('messages.weakPasswordComplex'),
             variant: "destructive",
           });
           setLoading(false);
@@ -156,8 +146,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             setRegisteredEmail(email);
             setShowEmailVerification(true);
             toast({
-              title: "¡Registro exitoso!",
-              description: "Hemos enviado un email de verificación a tu correo. Revisa tu bandeja de entrada y carpeta de spam.",
+              title: t('messages.signupSuccess'),
+              description: t('messages.signupSuccessDesc'),
             });
           } else {
             // Si el email ya está verificado (caso raro), enviar bienvenida y ir a login
@@ -169,8 +159,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             }
             
             toast({
-              title: "¡Registro exitoso!",
-              description: "Tu cuenta ha sido creada y verificada. Ahora puedes iniciar sesión.",
+              title: t('messages.signupSuccess'),
+              description: t('messages.signupVerifiedDesc'),
             });
 
             // Cambiar a modo login
@@ -195,7 +185,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         if (!email.trim()) {
           toast({
             title: "Error",
-            description: "El email es requerido",
+            description: t('messages.emailRequiredField'),
             variant: "destructive",
           });
           setLoading(false);
@@ -205,7 +195,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         if (!password.trim()) {
           toast({
             title: "Error",
-            description: "La contraseña es requerida",
+            description: t('messages.passwordRequired'),
             variant: "destructive",
           });
           setLoading(false);
@@ -261,16 +251,16 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       let errorTitle = "Error";
       
       if (error.code === 'weak_password' || error.message?.includes('Password should contain')) {
-        errorTitle = "Contraseña débil";
-        errorMessage = "La contraseña debe contener al menos: una letra minúscula (a-z), una letra mayúscula (A-Z) y un número (0-9)";
+        errorTitle = t('messages.weakPassword');
+        errorMessage = t('messages.weakPasswordComplex');
       } else if (error.message?.includes('Invalid login credentials')) {
-        errorMessage = "Email o contraseña incorrectos";
+        errorMessage = t('messages.invalidCredentials');
       } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = "Tu cuenta necesita ser verificada. Por favor revisa tu email y haz clic en el enlace de verificación. Si no encuentras el email, revisa tu carpeta de spam.";
+        errorMessage = t('messages.emailNotConfirmed');
       } else if (error.message?.includes('User already registered')) {
-        errorMessage = "Ya existe una cuenta con este email";
+        errorMessage = t('messages.userAlreadyRegistered');
       } else if (error.message?.includes('Signup not allowed')) {
-        errorMessage = "El registro no está permitido en este momento";
+        errorMessage = t('messages.signupNotAllowed');
       }
       
       toast({
@@ -299,13 +289,13 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       if (error) throw error;
 
       toast({
-        title: "Email reenviado",
-        description: "Hemos reenviado el enlace de verificación a tu email.",
+        title: t('messages.emailResent'),
+        description: t('messages.emailResentDesc'),
       });
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "No se pudo reenviar el email de verificación",
+        description: error.message || t('messages.emailResendError'),
         variant: "destructive",
       });
     } finally {
@@ -353,8 +343,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
     } catch (error: any) {
       console.error(`❌ Error en autenticación ${provider}:`, error);
       toast({
-        title: "Error de Autenticación",
-        description: error.message || `Error al conectar con ${provider}. Por favor, intenta de nuevo.`,
+        title: t('messages.authError'),
+        description: error.message || t('messages.authError'),
         variant: "destructive",
       });
     }
@@ -430,50 +420,50 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           {mode === "signup" && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="fullName">
-                  Nombre del contacto <span className="text-destructive">*</span>
+              <Label htmlFor="fullName">
+                  {t('form.contactName')} <span className="text-destructive">{t('form.required')}</span>
                 </Label>
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="Tu nombre completo"
+                  placeholder={t('form.fullNamePlaceholder')}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyName">
-                  Nombre del negocio <span className="text-destructive">*</span>
+              <Label htmlFor="companyName">
+                  {t('form.companyName')} <span className="text-destructive">{t('form.required')}</span>
                 </Label>
                 <Input
                   id="companyName"
                   type="text"
-                  placeholder="Tu Negocio S.A.S."
+                  placeholder={t('form.companyNamePlaceholder')}
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="websiteUrl">
-                  Sitio web <span className="text-destructive">*</span>
+              <Label htmlFor="websiteUrl">
+                  {t('form.websiteUrl')} <span className="text-muted-foreground text-xs">{t('form.websiteOptional')}</span>
                 </Label>
                 <Input
                   id="websiteUrl"
                   type="text"
-                  placeholder="tunegocio.com"
+                  placeholder={t('form.websiteUrlPlaceholder')}
                   value={websiteUrl}
                   onChange={(e) => setWebsiteUrl(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="country">
-                  País <span className="text-destructive">*</span>
+              <Label htmlFor="country">
+                  {t('form.country')} <span className="text-destructive">{t('form.required')}</span>
                 </Label>
                 <Select value={country} onValueChange={setCountry} required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona el país" />
+                    <SelectValue placeholder={t('form.countryPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Colombia">Colombia</SelectItem>
@@ -505,12 +495,12 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           
           <div className="space-y-2">
             <Label htmlFor="email">
-              Correo electrónico <span className="text-destructive">*</span>
+              {t('form.email')} <span className="text-destructive">{t('form.required')}</span>
             </Label>
             <Input
               id="email"
               type="email"
-              placeholder="contacto@tunegocio.com"
+              placeholder={t('form.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -519,11 +509,11 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           
           <div className="space-y-2">
             <Label htmlFor="password">
-              Contraseña <span className="text-destructive">*</span>
+              {t('form.password')} <span className="text-destructive">{t('form.required')}</span>
             </Label>
             <PasswordInput
               id="password"
-              placeholder="Tu contraseña"
+              placeholder={t('form.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -533,11 +523,11 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
           {mode === "signup" && (
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">
-                Confirmar contraseña <span className="text-destructive">*</span>
+                {t('form.confirmPassword')} <span className="text-destructive">{t('form.required')}</span>
               </Label>
               <PasswordInput
                 id="confirmPassword"
-                placeholder="Confirma tu contraseña"
+                placeholder={t('form.confirmPasswordPlaceholder')}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -556,7 +546,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 onClick={() => setShowForgotPassword(true)}
                 className="text-sm text-primary hover:text-primary/80 underline"
               >
-                ¿Olvidaste tu contraseña?
+                {t('buttons.forgotPassword')}
               </button>
             </div>
           )}

@@ -395,6 +395,52 @@ async function updateSocialAccountsFromAPI(supabaseClient: any, userId: string, 
   }
 }
 
+function extractUsernameFromUrl(platform: string, url: string): string | null {
+  if (!url) return null;
+  try {
+    const cleaned = url.trim().replace(/\/+$/, '');
+    switch (platform) {
+      case 'linkedin': {
+        const match = cleaned.match(/linkedin\.com\/(company|in)\/([^/?#]+)/i);
+        return match ? match[2] : null;
+      }
+      case 'instagram': {
+        const match = cleaned.match(/instagram\.com\/([^/?#]+)/i);
+        return match && match[1] !== 'p' ? match[1] : null;
+      }
+      case 'facebook': {
+        const match = cleaned.match(/facebook\.com\/([^/?#]+)/i);
+        return match && !['profile.php', 'pages', 'groups'].includes(match[1]) ? match[1] : null;
+      }
+      case 'tiktok': {
+        const match = cleaned.match(/tiktok\.com\/@?([^/?#]+)/i);
+        return match ? match[1].replace(/^@/, '') : null;
+      }
+      case 'youtube': {
+        const match = cleaned.match(/youtube\.com\/(@?[^/?#]+)/i);
+        return match ? match[1] : null;
+      }
+      case 'twitter': {
+        const match = cleaned.match(/(?:twitter|x)\.com\/([^/?#]+)/i);
+        return match ? match[1] : null;
+      }
+      default:
+        return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
+const platformUrlFields: Record<string, string> = {
+  facebook: 'facebook_url',
+  instagram: 'instagram_url',
+  linkedin: 'linkedin_url',
+  tiktok: 'tiktok_url',
+  youtube: 'youtube_url',
+  twitter: 'twitter_url',
+};
+
 async function updateSocialAccountsFromProfile(supabaseClient: any, userId: string, companyUsername: string, socialAccountsData: any) {
   try {
     console.log('🔄 Updating per-platform social accounts for:', companyUsername);
@@ -403,30 +449,64 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
     const platforms = Object.keys(socialAccountsData || {});
     console.log('📱 Platforms to process:', platforms);
 
+    // Fetch company URLs to extract real usernames
+    let companyUrls: Record<string, string> = {};
+    if (companyId) {
+      const { data: companyData } = await supabaseClient
+        .from('companies')
+        .select('facebook_url, instagram_url, linkedin_url, tiktok_url, youtube_url, twitter_url')
+        .eq('id', companyId)
+        .single();
+      if (companyData) {
+        companyUrls = companyData;
+      }
+    }
+
     for (const platform of platforms) {
       const platformData = (socialAccountsData as any)[platform];
 
       const hasData = platformData && typeof platformData === 'object';
       const isConnected = !!(hasData && (platformData.username || platformData.display_name || platformData.social_images));
 
+      // Determine the best platform_username:
+      // 1. Try extracting from company URL (most reliable for scrapers)
+      // 2. Fall back to API-provided username
+      let resolvedUsername: string | null = null;
+      const urlField = platformUrlFields[platform];
+      if (urlField && companyUrls[urlField]) {
+        resolvedUsername = extractUsernameFromUrl(platform, companyUrls[urlField]);
+        if (resolvedUsername) {
+          console.log(`🔍 ${platform}: extracted username from company URL: ${resolvedUsername}`);
+        }
+      }
+      if (!resolvedUsername && hasData) {
+        resolvedUsername = platformData.username ?? null;
+        if (resolvedUsername) {
+          console.log(`📡 ${platform}: using API-provided username: ${resolvedUsername}`);
+        }
+      }
+
       // Obtener la fila existente para preservar selected_page_name
       const { data: existingRow } = await supabaseClient
         .from('social_accounts')
-        .select('metadata, linkedin_page_id, facebook_page_id')
+        .select('metadata, linkedin_page_id, facebook_page_id, platform_username')
         .eq('user_id', userId)
         .eq('platform', platform)
         .single();
 
+      // If existing row already has a manually-set username from URL, preserve it
+      if (!resolvedUsername && existingRow?.platform_username) {
+        resolvedUsername = existingRow.platform_username;
+      }
+
       // Preparar metadata - preservar selected_page_name si ya existe
       const metadata = hasData ? { 
         ...platformData,
-        // Solo actualizar selected_page_name si no existe o si no hay página seleccionada
         ...((platform === 'linkedin' || platform === 'facebook') && 
             !existingRow?.metadata?.selected_page_name &&
             !(platform === 'linkedin' ? existingRow?.linkedin_page_id : existingRow?.facebook_page_id) &&
             platformData.display_name ? 
           { selected_page_name: platformData.display_name } : 
-          // Preservar el selected_page_name existente
           existingRow?.metadata?.selected_page_name ? 
             { selected_page_name: existingRow.metadata.selected_page_name } : 
             {})
@@ -439,7 +519,7 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
           company_id: companyId,
           company_username: companyUsername,
           platform,
-          platform_username: hasData ? (platformData.username ?? null) : null,
+          platform_username: resolvedUsername,
           platform_display_name: hasData ? (platformData.display_name ?? null) : null,
           is_connected: isConnected,
           metadata,
@@ -454,7 +534,7 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
         throw error;
       }
 
-      console.log(`✅ ${platform}: upserted (connected=${isConnected})`);
+      console.log(`✅ ${platform}: upserted (connected=${isConnected}, username=${resolvedUsername})`);
     }
 
     console.log('✅ All platform rows updated successfully');

@@ -851,6 +851,10 @@
       "title": "Requisitos não atendidos",
       "socialRequired": "Você precisa conectar pelo menos uma rede social ou importar pelo menos 5 publicações para ativar o autopilot de marketing.",
       "salesRequired": "Você precisa de pelo menos um deal ou contato no CRM para ativar o autopilot de vendas.",
+      "financeRequired": "Você precisa de pelo menos alguma atividade na plataforma (execuções de agentes ou snapshots de saúde) para ativar o autopilot de finanças.",
+      "legalRequired": "Você precisa configurar pelo menos um parâmetro legal para ativar o autopilot jurídico.",
+      "hrRequired": "Você precisa de pelo menos 2 membros na equipe para ativar o autopilot de recursos humanos.",
+      "operationsRequired": "Você precisa de pelo menos 1 equipe de AI workforce configurada para ativar o autopilot de operações.",
       "connectNow": "Conectar redes sociais",
       "importData": "Importar dados de redes",
       "setupCRM": "Configurar CRM"

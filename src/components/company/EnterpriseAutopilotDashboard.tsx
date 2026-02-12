@@ -177,6 +177,45 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
       }
     }
 
+    if (dept === 'finance') {
+      const [usage, snapshots] = await Promise.all([
+        supabase.from('agent_usage_log').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('business_health_snapshots').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      ]);
+      if ((usage.count || 0) === 0 && (snapshots.count || 0) === 0) {
+        setPrerequisiteMessage(t('enterprise.prerequisites.financeRequired'));
+        return false;
+      }
+    }
+
+    if (dept === 'legal') {
+      const { count } = await supabase.from('company_parameters')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId).like('parameter_key', 'legal_%');
+      if ((count || 0) === 0) {
+        setPrerequisiteMessage(t('enterprise.prerequisites.legalRequired'));
+        return false;
+      }
+    }
+
+    if (dept === 'hr') {
+      const { count } = await supabase.from('company_members')
+        .select('id', { count: 'exact', head: true }).eq('company_id', companyId);
+      if ((count || 0) < 2) {
+        setPrerequisiteMessage(t('enterprise.prerequisites.hrRequired'));
+        return false;
+      }
+    }
+
+    if (dept === 'operations') {
+      const { count } = await supabase.from('ai_workforce_teams')
+        .select('id', { count: 'exact', head: true }).eq('company_id', companyId);
+      if ((count || 0) === 0) {
+        setPrerequisiteMessage(t('enterprise.prerequisites.operationsRequired'));
+        return false;
+      }
+    }
+
     return true;
   };
 

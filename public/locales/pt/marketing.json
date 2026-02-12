@@ -171,5 +171,104 @@
     "optimizedContent": "Conteúdo Otimizado pela Era",
     "useOptimization": "Usar Otimização da Era",
     "keepOriginal": "Manter Original"
+  },
+  "hub": {
+    "loading": "Carregando Marketing Hub...",
+    "gettingStarted": {
+      "title": "Primeiros Passos",
+      "steps": {
+        "connectSocial": "Conectar redes sociais",
+        "completeBrand": "Completar DNA da marca",
+        "firstCampaign": "Criar primeira campanha",
+        "firstVideo": "Gerar primeiro vídeo",
+        "firstPost": "Agendar primeira publicação"
+      }
+    },
+    "tabs": {
+      "dashboard": "Painel",
+      "create": "Criar",
+      "campaigns": "Campanhas",
+      "calendar": "Calendário",
+      "library": "Biblioteca"
+    },
+    "metrics": {
+      "insights": "Insights Gerados",
+      "engagement": "Engagement Total",
+      "campaigns": "Campanhas Ativas",
+      "automation": "Score de Automação",
+      "insightsDesc": "Análises inteligentes geradas este mês",
+      "engagementDesc": "Interações em todas as plataformas",
+      "campaignsDesc": "Campanhas de marketing em execução",
+      "automationDesc": "Eficiência de automação IA",
+      "startingAnalysis": "Iniciando análise",
+      "noData": "Sem dados disponíveis",
+      "createFirst": "Crie sua primeira campanha",
+      "configureAuto": "Configure automação",
+      "running": "em andamento",
+      "noCampaigns": "Sem campanhas",
+      "actions": "ações",
+      "noActions": "Sem ações"
+    },
+    "platformPerformance": "Desempenho por Plataforma",
+    "yourAudiences": "Suas Audiências",
+    "audiencesDesc": "Segmentos identificados",
+    "quickActions": "Ações Rápidas",
+    "createContent": "Criar Conteúdo",
+    "newCampaign": "Nova Campanha",
+    "viewCalendar": "Ver Calendário",
+    "libraryBtn": "Biblioteca",
+    "connectNetworks": "Conectar Redes",
+    "connectToSeeMetrics": "Conecte suas redes sociais para ver métricas",
+    "publications": "publicações",
+    "totalEngagement": "engagement total",
+    "avgPerPost": "média/post",
+    "crear": {
+      "title": "O que você quer criar?",
+      "subtitle": "Escolha o caminho que melhor se adapta às suas necessidades",
+      "back": "Voltar às opções",
+      "start": "Começar",
+      "quickPost": {
+        "title": "Post Rápido",
+        "description": "Crie e publique conteúdo imediatamente com IA ou manualmente",
+        "f1": "Geração de texto com IA",
+        "f2": "Otimização com Era",
+        "f3": "Publicação direta"
+      },
+      "campaign": {
+        "title": "Campanha Completa",
+        "description": "Projete uma estratégia de marketing integral passo a passo",
+        "f1": "Wizard guiado de 7 passos",
+        "f2": "Buyer personas e segmentação",
+        "f3": "Conteúdo multi-plataforma"
+      },
+      "studio": {
+        "title": "Estúdio Criativo",
+        "description": "Gere vídeos, avatares e banners profissionais com IA",
+        "f1": "Video Ads do seu site",
+        "f2": "Avatares IA personalizados",
+        "f3": "Banners IAB em todos os tamanhos"
+      }
+    },
+    "library": {
+      "title": "Biblioteca Unificada",
+      "subtitle": "Todo seu conteúdo em um só lugar",
+      "loading": "Carregando biblioteca...",
+      "refresh": "Atualizar",
+      "untitled": "Sem título",
+      "publishedPost": "Post publicado",
+      "deleted": "Conteúdo excluído",
+      "deleteError": "Erro ao excluir",
+      "copied": "URL copiada para a área de transferência",
+      "empty": "Sua biblioteca está vazia",
+      "emptyHint": "Crie conteúdo, gere vídeos ou publique posts para começar a preenchê-la",
+      "items": "itens",
+      "filters": {
+        "all": "Todos",
+        "text": "Texto",
+        "image": "Imagens",
+        "video": "Vídeos",
+        "banner": "Banners"
+      }
+    }
   }
 }

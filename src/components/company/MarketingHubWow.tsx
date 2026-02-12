@@ -1,28 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import AdvancedAILoader from "@/components/ui/advanced-ai-loader";
 import { 
-  Sparkles, BarChart3, Calendar, TrendingUp, Users, Heart, ArrowRight, Plus, 
-  Zap, Target, Brain, Rocket, PenTool, Network, MessageCircle, Video, Image,
+  BarChart3, Calendar, TrendingUp, Users, Heart, Plus, 
+  Zap, Target, Brain, Rocket, PenTool, Network, Video, Image,
   FolderOpen
 } from "lucide-react";
 import { getPlatformDisplayName } from '@/lib/socialPlatforms';
-import ContentCreatorTab from './ContentCreatorTab';
-import ContentLibraryTab from './ContentLibraryTab';
-import { ScheduledPostsManager } from './ScheduledPostsManager';
-import { UploadHistory } from './UploadHistory';
-import AudienciasManager from './AudienciasManager';
-import { CampaignDashboard } from './campaign/CampaignDashboard';
 import ContentCalendar from './ContentCalendar';
 import AudienceHighlightsWidget from './AudienceHighlightsWidget';
 import ConnectionStatusBar from './ConnectionStatusBar';
+import { MarketingGettingStarted } from './MarketingGettingStarted';
+import { CrearContentHub } from './CrearContentHub';
+import { UnifiedLibrary } from './UnifiedLibrary';
+import { CampaignDashboard } from './campaign/CampaignDashboard';
 
 interface MarketingHubWowProps {
   profile: any;
@@ -38,115 +35,34 @@ interface QuickStat {
   description?: string;
 }
 
-interface CompanyData {
-  nombre_empresa: string;
-  pais: string;
-  objetivo_de_negocio: string;
-  propuesta_de_valor: string;
-  url_sitio_web: string;
-  objective_id?: string;
-  redes_socciales_activas?: string[];
-}
-
-interface CompanyObjective {
-  id: string;
-  title: string;
-  description: string;
-  priority: number;
-  status: string;
-}
-
-interface WorkflowState {
-  setup: boolean;
-  analysis: boolean;
-  strategy: boolean;
-  content: boolean;
-  automation: boolean;
-}
-
 const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useTranslation('marketing');
   
-  // Initialize activeTab from URL BEFORE first render to avoid race condition
   const getInitialTab = () => {
     const tab = searchParams.get('tab');
-    const allowed = new Set(['dashboard', 'create', 'content', 'campaigns', 'calendar']);
-    
-    if (tab && allowed.has(tab)) {
-      console.log('🎯 [MarketingHubWow] Estado inicial del tab desde URL:', tab);
-      return tab;
-    }
-    
+    const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content']);
+    if (tab && allowed.has(tab)) return tab;
     return 'dashboard';
   };
   
   const [activeTab, setActiveTab] = useState(getInitialTab());
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   
-  // React to URL changes after initial render
   useEffect(() => {
     const tab = searchParams.get('tab');
-    const view = searchParams.get('view');
-    
-    console.log('🔍 [MarketingHubWow] URL params changed:', { tab, view, currentTab: activeTab });
-    
     if (tab) {
-      const allowed = new Set(['dashboard', 'create', 'content', 'campaigns', 'calendar']);
-      if (allowed.has(tab) && tab !== activeTab) {
-        console.log('✅ [MarketingHubWow] Actualizando tab a:', tab);
-        setActiveTab(tab);
-      }
+      const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content']);
+      if (allowed.has(tab) && tab !== activeTab) setActiveTab(tab);
     }
   }, [searchParams]);
 
   const [loading, setLoading] = useState(false);
   const [realMetrics, setRealMetrics] = useState<QuickStat[]>([]);
   const [socialConnections, setSocialConnections] = useState({
-    linkedin: false,
-    instagram: false,
-    facebook: false,
-    tiktok: false
+    linkedin: false, instagram: false, facebook: false, tiktok: false
   });
-  const [currentProcess, setCurrentProcess] = useState<string | null>(null);
-  const [processStep, setProcessStep] = useState(0);
-  const [totalSteps, setTotalSteps] = useState(0);
-  const [stepDetails, setStepDetails] = useState({
-    title: '',
-    description: ''
-  });
-  const [recentActivity, setRecentActivity] = useState([]);
-  const [upcomingPosts, setUpcomingPosts] = useState([]);
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [showResults, setShowResults] = useState(false);
-  const [companyData, setCompanyData] = useState<CompanyData>({
-    nombre_empresa: '',
-    pais: '',
-    objetivo_de_negocio: '',
-    propuesta_de_valor: '',
-    url_sitio_web: ''
-  });
-  const [workflow, setWorkflow] = useState<WorkflowState>({
-    setup: false,
-    analysis: false,
-    strategy: false,
-    content: false,
-    automation: false
-  });
-  const [showCompanyDataDialog, setShowCompanyDataDialog] = useState(false);
-  const [showObjectiveDialog, setShowObjectiveDialog] = useState(false);
-  const [selectedObjective, setSelectedObjective] = useState('');
-  const [customObjective, setCustomObjective] = useState('');
-  const [tempCompanyData, setTempCompanyData] = useState<CompanyData>({
-    nombre_empresa: '',
-    pais: '',
-    objetivo_de_negocio: '',
-    propuesta_de_valor: '',
-    url_sitio_web: '',
-    objective_id: '',
-    redes_socciales_activas: []
-  });
-  const [availableObjectives, setAvailableObjectives] = useState<CompanyObjective[]>([]);
   const [platformStats, setPlatformStats] = useState({
     instagram: { posts: 0, followers: 0, engagement: 0 },
     linkedin: { posts: 0, connections: 0, engagement: 0 },
@@ -155,65 +71,32 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   });
 
   const { toast } = useToast();
-  
-  // Get the authenticated user ID directly
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Initialize userId from auth
   useEffect(() => {
-    const initializeUserId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const authUserId = user?.id;
-      const profileUserId = profile?.user_id;
-      
-      console.log('🔍 Auth User ID:', authUserId);
-      console.log('🔍 Profile User ID:', profileUserId);
-      console.log('🔍 Profile prop:', profile);
-      
-      // Use profile user_id if available, fallback to auth user id
-      const finalUserId = profileUserId || authUserId;
-      setUserId(finalUserId);
-      console.log('🔍 Final userId set to:', finalUserId);
-    };
-    
-    initializeUserId();
-  }, [profile]);
-
-  useEffect(() => {
-    let active = true;
     const resolve = async () => {
       try {
         if (profile?.user_id) {
-          if (active) setUserId(profile.user_id);
+          setUserId(profile.user_id);
         } else {
           const { data: { user } } = await supabase.auth.getUser();
-          if (active) setUserId(user?.id ?? null);
+          setUserId(user?.id ?? null);
         }
       } catch (e) {
-        console.warn('No se pudo resolver userId:', e);
+        console.warn('Could not resolve userId:', e);
       }
     };
     resolve();
-    return () => { active = false; };
   }, [profile?.user_id]);
 
   useEffect(() => {
-    if (userId) {
-      initializeMarketingHub();
-    }
+    if (userId) initializeMarketingHub();
   }, [userId]);
 
   const initializeMarketingHub = async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        loadConnections(), 
-        loadRealMetrics(), 
-        loadRecentActivity(), 
-        loadUpcomingPosts(), 
-        loadPlatformStats(), 
-        checkWorkflowStatus()
-      ]);
+      await Promise.all([loadConnections(), loadRealMetrics(), loadPlatformStats()]);
     } catch (error) {
       console.error('Error initializing Marketing Hub:', error);
     } finally {
@@ -234,7 +117,6 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
       let platforms = new Set((data || []).map((a: any) => a.platform));
 
       if (!platforms.size) {
-        console.log('ℹ️ No hay conexiones en BD. Intentando sincronizar con Upload-Post...');
         const init = await supabase.functions.invoke('upload-post-manager', {
           body: { action: 'init_profile', data: {} }
         });
@@ -265,58 +147,39 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   const loadRealMetrics = async () => {
     try {
-      // Get current and previous period data for real trend calculations
       const now = new Date();
-      const currentPeriodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // Last 30 days
-      const previousPeriodStart = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000); // 30-60 days ago
+      const currentPeriodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const previousPeriodStart = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
       
       const [
         currentInsights, previousInsights,
         currentPosts, previousPosts,
-        campaignsRes, actionsRes,
-        audiencesRes, socialAccountsRes
+        campaignsRes, actionsRes
       ] = await Promise.all([
-        // Current period insights
-        supabase.from('marketing_insights').select('*')
-          .eq('user_id', userId)
-          .gte('created_at', currentPeriodStart.toISOString()),
-        // Previous period insights  
-        supabase.from('marketing_insights').select('*')
-          .eq('user_id', userId)
-          .gte('created_at', previousPeriodStart.toISOString())
-          .lt('created_at', currentPeriodStart.toISOString()),
-        // Current period posts (all platforms)
+        supabase.from('marketing_insights').select('*').eq('user_id', userId).gte('created_at', currentPeriodStart.toISOString()),
+        supabase.from('marketing_insights').select('*').eq('user_id', userId).gte('created_at', previousPeriodStart.toISOString()).lt('created_at', currentPeriodStart.toISOString()),
         Promise.all([
           supabase.from('linkedin_posts').select('likes_count, comments_count, created_at').eq('user_id', userId).gte('created_at', currentPeriodStart.toISOString()),
           supabase.from('instagram_posts').select('like_count, comment_count, created_at').eq('user_id', userId).gte('created_at', currentPeriodStart.toISOString()),
           supabase.from('facebook_posts').select('likes_count, comments_count, created_at').eq('user_id', userId).gte('created_at', currentPeriodStart.toISOString()),
           supabase.from('tiktok_posts').select('digg_count, comment_count, created_at').eq('user_id', userId).gte('created_at', currentPeriodStart.toISOString())
         ]),
-        // Previous period posts
         Promise.all([
           supabase.from('linkedin_posts').select('likes_count, comments_count, created_at').eq('user_id', userId).gte('created_at', previousPeriodStart.toISOString()).lt('created_at', currentPeriodStart.toISOString()),
           supabase.from('instagram_posts').select('like_count, comment_count, created_at').eq('user_id', userId).gte('created_at', previousPeriodStart.toISOString()).lt('created_at', currentPeriodStart.toISOString()),
           supabase.from('facebook_posts').select('likes_count, comments_count, created_at').eq('user_id', userId).gte('created_at', previousPeriodStart.toISOString()).lt('created_at', currentPeriodStart.toISOString()),
           supabase.from('tiktok_posts').select('digg_count, comment_count, created_at').eq('user_id', userId).gte('created_at', previousPeriodStart.toISOString()).lt('created_at', currentPeriodStart.toISOString())
         ]),
-        // Active campaigns
         supabase.from('marketing_campaigns').select('*').eq('user_id', userId).in('status', ['active', 'running']),
-        // Completed actions
-        supabase.from('marketing_actionables').select('status').eq('user_id', userId).eq('status', 'completed'),
-        // Audiences
-        supabase.from('company_audiences').select('*').eq('user_id', userId),
-        // Social connections
-        supabase.from('social_accounts').select('platform, is_connected').eq('user_id', userId).eq('is_connected', true)
+        supabase.from('marketing_actionables').select('status').eq('user_id', userId).eq('status', 'completed')
       ]);
 
-      // Calculate current metrics
       const totalInsights = currentInsights.data?.length || 0;
       const previousTotalInsights = previousInsights.data?.length || 0;
       const insightsGrowth = previousTotalInsights > 0 ? 
         ((totalInsights - previousTotalInsights) / previousTotalInsights * 100).toFixed(1) : 
         totalInsights > 0 ? '100' : '0';
 
-      // Calculate engagement from all platforms
       const calculateEngagement = (platformPosts: any[]) => {
         return platformPosts.reduce((total, posts) => {
           return total + (posts.data || []).reduce((sum: number, post: any) => {
@@ -335,166 +198,64 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
       const activeCampaigns = campaignsRes.data?.length || 0;
       const completedActions = actionsRes.data?.length || 0;
-      const totalAudiences = audiencesRes.data?.length || 0;
-      const connectedPlatforms = socialAccountsRes.data?.length || 0;
-
-      // Calculate automation score based on real data
-      const automationScore = totalInsights > 0 ? 
-        Math.round((completedActions / totalInsights) * 100) : 0;
+      const automationScore = totalInsights > 0 ? Math.round((completedActions / totalInsights) * 100) : 0;
 
       const insightsGrowthNum = parseFloat(insightsGrowth);
       const engagementGrowthNum = parseFloat(engagementGrowth);
 
       const metrics: QuickStat[] = [
         {
-          label: "Insights Generados",
+          label: t("hub.metrics.insights"),
           value: totalInsights.toString(),
           change: `${insightsGrowthNum >= 0 ? '+' : ''}${insightsGrowth}%`,
           trend: insightsGrowthNum > 0 ? "up" : insightsGrowthNum < 0 ? "down" : "neutral",
           icon: Brain,
           color: "text-purple-600",
-          description: "Análisis inteligentes generados este mes"
+          description: t("hub.metrics.insightsDesc")
         },
         {
-          label: "Engagement Total",
+          label: t("hub.metrics.engagement"),
           value: formatNumber(currentEngagement),
           change: `${engagementGrowthNum >= 0 ? '+' : ''}${engagementGrowth}%`,
           trend: engagementGrowthNum > 0 ? "up" : engagementGrowthNum < 0 ? "down" : "neutral",
           icon: Heart,
           color: "text-pink-600",
-          description: "Interacciones en todas las plataformas"
+          description: t("hub.metrics.engagementDesc")
         },
         {
-          label: "Campañas Activas",
+          label: t("hub.metrics.campaigns"),
           value: activeCampaigns.toString(),
-          change: activeCampaigns > 0 ? `${activeCampaigns} en curso` : "Sin campañas",
+          change: activeCampaigns > 0 ? `${activeCampaigns} ${t("hub.metrics.running")}` : t("hub.metrics.noCampaigns"),
           trend: activeCampaigns > 0 ? "up" : "neutral",
           icon: Rocket,
           color: "text-blue-600",
-          description: "Campañas de marketing en ejecución"
+          description: t("hub.metrics.campaignsDesc")
         },
         {
-          label: "Score de Automatización",
+          label: t("hub.metrics.automation"),
           value: `${automationScore}%`,
-          change: completedActions > 0 ? `${completedActions} acciones` : "Sin acciones",
+          change: completedActions > 0 ? `${completedActions} ${t("hub.metrics.actions")}` : t("hub.metrics.noActions"),
           trend: automationScore > 70 ? "up" : automationScore > 30 ? "neutral" : "down",
           icon: Zap,
           color: "text-green-600",
-          description: "Eficiencia de automatización IA"
+          description: t("hub.metrics.automationDesc")
         }
       ];
 
       setRealMetrics(metrics);
     } catch (error) {
       console.error('Error loading metrics:', error);
-      // Set empty state instead of hardcoded values
       setRealMetrics([
-        {
-          label: "Insights Generados",
-          value: "0",
-          change: "Iniciando análisis",
-          trend: "neutral",
-          icon: Brain,
-          color: "text-purple-600",
-          description: "Conecta tus redes para generar insights"
-        },
-        {
-          label: "Engagement Total", 
-          value: "0",
-          change: "Sin datos disponibles",
-          trend: "neutral",
-          icon: Heart,
-          color: "text-pink-600",
-          description: "Conecta tus redes sociales"
-        },
-        {
-          label: "Campañas Activas",
-          value: "0", 
-          change: "Crea tu primera campaña",
-          trend: "neutral",
-          icon: Rocket,
-          color: "text-blue-600",
-          description: "Inicia tu estrategia de marketing"
-        },
-        {
-          label: "Score de Automatización",
-          value: "0%",
-          change: "Configura automatización",
-          trend: "neutral", 
-          icon: Zap,
-          color: "text-green-600",
-          description: "Optimiza con IA"
-        }
+        { label: t("hub.metrics.insights"), value: "0", change: t("hub.metrics.startingAnalysis"), trend: "neutral", icon: Brain, color: "text-purple-600" },
+        { label: t("hub.metrics.engagement"), value: "0", change: t("hub.metrics.noData"), trend: "neutral", icon: Heart, color: "text-pink-600" },
+        { label: t("hub.metrics.campaigns"), value: "0", change: t("hub.metrics.createFirst"), trend: "neutral", icon: Rocket, color: "text-blue-600" },
+        { label: t("hub.metrics.automation"), value: "0%", change: t("hub.metrics.configureAuto"), trend: "neutral", icon: Zap, color: "text-green-600" }
       ]);
-    }
-  };
-
-  const loadRecentActivity = async () => {
-    try {
-      const [insights, posts, campaigns] = await Promise.all([
-        supabase.from('marketing_insights').select('created_at, title, insight_type').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
-        supabase.from('linkedin_posts').select('posted_at, content').eq('user_id', userId).order('posted_at', { ascending: false }).limit(3),
-        supabase.from('marketing_campaigns').select('created_at, name, status').eq('user_id', userId).order('created_at', { ascending: false }).limit(2)
-      ]);
-
-      const activities = [];
-
-      insights.data?.forEach(insight => {
-        activities.push({
-          icon: getInsightIcon(insight.insight_type),
-          iconColor: getInsightColor(insight.insight_type),
-          title: insight.title || 'Nuevo insight generado',
-          time: formatTimeAgo(insight.created_at),
-          type: 'insight',
-          category: insight.insight_type
-        });
-      });
-
-      posts.data?.forEach(post => {
-        activities.push({
-          icon: MessageCircle,
-          iconColor: 'text-blue-600',
-          title: 'Post publicado en LinkedIn',
-          time: formatTimeAgo(post.posted_at),
-          type: 'post',
-          preview: post.content?.substring(0, 50) + '...'
-        });
-      });
-
-      setRecentActivity(activities.slice(0, 8));
-    } catch (error) {
-      console.error('Error loading recent activity:', error);
-    }
-  };
-
-  const loadUpcomingPosts = async () => {
-    try {
-      const { data: scheduledPosts } = await supabase
-        .from('scheduled_posts')
-        .select('*')
-        .eq('user_id', userId)
-        .gte('scheduled_for', new Date().toISOString())
-        .order('scheduled_for', { ascending: true })
-        .limit(5);
-
-      const upcoming = scheduledPosts?.map(post => ({
-        icon: getContentTypeIcon('post'),
-        title: typeof post.content === 'string' ? post.content.substring(0, 50) + '...' : 'Post programado',
-        time: formatScheduledTime(post.scheduled_for),
-        platform: post.platform,
-        type: 'post'
-      })) || [];
-
-      setUpcomingPosts(upcoming);
-    } catch (error) {
-      console.error('Error loading upcoming posts:', error);
     }
   };
 
   const loadPlatformStats = async () => {
     try {
-      console.log('🔍 Loading platform stats for userId:', userId);
-      
       const [instagramRes, linkedinRes, facebookRes, tiktokRes] = await Promise.all([
         supabase.from('instagram_posts').select('like_count, comment_count, reach, created_at').eq('user_id', userId),
         supabase.from('linkedin_posts').select('likes_count, comments_count, views_count, created_at').eq('user_id', userId),
@@ -502,53 +263,22 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         supabase.from('tiktok_posts').select('digg_count, comment_count, play_count, created_at').eq('user_id', userId)
       ]);
 
-      console.log('📊 Platform data results:', {
-        instagram: instagramRes.data?.length || 0,
-        linkedin: linkedinRes.data?.length || 0,
-        facebook: facebookRes.data?.length || 0,
-        tiktok: tiktokRes.data?.length || 0
-      });
-
       const calculateStats = (posts: any[], likeField: string, commentField: string, reachField?: string) => {
         if (!posts || posts.length === 0) return { posts: 0, engagement: 0, reach: 0 };
-        
         const totalLikes = posts.reduce((sum, post) => sum + (post[likeField] || 0), 0);
         const totalComments = posts.reduce((sum, post) => sum + (post[commentField] || 0), 0);
         const totalReach = reachField ? posts.reduce((sum, post) => sum + (post[reachField] || 0), 0) : 0;
-        
-        return {
-          posts: posts.length,
-          engagement: totalLikes + totalComments,
-          reach: totalReach
-        };
+        return { posts: posts.length, engagement: totalLikes + totalComments, reach: totalReach };
       };
 
-      const instagramStats = calculateStats(instagramRes.data || [], 'like_count', 'comment_count', 'reach');
-      const linkedinStats = calculateStats(linkedinRes.data || [], 'likes_count', 'comments_count', 'views_count');
-      const facebookStats = calculateStats(facebookRes.data || [], 'likes_count', 'comments_count');
-      const tiktokStats = calculateStats(tiktokRes.data || [], 'digg_count', 'comment_count', 'play_count');
-
       setPlatformStats({
-        instagram: {
-          ...instagramStats,
-          followers: 0 // Will be populated when Instagram API data is available
-        },
-        linkedin: {
-          ...linkedinStats,
-          connections: 0 // Will be populated when LinkedIn API data is available
-        },
-        facebook: {
-          ...facebookStats,
-          likes: 0 // Will be populated when Facebook API data is available
-        },
-        tiktok: {
-          ...tiktokStats,
-          views: tiktokStats.reach || 0
-        }
+        instagram: { ...calculateStats(instagramRes.data || [], 'like_count', 'comment_count', 'reach'), followers: 0 },
+        linkedin: { ...calculateStats(linkedinRes.data || [], 'likes_count', 'comments_count', 'views_count'), connections: 0 },
+        facebook: { ...calculateStats(facebookRes.data || [], 'likes_count', 'comments_count'), likes: 0 },
+        tiktok: { ...calculateStats(tiktokRes.data || [], 'digg_count', 'comment_count', 'play_count'), views: 0 }
       });
     } catch (error) {
       console.error('Error loading platform stats:', error);
-      // Set empty stats for error state
       setPlatformStats({
         instagram: { posts: 0, followers: 0, engagement: 0 },
         linkedin: { posts: 0, connections: 0, engagement: 0 },
@@ -558,108 +288,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     }
   };
 
-  const checkWorkflowStatus = async () => {
-    try {
-      const { data: companyMember } = await supabase
-        .from('company_members')
-        .select(`
-          company_id,
-          companies (
-            id, name, country, description, website_url, industry_sector
-          )
-        `)
-        .eq('user_id', userId)
-        .eq('is_primary', true)
-        .limit(1)
-        .single();
-
-      const [campaignRes] = await Promise.all([
-        supabase.from('marketing_insights').select('*').eq('user_id', userId).limit(1)
-      ]);
-
-      setWorkflow({
-        setup: companyMember?.companies ? true : false,
-        analysis: false,
-        strategy: (campaignRes.data?.length || 0) > 0,
-        content: false,
-        automation: false
-      });
-
-      if (companyMember?.companies) {
-        const company = companyMember.companies;
-        setCompanyData({
-          nombre_empresa: company.name || '',
-          pais: company.country || '',
-          objetivo_de_negocio: company.description || '',
-          propuesta_de_valor: '',
-          url_sitio_web: company.website_url || ''
-        });
-      }
-    } catch (error) {
-      console.error('Error checking workflow status:', error);
-    }
-  };
-
-  // Helper functions
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     else if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffHours < 1) return 'Hace menos de 1 hora';
-    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
-    if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
-    return date.toLocaleDateString();
-  };
-
-  const formatScheduledTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = date.getTime() - now.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffHours < 24) {
-      if (diffHours < 1) return 'En menos de 1 hora';
-      return `En ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
-    }
-    if (diffDays === 1) return 'Mañana';
-    if (diffDays < 7) return `En ${diffDays} días`;
-    return date.toLocaleDateString();
-  };
-
-  const getInsightIcon = (type: string) => {
-    switch (type) {
-      case 'audience': return Users;
-      case 'content': return PenTool;
-      case 'performance': return TrendingUp;
-      default: return Brain;
-    }
-  };
-
-  const getInsightColor = (type: string) => {
-    switch (type) {
-      case 'audience': return 'text-blue-600';
-      case 'content': return 'text-green-600';
-      case 'performance': return 'text-purple-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const getContentTypeIcon = (type: string) => {
-    switch (type) {
-      case 'video': return Video;
-      case 'image': return Image;
-      default: return MessageCircle;
-    }
   };
 
   const getPlatformInfo = (platform: keyof typeof platformStats) => {
@@ -672,12 +304,20 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     return configs[platform] || { name: platform, icon: '🌐', color: 'bg-gray-500' };
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('view', 'marketing-hub');
+    nextParams.set('tab', value);
+    setSearchParams(nextParams);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Cargando Marketing Hub...</p>
+          <p className="text-muted-foreground">{t("hub.loading")}</p>
         </div>
       </div>
     );
@@ -685,10 +325,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Enhanced Metrics Cards */}
+      {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {realMetrics.map((metric, index) => (
-          <Card key={index} className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-white to-gray-50 hover:shadow-xl transition-all duration-300">
+          <Card key={index} className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card to-muted/30 hover:shadow-xl transition-all duration-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-full bg-gradient-to-br ${
@@ -704,10 +344,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                 </Badge>
               </div>
               <div>
-                <p className="text-3xl font-bold text-gray-900 mb-1">{metric.value}</p>
-                <p className="text-sm font-medium text-gray-600">{metric.label}</p>
+                <p className="text-3xl font-bold mb-1">{metric.value}</p>
+                <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
                 {metric.description && (
-                  <p className="text-xs text-gray-500 mt-1">{metric.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{metric.description}</p>
                 )}
               </div>
             </CardContent>
@@ -715,59 +355,53 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         ))}
       </div>
 
-      {/* Main Content Tabs */}
-      <Tabs 
-        value={activeTab} 
-        onValueChange={(value) => {
-          setActiveTab(value);
-          const nextParams = new URLSearchParams(searchParams);
-          nextParams.set('view', 'marketing-hub');
-          nextParams.set('tab', value);
-          setSearchParams(nextParams);
-          console.log('🧭 [MarketingHubWow] Tab cambiado por usuario => URL sincronizada:', value);
-        }} 
-        className="w-full"
-      >
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5 lg:w-fit lg:grid-cols-5 mb-6">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
-            <span className="hidden sm:inline">Dashboard</span>
+            <span className="hidden sm:inline">{t("hub.tabs.dashboard")}</span>
           </TabsTrigger>
           <TabsTrigger value="create" className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Crear</span>
+            <span className="hidden sm:inline">{t("hub.tabs.create")}</span>
           </TabsTrigger>
           <TabsTrigger value="campaigns" className="flex items-center gap-2">
             <Rocket className="w-4 h-4" />
-            <span className="hidden sm:inline">Campañas</span>
+            <span className="hidden sm:inline">{t("hub.tabs.campaigns")}</span>
           </TabsTrigger>
           <TabsTrigger value="calendar" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            <span className="hidden sm:inline">Calendario</span>
+            <span className="hidden sm:inline">{t("hub.tabs.calendar")}</span>
           </TabsTrigger>
           <TabsTrigger value="content" className="flex items-center gap-2">
             <FolderOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">Biblioteca</span>
+            <span className="hidden sm:inline">{t("hub.tabs.library")}</span>
           </TabsTrigger>
         </TabsList>
 
+        {/* Dashboard Tab */}
         <TabsContent value="dashboard" className="space-y-6">
-          {/* Connection Status Bar */}
           <ConnectionStatusBar connections={socialConnections} />
           
+          {/* Getting Started Widget */}
+          {userId && (
+            <MarketingGettingStarted userId={userId} onNavigateTab={handleTabChange} />
+          )}
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Performance by Platform - 2 columns */}
+            {/* Platform Performance */}
             <Card className="lg:col-span-2 overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
                 <CardTitle className="flex items-center gap-2">
                   <Network className="w-5 h-5" />
-                  Rendimiento por Plataforma
+                  {t("hub.platformPerformance")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-4">
                   {Object.entries(platformStats)
-                    .filter(([platform]) => (socialConnections as any)[platform as keyof typeof socialConnections])
+                    .filter(([platform]) => (socialConnections as any)[platform])
                     .map(([platform, stats]) => {
                       const platformInfo = getPlatformInfo(platform as keyof typeof platformStats);
                       const engagementRate = stats.posts > 0 ? (stats.engagement / stats.posts).toFixed(1) : '0';
@@ -780,16 +414,14 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                               </div>
                               <div>
                                 <p className="font-semibold">{platformInfo.name}</p>
-                                <p className="text-sm text-muted-foreground">{stats.posts} publicaciones</p>
+                                <p className="text-sm text-muted-foreground">{stats.posts} {t("hub.publications")}</p>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-2xl font-bold text-primary">
-                                {formatNumber(stats.engagement)}
-                              </p>
-                              <p className="text-xs text-muted-foreground">total engagement</p>
+                              <p className="text-2xl font-bold text-primary">{formatNumber(stats.engagement)}</p>
+                              <p className="text-xs text-muted-foreground">{t("hub.totalEngagement")}</p>
                               {stats.posts > 0 && (
-                                <p className="text-xs font-medium text-blue-600">{engagementRate} avg/post</p>
+                                <p className="text-xs font-medium text-blue-600">{engagementRate} {t("hub.avgPerPost")}</p>
                               )}
                             </div>
                           </div>
@@ -799,12 +431,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                   {Object.values(socialConnections).every(v => !v) && (
                     <div className="text-center py-8">
                       <Network className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground mb-4">Conecta tus redes sociales para ver métricas</p>
-                      <Button 
-                        variant="outline"
-                        onClick={() => navigate('/company-dashboard?view=adn-empresa&tab=canales')}
-                      >
-                        Conectar Redes
+                      <p className="text-muted-foreground mb-4">{t("hub.connectToSeeMetrics")}</p>
+                      <Button variant="outline" onClick={() => navigate('/company-dashboard?view=configuracion')}>
+                        {t("hub.connectNetworks")}
                       </Button>
                     </div>
                   )}
@@ -812,16 +441,14 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
               </CardContent>
             </Card>
 
-            {/* Audiences Widget - 1 column */}
+            {/* Audiences Widget */}
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-pink-600 to-purple-600 text-white">
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Tus Audiencias
+                  {t("hub.yourAudiences")}
                 </CardTitle>
-                <CardDescription className="text-pink-100">
-                  Segmentos identificados
-                </CardDescription>
+                <CardDescription className="text-pink-100">{t("hub.audiencesDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="p-4">
                 <AudienceHighlightsWidget userId={userId || undefined} />
@@ -834,73 +461,54 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Rocket className="w-5 h-5 text-primary" />
-                Acciones Rápidas
+                {t("hub.quickActions")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Button 
-                  onClick={() => setActiveTab('create')}
-                  className="h-auto py-4 flex-col gap-2"
-                >
+                <Button onClick={() => handleTabChange('create')} className="h-auto py-4 flex-col gap-2">
                   <PenTool className="w-5 h-5" />
-                  <span className="text-sm">Crear Contenido</span>
+                  <span className="text-sm">{t("hub.createContent")}</span>
                 </Button>
-                <Button 
-                  onClick={() => setActiveTab('campaigns')}
-                  variant="outline"
-                  className="h-auto py-4 flex-col gap-2"
-                >
+                <Button onClick={() => handleTabChange('campaigns')} variant="outline" className="h-auto py-4 flex-col gap-2">
                   <Target className="w-5 h-5" />
-                  <span className="text-sm">Nueva Campaña</span>
+                  <span className="text-sm">{t("hub.newCampaign")}</span>
                 </Button>
-                <Button 
-                  onClick={() => setActiveTab('calendar')}
-                  variant="outline"
-                  className="h-auto py-4 flex-col gap-2"
-                >
+                <Button onClick={() => handleTabChange('calendar')} variant="outline" className="h-auto py-4 flex-col gap-2">
                   <Calendar className="w-5 h-5" />
-                  <span className="text-sm">Ver Calendario</span>
+                  <span className="text-sm">{t("hub.viewCalendar")}</span>
                 </Button>
-                <Button 
-                  onClick={() => setActiveTab('content')}
-                  variant="outline"
-                  className="h-auto py-4 flex-col gap-2"
-                >
+                <Button onClick={() => handleTabChange('content')} variant="outline" className="h-auto py-4 flex-col gap-2">
                   <FolderOpen className="w-5 h-5" />
-                  <span className="text-sm">Biblioteca</span>
+                  <span className="text-sm">{t("hub.libraryBtn")}</span>
                 </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* Create Tab - New 3-path hub */}
         <TabsContent value="create" className="space-y-6">
-          <ContentCreatorTab 
-            profile={profile} 
-            topPosts={recentActivity || []}
+          <CrearContentHub
+            profile={profile}
             selectedPlatform={selectedPlatform}
+            onNavigateTab={handleTabChange}
           />
         </TabsContent>
 
+        {/* Campaigns Tab */}
         <TabsContent value="campaigns" className="space-y-6">
           <CampaignDashboard />
         </TabsContent>
 
+        {/* Calendar Tab */}
         <TabsContent value="calendar" className="space-y-6">
           <ContentCalendar profile={profile} />
         </TabsContent>
 
+        {/* Library Tab - Unified */}
         <TabsContent value="content" className="space-y-6">
-          {/* Consolidated Library: Content + History + Scheduled */}
-          <div className="space-y-6">
-            <ContentLibraryTab profile={profile} />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <UploadHistory profile={profile} />
-              <ScheduledPostsManager profile={profile} />
-            </div>
-          </div>
+          <UnifiedLibrary profile={profile} />
         </TabsContent>
       </Tabs>
     </div>

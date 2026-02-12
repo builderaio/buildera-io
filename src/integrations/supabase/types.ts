@@ -3380,6 +3380,62 @@ export type Database = {
         }
         Relationships: []
       }
+      content_approvals: {
+        Row: {
+          company_id: string
+          content_data: Json | null
+          content_id: string
+          content_type: string
+          created_at: string
+          id: string
+          reviewed_at: string | null
+          reviewer_comments: string | null
+          reviewer_id: string | null
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          content_data?: Json | null
+          content_id: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewer_comments?: string | null
+          reviewer_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          content_data?: Json | null
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewer_comments?: string | null
+          reviewer_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_approvals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_calendar_items: {
         Row: {
           content_details: Json

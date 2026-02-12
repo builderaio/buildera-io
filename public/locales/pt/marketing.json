@@ -191,6 +191,8 @@
       "listening": "Escuta",
       "utm": "Attribution",
       "reports": "Relatórios",
+      "automation": "Automação",
+      "approvals": "Aprovações",
       "calendar": "Calendário",
       "library": "Biblioteca"
     },
@@ -521,6 +523,70 @@
       "posts": "Publicações",
       "generatedBy": "Gerado por Buildera",
       "page": "Página"
+    }
+  },
+  "socialAutomation": {
+    "title": "Automação Social",
+    "subtitle": "Crie regras automatizadas para responder e interagir nas redes sociais",
+    "newRule": "Nova Regra",
+    "createRule": "Criar Regra de Automação",
+    "ruleName": "Nome da regra",
+    "ruleNamePlaceholder": "Ex: Responder comentários positivos",
+    "platform": "Plataforma",
+    "allPlatforms": "Todas as plataformas",
+    "whenTrigger": "Quando ocorrer",
+    "thenAction": "Então executar",
+    "messageTemplate": "Modelo de mensagem",
+    "messageTemplatePlaceholder": "Escreva a mensagem ou deixe vazio para IA...",
+    "useAIHint": "Deixe vazio para a IA gerar respostas baseadas no DNA da sua marca",
+    "keywords": "Palavras-chave",
+    "keywordsPlaceholder": "preço, comprar, envio...",
+    "save": "Salvar Regra",
+    "cancel": "Cancelar",
+    "nameRequired": "O nome da regra é obrigatório",
+    "ruleCreated": "Regra criada com sucesso",
+    "ruleDeleted": "Regra excluída",
+    "noRules": "Nenhuma regra de automação",
+    "noRulesHint": "Crie regras para automatizar respostas e interações sociais",
+    "createFirst": "Criar primeira regra",
+    "triggers": {
+      "newComment": "Novo comentário",
+      "newFollower": "Novo seguidor",
+      "newMention": "Nova menção",
+      "keywordDetected": "Palavra-chave detectada"
+    },
+    "actions": {
+      "aiReply": "Responder com IA",
+      "sendDM": "Enviar mensagem direta",
+      "createPost": "Criar post de resposta",
+      "addToCRM": "Adicionar ao CRM"
+    }
+  },
+  "approvals": {
+    "title": "Aprovações de Conteúdo",
+    "subtitle": "Revise e aprove conteúdo antes de publicar",
+    "noContent": "Nenhum conteúdo para aprovar",
+    "noContentHint": "O conteúdo enviado para revisão aparecerá aqui",
+    "submitReview": "Enviar para revisão",
+    "approve": "Aprovar",
+    "reject": "Rejeitar",
+    "rejectReason": "Motivo da rejeição",
+    "rejectReasonPlaceholder": "Descreva por que este conteúdo é rejeitado...",
+    "confirmReject": "Confirmar rejeição",
+    "cancel": "Cancelar",
+    "approvedSuccess": "Conteúdo aprovado com sucesso",
+    "rejectedSuccess": "Conteúdo rejeitado",
+    "submittedForReview": "Conteúdo enviado para revisão",
+    "updateError": "Erro ao atualizar status",
+    "status": {
+      "draft": "Rascunho",
+      "pendingReview": "Em revisão",
+      "approved": "Aprovado",
+      "rejected": "Rejeitado",
+      "published": "Publicado"
+    },
+    "filter": {
+      "all": "Todos"
     }
   }
 }

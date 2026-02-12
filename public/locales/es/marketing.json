@@ -298,5 +298,53 @@
       "dmSent": "Mensaje enviado exitosamente",
       "dmError": "Error al enviar mensaje"
     }
+  },
+  "socialSearch": {
+    "title": "Buscador de Perfiles Sociales",
+    "subtitle": "Encuentra influencers, competidores y marcas en redes sociales",
+    "searchPlaceholder": "Buscar por nombre, descripción o username...",
+    "filters": "Filtros",
+    "platform": "Plataforma",
+    "allPlatforms": "Todas las plataformas",
+    "followers": "Seguidores",
+    "minFollowers": "Mínimo seguidores",
+    "maxFollowers": "Máximo seguidores",
+    "engagement": "Engagement",
+    "minER": "ER mínimo",
+    "maxER": "ER máximo",
+    "quality": "Calidad",
+    "minQuality": "Calidad mínima",
+    "verified": "Solo verificados",
+    "hasEmail": "Con email de contacto",
+    "activeOnly": "Solo cuentas activas",
+    "sortBy": "Ordenar por",
+    "sortOptions": {
+      "relevance": "Relevancia",
+      "followers": "Seguidores",
+      "engagement": "Engagement",
+      "quality": "Calidad",
+      "views": "Vistas",
+      "growth": "Crecimiento"
+    },
+    "results": "resultados",
+    "noResults": "No se encontraron perfiles",
+    "searching": "Buscando perfiles...",
+    "error": "Error en la búsqueda",
+    "viewProfile": "Ver perfil",
+    "addCompetitor": "Agregar como competidor",
+    "fakeFollowers": "Seguidores falsos",
+    "qualityScore": "Puntuación de calidad"
+  },
+  "contentAnalysis": {
+    "ads": "Publicidad",
+    "mentions": "Menciones",
+    "adsFound": "{count} anuncios encontrados",
+    "mentionsFound": "{count} menciones encontradas",
+    "noAds": "Sin anuncios detectados",
+    "noMentions": "Sin menciones encontradas",
+    "adLabel": "Anuncio",
+    "mentionLabel": "Mención",
+    "forceRefresh": "Forzar actualización de datos",
+    "refreshing": "Actualizando datos demográficos..."
   }
 }

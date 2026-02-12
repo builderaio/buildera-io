@@ -298,5 +298,53 @@
       "dmSent": "Message sent successfully",
       "dmError": "Error sending message"
     }
+  },
+  "socialSearch": {
+    "title": "Social Profile Search",
+    "subtitle": "Find influencers, competitors, and brands across social media",
+    "searchPlaceholder": "Search by name, description, or username...",
+    "filters": "Filters",
+    "platform": "Platform",
+    "allPlatforms": "All platforms",
+    "followers": "Followers",
+    "minFollowers": "Min followers",
+    "maxFollowers": "Max followers",
+    "engagement": "Engagement",
+    "minER": "Min ER",
+    "maxER": "Max ER",
+    "quality": "Quality",
+    "minQuality": "Min quality",
+    "verified": "Verified only",
+    "hasEmail": "Has contact email",
+    "activeOnly": "Active accounts only",
+    "sortBy": "Sort by",
+    "sortOptions": {
+      "relevance": "Relevance",
+      "followers": "Followers",
+      "engagement": "Engagement",
+      "quality": "Quality",
+      "views": "Views",
+      "growth": "Growth"
+    },
+    "results": "results",
+    "noResults": "No profiles found",
+    "searching": "Searching profiles...",
+    "error": "Search error",
+    "viewProfile": "View profile",
+    "addCompetitor": "Add as competitor",
+    "fakeFollowers": "Fake followers",
+    "qualityScore": "Quality score"
+  },
+  "contentAnalysis": {
+    "ads": "Advertising",
+    "mentions": "Mentions",
+    "adsFound": "{count} ads found",
+    "mentionsFound": "{count} mentions found",
+    "noAds": "No ads detected",
+    "noMentions": "No mentions found",
+    "adLabel": "Ad",
+    "mentionLabel": "Mention",
+    "forceRefresh": "Force data refresh",
+    "refreshing": "Refreshing demographic data..."
   }
 }

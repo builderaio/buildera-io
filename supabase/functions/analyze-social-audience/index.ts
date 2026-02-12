@@ -363,10 +363,10 @@ serve(async (req) => {
           continue
         }
 
-        // Call Community endpoint for other platforms
-        console.log(`Making Community API call for: ${urlData.url}`)
+        // Call Community endpoint for other platforms (with force=true to trigger demographic data refresh)
+        console.log(`Making Community API call for: ${urlData.url} (with force=true for demographic update)`)
 
-        const response = await fetch(`https://instagram-statistics-api.p.rapidapi.com/community?url=${encodeURIComponent(urlData.url)}`, {
+        const response = await fetch(`https://instagram-statistics-api.p.rapidapi.com/community?url=${encodeURIComponent(urlData.url)}&force=true`, {
           method: 'GET',
           headers: {
             'x-rapidapi-host': 'instagram-statistics-api.p.rapidapi.com',

@@ -1045,6 +1045,7 @@ export type Database = {
         Row: {
           activated_at: string | null
           activation_reason: string | null
+          auto_activate: boolean
           capability_code: string
           capability_name: string
           company_id: string
@@ -1053,18 +1054,24 @@ export type Database = {
           department: string
           description: string | null
           execution_count: number | null
+          gap_evidence: Json | null
           id: string
           is_active: boolean | null
           last_evaluated_at: string | null
+          proposed_reason: string | null
           required_data: Json | null
           required_maturity: string
+          source: string
+          status: string
           success_rate: number | null
+          trial_expires_at: string | null
           trigger_condition: Json
           updated_at: string
         }
         Insert: {
           activated_at?: string | null
           activation_reason?: string | null
+          auto_activate?: boolean
           capability_code: string
           capability_name: string
           company_id: string
@@ -1073,18 +1080,24 @@ export type Database = {
           department: string
           description?: string | null
           execution_count?: number | null
+          gap_evidence?: Json | null
           id?: string
           is_active?: boolean | null
           last_evaluated_at?: string | null
+          proposed_reason?: string | null
           required_data?: Json | null
           required_maturity?: string
+          source?: string
+          status?: string
           success_rate?: number | null
+          trial_expires_at?: string | null
           trigger_condition?: Json
           updated_at?: string
         }
         Update: {
           activated_at?: string | null
           activation_reason?: string | null
+          auto_activate?: boolean
           capability_code?: string
           capability_name?: string
           company_id?: string
@@ -1093,12 +1106,17 @@ export type Database = {
           department?: string
           description?: string | null
           execution_count?: number | null
+          gap_evidence?: Json | null
           id?: string
           is_active?: boolean | null
           last_evaluated_at?: string | null
+          proposed_reason?: string | null
           required_data?: Json | null
           required_maturity?: string
+          source?: string
+          status?: string
           success_rate?: number | null
+          trial_expires_at?: string | null
           trigger_condition?: Json
           updated_at?: string
         }
@@ -10522,6 +10540,7 @@ export type Database = {
         Args: { target_company_id: string }
         Returns: undefined
       }
+      deprecate_unused_capabilities: { Args: never; Returns: undefined }
       expire_old_invitations: { Args: never; Returns: undefined }
       extract_hashtags: { Args: { caption: string }; Returns: string[] }
       extract_mentions: { Args: { caption: string }; Returns: string[] }
@@ -10714,6 +10733,7 @@ export type Database = {
         Args: { _registration_method?: string; _user_id: string }
         Returns: undefined
       }
+      promote_trial_capabilities: { Args: never; Returns: undefined }
       reactivate_company: {
         Args: { target_company_id: string }
         Returns: boolean

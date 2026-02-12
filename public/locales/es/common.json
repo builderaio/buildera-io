@@ -922,7 +922,23 @@
       "noLessons": "Sin lecciones aprendidas aún. El sistema aprende después de varios ciclos de ejecución.",
       "noLesson": "Sin lección registrada para esta decisión.",
       "active": "Activa",
-      "pending": "Pendiente"
+      "pending": "Pendiente",
+      "genesis": {
+        "tab": "Sugeridas",
+        "title": "Capacidades Sugeridas por IA",
+        "newLabel": "nuevas",
+        "aiSuggested": "IA Sugerida",
+        "trial": "Prueba",
+        "deprecated": "Deprecada",
+        "reason": "Razón",
+        "evidencePoints": "puntos de evidencia",
+        "startTrial": "Probar 7d",
+        "activate": "Activar",
+        "activated": "Capacidad activada exitosamente",
+        "trialStarted": "Periodo de prueba iniciado (7 días)",
+        "rejected": "Capacidad rechazada",
+        "noSuggestions": "Sin sugerencias de nuevas capacidades aún. El sistema analiza gaps en cada ciclo de ejecución."
+      }
     },
     "welcome": {
       "title": "Tu Cerebro Empresarial está listo",

@@ -346,6 +346,47 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
     }
   };
 
+  const extractPlatformUsername = (platform: string, url: string): string | null => {
+    if (!url) return null;
+    try {
+      const cleaned = url.trim().replace(/\/+$/, '');
+      switch (platform) {
+        case 'linkedin': {
+          // https://linkedin.com/company/iddeo or https://linkedin.com/in/username
+          const match = cleaned.match(/linkedin\.com\/(company|in)\/([^/?#]+)/i);
+          return match ? match[2] : null;
+        }
+        case 'instagram': {
+          // https://instagram.com/username
+          const match = cleaned.match(/instagram\.com\/([^/?#]+)/i);
+          return match && match[1] !== 'p' ? match[1] : null;
+        }
+        case 'facebook': {
+          // https://facebook.com/pagename
+          const match = cleaned.match(/facebook\.com\/([^/?#]+)/i);
+          return match && !['profile.php', 'pages', 'groups'].includes(match[1]) ? match[1] : null;
+        }
+        case 'tiktok': {
+          // https://tiktok.com/@username
+          const match = cleaned.match(/tiktok\.com\/@?([^/?#]+)/i);
+          return match ? match[1].replace(/^@/, '') : null;
+        }
+        case 'youtube': {
+          const match = cleaned.match(/youtube\.com\/(@?[^/?#]+)/i);
+          return match ? match[1] : null;
+        }
+        case 'twitter': {
+          const match = cleaned.match(/(?:twitter|x)\.com\/([^/?#]+)/i);
+          return match ? match[1] : null;
+        }
+        default:
+          return null;
+      }
+    } catch {
+      return null;
+    }
+  };
+
   const saveUrl = async (platform: string) => {
     try {
       if (!companyData?.id) return;
@@ -353,19 +394,42 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       const config = platformConfig[platform as keyof typeof platformConfig];
       if (!config.urlField) return;
 
+      const url = urlValues[platform] || '';
+
+      // Extract username from URL
+      const extractedUsername = extractPlatformUsername(platform, url);
+
+      // Save URL to companies table
       const { error } = await supabase
         .from('companies')
-        .update({ [config.urlField]: urlValues[platform] || null })
+        .update({ [config.urlField]: url || null })
         .eq('id', companyData.id);
 
       if (error) throw error;
 
+      // Update platform_username in social_accounts if we have a connected account
+      if (extractedUsername && userId) {
+        const { error: updateError } = await supabase
+          .from('social_accounts')
+          .update({ platform_username: extractedUsername })
+          .eq('user_id', userId)
+          .eq('platform', platform);
+
+        if (updateError) {
+          console.warn('Could not update platform_username:', updateError);
+        } else {
+          console.log(`✅ Updated platform_username for ${platform}: ${extractedUsername}`);
+        }
+      }
+
       setEditingUrl(null);
-      await loadCompanyData();
+      await Promise.all([loadCompanyData(), loadSocialAccounts()]);
       
       toast({
         title: "✅ URL actualizada",
-        description: `URL de ${config.name} guardada correctamente`,
+        description: extractedUsername 
+          ? `URL de ${config.name} guardada. Usuario detectado: ${extractedUsername}`
+          : `URL de ${config.name} guardada correctamente`,
       });
     } catch (error) {
       console.error('Error saving URL:', error);
@@ -566,7 +630,10 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const connectedCount = socialAccounts.filter(acc => acc.is_connected && acc.platform !== 'upload_post_profile').length;
   const totalPlatforms = Object.keys(platformConfig).length;
   const configuredUrlCount = Object.values(urlValues).filter(url => url && url.trim() !== '').length;
-  const hasCompleteSetup = connectedCount > 0 && configuredUrlCount > 0;
+  const connectedWithoutUsername = socialAccounts.filter(
+    acc => acc.is_connected && acc.platform !== 'upload_post_profile' && !acc.platform_username
+  );
+  const hasCompleteSetup = connectedCount > 0 && configuredUrlCount > 0 && connectedWithoutUsername.length === 0;
 
   if (loading && socialAccounts.length === 0) {
     return (
@@ -629,15 +696,23 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       </Card>
 
       {/* URL Configuration Help Banner */}
-      {connectedCount > 0 && configuredUrlCount < connectedCount && (
-        <Alert className="border-orange-200 bg-orange-50/50">
-          <Info className="w-4 h-4 text-orange-600" />
+      {connectedCount > 0 && (configuredUrlCount < connectedCount || connectedWithoutUsername.length > 0) && (
+        <Alert className="border-destructive/30 bg-destructive/5">
+          <Info className="w-4 h-4 text-destructive" />
           <AlertDescription className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-orange-900">Configura las URLs de tus perfiles</p>
-              <p className="text-sm text-orange-700 mt-1">
-                {configuredUrlCount === 0 
-                  ? "Necesitas agregar las URLs públicas de tus perfiles para que Era pueda analizar tu contenido."
+              <p className="font-medium text-destructive">
+                {connectedWithoutUsername.length > 0 
+                  ? '⚠️ Acción requerida: Configura las URLs de tus perfiles'
+                  : 'Configura las URLs de tus perfiles'
+                }
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {connectedWithoutUsername.length > 0
+                  ? `Las plataformas ${connectedWithoutUsername.map(a => {
+                      const cfg = platformConfig[a.platform as keyof typeof platformConfig];
+                      return cfg?.name || a.platform;
+                    }).join(', ')} necesitan la URL del perfil para que el Autopilot pueda analizar e importar tu contenido. Ingresa la URL y el sistema extraerá el nombre de usuario automáticamente.`
                   : `Has configurado ${configuredUrlCount} de ${connectedCount} URLs. Completa las restantes para un análisis más completo.`
                 }
               </p>
@@ -654,9 +729,11 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
           const accountInfo = getAccountInfo(platform);
           
           const hasUrl = urlValues[platform] && urlValues[platform].trim() !== '';
+          const hasPlatformUsername = !!accountInfo?.platform_username;
+          const needsAttention = isConnected && (!hasUrl || !hasPlatformUsername);
           const cardBorderClass = isConnected 
-            ? (hasUrl ? 'border-green-500 bg-green-50/50' : 'border-yellow-500 bg-yellow-50/30')
-            : 'border-gray-200 bg-gray-50/30';
+            ? (hasUrl && hasPlatformUsername ? 'border-green-500 bg-green-50/50' : 'border-destructive/50 bg-destructive/5')
+            : 'border-muted bg-muted/30';
           
           return (
             <Card key={platform} className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${cardBorderClass}`}>
@@ -679,13 +756,13 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                   </div>
                   
                   {isConnected ? (
-                    hasUrl ? (
+                    hasUrl && hasPlatformUsername ? (
                       <CheckCircle2 className="w-5 h-5 text-green-600" />
                     ) : (
-                      <Info className="w-5 h-5 text-yellow-600" />
+                      <Info className="w-5 h-5 text-destructive" />
                     )
                   ) : (
-                    <XCircle className="w-5 h-5 text-gray-400" />
+                    <XCircle className="w-5 h-5 text-muted-foreground" />
                   )}
                 </div>
                 
@@ -693,12 +770,14 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                   variant={isConnected ? "default" : "secondary"}
                   className={`w-full justify-center ${
                     isConnected 
-                      ? (hasUrl ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200')
+                      ? (hasUrl && hasPlatformUsername 
+                          ? 'bg-green-100 text-green-700 border-green-200' 
+                          : 'bg-destructive/10 text-destructive border-destructive/20')
                       : ''
                   }`}
                 >
                   {isConnected 
-                    ? (hasUrl ? '✓ Conectado y configurado' : '⚠ URL pendiente')
+                    ? (hasUrl && hasPlatformUsername ? '✓ Conectado y configurado' : '⚠ URL del perfil requerida')
                     : 'No conectado'
                   }
                 </Badge>
@@ -732,7 +811,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <Label className="text-sm font-semibold flex items-center gap-1">
-                        URL del perfil {!hasUrl && isConnected && <span className="text-orange-500">*</span>}
+                        URL del perfil {needsAttention && <span className="text-destructive">*</span>}
                       </Label>
                       <SocialURLHelpDialog>
                         <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
@@ -747,10 +826,10 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                           value={urlValues[platform] || ''}
                           onChange={(e) => setUrlValues(prev => ({ ...prev, [platform]: e.target.value }))}
                           placeholder={
-                            platform === 'linkedin' ? 'https://linkedin.com/in/tu-usuario' :
-                            platform === 'instagram' ? 'https://instagram.com/tu_usuario' :
-                            platform === 'facebook' ? 'https://facebook.com/tu-pagina' :
-                            platform === 'tiktok' ? 'https://tiktok.com/@tu_usuario' :
+                            platform === 'linkedin' ? 'https://linkedin.com/company/mi-empresa' :
+                            platform === 'instagram' ? 'https://instagram.com/mi_usuario' :
+                            platform === 'facebook' ? 'https://facebook.com/mi-pagina' :
+                            platform === 'tiktok' ? 'https://tiktok.com/@mi_usuario' :
                             `URL de ${config.name}`
                           }
                           className="text-sm"
@@ -780,9 +859,16 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                         <div className={`text-sm flex-1 truncate px-2 py-1.5 rounded ${
                           hasUrl 
                             ? 'text-foreground bg-muted/50' 
-                            : 'text-muted-foreground italic bg-orange-50/50 border border-orange-200'
+                            : 'text-muted-foreground italic bg-destructive/5 border border-destructive/20'
                         }`}>
-                          {urlValues[platform] || 'Haz clic en el lápiz para agregar →'}
+                          {hasUrl 
+                            ? (hasPlatformUsername 
+                                ? `${urlValues[platform]} (👤 ${accountInfo?.platform_username})` 
+                                : urlValues[platform])
+                            : (isConnected 
+                                ? '⚠️ Ingresa la URL de tu perfil para activar el Autopilot →' 
+                                : 'Haz clic en el lápiz para agregar →')
+                          }
                         </div>
                         <Button
                           onClick={() => setEditingUrl(platform)}

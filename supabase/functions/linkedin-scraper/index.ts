@@ -18,24 +18,33 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Authenticate user
-    const authHeader = req.headers.get('Authorization')
+    const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header')
+      throw new Error('No authorization header');
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
-    if (authError || !user) {
-      throw new Error('Unauthorized')
-    }
+    const body = await req.json();
+    const { action, company_identifier, user_id: bodyUserId } = body;
 
-    const body = await req.json()
-    const { action, company_identifier } = body
+    // Support service-role calls from internal engine (pass user_id in body)
+    let userId: string;
+    const token = authHeader.replace('Bearer ', '');
+    if (token === serviceRoleKey && bodyUserId) {
+      // Internal server-to-server call
+      userId = bodyUserId;
+      console.log(`🔧 Internal call with service_role for user ${userId}`);
+    } else {
+      // Normal user auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) {
+        throw new Error('Unauthorized');
+      }
+      userId = user.id;
+    }
 
     console.log(`📋 Action: ${action}, Company identifier: ${company_identifier}`)
 
@@ -70,7 +79,7 @@ serve(async (req) => {
 
         // Actualizar posts existentes con información del perfil LinkedIn
         if (result && result.data) {
-          console.log(`💾 Updating LinkedIn posts with profile data for user ${user.id}`)
+          console.log(`💾 Updating LinkedIn posts with profile data for user ${userId}`)
           
           const companyData = result.data;
           
@@ -83,7 +92,7 @@ serve(async (req) => {
               profile_location: companyData.location,
               profile_url: companyData.company_url || `https://linkedin.com/company/${company_identifier}`
             })
-            .eq('user_id', user.id);
+            .eq('user_id', userId);
 
           if (updateError) {
             console.error('❌ Error updating LinkedIn posts with profile data:', updateError);
@@ -138,7 +147,7 @@ serve(async (req) => {
         console.log('🔍 Posts structure sample:', posts.length > 0 ? posts[0] : 'No posts');
         
         if (posts && posts.length > 0) {
-          console.log(`🔍 Processing ${posts.length} LinkedIn posts for user ${user.id}`);
+          console.log(`🔍 Processing ${posts.length} LinkedIn posts for user ${userId}`);
           
           const postsToInsert = posts.map((post: any, index: number) => {
             // La API devuelve posts con activity_urn, full_urn, etc.
@@ -181,7 +190,7 @@ serve(async (req) => {
             });
             
             return {
-              user_id: user.id,
+              user_id: userId,
               post_id: postId,
               content: content,
               likes_count: likesCount,
@@ -198,9 +207,7 @@ serve(async (req) => {
           console.log(`💾 Attempting to insert ${postsToInsert.length} LinkedIn posts`);
           console.log('📋 Sample post to insert:', JSON.stringify(postsToInsert[0], null, 2));
           
-          // Verificar que tenemos un supabase client válido con autenticación
-          const { data: authUser, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-          console.log('🔐 Auth check - User ID:', authUser?.user?.id, 'Error:', authError);
+          console.log('🔐 Auth check - User ID:', userId);
           
           // Insertar posts uno por uno para ver errores específicos
           let insertedCount = 0;

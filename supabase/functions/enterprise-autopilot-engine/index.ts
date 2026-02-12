@@ -39,15 +39,21 @@ const DEPARTMENT_REGISTRY: Record<string, DepartmentConfig> = {
     decisionTypes: ['create_content', 'publish', 'reply_comments', 'adjust_campaigns', 'analyze', 'ab_test'],
     systemPromptContext: 'social media engagement, content creation, campaign optimization, audience growth',
     senseQuery: async (companyId, { thirtyDaysAgo, sevenDaysAgo }) => {
+      // Post tables use user_id, not company_id — resolve owner
+      const { data: companyRow } = await supabase.from('companies')
+        .select('created_by').eq('id', companyId).single();
+      const ownerUserId = companyRow?.created_by;
+      if (!ownerUserId) return { platforms: {}, activeCampaigns: [] };
+
       const [ig, li, fb, tt, campaigns] = await Promise.all([
         supabase.from('instagram_posts').select('id, like_count, comment_count, reach, created_at')
-          .eq('company_id', companyId).gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(50),
+          .eq('user_id', ownerUserId).gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(50),
         supabase.from('linkedin_posts').select('id, likes_count, comments_count, views_count, created_at')
-          .eq('company_id', companyId).gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(50),
+          .eq('user_id', ownerUserId).gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(50),
         supabase.from('facebook_posts').select('id, likes_count, comments_count, created_at')
-          .eq('company_id', companyId).gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(50),
+          .eq('user_id', ownerUserId).gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(50),
         supabase.from('tiktok_posts').select('id, digg_count, comment_count, play_count, created_at')
-          .eq('company_id', companyId).gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(50),
+          .eq('user_id', ownerUserId).gte('created_at', thirtyDaysAgo).order('created_at', { ascending: false }).limit(50),
         supabase.from('marketing_campaigns').select('id, name, status, budget, start_date, end_date')
           .eq('company_id', companyId).in('status', ['active', 'running']),
       ]);
@@ -1076,40 +1082,72 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
       // PROACTIVE BOOTSTRAP for marketing: try auto-scraping connected accounts
       if (department === 'marketing') {
         console.log(`🔄 [marketing] Attempting proactive data bootstrap...`);
+
+        // Get company owner user_id
+        const { data: companyData } = await supabase.from('companies')
+          .select('created_by').eq('id', companyId).single();
+        const ownerUserId = companyData?.created_by;
+
+        // Get connected social accounts for this company's owner
         const { data: socialAccounts } = await supabase.from('social_accounts')
-          .select('id, platform')
+          .select('id, platform, platform_username, company_id')
           .eq('is_connected', true)
           .not('platform', 'eq', 'upload_post_profile');
 
-        // Filter to accounts belonging to company members
-        const { data: members } = await supabase.from('company_members')
-          .select('user_id').eq('company_id', companyId);
-        const memberIds = (members || []).map(m => m.user_id);
-
+        // Filter to accounts belonging to company owner or company
         const companyAccounts = (socialAccounts || []).filter((a: any) => {
-          // If we can't filter by user, try all connected accounts
-          return true;
+          if (a.company_id === companyId) return true;
+          return false;
         });
 
-        const scraperMap: Record<string, string> = {
-          instagram: 'instagram-scraper',
-          linkedin: 'linkedin-scraper',
-          facebook: 'facebook-scraper',
-          tiktok: 'tiktok-scraper',
+        // If no company-level accounts, try owner's personal accounts
+        let accountsToScrape = companyAccounts;
+        if (accountsToScrape.length === 0 && ownerUserId) {
+          const { data: ownerAccounts } = await supabase.from('social_accounts')
+            .select('id, platform, platform_username')
+            .eq('user_id', ownerUserId)
+            .eq('is_connected', true)
+            .not('platform', 'eq', 'upload_post_profile');
+          accountsToScrape = ownerAccounts || [];
+        }
+
+        console.log(`📋 [marketing] Found ${accountsToScrape.length} accounts to scrape`);
+
+        const scraperMap: Record<string, { fn: string; buildBody: (account: any, userId: string) => any }> = {
+          instagram: {
+            fn: 'instagram-scraper',
+            buildBody: (account, uid) => ({
+              action: 'get_posts',
+              username_or_url: account.platform_username || '',
+              user_id: uid,
+            }),
+          },
+          linkedin: {
+            fn: 'linkedin-scraper',
+            buildBody: (account, uid) => ({
+              action: 'get_company_posts',
+              company_identifier: account.platform_username || '',
+              user_id: uid,
+            }),
+          },
+          facebook: { fn: 'facebook-scraper', buildBody: (account, uid) => ({ user_id: uid }) },
+          tiktok: { fn: 'tiktok-scraper', buildBody: (account, uid) => ({ user_id: uid }) },
         };
 
         let scraped = false;
-        for (const account of companyAccounts) {
-          const scraperFn = scraperMap[account.platform];
-          if (!scraperFn) continue;
+        for (const account of accountsToScrape) {
+          const scraper = scraperMap[account.platform];
+          if (!scraper || !account.platform_username) continue;
           try {
-            console.log(`⚡ [marketing] Auto-scraping ${account.platform}...`);
-            await fetch(`${supabaseUrl}/functions/v1/${scraperFn}`, {
+            console.log(`⚡ [marketing] Auto-scraping ${account.platform} (${account.platform_username})...`);
+            const resp = await fetch(`${supabaseUrl}/functions/v1/${scraper.fn}`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ company_id: companyId }),
+              body: JSON.stringify(scraper.buildBody(account, ownerUserId || '')),
             });
-            scraped = true;
+            const result = await resp.json();
+            console.log(`📊 [marketing] ${account.platform} scrape result: ${resp.status}, success: ${result?.success}`);
+            if (result?.success) scraped = true;
           } catch (e) {
             console.error(`❌ [marketing] Auto-scrape failed for ${account.platform}:`, e);
           }
@@ -1132,7 +1170,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
               decision_type: 'bootstrap_required',
               priority: 'high',
               description: 'El Autopilot necesita más datos para funcionar. Importa publicaciones desde tus redes sociales conectadas o crea contenido nuevo.',
-              reasoning: `Auto-scrape attempted for ${companyAccounts.map(a => a.platform).join(', ')} but ${sufficiency2.reason}`,
+              reasoning: `Auto-scrape attempted for ${accountsToScrape.map((a: any) => a.platform).join(', ')} but ${sufficiency2.reason}`,
               action_taken: false,
               guardrail_result: 'needs_action',
             });
@@ -1143,7 +1181,7 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
             });
             return { department, cycle_id: cycleId, success: false, aborted: true, reason: 'needs_bootstrap', missing: ['social_posts_minimum'] };
           }
-        } else if (companyAccounts.length === 0) {
+        } else if (accountsToScrape.length === 0) {
           // No connected accounts at all
           await supabase.from('autopilot_decisions').insert({
             company_id: companyId,

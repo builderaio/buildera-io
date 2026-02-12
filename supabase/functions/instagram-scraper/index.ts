@@ -68,10 +68,9 @@ serve(async (req) => {
     }
 
     // Initialize Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
@@ -85,19 +84,29 @@ serve(async (req) => {
       });
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-    if (authError || !user) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Unauthorized'
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const body = await req.json();
+    const { action, username_or_url, user_id: bodyUserId } = body;
 
-    const { action, username_or_url } = await req.json();
-    console.log(`📱 Instagram Scraper - Action: ${action}, Username: ${username_or_url}, User: ${user.id}`);
+    // Support service-role calls from internal engine (pass user_id in body)
+    let userId: string;
+    const token = authHeader.replace('Bearer ', '');
+    if (token === serviceRoleKey && bodyUserId) {
+      userId = bodyUserId;
+      console.log(`🔧 Internal call with service_role for user ${userId}`);
+    } else {
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !user) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Unauthorized'
+        }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      userId = user.id;
+    }
+    console.log(`📱 Instagram Scraper - Action: ${action}, Username: ${username_or_url}, User: ${userId}`);
 
     // Extract username from URL or use as is
     const username = extractInstagramUsername(username_or_url);
@@ -106,9 +115,9 @@ serve(async (req) => {
     let responseData: any = {};
 
     if (action === 'get_complete_analysis') {
-      responseData = await getCompleteInstagramAnalysis(username, user.id, supabase);
+      responseData = await getCompleteInstagramAnalysis(username, userId, supabase);
     } else if (action === 'get_posts') {
-      responseData = await getInstagramPosts(username, user.id, supabase);
+      responseData = await getInstagramPosts(username, userId, supabase);
     } else {
       throw new Error(`Action not supported: ${action}`);
     }

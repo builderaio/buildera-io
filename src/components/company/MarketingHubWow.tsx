@@ -20,6 +20,7 @@ import { MarketingGettingStarted } from './MarketingGettingStarted';
 import { CrearContentHub } from './CrearContentHub';
 import { UnifiedLibrary } from './UnifiedLibrary';
 import { CampaignDashboard } from './campaign/CampaignDashboard';
+import { InstagramCommunityManager } from './instagram/InstagramCommunityManager';
 
 interface MarketingHubWowProps {
   profile: any;
@@ -455,6 +456,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Instagram Community Manager */}
+          {socialConnections.instagram && (
+            <InstagramCommunityManager profile={profile} />
+          )}
 
           {/* Quick Actions */}
           <Card className="overflow-hidden border-0 shadow-lg">

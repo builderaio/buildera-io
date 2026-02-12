@@ -270,6 +270,33 @@
         "video": "Videos",
         "banner": "Banners"
       }
+    },
+    "instagram": {
+      "title": "Community Manager de Instagram",
+      "subtitle": "Gestiona comentarios y mensajes directos",
+      "notConnected": "Conecta tu cuenta de Instagram para gestionar comentarios y mensajes",
+      "tabs": {
+        "posts": "Posts",
+        "comments": "Comentarios",
+        "dms": "Mensajes"
+      },
+      "loadingPosts": "Cargando posts...",
+      "errorLoading": "Error al cargar contenido",
+      "retry": "Reintentar",
+      "noPosts": "No se encontraron posts de Instagram",
+      "postsFound": "posts encontrados",
+      "selectPost": "Selecciona un post para ver sus comentarios",
+      "noComments": "No hay comentarios en este post",
+      "commentsFound": "comentarios",
+      "replyPlaceholder": "Escribe tu respuesta...",
+      "replySent": "Respuesta enviada exitosamente",
+      "replyError": "Error al enviar respuesta",
+      "noConversations": "No hay conversaciones activas",
+      "conversations": "Conversaciones",
+      "selectConversation": "Selecciona una conversación",
+      "dmPlaceholder": "Escribe un mensaje...",
+      "dmSent": "Mensaje enviado exitosamente",
+      "dmError": "Error al enviar mensaje"
     }
   }
 }

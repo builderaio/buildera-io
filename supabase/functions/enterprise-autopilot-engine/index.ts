@@ -1072,12 +1072,105 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
     const sufficiency = checkDataSufficiency(department, senseData);
     if (!sufficiency.sufficient) {
       console.warn(`🚫 [${department}] Insufficient data: ${sufficiency.reason}`);
-      await logExecution(companyId, cycleId, department, 'sense', 'insufficient_data', {
-        error_message: sufficiency.reason,
-        context_snapshot: senseData,
-        execution_time_ms: Date.now() - startTime,
-      });
-      return { department, cycle_id: cycleId, success: false, aborted: true, reason: sufficiency.reason };
+
+      // PROACTIVE BOOTSTRAP for marketing: try auto-scraping connected accounts
+      if (department === 'marketing') {
+        console.log(`🔄 [marketing] Attempting proactive data bootstrap...`);
+        const { data: socialAccounts } = await supabase.from('social_accounts')
+          .select('id, platform')
+          .eq('is_connected', true)
+          .not('platform', 'eq', 'upload_post_profile');
+
+        // Filter to accounts belonging to company members
+        const { data: members } = await supabase.from('company_members')
+          .select('user_id').eq('company_id', companyId);
+        const memberIds = (members || []).map(m => m.user_id);
+
+        const companyAccounts = (socialAccounts || []).filter((a: any) => {
+          // If we can't filter by user, try all connected accounts
+          return true;
+        });
+
+        const scraperMap: Record<string, string> = {
+          instagram: 'instagram-scraper',
+          linkedin: 'linkedin-scraper',
+          facebook: 'facebook-scraper',
+          tiktok: 'tiktok-scraper',
+        };
+
+        let scraped = false;
+        for (const account of companyAccounts) {
+          const scraperFn = scraperMap[account.platform];
+          if (!scraperFn) continue;
+          try {
+            console.log(`⚡ [marketing] Auto-scraping ${account.platform}...`);
+            await fetch(`${supabaseUrl}/functions/v1/${scraperFn}`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ company_id: companyId }),
+            });
+            scraped = true;
+          } catch (e) {
+            console.error(`❌ [marketing] Auto-scrape failed for ${account.platform}:`, e);
+          }
+        }
+
+        if (scraped) {
+          // Re-check data sufficiency after scraping
+          const senseData2 = await sensePhase(companyId, department);
+          const sufficiency2 = checkDataSufficiency(department, senseData2);
+          if (sufficiency2.sufficient) {
+            console.log(`✅ [marketing] Bootstrap successful! Continuing cycle with new data.`);
+            // Continue with the new sense data - reassign and proceed
+            Object.assign(senseData, senseData2);
+          } else {
+            // Still insufficient - log bootstrap_required decision
+            console.warn(`🚫 [marketing] Bootstrap completed but still insufficient data.`);
+            await supabase.from('autopilot_decisions').insert({
+              company_id: companyId,
+              cycle_id: cycleId,
+              decision_type: 'bootstrap_required',
+              priority: 'high',
+              description: 'El Autopilot necesita más datos para funcionar. Importa publicaciones desde tus redes sociales conectadas o crea contenido nuevo.',
+              reasoning: `Auto-scrape attempted for ${companyAccounts.map(a => a.platform).join(', ')} but ${sufficiency2.reason}`,
+              action_taken: false,
+              guardrail_result: 'needs_action',
+            });
+            await logExecution(companyId, cycleId, department, 'sense', 'needs_bootstrap', {
+              error_message: `Bootstrap attempted but: ${sufficiency2.reason}`,
+              context_snapshot: senseData2,
+              execution_time_ms: Date.now() - startTime,
+            });
+            return { department, cycle_id: cycleId, success: false, aborted: true, reason: 'needs_bootstrap', missing: ['social_posts_minimum'] };
+          }
+        } else if (companyAccounts.length === 0) {
+          // No connected accounts at all
+          await supabase.from('autopilot_decisions').insert({
+            company_id: companyId,
+            cycle_id: cycleId,
+            decision_type: 'bootstrap_required',
+            priority: 'critical',
+            description: 'No hay redes sociales conectadas. Conecta al menos una red social desde el Marketing Hub para activar el Autopilot.',
+            reasoning: 'No connected social accounts found. Cannot scrape or generate data.',
+            action_taken: false,
+            guardrail_result: 'needs_action',
+          });
+          await logExecution(companyId, cycleId, department, 'sense', 'needs_bootstrap', {
+            error_message: 'No connected social accounts. Bootstrap impossible.',
+            context_snapshot: senseData,
+            execution_time_ms: Date.now() - startTime,
+          });
+          return { department, cycle_id: cycleId, success: false, aborted: true, reason: 'needs_bootstrap', missing: ['social_accounts_connected', 'social_posts_minimum'] };
+        }
+      } else {
+        // Non-marketing departments: original behavior
+        await logExecution(companyId, cycleId, department, 'sense', 'insufficient_data', {
+          error_message: sufficiency.reason,
+          context_snapshot: senseData,
+          execution_time_ms: Date.now() - startTime,
+        });
+        return { department, cycle_id: cycleId, success: false, aborted: true, reason: sufficiency.reason };
+      }
     }
 
     // EXTERNAL INTELLIGENCE

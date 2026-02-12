@@ -1,0 +1,79 @@
+{
+  "tabs": {
+    "videoAd": "Vídeo Ad",
+    "avatar": "Avatar IA",
+    "adClone": "Clonar Anúncio",
+    "banners": "Banners IAB",
+    "gallery": "Galeria"
+  },
+  "videoAd": {
+    "title": "Gerar Vídeo Publicitário",
+    "productUrl": "URL do produto ou site",
+    "platform": "Plataforma destino",
+    "scriptStyle": "Estilo do roteiro",
+    "aspectRatio": "Formato"
+  },
+  "scriptStyles": {
+    "brandStory": "História da marca",
+    "callToAction": "Chamada para ação",
+    "specialOffers": "Ofertas especiais",
+    "discovery": "Descoberta",
+    "howTo": "Tutorial"
+  },
+  "avatar": {
+    "title": "Vídeo com Avatar IA",
+    "selectAvatar": "Selecionar avatar",
+    "selectVoice": "Selecionar voz",
+    "script": "Roteiro do vídeo",
+    "scriptPlaceholder": "Escreva o texto que o avatar vai falar..."
+  },
+  "adClone": {
+    "title": "Clonar Anúncio",
+    "competitorVideoUrl": "URL do vídeo a clonar",
+    "yourProductUrl": "URL do seu produto"
+  },
+  "banners": {
+    "title": "Banners IAB",
+    "productImageUrl": "URL da imagem do produto",
+    "tagline": "Slogan",
+    "taglinePlaceholder": "Seu slogan aqui...",
+    "ctaText": "Texto do botão",
+    "ctaPlaceholder": "Comprar agora"
+  },
+  "gallery": {
+    "title": "Assets Gerados",
+    "loading": "Carregando galeria...",
+    "empty": "Você ainda não gerou conteúdo. Comece criando seu primeiro vídeo ou banner!",
+    "filterAll": "Todos os tipos",
+    "assetGenerator": "Gerador de Assets",
+    "aiScript": "Roteiro IA",
+    "tts": "Texto para Fala"
+  },
+  "status": {
+    "completed": "Geração concluída!",
+    "failed": "A geração falhou",
+    "inQueue": "Na fila de processamento...",
+    "generating": "Gerando conteúdo...",
+    "preparing": "Preparando...",
+    "jobCreated": "Trabalho iniciado com sucesso",
+    "loadingResources": "Carregando recursos..."
+  },
+  "actions": {
+    "generateVideo": "Gerar Vídeo",
+    "generateAvatar": "Gerar Vídeo com Avatar",
+    "cloneAd": "Clonar Anúncio",
+    "generateBanners": "Gerar Banners",
+    "creating": "Criando...",
+    "retry": "Tentar novamente",
+    "download": "Baixar",
+    "view": "Ver",
+    "delete": "Excluir"
+  },
+  "errors": {
+    "urlRequired": "A URL é obrigatória",
+    "scriptRequired": "O roteiro é obrigatório",
+    "imageRequired": "A URL da imagem é obrigatória",
+    "generationFailed": "Erro na geração",
+    "noCompany": "Empresa não encontrada"
+  }
+}

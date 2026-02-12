@@ -3702,6 +3702,76 @@ export type Database = {
         }
         Relationships: []
       }
+      creatify_jobs: {
+        Row: {
+          calendar_item_id: string | null
+          campaign_id: string | null
+          company_id: string
+          created_at: string
+          creatify_job_id: string | null
+          credits_used: number | null
+          id: string
+          input_params: Json | null
+          job_type: string
+          output_data: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calendar_item_id?: string | null
+          campaign_id?: string | null
+          company_id: string
+          created_at?: string
+          creatify_job_id?: string | null
+          credits_used?: number | null
+          id?: string
+          input_params?: Json | null
+          job_type: string
+          output_data?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calendar_item_id?: string | null
+          campaign_id?: string | null
+          company_id?: string
+          created_at?: string
+          creatify_job_id?: string | null
+          credits_used?: number | null
+          id?: string
+          input_params?: Json | null
+          job_type?: string
+          output_data?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creatify_jobs_calendar_item_id_fkey"
+            columns: ["calendar_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_calendar_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creatify_jobs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creatify_jobs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crm_accounts: {
         Row: {
           account_name: string

@@ -1,0 +1,79 @@
+{
+  "tabs": {
+    "videoAd": "Video Ad",
+    "avatar": "AI Avatar",
+    "adClone": "Clone Ad",
+    "banners": "IAB Banners",
+    "gallery": "Gallery"
+  },
+  "videoAd": {
+    "title": "Generate Video Ad",
+    "productUrl": "Product or website URL",
+    "platform": "Target platform",
+    "scriptStyle": "Script style",
+    "aspectRatio": "Format"
+  },
+  "scriptStyles": {
+    "brandStory": "Brand Story",
+    "callToAction": "Call to Action",
+    "specialOffers": "Special Offers",
+    "discovery": "Discovery",
+    "howTo": "How-To"
+  },
+  "avatar": {
+    "title": "AI Avatar Video",
+    "selectAvatar": "Select avatar",
+    "selectVoice": "Select voice",
+    "script": "Video script",
+    "scriptPlaceholder": "Write the text the avatar will say..."
+  },
+  "adClone": {
+    "title": "Clone Ad",
+    "competitorVideoUrl": "Video URL to clone",
+    "yourProductUrl": "Your product URL"
+  },
+  "banners": {
+    "title": "IAB Banners",
+    "productImageUrl": "Product image URL",
+    "tagline": "Tagline",
+    "taglinePlaceholder": "Your tagline here...",
+    "ctaText": "Button text",
+    "ctaPlaceholder": "Buy Now"
+  },
+  "gallery": {
+    "title": "Generated Assets",
+    "loading": "Loading gallery...",
+    "empty": "You haven't generated any content yet. Start by creating your first video or banner!",
+    "filterAll": "All types",
+    "assetGenerator": "Asset Generator",
+    "aiScript": "AI Script",
+    "tts": "Text to Speech"
+  },
+  "status": {
+    "completed": "Generation completed!",
+    "failed": "Generation failed",
+    "inQueue": "In processing queue...",
+    "generating": "Generating content...",
+    "preparing": "Preparing...",
+    "jobCreated": "Job started successfully",
+    "loadingResources": "Loading resources..."
+  },
+  "actions": {
+    "generateVideo": "Generate Video",
+    "generateAvatar": "Generate Avatar Video",
+    "cloneAd": "Clone Ad",
+    "generateBanners": "Generate Banners",
+    "creating": "Creating...",
+    "retry": "Retry",
+    "download": "Download",
+    "view": "View",
+    "delete": "Delete"
+  },
+  "errors": {
+    "urlRequired": "URL is required",
+    "scriptRequired": "Script is required",
+    "imageRequired": "Image URL is required",
+    "generationFailed": "Generation error",
+    "noCompany": "Company not found"
+  }
+}

@@ -6,14 +6,15 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { 
-  CheckCircle2, Circle, Network, Palette, Megaphone, Video, Calendar,
-  ArrowRight, Sparkles, Brain, Shield, Eye, Zap
+  CheckCircle2, Circle, Network, Palette, Megaphone, Calendar,
+  ArrowRight, Sparkles, Brain, Shield, Eye, Zap, Download
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface MarketingGettingStartedProps {
   userId: string;
   onNavigateTab: (tab: string) => void;
+  onImportData?: () => void;
 }
 
 interface OnboardingStep {
@@ -23,7 +24,7 @@ interface OnboardingStep {
   level: 1 | 2;
 }
 
-export const MarketingGettingStarted = ({ userId, onNavigateTab }: MarketingGettingStartedProps) => {
+export const MarketingGettingStarted = ({ userId, onNavigateTab, onImportData }: MarketingGettingStartedProps) => {
   const { t } = useTranslation("marketing");
   const navigate = useNavigate();
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
@@ -36,15 +37,19 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab }: MarketingGett
 
   const checkProgress = async () => {
     try {
-      const [socialRes, brandingRes, campaignRes, creatifyRes, postsRes, autopilotRes, guardrailsRes] = await Promise.all([
+      const [socialRes, brandingRes, postsRes, autopilotRes, guardrailsRes, igPosts, liPosts, fbPosts, tkPosts] = await Promise.all([
         supabase.from("social_accounts").select("id").eq("user_id", userId).eq("is_connected", true).limit(1),
         supabase.from("company_branding").select("id").limit(1),
-        supabase.from("marketing_campaigns").select("id").eq("user_id", userId).limit(1),
-        supabase.from("creatify_jobs").select("id").eq("user_id", userId).limit(1),
         supabase.from("scheduled_posts").select("id").eq("user_id", userId).limit(1),
         supabase.from("company_autopilot_config").select("autopilot_enabled, require_human_approval").eq("user_id", userId).eq("autopilot_enabled", true).maybeSingle(),
         supabase.from("company_communication_settings").select("id").limit(1),
+        supabase.from("instagram_posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("linkedin_posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("facebook_posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("tiktok_posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
       ]);
+
+      const totalImportedPosts = (igPosts.count || 0) + (liPosts.count || 0) + (fbPosts.count || 0) + (tkPosts.count || 0);
 
       const level1Steps: OnboardingStep[] = [
         {
@@ -60,15 +65,9 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab }: MarketingGett
           level: 1,
         },
         {
-          key: "firstCampaign",
-          completed: (campaignRes.data?.length || 0) > 0,
-          action: () => onNavigateTab("campaigns"),
-          level: 1,
-        },
-        {
-          key: "firstVideo",
-          completed: (creatifyRes.data?.length || 0) > 0,
-          action: () => onNavigateTab("create"),
+          key: "importSocialData",
+          completed: totalImportedPosts >= 5,
+          action: () => onImportData?.(),
           level: 1,
         },
         {
@@ -102,7 +101,7 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab }: MarketingGett
         },
         {
           key: "reviewDecisions",
-          completed: false, // Checked dynamically below
+          completed: false,
           action: () => onNavigateTab("autopilot"),
           level: 2,
         },
@@ -120,7 +119,6 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab }: MarketingGett
         },
       ];
 
-      // Check if user has reviewed any autopilot decisions
       if (autopilotRes.data) {
         const { data: decisionsData } = await supabase
           .from("autopilot_decisions")
@@ -146,11 +144,9 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab }: MarketingGett
   const completedCount = activeSteps.filter((s) => s.completed).length;
   const progress = (completedCount / activeSteps.length) * 100;
 
-  // Hide only if level 2 is 100% complete
   if (showLevel2 && progress === 100) return null;
-  // If level 1 complete, we show level 2 instead of hiding
   
-  const level1Icons = [Network, Palette, Megaphone, Video, Calendar, Brain];
+  const level1Icons = [Network, Palette, Download, Calendar, Brain];
   const level2Icons = [Shield, Brain, Eye, Zap, Sparkles];
   const icons = showLevel2 ? level2Icons : level1Icons;
 

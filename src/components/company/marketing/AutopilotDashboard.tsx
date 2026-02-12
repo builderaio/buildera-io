@@ -12,6 +12,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -20,7 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Brain, Zap, Shield, BookOpen, Eye, Settings, Play, Pause,
   CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp,
-  Activity, BarChart3, RefreshCw, Link2, Upload
+  Activity, BarChart3, RefreshCw, Link2, Upload, Loader2,
+  Instagram, Linkedin, Facebook, Music2, Download
 } from "lucide-react";
 
 interface AutopilotDashboardProps {
@@ -150,6 +152,16 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
   };
 
   const [showPrereqDialog, setShowPrereqDialog] = useState(false);
+  const [connectedAccounts, setConnectedAccounts] = useState<{id: string; platform: string; username?: string}[]>([]);
+  const [importingPlatforms, setImportingPlatforms] = useState<Record<string, 'idle' | 'loading' | 'success' | 'error'>>({});
+  const [bootstrapProgress, setBootstrapProgress] = useState(0);
+
+  const PLATFORM_SCRAPERS: Record<string, {scraper: string; icon: React.ComponentType<any>; name: string}> = {
+    instagram: { scraper: 'instagram-scraper', icon: Instagram, name: 'Instagram' },
+    linkedin: { scraper: 'linkedin-scraper', icon: Linkedin, name: 'LinkedIn' },
+    facebook: { scraper: 'facebook-scraper', icon: Facebook, name: 'Facebook' },
+    tiktok: { scraper: 'tiktok-scraper', icon: Music2, name: 'TikTok' },
+  };
 
   const checkMarketingPrerequisites = async (): Promise<boolean> => {
     if (!companyId) return false;
@@ -165,11 +177,97 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
         supabase.from('tiktok_posts' as any).select('id', { count: 'exact', head: true }).eq('company_id', companyId),
       ]);
       const realAccounts = (socialRes.data || []).filter((a: any) => a.platform !== 'upload_post_profile');
+      setConnectedAccounts(realAccounts);
       const totalPosts = (igCount.count || 0) + (liCount.count || 0) + (fbCount.count || 0) + (tkCount.count || 0);
 
-      return realAccounts.length > 0 || totalPosts >= 5;
+      return realAccounts.length > 0 && totalPosts >= 5;
     } catch {
       return false;
+    }
+  };
+
+  const handleBootstrapImport = async (platform: string) => {
+    const scraperInfo = PLATFORM_SCRAPERS[platform];
+    if (!scraperInfo) return;
+
+    setImportingPlatforms(prev => ({ ...prev, [platform]: 'loading' }));
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.functions.invoke(scraperInfo.scraper, {
+        body: {
+          user_id: user.id,
+          company_id: companyId,
+        }
+      });
+
+      if (error) throw error;
+
+      setImportingPlatforms(prev => ({ ...prev, [platform]: 'success' }));
+      
+      // Update progress
+      const statuses = { ...importingPlatforms, [platform]: 'success' };
+      const total = connectedAccounts.length;
+      const done = Object.values(statuses).filter(s => s === 'success').length;
+      setBootstrapProgress(Math.round((done / total) * 100));
+
+      toast({
+        title: t('autopilot.bootstrap.importSuccess', { platform: scraperInfo.name }),
+        description: `${data?.posts_count || data?.posts?.length || 0} posts importados`,
+      });
+
+      // Check if all done → auto-activate
+      if (done >= total) {
+        setTimeout(async () => {
+          const hasPrereqs = await checkMarketingPrerequisites();
+          if (hasPrereqs) {
+            setShowPrereqDialog(false);
+            await toggleAutopilotAfterBootstrap();
+          }
+        }, 1000);
+      }
+    } catch (err: any) {
+      console.error(`Error importing from ${platform}:`, err);
+      setImportingPlatforms(prev => ({ ...prev, [platform]: 'error' }));
+      toast({
+        title: t('autopilot.bootstrap.importError', { platform: scraperInfo.name }),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleImportAll = async () => {
+    for (const account of connectedAccounts) {
+      const platform = account.platform;
+      if (PLATFORM_SCRAPERS[platform] && importingPlatforms[platform] !== 'success') {
+        await handleBootstrapImport(platform);
+      }
+    }
+  };
+
+  const toggleAutopilotAfterBootstrap = async () => {
+    if (!config?.id) {
+      // First-time smart config
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !companyId) return;
+        await saveConfig({
+          autopilot_enabled: true,
+          require_human_approval: true,
+          execution_frequency: '6h',
+          max_posts_per_day: 3,
+          max_credits_per_cycle: 50,
+        });
+        toast({
+          title: t('autopilot.smartConfigApplied'),
+          description: t('autopilot.bootstrap.autoActivated'),
+        });
+      } catch (e) {
+        console.error('Error auto-activating after bootstrap:', e);
+      }
+    } else {
+      await saveConfig({ autopilot_enabled: true });
     }
   };
 
@@ -555,32 +653,83 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
         </TabsContent>
       </Tabs>
 
-      {/* Prerequisite Dialog */}
+      {/* Bootstrap Dialog */}
       <Dialog open={showPrereqDialog} onOpenChange={setShowPrereqDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-              {t('autopilot.prerequisites.title')}
+              <Download className="w-5 h-5 text-primary" />
+              {t('autopilot.bootstrap.title', 'Preparar datos para Autopilot')}
             </DialogTitle>
-            <DialogDescription>{t('autopilot.prerequisites.socialRequired')}</DialogDescription>
+            <DialogDescription>
+              {connectedAccounts.length > 0
+                ? t('autopilot.bootstrap.descConnected', 'Importa tus publicaciones existentes para que el Autopilot pueda analizar y generar decisiones inteligentes.')
+                : t('autopilot.bootstrap.descNoAccounts', 'Conecta al menos una red social para que el Autopilot pueda funcionar.')
+              }
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-2">
-            <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
-              setShowPrereqDialog(false);
-              navigate('/company-dashboard?view=marketing-hub&action=connect');
-            }}>
+
+          <div className="space-y-3 pt-2">
+            {connectedAccounts.length > 0 && (
+              <>
+                {connectedAccounts.map(account => {
+                  const scraperInfo = PLATFORM_SCRAPERS[account.platform];
+                  if (!scraperInfo) return null;
+                  const status = importingPlatforms[account.platform] || 'idle';
+                  const Icon = scraperInfo.icon;
+                  return (
+                    <div key={account.id} className="flex items-center justify-between p-3 rounded-lg border bg-card">
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium text-sm">{scraperInfo.name}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={status === 'success' ? 'outline' : 'default'}
+                        disabled={status === 'loading' || status === 'success'}
+                        onClick={() => handleBootstrapImport(account.platform)}
+                      >
+                        {status === 'loading' && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+                        {status === 'success' && <CheckCircle className="w-4 h-4 text-green-600 mr-1" />}
+                        {status === 'error' && <XCircle className="w-4 h-4 text-destructive mr-1" />}
+                        {status === 'idle' && t('autopilot.bootstrap.import', 'Importar')}
+                        {status === 'loading' && t('autopilot.bootstrap.importing', 'Importando...')}
+                        {status === 'success' && t('autopilot.bootstrap.imported', 'Importado')}
+                        {status === 'error' && t('autopilot.bootstrap.retry', 'Reintentar')}
+                      </Button>
+                    </div>
+                  );
+                })}
+
+                {connectedAccounts.length > 1 && (
+                  <Button className="w-full" onClick={handleImportAll} disabled={Object.values(importingPlatforms).some(s => s === 'loading')}>
+                    <Download className="w-4 h-4 mr-2" />
+                    {t('autopilot.bootstrap.importAll', 'Importar todo')}
+                  </Button>
+                )}
+
+                {bootstrapProgress > 0 && (
+                  <Progress value={bootstrapProgress} className="h-2" />
+                )}
+              </>
+            )}
+
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={() => {
+                setShowPrereqDialog(false);
+                navigate('/company-dashboard?view=marketing-hub&action=connect');
+              }}
+            >
               <Link2 className="w-4 h-4" />
-              {t('autopilot.prerequisites.connectNow')}
-            </Button>
-            <Button variant="outline" className="w-full justify-start gap-2" onClick={() => {
-              setShowPrereqDialog(false);
-              navigate('/company-dashboard?view=marketing');
-            }}>
-              <Upload className="w-4 h-4" />
-              {t('autopilot.prerequisites.importData')}
+              {connectedAccounts.length > 0
+                ? t('autopilot.bootstrap.connectMore', 'Conectar más redes')
+                : t('autopilot.prerequisites.connectNow')
+              }
             </Button>
           </div>
+
           <DialogFooter>
             <Button variant="ghost" onClick={() => setShowPrereqDialog(false)}>
               {t('actions.cancel', 'Cancelar')}

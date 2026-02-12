@@ -28,6 +28,7 @@ import { SocialAutomationRules } from './marketing/SocialAutomationRules';
 import { ContentApprovalPanel } from './marketing/ContentApprovalPanel';
 import { AutopilotDashboard } from './marketing/AutopilotDashboard';
 import { SocialConnectionManager } from './SocialConnectionManager';
+import { SocialDataImportDialog } from '../agents/SocialDataImportDialog';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -161,6 +162,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   }, [searchParams]);
 
   const [showConnectDialog, setShowConnectDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   // Handle action=connect deep link
   useEffect(() => {
@@ -498,7 +500,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
               <ConnectionStatusBar connections={socialConnections} onConnectClick={() => setShowConnectDialog(true)} />
               
               {userId && (
-                <MarketingGettingStarted userId={userId} onNavigateTab={handleTabChange} />
+                <MarketingGettingStarted userId={userId} onNavigateTab={handleTabChange} onImportData={() => setShowImportDialog(true)} />
               )}
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -673,6 +675,19 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Social Data Import Dialog */}
+      {userId && (
+        <SocialDataImportDialog
+          open={showImportDialog}
+          onOpenChange={setShowImportDialog}
+          userId={userId}
+          companyId={profile?.company_id || ''}
+          onSuccess={() => {
+            initializeMarketingHub();
+          }}
+        />
+      )}
     </div>
   );
 };

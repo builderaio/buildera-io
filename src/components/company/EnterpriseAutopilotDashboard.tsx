@@ -4,6 +4,7 @@ import {
   TrendingUp, Globe, Lightbulb, BookOpen, Unlock, ToggleLeft, ToggleRight,
   Building2, ShoppingCart, DollarSign, Scale, Users, Settings2,
   AlertTriangle, CheckCircle2, XCircle, Loader2, Sparkles, RefreshCw,
+  Link2, Upload,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,10 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useDepartmentUnlocking, DepartmentConfig, DepartmentType } from "@/hooks/useDepartmentUnlocking";
@@ -139,7 +144,50 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  const [prerequisiteDialogDept, setPrerequisiteDialogDept] = useState<string | null>(null);
+  const [prerequisiteMessage, setPrerequisiteMessage] = useState<string>('');
+
+  const checkDepartmentPrerequisites = async (dept: DepartmentType): Promise<boolean> => {
+    if (!companyId || !profile?.user_id) return false;
+
+    if (dept === 'marketing') {
+      const [socialRes, igCount, liCount, fbCount, tkCount] = await Promise.all([
+        supabase.from('social_accounts').select('id, platform').eq('user_id', profile.user_id).eq('is_connected', true),
+        supabase.from('instagram_posts' as any).select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('linkedin_posts' as any).select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('facebook_posts' as any).select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('tiktok_posts' as any).select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      ]);
+      const realAccounts = (socialRes.data || []).filter(a => a.platform !== 'upload_post_profile');
+      const totalPosts = (igCount.count || 0) + (liCount.count || 0) + (fbCount.count || 0) + (tkCount.count || 0);
+      if (realAccounts.length === 0 && totalPosts < 5) {
+        setPrerequisiteMessage(t('enterprise.prerequisites.socialRequired'));
+        return false;
+      }
+    }
+
+    if (dept === 'sales') {
+      const [deals, contacts] = await Promise.all([
+        supabase.from('crm_deals').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('crm_contacts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      ]);
+      if ((deals.count || 0) === 0 && (contacts.count || 0) === 0) {
+        setPrerequisiteMessage(t('enterprise.prerequisites.salesRequired'));
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleToggleAutopilot = async (dept: DepartmentType, enabled: boolean) => {
+    if (enabled) {
+      const ok = await checkDepartmentPrerequisites(dept);
+      if (!ok) {
+        setPrerequisiteDialogDept(dept);
+        return;
+      }
+    }
     const success = await toggleAutopilot(dept, enabled);
     if (success) {
       toast({
@@ -618,6 +666,54 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
           </CardContent>
         </Card>
       )}
+
+      {/* Prerequisite Dialog */}
+      <Dialog open={!!prerequisiteDialogDept} onOpenChange={() => setPrerequisiteDialogDept(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              {t('enterprise.prerequisites.title')}
+            </DialogTitle>
+            <DialogDescription>{prerequisiteMessage}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            {prerequisiteDialogDept === 'marketing' && (
+              <>
+                <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                  setPrerequisiteDialogDept(null);
+                  // Navigate to social connections tab
+                  window.dispatchEvent(new CustomEvent('navigate-to-adn-tab', { detail: 'social' }));
+                }}>
+                  <Link2 className="w-4 h-4" />
+                  {t('enterprise.prerequisites.connectNow')}
+                </Button>
+                <Button variant="outline" className="w-full justify-start gap-2" onClick={() => {
+                  setPrerequisiteDialogDept(null);
+                  window.dispatchEvent(new CustomEvent('navigate-to-adn-tab', { detail: 'social' }));
+                }}>
+                  <Upload className="w-4 h-4" />
+                  {t('enterprise.prerequisites.importData')}
+                </Button>
+              </>
+            )}
+            {prerequisiteDialogDept === 'sales' && (
+              <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                setPrerequisiteDialogDept(null);
+                window.dispatchEvent(new CustomEvent('navigate-to-section', { detail: 'crm' }));
+              }}>
+                <ShoppingCart className="w-4 h-4" />
+                {t('enterprise.prerequisites.setupCRM')}
+              </Button>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPrerequisiteDialogDept(null)}>
+              {t('actions.cancel')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

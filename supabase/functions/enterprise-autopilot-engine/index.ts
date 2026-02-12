@@ -284,7 +284,89 @@ async function retrieveMemory(companyId: string, department: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CORE CYCLE: SENSE → THINK → GUARD → ACT → LEARN
+// PREFLIGHT: validate minimum data requirements per department
+// ═══════════════════════════════════════════════════════════════
+
+interface PreflightResult {
+  ready: boolean;
+  reason?: string;
+  missing: string[];
+}
+
+async function preflightCheck(companyId: string, department: string): Promise<PreflightResult> {
+  const missing: string[] = [];
+
+  if (department === 'marketing') {
+    // Check connected social accounts (real platforms, not upload_post_profile)
+    const { data: socialAccounts } = await supabase.from('social_accounts')
+      .select('id, platform')
+      .eq('is_connected', true)
+      .not('platform', 'eq', 'upload_post_profile');
+
+    // Filter by user who owns this company
+    const { data: members } = await supabase.from('company_members')
+      .select('user_id').eq('company_id', companyId);
+    const memberIds = (members || []).map(m => m.user_id);
+
+    const connectedAccounts = (socialAccounts || []).length;
+
+    // Check total posts across all platforms
+    const [igCount, liCount, fbCount, tkCount] = await Promise.all([
+      supabase.from('instagram_posts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      supabase.from('linkedin_posts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      supabase.from('facebook_posts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      supabase.from('tiktok_posts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+    ]);
+    const totalPosts = (igCount.count || 0) + (liCount.count || 0) + (fbCount.count || 0) + (tkCount.count || 0);
+
+    if (connectedAccounts === 0) missing.push('social_accounts_connected');
+    if (totalPosts < 5) missing.push('social_posts_minimum');
+
+    if (connectedAccounts === 0 && totalPosts < 5) {
+      return {
+        ready: false,
+        reason: `Marketing requires at least 1 connected social account or 5+ imported posts. Found: ${connectedAccounts} accounts, ${totalPosts} posts.`,
+        missing,
+      };
+    }
+  }
+
+  if (department === 'sales') {
+    const [deals, contacts] = await Promise.all([
+      supabase.from('crm_deals').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      supabase.from('crm_contacts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+    ]);
+    if ((deals.count || 0) === 0 && (contacts.count || 0) === 0) {
+      missing.push('crm_data');
+      return { ready: false, reason: 'Sales requires at least 1 deal or 1 contact in CRM.', missing };
+    }
+  }
+
+  return { ready: true, missing };
+}
+
+function checkDataSufficiency(department: string, senseData: any): { sufficient: boolean; reason?: string } {
+  if (department === 'marketing') {
+    const platforms = senseData?.platforms || {};
+    const totalCount = Object.values(platforms).reduce((sum: number, p: any) => sum + (p?.count || 0), 0);
+    const hasCampaigns = (senseData?.activeCampaigns?.length || 0) > 0;
+
+    if (totalCount === 0 && !hasCampaigns) {
+      return { sufficient: false, reason: 'All platforms have 0 posts and no active campaigns. Cannot generate meaningful decisions.' };
+    }
+  }
+
+  if (department === 'sales') {
+    if ((senseData?.totalDeals || 0) === 0 && (senseData?.contactsCount || 0) === 0) {
+      return { sufficient: false, reason: 'No deals or contacts found. Cannot generate sales decisions.' };
+    }
+  }
+
+  return { sufficient: true };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CORE CYCLE: PREFLIGHT → SENSE → THINK → GUARD → ACT → LEARN
 // ═══════════════════════════════════════════════════════════════
 
 async function sensePhase(companyId: string, department: string) {
@@ -365,15 +447,9 @@ Respond ONLY with a valid JSON array of decisions. Each decision:
     const jsonMatch = aiResult.response.match(/\[[\s\S]*\]/);
     if (jsonMatch) decisions = JSON.parse(jsonMatch[0]);
   } catch {
-    decisions = [{
-      decision_type: 'analyze',
-      priority: 'medium',
-      description: `Review current ${department} performance metrics`,
-      reasoning: 'AI response could not be parsed',
-      agent_to_execute: 'ANALYTICS_REPORTER',
-      action_parameters: {},
-      expected_impact: { metric: 'insight', estimated_change: '0%' },
-    }];
+    console.warn(`⚠️ [${department}] AI response could not be parsed. Skipping decision generation.`);
+    // Do NOT create fallback decisions with non-existent agents
+    decisions = [];
   }
 
   return decisions;
@@ -856,12 +932,37 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
   console.log(`🚀 [${department.toUpperCase()}] Starting cycle ${cycleId} for company ${companyId}`);
 
   try {
+    // PREFLIGHT
+    console.log(`🔑 [${department}] PREFLIGHT`);
+    const preflight = await preflightCheck(companyId, department);
+    if (!preflight.ready) {
+      console.warn(`🚫 [${department}] Preflight failed: ${preflight.reason}`);
+      await logExecution(companyId, cycleId, department, 'preflight', 'aborted', {
+        error_message: preflight.reason,
+        context_snapshot: { missing: preflight.missing },
+        execution_time_ms: Date.now() - startTime,
+      });
+      return { department, cycle_id: cycleId, success: false, aborted: true, reason: preflight.reason, missing: preflight.missing };
+    }
+
     // SENSE
     console.log(`📡 [${department}] SENSE`);
     const senseData = await sensePhase(companyId, department);
     await logExecution(companyId, cycleId, department, 'sense', 'completed', {
       context_snapshot: senseData, execution_time_ms: Date.now() - startTime,
     });
+
+    // DATA SUFFICIENCY CHECK
+    const sufficiency = checkDataSufficiency(department, senseData);
+    if (!sufficiency.sufficient) {
+      console.warn(`🚫 [${department}] Insufficient data: ${sufficiency.reason}`);
+      await logExecution(companyId, cycleId, department, 'sense', 'insufficient_data', {
+        error_message: sufficiency.reason,
+        context_snapshot: senseData,
+        execution_time_ms: Date.now() - startTime,
+      });
+      return { department, cycle_id: cycleId, success: false, aborted: true, reason: sufficiency.reason };
+    }
 
     // EXTERNAL INTELLIGENCE
     console.log(`🌐 [${department}] EXTERNAL INTELLIGENCE`);

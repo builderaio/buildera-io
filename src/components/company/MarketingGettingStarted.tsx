@@ -80,7 +80,7 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab }: MarketingGett
         {
           key: "activateAutopilot",
           completed: !!autopilotRes.data,
-          action: () => onNavigateTab("autopilot"),
+          action: () => navigate("/company-dashboard?view=autopilot"),
           level: 1,
         },
       ];
@@ -109,7 +109,13 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab }: MarketingGett
         {
           key: "autonomousMode",
           completed: !!autopilotRes.data && autopilotRes.data.require_human_approval === false,
-          action: () => onNavigateTab("autopilot"),
+          action: () => navigate("/company-dashboard?view=autopilot"),
+          level: 2,
+        },
+        {
+          key: "exploreEnterpriseBrain",
+          completed: false,
+          action: () => navigate("/company-dashboard?view=autopilot"),
           level: 2,
         },
       ];
@@ -145,7 +151,7 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab }: MarketingGett
   // If level 1 complete, we show level 2 instead of hiding
   
   const level1Icons = [Network, Palette, Megaphone, Video, Calendar, Brain];
-  const level2Icons = [Shield, Brain, Eye, Zap];
+  const level2Icons = [Shield, Brain, Eye, Zap, Sparkles];
   const icons = showLevel2 ? level2Icons : level1Icons;
 
   return (

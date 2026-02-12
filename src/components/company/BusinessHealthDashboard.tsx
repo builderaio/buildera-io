@@ -16,7 +16,9 @@ import { useCompanyCredits } from "@/hooks/useCompanyCredits";
 import { useCompanyState } from "@/hooks/useCompanyState";
 import { useNextBestAction } from "@/hooks/useNextBestAction";
 import { useBusinessHealth, BusinessHealthKPI, ObjectiveProgress } from "@/hooks/useBusinessHealth";
+import { useDepartmentUnlocking } from "@/hooks/useDepartmentUnlocking";
 import { AgentInteractionPanel } from "@/components/agents/AgentInteractionPanel";
+import { EnterpriseAutopilotWelcome } from "@/components/company/EnterpriseAutopilotWelcome";
 import { cn } from "@/lib/utils";
 
 interface BusinessHealthDashboardProps {
@@ -154,82 +156,70 @@ const ActivityItem = ({ activity }: { activity: ActivityLog }) => {
   );
 };
 
-// Autopilot Status Card for Command Center
-const AutopilotStatusCard = ({ companyId, onNavigate }: { companyId: string; onNavigate: (view: string) => void }) => {
+// Enterprise Autopilot Status Card
+const EnterpriseAutopilotStatusCard = ({ companyId, departments, onNavigate }: { companyId: string; departments: any[]; onNavigate: (view: string) => void }) => {
   const { t } = useTranslation(['common']);
-  const [config, setConfig] = useState<any>(null);
   const [lastExecution, setLastExecution] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [configRes, execRes] = await Promise.all([
-        supabase
-          .from('company_autopilot_config')
-          .select('autopilot_enabled, execution_frequency, last_execution_at, next_execution_at, total_cycles_run')
-          .eq('company_id', companyId)
-          .maybeSingle(),
-        supabase
-          .from('autopilot_execution_log')
-          .select('status, phase, credits_consumed, created_at')
-          .eq('company_id', companyId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ]);
-      setConfig(configRes.data);
-      setLastExecution(execRes.data);
+      const { data } = await supabase
+        .from('autopilot_execution_log')
+        .select('status, phase, credits_consumed, created_at')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setLastExecution(data);
     };
     fetchData();
   }, [companyId]);
 
-  const isEnabled = config?.autopilot_enabled;
+  const activeDepts = departments.filter(d => d.autopilot_enabled).length;
+  const totalDepts = departments.length;
+  const hasActive = activeDepts > 0;
 
   return (
     <Card className={cn(
       "border overflow-hidden",
-      isEnabled ? "border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-transparent" : "border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent"
+      hasActive ? "border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-transparent" : "border-primary/30 bg-gradient-to-br from-primary/5 to-transparent"
     )}>
       <CardContent className="p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <div className={cn(
             "p-2.5 rounded-xl",
-            isEnabled ? "bg-emerald-500/10" : "bg-amber-500/10"
+            hasActive ? "bg-emerald-500/10" : "bg-primary/10"
           )}>
-            <Brain className={cn("w-5 h-5", isEnabled ? "text-emerald-500" : "text-amber-500")} />
+            <Brain className={cn("w-5 h-5", hasActive ? "text-emerald-500" : "text-primary")} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-sm">{t('common:dashboard.autopilot', 'Marketing Autopilot')}</h3>
-              <Badge variant={isEnabled ? "default" : "secondary"} className={cn(
+              <h3 className="font-semibold text-sm">{t('common:enterprise.autopilot.title')}</h3>
+              <Badge variant={hasActive ? "default" : "secondary"} className={cn(
                 "text-[10px]",
-                isEnabled ? "bg-emerald-500/20 text-emerald-600 border-emerald-500/30" : ""
+                hasActive ? "bg-emerald-500/20 text-emerald-600 border-emerald-500/30" : ""
               )}>
-                {isEnabled 
-                  ? t('common:sidebar.autopilotActive', 'Active') 
-                  : t('common:sidebar.autopilotInactive', 'Inactive')}
+                {activeDepts}/{totalDepts} {t('common:enterprise.departments.marketing') ? '' : ''}
               </Badge>
             </div>
-            {isEnabled && config?.total_cycles_run > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {config.total_cycles_run} {t('common:dashboard.cyclesCompleted', 'cycles completed')}
-                {lastExecution && ` • ${t('common:dashboard.last', 'Last')}: ${lastExecution.status}`}
-              </p>
-            )}
-            {!isEnabled && (
-              <p className="text-xs text-muted-foreground">
-                {t('common:dashboard.autopilotCTA', 'Activate to automate your marketing operations')}
+            <p className="text-xs text-muted-foreground">
+              {hasActive 
+                ? `${activeDepts} ${t('common:enterprise.departments.marketing', 'dept').replace(/Marketing/i, t('common:enterprise.autopilot.actions_short', 'departments'))} ${t('common:enterprise.autopilot_active', 'active')}`
+                : t('common:enterprise.autopilot.subtitle')}
+            </p>
+            {lastExecution && (
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {t('common:dashboard.last', 'Last')}: {lastExecution.status} • {lastExecution.credits_consumed} cr
               </p>
             )}
           </div>
           <Button 
             size="sm" 
-            variant={isEnabled ? "outline" : "default"}
-            onClick={() => onNavigate('marketing-hub')}
+            variant={hasActive ? "outline" : "default"}
+            onClick={() => onNavigate('autopilot')}
             className="shrink-0"
           >
-            {isEnabled 
-              ? t('common:actions.view') 
-              : t('common:dashboard.activate', 'Activate')}
+            {hasActive ? t('common:actions.view') : t('common:dashboard.activate', 'Activate')}
             <ArrowRight className="w-3 h-3 ml-1" />
           </Button>
         </div>
@@ -253,6 +243,7 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
   const { availableCredits, refetch: refetchCredits } = useCompanyCredits(companyId || undefined, profile?.user_id);
   const companyState = useCompanyState(companyId || undefined, profile?.user_id);
   const businessHealth = useBusinessHealth(companyId || undefined);
+  const { departments: deptConfigs } = useDepartmentUnlocking(companyId, companyState.maturityLevel);
   
   const enabledAgentsList = agents.filter(agent => enabledAgentIds.includes(agent.id));
   
@@ -382,9 +373,14 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
         </div>
       </div>
 
-      {/* Autopilot Status Card */}
+      {/* Enterprise Autopilot Status Card */}
       {companyId && (
-        <AutopilotStatusCard companyId={companyId} onNavigate={handleNavigate} />
+        <EnterpriseAutopilotStatusCard companyId={companyId} departments={deptConfigs} onNavigate={handleNavigate} />
+      )}
+
+      {/* Enterprise Welcome (show once when departments exist but none active) */}
+      {companyId && deptConfigs.length > 0 && !deptConfigs.some(d => d.autopilot_enabled) && (
+        <EnterpriseAutopilotWelcome unlockedDepartments={deptConfigs.map(d => d.department)} />
       )}
 
       {/* Primary Objective Banner */}

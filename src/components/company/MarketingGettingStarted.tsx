@@ -50,7 +50,7 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab }: MarketingGett
         {
           key: "connectSocial",
           completed: (socialRes.data?.length || 0) > 0,
-          action: () => navigate("/company-dashboard?view=configuracion"),
+          action: () => navigate("/company-dashboard?view=configuracion&tab=canales"),
           level: 1,
         },
         {

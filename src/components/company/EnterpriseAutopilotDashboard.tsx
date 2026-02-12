@@ -723,7 +723,7 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
               <>
                 <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
                   setPrerequisiteDialogDept(null);
-                  navigate('/company-dashboard?view=configuracion');
+                  navigate('/company-dashboard?view=configuracion&tab=canales');
                 }}>
                   <Link2 className="w-4 h-4" />
                   {t('enterprise.prerequisites.connectNow')}

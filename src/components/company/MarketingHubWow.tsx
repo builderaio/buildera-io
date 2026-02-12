@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   BarChart3, Calendar, TrendingUp, Users, Heart, Plus, 
   Zap, Target, Brain, Rocket, PenTool, Network, Video, Image,
-  FolderOpen
+  FolderOpen, Ear
 } from "lucide-react";
 import { getPlatformDisplayName } from '@/lib/socialPlatforms';
 import ContentCalendar from './ContentCalendar';
@@ -21,6 +21,7 @@ import { CrearContentHub } from './CrearContentHub';
 import { UnifiedLibrary } from './UnifiedLibrary';
 import { CampaignDashboard } from './campaign/CampaignDashboard';
 import { InstagramCommunityManager } from './instagram/InstagramCommunityManager';
+import { SocialListeningPanel } from './marketing/SocialListeningPanel';
 
 interface MarketingHubWowProps {
   profile: any;
@@ -43,7 +44,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   
   const getInitialTab = () => {
     const tab = searchParams.get('tab');
-    const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content']);
+    const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening']);
     if (tab && allowed.has(tab)) return tab;
     return 'dashboard';
   };
@@ -54,7 +55,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab) {
-      const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content']);
+      const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening']);
       if (allowed.has(tab) && tab !== activeTab) setActiveTab(tab);
     }
   }, [searchParams]);
@@ -358,7 +359,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:w-fit lg:grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-6 lg:w-fit lg:grid-cols-6 mb-6">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">{t("hub.tabs.dashboard")}</span>
@@ -370,6 +371,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           <TabsTrigger value="campaigns" className="flex items-center gap-2">
             <Rocket className="w-4 h-4" />
             <span className="hidden sm:inline">{t("hub.tabs.campaigns")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="listening" className="flex items-center gap-2">
+            <Ear className="w-4 h-4" />
+            <span className="hidden sm:inline">{t("hub.tabs.listening")}</span>
           </TabsTrigger>
           <TabsTrigger value="calendar" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
@@ -500,6 +505,11 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             selectedPlatform={selectedPlatform}
             onNavigateTab={handleTabChange}
           />
+        </TabsContent>
+
+        {/* Social Listening Tab */}
+        <TabsContent value="listening" className="space-y-6">
+          <SocialListeningPanel profile={profile} companyId={profile?.company_id} />
         </TabsContent>
 
         {/* Campaigns Tab */}

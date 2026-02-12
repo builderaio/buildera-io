@@ -1,133 +1,126 @@
 
 
-# Capability Genesis: Creacion Dinamica de Capacidades en Tiempo Real
+# Fix: Validacion de Prerequisites en el Autopilot
 
-## Diagnostico del Gap
+## Diagnostico de los Problemas
 
-El sistema actual tiene un conjunto **fijo de 16 capabilities** pre-definidas en una migracion SQL. La funcion `evaluateCapabilities` solo evalua condiciones de activacion (`min_deals`, `min_posts`, etc.) para esas 16 capabilities existentes.
+Analizando los datos del usuario `mdelatorrep@gmail.com` (empresa Iddeo, ID: `224c42a1`):
 
-**Lo que NO puede hacer hoy:**
-- Detectar que una empresa necesita una capacidad que no existe en el catalogo
-- Crear nuevas capabilities basadas en patrones emergentes de uso
-- Proponer capacidades derivadas de inteligencia externa (ej: nueva regulacion requiere capability `gdpr_compliance_monitor` que no existia)
-- Aprender de empresas similares y replicar capabilities exitosas
+| Dato | Estado |
+|------|--------|
+| Strategy | Existe (generada con AI) |
+| Social connections (LinkedIn, Instagram, Facebook) | NINGUNA |
+| Social accounts | Solo upload_post_profile (no conectada a redes reales), TikTok is_connected=false |
+| Social posts (IG, LI, FB, TK) | 0 en todas |
+| Agent usage log | Vacio (0 ejecuciones registradas) |
+| Autopilot marketing (dept config) | ACTIVADO (autopilot_enabled=true) |
+| Autopilot decisions | 2 ciclos ejecutados, ambos con `reasoning: "AI response could not be parsed"` y `agent_to_execute: "ANALYTICS_REPORTER"` (agente inexistente) |
 
----
+### Problemas raiz identificados:
 
-## Solucion: Capability Genesis Engine
+1. **Sin validacion de prerequisites al activar**: El toggle de autopilot se activa sin verificar que existan redes sociales conectadas ni datos. El usuario activo marketing autopilot sin tener NINGUNA red social conectada.
 
-Un sistema de 3 capas que permite al Autopilot Brain **inventar, proponer y activar** nuevas capabilities en tiempo real.
+2. **Fallback a agente fantasma**: Cuando la IA no puede parsear la respuesta (porque recibe datos completamente vacios), el engine usa `ANALYTICS_REPORTER` como fallback, pero ese agente NO existe en `platform_agents`. Resultado: "No agent mapped", no pasa nada.
 
-### Capa 1: Deteccion de Necesidades (Capability Gap Detector)
-
-Dentro de la fase LEARN del enterprise-autopilot-engine, agregar logica que analiza:
-
-1. **Decisiones sin agente mapeado** (`no_agent_mapped`): Si el engine genera decisiones que ningun agente puede ejecutar, es senal de que falta una capability
-2. **Decisiones bloqueadas recurrentes**: Si guardrails bloquean repetidamente el mismo tipo de accion, puede indicar que se necesita una capability de compliance o gestion
-3. **Senales externas sin respuesta**: Si `external_intelligence_cache` detecta cambios (regulatorios, competitivos) pero no hay capability para reaccionar
-4. **Patrones de uso**: Si un departamento ejecuta el mismo decision_type repetidamente con exito, podria beneficiarse de una capability automatizada
-
-### Capa 2: Generacion de Capabilities via IA (Capability Proposer)
-
-Una nueva funcion `proposeNewCapabilities` que:
-
-1. Recopila los gaps detectados en la capa anterior
-2. Llama a `openai-responses-handler` con un prompt especializado:
-   - "Dada esta empresa con industria X, estos gaps detectados, y estas senales externas, propone 1-3 nuevas capabilities con: codigo, nombre, descripcion, trigger_condition, departamento, maturity requerido"
-3. La IA genera capabilities personalizadas para esa empresa especifica
-4. Se insertan en `autopilot_capabilities` con status `proposed` (nuevo campo)
-
-### Capa 3: Activacion Gobernada
-
-Las capabilities propuestas por IA pasan por un flujo de gobernanza:
-
-- **Auto-activacion**: Si la capability tiene `auto_activate=true` (cuando el riesgo es bajo, ej: analytics)
-- **Aprobacion humana**: Si requiere accion costosa o riesgosa (ej: contratar servicio externo), se crea entrada en `content_approvals`
-- **Periodo de prueba**: Capabilities nuevas entran en modo `trial` por 7 dias antes de ser permanentes
+3. **Engine ejecuta ciclos vacios**: El SENSE phase devuelve 0 posts en todas las plataformas, la IA no puede generar decisiones utiles con datos vacios, y el ciclo completo es desperdicio de recursos.
 
 ---
 
-## Implementacion Tecnica
+## Plan de Solucion
 
-### 1. Migrar tabla `autopilot_capabilities` (nuevos campos)
+### Paso 1: Prerequisite Gate en el Enterprise Engine
 
-Agregar columnas:
-- `status`: `seeded | proposed | trial | active | deprecated` (reemplaza el booleano `is_active`)
-- `source`: `system_seed | ai_generated | external_signal | pattern_detected`
-- `auto_activate`: booleano para capabilities de bajo riesgo
-- `trial_expires_at`: fecha de fin del periodo de prueba
-- `proposed_reason`: texto explicando por que la IA propuso esta capability
-- `gap_evidence`: JSONB con los datos que justifican la necesidad
+**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts`
 
-### 2. Capability Gap Detector (nueva funcion en el engine)
+Agregar una fase `PREFLIGHT` antes de SENSE que valide condiciones minimas por departamento:
 
-Se ejecuta al final de cada ciclo LEARN. Analiza:
-- Ultimas 50 decisiones del departamento
-- Busca patrones: decision_types sin agente, bloqueos recurrentes, senales externas sin respuesta
-- Genera un `gap_report` JSONB con las necesidades detectadas
+- Marketing: al menos 1 red social conectada (`social_accounts` con `is_connected=true` y plataforma real) O al menos 10 posts importados
+- Sales: al menos 1 deal o 1 contacto en CRM
+- Finance: al menos configuracion de presupuesto
 
-### 3. Capability Proposer (nueva funcion en el engine)
+Si preflight falla, el ciclo se aborta inmediatamente con un resultado descriptivo y se registra en `autopilot_execution_log` con `phase: 'preflight'` y `error_details` explicando que falta.
 
-Se ejecuta si el gap detector encuentra 2+ gaps consistentes. Llama a la IA con:
-- Perfil de la empresa (industria, maturity, departamentos activos)
-- Gap report
-- Inteligencia externa reciente
-- Capabilities existentes (para no duplicar)
+### Paso 2: Prerequisite Gate en la UI (toggle de activacion)
 
-La IA responde con un JSON de capabilities nuevas que se insertan como `proposed`.
+**Archivos**: 
+- `src/components/company/EnterpriseAutopilotDashboard.tsx`
+- `src/components/company/marketing/AutopilotDashboard.tsx`
 
-### 4. Capability Lifecycle Manager
+Antes de permitir `autopilot_enabled=true`:
+- Verificar redes sociales conectadas (para marketing)
+- Si no cumple, mostrar un Dialog/Alert explicando que se necesita y con CTAs directos:
+  - "Conectar redes sociales" -> navega a la seccion de conexion
+  - "Importar datos de redes" -> abre el flujo de importacion
+- El toggle NO se activa hasta que se cumplan los minimos
 
-Logica que gestiona el ciclo de vida:
-- `proposed` -> `trial` (cuando se auto-activa o el usuario aprueba)
-- `trial` -> `active` (cuando pasan 7 dias sin problemas)
-- `active` -> `deprecated` (cuando no se usa en 30 dias)
-- Dashboard muestra capabilities propuestas con CTA "Activar" / "Rechazar"
+### Paso 3: Corregir el fallback de AI parsing
 
-### 5. UI: Panel de Capabilities Propuestas
+**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts`
 
-En el `EnterpriseAutopilotDashboard`, agregar seccion "Capabilities Sugeridas":
-- Cards con icono, nombre, descripcion, y razon de la propuesta
-- Badge "IA Sugerida" o "Senal Externa"
-- Botones: Activar / Periodo de Prueba / Rechazar
-- Indicador de evidencia (cuantos gaps respaldan la sugerencia)
+Cambiar el fallback cuando AI no puede parsearse:
+- En vez de inventar una decision con `ANALYTICS_REPORTER` (inexistente), generar una decision con `decision_type: 'analyze'` pero con `agent_to_execute: null`
+- Esto evita el intento de ejecucion de un agente fantasma
+- Registrar el fallo de parsing en el log con detalles utiles
 
-### 6. i18n
+### Paso 4: SENSE Phase con deteccion de datos insuficientes
 
-Cadenas para ES/EN/PT cubriendo:
-- Estados de capabilities (proposed, trial, active, deprecated)
-- Panel de sugerencias
-- Notificaciones de nuevas capabilities propuestas
+**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts`
 
----
+Despues del SENSE, evaluar si los datos son "suficientes" para que la IA tome decisiones:
+- Marketing: si todas las plataformas tienen `count: 0` y no hay campanas activas, abortar con mensaje claro
+- Esto evita enviar datos vacios a la IA que no puede generar nada util
 
-## Flujo Completo
+### Paso 5: Desactivar autopilot del usuario actual
+
+**Migracion SQL**
+
+Desactivar el autopilot de marketing para la empresa Iddeo ya que fue activado sin datos:
 
 ```text
-CICLO AUTOPILOT (LEARN Phase)
+UPDATE company_department_config 
+SET autopilot_enabled = false 
+WHERE company_id = '224c42a1-...' AND department = 'marketing';
+```
+
+### Paso 6: i18n para mensajes de prerequisites
+
+**Archivos**: `public/locales/[es|en|pt]/common.json`
+
+Agregar cadenas:
+- `enterprise.prerequisites.socialRequired`: "Necesitas conectar al menos una red social para activar el autopilot de marketing"
+- `enterprise.prerequisites.connectNow`: "Conectar ahora"
+- `enterprise.prerequisites.importData`: "Importar datos"
+- `enterprise.preflight.aborted`: "Ciclo abortado: datos insuficientes"
+
+---
+
+## Flujo Corregido
+
+```text
+USUARIO ACTIVA TOGGLE AUTOPILOT
         |
         v
-GAP DETECTOR
-  - "3 decisiones sin agente mapeado tipo 'competitor_response'"
-  - "Senal externa: nuevo competidor detectado, sin capability para reaccionar"
+PREREQUISITE CHECK (UI)
+  - Marketing: redes sociales conectadas?
+  - Sales: datos CRM?
+  - Finance: presupuesto configurado?
+        |
+   NO --+--> DIALOG: "Necesitas X para activar"
+        |         |-> CTA: "Conectar redes"
+        |         |-> CTA: "Importar datos"
+        |
+   SI --+--> TOGGLE ACTIVA
         |
         v
-CAPABILITY PROPOSER (IA)
-  - Input: gaps + perfil empresa + intel externa
-  - Output: { code: "competitive_response_engine", 
-               name: "Motor de Respuesta Competitiva",
-               department: "marketing",
-               trigger: { min_competitor_signals: 3 },
-               auto_activate: true }
+ENGINE CYCLE STARTS
         |
         v
-INSERT autopilot_capabilities (status: 'proposed')
+PREFLIGHT CHECK (Engine)
+  - Datos minimos existen?
         |
-        v
-AUTO-ACTIVATE o APPROVAL HUMANO
+   NO --+--> LOG: "preflight_failed" + ABORT
         |
-        v
-TRIAL (7 dias) -> ACTIVE
+   SI --+--> SENSE -> THINK -> GUARD -> ACT -> LEARN
 ```
 
 ---
@@ -136,10 +129,11 @@ TRIAL (7 dias) -> ACTIVE
 
 | Orden | Entregable | Prioridad |
 |-------|-----------|-----------|
-| 1 | Migracion: nuevos campos en autopilot_capabilities | Alta |
-| 2 | Capability Gap Detector en LEARN phase | Alta |
-| 3 | Capability Proposer (llamada IA) | Alta |
-| 4 | Capability Lifecycle Manager (trial/active/deprecated) | Media |
-| 5 | UI: Panel de Capabilities Sugeridas en Dashboard | Media |
-| 6 | i18n ES/EN/PT | Baja |
+| 1 | Preflight gate en enterprise-autopilot-engine | Alta |
+| 2 | Corregir fallback AI (eliminar ANALYTICS_REPORTER fantasma) | Alta |
+| 3 | SENSE data sufficiency check | Alta |
+| 4 | Prerequisite gate en UI (EnterpriseAutopilotDashboard) | Alta |
+| 5 | Prerequisite gate en UI (AutopilotDashboard marketing) | Alta |
+| 6 | Desactivar autopilot de Iddeo | Media |
+| 7 | i18n ES/EN/PT | Baja |
 

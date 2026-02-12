@@ -7690,6 +7690,127 @@ export type Database = {
         }
         Relationships: []
       }
+      smart_link_leads: {
+        Row: {
+          captured_at: string
+          custom_fields: Json | null
+          email: string | null
+          id: string
+          ip_address: string | null
+          link_id: string
+          name: string | null
+          phone: string | null
+          source_platform: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          captured_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          link_id: string
+          name?: string | null
+          phone?: string | null
+          source_platform?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          captured_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          id?: string
+          ip_address?: string | null
+          link_id?: string
+          name?: string | null
+          phone?: string | null
+          source_platform?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_link_leads_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "smart_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_links: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          destination_url: string | null
+          form_fields: Json
+          id: string
+          is_active: boolean
+          page_config: Json
+          slug: string
+          template_type: string
+          title: string
+          total_clicks: number
+          total_leads: number
+          updated_at: string
+          user_id: string
+          utm_params: Json | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          destination_url?: string | null
+          form_fields?: Json
+          id?: string
+          is_active?: boolean
+          page_config?: Json
+          slug: string
+          template_type?: string
+          title: string
+          total_clicks?: number
+          total_leads?: number
+          updated_at?: string
+          user_id: string
+          utm_params?: Json | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          destination_url?: string | null
+          form_fields?: Json
+          id?: string
+          is_active?: boolean
+          page_config?: Json
+          slug?: string
+          template_type?: string
+          title?: string
+          total_clicks?: number
+          total_leads?: number
+          updated_at?: string
+          user_id?: string
+          utm_params?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_links_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_accounts: {
         Row: {
           access_token: string | null
@@ -9117,6 +9238,78 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      utm_click_events: {
+        Row: {
+          clicked_at: string
+          company_id: string
+          country: string | null
+          device_type: string | null
+          id: string
+          ip_address: string | null
+          post_id: string | null
+          referrer: string | null
+          smart_link_id: string | null
+          url: string
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          clicked_at?: string
+          company_id: string
+          country?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          post_id?: string | null
+          referrer?: string | null
+          smart_link_id?: string | null
+          url: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          clicked_at?: string
+          company_id?: string
+          country?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          post_id?: string | null
+          referrer?: string | null
+          smart_link_id?: string | null
+          url?: string
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "utm_click_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "utm_click_events_smart_link_id_fkey"
+            columns: ["smart_link_id"]
+            isOneToOne: false
+            referencedRelation: "smart_links"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whitelabel_agent_templates: {
         Row: {

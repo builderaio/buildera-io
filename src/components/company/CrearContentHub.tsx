@@ -3,11 +3,12 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
-  PenTool, Megaphone, Video, ArrowLeft, Sparkles
+  PenTool, Megaphone, Video, ArrowLeft, Sparkles, Link2, Mail
 } from "lucide-react";
 import ContentCreatorTab from "./ContentCreatorTab";
 import { CampaignDashboard } from "./campaign/CampaignDashboard";
 import { CreatifyStudio } from "./creatify/CreatifyStudio";
+import { SmartLinkBuilder } from "./marketing/SmartLinkBuilder";
 
 interface CrearContentHubProps {
   profile: any;
@@ -15,7 +16,7 @@ interface CrearContentHubProps {
   onNavigateTab: (tab: string) => void;
 }
 
-type CreationPath = null | "quick-post" | "campaign" | "creative-studio";
+type CreationPath = null | "quick-post" | "campaign" | "creative-studio" | "smart-links" | "email-sequence";
 
 export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: CrearContentHubProps) => {
   const { t } = useTranslation("marketing");
@@ -61,6 +62,17 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
     );
   }
 
+  if (activePath === "smart-links") {
+    return (
+      <div className="space-y-4">
+        <SmartLinkBuilder
+          companyId={profile?.company_id || ""}
+          onBack={() => setActivePath(null)}
+        />
+      </div>
+    );
+  }
+
   const paths = [
     {
       id: "quick-post" as CreationPath,
@@ -89,6 +101,24 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
       gradient: "from-purple-500/10 to-pink-500/10",
       iconBg: "bg-purple-500/10 text-purple-600",
     },
+    {
+      id: "smart-links" as CreationPath,
+      icon: Link2,
+      titleKey: "hub.crear.smartLinks.title",
+      descKey: "hub.crear.smartLinks.description",
+      features: ["hub.crear.smartLinks.f1", "hub.crear.smartLinks.f2", "hub.crear.smartLinks.f3"],
+      gradient: "from-emerald-500/10 to-teal-500/10",
+      iconBg: "bg-emerald-500/10 text-emerald-600",
+    },
+    {
+      id: "email-sequence" as CreationPath,
+      icon: Mail,
+      titleKey: "hub.crear.emailSequence.title",
+      descKey: "hub.crear.emailSequence.description",
+      features: ["hub.crear.emailSequence.f1", "hub.crear.emailSequence.f2", "hub.crear.emailSequence.f3"],
+      gradient: "from-cyan-500/10 to-blue-500/10",
+      iconBg: "bg-cyan-500/10 text-cyan-600",
+    },
   ];
 
   return (
@@ -101,7 +131,7 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
         <p className="text-muted-foreground mt-1">{t("hub.crear.subtitle")}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {paths.map((path) => {
           const Icon = path.icon;
           return (

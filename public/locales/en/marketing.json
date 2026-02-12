@@ -172,5 +172,104 @@
     "optimizedContent": "Era Optimized Content",
     "useOptimization": "Use Era Optimization",
     "keepOriginal": "Keep Original"
+  },
+  "hub": {
+    "loading": "Loading Marketing Hub...",
+    "gettingStarted": {
+      "title": "Getting Started",
+      "steps": {
+        "connectSocial": "Connect social networks",
+        "completeBrand": "Complete brand DNA",
+        "firstCampaign": "Create first campaign",
+        "firstVideo": "Generate first video",
+        "firstPost": "Schedule first post"
+      }
+    },
+    "tabs": {
+      "dashboard": "Dashboard",
+      "create": "Create",
+      "campaigns": "Campaigns",
+      "calendar": "Calendar",
+      "library": "Library"
+    },
+    "metrics": {
+      "insights": "Insights Generated",
+      "engagement": "Total Engagement",
+      "campaigns": "Active Campaigns",
+      "automation": "Automation Score",
+      "insightsDesc": "Intelligent analyses generated this month",
+      "engagementDesc": "Interactions across all platforms",
+      "campaignsDesc": "Running marketing campaigns",
+      "automationDesc": "AI automation efficiency",
+      "startingAnalysis": "Starting analysis",
+      "noData": "No data available",
+      "createFirst": "Create your first campaign",
+      "configureAuto": "Configure automation",
+      "running": "running",
+      "noCampaigns": "No campaigns",
+      "actions": "actions",
+      "noActions": "No actions"
+    },
+    "platformPerformance": "Platform Performance",
+    "yourAudiences": "Your Audiences",
+    "audiencesDesc": "Identified segments",
+    "quickActions": "Quick Actions",
+    "createContent": "Create Content",
+    "newCampaign": "New Campaign",
+    "viewCalendar": "View Calendar",
+    "libraryBtn": "Library",
+    "connectNetworks": "Connect Networks",
+    "connectToSeeMetrics": "Connect your social networks to see metrics",
+    "publications": "publications",
+    "totalEngagement": "total engagement",
+    "avgPerPost": "avg/post",
+    "crear": {
+      "title": "What do you want to create?",
+      "subtitle": "Choose the path that best fits your needs",
+      "back": "Back to options",
+      "start": "Get Started",
+      "quickPost": {
+        "title": "Quick Post",
+        "description": "Create and publish content immediately with AI or manually",
+        "f1": "AI text generation",
+        "f2": "Era optimization",
+        "f3": "Direct publishing"
+      },
+      "campaign": {
+        "title": "Full Campaign",
+        "description": "Design a comprehensive marketing strategy step by step",
+        "f1": "Guided 7-step wizard",
+        "f2": "Buyer personas and segmentation",
+        "f3": "Multi-platform content"
+      },
+      "studio": {
+        "title": "Creative Studio",
+        "description": "Generate professional videos, avatars and banners with AI",
+        "f1": "Video Ads from your website",
+        "f2": "Custom AI avatars",
+        "f3": "IAB banners in all sizes"
+      }
+    },
+    "library": {
+      "title": "Unified Library",
+      "subtitle": "All your content in one place",
+      "loading": "Loading library...",
+      "refresh": "Refresh",
+      "untitled": "Untitled",
+      "publishedPost": "Published post",
+      "deleted": "Content deleted",
+      "deleteError": "Error deleting",
+      "copied": "URL copied to clipboard",
+      "empty": "Your library is empty",
+      "emptyHint": "Create content, generate videos or publish posts to start filling it",
+      "items": "items",
+      "filters": {
+        "all": "All",
+        "text": "Text",
+        "image": "Images",
+        "video": "Videos",
+        "banner": "Banners"
+      }
+    }
   }
 }

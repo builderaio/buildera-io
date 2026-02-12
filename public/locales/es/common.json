@@ -877,5 +877,28 @@
   "previous": "Anterior",
   "next": "Siguiente",
   "finish": "Finalizar",
-  "add": "Añadir"
+  "add": "Añadir",
+  "enterprise": {
+    "department_unlocked": "Departamento desbloqueado: {{department}}",
+    "department_unlocked_desc": "Se ha desbloqueado una nueva capacidad empresarial automáticamente gracias al crecimiento de tu negocio.",
+    "departments": {
+      "marketing": "Marketing",
+      "sales": "Comercial",
+      "finance": "Finanzas",
+      "legal": "Legal",
+      "hr": "Recursos Humanos",
+      "operations": "Operaciones"
+    },
+    "maturity": {
+      "starter": "Inicial",
+      "growing": "En Crecimiento",
+      "established": "Establecido",
+      "scaling": "Escalando"
+    },
+    "autopilot_active": "Autopilot Activo",
+    "autopilot_inactive": "Autopilot Inactivo",
+    "locked": "Bloqueado",
+    "unlocked": "Desbloqueado",
+    "requires_maturity": "Requiere nivel: {{level}}"
+  }
 }

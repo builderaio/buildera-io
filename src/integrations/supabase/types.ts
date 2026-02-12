@@ -2111,6 +2111,77 @@ export type Database = {
         }
         Relationships: []
       }
+      company_department_config: {
+        Row: {
+          active_hours: Json | null
+          allowed_actions: string[]
+          auto_unlocked: boolean
+          auto_unlocked_at: string | null
+          autopilot_enabled: boolean
+          company_id: string
+          created_at: string
+          department: string
+          execution_frequency: string
+          guardrails: Json | null
+          id: string
+          last_execution_at: string | null
+          maturity_level_required: string
+          max_credits_per_cycle: number
+          next_execution_at: string | null
+          require_human_approval: boolean
+          total_cycles_run: number
+          updated_at: string
+        }
+        Insert: {
+          active_hours?: Json | null
+          allowed_actions?: string[]
+          auto_unlocked?: boolean
+          auto_unlocked_at?: string | null
+          autopilot_enabled?: boolean
+          company_id: string
+          created_at?: string
+          department: string
+          execution_frequency?: string
+          guardrails?: Json | null
+          id?: string
+          last_execution_at?: string | null
+          maturity_level_required?: string
+          max_credits_per_cycle?: number
+          next_execution_at?: string | null
+          require_human_approval?: boolean
+          total_cycles_run?: number
+          updated_at?: string
+        }
+        Update: {
+          active_hours?: Json | null
+          allowed_actions?: string[]
+          auto_unlocked?: boolean
+          auto_unlocked_at?: string | null
+          autopilot_enabled?: boolean
+          company_id?: string
+          created_at?: string
+          department?: string
+          execution_frequency?: string
+          guardrails?: Json | null
+          id?: string
+          last_execution_at?: string | null
+          maturity_level_required?: string
+          max_credits_per_cycle?: number
+          next_execution_at?: string | null
+          require_human_approval?: boolean
+          total_cycles_run?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_department_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_digital_presence: {
         Row: {
           action_plan: Json | null
@@ -4825,6 +4896,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      department_execution_log: {
+        Row: {
+          actions_taken: Json | null
+          company_id: string
+          context_snapshot: Json | null
+          created_at: string
+          credits_consumed: number
+          cycle_id: string
+          decisions_made: Json | null
+          department: string
+          error_message: string | null
+          execution_time_ms: number | null
+          guardrail_results: Json | null
+          id: string
+          phase: string
+          status: string
+        }
+        Insert: {
+          actions_taken?: Json | null
+          company_id: string
+          context_snapshot?: Json | null
+          created_at?: string
+          credits_consumed?: number
+          cycle_id?: string
+          decisions_made?: Json | null
+          department: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          guardrail_results?: Json | null
+          id?: string
+          phase: string
+          status?: string
+        }
+        Update: {
+          actions_taken?: Json | null
+          company_id?: string
+          context_snapshot?: Json | null
+          created_at?: string
+          credits_consumed?: number
+          cycle_id?: string
+          decisions_made?: Json | null
+          department?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          guardrail_results?: Json | null
+          id?: string
+          phase?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_execution_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       developer_profiles: {
         Row: {

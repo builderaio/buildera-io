@@ -1,27 +1,64 @@
 {
   "hero": {
-    "badge": "Tecnología empresarial confiable",
-    "title": "Automatiza tu negocio",
-    "subtitle": "simple, seguro y escalable",
-    "description": "Especialistas de IA que trabajan por ti: menos operación, más resultados. Tú te enfocas en crecer.",
+    "badge": "El cerebro autónomo para tu empresa",
+    "title": "Tu empresa se gestiona",
+    "subtitle": "sola, inteligente y sin límites",
+    "description": "Un cerebro empresarial con IA que opera 6 departamentos, aprende de cada decisión y crea nuevas capacidades en tiempo real. Tú defines la visión, Buildera ejecuta.",
     "stats": {
       "companies": "Empresas confiando",
-      "costReduction": "Reducción de costos",
-      "implementation": "Implementación"
+      "costReduction": "Decisiones autónomas",
+      "implementation": "Tiempo de activación"
     },
     "cta": {
-      "start": "Comenzar ahora",
-      "useCases": "Ver casos de uso"
+      "start": "Activar mi cerebro empresarial",
+      "useCases": "Ver cómo funciona"
     },
     "trust": {
-      "message": "Más de 500 empresas ya han automatizado sus procesos con Buildera",
-      "badge": "Líderes en automatización empresarial"
+      "message": "Empresas en crecimiento ya operan con inteligencia autónoma de Buildera",
+      "badge": "Pioneros en gestión empresarial autónoma"
     }
   },
+  "autonomousEnterprise": {
+    "badge": "Enterprise Autopilot Brain",
+    "title": "6 Departamentos. 1 Cerebro. Cero fricción.",
+    "subtitle": "Un sistema autónomo que observa tu negocio, piensa soluciones, aplica guardrails, ejecuta acciones, aprende de los resultados y evoluciona creando nuevas capacidades.",
+    "departments": {
+      "marketing": "Marketing",
+      "sales": "Comercial",
+      "finance": "Finanzas",
+      "legal": "Legal",
+      "hr": "RRHH",
+      "operations": "Operaciones"
+    },
+    "cycleTitle": "El Ciclo de Inteligencia Autónoma",
+    "cycle": {
+      "sense": "Observar",
+      "think": "Pensar",
+      "guard": "Proteger",
+      "act": "Ejecutar",
+      "learn": "Aprender",
+      "evolve": "Evolucionar"
+    },
+    "features": {
+      "adaptive": {
+        "title": "Inteligencia Adaptativa",
+        "description": "Cada decisión se evalúa. Cada resultado se memoriza. El sistema aprende qué funciona para TU empresa y mejora con cada ciclo."
+      },
+      "genesis": {
+        "title": "Capability Genesis",
+        "description": "La IA detecta necesidades que no existían en el catálogo y propone nuevas capacidades personalizadas: monitoreo de competencia, cumplimiento regulatorio, optimización de procesos."
+      },
+      "crossDept": {
+        "title": "Orquestación Cross-Departamental",
+        "description": "Finanzas frena gasto excesivo de Marketing. Legal revisa antes de que Ventas cierre. Todos los departamentos operan coordinados con guardrails inteligentes."
+      }
+    },
+    "cta": "Activar Enterprise Autopilot"
+  },
   "agentShowcase": {
-    "badge": "Ecosistema de 27 Agentes",
-    "title": "Conoce a tus Especialistas de IA",
-    "subtitle": "Un equipo completo de expertos virtuales listos para trabajar por tu empresa, sin horarios ni límites.",
+    "badge": "Ecosistema de 27+ Agentes",
+    "title": "Especialistas de IA para cada área",
+    "subtitle": "Un equipo completo de expertos virtuales que ejecutan las decisiones del cerebro autónomo en cada departamento.",
     "categories": {
       "strategy": "Estrategia",
       "content": "Contenido",
@@ -65,105 +102,105 @@
     "cta": "Ver todos los agentes"
   },
   "howItWorks": {
-    "badge": "Simple y Rápido",
-    "title": "¿Cómo Funciona?",
-    "subtitle": "Tres pasos para activar tu equipo de especialistas de IA y comenzar a ver resultados.",
-    "timeLabel": "Primeros resultados en",
+    "badge": "Activa en minutos",
+    "title": "De registro a empresa autónoma",
+    "subtitle": "Tres pasos para activar tu cerebro empresarial y comenzar a operar con inteligencia autónoma.",
+    "timeLabel": "Primer ciclo autónomo en",
     "steps": {
       "1": {
         "title": "Registra tu Empresa",
-        "description": "Ingresa el nombre y sitio web de tu empresa. Nuestra IA extrae automáticamente la información relevante.",
+        "description": "Ingresa tu empresa. Nuestra IA diagnostica tu presencia digital, identifica oportunidades y analiza tu mercado automáticamente.",
         "features": {
-          "1": "Registro en 30 segundos",
-          "2": "Sin configuración compleja",
-          "3": "Extracción automática de datos"
+          "1": "Diagnóstico digital completo",
+          "2": "Análisis de mercado con IA",
+          "3": "Perfil empresarial en 30 segundos"
         }
       },
       "2": {
         "title": "IA Genera tu Estrategia",
-        "description": "Tres agentes trabajan en paralelo: estratega, creador de contenido y analista generan tu kit inicial.",
+        "description": "Agentes especializados trabajan en paralelo: estrategia, marca, contenido y análisis de audiencia. Tu kit operativo completo.",
         "features": {
-          "1": "Estrategia de marketing completa",
-          "2": "Primeros contenidos listos",
-          "3": "Insights accionables"
+          "1": "Estrategia multi-departamental",
+          "2": "Identidad de marca generada",
+          "3": "Primeros contenidos listos"
         }
       },
       "3": {
-        "title": "Activa y Opera",
-        "description": "Accede a tu dashboard con todos los agentes disponibles. Activa los que necesites según tu plan.",
+        "title": "Autopilot se Activa",
+        "description": "El Enterprise Brain comienza su ciclo autónomo. Observa, decide, ejecuta y aprende. Nuevas capacidades emergen según las necesidades de tu negocio.",
         "features": {
-          "1": "27 agentes especializados",
-          "2": "Ejecución bajo demanda",
-          "3": "Resultados medibles"
+          "1": "6 departamentos autónomos",
+          "2": "Capacidades auto-generadas por IA",
+          "3": "Evolución continua sin intervención"
         }
       }
     }
   },
   "agentsInAction": {
     "badge": "Demo en Vivo",
-    "title": "Agentes en Acción",
-    "subtitle": "Mira cómo nuestros agentes transforman información básica en resultados profesionales.",
-    "inputLabel": "Tú dices...",
+    "title": "Inteligencia Autónoma en Acción",
+    "subtitle": "Mira cómo el cerebro empresarial toma decisiones, ejecuta agentes y aprende de los resultados.",
+    "inputLabel": "Tu empresa necesita...",
     "demos": {
       "strategist": {
-        "agentName": "Estratega de Marketing",
-        "input": "Mi empresa vende ropa sostenible para jóvenes urbanos que valoran el medio ambiente.",
+        "agentName": "Enterprise Brain",
+        "input": "Mi empresa vende ropa sostenible y necesito crecer en todos los frentes: marketing, ventas y operaciones.",
         "output": {
-          "title": "Misión Generada",
-          "content": "Transformar la industria de la moda con prendas que combinan estilo urbano y responsabilidad ambiental, empoderando a una nueva generación de consumidores conscientes.",
+          "title": "3 Departamentos Activados",
+          "content": "Marketing: campaña de contenido orgánico en 4 plataformas. Ventas: pipeline de leads cualificados con scoring automático. Operaciones: optimización de tiempos de respuesta. Todo coordinado por guardrails cross-departamentales.",
           "tags": {
-            "1": "✓ Visión definida",
-            "2": "✓ Propuesta de valor",
-            "3": "✓ Objetivos SMART"
+            "1": "✓ 12 decisiones autónomas",
+            "2": "✓ 3 agentes ejecutados",
+            "3": "✓ Aprendizaje registrado"
           }
         }
       },
       "content": {
-        "agentName": "Creador de Contenido",
-        "input": "Necesito un post para Instagram sobre nuestra nueva colección de verano.",
+        "agentName": "Capability Genesis",
+        "input": "El sistema detectó que un nuevo competidor entró al mercado pero no tengo capacidad para monitorearlo.",
         "output": {
-          "title": "Post Generado",
-          "content": "☀️ El verano llegó con consciencia. Nuestra nueva colección #EcoSummer combina algodón orgánico + diseños que cuentan historias. Cada prenda es un voto por el planeta 🌍",
+          "title": "Nueva Capacidad Propuesta",
+          "content": "Se detectaron 3 señales externas sobre competencia sin capacidad de respuesta. El sistema propone: 'Motor de Respuesta Competitiva' — monitoreo automático de movimientos competitivos con alertas y contra-estrategias.",
           "tags": {
-            "1": "✓ Hashtags optimizados",
-            "2": "✓ Call-to-action",
-            "3": "✓ Tono de marca"
+            "1": "✓ Gap detectado",
+            "2": "✓ Capacidad auto-creada",
+            "3": "✓ Periodo de prueba 7 días"
           }
         }
       },
       "insights": {
-        "agentName": "Generador de Insights",
-        "input": "Analiza el rendimiento de mis últimas 50 publicaciones en redes sociales.",
+        "agentName": "Inteligencia Adaptativa",
+        "input": "¿Qué ha aprendido el sistema sobre mi negocio en las últimas semanas?",
         "output": {
-          "title": "Insight Descubierto",
-          "content": "Tus posts con personas reales generan 3.2x más engagement que los de producto solo. Los martes a las 7PM tienen 45% más alcance. Recomendación: aumentar contenido lifestyle.",
+          "title": "5 Lecciones Aprendidas",
+          "content": "Posts con personas reales generan 3.2x más engagement. Los martes a las 7PM tienen mejor alcance. Campañas con presupuesto < $50 no generan ROI positivo. Los leads que responden en < 1 hora cierran 60% más.",
           "tags": {
-            "1": "✓ Patrón identificado",
-            "2": "✓ Horario óptimo",
-            "3": "✓ Acción recomendada"
+            "1": "✓ IQ Score: 78/100",
+            "2": "✓ 23 decisiones evaluadas",
+            "3": "✓ 4 reglas extraídas"
           }
         }
       }
     },
-    "cta": "Probar Ahora Gratis"
+    "cta": "Activar mi Empresa Autónoma"
   },
   "values": {
     "secure": {
-      "title": "Seguro por diseño",
-      "description": "Tus datos y operaciones, protegidos"
+      "title": "Guardrails inteligentes",
+      "description": "Protección cross-departamental automática"
     },
     "scalable": {
-      "title": "Escala sin fricción",
-      "description": "Crece sin aumentar tu carga"
+      "title": "Evoluciona solo",
+      "description": "Nuevas capacidades emergen por IA"
     },
     "flexible": {
-      "title": "Flexible a tu negocio",
-      "description": "Se adapta a tu forma de trabajar"
+      "title": "Aprende de ti",
+      "description": "Cada ciclo es más inteligente"
     }
   },
   "problem": {
     "title": "El problema en las empresas y nuestra solución",
-    "subtitle": "Necesitas resultados sin inflar tu estructura. Te damos un equipo de IA listo para operar, con seguridad, control y enfoque en resultados.",
+    "subtitle": "Necesitas resultados sin inflar tu estructura. Te damos un cerebro empresarial autónomo que opera, aprende y evoluciona.",
     "challenges": {
       "title": "La realidad de muchas empresas",
       "dispersed": {
@@ -182,96 +219,96 @@
     "solution": {
       "title": "Cómo te ayuda Buildera",
       "specialists": {
-        "title": "Especialistas virtuales por área",
-        "description": "marketing, ventas, servicio, finanzas y más, operando 24/7."
+        "title": "Cerebro autónomo multi-departamental",
+        "description": "marketing, ventas, finanzas, legal, RRHH y operaciones operando de forma coordinada 24/7."
       },
       "security": {
-        "title": "Seguridad, escalabilidad y flexibilidad",
-        "description": "controles por roles, trazabilidad y flujos que se adaptan a tu operación."
+        "title": "Guardrails y gobernanza",
+        "description": "cada decisión pasa por controles de seguridad cross-departamentales antes de ejecutarse."
       },
       "measurable": {
-        "title": "Resultados medibles",
-        "description": "KPIs y reportes para decidir y optimizar con claridad."
+        "title": "Inteligencia que evoluciona",
+        "description": "el sistema aprende de cada resultado y propone nuevas capacidades basadas en las necesidades reales de tu negocio."
       }
     }
   },
   "ecosystem": {
-    "title": "Ecosistema que impulsa tu crecimiento",
-    "subtitle": "Empresas, desarrolladores y expertos trabajando juntos para operar con IA de forma simple y efectiva.",
+    "title": "Un ecosistema que piensa, ejecuta y evoluciona",
+    "subtitle": "Empresas, agentes de IA y inteligencia externa trabajando juntos en un ciclo de mejora continua.",
     "roles": {
-      "companies": "Empresas",
-      "developers": "Desarrolladores",
-      "experts": "Expertos"
+      "companies": "Tu Empresa",
+      "developers": "Cerebro IA",
+      "experts": "Inteligencia Externa"
     },
     "companies": {
-      "title": "Empresas",
-      "description": "Operan con agentes de IA hechos a su medida.",
+      "title": "Tu Empresa",
+      "description": "Define la visión y los objetivos. El cerebro se encarga del resto.",
       "benefits": {
-        "lessOperation": "Menos operación",
-        "moreGrowth": "Más crecimiento",
-        "measurable": "Procesos medibles"
+        "lessOperation": "Cero operación manual",
+        "moreGrowth": "Crecimiento autónomo",
+        "measurable": "Resultados trazables"
       }
     },
     "developers": {
-      "title": "Desarrolladores",
-      "description": "Crean y escalan agentes listos para el mercado.",
+      "title": "Cerebro Empresarial",
+      "description": "27+ agentes coordinados por inteligencia autónoma en 6 departamentos.",
       "benefits": {
-        "timeToMarket": "Time‑to‑market",
-        "reusable": "Plantillas reutilizables",
-        "scalability": "Escalabilidad"
+        "timeToMarket": "Decisiones en tiempo real",
+        "reusable": "Aprendizaje continuo",
+        "scalability": "Capacidades auto-generadas"
       }
     },
     "experts": {
-      "title": "Expertos",
-      "description": "Aseguran alineación estratégica y ética.",
+      "title": "Inteligencia Externa",
+      "description": "Señales de mercado, competencia y regulación alimentan las decisiones.",
       "benefits": {
-        "bestPractices": "Buenas prácticas",
-        "governance": "Gobierno y control",
-        "reliable": "Resultados confiables"
+        "bestPractices": "Tendencias de mercado",
+        "governance": "Alertas regulatorias",
+        "reliable": "Inteligencia competitiva"
       }
     },
-    "impact": "Resultado: menos operación, más crecimiento — con una experiencia simple y segura."
+    "impact": "Resultado: una empresa que se gestiona sola, aprende de cada decisión y evoluciona con tu negocio."
   },
   "useCases": {
     "title": "Casos de uso",
-    "subtitle": "Lo que puedes automatizar hoy para reducir operación y enfocarte en crecer.",
+    "subtitle": "Lo que tu empresa autónoma puede hacer hoy sin intervención humana.",
     "cases": {
       "socialMedia": {
-        "title": "Marketing en redes sociales",
-        "description": "Publicaciones, respuestas y calendario automático para Instagram y Facebook.",
-        "features": ["Ideas y copies listos", "Publicación programada", "Respuestas 24/7"]
+        "title": "Marketing autónomo",
+        "description": "Contenido, publicación, análisis y optimización automática en todas tus plataformas.",
+        "features": ["Contenido generado por IA", "Publicación autónoma", "Optimización por resultados"]
       },
       "customerService": {
-        "title": "Atención al cliente 24/7",
-        "description": "WhatsApp, web o redes: respuestas rápidas, agenda y seguimiento.",
-        "features": ["Preguntas frecuentes", "Agendamiento", "Escalamiento a humano"]
+        "title": "Ventas inteligentes",
+        "description": "Pipeline automático con cualificación, seguimiento y cierre asistido por IA.",
+        "features": ["Lead scoring autónomo", "Propuestas automáticas", "Forecast predictivo"]
       },
       "sales": {
-        "title": "Ventas y prospección",
-        "description": "Captura leads, califícalos y haz seguimiento sin perder oportunidades.",
-        "features": ["Formularios y chat", "Lead scoring", "Recordatorios automáticos"]
+        "title": "Finanzas vigilantes",
+        "description": "Monitoreo de créditos, presupuesto y cashflow con alertas proactivas.",
+        "features": ["Control presupuestario", "Alertas de gasto", "Guardrails cross-dept"]
       },
       "ecommerce": {
-        "title": "E‑commerce",
-        "description": "Catálogo, inventario y recomendaciones para mover tus productos.",
-        "features": ["Sincroniza catálogo", "Promos por temporada", "Carritos recuperados"]
+        "title": "Legal proactivo",
+        "description": "Monitoreo regulatorio y revisión de compliance automática.",
+        "features": ["Alertas regulatorias", "Revisión de contratos", "Cumplimiento automático"]
       },
       "professionalServices": {
-        "title": "Servicios profesionales",
-        "description": "Agenda, confirmaciones y recordatorios para citas sin fricciones.",
-        "features": ["Reserva online", "Recordatorios", "Encuestas post‑servicio"]
+        "title": "RRHH estratégico",
+        "description": "Perfiles de talento, clima organizacional y recomendaciones de formación.",
+        "features": ["Job profiling IA", "Clima organizacional", "Talent matching"]
       },
       "education": {
-        "title": "Educación y cursos",
-        "description": "Matrículas, seguimiento y comunicación con estudiantes.",
-        "features": ["Inscripción simple", "Onboarding", "Progreso y avisos"]
+        "title": "Operaciones optimizadas",
+        "description": "Detección de cuellos de botella, automatización de tareas y eficiencia operativa.",
+        "features": ["Detección de bottlenecks", "Automatización inteligente", "SLA monitoring"]
       }
     }
   },
   "finalCta": {
-    "title": "¿Listo para operar tu negocio con IA segura y escalable?",
-    "description": "Activa especialistas virtuales para marketing, ventas y servicio con seguridad empresarial, control total y resultados reales.",
-    "button": "Activar mi equipo de especialistas"
+    "title": "¿Listo para que tu empresa se gestione sola?",
+    "description": "Activa un cerebro empresarial con IA que opera 6 departamentos, aprende de cada decisión y crea nuevas capacidades automáticamente.",
+    "button": "Activar mi Enterprise Brain"
   },
   "footer": {
     "brand": {

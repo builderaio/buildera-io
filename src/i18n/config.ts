@@ -30,6 +30,7 @@ i18n
       'errors',
       'validation',
       'notifications',
+      'creatify',
     ],
     detection: detectionOptions,
     backend: {

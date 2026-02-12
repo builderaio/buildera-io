@@ -18,6 +18,7 @@ import FounderPTWSimplified from "@/components/strategy/founder/FounderPTWSimpli
 // Legacy components (for backwards compatibility during transition)
 import MisArchivos from "@/components/company/BaseConocimiento";
 import { ContentAnalysisDashboard } from "@/components/company/ContentAnalysisDashboard";
+import { CreatifyStudio } from "@/components/company/creatify/CreatifyStudio";
 
 import UserProfile from "./UserProfile";
 import OnboardingOrchestrator from "@/components/OnboardingOrchestrator";
@@ -387,6 +388,10 @@ const CompanyDashboard = () => {
       case "academia-buildera":
         return <AcademiaBuildiera />;
       
+      // === CREATIFY STUDIO ===
+      case "creatify-studio":
+        return <CreatifyStudio />;
+
       // === LEGACY VIEWS (backwards compatibility) ===
       case "base-conocimiento":
         return <MisArchivos />;

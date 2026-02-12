@@ -1,0 +1,79 @@
+{
+  "tabs": {
+    "videoAd": "Video Ad",
+    "avatar": "Avatar IA",
+    "adClone": "Clonar Anuncio",
+    "banners": "Banners IAB",
+    "gallery": "Galería"
+  },
+  "videoAd": {
+    "title": "Generar Video Publicitario",
+    "productUrl": "URL del producto o sitio web",
+    "platform": "Plataforma destino",
+    "scriptStyle": "Estilo de guión",
+    "aspectRatio": "Formato"
+  },
+  "scriptStyles": {
+    "brandStory": "Historia de marca",
+    "callToAction": "Llamada a la acción",
+    "specialOffers": "Ofertas especiales",
+    "discovery": "Descubrimiento",
+    "howTo": "Tutorial"
+  },
+  "avatar": {
+    "title": "Video con Avatar IA",
+    "selectAvatar": "Seleccionar avatar",
+    "selectVoice": "Seleccionar voz",
+    "script": "Guión del video",
+    "scriptPlaceholder": "Escribe el texto que el avatar dirá..."
+  },
+  "adClone": {
+    "title": "Clonar Anuncio",
+    "competitorVideoUrl": "URL del video a clonar",
+    "yourProductUrl": "URL de tu producto"
+  },
+  "banners": {
+    "title": "Banners IAB",
+    "productImageUrl": "URL de imagen del producto",
+    "tagline": "Eslogan",
+    "taglinePlaceholder": "Tu eslogan aquí...",
+    "ctaText": "Texto del botón",
+    "ctaPlaceholder": "Comprar ahora"
+  },
+  "gallery": {
+    "title": "Assets Generados",
+    "loading": "Cargando galería...",
+    "empty": "Aún no has generado contenido. ¡Empieza creando tu primer video o banner!",
+    "filterAll": "Todos los tipos",
+    "assetGenerator": "Generador de Assets",
+    "aiScript": "Guión IA",
+    "tts": "Texto a Voz"
+  },
+  "status": {
+    "completed": "¡Generación completada!",
+    "failed": "La generación falló",
+    "inQueue": "En cola de procesamiento...",
+    "generating": "Generando contenido...",
+    "preparing": "Preparando...",
+    "jobCreated": "Trabajo iniciado correctamente",
+    "loadingResources": "Cargando recursos..."
+  },
+  "actions": {
+    "generateVideo": "Generar Video",
+    "generateAvatar": "Generar Video con Avatar",
+    "cloneAd": "Clonar Anuncio",
+    "generateBanners": "Generar Banners",
+    "creating": "Creando...",
+    "retry": "Reintentar",
+    "download": "Descargar",
+    "view": "Ver",
+    "delete": "Eliminar"
+  },
+  "errors": {
+    "urlRequired": "La URL es requerida",
+    "scriptRequired": "El guión es requerido",
+    "imageRequired": "La URL de imagen es requerida",
+    "generationFailed": "Error en la generación",
+    "noCompany": "Empresa no encontrada"
+  }
+}

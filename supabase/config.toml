@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.smart-link-manager]
 verify_jwt = false
+
+[functions.marketing-autopilot-engine]
+verify_jwt = false

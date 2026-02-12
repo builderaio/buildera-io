@@ -194,6 +194,7 @@
       "reports": "Reports",
       "automation": "Automation",
       "approvals": "Approvals",
+      "autopilot": "Autopilot",
       "calendar": "Calendar",
       "library": "Library"
     },
@@ -589,5 +590,43 @@
     "filter": {
       "all": "All"
     }
+  },
+  "autopilot": {
+    "title": "Marketing Autopilot",
+    "subtitle": "Autonomous AI marketing engine - SENSE → THINK → ACT → GUARD → LEARN cycle",
+    "configSaved": "Configuration saved",
+    "configError": "Error saving configuration",
+    "cycleComplete": "Cycle completed",
+    "decisionsGenerated": "decisions generated",
+    "cycleError": "Error running cycle",
+    "active": "Active",
+    "inactive": "Inactive",
+    "runNow": "Run now",
+    "running": "Running...",
+    "totalCycles": "Total cycles",
+    "approved": "Approved",
+    "blocked": "Blocked",
+    "pendingReview": "Pending review",
+    "overview": "Overview",
+    "timeline": "Timeline",
+    "settings": "Settings",
+    "recentDecisions": "Recent decisions",
+    "noDecisions": "No decisions yet. Run a cycle to get started.",
+    "executionTimeline": "Execution timeline",
+    "noCycles": "No cycles executed yet.",
+    "cycle": "Cycle",
+    "frequency": "Frequency",
+    "executionFrequency": "Execution frequency",
+    "every1h": "Every hour",
+    "every2h": "Every 2 hours",
+    "every6h": "Every 6 hours",
+    "every12h": "Every 12 hours",
+    "every24h": "Every 24 hours",
+    "maxPostsPerDay": "Max posts per day",
+    "maxCreditsPerCycle": "Max credits per cycle",
+    "guardrails": "Guardrails",
+    "requireApproval": "Require human approval",
+    "activeHoursStart": "Active hours start",
+    "activeHoursEnd": "Active hours end"
   }
 }

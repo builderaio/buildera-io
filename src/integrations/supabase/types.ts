@@ -1041,6 +1041,136 @@ export type Database = {
         }
         Relationships: []
       }
+      autopilot_decisions: {
+        Row: {
+          action_parameters: Json | null
+          action_taken: boolean
+          actual_impact: Json | null
+          agent_to_execute: string | null
+          company_id: string
+          created_at: string
+          cycle_id: string
+          decision_type: string
+          description: string
+          expected_impact: Json | null
+          guardrail_details: string | null
+          guardrail_result: string | null
+          id: string
+          impact_evaluated_at: string | null
+          priority: string
+          reasoning: string | null
+        }
+        Insert: {
+          action_parameters?: Json | null
+          action_taken?: boolean
+          actual_impact?: Json | null
+          agent_to_execute?: string | null
+          company_id: string
+          created_at?: string
+          cycle_id: string
+          decision_type: string
+          description: string
+          expected_impact?: Json | null
+          guardrail_details?: string | null
+          guardrail_result?: string | null
+          id?: string
+          impact_evaluated_at?: string | null
+          priority?: string
+          reasoning?: string | null
+        }
+        Update: {
+          action_parameters?: Json | null
+          action_taken?: boolean
+          actual_impact?: Json | null
+          agent_to_execute?: string | null
+          company_id?: string
+          created_at?: string
+          cycle_id?: string
+          decision_type?: string
+          description?: string
+          expected_impact?: Json | null
+          guardrail_details?: string | null
+          guardrail_result?: string | null
+          id?: string
+          impact_evaluated_at?: string | null
+          priority?: string
+          reasoning?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_decisions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopilot_execution_log: {
+        Row: {
+          actions_taken: Json | null
+          company_id: string
+          content_approved: number
+          content_generated: number
+          content_pending_review: number
+          content_rejected: number
+          context_snapshot: Json | null
+          created_at: string
+          credits_consumed: number
+          cycle_id: string
+          decisions_made: Json | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          phase: string
+          status: string
+        }
+        Insert: {
+          actions_taken?: Json | null
+          company_id: string
+          content_approved?: number
+          content_generated?: number
+          content_pending_review?: number
+          content_rejected?: number
+          context_snapshot?: Json | null
+          created_at?: string
+          credits_consumed?: number
+          cycle_id?: string
+          decisions_made?: Json | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          phase: string
+          status?: string
+        }
+        Update: {
+          actions_taken?: Json | null
+          company_id?: string
+          content_approved?: number
+          content_generated?: number
+          content_pending_review?: number
+          content_rejected?: number
+          context_snapshot?: Json | null
+          created_at?: string
+          credits_consumed?: number
+          cycle_id?: string
+          decisions_made?: Json | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          phase?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_execution_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       business_function_configurations: {
         Row: {
           configuration: Json | null
@@ -1598,6 +1728,71 @@ export type Database = {
           youtube_targeting?: Json | null
         }
         Relationships: []
+      }
+      company_autopilot_config: {
+        Row: {
+          active_hours: Json | null
+          allowed_actions: string[]
+          autopilot_enabled: boolean
+          brand_guardrails: Json | null
+          company_id: string
+          created_at: string
+          execution_frequency: string
+          id: string
+          last_execution_at: string | null
+          max_credits_per_cycle: number
+          max_posts_per_day: number
+          next_execution_at: string | null
+          require_human_approval: boolean
+          total_cycles_run: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_hours?: Json | null
+          allowed_actions?: string[]
+          autopilot_enabled?: boolean
+          brand_guardrails?: Json | null
+          company_id: string
+          created_at?: string
+          execution_frequency?: string
+          id?: string
+          last_execution_at?: string | null
+          max_credits_per_cycle?: number
+          max_posts_per_day?: number
+          next_execution_at?: string | null
+          require_human_approval?: boolean
+          total_cycles_run?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_hours?: Json | null
+          allowed_actions?: string[]
+          autopilot_enabled?: boolean
+          brand_guardrails?: Json | null
+          company_id?: string
+          created_at?: string
+          execution_frequency?: string
+          id?: string
+          last_execution_at?: string | null
+          max_credits_per_cycle?: number
+          max_posts_per_day?: number
+          next_execution_at?: string | null
+          require_human_approval?: boolean
+          total_cycles_run?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_autopilot_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_branding: {
         Row: {
@@ -8172,6 +8367,71 @@ export type Database = {
           verified?: boolean | null
         }
         Relationships: []
+      }
+      social_automation_rules: {
+        Row: {
+          action_config: Json | null
+          action_type: string
+          company_id: string
+          cooldown_minutes: number | null
+          created_at: string
+          description: string | null
+          execution_count: number
+          id: string
+          is_active: boolean
+          last_triggered_at: string | null
+          name: string
+          platforms: string[] | null
+          trigger_config: Json | null
+          trigger_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_config?: Json | null
+          action_type: string
+          company_id: string
+          cooldown_minutes?: number | null
+          created_at?: string
+          description?: string | null
+          execution_count?: number
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          name: string
+          platforms?: string[] | null
+          trigger_config?: Json | null
+          trigger_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_config?: Json | null
+          action_type?: string
+          company_id?: string
+          cooldown_minutes?: number | null
+          created_at?: string
+          description?: string | null
+          execution_count?: number
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          name?: string
+          platforms?: string[] | null
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_automation_rules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_content_analysis: {
         Row: {

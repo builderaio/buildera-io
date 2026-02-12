@@ -14,7 +14,11 @@ export type JourneyStepType =
   | 'remove_tag'
   | 'webhook'
   | 'enroll_in_journey'
-  | 'exit';
+  | 'exit'
+  // Social automation types
+  | 'social_reply'
+  | 'social_dm'
+  | 'create_post';
 
 export interface JourneyStep {
   id: string;
@@ -106,7 +110,7 @@ export function useJourneyBuilder(journeyId: string | undefined) {
           journey_id: input.journey_id,
           name: input.name,
           description: input.description,
-          step_type: input.step_type,
+          step_type: input.step_type as any,
           step_config: input.step_config || {},
           position: input.position || 0,
           position_x: input.position_x || 0,
@@ -138,7 +142,7 @@ export function useJourneyBuilder(journeyId: string | undefined) {
     mutationFn: async ({ id, ...updates }: UpdateStepInput) => {
       const { data, error } = await supabase
         .from('journey_steps')
-        .update(updates)
+        .update(updates as any)
         .eq('id', id)
         .select()
         .single();

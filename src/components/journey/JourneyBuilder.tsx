@@ -55,7 +55,7 @@ interface JourneyBuilderProps {
   onBack?: () => void;
 }
 
-const stepTypeConfig: Record<JourneyStepType, { icon: React.ElementType; label: string; color: string }> = {
+const stepTypeConfig: Record<string, { icon: React.ElementType; label: string; color: string }> = {
   send_email: { icon: Mail, label: 'Enviar Email', color: 'bg-blue-500' },
   delay: { icon: Clock, label: 'Esperar', color: 'bg-yellow-500' },
   condition: { icon: GitBranch, label: 'Condición', color: 'bg-purple-500' },
@@ -68,6 +68,9 @@ const stepTypeConfig: Record<JourneyStepType, { icon: React.ElementType; label: 
   webhook: { icon: Webhook, label: 'Webhook', color: 'bg-gray-500' },
   enroll_in_journey: { icon: Play, label: 'Inscribir en Journey', color: 'bg-cyan-500' },
   exit: { icon: LogOut, label: 'Salir', color: 'bg-red-500' },
+  social_reply: { icon: Mail, label: 'Responder Social', color: 'bg-pink-400' },
+  social_dm: { icon: Mail, label: 'Enviar DM', color: 'bg-violet-500' },
+  create_post: { icon: Play, label: 'Crear Post', color: 'bg-emerald-500' },
 };
 
 // Custom Node Component

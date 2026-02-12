@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   BarChart3, Calendar, TrendingUp, Users, Heart, Plus, 
   Zap, Target, Brain, Rocket, PenTool, Network, Video, Image,
-  FolderOpen, Ear, Link2, FileText
+  FolderOpen, Ear, Link2, FileText, Bot, CheckCircle
 } from "lucide-react";
 import { getPlatformDisplayName } from '@/lib/socialPlatforms';
 import ContentCalendar from './ContentCalendar';
@@ -24,6 +24,8 @@ import { InstagramCommunityManager } from './instagram/InstagramCommunityManager
 import { SocialListeningPanel } from './marketing/SocialListeningPanel';
 import { UTMDashboard } from './marketing/UTMDashboard';
 import { ReportBuilder } from './marketing/ReportBuilder';
+import { SocialAutomationRules } from './marketing/SocialAutomationRules';
+import { ContentApprovalPanel } from './marketing/ContentApprovalPanel';
 
 interface MarketingHubWowProps {
   profile: any;
@@ -46,7 +48,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   
   const getInitialTab = () => {
     const tab = searchParams.get('tab');
-    const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening', 'utm', 'reports']);
+    const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening', 'utm', 'reports', 'automation', 'approvals']);
     if (tab && allowed.has(tab)) return tab;
     return 'dashboard';
   };
@@ -57,7 +59,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab) {
-      const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening', 'utm', 'reports']);
+      const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening', 'utm', 'reports', 'automation', 'approvals']);
       if (allowed.has(tab) && tab !== activeTab) setActiveTab(tab);
     }
   }, [searchParams]);
@@ -386,6 +388,14 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             <FileText className="w-4 h-4" />
             <span className="hidden sm:inline">{t("hub.tabs.reports")}</span>
           </TabsTrigger>
+          <TabsTrigger value="automation" className="flex items-center gap-2">
+            <Bot className="w-4 h-4" />
+            <span className="hidden sm:inline">{t("hub.tabs.automation")}</span>
+          </TabsTrigger>
+          <TabsTrigger value="approvals" className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4" />
+            <span className="hidden sm:inline">{t("hub.tabs.approvals")}</span>
+          </TabsTrigger>
           <TabsTrigger value="calendar" className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             <span className="hidden sm:inline">{t("hub.tabs.calendar")}</span>
@@ -530,6 +540,16 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-6">
           <ReportBuilder profile={profile} companyId={profile?.company_id} />
+        </TabsContent>
+
+        {/* Automation Tab */}
+        <TabsContent value="automation" className="space-y-6">
+          <SocialAutomationRules companyId={profile?.company_id} />
+        </TabsContent>
+
+        {/* Approvals Tab */}
+        <TabsContent value="approvals" className="space-y-6">
+          <ContentApprovalPanel companyId={profile?.company_id} />
         </TabsContent>
 
         {/* Campaigns Tab */}

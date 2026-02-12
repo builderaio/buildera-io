@@ -1041,6 +1041,77 @@ export type Database = {
         }
         Relationships: []
       }
+      autopilot_capabilities: {
+        Row: {
+          activated_at: string | null
+          activation_reason: string | null
+          capability_code: string
+          capability_name: string
+          company_id: string
+          created_at: string
+          deactivated_at: string | null
+          department: string
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_evaluated_at: string | null
+          required_data: Json | null
+          required_maturity: string
+          success_rate: number | null
+          trigger_condition: Json
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activation_reason?: string | null
+          capability_code: string
+          capability_name: string
+          company_id: string
+          created_at?: string
+          deactivated_at?: string | null
+          department: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_evaluated_at?: string | null
+          required_data?: Json | null
+          required_maturity?: string
+          success_rate?: number | null
+          trigger_condition?: Json
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          activation_reason?: string | null
+          capability_code?: string
+          capability_name?: string
+          company_id?: string
+          created_at?: string
+          deactivated_at?: string | null
+          department?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_evaluated_at?: string | null
+          required_data?: Json | null
+          required_maturity?: string
+          success_rate?: number | null
+          trigger_condition?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_capabilities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       autopilot_decisions: {
         Row: {
           action_parameters: Json | null
@@ -1164,6 +1235,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "autopilot_execution_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      autopilot_memory: {
+        Row: {
+          applies_to_future: Json | null
+          company_id: string
+          context_hash: string | null
+          context_summary: string | null
+          created_at: string
+          cycle_id: string
+          decision_type: string
+          department: string
+          evaluated_at: string | null
+          external_signal_details: Json | null
+          external_signal_used: boolean | null
+          id: string
+          lesson_learned: string | null
+          outcome_evaluation: string | null
+          outcome_score: number | null
+        }
+        Insert: {
+          applies_to_future?: Json | null
+          company_id: string
+          context_hash?: string | null
+          context_summary?: string | null
+          created_at?: string
+          cycle_id: string
+          decision_type: string
+          department?: string
+          evaluated_at?: string | null
+          external_signal_details?: Json | null
+          external_signal_used?: boolean | null
+          id?: string
+          lesson_learned?: string | null
+          outcome_evaluation?: string | null
+          outcome_score?: number | null
+        }
+        Update: {
+          applies_to_future?: Json | null
+          company_id?: string
+          context_hash?: string | null
+          context_summary?: string | null
+          created_at?: string
+          cycle_id?: string
+          decision_type?: string
+          department?: string
+          evaluated_at?: string | null
+          external_signal_details?: Json | null
+          external_signal_used?: boolean | null
+          id?: string
+          lesson_learned?: string | null
+          outcome_evaluation?: string | null
+          outcome_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autopilot_memory_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -5522,6 +5655,62 @@ export type Database = {
           website_url?: string | null
         }
         Relationships: []
+      }
+      external_intelligence_cache: {
+        Row: {
+          company_id: string | null
+          data: Json
+          expires_at: string
+          fetched_at: string
+          id: string
+          industry_sector: string | null
+          is_processed: boolean | null
+          query_used: string | null
+          region: string | null
+          relevance_score: number | null
+          source: string
+          structured_signals: Json | null
+          triggered_actions: Json | null
+        }
+        Insert: {
+          company_id?: string | null
+          data?: Json
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          industry_sector?: string | null
+          is_processed?: boolean | null
+          query_used?: string | null
+          region?: string | null
+          relevance_score?: number | null
+          source: string
+          structured_signals?: Json | null
+          triggered_actions?: Json | null
+        }
+        Update: {
+          company_id?: string | null
+          data?: Json
+          expires_at?: string
+          fetched_at?: string
+          id?: string
+          industry_sector?: string | null
+          is_processed?: boolean | null
+          query_used?: string | null
+          region?: string | null
+          relevance_score?: number | null
+          source?: string
+          structured_signals?: Json | null
+          triggered_actions?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_intelligence_cache_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       facebook_instagram_connections: {
         Row: {

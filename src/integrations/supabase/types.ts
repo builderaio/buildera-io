@@ -1800,6 +1800,47 @@ export type Database = {
           },
         ]
       }
+      company_credits: {
+        Row: {
+          available_credits: number
+          company_id: string
+          created_at: string
+          id: string
+          last_recharge_at: string | null
+          total_credits_consumed: number
+          total_credits_purchased: number
+          updated_at: string
+        }
+        Insert: {
+          available_credits?: number
+          company_id: string
+          created_at?: string
+          id?: string
+          last_recharge_at?: string | null
+          total_credits_consumed?: number
+          total_credits_purchased?: number
+          updated_at?: string
+        }
+        Update: {
+          available_credits?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          last_recharge_at?: string | null
+          total_credits_consumed?: number
+          total_credits_purchased?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_credits_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_dashboard_metrics: {
         Row: {
           active_agents: number | null
@@ -9575,9 +9616,13 @@ export type Database = {
         Returns: boolean
       }
       deactivate_user: { Args: { target_user_id: string }; Returns: boolean }
+      deduct_company_credits: {
+        Args: { _company_id: string; _credits: number }
+        Returns: boolean
+      }
       delete_company_cascade: {
         Args: { target_company_id: string }
-        Returns: boolean
+        Returns: undefined
       }
       expire_old_invitations: { Args: never; Returns: undefined }
       extract_hashtags: { Args: { caption: string }; Returns: string[] }

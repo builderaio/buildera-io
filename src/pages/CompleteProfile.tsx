@@ -363,7 +363,6 @@ const CompleteProfile = () => {
                       placeholder="tunegocio.com"
                       value={websiteUrl}
                       onChange={(e) => setWebsiteUrl(e.target.value)}
-                      required
                     />
                   </div>
                 </>

@@ -95,7 +95,6 @@ const AdminDashboard = () => {
         subscriptionsResult,
         plansResult,
         agentUsageResult,
-        recentActivityResult
       ] = await Promise.all([
         supabase.from('profiles').select('id, user_type, created_at'),
         supabase.from('companies').select('id, is_active, created_at'),
@@ -103,8 +102,15 @@ const AdminDashboard = () => {
         supabase.from('subscription_plans').select('*'),
         supabase.from('agent_usage_log').select('*, platform_agents(name)')
           .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
-        supabase.rpc('get_admin_recent_activity')
       ]);
+
+      // Load recent activity separately to avoid blocking dashboard if RPC doesn't exist
+      let recentActivityResult = { data: null, error: null } as any;
+      try {
+        recentActivityResult = await supabase.rpc('get_admin_recent_activity');
+      } catch (e) {
+        console.warn('get_admin_recent_activity not available:', e);
+      }
 
       // Process profiles
       const profiles = profilesResult.data || [];

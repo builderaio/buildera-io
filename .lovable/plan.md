@@ -1,245 +1,184 @@
 
-# Integracion de Creatify AI en el Marketing Hub de Buildera
+# Rediseno del Marketing Hub - Flujo de Experiencia de Usuario
 
-## Resumen
+## Diagnostico: Problemas Identificados
 
-Creatify.ai es una plataforma de generacion de video publicitario con IA. Integraremos sus 7 APIs principales en el Marketing Hub para que cada empresa registrada pueda generar contenido de video, imagenes publicitarias y assets creativos directamente desde Buildera.
+### 1. Dashboard sin guia de accion (Tab "Dashboard")
+El dashboard muestra metricas (Insights, Engagement, Campanas, Automatizacion) pero cuando un usuario nuevo llega, ve todo en ceros y no hay un flujo guiado que le diga **por donde empezar**. Las "Acciones Rapidas" son 4 botones genericos sin contexto ni priorizacion.
 
----
+### 2. Tab "Crear" es confuso y fragmentado
+- Muestra un banner del "Content Studio IA - Version Avanzada" que compite visualmente con el creador simple
+- El creador simple tiene 2 sub-tabs (Generacion IA / Manual) pero no conecta con las campanas ni con Creatify
+- No hay acceso a la generacion de video (Creatify) desde esta pestaña
+- El usuario no sabe si crear contenido suelto o dentro de una campana
 
-## APIs de Creatify a Integrar
+### 3. Creatify Studio completamente aislado
+CreatifyStudio solo es accesible via `?view=creatify-studio` en CompanyDashboard, pero **no aparece en ningun menu del Marketing Hub**. El usuario no puede descubrir las capacidades de video/banner/avatar a menos que conozca la URL exacta.
 
-| API | Funcion | Costo (creditos) | Uso en Buildera |
-|---|---|---|---|
-| **URL to Video** | Convierte URL de producto en video publicitario | 5 cr/30s | Paso 5 "Creacion de Contenido" - generar video ads desde el sitio web de la empresa |
-| **AI Avatar (Lipsync v2)** | Videos con avatares AI hablando un script | 5 cr/30s | Generar portavoces virtuales para la marca |
-| **Ad Clone** | Recrea anuncios ganadores con los productos de la empresa | 3 cr/5s del video referencia | Clonar anuncios exitosos de competidores |
-| **Image Ad (IAB)** | Genera banners publicitarios en todos los tamanos IAB | 2 cr/request | Banners para campanas display/mobile |
-| **Asset Generator** | Genera imagenes/videos con modelos como Kling, etc. | Variable | Imagenes de producto, videos cortos |
-| **AI Scripts** | Genera scripts para videos | 1 cr/request | Pre-generar guiones antes de crear videos |
-| **Text to Speech** | Convierte texto a audio | 1 cr/30s | Voiceovers para contenido |
+### 4. Tab "Campanas" no muestra campanas activas
+CampaignDashboard solo muestra borradores y un boton para crear nueva campana. No hay visualizacion de campanas completadas ni su rendimiento. El wizard de 7 pasos es robusto pero el usuario no sabe que existe.
 
----
+### 5. Calendario desconectado del flujo de creacion
+ContentCalendar muestra posts programados pero no tiene forma de crear contenido directamente desde el calendario. El flujo natural seria: ver hueco en calendario -> crear contenido -> programar.
 
-## Arquitectura Tecnica
+### 6. Biblioteca sin valor agregado
+ContentLibraryTab + UploadHistory + ScheduledPostsManager se muestran apilados sin un flujo coherente. No se muestran los assets de Creatify aqui.
 
-### Autenticacion
-Creatify usa dos headers: `X-API-ID` y `X-API-KEY` (obtenidos desde el dashboard de Creatify). Se almacenaran como secrets de Supabase: `CREATIFY_API_ID` y `CREATIFY_API_KEY`.
-
-### Patron Asincrono
-Todas las APIs de Creatify siguen un patron asincrono:
-1. `POST` para crear la tarea (retorna un `id`)
-2. `GET` para consultar el estado (polling hasta `status: done`)
-3. Opcion de `webhook_url` para recibir notificacion cuando termine
-
-Usaremos **polling** desde el frontend con intervalos de 5 segundos, ya que los webhooks requieren URL publica y agregan complejidad innecesaria en esta fase.
+### 7. Hardcoded strings (i18n violation)
+Todo el MarketingHubWow tiene docenas de strings hardcodeados en espanol: "Insights Generados", "Engagement Total", "Rendimiento por Plataforma", "Acciones Rapidas", "Cargando Marketing Hub", etc.
 
 ---
 
-## Plan de Implementacion
+## Solucion Propuesta: Marketing Hub Guiado por Valor
 
-### Fase 1: Infraestructura Base
-
-**1.1 Configuracion de Secrets**
-- Solicitar al usuario sus credenciales `CREATIFY_API_ID` y `CREATIFY_API_KEY`
-- Almacenarlas como secrets de Supabase
-
-**1.2 Edge Function central: `creatify-proxy`**
-- Una sola edge function que actua como proxy hacia todas las APIs de Creatify
-- Recibe `action` (create-link, url-to-video, avatar-video, ad-clone, iab-images, asset-generator, check-status) y `params`
-- Valida autenticacion del usuario
-- Agrega headers `X-API-ID` / `X-API-KEY`
-- Retorna la respuesta de Creatify
+### Principio rector
+Convertir el Marketing Hub de un "panel de datos" a un **flujo guiado de generacion de valor** con 3 caminos claros:
 
 ```text
-Estructura del Edge Function:
-
-POST /creatify-proxy
-Body: {
-  action: "create-link" | "url-to-video" | "check-video-status" | 
-          "avatar-video" | "check-avatar-status" |
-          "ad-clone" | "check-clone-status" |
-          "iab-images" | "check-iab-status" |
-          "asset-generator" | "check-asset-status" |
-          "get-avatars" | "get-voices",
-  params: { ... }
-}
++------------------------------------------+
+|          MARKETING HUB                   |
+|                                          |
+|  [Estado Actual: Metricas + Conexiones]  |
+|                                          |
+|  3 Caminos de Valor:                     |
+|  +----------+ +----------+ +----------+ |
+|  | Campana  | | Contenido| | Estudio  | |
+|  | Completa | | Rapido   | | Creativo | |
+|  | (Wizard) | | (Post)   | | (Video)  | |
+|  +----------+ +----------+ +----------+ |
+|                                          |
+|  [Calendario] [Biblioteca]               |
++------------------------------------------+
 ```
 
-**1.3 Tabla de base de datos: `creatify_jobs`**
+### Cambio 1: Dashboard con "Getting Started" inteligente
+
+Cuando no hay metricas/campanas, mostrar un **onboarding contextual** en lugar de metricas vacias:
+
 ```text
-creatify_jobs:
-  - id (uuid, PK)
-  - company_id (uuid, FK -> companies)
-  - user_id (uuid, FK -> auth.users)
-  - job_type (text: url_to_video | avatar | ad_clone | iab_images | asset_generator)
-  - creatify_job_id (text - el ID devuelto por Creatify)
-  - status (text: pending | in_queue | running | done | failed)
-  - input_params (jsonb - parametros enviados)
-  - output_data (jsonb - respuesta final con URLs de video/imagen)
-  - credits_used (integer)
-  - campaign_id (uuid, FK -> marketing_campaigns, nullable)
-  - calendar_item_id (uuid, FK -> content_calendar_items, nullable)
-  - created_at, updated_at
+Bienvenido al Marketing Hub
+-----------------------------
+Tu progreso: [===>--------] 30%
+
+[ ] 1. Conectar redes sociales       [Ir ->]
+[x] 2. Completar ADN de empresa      [Hecho]
+[ ] 3. Crear primera campana         [Ir ->]
+[ ] 4. Generar primer video          [Ir ->]
+[ ] 5. Programar primer publicacion  [Ir ->]
 ```
 
-**1.4 API Client en frontend: `src/lib/api/creatify.ts`**
-- Funciones tipadas para cada operacion
-- Hook `useCreatifyJob` con polling automatico de estado
-- Manejo de errores y reintentos
+Cuando **si hay datos**, mostrar el dashboard actual con metricas reales.
 
----
+### Cambio 2: Reestructurar tabs de 5 a 5 (renombrar + integrar Creatify)
 
-### Fase 2: Integracion en el Marketing Hub (Paso 5: Creacion de Contenido)
+| Tab Actual | Tab Nuevo | Contenido |
+|---|---|---|
+| Dashboard | **Panel** | Metricas + Getting Started inteligente |
+| Crear | **Crear** | 3 opciones claras: Post Rapido, Campana Completa, Estudio Creativo (Creatify) |
+| Campanas | **Campanas** | Dashboard de campanas existente |
+| Calendario | **Calendario** | Sin cambios, agregar boton "Crear desde aqui" |
+| Biblioteca | **Biblioteca** | Unificar: content library + Creatify gallery + historial |
 
-**2.1 Nuevo componente: `CreatifyVideoCreator`**
-Se integrara dentro de `ContentCreation.tsx` (paso 5 del wizard) como una opcion adicional de creacion de contenido. El usuario podra elegir entre:
-- Generacion de copy (existente)
-- **Generar Video Ad** (nuevo - URL to Video)
-- **Generar Video con Avatar** (nuevo - AI Avatar)
-- **Clonar Anuncio** (nuevo - Ad Clone)
-- **Generar Banners** (nuevo - IAB Images)
+### Cambio 3: Tab "Crear" rediseñado con 3 caminos claros
 
-**2.2 Flujo URL to Video**
-1. Se toma automaticamente el `website_url` de la empresa
-2. Se crea un Link via `POST /api/links/`
-3. Se enriquece con logo, imagenes y descripcion del ADN de la empresa
-4. Se genera el video con parametros pre-configurados segun la estrategia:
-   - `target_audience`: del buyer persona definido en paso 2
-   - `target_platform`: de la red social del item del calendario
-   - `language`: del idioma del usuario (es/en/pt)
-   - `script_style`: mapeado desde el objetivo de la campana
-   - `aspect_ratio`: segun plataforma (9x16 para TikTok/Reels, 16x9 para YouTube, 1x1 para Feed)
-5. Polling de estado con indicador de progreso visual
-6. Al completar, se muestra preview del video y se guarda en `generated_assets`
+En lugar del creador fragmentado actual, mostrar 3 cards de accion:
 
-**2.3 Flujo AI Avatar**
-1. El usuario selecciona un avatar de la galeria (1500+ opciones)
-2. Se usa el script generado en el paso de estrategia o se escribe uno nuevo
-3. Se selecciona voz y acento
-4. Se configura fondo (imagen de producto o color de marca)
-5. Se genera el video multi-escena
-6. Preview y guardado
+**Camino 1: Post Rapido**
+- Para cuando el usuario quiere publicar algo ya
+- Generacion IA o manual -> Optimizar con Era -> Publicar/Programar
+- Es el ContentCreatorTab actual pero simplificado
 
-**2.4 Flujo Ad Clone**
-1. El usuario pega la URL de un anuncio de la competencia (o se sugiere desde competitive intelligence)
-2. Se crea un Link con los assets de SU empresa
-3. Se genera un clon del anuncio con los productos de la empresa
-4. Preview y guardado
+**Camino 2: Campana Completa**
+- El wizard de 7 pasos existente
+- Para estrategias de marketing completas
+- Acceso directo al CampaignWizard
 
-**2.5 Flujo IAB Banners**
-1. Se selecciona una imagen de producto o del branding de la empresa
-2. Se generan automaticamente 12 tamanos IAB (mobile + desktop)
-3. Se muestran todos los tamanos en una grilla con opcion de descarga individual o por lote
+**Camino 3: Estudio Creativo (Creatify)**
+- Video Ads desde URL del sitio web
+- Videos con Avatar AI
+- Clonar anuncios de competidores
+- Banners IAB en todos los tamanos
+- Es el CreatifyStudio integrado directamente
 
----
+### Cambio 4: Biblioteca unificada
 
-### Fase 3: Componentes UI
+Consolidar en una sola vista con filtros:
+- Contenido generado (texto)
+- Imagenes generadas
+- Videos Creatify (desde creatify_jobs)
+- Posts publicados (historial Upload-Post)
+- Posts programados
 
-**3.1 `CreatifyStudio` (componente contenedor)**
-- Tab interface con las 4 herramientas: Video Ad | Avatar | Ad Clone | Banners
-- Historial de generaciones previas de la empresa
-- Indicador de creditos restantes
+### Cambio 5: Internacionalizacion
 
-**3.2 `VideoGenerationForm`**
-- Formulario con los parametros configurables
-- Selectors para visual_style, script_style, aspect_ratio
-- Preview del link scrapeado antes de generar
-- Barra de progreso durante generacion
-
-**3.3 `AvatarSelector`**
-- Galeria de avatares con filtros (genero, etnia, estilo)
-- Selector de voz con preview de audio
-- Editor de script multi-escena
-
-**3.4 `GenerationStatusTracker`**
-- Componente reutilizable para mostrar estado de cualquier job
-- Animacion de loading con porcentaje
-- Auto-refresh cada 5 segundos
-- Manejo de errores con opcion de reintento
-
-**3.5 `CreatifyGallery`**
-- Galeria de todos los assets generados por la empresa
-- Filtros por tipo (video, imagen, banner)
-- Acciones: descargar, usar en calendario, eliminar
-
----
-
-### Fase 4: i18n
-
-Todos los nuevos componentes usaran el sistema de traduccion existente con claves en `creatify.json` para ES, EN y PT. Incluira traducciones para:
-- Labels de formularios
-- Nombres de estilos visuales y de script
-- Mensajes de estado
-- Errores
+Mover todos los strings hardcodeados a `marketing.json` en los 3 idiomas (ES, EN, PT).
 
 ---
 
 ## Detalles Tecnicos
 
-### Edge Function `creatify-proxy/index.ts`
-- Valida JWT del usuario
-- Lee `CREATIFY_API_ID` y `CREATIFY_API_KEY` de env
-- Redirige la llamada a `https://api.creatify.ai/api/...` con los headers correctos
-- Para acciones de tipo "check-status", acepta el `job_id` y consulta la API correspondiente
-- Actualiza la tabla `creatify_jobs` con cada cambio de estado
-
-### Hook `useCreatifyJob`
-```text
-useCreatifyJob(jobId):
-  - Polling cada 5 segundos mientras status != done/failed
-  - Retorna { status, progress, output, error, isLoading }
-  - Se detiene automaticamente al completar
-  - Timeout de 10 minutos maximo
-```
-
-### Mapeo de plataformas a aspect_ratio
-```text
-TikTok, Instagram Reels, YouTube Shorts -> 9x16
-YouTube, LinkedIn Video -> 16x9
-Instagram Feed, Facebook Feed -> 1x1
-```
-
-### Mapeo de objetivos de campana a script_style
-```text
-brand_awareness -> BrandStoryV2
-lead_generation -> CallToActionV2
-sales -> SpecialOffersV2
-engagement -> DiscoveryWriter
-education -> HowToV2
-```
-
----
-
-## Archivos a Crear/Modificar
-
-### Nuevos archivos:
-1. `supabase/functions/creatify-proxy/index.ts` - Edge function proxy
-2. `src/lib/api/creatify.ts` - API client tipado
-3. `src/hooks/useCreatifyJob.ts` - Hook de polling
-4. `src/components/company/creatify/CreatifyStudio.tsx` - Contenedor principal
-5. `src/components/company/creatify/VideoGenerationForm.tsx` - Form URL to Video
-6. `src/components/company/creatify/AvatarVideoForm.tsx` - Form Avatar
-7. `src/components/company/creatify/AdCloneForm.tsx` - Form Ad Clone
-8. `src/components/company/creatify/IABBannerForm.tsx` - Form Banners
-9. `src/components/company/creatify/GenerationStatusTracker.tsx` - Status tracker
-10. `src/components/company/creatify/CreatifyGallery.tsx` - Galeria de assets
-11. `public/locales/es/creatify.json` - Traducciones ES
-12. `public/locales/en/creatify.json` - Traducciones EN
-13. `public/locales/pt/creatify.json` - Traducciones PT
-14. Migracion SQL para tabla `creatify_jobs`
-
 ### Archivos a modificar:
-1. `src/components/company/campaign/steps/ContentCreation.tsx` - Agregar opciones de Creatify
-2. `supabase/config.toml` - Agregar config de `creatify-proxy`
-3. `src/integrations/supabase/types.ts` - Agregar tipos de la nueva tabla
-4. `src/pages/CompanyDashboard.tsx` - Agregar vista de "Estudio Creatify" como opcion del dashboard
+
+1. **`src/components/company/MarketingHubWow.tsx`** (archivo principal - 910 lineas)
+   - Agregar logica de "Getting Started" basada en estado del usuario
+   - Reestructurar tab "Crear" con las 3 opciones
+   - Integrar CreatifyStudio en el tab "Crear" como opcion
+   - Integrar CreatifyGallery en tab "Biblioteca"
+   - Reemplazar ~60 strings hardcodeados con claves i18n
+
+2. **`src/components/company/ContentCreatorTab.tsx`** (692 lineas)
+   - Simplificar eliminando el banner del "Advanced Creator" que confunde
+   - Convertir en la opcion "Post Rapido" dentro del nuevo tab Crear
+
+3. **`src/components/company/ContentCalendar.tsx`** (465 lineas)
+   - Agregar boton de "Crear contenido" al hacer click en un dia vacio
+
+4. **`public/locales/es/marketing.json`** - Crear traducciones ES
+5. **`public/locales/en/marketing.json`** - Crear traducciones EN
+6. **`public/locales/pt/marketing.json`** - Crear traducciones PT
+
+### Nuevo componente: `MarketingGettingStarted.tsx`
+Widget de onboarding que evalua el estado actual del usuario:
+- Redes conectadas? (social_accounts)
+- ADN completo? (company_branding)
+- Primera campana? (marketing_campaigns)
+- Primer video? (creatify_jobs)
+- Primera publicacion? (scheduled_posts / upload history)
+
+### Nuevo componente: `CrearContentHub.tsx`
+Las 3 tarjetas de accion para el tab "Crear":
+- Post Rapido (abre ContentCreatorTab inline)
+- Campana Completa (navega a tab campanas/wizard)
+- Estudio Creativo (abre CreatifyStudio inline)
+
+### Nuevo componente: `UnifiedLibrary.tsx`
+Vista consolidada de todos los assets:
+- Query content_library + creatify_jobs (done) + generated_content
+- Filtros por tipo (texto, imagen, video, banner)
+- Acciones: descargar, publicar, programar, eliminar
+
+### Impacto en navegacion
+- Eliminar `creatify-studio` como vista separada en CompanyDashboard (se accede desde Marketing Hub)
+- Mantener la ruta `?view=creatify-studio` como redirect al Marketing Hub tab "Crear"
 
 ---
 
-## Prerequisitos
+## Plan de Ejecucion
 
-Antes de implementar, se necesitara que el propietario del proyecto:
-1. Cree una cuenta en [Creatify.ai](https://app.creatify.ai/) con un plan API (desde $99/mes)
-2. Obtenga las credenciales `X-API-ID` y `X-API-KEY` desde el API Dashboard
-3. Las proporcione para almacenarlas como secrets de Supabase
+### Fase 1: Infraestructura i18n + Getting Started
+1. Crear archivos de traduccion `marketing.json` (ES/EN/PT)
+2. Crear componente `MarketingGettingStarted.tsx`
+3. Integrar Getting Started en el dashboard del Marketing Hub
+
+### Fase 2: Reestructurar Tab "Crear"
+4. Crear componente `CrearContentHub.tsx` con las 3 opciones
+5. Integrar CreatifyStudio como opcion dentro del tab Crear
+6. Simplificar ContentCreatorTab (remover banner Advanced confuso)
+
+### Fase 3: Biblioteca Unificada
+7. Crear componente `UnifiedLibrary.tsx`
+8. Integrar CreatifyGallery + ContentLibrary + UploadHistory
+
+### Fase 4: Refactor i18n completo
+9. Reemplazar todos los strings hardcodeados en MarketingHubWow.tsx
+10. Internacionalizar ContentCreatorTab, ContentCalendar, ConnectionStatusBar

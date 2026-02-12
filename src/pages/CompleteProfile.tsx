@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +16,7 @@ const CompleteProfile = () => {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const { t } = useTranslation("auth");
   
   // Developer fields
   const [githubUrl, setGithubUrl] = useState("");
@@ -34,11 +36,10 @@ const CompleteProfile = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
-  const industries = [
-    "Tecnología", "Finanzas", "Salud", "Educación", "Retail", 
-    "Manufactura", "Consultoría", "Marketing", "Recursos Humanos", "Otro"
+  const industryKeys = [
+    "technology", "finance", "health", "education", "retail", 
+    "manufacturing", "consulting", "marketing", "humanResources", "other"
   ];
-
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -52,6 +53,12 @@ const CompleteProfile = () => {
       setUser(session.user);
       setFullName(session.user.user_metadata?.full_name || session.user.user_metadata?.name || "");
       
+      // Pre-fill company data from signup metadata
+      const metaCompany = session.user.user_metadata?.company_name;
+      const metaWebsite = session.user.user_metadata?.website_url;
+      if (metaCompany) setCompanyName(metaCompany);
+      if (metaWebsite) setWebsiteUrl(metaWebsite);
+
       // Check if profile already exists
       const { data: profile } = await supabase
         .from('profiles')
@@ -66,8 +73,6 @@ const CompleteProfile = () => {
         .eq('user_id', session.user.id)
         .maybeSingle();
 
-      const firstLoginCompleted = onboarding?.first_login_completed === true;
-
       // Prefijar tipo si existe desde el perfil
       if (profile?.user_type && !userType) {
         setUserType(profile.user_type);
@@ -76,14 +81,13 @@ const CompleteProfile = () => {
       // Check URL params for user type from OAuth or social callback
       const typeParam = searchParams.get('user_type');
       if (typeParam && ['company', 'developer', 'expert'].includes(typeParam)) {
-        console.log('🔍 CompleteProfile: user_type desde URL:', typeParam);
+        console.log('🔍 CompleteProfile: user_type from URL:', typeParam);
         setUserType(typeParam);
       }
 
       // Check if this is a provider linking action
       const action = searchParams.get('action');
       if (action === 'link_provider') {
-        // User is linking a new provider, update their profile
         await updateAuthProvider(session.user);
       }
 
@@ -92,10 +96,8 @@ const CompleteProfile = () => {
 
     const updateAuthProvider = async (user: any) => {
       try {
-        // Get the app_metadata that contains the provider info
         const provider = user.app_metadata?.provider;
         if (provider && provider !== 'email') {
-          // Add the new provider
           await supabase.rpc('add_linked_provider', {
             _user_id: user.id,
             _provider: provider
@@ -123,7 +125,6 @@ const CompleteProfile = () => {
         user_type: userType
       };
 
-      // Add specific fields based on user type
       if (userType === 'developer') {
         profileData.github_url = githubUrl;
         profileData.skills = skills ? skills.split(',').map(s => s.trim()) : [];
@@ -131,9 +132,6 @@ const CompleteProfile = () => {
       } else if (userType === 'expert') {
         profileData.expertise_areas = expertiseAreas ? expertiseAreas.split(',').map(s => s.trim()) : [];
         profileData.years_experience = yearsExperience ? parseInt(yearsExperience) : null;
-      } else if (userType === 'company') {
-        // Para companies NO guardamos datos de empresa en profiles.
-        // La información de empresa se crea/actualiza en la tabla companies en el paso siguiente.
       }
 
       const { error } = await supabase
@@ -142,7 +140,6 @@ const CompleteProfile = () => {
 
       if (error) throw error;
 
-      // Para usuarios tipo 'company', crear la empresa automáticamente
       if (userType === 'company') {
         try {
           const { data: companyData, error: companyError } = await supabase.rpc('create_company_with_owner', {
@@ -153,17 +150,15 @@ const CompleteProfile = () => {
           });
 
           if (companyError) {
-            console.error('Error creando empresa:', companyError);
+            console.error('Error creating company:', companyError);
             throw companyError;
           }
-
-          console.log('✅ Empresa creada exitosamente:', companyData);
+          console.log('✅ Company created:', companyData);
         } catch (companyError) {
-          console.error('❌ Error en creación de empresa:', companyError);
-          // No bloquear el flujo si falla la creación de empresa
+          console.error('❌ Company creation error:', companyError);
         }
       }
-      // Marcar primer login completado en onboarding
+
       const provider = (user.app_metadata?.provider as string) || 'email';
       try {
         await supabase.from('user_onboarding_status').upsert({
@@ -172,15 +167,14 @@ const CompleteProfile = () => {
           registration_method: provider === 'email' ? 'email' : 'social'
         });
       } catch (e) {
-        console.warn('No se pudo actualizar user_onboarding_status:', e);
+        console.warn('Could not update user_onboarding_status:', e);
       }
 
       toast({
-        title: "¡Perfil completado!",
-        description: "Su información ha sido guardada correctamente.",
+        title: t("completeProfile.successTitle"),
+        description: t("completeProfile.successDesc"),
       });
 
-      // Redirect based on user type - TODOS VAN AL ONBOARDING DE 5 PASOS
       if (userType === 'company') {
         navigate('/company-dashboard?view=onboarding&first_login=true');
       } else if (userType === 'developer') {
@@ -193,7 +187,7 @@ const CompleteProfile = () => {
       
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("messages.authError"),
         description: error.message,
         variant: "destructive",
       });
@@ -207,7 +201,7 @@ const CompleteProfile = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-subtle">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Verificando perfil...</p>
+          <p className="text-muted-foreground">{t("completeProfile.verifying")}</p>
         </div>
       </div>
     );
@@ -218,45 +212,44 @@ const CompleteProfile = () => {
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-heading gradient-text">
-            Completa tu perfil
+            {t("completeProfile.title")}
           </h1>
           <p className="text-muted-foreground mt-2">
-            Solo necesitamos algunos datos adicionales para personalizar tu experiencia
+            {t("completeProfile.subtitle")}
           </p>
         </div>
 
         <Card className="shadow-elegant">
           <CardHeader className="text-center">
-            <CardTitle>Información adicional</CardTitle>
+            <CardTitle>{t("completeProfile.cardTitle")}</CardTitle>
             <CardDescription>
-              Ayúdanos a conocerte mejor seleccionando tu tipo de usuario y completando tu información
+              {t("completeProfile.cardDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Solo mostrar selector de tipo si no viene en URL */}
               {!searchParams.get('user_type') && (
                 <div className="space-y-2">
-                  <Label htmlFor="userType">Tipo de usuario</Label>
+                  <Label htmlFor="userType">{t("completeProfile.userType")}</Label>
                   <Select value={userType} onValueChange={setUserType} required>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecciona tu rol" />
+                      <SelectValue placeholder={t("completeProfile.selectRole")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="developer">Desarrollador</SelectItem>
-                      <SelectItem value="expert">Experto</SelectItem>
-                      <SelectItem value="company">Negocio</SelectItem>
+                      <SelectItem value="developer">{t("completeProfile.developer")}</SelectItem>
+                      <SelectItem value="expert">{t("completeProfile.expert")}</SelectItem>
+                      <SelectItem value="company">{t("completeProfile.business")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="fullName">Nombre completo</Label>
+                <Label htmlFor="fullName">{t("form.fullName")}</Label>
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="Tu nombre completo"
+                  placeholder={t("form.fullNamePlaceholder")}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
@@ -266,32 +259,32 @@ const CompleteProfile = () => {
               {userType === 'developer' && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="githubUrl">GitHub URL (opcional)</Label>
+                    <Label htmlFor="githubUrl">{t("form.githubUrl")}</Label>
                     <Input
                       id="githubUrl"
                       type="text"
-                      placeholder="github.com/tuusuario"
+                      placeholder={t("form.githubUrlPlaceholder")}
                       value={githubUrl}
                       onChange={(e) => setGithubUrl(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="skills">Habilidades principales</Label>
+                    <Label htmlFor="skills">{t("form.skills")}</Label>
                     <Input
                       id="skills"
                       type="text"
-                      placeholder="React, Python, Node.js (separadas por comas)"
+                      placeholder={t("form.skillsPlaceholder")}
                       value={skills}
                       onChange={(e) => setSkills(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="experienceYears">Años de experiencia</Label>
+                    <Label htmlFor="experienceYears">{t("form.experienceYears")}</Label>
                     <Input
                       id="experienceYears"
                       type="number"
-                      placeholder="5"
+                      placeholder={t("form.experienceYearsPlaceholder")}
                       value={experienceYears}
                       onChange={(e) => setExperienceYears(e.target.value)}
                       required
@@ -303,37 +296,37 @@ const CompleteProfile = () => {
               {userType === 'expert' && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="industry">Industria principal</Label>
+                    <Label htmlFor="industry">{t("form.industry")}</Label>
                     <Select value={industry} onValueChange={setIndustry} required>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecciona tu industria" />
+                        <SelectValue placeholder={t("form.industryPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        {industries.map((ind) => (
-                          <SelectItem key={ind} value={ind}>
-                            {ind}
+                        {industryKeys.map((key) => (
+                          <SelectItem key={key} value={t(`industries.${key}`)}>
+                            {t(`industries.${key}`)}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="expertiseAreas">Áreas de experiencia</Label>
+                    <Label htmlFor="expertiseAreas">{t("form.expertiseAreas")}</Label>
                     <Input
                       id="expertiseAreas"
                       type="text"
-                      placeholder="Estrategia digital, Transformación, IA (separadas por comas)"
+                      placeholder={t("form.expertiseAreasPlaceholder")}
                       value={expertiseAreas}
                       onChange={(e) => setExpertiseAreas(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="yearsExperience">Años de experiencia</Label>
+                    <Label htmlFor="yearsExperience">{t("form.yearsExperience")}</Label>
                     <Input
                       id="yearsExperience"
                       type="number"
-                      placeholder="10"
+                      placeholder={t("form.yearsExperiencePlaceholder")}
                       value={yearsExperience}
                       onChange={(e) => setYearsExperience(e.target.value)}
                       required
@@ -345,22 +338,22 @@ const CompleteProfile = () => {
               {userType === 'company' && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="companyName">Nombre del negocio</Label>
+                    <Label htmlFor="companyName">{t("form.companyName")}</Label>
                     <Input
                       id="companyName"
                       type="text"
-                      placeholder="Tu Negocio S.A.S."
+                      placeholder={t("form.companyNamePlaceholder")}
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="websiteUrl">Sitio web</Label>
+                    <Label htmlFor="websiteUrl">{t("form.websiteUrl")}</Label>
                     <Input
                       id="websiteUrl"
                       type="text"
-                      placeholder="tunegocio.com"
+                      placeholder={t("form.websiteUrlPlaceholder")}
                       value={websiteUrl}
                       onChange={(e) => setWebsiteUrl(e.target.value)}
                     />
@@ -369,7 +362,7 @@ const CompleteProfile = () => {
               )}
 
               <Button type="submit" className="w-full" disabled={loading || !userType}>
-                {loading ? "Guardando..." : "Completar perfil"}
+                {loading ? t("completeProfile.saving") : t("completeProfile.submit")}
               </Button>
             </form>
           </CardContent>

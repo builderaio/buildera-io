@@ -12,6 +12,19 @@ const corsHeaders = {
 };
 
 // ═══════════════════════════════════════════════════════════════
+// DEPARTMENT → CATEGORY MAPPING (platform_agents uses 'category', not 'department')
+// ═══════════════════════════════════════════════════════════════
+
+const DEPT_CATEGORY_MAP: Record<string, string[]> = {
+  marketing: ['marketing', 'content', 'analytics', 'branding'],
+  sales: ['sales'],
+  finance: ['finance'],
+  legal: ['legal'],
+  hr: ['hr'],
+  operations: ['operations'],
+};
+
+// ═══════════════════════════════════════════════════════════════
 // DEPARTMENT REGISTRY: data sources, decision types, sense queries
 // ═══════════════════════════════════════════════════════════════
 
@@ -297,20 +310,16 @@ async function preflightCheck(companyId: string, department: string): Promise<Pr
   const missing: string[] = [];
 
   if (department === 'marketing') {
-    // Check connected social accounts (real platforms, not upload_post_profile)
     const { data: socialAccounts } = await supabase.from('social_accounts')
       .select('id, platform')
       .eq('is_connected', true)
       .not('platform', 'eq', 'upload_post_profile');
 
-    // Filter by user who owns this company
     const { data: members } = await supabase.from('company_members')
       .select('user_id').eq('company_id', companyId);
-    const memberIds = (members || []).map(m => m.user_id);
 
     const connectedAccounts = (socialAccounts || []).length;
 
-    // Check total posts across all platforms
     const [igCount, liCount, fbCount, tkCount] = await Promise.all([
       supabase.from('instagram_posts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
       supabase.from('linkedin_posts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
@@ -342,6 +351,51 @@ async function preflightCheck(companyId: string, department: string): Promise<Pr
     }
   }
 
+  if (department === 'finance') {
+    const [usage, snapshots] = await Promise.all([
+      supabase.from('agent_usage_log').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      supabase.from('business_health_snapshots').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+    ]);
+    if ((usage.count || 0) === 0 && (snapshots.count || 0) === 0) {
+      missing.push('finance_activity');
+      return { ready: false, reason: 'Finance requires at least some platform activity (agent executions or health snapshots).', missing };
+    }
+  }
+
+  if (department === 'legal') {
+    const { data: legalParams } = await supabase.from('company_parameters')
+      .select('id', { count: 'exact', head: true })
+      .eq('company_id', companyId).like('parameter_key', 'legal_%');
+    if ((legalParams as any)?.count === 0 || !legalParams) {
+      // Use count query properly
+      const { count } = await supabase.from('company_parameters')
+        .select('id', { count: 'exact', head: true })
+        .eq('company_id', companyId).like('parameter_key', 'legal_%');
+      if ((count || 0) === 0) {
+        missing.push('legal_parameters');
+        return { ready: false, reason: 'Legal requires at least 1 legal parameter configured.', missing };
+      }
+    }
+  }
+
+  if (department === 'hr') {
+    const { count } = await supabase.from('company_members')
+      .select('id', { count: 'exact', head: true }).eq('company_id', companyId);
+    if ((count || 0) < 2) {
+      missing.push('hr_team_members');
+      return { ready: false, reason: 'HR requires at least 2 team members registered.', missing };
+    }
+  }
+
+  if (department === 'operations') {
+    const { count } = await supabase.from('ai_workforce_teams')
+      .select('id', { count: 'exact', head: true }).eq('company_id', companyId);
+    if ((count || 0) === 0) {
+      missing.push('operations_teams');
+      return { ready: false, reason: 'Operations requires at least 1 AI workforce team configured.', missing };
+    }
+  }
+
   return { ready: true, missing };
 }
 
@@ -350,7 +404,6 @@ function checkDataSufficiency(department: string, senseData: any): { sufficient:
     const platforms = senseData?.platforms || {};
     const totalCount = Object.values(platforms).reduce((sum: number, p: any) => sum + (p?.count || 0), 0);
     const hasCampaigns = (senseData?.activeCampaigns?.length || 0) > 0;
-
     if (totalCount === 0 && !hasCampaigns) {
       return { sufficient: false, reason: 'All platforms have 0 posts and no active campaigns. Cannot generate meaningful decisions.' };
     }
@@ -359,6 +412,30 @@ function checkDataSufficiency(department: string, senseData: any): { sufficient:
   if (department === 'sales') {
     if ((senseData?.totalDeals || 0) === 0 && (senseData?.contactsCount || 0) === 0) {
       return { sufficient: false, reason: 'No deals or contacts found. Cannot generate sales decisions.' };
+    }
+  }
+
+  if (department === 'finance') {
+    if ((senseData?.creditsUsedThisMonth || 0) === 0 && (senseData?.recentSnapshots?.length || 0) === 0) {
+      return { sufficient: false, reason: 'No credit usage or health snapshots found. Cannot generate finance decisions.' };
+    }
+  }
+
+  if (department === 'legal') {
+    if ((senseData?.parametersCount || 0) === 0) {
+      return { sufficient: false, reason: 'No legal parameters configured. Cannot generate legal decisions.' };
+    }
+  }
+
+  if (department === 'hr') {
+    if ((senseData?.teamSize || 0) < 2) {
+      return { sufficient: false, reason: 'Insufficient team data. Need at least 2 members for HR decisions.' };
+    }
+  }
+
+  if (department === 'operations') {
+    if ((senseData?.totalTasks || 0) === 0 && (senseData?.agentExecutions || 0) === 0) {
+      return { sufficient: false, reason: 'No tasks or agent executions found. Cannot generate operations decisions.' };
     }
   }
 
@@ -389,6 +466,21 @@ async function thinkPhase(companyId: string, department: string, senseData: any,
   const { data: branding } = await supabase.from('company_branding')
     .select('brand_voice').eq('company_id', companyId).maybeSingle();
 
+  // Fetch REAL available agents for this department's categories
+  const categories = DEPT_CATEGORY_MAP[department] || [];
+  const { data: availableAgents } = await supabase.from('platform_agents')
+    .select('internal_code, name, edge_function_name, execution_type')
+    .in('category', categories).eq('is_active', true);
+
+  const agentListBlock = (availableAgents || []).length > 0
+    ? `\n\nAVAILABLE AGENTS (use ONLY these internal_code values for agent_to_execute):\n${
+        (availableAgents || []).map(a => {
+          const status = a.edge_function_name ? 'ready' : 'pending implementation';
+          return `- ${a.internal_code}: ${a.name} (${status})`;
+        }).join('\n')
+      }\nIf no agent fits the action, set agent_to_execute to null.`
+    : '\n\nNO AGENTS AVAILABLE for this department yet. Set agent_to_execute to null for all decisions.';
+
   let memoryBlock = '';
   if (memory?.lessons) {
     memoryBlock = `\n\nLESSONS FROM PAST DECISIONS (use these to make better decisions):\n${memory.lessons}`;
@@ -410,6 +502,7 @@ RULES:
 - Max actions per cycle: ${deptConfig.max_posts_per_day || 5}
 - Allowed actions: ${(deptConfig.allowed_actions || reg!.decisionTypes).join(', ')}
 - Brand tone: ${branding?.brand_voice ? JSON.stringify(branding.brand_voice) : 'professional'}
+${agentListBlock}
 ${memoryBlock}
 ${externalBlock}
 
@@ -419,7 +512,7 @@ Respond ONLY with a valid JSON array of decisions. Each decision:
   "priority": "critical|high|medium|low",
   "description": "What to do and why",
   "reasoning": "Data-driven justification including any external signals considered",
-  "agent_to_execute": "AGENT_CODE matching this department",
+  "agent_to_execute": "AGENT_CODE from the AVAILABLE AGENTS list above, or null if none fits",
   "action_parameters": {},
   "expected_impact": {"metric": "relevant_metric", "estimated_change": "+X%"},
   "external_signal_influence": true/false
@@ -503,10 +596,11 @@ async function guardPhase(companyId: string, department: string, decisions: any[
 async function actPhase(companyId: string, department: string, guardedDecisions: any[], cycleId: string) {
   const results: any[] = [];
 
-  // Resolve agent mappings for this department
+  // Resolve agent mappings using category (NOT department column which doesn't exist)
+  const categories = DEPT_CATEGORY_MAP[department] || [];
   const { data: agents } = await supabase.from('platform_agents')
-    .select('id, internal_code, name, edge_function_name, credits_per_use')
-    .eq('department', department).eq('is_active', true);
+    .select('id, internal_code, name, edge_function_name, execution_type, credits_per_use')
+    .in('category', categories).eq('is_active', true);
   
   const agentMap = new Map((agents || []).map(a => [a.internal_code, a]));
 
@@ -530,51 +624,73 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
 
     // Real agent execution
     const agentCode = decision.agent_to_execute;
+    
+    // If AI set agent_to_execute to null, record as no action needed
+    if (!agentCode) {
+      console.log(`ℹ️ [${department}] Decision has no agent assigned (null). Logging as recommendation only.`);
+      results.push({ ...decision, action_taken: false, execution_result: 'recommendation_only' });
+      continue;
+    }
+
     const agent = agentMap.get(agentCode);
     
-    if (agent?.edge_function_name) {
-      try {
-        console.log(`⚡ [${department}] Invoking agent: ${agent.name} (${agent.edge_function_name})`);
-        const execStart = Date.now();
-        
-        const agentRes = await fetch(`${supabaseUrl}/functions/v1/${agent.edge_function_name}`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            company_id: companyId,
-            department,
-            decision_type: decision.decision_type,
-            parameters: decision.action_parameters || {},
-            cycle_id: cycleId,
-            autopilot: true,
-          }),
-        });
-        
-        const agentResult = await agentRes.json();
-        const execTime = Date.now() - execStart;
-        
-        // Log usage
-        await supabase.from('agent_usage_log').insert({
-          agent_id: agent.id,
+    if (!agent) {
+      // Agent code doesn't exist in platform_agents
+      console.log(`⚠️ [${department}] No agent found for code: ${agentCode}. Not a real agent.`);
+      results.push({ ...decision, action_taken: false, execution_result: 'no_agent_mapped' });
+      continue;
+    }
+
+    if (!agent.edge_function_name || agent.execution_type === 'pending') {
+      // Agent exists but is not implemented yet
+      console.log(`⚠️ [${department}] Agent ${agentCode} exists but is pending implementation.`);
+      results.push({ ...decision, action_taken: false, execution_result: 'agent_not_implemented' });
+      continue;
+    }
+
+    // Prevent recursive calls to the autopilot engine itself
+    if (agent.edge_function_name === 'enterprise-autopilot-engine') {
+      console.warn(`🔄 [${department}] Agent ${agentCode} points to enterprise-autopilot-engine itself! Skipping to prevent recursion.`);
+      results.push({ ...decision, action_taken: false, execution_result: 'recursive_agent_blocked' });
+      continue;
+    }
+
+    try {
+      console.log(`⚡ [${department}] Invoking agent: ${agent.name} (${agent.edge_function_name})`);
+      const execStart = Date.now();
+      
+      const agentRes = await fetch(`${supabaseUrl}/functions/v1/${agent.edge_function_name}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           company_id: companyId,
-          status: agentResult.success !== false ? 'completed' : 'failed',
-          credits_consumed: agent.credits_per_use || 1,
-          execution_time_ms: execTime,
-          input_data: decision.action_parameters,
-          output_data: agentResult,
-          output_summary: agentResult.summary || decision.description,
-          error_message: agentResult.error || null,
-        });
-        
-        results.push({ ...decision, action_taken: true, execution_result: agentResult.success !== false ? 'success' : 'failed' });
-      } catch (err) {
-        console.error(`❌ Agent execution failed for ${agentCode}:`, err);
-        results.push({ ...decision, action_taken: true, execution_result: 'error', execution_error: (err as Error).message });
-      }
-    } else {
-      // No agent mapped - log the decision as taken
-      console.log(`⚠️ [${department}] No agent mapped for code: ${agentCode}`);
-      results.push({ ...decision, action_taken: true, execution_result: 'no_agent_mapped' });
+          department,
+          decision_type: decision.decision_type,
+          parameters: decision.action_parameters || {},
+          cycle_id: cycleId,
+          autopilot: true,
+        }),
+      });
+      
+      const agentResult = await agentRes.json();
+      const execTime = Date.now() - execStart;
+      
+      await supabase.from('agent_usage_log').insert({
+        agent_id: agent.id,
+        company_id: companyId,
+        status: agentResult.success !== false ? 'completed' : 'failed',
+        credits_consumed: agent.credits_per_use || 1,
+        execution_time_ms: execTime,
+        input_data: decision.action_parameters,
+        output_data: agentResult,
+        output_summary: agentResult.summary || decision.description,
+        error_message: agentResult.error || null,
+      });
+      
+      results.push({ ...decision, action_taken: true, execution_result: agentResult.success !== false ? 'success' : 'failed' });
+    } catch (err) {
+      console.error(`❌ Agent execution failed for ${agentCode}:`, err);
+      results.push({ ...decision, action_taken: false, execution_result: 'error', execution_error: (err as Error).message });
     }
   }
 

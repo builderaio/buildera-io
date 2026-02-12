@@ -851,6 +851,10 @@
       "title": "Requirements not met",
       "socialRequired": "You need to connect at least one social network or import at least 5 posts to activate the marketing autopilot.",
       "salesRequired": "You need at least one deal or contact in the CRM to activate the sales autopilot.",
+      "financeRequired": "You need at least some platform activity (agent executions or health snapshots) to activate the finance autopilot.",
+      "legalRequired": "You need to configure at least one legal parameter to activate the legal autopilot.",
+      "hrRequired": "You need at least 2 team members registered to activate the HR autopilot.",
+      "operationsRequired": "You need at least 1 AI workforce team configured to activate the operations autopilot.",
       "connectNow": "Connect social networks",
       "importData": "Import social data",
       "setupCRM": "Set up CRM"

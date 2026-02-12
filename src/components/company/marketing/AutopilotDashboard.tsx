@@ -145,6 +145,60 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
 
   const toggleAutopilot = async () => {
     const newState = !config?.autopilot_enabled;
+    
+    // Smart pre-configuration when activating for the first time
+    if (newState && !config?.id) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !companyId) return;
+
+        // Fetch existing company data for smart defaults
+        const [commRes, brandRes, socialRes, companyRes] = await Promise.all([
+          supabase.from('company_communication_settings').select('forbidden_words, language_formality, approved_slogans, tone_by_platform, topics_to_avoid').eq('company_id', companyId).maybeSingle(),
+          supabase.from('company_branding').select('brand_voice').eq('company_id', companyId).maybeSingle(),
+          supabase.from('social_accounts').select('id').eq('user_id', user.id).eq('is_connected', true),
+          supabase.from('companies').select('country').eq('id', companyId).single(),
+        ]);
+
+        // Build smart guardrails from existing brand data
+        const brandGuardrails: any = {};
+        if (commRes.data?.forbidden_words) brandGuardrails.forbidden_words = commRes.data.forbidden_words;
+        if (commRes.data?.language_formality) brandGuardrails.tone = commRes.data.language_formality;
+        if (commRes.data?.approved_slogans) brandGuardrails.approved_slogans = commRes.data.approved_slogans;
+        if (commRes.data?.tone_by_platform) brandGuardrails.tone_by_platform = commRes.data.tone_by_platform;
+        if (commRes.data?.topics_to_avoid) brandGuardrails.topics_to_avoid = commRes.data.topics_to_avoid;
+        if (brandRes.data?.brand_voice) brandGuardrails.brand_voice = brandRes.data.brand_voice;
+
+        // Determine allowed actions based on connected networks
+        const hasSocial = (socialRes.data?.length || 0) > 0;
+        const allowedActions = hasSocial 
+          ? ['create_content', 'publish', 'reply_comments', 'adjust_campaigns']
+          : ['create_content'];
+
+        // Set default active hours (9-21 local time)
+        const activeHours = { start: '09:00', end: '21:00' };
+
+        await saveConfig({
+          autopilot_enabled: true,
+          require_human_approval: true, // Start in supervised mode
+          brand_guardrails: Object.keys(brandGuardrails).length > 0 ? brandGuardrails : null,
+          allowed_actions: allowedActions,
+          active_hours: activeHours,
+          execution_frequency: '6h',
+          max_posts_per_day: 3,
+          max_credits_per_cycle: 50,
+        });
+
+        toast({ 
+          title: t('autopilot.smartConfigApplied'),
+          description: t('autopilot.smartConfigDesc'),
+        });
+        return;
+      } catch (error) {
+        console.error('Error applying smart config:', error);
+      }
+    }
+    
     await saveConfig({ autopilot_enabled: newState });
   };
 

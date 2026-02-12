@@ -177,12 +177,18 @@
     "loading": "Loading Marketing Hub...",
     "gettingStarted": {
       "title": "Getting Started",
+      "titleLevel2": "Advanced Automation",
       "steps": {
         "connectSocial": "Connect social networks",
         "completeBrand": "Complete brand DNA",
         "firstCampaign": "Create first campaign",
         "firstVideo": "Generate first video",
-        "firstPost": "Schedule first post"
+        "firstPost": "Schedule first post",
+        "activateAutopilot": "Activate Marketing Autopilot",
+        "configureGuardrails": "Configure brand guardrails",
+        "supervisedMode": "Activate supervised mode",
+        "reviewDecisions": "Review Autopilot decisions",
+        "autonomousMode": "Graduate to autonomous mode"
       }
     },
     "tabs": {
@@ -627,6 +633,8 @@
     "guardrails": "Guardrails",
     "requireApproval": "Require human approval",
     "activeHoursStart": "Active hours start",
-    "activeHoursEnd": "Active hours end"
+    "activeHoursEnd": "Active hours end",
+    "smartConfigApplied": "Smart configuration applied",
+    "smartConfigDesc": "We've pre-configured Autopilot with your brand data. Review the settings and adjust as needed."
   }
 }

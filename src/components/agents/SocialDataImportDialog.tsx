@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,10 @@ interface SocialDataImportDialogProps {
 }
 
 const PLATFORMS = [
-  { id: 'instagram', name: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/tu_usuario', scraper: 'instagram-scraper' },
-  { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/company/tu_empresa', scraper: 'linkedin-scraper' },
-  { id: 'facebook', name: 'Facebook', icon: Facebook, placeholder: 'https://facebook.com/tu_pagina', scraper: 'facebook-scraper' },
-  { id: 'tiktok', name: 'TikTok', icon: Music2, placeholder: 'https://tiktok.com/@tu_usuario', scraper: 'tiktok-scraper' },
+  { id: 'instagram', name: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/tu_usuario', scraper: 'instagram-scraper', urlField: 'instagram_url' },
+  { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, placeholder: 'https://linkedin.com/company/tu_empresa', scraper: 'linkedin-scraper', urlField: 'linkedin_url' },
+  { id: 'facebook', name: 'Facebook', icon: Facebook, placeholder: 'https://facebook.com/tu_pagina', scraper: 'facebook-scraper', urlField: 'facebook_url' },
+  { id: 'tiktok', name: 'TikTok', icon: Music2, placeholder: 'https://tiktok.com/@tu_usuario', scraper: 'tiktok-scraper', urlField: 'tiktok_url' },
 ];
 
 export function SocialDataImportDialog({
@@ -39,6 +39,35 @@ export function SocialDataImportDialog({
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [companyUrls, setCompanyUrls] = useState<Record<string, string>>({});
+
+  // Fetch company social URLs when dialog opens
+  useEffect(() => {
+    if (!open || !companyId) return;
+    const fetchUrls = async () => {
+      const { data } = await supabase
+        .from('companies')
+        .select('instagram_url, linkedin_url, facebook_url, tiktok_url')
+        .eq('id', companyId)
+        .maybeSingle();
+      if (data) {
+        setCompanyUrls({
+          instagram: data.instagram_url || '',
+          linkedin: data.linkedin_url || '',
+          facebook: data.facebook_url || '',
+          tiktok: data.tiktok_url || '',
+        });
+      }
+    };
+    fetchUrls();
+  }, [open, companyId]);
+
+  // Auto-fill URL when platform changes
+  useEffect(() => {
+    if (platform && companyUrls[platform]) {
+      setUrl(companyUrls[platform]);
+    }
+  }, [platform, companyUrls]);
 
   const selectedPlatform = PLATFORMS.find(p => p.id === platform);
 

@@ -845,6 +845,29 @@
     "autopilot_inactive": "Autopilot Inactive",
     "locked": "Locked",
     "unlocked": "Unlocked",
-    "requires_maturity": "Requires level: {{level}}"
+    "requires_maturity": "Requires level: {{level}}",
+    "autopilot": {
+      "title": "Enterprise Autopilot Brain",
+      "subtitle": "Multi-department autonomous command center",
+      "cycles": "cycles",
+      "decisions": "decisions",
+      "capabilities": "capabilities",
+      "actions_short": "actions",
+      "running": "Running...",
+      "runCycle": "Run cycle",
+      "cycleComplete": "Cycle completed",
+      "intelligence": "Intelligence",
+      "lessons": "Lessons",
+      "capabilitiesTab": "Capabilities",
+      "intelligenceFeed": "External Intelligence Feed",
+      "lessonsLearned": "Lessons Learned",
+      "capabilitiesTitle": "Capability Evolution",
+      "executionTimeline": "Execution Timeline",
+      "noIntelligence": "No external intelligence signals yet. Run a cycle to gather market data.",
+      "noLessons": "No lessons learned yet. The system learns after several execution cycles.",
+      "noLesson": "No lesson recorded for this decision.",
+      "active": "Active",
+      "pending": "Pending"
+    }
   }
 }

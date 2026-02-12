@@ -845,6 +845,29 @@
     "autopilot_inactive": "Autopilot Inativo",
     "locked": "Bloqueado",
     "unlocked": "Desbloqueado",
-    "requires_maturity": "Requer nível: {{level}}"
+    "requires_maturity": "Requer nível: {{level}}",
+    "autopilot": {
+      "title": "Enterprise Autopilot Brain",
+      "subtitle": "Centro de comando autônomo multi-departamental",
+      "cycles": "ciclos",
+      "decisions": "decisões",
+      "capabilities": "capacidades",
+      "actions_short": "ações",
+      "running": "Executando...",
+      "runCycle": "Executar ciclo",
+      "cycleComplete": "Ciclo concluído",
+      "intelligence": "Inteligência",
+      "lessons": "Lições",
+      "capabilitiesTab": "Capacidades",
+      "intelligenceFeed": "Feed de Inteligência Externa",
+      "lessonsLearned": "Lições Aprendidas",
+      "capabilitiesTitle": "Evolução de Capacidades",
+      "executionTimeline": "Timeline de Execução",
+      "noIntelligence": "Sem sinais de inteligência externa ainda. Execute um ciclo para coletar dados de mercado.",
+      "noLessons": "Sem lições aprendidas ainda. O sistema aprende após vários ciclos de execução.",
+      "noLesson": "Sem lição registrada para esta decisão.",
+      "active": "Ativa",
+      "pending": "Pendente"
+    }
   }
 }

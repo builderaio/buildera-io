@@ -42,6 +42,68 @@ interface QuickStat {
   description?: string;
 }
 
+// Sub-navigation for Autopilot section
+const AutopilotSubNav = ({ activeSubTab, onSubTabChange }: { activeSubTab: string; onSubTabChange: (tab: string) => void }) => {
+  const { t } = useTranslation('marketing');
+  const subTabs = [
+    { id: 'status', label: t('hub.autopilotSubs.status', 'Status'), icon: Brain },
+    { id: 'automation', label: t('hub.autopilotSubs.automation', 'Automation'), icon: Bot },
+    { id: 'approvals', label: t('hub.autopilotSubs.approvals', 'Approvals'), icon: CheckCircle },
+    { id: 'listening', label: t('hub.autopilotSubs.listening', 'Listening'), icon: Ear },
+    { id: 'attribution', label: t('hub.autopilotSubs.attribution', 'Attribution'), icon: Link2 },
+  ];
+
+  return (
+    <div className="flex flex-wrap gap-2 mb-4">
+      {subTabs.map(tab => {
+        const Icon = tab.icon;
+        return (
+          <Button
+            key={tab.id}
+            variant={activeSubTab === tab.id ? "default" : "outline"}
+            size="sm"
+            onClick={() => onSubTabChange(tab.id)}
+            className="gap-1.5 text-xs"
+          >
+            <Icon className="w-3.5 h-3.5" />
+            {tab.label}
+          </Button>
+        );
+      })}
+    </div>
+  );
+};
+
+// Sub-navigation for Dashboard section
+const DashboardSubNav = ({ activeSubTab, onSubTabChange }: { activeSubTab: string; onSubTabChange: (tab: string) => void }) => {
+  const { t } = useTranslation('marketing');
+  const subTabs = [
+    { id: 'overview', label: t('hub.dashboardSubs.overview', 'Overview'), icon: BarChart3 },
+    { id: 'library', label: t('hub.dashboardSubs.library', 'Library'), icon: FolderOpen },
+    { id: 'reports', label: t('hub.dashboardSubs.reports', 'Reports'), icon: FileText },
+  ];
+
+  return (
+    <div className="flex flex-wrap gap-2 mb-4">
+      {subTabs.map(tab => {
+        const Icon = tab.icon;
+        return (
+          <Button
+            key={tab.id}
+            variant={activeSubTab === tab.id ? "default" : "outline"}
+            size="sm"
+            onClick={() => onSubTabChange(tab.id)}
+            className="gap-1.5 text-xs"
+          >
+            <Icon className="w-3.5 h-3.5" />
+            {tab.label}
+          </Button>
+        );
+      })}
+    </div>
+  );
+};
+
 const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -49,19 +111,48 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   
   const getInitialTab = () => {
     const tab = searchParams.get('tab');
-    const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening', 'utm', 'reports', 'automation', 'approvals', 'autopilot']);
+    // Map old tabs to new structure
+    const tabMapping: Record<string, string> = {
+      'listening': 'autopilot',
+      'utm': 'autopilot',
+      'reports': 'dashboard',
+      'automation': 'autopilot',
+      'approvals': 'autopilot',
+      'content': 'dashboard',
+    };
+    if (tab && tabMapping[tab]) return tabMapping[tab];
+    const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'autopilot']);
     if (tab && allowed.has(tab)) return tab;
     return 'dashboard';
   };
   
   const [activeTab, setActiveTab] = useState(getInitialTab());
+  const [autopilotSubTab, setAutopilotSubTab] = useState('status');
+  const [dashboardSubTab, setDashboardSubTab] = useState('overview');
   const [selectedPlatform, setSelectedPlatform] = useState("all");
   
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab) {
-      const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'content', 'listening', 'utm', 'reports', 'automation', 'approvals', 'autopilot']);
-      if (allowed.has(tab) && tab !== activeTab) setActiveTab(tab);
+      const tabMapping: Record<string, string> = {
+        'listening': 'autopilot',
+        'utm': 'autopilot',
+        'reports': 'dashboard',
+        'automation': 'autopilot',
+        'approvals': 'autopilot',
+        'content': 'dashboard',
+      };
+      // Map old sub-tabs
+      if (tab === 'listening') setAutopilotSubTab('listening');
+      else if (tab === 'utm') setAutopilotSubTab('attribution');
+      else if (tab === 'automation') setAutopilotSubTab('automation');
+      else if (tab === 'approvals') setAutopilotSubTab('approvals');
+      else if (tab === 'reports') setDashboardSubTab('reports');
+      else if (tab === 'content') setDashboardSubTab('library');
+      
+      const mapped = tabMapping[tab] || tab;
+      const allowed = new Set(['dashboard', 'create', 'campaigns', 'calendar', 'autopilot']);
+      if (allowed.has(mapped) && mapped !== activeTab) setActiveTab(mapped);
     }
   }, [searchParams]);
 
@@ -217,7 +308,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           change: `${insightsGrowthNum >= 0 ? '+' : ''}${insightsGrowth}%`,
           trend: insightsGrowthNum > 0 ? "up" : insightsGrowthNum < 0 ? "down" : "neutral",
           icon: Brain,
-          color: "text-purple-600",
+          color: "text-primary",
           description: t("hub.metrics.insightsDesc")
         },
         {
@@ -226,7 +317,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           change: `${engagementGrowthNum >= 0 ? '+' : ''}${engagementGrowth}%`,
           trend: engagementGrowthNum > 0 ? "up" : engagementGrowthNum < 0 ? "down" : "neutral",
           icon: Heart,
-          color: "text-pink-600",
+          color: "text-secondary",
           description: t("hub.metrics.engagementDesc")
         },
         {
@@ -235,7 +326,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           change: activeCampaigns > 0 ? `${activeCampaigns} ${t("hub.metrics.running")}` : t("hub.metrics.noCampaigns"),
           trend: activeCampaigns > 0 ? "up" : "neutral",
           icon: Rocket,
-          color: "text-blue-600",
+          color: "text-primary",
           description: t("hub.metrics.campaignsDesc")
         },
         {
@@ -244,7 +335,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           change: completedActions > 0 ? `${completedActions} ${t("hub.metrics.actions")}` : t("hub.metrics.noActions"),
           trend: automationScore > 70 ? "up" : automationScore > 30 ? "neutral" : "down",
           icon: Zap,
-          color: "text-green-600",
+          color: "text-primary",
           description: t("hub.metrics.automationDesc")
         }
       ];
@@ -253,10 +344,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     } catch (error) {
       console.error('Error loading metrics:', error);
       setRealMetrics([
-        { label: t("hub.metrics.insights"), value: "0", change: t("hub.metrics.startingAnalysis"), trend: "neutral", icon: Brain, color: "text-purple-600" },
-        { label: t("hub.metrics.engagement"), value: "0", change: t("hub.metrics.noData"), trend: "neutral", icon: Heart, color: "text-pink-600" },
-        { label: t("hub.metrics.campaigns"), value: "0", change: t("hub.metrics.createFirst"), trend: "neutral", icon: Rocket, color: "text-blue-600" },
-        { label: t("hub.metrics.automation"), value: "0%", change: t("hub.metrics.configureAuto"), trend: "neutral", icon: Zap, color: "text-green-600" }
+        { label: t("hub.metrics.insights"), value: "0", change: t("hub.metrics.startingAnalysis"), trend: "neutral", icon: Brain, color: "text-primary" },
+        { label: t("hub.metrics.engagement"), value: "0", change: t("hub.metrics.noData"), trend: "neutral", icon: Heart, color: "text-secondary" },
+        { label: t("hub.metrics.campaigns"), value: "0", change: t("hub.metrics.createFirst"), trend: "neutral", icon: Rocket, color: "text-primary" },
+        { label: t("hub.metrics.automation"), value: "0%", change: t("hub.metrics.configureAuto"), trend: "neutral", icon: Zap, color: "text-primary" }
       ]);
     }
   };
@@ -303,12 +394,12 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   const getPlatformInfo = (platform: keyof typeof platformStats) => {
     const configs = {
-      instagram: { name: 'Instagram', icon: '📷', color: 'bg-pink-500' },
-      linkedin: { name: 'LinkedIn', icon: '💼', color: 'bg-blue-600' },
-      facebook: { name: 'Facebook', icon: '📘', color: 'bg-blue-700' },
-      tiktok: { name: 'TikTok', icon: '🎵', color: 'bg-black' }
+      instagram: { name: 'Instagram', icon: '📷', color: 'bg-secondary' },
+      linkedin: { name: 'LinkedIn', icon: '💼', color: 'bg-primary' },
+      facebook: { name: 'Facebook', icon: '📘', color: 'bg-primary' },
+      tiktok: { name: 'TikTok', icon: '🎵', color: 'bg-foreground' }
     };
-    return configs[platform] || { name: platform, icon: '🌐', color: 'bg-gray-500' };
+    return configs[platform] || { name: platform, icon: '🌐', color: 'bg-muted' };
   };
 
   const handleTabChange = (value: string) => {
@@ -332,26 +423,21 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
 
   return (
     <div className="space-y-6">
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Metrics Cards - Brand-aligned */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {realMetrics.map((metric, index) => (
-          <Card key={index} className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-card to-muted/30 hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6">
+          <Card key={index} className="overflow-hidden border shadow-sm hover:shadow-md transition-all duration-300">
+            <CardContent className="p-5 sm:p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-full bg-gradient-to-br ${
-                  metric.color === 'text-purple-600' ? 'from-purple-100 to-purple-50' :
-                  metric.color === 'text-pink-600' ? 'from-pink-100 to-pink-50' :
-                  metric.color === 'text-blue-600' ? 'from-blue-100 to-blue-50' :
-                  'from-green-100 to-green-50'
-                }`}>
-                  <metric.icon className={`w-6 h-6 ${metric.color}`} />
+                <div className="p-2.5 rounded-xl bg-primary/10">
+                  <metric.icon className={`w-5 h-5 ${metric.color}`} />
                 </div>
                 <Badge variant={metric.trend === 'up' ? 'default' : 'secondary'} className="text-xs">
                   {metric.change}
                 </Badge>
               </div>
               <div>
-                <p className="text-3xl font-bold mb-1">{metric.value}</p>
+                <p className="text-2xl sm:text-3xl font-bold mb-1">{metric.value}</p>
                 <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
                 {metric.description && (
                   <p className="text-xs text-muted-foreground mt-1">{metric.description}</p>
@@ -362,9 +448,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         ))}
       </div>
 
-      {/* Main Tabs */}
+      {/* Main Tabs - Reduced from 11 to 5 */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="flex w-full overflow-x-auto lg:w-fit mb-6">
+        <TabsList className="flex w-full lg:w-fit mb-6">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">{t("hub.tabs.dashboard")}</span>
@@ -377,153 +463,142 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
             <Rocket className="w-4 h-4" />
             <span className="hidden sm:inline">{t("hub.tabs.campaigns")}</span>
           </TabsTrigger>
-          <TabsTrigger value="listening" className="flex items-center gap-2">
-            <Ear className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("hub.tabs.listening")}</span>
-          </TabsTrigger>
-          <TabsTrigger value="utm" className="flex items-center gap-2">
-            <Link2 className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("hub.tabs.utm")}</span>
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("hub.tabs.reports")}</span>
-          </TabsTrigger>
-          <TabsTrigger value="automation" className="flex items-center gap-2">
-            <Bot className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("hub.tabs.automation")}</span>
-          </TabsTrigger>
-          <TabsTrigger value="approvals" className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("hub.tabs.approvals")}</span>
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <Calendar className="w-4 h-4" />
+            <span className="hidden sm:inline">{t("hub.tabs.calendar")}</span>
           </TabsTrigger>
           <TabsTrigger value="autopilot" className="flex items-center gap-2">
             <Brain className="w-4 h-4" />
             <span className="hidden sm:inline">{t("hub.tabs.autopilot")}</span>
           </TabsTrigger>
-          <TabsTrigger value="calendar" className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("hub.tabs.calendar")}</span>
-          </TabsTrigger>
-          <TabsTrigger value="content" className="flex items-center gap-2">
-            <FolderOpen className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("hub.tabs.library")}</span>
-          </TabsTrigger>
         </TabsList>
 
-        {/* Dashboard Tab */}
+        {/* Dashboard Tab with sub-navigation */}
         <TabsContent value="dashboard" className="space-y-6">
-          <ConnectionStatusBar connections={socialConnections} />
+          <DashboardSubNav activeSubTab={dashboardSubTab} onSubTabChange={setDashboardSubTab} />
           
-          {/* Getting Started Widget */}
-          {userId && (
-            <MarketingGettingStarted userId={userId} onNavigateTab={handleTabChange} />
-          )}
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Platform Performance */}
-            <Card className="lg:col-span-2 overflow-hidden border-0 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
-                <CardTitle className="flex items-center gap-2">
-                  <Network className="w-5 h-5" />
-                  {t("hub.platformPerformance")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {Object.entries(platformStats)
-                    .filter(([platform]) => (socialConnections as any)[platform])
-                    .map(([platform, stats]) => {
-                      const platformInfo = getPlatformInfo(platform as keyof typeof platformStats);
-                      const engagementRate = stats.posts > 0 ? (stats.engagement / stats.posts).toFixed(1) : '0';
-                      return (
-                        <div key={platform} className="relative overflow-hidden p-4 bg-muted/50 rounded-lg border hover:shadow-md transition-shadow">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-lg">
-                                {platformInfo.icon}
-                              </div>
-                              <div>
-                                <p className="font-semibold">{platformInfo.name}</p>
-                                <p className="text-sm text-muted-foreground">{stats.posts} {t("hub.publications")}</p>
+          {dashboardSubTab === 'overview' && (
+            <>
+              <ConnectionStatusBar connections={socialConnections} />
+              
+              {userId && (
+                <MarketingGettingStarted userId={userId} onNavigateTab={handleTabChange} />
+              )}
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Platform Performance */}
+                <Card className="lg:col-span-2 overflow-hidden border shadow-sm">
+                  <CardHeader className="bg-primary/5 border-b">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Network className="w-5 h-5 text-primary" />
+                      {t("hub.platformPerformance")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      {Object.entries(platformStats)
+                        .filter(([platform]) => (socialConnections as any)[platform])
+                        .map(([platform, stats]) => {
+                          const platformInfo = getPlatformInfo(platform as keyof typeof platformStats);
+                          const engagementRate = stats.posts > 0 ? (stats.engagement / stats.posts).toFixed(1) : '0';
+                          return (
+                            <div key={platform} className="relative overflow-hidden p-4 bg-muted/50 rounded-lg border hover:shadow-md transition-shadow">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-lg">
+                                    {platformInfo.icon}
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold">{platformInfo.name}</p>
+                                    <p className="text-sm text-muted-foreground">{stats.posts} {t("hub.publications")}</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-2xl font-bold text-primary">{formatNumber(stats.engagement)}</p>
+                                  <p className="text-xs text-muted-foreground">{t("hub.totalEngagement")}</p>
+                                  {stats.posts > 0 && (
+                                    <p className="text-xs font-medium text-primary">{engagementRate} {t("hub.avgPerPost")}</p>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-2xl font-bold text-primary">{formatNumber(stats.engagement)}</p>
-                              <p className="text-xs text-muted-foreground">{t("hub.totalEngagement")}</p>
-                              {stats.posts > 0 && (
-                                <p className="text-xs font-medium text-blue-600">{engagementRate} {t("hub.avgPerPost")}</p>
-                              )}
-                            </div>
-                          </div>
+                          );
+                        })}
+                      {Object.values(socialConnections).every(v => !v) && (
+                        <div className="text-center py-8">
+                          <Network className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                          <p className="text-muted-foreground mb-4">{t("hub.connectToSeeMetrics")}</p>
+                          <Button variant="outline" onClick={() => navigate('/company-dashboard?view=configuracion')}>
+                            {t("hub.connectNetworks")}
+                          </Button>
                         </div>
-                      );
-                    })}
-                  {Object.values(socialConnections).every(v => !v) && (
-                    <div className="text-center py-8">
-                      <Network className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground mb-4">{t("hub.connectToSeeMetrics")}</p>
-                      <Button variant="outline" onClick={() => navigate('/company-dashboard?view=configuracion')}>
-                        {t("hub.connectNetworks")}
-                      </Button>
+                      )}
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
 
-            {/* Audiences Widget */}
-            <Card className="overflow-hidden border-0 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-pink-600 to-purple-600 text-white">
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  {t("hub.yourAudiences")}
-                </CardTitle>
-                <CardDescription className="text-pink-100">{t("hub.audiencesDesc")}</CardDescription>
-              </CardHeader>
-              <CardContent className="p-4">
-                <AudienceHighlightsWidget userId={userId || undefined} />
-              </CardContent>
-            </Card>
-          </div>
+                {/* Audiences Widget */}
+                <Card className="overflow-hidden border shadow-sm">
+                  <CardHeader className="bg-secondary/5 border-b">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Users className="w-5 h-5 text-secondary" />
+                      {t("hub.yourAudiences")}
+                    </CardTitle>
+                    <CardDescription>{t("hub.audiencesDesc")}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <AudienceHighlightsWidget userId={userId || undefined} />
+                  </CardContent>
+                </Card>
+              </div>
 
-          {/* Instagram Community Manager */}
-          {socialConnections.instagram && (
-            <InstagramCommunityManager profile={profile} />
+              {/* Instagram Community Manager */}
+              {socialConnections.instagram && (
+                <InstagramCommunityManager profile={profile} />
+              )}
+
+              {/* Quick Actions */}
+              <Card className="overflow-hidden border shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Rocket className="w-5 h-5 text-primary" />
+                    {t("hub.quickActions")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Button onClick={() => handleTabChange('create')} className="h-auto py-4 flex-col gap-2">
+                      <PenTool className="w-5 h-5" />
+                      <span className="text-sm">{t("hub.createContent")}</span>
+                    </Button>
+                    <Button onClick={() => handleTabChange('campaigns')} variant="outline" className="h-auto py-4 flex-col gap-2">
+                      <Target className="w-5 h-5" />
+                      <span className="text-sm">{t("hub.newCampaign")}</span>
+                    </Button>
+                    <Button onClick={() => handleTabChange('calendar')} variant="outline" className="h-auto py-4 flex-col gap-2">
+                      <Calendar className="w-5 h-5" />
+                      <span className="text-sm">{t("hub.viewCalendar")}</span>
+                    </Button>
+                    <Button onClick={() => handleTabChange('autopilot')} variant="outline" className="h-auto py-4 flex-col gap-2 border-primary/30 hover:bg-primary/5">
+                      <Brain className="w-5 h-5 text-primary" />
+                      <span className="text-sm">{t("hub.tabs.autopilot")}</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
 
-          {/* Quick Actions */}
-          <Card className="overflow-hidden border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Rocket className="w-5 h-5 text-primary" />
-                {t("hub.quickActions")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Button onClick={() => handleTabChange('create')} className="h-auto py-4 flex-col gap-2">
-                  <PenTool className="w-5 h-5" />
-                  <span className="text-sm">{t("hub.createContent")}</span>
-                </Button>
-                <Button onClick={() => handleTabChange('campaigns')} variant="outline" className="h-auto py-4 flex-col gap-2">
-                  <Target className="w-5 h-5" />
-                  <span className="text-sm">{t("hub.newCampaign")}</span>
-                </Button>
-                <Button onClick={() => handleTabChange('calendar')} variant="outline" className="h-auto py-4 flex-col gap-2">
-                  <Calendar className="w-5 h-5" />
-                  <span className="text-sm">{t("hub.viewCalendar")}</span>
-                </Button>
-                <Button onClick={() => handleTabChange('content')} variant="outline" className="h-auto py-4 flex-col gap-2">
-                  <FolderOpen className="w-5 h-5" />
-                  <span className="text-sm">{t("hub.libraryBtn")}</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {dashboardSubTab === 'library' && (
+            <UnifiedLibrary profile={profile} />
+          )}
+
+          {dashboardSubTab === 'reports' && (
+            <ReportBuilder profile={profile} companyId={profile?.company_id} />
+          )}
         </TabsContent>
 
-        {/* Create Tab - New 3-path hub */}
+        {/* Create Tab */}
         <TabsContent value="create" className="space-y-6">
           <CrearContentHub
             profile={profile}
@@ -532,34 +607,25 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           />
         </TabsContent>
 
-        {/* Social Listening Tab */}
-        <TabsContent value="listening" className="space-y-6">
-          <SocialListeningPanel profile={profile} companyId={profile?.company_id} />
-        </TabsContent>
-
-        {/* UTM Tracking Tab */}
-        <TabsContent value="utm" className="space-y-6">
-          <UTMDashboard companyId={profile?.company_id} />
-        </TabsContent>
-
-        {/* Reports Tab */}
-        <TabsContent value="reports" className="space-y-6">
-          <ReportBuilder profile={profile} companyId={profile?.company_id} />
-        </TabsContent>
-
-        {/* Automation Tab */}
-        <TabsContent value="automation" className="space-y-6">
-          <SocialAutomationRules companyId={profile?.company_id} />
-        </TabsContent>
-
-        {/* Approvals Tab */}
-        <TabsContent value="approvals" className="space-y-6">
-          <ContentApprovalPanel companyId={profile?.company_id} />
-        </TabsContent>
-
-        {/* Autopilot Tab */}
+        {/* Autopilot Tab with sub-navigation */}
         <TabsContent value="autopilot" className="space-y-6">
-          <AutopilotDashboard companyId={profile?.company_id} profile={profile} />
+          <AutopilotSubNav activeSubTab={autopilotSubTab} onSubTabChange={setAutopilotSubTab} />
+          
+          {autopilotSubTab === 'status' && (
+            <AutopilotDashboard companyId={profile?.company_id} profile={profile} />
+          )}
+          {autopilotSubTab === 'automation' && (
+            <SocialAutomationRules companyId={profile?.company_id} />
+          )}
+          {autopilotSubTab === 'approvals' && (
+            <ContentApprovalPanel companyId={profile?.company_id} />
+          )}
+          {autopilotSubTab === 'listening' && (
+            <SocialListeningPanel profile={profile} companyId={profile?.company_id} />
+          )}
+          {autopilotSubTab === 'attribution' && (
+            <UTMDashboard companyId={profile?.company_id} />
+          )}
         </TabsContent>
 
         {/* Campaigns Tab */}
@@ -570,11 +636,6 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
         {/* Calendar Tab */}
         <TabsContent value="calendar" className="space-y-6">
           <ContentCalendar profile={profile} />
-        </TabsContent>
-
-        {/* Library Tab - Unified */}
-        <TabsContent value="content" className="space-y-6">
-          <UnifiedLibrary profile={profile} />
         </TabsContent>
       </Tabs>
     </div>

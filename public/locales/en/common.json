@@ -192,7 +192,29 @@
     "credits": "Credits",
     "settings": "Settings",
     "profile": "My Profile",
-    "logout": "Log out"
+    "logout": "Log out",
+    "commandCenter": "Command Center",
+    "platformTagline": "Marketing Autopilot",
+    "autopilot": "Autopilot",
+    "autopilotActive": "Active",
+    "autopilotInactive": "Inactive"
+  },
+  "dashboard": {
+    "vsPreviousMonth": "vs. previous month",
+    "progress": "Progress",
+    "autopilot": "Marketing Autopilot",
+    "cyclesCompleted": "cycles completed",
+    "last": "Last",
+    "autopilotCTA": "Activate to automate your marketing operations",
+    "activate": "Activate",
+    "strategicObjective": "Strategic Objective",
+    "objectiveProgress": "Objective Progress",
+    "noObjectives": "No objectives defined",
+    "defineObjectives": "Define Objectives",
+    "featuredRecommendation": "Featured Recommendation",
+    "healthScore": "Health Score",
+    "outOf100": "out of 100",
+    "viewDiagnostic": "View Full Diagnostic"
   },
   "onboarding": {
     "checkingData": "Checking your company data...",

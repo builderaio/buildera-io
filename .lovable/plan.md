@@ -1,139 +1,148 @@
 
 
-# Fix: Validacion de Prerequisites en el Autopilot
+# Fix Estructural: Autopilot Sin Agentes Fantasmas y con Controles Uniformes
 
-## Diagnostico de los Problemas
+## Problemas Criticos Encontrados
 
-Analizando los datos del usuario `mdelatorrep@gmail.com` (empresa Iddeo, ID: `224c42a1`):
+### 1. BUG FATAL: El engine busca agentes por columna inexistente (Linea 509)
 
-| Dato | Estado |
-|------|--------|
-| Strategy | Existe (generada con AI) |
-| Social connections (LinkedIn, Instagram, Facebook) | NINGUNA |
-| Social accounts | Solo upload_post_profile (no conectada a redes reales), TikTok is_connected=false |
-| Social posts (IG, LI, FB, TK) | 0 en todas |
-| Agent usage log | Vacio (0 ejecuciones registradas) |
-| Autopilot marketing (dept config) | ACTIVADO (autopilot_enabled=true) |
-| Autopilot decisions | 2 ciclos ejecutados, ambos con `reasoning: "AI response could not be parsed"` y `agent_to_execute: "ANALYTICS_REPORTER"` (agente inexistente) |
+```text
+// enterprise-autopilot-engine/index.ts, linea 509:
+.eq('department', department)  // <-- 'department' NO EXISTE en platform_agents
+```
 
-### Problemas raiz identificados:
+La tabla `platform_agents` tiene `category` (analytics, content, marketing, finance, hr, legal, operations), NO `department`. Esto significa que el ACT phase **NUNCA encuentra agentes** para ningun departamento. Todas las decisiones caen en `no_agent_mapped`.
 
-1. **Sin validacion de prerequisites al activar**: El toggle de autopilot se activa sin verificar que existan redes sociales conectadas ni datos. El usuario activo marketing autopilot sin tener NINGUNA red social conectada.
+### 2. Agentes recursivos (se llaman a si mismos)
 
-2. **Fallback a agente fantasma**: Cuando la IA no puede parsear la respuesta (porque recibe datos completamente vacios), el engine usa `ANALYTICS_REPORTER` como fallback, pero ese agente NO existe en `platform_agents`. Resultado: "No agent mapped", no pasa nada.
+Los agentes de Finance, HR, Legal, Operations tienen `edge_function_name: 'enterprise-autopilot-engine'`, lo que crearia un loop recursivo si el engine lograra encontrarlos.
 
-3. **Engine ejecuta ciclos vacios**: El SENSE phase devuelve 0 posts en todas las plataformas, la IA no puede generar decisiones utiles con datos vacios, y el ciclo completo es desperdicio de recursos.
+| Agente | edge_function_name | Problema |
+|--------|-------------------|----------|
+| CASHFLOW_MONITOR | enterprise-autopilot-engine | Recursivo |
+| EXPENSE_ANALYZER | enterprise-autopilot-engine | Recursivo |
+| REVENUE_FORECASTER | enterprise-autopilot-engine | Recursivo |
+| JOB_PROFILER | enterprise-autopilot-engine | Recursivo |
+| CLIMATE_ANALYZER | enterprise-autopilot-engine | Recursivo |
+| TALENT_SCOUT | enterprise-autopilot-engine | Recursivo |
+| COMPLIANCE_MONITOR | enterprise-autopilot-engine | Recursivo |
+| CONTRACT_REVIEWER | enterprise-autopilot-engine | Recursivo |
+| PROCESS_OPTIMIZER | enterprise-autopilot-engine | Recursivo |
+| SLA_MONITOR | enterprise-autopilot-engine | Recursivo |
+
+### 3. La IA no sabe que agentes existen
+
+El prompt THINK dice `"agent_to_execute": "AGENT_CODE matching this department"` pero no lista los codigos disponibles. La IA inventa codigos como `ANALYTICS_REPORTER` que no existen.
+
+### 4. `no_agent_mapped` marca `action_taken: true`
+
+Cuando no se encuentra el agente, el engine marca la decision como `action_taken: true` con resultado `no_agent_mapped`, lo que es enganoso: no se tomo ninguna accion real.
+
+### 5. Preflight incompleto
+
+Solo Marketing y Sales tienen validacion de prerequisitos. Finance, Legal, HR y Operations no tienen ninguna validacion, ni en el engine ni en la UI.
+
+### 6. Mapeo category-to-department ausente
+
+No existe un mapeo entre las `category` de `platform_agents` y los `department` del autopilot para resolver correctamente que agentes pertenecen a cada departamento.
 
 ---
 
 ## Plan de Solucion
 
-### Paso 1: Prerequisite Gate en el Enterprise Engine
+### Paso 1: Crear mapeo category-to-department en el engine
 
-**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts`
-
-Agregar una fase `PREFLIGHT` antes de SENSE que valide condiciones minimas por departamento:
-
-- Marketing: al menos 1 red social conectada (`social_accounts` con `is_connected=true` y plataforma real) O al menos 10 posts importados
-- Sales: al menos 1 deal o 1 contacto en CRM
-- Finance: al menos configuracion de presupuesto
-
-Si preflight falla, el ciclo se aborta inmediatamente con un resultado descriptivo y se registra en `autopilot_execution_log` con `phase: 'preflight'` y `error_details` explicando que falta.
-
-### Paso 2: Prerequisite Gate en la UI (toggle de activacion)
-
-**Archivos**: 
-- `src/components/company/EnterpriseAutopilotDashboard.tsx`
-- `src/components/company/marketing/AutopilotDashboard.tsx`
-
-Antes de permitir `autopilot_enabled=true`:
-- Verificar redes sociales conectadas (para marketing)
-- Si no cumple, mostrar un Dialog/Alert explicando que se necesita y con CTAs directos:
-  - "Conectar redes sociales" -> navega a la seccion de conexion
-  - "Importar datos de redes" -> abre el flujo de importacion
-- El toggle NO se activa hasta que se cumplan los minimos
-
-### Paso 3: Corregir el fallback de AI parsing
-
-**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts`
-
-Cambiar el fallback cuando AI no puede parsearse:
-- En vez de inventar una decision con `ANALYTICS_REPORTER` (inexistente), generar una decision con `decision_type: 'analyze'` pero con `agent_to_execute: null`
-- Esto evita el intento de ejecucion de un agente fantasma
-- Registrar el fallo de parsing en el log con detalles utiles
-
-### Paso 4: SENSE Phase con deteccion de datos insuficientes
-
-**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts`
-
-Despues del SENSE, evaluar si los datos son "suficientes" para que la IA tome decisiones:
-- Marketing: si todas las plataformas tienen `count: 0` y no hay campanas activas, abortar con mensaje claro
-- Esto evita enviar datos vacios a la IA que no puede generar nada util
-
-### Paso 5: Desactivar autopilot del usuario actual
-
-**Migracion SQL**
-
-Desactivar el autopilot de marketing para la empresa Iddeo ya que fue activado sin datos:
+Definir un mapa explicito que relaciona cada departamento del autopilot con las categorias de `platform_agents` que le corresponden:
 
 ```text
-UPDATE company_department_config 
-SET autopilot_enabled = false 
-WHERE company_id = '224c42a1-...' AND department = 'marketing';
+marketing -> ['marketing', 'content', 'analytics', 'branding']
+sales     -> ['sales']  (+ crear categoria si se agregan agentes)
+finance   -> ['finance']
+legal     -> ['legal']
+hr        -> ['hr']
+operations -> ['operations']
 ```
 
-### Paso 6: i18n para mensajes de prerequisites
+Cambiar la query de la linea 509 de `.eq('department', department)` a `.in('category', DEPT_CATEGORY_MAP[department])`.
 
-**Archivos**: `public/locales/[es|en|pt]/common.json`
+### Paso 2: Inyectar agentes disponibles en el prompt THINK
 
-Agregar cadenas:
-- `enterprise.prerequisites.socialRequired`: "Necesitas conectar al menos una red social para activar el autopilot de marketing"
-- `enterprise.prerequisites.connectNow`: "Conectar ahora"
-- `enterprise.prerequisites.importData`: "Importar datos"
-- `enterprise.preflight.aborted`: "Ciclo abortado: datos insuficientes"
+En la funcion `thinkPhase`, antes de llamar a la IA, consultar los agentes reales disponibles por categoria y agregar al system prompt:
+
+```text
+AVAILABLE AGENTS (use ONLY these codes):
+- CONTENT_CREATOR: Creador de Contenido (edge: marketing-hub-post-creator)
+- MKTG_STRATEGIST: Estratega de Marketing (edge: marketing-hub-marketing-strategy)
+- ...
+If no agent fits the action, set agent_to_execute to null.
+```
+
+Esto elimina la alucinacion de codigos de agentes.
+
+### Paso 3: Corregir agentes recursivos
+
+Actualizar los agentes de Finance, HR, Legal y Operations en la base de datos para que apunten a edge functions reales o, si no existen funciones especificas, marcarlos como `execution_type: 'pending'` con `edge_function_name: null`. El engine debe manejar esto de forma explicita registrando que el agente existe pero no tiene implementacion aun, sin intentar ejecutar nada.
+
+### Paso 4: Corregir `no_agent_mapped` -> `action_taken: false`
+
+En `actPhase`, cuando un agente no tiene `edge_function_name` o no se encuentra en el mapa, marcar `action_taken: false` en vez de `true`, y agregar un `execution_result: 'agent_not_implemented'` descriptivo.
+
+### Paso 5: Completar preflight para todos los departamentos
+
+Agregar validaciones minimas en `preflightCheck`:
+
+- **Finance**: al menos 1 registro en `agent_usage_log` (indica actividad) o `business_health_snapshots`
+- **Legal**: al menos 1 parametro con prefix `legal_` en `company_parameters`
+- **HR**: al menos 2 miembros en `company_members`
+- **Operations**: al menos 1 equipo en `ai_workforce_teams`
+
+### Paso 6: Completar prerequisitos en la UI
+
+En `EnterpriseAutopilotDashboard.tsx`, extender `checkDepartmentPrerequisites` para cubrir los 6 departamentos con mensajes y CTAs apropiados.
+
+### Paso 7: Completar `checkDataSufficiency` para todos los departamentos
+
+Agregar validaciones de datos insuficientes post-SENSE para finance, legal, hr, operations (actualmente solo marketing y sales las tienen).
+
+### Paso 8: Migracion SQL para corregir agentes recursivos
+
+Actualizar `edge_function_name` de los 10 agentes recursivos a `null` y su `execution_type` a `'pending'`.
+
+### Paso 9: i18n para prerequisitos de todos los departamentos
+
+Agregar cadenas para:
+- `enterprise.prerequisites.financeRequired`
+- `enterprise.prerequisites.legalRequired`
+- `enterprise.prerequisites.hrRequired`
+- `enterprise.prerequisites.operationsRequired`
+
+En ES, EN, PT.
 
 ---
 
-## Flujo Corregido
+## Resumen de Impacto
 
-```text
-USUARIO ACTIVA TOGGLE AUTOPILOT
-        |
-        v
-PREREQUISITE CHECK (UI)
-  - Marketing: redes sociales conectadas?
-  - Sales: datos CRM?
-  - Finance: presupuesto configurado?
-        |
-   NO --+--> DIALOG: "Necesitas X para activar"
-        |         |-> CTA: "Conectar redes"
-        |         |-> CTA: "Importar datos"
-        |
-   SI --+--> TOGGLE ACTIVA
-        |
-        v
-ENGINE CYCLE STARTS
-        |
-        v
-PREFLIGHT CHECK (Engine)
-  - Datos minimos existen?
-        |
-   NO --+--> LOG: "preflight_failed" + ABORT
-        |
-   SI --+--> SENSE -> THINK -> GUARD -> ACT -> LEARN
-```
+| Problema | Impacto | Fix |
+|----------|---------|-----|
+| `.eq('department', ...)` en columna inexistente | TODOS los agentes son `no_agent_mapped` | Usar `category` con mapeo |
+| IA inventa codigos de agentes | Decisiones con agentes fantasma | Inyectar lista real en prompt |
+| 10 agentes apuntan al engine mismo | Loop recursivo potencial | Marcar como `pending`, edge_function=null |
+| `action_taken: true` sin accion | Metricas falsas | Cambiar a `false` |
+| Preflight solo para 2/6 departamentos | 4 departamentos sin validacion | Completar los 6 |
+| Data sufficiency solo para 2/6 | Ciclos vacios en 4 departamentos | Completar los 6 |
 
 ---
 
 ## Secuencia de Implementacion
 
-| Orden | Entregable | Prioridad |
-|-------|-----------|-----------|
-| 1 | Preflight gate en enterprise-autopilot-engine | Alta |
-| 2 | Corregir fallback AI (eliminar ANALYTICS_REPORTER fantasma) | Alta |
-| 3 | SENSE data sufficiency check | Alta |
-| 4 | Prerequisite gate en UI (EnterpriseAutopilotDashboard) | Alta |
-| 5 | Prerequisite gate en UI (AutopilotDashboard marketing) | Alta |
-| 6 | Desactivar autopilot de Iddeo | Media |
-| 7 | i18n ES/EN/PT | Baja |
+| Orden | Entregable | Archivo |
+|-------|-----------|---------|
+| 1 | Mapeo category-department + fix query | enterprise-autopilot-engine |
+| 2 | Inyectar agentes disponibles en prompt THINK | enterprise-autopilot-engine |
+| 3 | Corregir action_taken para no_agent_mapped | enterprise-autopilot-engine |
+| 4 | Completar preflight para 6 departamentos | enterprise-autopilot-engine |
+| 5 | Completar data sufficiency para 6 departamentos | enterprise-autopilot-engine |
+| 6 | Migracion SQL: fix agentes recursivos | SQL migration |
+| 7 | Completar prerequisitos UI para 6 departamentos | EnterpriseAutopilotDashboard |
+| 8 | i18n ES/EN/PT | common.json x3 |
 

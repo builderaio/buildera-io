@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import Hero from "@/components/Hero";
+import AutonomousEnterprise from "@/components/home/AutonomousEnterprise";
 import AgentShowcase from "@/components/home/AgentShowcase";
 import HowItWorks from "@/components/home/HowItWorks";
 import ValueHighlights from "@/components/home/ValueHighlights";
@@ -35,6 +36,7 @@ const Index = () => {
       <Header />
       <main>
         <Hero />
+        <AutonomousEnterprise />
         <AgentShowcase />
         <HowItWorks />
         <ValueHighlights />

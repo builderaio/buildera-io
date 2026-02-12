@@ -1,14 +1,14 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Shield, TrendingUp, Shuffle } from "lucide-react";
+import { Shield, Sparkles, Brain } from "lucide-react";
 
 const ValueHighlights = () => {
   const { t } = useTranslation('landing');
   
   const items = [
     { Icon: Shield, titleKey: "values.secure.title", descKey: "values.secure.description" },
-    { Icon: TrendingUp, titleKey: "values.scalable.title", descKey: "values.scalable.description" },
-    { Icon: Shuffle, titleKey: "values.flexible.title", descKey: "values.flexible.description" },
+    { Icon: Sparkles, titleKey: "values.scalable.title", descKey: "values.scalable.description" },
+    { Icon: Brain, titleKey: "values.flexible.title", descKey: "values.flexible.description" },
   ];
   return (
     <section id="valores" className="py-16">

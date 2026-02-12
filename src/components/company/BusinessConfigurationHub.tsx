@@ -24,7 +24,6 @@ import {
   ADNInfoTab, 
   ADNStrategyTab, 
   ADNBrandTab, 
-  ADNChannelsConsolidatedView,
   ADNProductsTab,
   ADNTeamTab,
   ADNAgentPrefsSimplified,
@@ -101,14 +100,6 @@ const BusinessConfigurationHub = ({ profile, onProfileUpdate }: BusinessConfigur
         requiredFields: 3,
         completedFields: 0,
       },
-      {
-        id: 'canales',
-        label: 'Canales',
-        icon: Share2,
-        completeness: 0,
-        requiredFields: 2,
-        completedFields: 0,
-      },
     ];
 
     // Calculate empresa section
@@ -132,14 +123,6 @@ const BusinessConfigurationHub = ({ profile, onProfileUpdate }: BusinessConfigur
       sections[2].completeness = Math.round((sections[2].completedFields / sections[2].requiredFields) * 100);
     }
 
-    // Calculate canales section (based on social URLs)
-    if (companyData) {
-      const socialFields = ['instagram_url', 'facebook_url', 'linkedin_url', 'twitter_url', 'tiktok_url'];
-      const connectedSocials = socialFields.filter(f => companyData[f]).length;
-      sections[3].completedFields = connectedSocials > 0 ? 1 : 0;
-      sections[3].completedFields += companyData.website_url ? 1 : 0;
-      sections[3].completeness = Math.round((sections[3].completedFields / sections[3].requiredFields) * 100);
-    }
 
     setSectionStats(sections);
   }, [companyData, strategyData, brandingData]);
@@ -522,9 +505,6 @@ const BusinessConfigurationHub = ({ profile, onProfileUpdate }: BusinessConfigur
           />
         </TabsContent>
 
-        <TabsContent value="canales" className="space-y-6 mt-0">
-          <ADNChannelsConsolidatedView companyId={companyData?.id} />
-        </TabsContent>
 
         <TabsContent value="equipo" className="space-y-6 mt-0">
           <ADNTeamTab />

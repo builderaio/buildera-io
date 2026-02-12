@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Brain, Zap, Shield, Activity, Clock, ChevronRight,
   TrendingUp, Globe, Lightbulb, BookOpen, Unlock, ToggleLeft, ToggleRight,
@@ -99,6 +100,7 @@ interface MemoryEntry {
 const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilotDashboardProps) => {
   const { t } = useTranslation(['common']);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const companyState = useCompanyState(companyId || undefined, profile?.user_id);
   const {
     departments, loading: deptsLoading, toggleAutopilot,
@@ -721,15 +723,14 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
               <>
                 <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
                   setPrerequisiteDialogDept(null);
-                  // Navigate to social connections tab
-                  window.dispatchEvent(new CustomEvent('navigate-to-adn-tab', { detail: 'social' }));
+                  navigate('/company-dashboard?view=configuracion');
                 }}>
                   <Link2 className="w-4 h-4" />
                   {t('enterprise.prerequisites.connectNow')}
                 </Button>
                 <Button variant="outline" className="w-full justify-start gap-2" onClick={() => {
                   setPrerequisiteDialogDept(null);
-                  window.dispatchEvent(new CustomEvent('navigate-to-adn-tab', { detail: 'social' }));
+                  navigate('/company-dashboard?view=marketing');
                 }}>
                   <Upload className="w-4 h-4" />
                   {t('enterprise.prerequisites.importData')}
@@ -739,10 +740,46 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
             {prerequisiteDialogDept === 'sales' && (
               <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
                 setPrerequisiteDialogDept(null);
-                window.dispatchEvent(new CustomEvent('navigate-to-section', { detail: 'crm' }));
+                navigate('/company-dashboard?view=crm');
               }}>
                 <ShoppingCart className="w-4 h-4" />
                 {t('enterprise.prerequisites.setupCRM')}
+              </Button>
+            )}
+            {prerequisiteDialogDept === 'finance' && (
+              <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                setPrerequisiteDialogDept(null);
+                navigate('/company-dashboard?view=comando');
+              }}>
+                <DollarSign className="w-4 h-4" />
+                {t('enterprise.prerequisites.financeRequired')}
+              </Button>
+            )}
+            {prerequisiteDialogDept === 'hr' && (
+              <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                setPrerequisiteDialogDept(null);
+                navigate('/company-dashboard?view=adn-empresa');
+              }}>
+                <Users className="w-4 h-4" />
+                {t('enterprise.prerequisites.hrRequired')}
+              </Button>
+            )}
+            {prerequisiteDialogDept === 'legal' && (
+              <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                setPrerequisiteDialogDept(null);
+                navigate('/company-dashboard?view=adn-empresa');
+              }}>
+                <Scale className="w-4 h-4" />
+                {t('enterprise.prerequisites.legalRequired')}
+              </Button>
+            )}
+            {prerequisiteDialogDept === 'operations' && (
+              <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                setPrerequisiteDialogDept(null);
+                navigate('/company-dashboard?view=ai-workforce');
+              }}>
+                <Settings2 className="w-4 h-4" />
+                {t('enterprise.prerequisites.operationsRequired')}
               </Button>
             )}
           </div>

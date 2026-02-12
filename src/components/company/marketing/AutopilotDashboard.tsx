@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,7 @@ const PHASE_COLORS: Record<string, string> = {
 export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardProps) {
   const { t } = useTranslation('marketing');
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [config, setConfig] = useState<AutopilotConfig | null>(null);
   const [logs, setLogs] = useState<ExecutionLog[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
@@ -566,14 +568,14 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
           <div className="flex flex-col gap-2">
             <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
               setShowPrereqDialog(false);
-              window.dispatchEvent(new CustomEvent('navigate-to-adn-tab', { detail: 'social' }));
+              navigate('/company-dashboard?view=configuracion');
             }}>
               <Link2 className="w-4 h-4" />
               {t('autopilot.prerequisites.connectNow')}
             </Button>
             <Button variant="outline" className="w-full justify-start gap-2" onClick={() => {
               setShowPrereqDialog(false);
-              window.dispatchEvent(new CustomEvent('navigate-to-adn-tab', { detail: 'social' }));
+              navigate('/company-dashboard?view=marketing');
             }}>
               <Upload className="w-4 h-4" />
               {t('autopilot.prerequisites.importData')}

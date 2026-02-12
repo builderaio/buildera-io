@@ -116,8 +116,8 @@ Deno.serve(async (req) => {
 
         console.log(`📈 Analyzing retrospective statistics for CID: ${cid}`);
 
-        // Call RapidAPI Instagram Statistics API - Retrospective endpoint
-        const apiUrl = `https://instagram-statistics-api.p.rapidapi.com/statistics/retrospective?cid=${encodeURIComponent(cid)}&from=${fromFormatted}&to=${toFormatted}`;
+        // Call RapidAPI Instagram Statistics API - Retrospective endpoint (with force=true for fresh data)
+        const apiUrl = `https://instagram-statistics-api.p.rapidapi.com/statistics/retrospective?cid=${encodeURIComponent(cid)}&from=${fromFormatted}&to=${toFormatted}&force=true`;
         
         const apiResponse = await fetch(apiUrl, {
           method: 'GET',

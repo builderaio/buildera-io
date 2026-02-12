@@ -624,7 +624,7 @@ Deno.serve(async (req) => {
           };
 
         } else {
-          // Original Instagram/TikTok/Facebook API logic
+          // Original Instagram/TikTok/Facebook API logic - fetch posts, ads, and mentions
           const apiUrl = `https://instagram-statistics-api.p.rapidapi.com/posts?cid=${encodeURIComponent(cid)}&from=${fromFormatted}&to=${toFormatted}&type=posts&sort=date`;
           
           let apiResponse;
@@ -700,6 +700,64 @@ Deno.serve(async (req) => {
             contentData.data = contentData.data || {};
             contentData.data.posts = [];
             contentData.data.summary = contentData.data.summary || null;
+          }
+
+          // === FETCH ADS (type=ads) ===
+          try {
+            console.log(`📢 Fetching ads for CID ${cid}...`);
+            const adsUrl = `https://instagram-statistics-api.p.rapidapi.com/posts?cid=${encodeURIComponent(cid)}&from=${fromFormatted}&to=${toFormatted}&type=ads&sort=date`;
+            const adsResponse = await fetch(adsUrl, {
+              method: 'GET',
+              headers: {
+                'x-rapidapi-host': 'instagram-statistics-api.p.rapidapi.com',
+                'x-rapidapi-key': rapidApiKey,
+              },
+            });
+            if (adsResponse.ok) {
+              const adsData = await adsResponse.json();
+              const adsPosts = adsData?.data?.posts || [];
+              if (adsPosts.length > 0) {
+                // Mark ads and append to main posts array
+                const markedAds = adsPosts.map((p: any) => ({ ...p, isAd: true, _feedType: 'ad' }));
+                contentData.data.posts = [...contentData.data.posts, ...markedAds];
+                console.log(`✅ Found ${adsPosts.length} ads for CID ${cid}`);
+              }
+              // Store ads summary separately
+              contentData.data.ads_summary = adsData?.data?.summary || null;
+              contentData.data.ads_count = adsPosts.length;
+            } else {
+              console.warn(`⚠️ Ads API returned ${adsResponse.status} for CID ${cid}`);
+            }
+          } catch (adsErr) {
+            console.warn('⚠️ Error fetching ads:', (adsErr as Error).message);
+          }
+
+          // === FETCH MENTIONS (type=mentions) ===
+          try {
+            console.log(`📣 Fetching mentions for CID ${cid}...`);
+            const mentionsUrl = `https://instagram-statistics-api.p.rapidapi.com/posts?cid=${encodeURIComponent(cid)}&from=${fromFormatted}&to=${toFormatted}&type=mentions&sort=date`;
+            const mentionsResponse = await fetch(mentionsUrl, {
+              method: 'GET',
+              headers: {
+                'x-rapidapi-host': 'instagram-statistics-api.p.rapidapi.com',
+                'x-rapidapi-key': rapidApiKey,
+              },
+            });
+            if (mentionsResponse.ok) {
+              const mentionsData = await mentionsResponse.json();
+              const mentionsPosts = mentionsData?.data?.posts || [];
+              if (mentionsPosts.length > 0) {
+                const markedMentions = mentionsPosts.map((p: any) => ({ ...p, _feedType: 'mention' }));
+                contentData.data.posts = [...contentData.data.posts, ...markedMentions];
+                console.log(`✅ Found ${mentionsPosts.length} mentions for CID ${cid}`);
+              }
+              contentData.data.mentions_summary = mentionsData?.data?.summary || null;
+              contentData.data.mentions_count = mentionsPosts.length;
+            } else {
+              console.warn(`⚠️ Mentions API returned ${mentionsResponse.status} for CID ${cid}`);
+            }
+          } catch (mentionsErr) {
+            console.warn('⚠️ Error fetching mentions:', (mentionsErr as Error).message);
           }
         }
 

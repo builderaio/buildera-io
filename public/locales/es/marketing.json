@@ -248,6 +248,20 @@
         "f1": "Video Ads desde tu sitio web",
         "f2": "Avatares AI personalizados",
         "f3": "Banners IAB en todos los tamaños"
+      },
+      "smartLinks": {
+        "title": "Smart Links",
+        "description": "Crea micro-landing pages con formularios para capturar leads",
+        "f1": "Landing pages con IA",
+        "f2": "Formularios personalizados",
+        "f3": "Links trackeables con UTM"
+      },
+      "emailSequence": {
+        "title": "Secuencia de Email",
+        "description": "Diseña flujos de email automatizados para nutrir leads",
+        "f1": "Journey Builder visual",
+        "f2": "Templates pre-diseñados",
+        "f3": "Segmentación por audiencia"
       }
     },
     "library": {
@@ -346,5 +360,49 @@
     "mentionLabel": "Mención",
     "forceRefresh": "Forzar actualización de datos",
     "refreshing": "Actualizando datos demográficos..."
+  },
+  "smartLinks": {
+    "myLinks": "Mis Links",
+    "createNew": "Crear Nuevo",
+    "leads": "Leads",
+    "totalClicks": "Clicks Totales",
+    "totalLeads": "Leads Totales",
+    "conversionRate": "Tasa de Conversión",
+    "empty": "No tienes Smart Links aún",
+    "createFirst": "Crear tu primer Smart Link",
+    "created": "Smart Link creado exitosamente",
+    "createError": "Error al crear el Smart Link",
+    "deleted": "Smart Link eliminado",
+    "deleteError": "Error al eliminar",
+    "copied": "Link copiado al portapapeles",
+    "copyLink": "Copiar link",
+    "preview": "Vista previa",
+    "viewLeads": "Ver leads",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "clicks": "clicks",
+    "leadsCount": "leads",
+    "leadsCapture": "leads capturados",
+    "noLeads": "Aún no hay leads capturados",
+    "selectTemplate": "Selecciona un template",
+    "title": "Título",
+    "titlePlaceholder": "Ej: Descarga nuestra guía gratuita",
+    "destinationUrl": "URL de destino",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Describe tu oferta o contenido...",
+    "formFields": "Campos del Formulario",
+    "formFieldsDesc": "Define qué información quieres capturar",
+    "fieldLabel": "Nombre del campo",
+    "required": "Req.",
+    "addField": "Agregar campo",
+    "createLink": "Crear Smart Link",
+    "templates": {
+      "emailCapture": "Captura Email",
+      "email_capture": "Captura Email",
+      "resourceDownload": "Descarga Recurso",
+      "resource_download": "Descarga Recurso",
+      "appointment": "Agendar Cita",
+      "coupon": "Cupón / Oferta"
+    }
   }
 }

@@ -1,174 +1,188 @@
 
+# Enterprise Autopilot: IA Autonoma para Toda la Empresa
 
-# Rediseno de Layout, Arquitectura de Informacion y Diseno Visual
+## Vision General
 
-## Diagnostico: Problemas Detectados
+Escalar el patron SENSE-THINK-ACT-GUARD-LEARN del Marketing Autopilot a **6 departamentos empresariales**, creando un sistema que arranca con capacidades base y desbloquea automaticamente nuevas funcionalidades conforme el negocio crece.
 
-Tras auditar todos los modulos, he identificado **3 categorias de problemas** que desconectan la experiencia actual de la propuesta de valor de la plataforma.
+```text
+ARQUITECTURA: ENTERPRISE AUTOPILOT ENGINE
+==========================================
+
+                    +---------------------------+
+                    |   ENTERPRISE ORCHESTRATOR  |
+                    |  (Coordina todos los       |
+                    |   departamentos)           |
+                    +---------------------------+
+                              |
+       +----------+-----------+-----------+----------+----------+
+       |          |           |           |          |          |
+  +---------+ +--------+ +--------+ +--------+ +--------+ +--------+
+  |MARKETING| |COMERCIAL| |FINANZAS| |LEGAL   | |RRHH    | |OPERAC. |
+  |Autopilot| |Autopilot| |Autopilot| |Autopilot| |Autopilot| |Autopilot|
+  |(EXISTE)  | |(NUEVO)  | |(NUEVO)  | |(NUEVO)  | |(NUEVO)  | |(NUEVO)  |
+  +---------+ +--------+ +--------+ +--------+ +--------+ +--------+
+       |          |           |           |          |          |
+       +----------+-----------+-----------+----------+----------+
+                              |
+                    +---------------------------+
+                    |   COMPANY STATE ANALYZER   |
+                    |  (Maturity-based unlocking) |
+                    +---------------------------+
+```
 
 ---
 
-### A. i18n Roto y Textos Hardcoded
+## Lo Que Ya Existe (Fundamentos)
 
-**Problema critico**: La landing page muestra las claves de traduccion en crudo (`hero.title`, `hero.badge`, `header.login`) en vez del texto real. Esto significa que los visitantes ven texto sin sentido.
-
-Ademas, multiples componentes internos tienen strings en espanol hardcoded que violan la politica de internacionalizacion:
-
-| Componente | Textos hardcoded encontrados |
+| Componente | Estado |
 |---|---|
-| BusinessHealthDashboard | "Objetivo Estrategico", "Progreso de Objetivos", "Agentes Rapidos", "Actividad Reciente", "Puntuacion de Salud", "de 100 puntos", "Ver Diagnostico Completo", "Recomendacion destacada", "No tienes objetivos definidos", "Definir Objetivos", "Sin actividad reciente", "No hay agentes habilitados", "Explorar agentes", "Editar", "Ver todos", "agentes", "creditos" |
-| ResponsiveLayout (Sidebar) | "AI Business Platform", "BUILDERA", "Mi Empresa", "Creditos:", "cr" |
-| WhiteLabelDashboard | Completamente en ingles sin i18n |
-| AdminLayout | Hardcoded en espanol: "Sesion cerrada", "Portal Admin", "Buildera", etc. |
+| Marketing Autopilot (SENSE-THINK-ACT-GUARD-LEARN) | Implementado |
+| 27 agentes en platform_agents (8 categorias) | Activo |
+| Company State Analyzer (maturity: starter/growing/established/scaling) | Activo |
+| CRM basico (pipelines, deals, contacts, activities) | Tablas existen |
+| Products catalog (company_products) | Tabla existe |
+| AI Workforce Teams (equipos con tareas) | Tablas existen |
+| Agent SDK Executor (ejecutor unificado) | Edge function activa |
+| company_parameters (intercambio de datos inter-agente) | Activo |
 
 ---
 
-### B. Arquitectura de Informacion Desalineada
+## Los 6 Departamentos Autopilot
 
-**1. Sidebar no refleja la propuesta de valor**
-- 4 items genericos (Comando, Marketing, Agentes, Mi Negocio) sin indicar el diferencial: automatizacion autonoma
-- No hay indicador del estado del Autopilot (activo/inactivo)
-- La etiqueta "AI Business Platform" es generica y no comunica valor
-- Los emojis (casa, megafono, robot, edificio) son informales para una plataforma B2B
+### Nivel 1 - STARTER (dia 1, gratis)
+Capacidades base que arrancan inmediatamente:
 
-**2. Marketing Hub sobrecargado**
-- 11 tabs en una sola barra: Dashboard, Crear, Campanas, Listening, UTM, Reports, Automation, Approvals, Autopilot, Calendar, Library
-- En mobile, imposible de navegar (overflow horizontal)
-- El Autopilot (la funcionalidad mas poderosa) esta en la posicion 9 de 11
-- No hay agrupacion logica (creacion vs analisis vs automatizacion)
+| Departamento | Capacidades Base |
+|---|---|
+| **Marketing** | Autopilot existente: contenido, engagement, publicacion |
+| **Comercial** | Lead scoring basico desde CRM, alertas de deals estancados |
+| **Finanzas** | Dashboard de creditos, alertas de consumo, proyeccion simple |
 
-**3. Header de la landing page**
-- No incluye enlace a Pricing (existe la pagina pero no esta en el menu)
-- Falta menu hamburguesa en mobile (los links se ocultan con `hidden md:flex`)
-- No refleja la nueva narrativa del Marketing Autopilot
+### Nivel 2 - GROWING (>30% completion, >3 agent executions)
+Se desbloquean automaticamente:
 
-**4. Dashboard (Comando) desconectado del Autopilot**
-- No muestra el estado del autopilot (activo/pausado/ejecutando)
-- No muestra las ultimas decisiones autonomas tomadas
-- No hay acceso directo a activar/configurar el autopilot
+| Departamento | Capacidades Desbloqueadas |
+|---|---|
+| **Marketing** | Campanas multi-canal, A/B testing automatico |
+| **Comercial** | Pipeline automation, propuestas auto-generadas, CRM enrichment |
+| **Finanzas** | Facturacion automatica, alertas de cobro, forecast de revenue |
+| **Legal** | Revision automatica de contratos, alertas de compliance |
 
----
+### Nivel 3 - ESTABLISHED (>60% completion, >10 executions)
+Capacidades avanzadas:
 
-### C. Consistencia Visual y de Diseno
+| Departamento | Capacidades Avanzadas |
+|---|---|
+| **Operaciones** | Automatizacion de procesos repetitivos, SLA monitoring |
+| **RRHH** | Generacion de perfiles de cargo, evaluaciones, clima laboral |
+| **Estrategia** | OKR tracking autonomo, alertas de desviacion, recomendaciones PTW |
 
-- Cards de metricas del Marketing Hub usan gradientes pesados (`from-card to-muted/30`) mientras el Dashboard usa cards planas
-- Los headers de cards del Marketing Hub tienen gradientes de colores fuertes (green-600, pink-600) que no son del brand palette (#3c46b2, #f15438)
-- Tipografia: el font heading `DOCKER ONE` no esta aplicado consistentemente en todos los titulos
+### Nivel 4 - SCALING (>80% completion, >20 executions)
+Orquestacion cross-departamental:
 
----
-
-## Plan de Implementacion
-
-### Paso 1: Corregir i18n de la Landing Page
-**Prioridad: CRITICA** - Los visitantes ven texto roto
-
-Investigar por que las traducciones del namespace `landing` no se cargan. El archivo `public/locales/es/landing.json` existe y tiene contenido valido. El problema puede estar en:
-- La importacion de `src/i18n/config.ts` en `main.tsx`
-- Un problema de carga asincrona del backend HTTP
-
-**Archivos**: `src/main.tsx`, `src/i18n/config.ts`
-
-### Paso 2: Internacionalizar BusinessHealthDashboard
-Mover los ~17 strings hardcoded a claves i18n en `common.json` / `company.json`
-
-**Archivos**: `src/components/company/BusinessHealthDashboard.tsx`, `public/locales/[es|en|pt]/common.json`
-
-### Paso 3: Redisenar Sidebar con enfoque en Autopilot
-- Reemplazar emojis por iconos Lucide profesionales
-- Agregar indicador visual del estado del Autopilot (punto verde = activo, ambar = pausado)
-- Cambiar "AI Business Platform" por subtitulo dinamico con estado: "Autopilot: Activo" o "Autopilot: Inactivo"
-- Mantener los 4 pilares pero con labels mas descriptivos
-
-```text
-Antes:                     Despues:
-casa Comando               Activity  Centro de Comando
-megafono Marketing          Megaphone Marketing Hub
-robot Agentes              Bot       Agentes IA
-edificio Mi Negocio        Building  Mi Negocio
-                           [Estado Autopilot: Activo]
-```
-
-**Archivos**: `src/components/ResponsiveLayout.tsx`
-
-### Paso 4: Reorganizar Marketing Hub Tabs
-Agrupar los 11 tabs en 3 secciones logicas con sub-navegacion:
-
-```text
-Tabs principales (5):
-  Dashboard | Crear | Campanas | Calendario | Autopilot
-
-Dentro de Dashboard:
-  - Metricas
-  - Biblioteca (Library)
-  - Reportes
-
-Dentro de Autopilot:
-  - Estado y Timeline
-  - Automation Rules
-  - Approvals
-  - Listening
-  - UTM/Attribution
-```
-
-Esto reduce la barra de tabs de 11 a 5, hace el Autopilot prominente, y agrupa funcionalidades relacionadas.
-
-**Archivos**: `src/components/company/MarketingHubWow.tsx`
-
-### Paso 5: Agregar Estado Autopilot al Dashboard (Comando)
-Insertar una card prominente en el dashboard que muestre:
-- Estado actual del autopilot (activo/inactivo/ejecutando)
-- Ultima ejecucion y sus resultados
-- Boton de activar/configurar si esta inactivo
-- Proxima ejecucion programada
-
-**Archivos**: `src/components/company/BusinessHealthDashboard.tsx`
-
-### Paso 6: Actualizar Header de Landing Page
-- Agregar enlace a `/pricing` en la navegacion
-- Implementar menu hamburguesa para mobile
-- Asegurar que el logo Buildera se muestra correctamente
-
-**Archivos**: `src/components/Header.tsx`
-
-### Paso 7: Normalizar paleta de colores
-Reemplazar los gradientes arbitrarios del Marketing Hub (green-600, pink-600, purple-600) por la paleta oficial:
-- Primary: #3c46b2 (cerulean blue)
-- Secondary/Accent: #f15438 (orange-red)
-- Neutrales para cards: bg-card con bordes sutiles
-
-**Archivos**: `src/components/company/MarketingHubWow.tsx`
-
-### Paso 8: Internacionalizar componentes restantes
-- ResponsiveLayout sidebar strings
-- WhiteLabelDashboard (completo)
-- AdminLayout strings
-
-**Archivos**: Multiples archivos + locales
+| Capacidad | Descripcion |
+|---|---|
+| Cross-department decisions | Finanzas bloquea campana de marketing si el budget esta agotado |
+| Unified reporting | Un solo reporte ejecutivo con KPIs de todos los departamentos |
+| Predictive alerts | IA predice problemas antes de que ocurran |
 
 ---
 
-## Secuencia de Ejecucion
+## Implementacion Tecnica
 
-| Paso | Prioridad | Dependencia |
-|------|-----------|-------------|
-| 1. Fix i18n landing | CRITICA | Ninguna |
-| 2. i18n BusinessHealthDashboard | Alta | Ninguna |
-| 3. Rediseno Sidebar + Autopilot indicator | Alta | Ninguna |
-| 4. Reorganizar Marketing Hub tabs | Media | Paso 3 |
-| 5. Autopilot card en Dashboard | Media | Paso 3 |
-| 6. Header landing + mobile menu | Media | Paso 1 |
-| 7. Normalizar colores | Baja | Paso 4 |
-| 8. i18n componentes restantes | Baja | Pasos 2-3 |
+### Paso 1: Tabla `company_department_config`
+Extiende el patron de `company_autopilot_config` a todos los departamentos:
+
+- company_id, department (marketing/sales/finance/legal/hr/operations)
+- autopilot_enabled, maturity_level_required
+- allowed_actions (array), guardrails (jsonb)
+- execution_frequency, last_execution_at
+- auto_unlocked (boolean - se activo automaticamente por maturity)
+
+### Paso 2: Nuevos Agentes por Departamento
+Agregar ~15 agentes nuevos a `platform_agents`:
+
+**Comercial:**
+- SALES_PIPELINE_OPTIMIZER - Analiza deals, sugiere acciones
+- LEAD_SCORER - Scoring automatico de leads
+- PROPOSAL_GENERATOR - Genera propuestas comerciales
+
+**Finanzas:**
+- CASHFLOW_MONITOR - Monitorea flujo de caja y alerta
+- REVENUE_FORECASTER - Proyeccion de ingresos
+- EXPENSE_ANALYZER - Analisis de gastos y optimizacion
+
+**Legal:**
+- CONTRACT_REVIEWER - Revision automatica de contratos
+- COMPLIANCE_MONITOR - Monitoreo de cumplimiento normativo
+
+**RRHH:**
+- JOB_PROFILER - Genera perfiles de cargo
+- CLIMATE_ANALYZER - Analiza clima laboral
+- TALENT_SCOUT - Busqueda y matching de talento
+
+**Operaciones:**
+- PROCESS_OPTIMIZER - Identifica cuellos de botella
+- SLA_MONITOR - Monitorea niveles de servicio
+- TASK_AUTOMATOR - Automatiza tareas repetitivas
+
+### Paso 3: Edge Function `enterprise-autopilot-engine`
+Un orquestador que:
+1. Lee el maturity level de la empresa
+2. Determina que departamentos estan desbloqueados
+3. Ejecuta el ciclo SENSE-THINK-ACT-GUARD-LEARN para cada departamento activo
+4. Coordina decisiones cross-departamentales (e.g., finanzas aprueba presupuesto de marketing)
+
+### Paso 4: Extender `useCompanyState`
+Agregar areas nuevas al state analyzer:
+- sales (CRM deals, pipeline health)
+- finance (credits, revenue tracking)
+- legal (contracts, compliance)
+- hr (team size, evaluations)
+- operations (processes, SLAs)
+
+### Paso 5: Auto-unlock Logic
+Hook `useDepartmentUnlocking` que:
+- Observa cambios en maturity level
+- Cuando sube de nivel, auto-inserta configs en `company_department_config`
+- Muestra notificacion al usuario: "Nueva capacidad desbloqueada: Autopilot Financiero"
+- Registra el unlock en `company_parameters` para trazabilidad
+
+### Paso 6: UI - Enterprise Command Center
+Nuevo tab en el sidebar o evolucion del "Centro de Comando" actual:
+- Vista unificada de todos los departamentos con su estado
+- Cards por departamento mostrando: estado (activo/bloqueado/desbloqueado), ultimo ciclo, decisiones pendientes
+- Departamentos bloqueados aparecen con candado y barra de progreso hacia el desbloqueo
+- Click en departamento abre su dashboard especifico
+
+### Paso 7: Dashboard por Departamento
+Cada departamento tiene su propio dashboard siguiendo el patron del AutopilotDashboard:
+- Toggle ON/OFF
+- Timeline de decisiones
+- Guardrails configurables
+- Metricas especificas del area
+
+### Paso 8: i18n Completo
+Todas las nuevas cadenas en ES/EN/PT desde el inicio.
 
 ---
 
-## Resultado Esperado
+## Secuencia de Implementacion Sugerida
 
-Tras estas mejoras:
-- La landing page mostrara contenido real en vez de claves i18n
-- El sidebar comunicara inmediatamente que la plataforma tiene un motor autonomo de marketing
-- El Marketing Hub sera navegable en mobile con 5 tabs en vez de 11
-- El Dashboard mostrara el estado del Autopilot como funcionalidad central
-- Los colores estaran alineados con la marca Buildera
-- Todos los textos estaran internacionalizados en ES/EN/PT
+| Fase | Entregable | Esfuerzo |
+|---|---|---|
+| 1 | Tabla company_department_config + migracion | Bajo |
+| 2 | Nuevos agentes en platform_agents (INSERT SQL) | Bajo |
+| 3 | Extender useCompanyState con areas empresariales | Medio |
+| 4 | Hook useDepartmentUnlocking (auto-desbloqueo) | Medio |
+| 5 | Enterprise Autopilot Engine (edge function) | Alto |
+| 6 | UI: Enterprise Command Center (nuevo tab) | Alto |
+| 7 | Dashboards por departamento (Sales, Finance, Legal, HR, Ops) | Alto |
+| 8 | Cross-department coordination logic | Alto |
+| 9 | i18n de todo lo nuevo | Medio |
 
+**Recomendacion**: Implementar en 3 oleadas:
+- **Oleada 1** (Pasos 1-4): Infraestructura + auto-unlock. El usuario ve los departamentos bloqueandose/desbloqueandose.
+- **Oleada 2** (Pasos 5-6): Engine + Command Center. Los departamentos empiezan a funcionar autonomamente.
+- **Oleada 3** (Pasos 7-9): Dashboards detallados + coordinacion cross-departamental.

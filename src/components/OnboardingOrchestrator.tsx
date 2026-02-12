@@ -478,6 +478,14 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           onConflict: 'user_id'
         });
 
+      // Update journey step for the company
+      if (companyData?.id) {
+        await supabase
+          .from('companies')
+          .update({ journey_current_step: 2 })
+          .eq('id', companyData.id);
+      }
+
       // Dispatch completion event
       window.dispatchEvent(new CustomEvent('onboarding-completed'));
 
@@ -487,9 +495,13 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         duration: 2000
       });
 
-      // Navigate to dashboard
+      // Navigate based on journey type
       setTimeout(() => {
-        navigate('/company-dashboard?view=adn-empresa&onboarding_completed=true', { replace: true });
+        if (selectedJourney === 'new_business') {
+          navigate('/company-dashboard?view=founder-ptw&onboarding_completed=true', { replace: true });
+        } else {
+          navigate('/company-dashboard?view=comando&onboarding_completed=true', { replace: true });
+        }
       }, 1000);
     } catch (error) {
       console.error('Error completing onboarding:', error);

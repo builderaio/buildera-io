@@ -10,6 +10,7 @@ import BusinessConfigurationHub from "@/components/company/BusinessConfiguration
 import UnifiedAgentsView from "@/components/company/UnifiedAgentsView";
 import MarketingHub from "@/components/company/MarketingHubWow";
 import AcademiaBuildiera from "@/components/company/AcademiaBuildera";
+import EnterpriseAutopilotDashboard from "@/components/company/EnterpriseAutopilotDashboard";
 
 // Strategy components
 import PlayToWinModule from "@/components/strategy/PlayToWinModule";
@@ -387,6 +388,11 @@ const CompanyDashboard = () => {
       case "academia":
       case "academia-buildera":
         return <AcademiaBuildiera />;
+      
+      // Enterprise Autopilot
+      case "autopilot":
+      case "enterprise-autopilot":
+        return <EnterpriseAutopilotDashboard profile={profile} companyId={profile?.primary_company_id} />;
       
       // === CREATIFY STUDIO ===
       case "creatify-studio":

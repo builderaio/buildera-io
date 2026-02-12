@@ -427,6 +427,13 @@ async function guardPhase(companyId: string, department: string, decisions: any[
 async function actPhase(companyId: string, department: string, guardedDecisions: any[], cycleId: string) {
   const results: any[] = [];
 
+  // Resolve agent mappings for this department
+  const { data: agents } = await supabase.from('platform_agents')
+    .select('id, internal_code, name, edge_function_name, credits_per_use')
+    .eq('department', department).eq('is_active', true);
+  
+  const agentMap = new Map((agents || []).map(a => [a.internal_code, a]));
+
   for (const decision of guardedDecisions) {
     if (decision.guardrail_result === 'blocked') {
       results.push({ ...decision, action_taken: false });
@@ -445,8 +452,54 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
       continue;
     }
 
-    // Execute: log execution (actual agent invocation goes here when agents are wired)
-    results.push({ ...decision, action_taken: true });
+    // Real agent execution
+    const agentCode = decision.agent_to_execute;
+    const agent = agentMap.get(agentCode);
+    
+    if (agent?.edge_function_name) {
+      try {
+        console.log(`⚡ [${department}] Invoking agent: ${agent.name} (${agent.edge_function_name})`);
+        const execStart = Date.now();
+        
+        const agentRes = await fetch(`${supabaseUrl}/functions/v1/${agent.edge_function_name}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            company_id: companyId,
+            department,
+            decision_type: decision.decision_type,
+            parameters: decision.action_parameters || {},
+            cycle_id: cycleId,
+            autopilot: true,
+          }),
+        });
+        
+        const agentResult = await agentRes.json();
+        const execTime = Date.now() - execStart;
+        
+        // Log usage
+        await supabase.from('agent_usage_log').insert({
+          agent_id: agent.id,
+          company_id: companyId,
+          status: agentResult.success !== false ? 'completed' : 'failed',
+          credits_consumed: agent.credits_per_use || 1,
+          execution_time_ms: execTime,
+          input_data: decision.action_parameters,
+          output_data: agentResult,
+          output_summary: agentResult.summary || decision.description,
+          error_message: agentResult.error || null,
+        });
+        
+        results.push({ ...decision, action_taken: true, execution_result: agentResult.success !== false ? 'success' : 'failed' });
+      } catch (err) {
+        console.error(`❌ Agent execution failed for ${agentCode}:`, err);
+        results.push({ ...decision, action_taken: true, execution_result: 'error', execution_error: (err as Error).message });
+      }
+    } else {
+      // No agent mapped - log the decision as taken
+      console.log(`⚠️ [${department}] No agent mapped for code: ${agentCode}`);
+      results.push({ ...decision, action_taken: true, execution_result: 'no_agent_mapped' });
+    }
   }
 
   return results;

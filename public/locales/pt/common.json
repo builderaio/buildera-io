@@ -192,7 +192,29 @@
     "credits": "Créditos",
     "settings": "Configurações",
     "profile": "Meu Perfil",
-    "logout": "Sair"
+    "logout": "Sair",
+    "commandCenter": "Centro de Comando",
+    "platformTagline": "Marketing Autopilot",
+    "autopilot": "Autopilot",
+    "autopilotActive": "Ativo",
+    "autopilotInactive": "Inativo"
+  },
+  "dashboard": {
+    "vsPreviousMonth": "vs. mês anterior",
+    "progress": "Progresso",
+    "autopilot": "Marketing Autopilot",
+    "cyclesCompleted": "ciclos completados",
+    "last": "Último",
+    "autopilotCTA": "Ative para automatizar suas operações de marketing",
+    "activate": "Ativar",
+    "strategicObjective": "Objetivo Estratégico",
+    "objectiveProgress": "Progresso dos Objetivos",
+    "noObjectives": "Nenhum objetivo definido",
+    "defineObjectives": "Definir Objetivos",
+    "featuredRecommendation": "Recomendação em destaque",
+    "healthScore": "Pontuação de Saúde",
+    "outOf100": "de 100 pontos",
+    "viewDiagnostic": "Ver Diagnóstico Completo"
   },
   "onboarding": {
     "checkingData": "Verificando dados da sua empresa...",

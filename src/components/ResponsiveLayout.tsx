@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Building, Bot, Store, Settings, User, LogOut, Activity, Zap, Menu, Brain } from 'lucide-react';
+import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -76,7 +76,7 @@ const ResponsiveLayout = () => {
         email: user.email,
         full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
         user_type: user.app_metadata?.provider === 'email' ? 'company' : null,
-        company_name: 'Mi Empresa'
+        company_name: t('common:sidebar.myCompany')
       };
       
       const { data: companyMember } = await supabase
@@ -88,7 +88,7 @@ const ResponsiveLayout = () => {
       
       const profileWithCompanyName = {
         ...baseProfile,
-        company_name: companyMember?.companies?.name || baseProfile.company_name || 'Mi Empresa'
+        company_name: companyMember?.companies?.name || baseProfile.company_name || t('common:sidebar.myCompany')
       };
       
       setProfile(profileWithCompanyName);
@@ -195,6 +195,7 @@ const SidebarLogoHeader = ({
   onLogoClick: () => void;
 }) => {
   const { company } = useCompany();
+  const { t } = useTranslation(['common']);
   const defaultLogo = "/lovable-uploads/255a63ec-9f96-4ae3-88c5-13f1eacfc672.png";
   const hasCompanyLogo = !!company?.logo_url;
   
@@ -214,7 +215,7 @@ const SidebarLogoHeader = ({
           {company?.name || companyName}
         </span>
         <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide">
-          AI Business Platform
+          {t('common:sidebar.platformTagline', 'Marketing Autopilot')}
         </span>
       </div>
     </div>
@@ -238,6 +239,39 @@ const CollapsedSidebarLogo = () => {
           className={`${hasCompanyLogo ? 'size-9 object-cover' : 'size-5 object-contain filter brightness-0 invert'}`}
         />
       </div>
+    </div>
+  );
+};
+
+// Autopilot Status Indicator
+const AutopilotStatusIndicator = ({ companyId }: { companyId: string | null }) => {
+  const { t } = useTranslation(['common']);
+  const [autopilotEnabled, setAutopilotEnabled] = useState(false);
+
+  useEffect(() => {
+    if (!companyId) return;
+    const fetchStatus = async () => {
+      const { data } = await supabase
+        .from('company_autopilot_config')
+        .select('autopilot_enabled')
+        .eq('company_id', companyId)
+        .maybeSingle();
+      setAutopilotEnabled(!!data?.autopilot_enabled);
+    };
+    fetchStatus();
+  }, [companyId]);
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50 group-data-[state=collapsed]:hidden">
+      <div className={`w-2 h-2 rounded-full ${autopilotEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+      <span className="text-xs font-medium text-sidebar-foreground">
+        {t('common:sidebar.autopilot', 'Autopilot')}:
+      </span>
+      <span className={`text-xs font-semibold ${autopilotEnabled ? 'text-emerald-500' : 'text-amber-500'}`}>
+        {autopilotEnabled 
+          ? t('common:sidebar.autopilotActive', 'Active') 
+          : t('common:sidebar.autopilotInactive', 'Inactive')}
+      </span>
     </div>
   );
 };
@@ -310,15 +344,15 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
     const routes: Record<string, string> = {
       'panel': '/company-dashboard?view=panel',
-      'mando-central': '/company-dashboard?view=panel', // redirect legacy
+      'mando-central': '/company-dashboard?view=panel',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
       'agentes': '/company-dashboard?view=agentes',
-      'mis-agentes': '/company-dashboard?view=agentes', // redirect legacy
-      'marketplace': '/company-dashboard?view=agentes', // consolidate
+      'mis-agentes': '/company-dashboard?view=agentes',
+      'marketplace': '/company-dashboard?view=agentes',
       'negocio': '/company-dashboard?view=negocio',
-      'adn-empresa': '/company-dashboard?view=negocio', // redirect legacy
-      'configuracion': '/company-dashboard?view=negocio', // consolidate
-      'inteligencia': '/company-dashboard?view=negocio', // consolidate
+      'adn-empresa': '/company-dashboard?view=negocio',
+      'configuracion': '/company-dashboard?view=negocio',
+      'inteligencia': '/company-dashboard?view=negocio',
       'profile': '/profile'
     };
     
@@ -331,12 +365,12 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   const activeView = getActiveView();
 
-  // Simplified sidebar navigation - 5 main sections
+  // Sidebar navigation with Lucide icons (no emojis)
   const sidebarItems = [
-    { id: 'panel', label: t('common:sidebar.dashboard', 'Comando'), icon: Activity, emoji: '🏠' },
-    { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing'), icon: Activity, emoji: '📣' },
-    { id: 'agentes', label: t('common:sidebar.myAgents', 'Agentes'), icon: Bot, emoji: '🤖' },
-    { id: 'negocio', label: t('common:sidebar.companyDna', 'Mi Negocio'), icon: Building, emoji: '🏢' },
+    { id: 'panel', label: t('common:sidebar.commandCenter', 'Centro de Comando'), icon: Activity },
+    { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Megaphone },
+    { id: 'agentes', label: t('common:sidebar.aiAgents', 'Agentes IA'), icon: Bot },
+    { id: 'negocio', label: t('common:sidebar.myCompany', 'Mi Negocio'), icon: Building },
   ];
 
   return (
@@ -349,13 +383,17 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
               onLogoClick={() => setActiveView('mando-central')} 
             />
             
+            {/* Credits indicator */}
             <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
               <Zap className="size-3 sm:size-4 text-amber-500" />
-              <span className="text-[10px] sm:text-xs font-medium text-sidebar-foreground">Créditos:</span>
+              <span className="text-[10px] sm:text-xs font-medium text-sidebar-foreground">{t('common:sidebar.credits')}:</span>
               <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0 sm:py-0.5 h-4 sm:h-5 bg-primary/20 text-primary font-bold">
                 {availableCredits} cr
               </Badge>
             </div>
+
+            {/* Autopilot status */}
+            <AutopilotStatusIndicator companyId={companyId} />
           </SidebarHeader>
 
           <CollapsedSidebarLogo />
@@ -387,8 +425,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                           tooltip={item.label}
                         >
                           <div className="flex items-center gap-3">
-                            <span className="text-lg group-data-[state=collapsed]:hidden">{item.emoji}</span>
-                            <Icon className="size-5 shrink-0 hidden group-data-[state=collapsed]:block" />
+                            <Icon className="size-5 shrink-0" />
                             <span className="font-medium group-data-[state=collapsed]:hidden">{item.label}</span>
                           </div>
                         </SidebarMenuButton>
@@ -407,10 +444,10 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                   onClick={() => setActiveView('configuracion')} 
                   disabled={shouldBlockNavigation} 
                   className="justify-start"
-                  tooltip="Configuración"
+                  tooltip={t('common:sidebar.settings')}
                 >
                   <Settings className="size-5" />
-                  <span className="group-data-[state=collapsed]:hidden">{t('common:sidebar.settings', 'Configuración')}</span>
+                  <span className="group-data-[state=collapsed]:hidden">{t('common:sidebar.settings')}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -438,7 +475,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                         <AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback>
                       </Avatar>
                       <span className="hidden md:block text-sm font-medium truncate max-w-[120px]">
-                        {profile?.full_name || "Usuario"}
+                        {profile?.full_name || t('common:sidebar.profile')}
                       </span>
                     </div>
                   </Button>
@@ -457,16 +494,16 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setActiveView('profile')}>
                     <User className="mr-2 h-4 w-4" />
-                    <span>{t('common:sidebar.profile', 'Mi Perfil')}</span>
+                    <span>{t('common:sidebar.profile')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setActiveView('configuracion')} disabled={shouldBlockNavigation}>
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>{t('common:sidebar.settings', 'Configuración')}</span>
+                    <span>{t('common:sidebar.settings')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>{t('common:sidebar.logout', 'Cerrar sesión')}</span>
+                    <span>{t('common:sidebar.logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

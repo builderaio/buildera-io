@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,8 +48,10 @@ interface ConfigSection {
 const BusinessConfigurationHub = ({ profile, onProfileUpdate }: BusinessConfigurationHubProps) => {
   const { toast } = useToast();
   const { t } = useTranslation(['marketing', 'company', 'common']);
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || "empresa";
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("empresa");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [companyData, setCompanyData] = useState<any>(null);
   const [strategyData, setStrategyData] = useState<any>(null);
   const [brandingData, setBrandingData] = useState<any>(null);
@@ -58,6 +61,11 @@ const BusinessConfigurationHub = ({ profile, onProfileUpdate }: BusinessConfigur
   const [isGeneratingBrand, setIsGeneratingBrand] = useState(false);
   const [isGeneratingObjectives, setIsGeneratingObjectives] = useState(false);
   const [sectionStats, setSectionStats] = useState<ConfigSection[]>([]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
 
   useEffect(() => {
     if (profile?.user_id) {

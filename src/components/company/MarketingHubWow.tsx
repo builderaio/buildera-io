@@ -528,7 +528,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
                         <div className="text-center py-8">
                           <Network className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                           <p className="text-muted-foreground mb-4">{t("hub.connectToSeeMetrics")}</p>
-                          <Button variant="outline" onClick={() => navigate('/company-dashboard?view=configuracion')}>
+                          <Button variant="outline" onClick={() => navigate('/company-dashboard?view=configuracion&tab=canales')}>
                             {t("hub.connectNetworks")}
                           </Button>
                         </div>

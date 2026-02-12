@@ -568,7 +568,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
           <div className="flex flex-col gap-2">
             <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
               setShowPrereqDialog(false);
-              navigate('/company-dashboard?view=configuracion');
+              navigate('/company-dashboard?view=configuracion&tab=canales');
             }}>
               <Link2 className="w-4 h-4" />
               {t('autopilot.prerequisites.connectNow')}

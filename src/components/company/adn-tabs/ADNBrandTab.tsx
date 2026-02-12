@@ -83,61 +83,36 @@ export const ADNBrandTab = ({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Paleta de Colores */}
-        {(brandingData?.primary_color || brandingData?.secondary_color) && (
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block">{t('common:adn.colorPalette')}</label>
-            <div className="flex flex-wrap gap-3">
-              {brandingData.primary_color && (
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-8 h-8 rounded-lg border shadow-sm" 
-                    style={{ backgroundColor: brandingData.primary_color }}
+        <div>
+          <label className="text-xs font-medium text-muted-foreground mb-2 block">{t('common:adn.colorPalette')}</label>
+          <div className="flex flex-wrap gap-3">
+            {[
+              { key: 'primary_color', label: t('common:adn.primary') },
+              { key: 'secondary_color', label: t('common:adn.secondary') },
+              { key: 'complementary_color_1', label: `${t('common:adn.complementary')} 1` },
+              { key: 'complementary_color_2', label: `${t('common:adn.complementary')} 2` },
+            ].map(({ key, label }) => (
+              <div key={key} className="flex items-center gap-2">
+                <label className="relative cursor-pointer">
+                  <input
+                    type="color"
+                    value={brandingData?.[key] || '#ffffff'}
+                    onChange={(e) => saveField(key, e.target.value, 'company_branding')}
+                    className="absolute inset-0 w-8 h-8 opacity-0 cursor-pointer"
                   />
-                  <div>
-                    <p className="text-xs font-medium">{t('common:adn.primary')}</p>
-                    <p className="text-xs text-muted-foreground">{brandingData.primary_color}</p>
-                  </div>
-                </div>
-              )}
-              {brandingData.secondary_color && (
-                <div className="flex items-center gap-2">
                   <div 
-                    className="w-8 h-8 rounded-lg border shadow-sm" 
-                    style={{ backgroundColor: brandingData.secondary_color }}
+                    className="w-8 h-8 rounded-lg border shadow-sm transition-transform hover:scale-110" 
+                    style={{ backgroundColor: brandingData?.[key] || '#ffffff' }}
                   />
-                  <div>
-                    <p className="text-xs font-medium">{t('common:adn.secondary')}</p>
-                    <p className="text-xs text-muted-foreground">{brandingData.secondary_color}</p>
-                  </div>
+                </label>
+                <div>
+                  <p className="text-xs font-medium">{label}</p>
+                  <p className="text-xs text-muted-foreground">{brandingData?.[key] || '—'}</p>
                 </div>
-              )}
-              {brandingData.complementary_color_1 && (
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-8 h-8 rounded-lg border shadow-sm" 
-                    style={{ backgroundColor: brandingData.complementary_color_1 }}
-                  />
-                  <div>
-                    <p className="text-xs font-medium">{t('common:adn.complementary')} 1</p>
-                    <p className="text-xs text-muted-foreground">{brandingData.complementary_color_1}</p>
-                  </div>
-                </div>
-              )}
-              {brandingData.complementary_color_2 && (
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-8 h-8 rounded-lg border shadow-sm" 
-                    style={{ backgroundColor: brandingData.complementary_color_2 }}
-                  />
-                  <div>
-                    <p className="text-xs font-medium">{t('common:adn.complementary')} 2</p>
-                    <p className="text-xs text-muted-foreground">{brandingData.complementary_color_2}</p>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* Identidad Visual */}
         <div>

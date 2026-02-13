@@ -714,6 +714,24 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
               </>
             )}
 
+            {/* Cold Start: Generate content with AI */}
+            <div className="border-t pt-3 mt-1">
+              <p className="text-sm text-muted-foreground mb-2">
+                {t('autopilot.bootstrap.coldStartDesc', '¿Tu empresa es nueva y no tiene publicaciones? Genera tu primer contenido con IA.')}
+              </p>
+              <Button
+                variant="secondary"
+                className="w-full justify-start gap-2"
+                onClick={() => {
+                  setShowPrereqDialog(false);
+                  navigate('/company-dashboard?view=marketing-hub&tab=create');
+                }}
+              >
+                <Zap className="w-4 h-4" />
+                {t('autopilot.bootstrap.generateContent', 'Crear primer contenido con IA')}
+              </Button>
+            </div>
+
             <Button
               variant="outline"
               className="w-full justify-start gap-2"

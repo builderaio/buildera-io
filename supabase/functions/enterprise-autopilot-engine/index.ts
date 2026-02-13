@@ -1167,12 +1167,13 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
             await supabase.from('autopilot_decisions').insert({
               company_id: companyId,
               cycle_id: cycleId,
-              decision_type: 'bootstrap_required',
+              decision_type: 'cold_start_content',
               priority: 'high',
-              description: 'El Autopilot necesita más datos para funcionar. Importa publicaciones desde tus redes sociales conectadas o crea contenido nuevo.',
+              description: 'Tu empresa es nueva en el mundo digital. El Autopilot puede generar tu primer calendario de contenido automáticamente. Crea contenido con IA desde el Marketing Hub.',
               reasoning: `Auto-scrape attempted for ${accountsToScrape.map((a: any) => a.platform).join(', ')} but ${sufficiency2.reason}`,
               action_taken: false,
               guardrail_result: 'needs_action',
+              expected_impact: { suggested_action: 'generate_initial_content' },
             });
             await logExecution(companyId, cycleId, department, 'sense', 'needs_bootstrap', {
               error_message: `Bootstrap attempted but: ${sufficiency2.reason}`,
@@ -1186,12 +1187,13 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
           await supabase.from('autopilot_decisions').insert({
             company_id: companyId,
             cycle_id: cycleId,
-            decision_type: 'bootstrap_required',
+            decision_type: 'cold_start_content',
             priority: 'critical',
-            description: 'No hay redes sociales conectadas. Conecta al menos una red social desde el Marketing Hub para activar el Autopilot.',
-            reasoning: 'No connected social accounts found. Cannot scrape or generate data.',
+            description: 'Tu empresa es nueva en el mundo digital. No necesitas historial: crea tu primer contenido con IA desde el Marketing Hub y el Autopilot se encargará del resto.',
+            reasoning: 'No connected social accounts found. Cold start mode: user can generate initial content with AI agents.',
             action_taken: false,
             guardrail_result: 'needs_action',
+            expected_impact: { suggested_action: 'generate_initial_content' },
           });
           await logExecution(companyId, cycleId, department, 'sense', 'needs_bootstrap', {
             error_message: 'No connected social accounts. Bootstrap impossible.',

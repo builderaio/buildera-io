@@ -37,7 +37,7 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab, onImportData }:
 
   const checkProgress = async () => {
     try {
-      const [socialRes, brandingRes, postsRes, autopilotRes, guardrailsRes, igPosts, liPosts, fbPosts, tkPosts] = await Promise.all([
+      const [socialRes, brandingRes, postsRes, autopilotRes, guardrailsRes, igPosts, liPosts, fbPosts, tkPosts, scheduledRes] = await Promise.all([
         supabase.from("social_accounts").select("id").eq("user_id", userId).eq("is_connected", true).limit(1),
         supabase.from("company_branding").select("id").limit(1),
         supabase.from("scheduled_posts").select("id").eq("user_id", userId).limit(1),
@@ -47,9 +47,11 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab, onImportData }:
         supabase.from("linkedin_posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
         supabase.from("facebook_posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
         supabase.from("tiktok_posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("scheduled_posts").select("id", { count: "exact", head: true }).eq("user_id", userId),
       ]);
 
       const totalImportedPosts = (igPosts.count || 0) + (liPosts.count || 0) + (fbPosts.count || 0) + (tkPosts.count || 0);
+      const totalScheduledPosts = scheduledRes.count || 0;
 
       const level1Steps: OnboardingStep[] = [
         {
@@ -66,8 +68,10 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab, onImportData }:
         },
         {
           key: "importSocialData",
-          completed: totalImportedPosts >= 5,
-          action: () => onImportData?.(),
+          completed: totalImportedPosts >= 5 || totalScheduledPosts >= 1,
+          action: () => totalImportedPosts === 0 && (socialRes.data?.length || 0) === 0
+            ? onNavigateTab("create")
+            : onImportData?.(),
           level: 1,
         },
         {

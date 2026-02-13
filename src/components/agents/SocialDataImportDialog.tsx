@@ -17,6 +17,7 @@ interface SocialDataImportDialogProps {
   companyId: string;
   onSuccess?: () => void;
   defaultPlatform?: string;
+  onNavigateToCreate?: () => void;
 }
 
 const PLATFORMS = [
@@ -62,7 +63,8 @@ export function SocialDataImportDialog({
   userId,
   companyId,
   onSuccess,
-  defaultPlatform
+  defaultPlatform,
+  onNavigateToCreate
 }: SocialDataImportDialogProps) {
   const { t } = useTranslation(['common', 'marketing']);
   const [platform, setPlatform] = useState(defaultPlatform || '');
@@ -70,6 +72,7 @@ export function SocialDataImportDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resolvedUsernames, setResolvedUsernames] = useState<Record<string, string>>({});
+  const [zeroPosts, setZeroPosts] = useState(false);
 
   // Fetch pre-filled usernames from companies URLs + social_accounts
   useEffect(() => {
@@ -209,6 +212,11 @@ export function SocialDataImportDialog({
 
       const postsImported = data?.posts_count || data?.posts?.length || 0;
       
+      if (postsImported === 0) {
+        setZeroPosts(true);
+        return;
+      }
+
       toast.success(
         `Datos importados de ${selectedPlatform?.name}`,
         { description: `${postsImported} publicaciones encontradas` }
@@ -240,6 +248,27 @@ export function SocialDataImportDialog({
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
+          {zeroPosts && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="space-y-2">
+                <p>{t('marketing:hub.import.zeroPosts', 'No encontramos publicaciones en este perfil. Si tu empresa es nueva en el mundo digital, puedes crear tu primer contenido con IA.')}</p>
+                {onNavigateToCreate && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onNavigateToCreate();
+                    }}
+                  >
+                    {t('marketing:hub.import.createWithAI', 'Crear contenido con IA')}
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />

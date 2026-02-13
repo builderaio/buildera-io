@@ -1,126 +1,82 @@
 
 
-# Ajuste Estructural: Guiar al Usuario hacia el Autopilot de Marketing
+# Soporte para Empresas Nuevas sin Historial Digital
 
-## Problema Raiz
+## Problema
 
-El Autopilot de Marketing tiene un ciclo SENSE-THINK-GUARD-ACT-LEARN que **aborta** cuando no hay datos suficientes (0 posts, 0 campanas). Sin embargo, el sistema **nunca guia proactivamente** al usuario para obtener esos datos usando las capacidades que ya existen (scrapers, conexion social, creacion de contenido). El resultado: el usuario activa el autopilot, no pasa nada, y no sabe por que ni que hacer.
+Cuando una empresa es nueva y no tiene publicaciones en redes sociales:
 
-Los problemas especificos son:
+1. El paso **"Importar datos sociales"** del Getting Started exige minimo 5 posts -- imposible de cumplir
+2. El **Autopilot Engine** aborta porque `checkDataSufficiency` requiere al menos 1 post
+3. El usuario queda atrapado sin saber que hacer
 
-1. **El engine aborta silenciosamente** cuando no hay posts -- no ejecuta ninguna accion proactiva como importar datos o crear contenido inicial.
-2. **El Getting Started checklist requiere pasos innecesarios** antes de permitir el autopilot (video, campaña) -- estos no son prerrequisitos reales del engine.
-3. **No existe un "bootstrap" automatico** que, al activar el autopilot por primera vez, importe datos sociales existentes usando los scrapers disponibles.
-4. **El prerequisite dialog** solo muestra un mensaje generico con botones de navegacion, sin ejecutar acciones concretas.
+## Solucion
 
-## Solucion: 3 Cambios Estructurales
+Crear un **camino alternativo** para empresas sin historial: en vez de importar datos, pueden generar contenido inicial usando los agentes de creacion que ya existen (CONTENT_CREATOR, CALENDAR_PLANNER).
 
-### Cambio 1: Getting Started Simplificado y Realista
+### Cambio 1: Getting Started -- Paso de importacion flexible
 
 **Archivo**: `src/components/company/MarketingGettingStarted.tsx`
 
-Reducir los pasos de Level 1 a los que realmente importan para que el autopilot funcione:
+- Convertir el paso "Importar datos sociales" en un paso bifurcado:
+  - Si la empresa tiene redes con contenido: mostrar la opcion de importar (flujo actual)
+  - Si no tiene contenido o no tiene redes: mostrar opcion alternativa **"Crear tu primer contenido con IA"** que lleva a la pestana "Crear" del Marketing Hub
+- El paso se marca como completado si hay 5+ posts importados **O** si hay 1+ post programado/creado via la plataforma
 
-| Paso actual | Estado |
-|---|---|
-| Conectar red social | **MANTENER** - prerrequisito real |
-| Completar marca | **MANTENER** - mejora calidad del output |
-| Primera campaña | **ELIMINAR** - no es prerrequisito |
-| Primer video | **ELIMINAR** - no es prerrequisito |
-| Importar datos sociales (NUEVO) | **AGREGAR** - prerrequisito real del engine |
-| Primera publicacion | **MANTENER** - demuestra que el sistema funciona |
-| Activar autopilot | **MANTENER** - objetivo final |
-
-El paso "Importar datos sociales" abrira el `SocialDataImportDialog` directamente, permitiendo al usuario pegar su URL de perfil y ejecutar el scraper existente. Esto llena la base de datos con los posts que el engine necesita.
-
-### Cambio 2: Bootstrap Automatico al Activar Autopilot
-
-**Archivo**: `src/components/company/marketing/AutopilotDashboard.tsx`
-
-Cuando el usuario intente activar el autopilot y no haya posts suficientes, en vez de solo mostrar un dialog con botones de navegacion:
-
-1. Mostrar un **dialog de bootstrap interactivo** que:
-   - Detecte las redes conectadas
-   - Ofrezca importar datos automaticamente (ejecutando los scrapers existentes desde el dialog)
-   - Muestre progreso de la importacion en tiempo real
-   - Una vez importados los datos, active el autopilot automaticamente
-
-El flujo seria:
-```text
-Usuario activa toggle
-    |
-    v
-+----------------------------+
-| Prerequisitos no cumplidos |
-+----------------------------+
-    |
-    v
-+-------------------------------+
-| Dialog Bootstrap Interactivo  |
-| - Redes detectadas: LinkedIn  |
-| - [Importar posts de LinkedIn]|  <-- ejecuta linkedin-scraper
-| - [Conectar mas redes]        |  <-- abre SocialConnectionManager
-| - Progreso: ████░░ 60%        |
-+-------------------------------+
-    |
-    v (datos importados)
-Autopilot se activa automaticamente
-```
-
-### Cambio 3: Engine Proactivo ante Datos Insuficientes
+### Cambio 2: Autopilot Engine -- Modo Cold Start
 
 **Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts`
 
-Modificar el comportamiento del engine cuando `checkDataSufficiency` falla para Marketing:
+Cuando `checkDataSufficiency` falla para marketing y el bootstrap (scraping) tambien falla:
 
-En vez de abortar con "Insufficient data", el engine debe:
-1. Intentar ejecutar los scrapers automaticamente para las cuentas sociales conectadas
-2. Si logra importar datos, reintentar el ciclo SENSE
-3. Si no hay cuentas conectadas, registrar una decision de tipo `bootstrap_required` en `autopilot_decisions` con un mensaje claro para el usuario
-4. Desactivar temporalmente el autopilot y notificar al usuario via toast/notificacion
+- En vez de solo registrar `bootstrap_required` y abortar, registrar una decision actionable de tipo `cold_start_content` que sugiera crear contenido inicial
+- La descripcion de la decision incluira un mensaje especifico: "Tu empresa es nueva en el mundo digital. El Autopilot puede generar tu primer calendario de contenido automaticamente."
+- Agregar un campo `suggested_action` con valor `generate_initial_content` para que el frontend pueda mostrar un CTA directo
 
-Esto convierte el engine de "pasivo" (solo opera si hay datos) a "proactivo" (busca obtener los datos que necesita).
+### Cambio 3: Bootstrap Dialog -- Opcion de generar contenido
+
+**Archivo**: `src/components/company/marketing/AutopilotDashboard.tsx`
+
+En el Bootstrap Dialog que aparece cuando faltan prerrequisitos:
+
+- Agregar una seccion para empresas sin datos: **"Sin historial? Genera tu primer contenido"**
+- Boton que invoca el agente `CALENDAR_PLANNER` para crear un calendario inicial de 1 semana basado en la estrategia y marca de la empresa
+- Al completarse la generacion, los posts creados satisfacen el requisito de datos y el autopilot puede activarse
+
+### Cambio 4: SocialDataImportDialog -- Mensaje para empresas nuevas
+
+**Archivo**: `src/components/agents/SocialDataImportDialog.tsx`
+
+- Si el scraper retorna 0 posts, mostrar un mensaje amigable en vez de un error: "No encontramos publicaciones en este perfil. Si tu empresa es nueva, puedes crear contenido con IA desde el Marketing Hub."
+- Incluir un boton/link directo a la pestana "Crear"
 
 ---
 
 ## Detalle Tecnico
 
 ### MarketingGettingStarted.tsx
-- Eliminar pasos `firstCampaign` y `firstVideo`
-- Agregar paso `importSocialData` que verifica si hay posts en cualquier tabla de posts
-- La accion del nuevo paso abre un estado que el padre (`MarketingHubWow`) usa para mostrar el `SocialDataImportDialog`
-- Comunicar con el padre via un nuevo callback `onImportData`
-
-### AutopilotDashboard.tsx
-- Reemplazar el `showPrereqDialog` simple por un **BootstrapDialog** interactivo
-- El dialog:
-  - Consulta `social_accounts` para detectar redes conectadas
-  - Por cada red conectada, muestra boton "Importar posts"
-  - Al hacer click, invoca el scraper correspondiente (`instagram-scraper`, `linkedin-scraper`, etc.)
-  - Muestra estado de importacion (loading/success/error por plataforma)
-  - Boton "Conectar redes" que abre el `SocialConnectionManager` via deep link
-  - Al completar importacion, re-verifica prerrequisitos y activa autopilot automaticamente
+- Verificar tambien `scheduled_posts` ademas de las tablas de posts importados para el paso `importSocialData`
+- Cambiar el umbral: completado si `totalImportedPosts >= 5 OR scheduledPosts >= 1`
+- Cambiar la accion del paso: si no hay redes conectadas, redirigir a `onNavigateTab("create")` en vez de `onImportData()`
 
 ### enterprise-autopilot-engine/index.ts
-- En `checkDataSufficiency` para marketing, si falla:
-  - Buscar cuentas sociales conectadas del company
-  - Si hay cuentas, invocar scrapers automaticamente
-  - Re-evaluar data sufficiency despues del scrape
-  - Si sigue fallando, registrar decision `bootstrap_required` en vez de abortar silenciosamente
-  - Marcar el ciclo como `needs_bootstrap` en el log en vez de simplemente `insufficient_data`
+- En el bloque donde se registra `bootstrap_required` (lineas 1167-1182 y 1186-1201), agregar `suggested_action: 'generate_initial_content'` al objeto de la decision
+- Modificar la descripcion para incluir guidance especifica sobre creacion de contenido
 
-### MarketingHubWow.tsx
-- Agregar estado y dialog para `SocialDataImportDialog` accesible desde Getting Started
-- Pasar callback `onImportData` al componente `MarketingGettingStarted`
+### AutopilotDashboard.tsx
+- En el Bootstrap Dialog, despues de la lista de plataformas para importar, agregar un bloque condicional que aparezca cuando no hay datos importables
+- El boton de "Generar contenido" invocara `supabase.functions.invoke('marketing-hub-content-calendar', { body: { user_id, company_id, ... } })`
+- Al terminar, refrescar prerrequisitos y activar autopilot
 
----
+### SocialDataImportDialog.tsx
+- Despues de la invocacion del scraper, si `data.posts_count === 0` o `data.posts?.length === 0`, mostrar un Alert informativo con un boton que cierre el dialog y ejecute `onNavigateTab?.("create")`
+- Agregar prop opcional `onNavigateToCreate?: () => void`
 
 ## Archivos a Modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/company/MarketingGettingStarted.tsx` | Simplificar pasos, agregar importacion de datos |
-| `src/components/company/MarketingHubWow.tsx` | Agregar SocialDataImportDialog y callback |
-| `src/components/company/marketing/AutopilotDashboard.tsx` | Bootstrap dialog interactivo |
-| `supabase/functions/enterprise-autopilot-engine/index.ts` | Engine proactivo con auto-scrape |
-
+| `src/components/company/MarketingGettingStarted.tsx` | Paso flexible: importar o crear contenido |
+| `src/components/agents/SocialDataImportDialog.tsx` | Mensaje amigable cuando 0 posts + link a crear |
+| `src/components/company/marketing/AutopilotDashboard.tsx` | Opcion de generar calendario inicial en bootstrap dialog |
+| `supabase/functions/enterprise-autopilot-engine/index.ts` | Decision cold_start_content con suggested_action |

@@ -154,14 +154,28 @@ export function SocialDataImportDialog({
         throw new Error('Scraper no disponible para esta plataforma');
       }
 
-      const { data, error: fnError } = await supabase.functions.invoke(scraperFunction, {
-        body: {
-          user_id: userId,
-          company_id: companyId,
-          profile_url: fullUrl,
-          url: fullUrl
-        }
-      });
+      // Build platform-specific payload
+      const cleanSlug = username.replace(/^@/, '').trim();
+      let body: Record<string, any> = {};
+
+      switch (platform) {
+        case 'linkedin':
+          body = { action: 'get_company_posts', company_identifier: cleanSlug, user_id: userId };
+          break;
+        case 'tiktok':
+          body = { action: 'get_posts', unique_id: cleanSlug };
+          break;
+        case 'instagram':
+          body = { action: 'get_posts', username: cleanSlug, user_id: userId, company_id: companyId };
+          break;
+        case 'facebook':
+          body = { action: 'get_posts', page_id: cleanSlug, user_id: userId, company_id: companyId };
+          break;
+        default:
+          body = { profile_url: fullUrl, url: fullUrl, user_id: userId, company_id: companyId };
+      }
+
+      const { data, error: fnError } = await supabase.functions.invoke(scraperFunction, { body });
 
       if (fnError) throw fnError;
 

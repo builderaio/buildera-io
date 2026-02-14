@@ -16,7 +16,7 @@ interface Profile {
   user_id: string;
   email: string;
   full_name: string;
-  user_type: 'company' | 'developer' | 'expert';
+  user_type: string;
   avatar_url?: string;
   company_name?: string;
 }
@@ -135,7 +135,7 @@ const AuthenticatedLayout = () => {
 
   // Company users use ResponsiveLayout directly via routing, no redirect needed
 
-  // Layout simplificado para desarrolladores y expertos
+  // Layout simplificado para rutas autenticadas genéricas
   return (
     <div className="min-h-screen bg-background">
       {/* Header simple */}

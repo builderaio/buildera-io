@@ -92,11 +92,9 @@ const SupportChatWidget = ({ user }: SupportChatWidgetProps) => {
   // Obtener contexto de la página actual
   const getPageContext = () => {
     const path = location.pathname;
-    const contexts = {
+    const contexts: Record<string, string> = {
       '/company-dashboard': 'Panel de control del negocio',
       '/company-dashboard/adn': 'Sección ADN del Negocio',
-      '/company-dashboard/marketplace': 'Marketplace de expertos',
-      '/company-dashboard/expertos': 'Gestión de expertos',
       '/company-dashboard/marketing': 'Marketing Hub',
       '/company-dashboard/inteligencia': 'Inteligencia Competitiva',
       '/company-dashboard/academia': 'Academia Buildera',

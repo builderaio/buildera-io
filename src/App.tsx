@@ -20,11 +20,8 @@ import ResetPassword from "./pages/ResetPassword";
 import EmailVerificationHandler from "./pages/EmailVerificationHandler";
 import CompleteProfile from "./pages/CompleteProfile";
 import CompanyDashboard from "./pages/CompanyDashboard";
-import ExpertDashboard from "./pages/ExpertDashboard";
-import DeveloperDashboard from "./pages/DeveloperDashboard";
 import NotFound from "./pages/NotFound";
 
-import DeveloperPortal from "./pages/DeveloperPortal";
 import CompanyAgents from "./pages/CompanyAgents";
 import CompanyAgentView from "./pages/CompanyAgentView";
 import SocialCallback from "./pages/SocialCallback";
@@ -47,17 +44,6 @@ import AdminAgentPerformance from "./pages/AdminAgentPerformance";
 import AdminSystem from "./pages/AdminSystem";
 import AgentMarketplaceV2 from "./pages/AgentMarketplaceV2";
 import ResponsiveLayout from "./components/ResponsiveLayout";
-import AgentFlowBuilder from "./pages/AgentFlowBuilder";
-import CompanyWhiteLabelAgents from "./pages/CompanyWhiteLabelAgents";
-import WhiteLabelAnalytics from "./pages/WhiteLabelAnalytics";
-import WhiteLabelRevenue from "./pages/WhiteLabelRevenue";
-import WhiteLabelKnowledgeBase from "./pages/WhiteLabelKnowledgeBase";
-import WhiteLabelVoiceVision from "./pages/WhiteLabelVoiceVision";
-import WhiteLabelAPIGenerator from "./pages/WhiteLabelAPIGenerator";
-import WhiteLabelABTesting from "./pages/WhiteLabelABTesting";
-import WhiteLabelDashboard from "./pages/WhiteLabelDashboard";
-import WhiteLabelMarketplace from "./pages/WhiteLabelMarketplace";
-import AIWorkforce from "./pages/AIWorkforce";
 import InviteAccept from "./pages/InviteAccept";
 
 const queryClient = new QueryClient();
@@ -125,38 +111,25 @@ const App = () => {
                   <Route path="/company-dashboard/marketing-hub" element={<Navigate to="/company-dashboard?view=marketing-hub" replace />} />
                   <Route path="/company-dashboard/inteligencia-competitiva" element={<Navigate to="/company-dashboard?view=inteligencia-competitiva" replace />} />
                   <Route path="/company-dashboard/academia-buildera" element={<Navigate to="/company-dashboard?view=academia-buildera" replace />} />
-                  <Route path="/company-dashboard/expertos" element={<Navigate to="/company-dashboard?view=expertos" replace />} />
+                  {/* /company-dashboard/expertos removed - obsolete */}
                   <Route path="/company-dashboard/configuracion" element={<Navigate to="/company-dashboard?view=configuracion" replace />} />
                   <Route path="/company-dashboard/base-conocimiento" element={<Navigate to="/company-dashboard?view=base-conocimiento" replace />} />
                   
-                  <Route path="/expert-dashboard" element={<ExpertDashboard />} />
-                  <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
+                  {/* expert-dashboard and developer-dashboard removed - obsolete */}
                   <Route path="/profile" element={<UserProfile />} />
                   <Route path="/marketplace/agents" element={<AgentMarketplaceV2 />} />
-                  <Route path="/marketplace/whitelabel" element={<WhiteLabelMarketplace />} />
                   <Route path="/agents" element={<AgentMarketplaceV2 />} />
                   {/* Legacy route redirects to new agent view */}
                   <Route path="/marketplace/agents/:templateId/configure" element={<Navigate to="/company/agents" replace />} />
                   <Route path="/company/agents" element={<CompanyAgents />} />
                   <Route path="/company/agents/:agentId" element={<CompanyAgentView />} />
-                  <Route path="/company/agent-flow-builder" element={<AgentFlowBuilder />} />
                   <Route path="/company/agent-config/:id" element={<Navigate to="/company/agents" replace />} />
-                  <Route path="/company/whitelabel-agents" element={<CompanyWhiteLabelAgents />} />
-                  <Route path="/developer/portal" element={<DeveloperPortal />} />
-                  <Route path="/developer/dashboard" element={<WhiteLabelDashboard />} />
-                  <Route path="/whitelabel/marketplace" element={<WhiteLabelMarketplace />} />
-                  <Route path="/whitelabel/agent-builder" element={<AgentFlowBuilder />} />
-                  <Route path="/whitelabel/agent-builder/:templateId" element={<AgentFlowBuilder />} />
-                  <Route path="/whitelabel/analytics/:templateId" element={<WhiteLabelAnalytics />} />
-                  <Route path="/whitelabel/revenue" element={<WhiteLabelRevenue />} />
-                  <Route path="/whitelabel/knowledge" element={<WhiteLabelKnowledgeBase />} />
-                  <Route path="/whitelabel/voice-vision" element={<WhiteLabelVoiceVision />} />
-                  <Route path="/whitelabel/api-docs/:templateId" element={<WhiteLabelAPIGenerator />} />
-                  <Route path="/whitelabel/ab-testing" element={<WhiteLabelABTesting />} />
-                  <Route path="/whitelabel/dashboard" element={<WhiteLabelDashboard />} />
-                  <Route path="/ai-workforce" element={<AIWorkforce />} />
-                  {/* Legacy route redirect */}
+                  {/* Legacy route redirects */}
+                  <Route path="/ai-workforce" element={<Navigate to="/company-dashboard?view=ai-workforce" replace />} />
                   <Route path="/ai-workforce/:agentId" element={<Navigate to="/company/agents" replace />} />
+                  <Route path="/whitelabel/*" element={<Navigate to="/company-dashboard" replace />} />
+                  <Route path="/developer/*" element={<Navigate to="/company-dashboard" replace />} />
+                  <Route path="/expert-dashboard" element={<Navigate to="/company-dashboard" replace />} />
                 </Route>
                 
                 {/* Admin Routes */}

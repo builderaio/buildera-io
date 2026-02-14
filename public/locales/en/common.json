@@ -1399,6 +1399,9 @@
     "archetypeClosing_micro_early": "Currently competing on narrative. To compete on authority, you need structured evidence.",
     "archetypeClosing_boutique_specialized": "Currently competing on specialization. To compete on trust, you need verifiable proof at scale.",
     "archetypeClosing_structured_firm": "Currently competing on substance. To compete on category leadership, you need ecosystem dominance.",
-    "archetypeClosing_market_leader": "You compete on authority and evidence. Maintain your edge by continuously innovating your trust infrastructure."
+    "archetypeClosing_market_leader": "You compete on authority and evidence. Maintain your edge by continuously innovating your trust infrastructure.",
+    "projectedIndex": "Projected Strategic Digital Index",
+    "projectionMessage": "If you execute these {{count}} actions in {{days}} days, your index could rise from {{from}} to {{to}}.",
+    "indexPoints": "index points"
   }
 }

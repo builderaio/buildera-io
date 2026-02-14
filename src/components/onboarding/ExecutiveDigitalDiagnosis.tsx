@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { computeDigitalMaturityScores } from './scoring/digitalMaturityScoring';
+import { InteractiveActionRoadmap } from './InteractiveActionRoadmap';
 import { ScoreRingWithTooltip } from './scoring/ScoreRingWithTooltip';
 import { Instagram, Linkedin, Facebook, Twitter, Youtube } from 'lucide-react';
 
@@ -688,104 +689,7 @@ export const ExecutiveDigitalDiagnosis = ({
         {(actionPlan.short_term?.length > 0 || actionPlan.mid_term?.length > 0 || actionPlan.long_term?.length > 0) && (
           <motion.section {...fadeUp(0.4)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
             <SectionHeader icon={Zap} title={t('common:execDiagnosis.actionPlan', 'Recommended Action Plan')} color="text-orange-400" />
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Short Term */}
-              {actionPlan.short_term?.length > 0 && (
-                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Zap className="w-4 h-4 text-emerald-400" />
-                    <div>
-                      <p className="text-xs font-bold text-emerald-400 uppercase">
-                        {t('common:execDiagnosis.shortTerm', 'Short Term')}
-                      </p>
-                      <p className="text-[10px] text-emerald-500/60">30 {t('common:execDiagnosis.days', 'days')}</p>
-                    </div>
-                  </div>
-                  <ul className="space-y-3">
-                    {actionPlan.short_term.map((action: any, idx: number) => (
-                      <li key={idx} className="text-xs">
-                        <div className="flex items-start gap-2">
-                          <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
-                            {idx + 1}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="font-medium text-slate-200">{action.action || action}</p>
-                            {action.reason && (
-                              <p className="text-slate-500 text-[11px] mt-1">{action.reason}</p>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Mid Term */}
-              {actionPlan.mid_term?.length > 0 && (
-                <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <TrendingUp className="w-4 h-4 text-blue-400" />
-                    <div>
-                      <p className="text-xs font-bold text-blue-400 uppercase">
-                        {t('common:execDiagnosis.midTerm', 'Mid Term')}
-                      </p>
-                      <p className="text-[10px] text-blue-500/60">90 {t('common:execDiagnosis.days', 'days')}</p>
-                    </div>
-                  </div>
-                  <ul className="space-y-3">
-                    {actionPlan.mid_term.map((action: any, idx: number) => (
-                      <li key={idx} className="text-xs">
-                        <div className="flex items-start gap-2">
-                          <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
-                            {idx + 1}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="font-medium text-slate-200">{action.action || action}</p>
-                            {action.reason && (
-                              <p className="text-slate-500 text-[11px] mt-1">{action.reason}</p>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Long Term */}
-              {actionPlan.long_term?.length > 0 && (
-                <div className="bg-purple-500/5 border border-purple-500/20 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Star className="w-4 h-4 text-purple-400" />
-                    <div>
-                      <p className="text-xs font-bold text-purple-400 uppercase">
-                        {t('common:execDiagnosis.longTerm', 'Long Term')}
-                      </p>
-                      <p className="text-[10px] text-purple-500/60">6-12 {t('common:execDiagnosis.months', 'months')}</p>
-                    </div>
-                  </div>
-                  <ul className="space-y-3">
-                    {actionPlan.long_term.map((action: any, idx: number) => (
-                      <li key={idx} className="text-xs">
-                        <div className="flex items-start gap-2">
-                          <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
-                            {idx + 1}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="font-medium text-slate-200">{action.action || action}</p>
-                            {action.reason && (
-                              <p className="text-slate-500 text-[11px] mt-1">{action.reason}</p>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+            <InteractiveActionRoadmap actionPlan={actionPlan} currentScore={overallScore} />
           </motion.section>
         )}
 

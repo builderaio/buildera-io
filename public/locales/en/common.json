@@ -1140,5 +1140,66 @@
       "amount": "Amount",
       "create": "Create Deal"
     }
+  },
+  "toast": {
+    "error": "Error",
+    "success": "Success",
+    "copied": "Copied!",
+    "copiedClipboard": "Copied to clipboard",
+    "saved": "Saved",
+    "deleted": "Deleted",
+    "created": "Created",
+    "updated": "Updated",
+    "crm": {
+      "contactCreated": "Contact created",
+      "contactCreatedDesc": "The contact has been created successfully",
+      "contactUpdated": "Contact updated",
+      "contactDeleted": "Contact deleted",
+      "accountCreated": "Account created",
+      "accountUpdated": "Account updated",
+      "accountDeleted": "Account deleted",
+      "activityCreated": "Activity logged",
+      "activityCompleted": "Activity completed",
+      "activityDeleted": "Activity deleted",
+      "pipelineCreated": "Pipeline created",
+      "dealCreated": "Deal created",
+      "dealWon": "Deal won!",
+      "dealLost": "Deal lost"
+    },
+    "journey": {
+      "created": "Journey created",
+      "createdDesc": "You can now add steps to the journey",
+      "activated": "Journey activated",
+      "paused": "Journey paused",
+      "cloned": "Journey cloned",
+      "deleted": "Journey deleted",
+      "errorCreate": "Could not create the journey",
+      "errorActivate": "Could not activate",
+      "errorPause": "Could not pause",
+      "errorClone": "Could not clone",
+      "errorDelete": "Could not delete"
+    },
+    "content": {
+      "generated": "Content generated!",
+      "generatedDesc": "Your new content is ready to review",
+      "errorGenerate": "Could not generate the content. Try again.",
+      "imageGenerated": "Image generated!",
+      "imageGeneratedDesc": "The image has been created successfully",
+      "errorImage": "Could not generate the image. Try again.",
+      "optimized": "Content optimized!",
+      "optimizedDesc": "Your content has been improved by Era",
+      "enterDescription": "Please enter a description",
+      "enterPrompt": "Please enter a description for the content",
+      "generateTextFirst": "Generate the text first",
+      "writeFirst": "Write something first",
+      "needContent": "You need content to generate an image",
+      "notAuthenticated": "User not authenticated"
+    },
+    "admin": {
+      "invalidAmount": "Enter a valid amount",
+      "creditsAssigned": "{amount} credits assigned to {company}",
+      "dataReset": "Data reset to default values",
+      "testSuccess": "Test executed successfully"
+    }
   }
 }

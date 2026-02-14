@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Search, Plus, Building2, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface CompanyCredit {
   id: string;
@@ -22,6 +23,7 @@ interface CompanyCredit {
 
 const CreditsPanel = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [credits, setCredits] = useState<CompanyCredit[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -77,7 +79,7 @@ const CreditsPanel = () => {
     try {
       const amount = parseInt(assignAmount);
       if (isNaN(amount) || amount <= 0) {
-        toast({ title: 'Error', description: 'Ingresa una cantidad válida', variant: 'destructive' });
+        toast({ title: t('toast.error'), description: t('toast.admin.invalidAmount'), variant: 'destructive' });
         return;
       }
 
@@ -97,12 +99,12 @@ const CreditsPanel = () => {
 
       if (error) throw error;
 
-      toast({ title: 'Éxito', description: `${amount} créditos asignados a ${assignDialog.companyName}` });
+      toast({ title: t('toast.success'), description: t('toast.admin.creditsAssigned', { amount, company: assignDialog.companyName }) });
       setAssignDialog({ open: false });
       setAssignAmount('');
       loadCredits();
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     }
   };
 

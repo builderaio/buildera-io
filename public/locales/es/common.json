@@ -1194,5 +1194,66 @@
       "amount": "Monto",
       "create": "Crear Deal"
     }
+  },
+  "toast": {
+    "error": "Error",
+    "success": "Éxito",
+    "copied": "¡Copiado!",
+    "copiedClipboard": "Copiado al portapapeles",
+    "saved": "Guardado",
+    "deleted": "Eliminado",
+    "created": "Creado",
+    "updated": "Actualizado",
+    "crm": {
+      "contactCreated": "Contacto creado",
+      "contactCreatedDesc": "El contacto se ha creado exitosamente",
+      "contactUpdated": "Contacto actualizado",
+      "contactDeleted": "Contacto eliminado",
+      "accountCreated": "Cuenta creada",
+      "accountUpdated": "Cuenta actualizada",
+      "accountDeleted": "Cuenta eliminada",
+      "activityCreated": "Actividad registrada",
+      "activityCompleted": "Actividad completada",
+      "activityDeleted": "Actividad eliminada",
+      "pipelineCreated": "Pipeline creado",
+      "dealCreated": "Deal creado",
+      "dealWon": "¡Deal ganado!",
+      "dealLost": "Deal perdido"
+    },
+    "journey": {
+      "created": "Journey creado",
+      "createdDesc": "Ahora puedes añadir pasos al journey",
+      "activated": "Journey activado",
+      "paused": "Journey pausado",
+      "cloned": "Journey clonado",
+      "deleted": "Journey eliminado",
+      "errorCreate": "No se pudo crear el journey",
+      "errorActivate": "No se pudo activar",
+      "errorPause": "No se pudo pausar",
+      "errorClone": "No se pudo clonar",
+      "errorDelete": "No se pudo eliminar"
+    },
+    "content": {
+      "generated": "¡Contenido generado!",
+      "generatedDesc": "Tu nuevo contenido está listo para revisar",
+      "errorGenerate": "No se pudo generar el contenido. Intenta de nuevo.",
+      "imageGenerated": "¡Imagen generada!",
+      "imageGeneratedDesc": "La imagen ha sido creada exitosamente",
+      "errorImage": "No se pudo generar la imagen. Intenta de nuevo.",
+      "optimized": "¡Contenido optimizado!",
+      "optimizedDesc": "Tu contenido ha sido mejorado por Era",
+      "enterDescription": "Por favor ingresa una descripción",
+      "enterPrompt": "Por favor ingresa una descripción para el contenido",
+      "generateTextFirst": "Primero genera el texto",
+      "writeFirst": "Escribe algo primero",
+      "needContent": "Necesitas contenido para generar una imagen",
+      "notAuthenticated": "Usuario no autenticado"
+    },
+    "admin": {
+      "invalidAmount": "Ingresa una cantidad válida",
+      "creditsAssigned": "{amount} créditos asignados a {company}",
+      "dataReset": "Datos reseteados a valores predeterminados",
+      "testSuccess": "Prueba ejecutada exitosamente"
+    }
   }
 }

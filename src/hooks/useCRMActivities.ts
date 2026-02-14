@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import type { Json } from '@/integrations/supabase/types';
 
 export interface CRMActivity {
@@ -39,6 +40,7 @@ export interface CreateActivityInput {
 
 export const useCRMActivities = (companyId: string | undefined, contactId?: string, dealId?: string) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: activities, isLoading, refetch } = useQuery({
@@ -86,10 +88,10 @@ export const useCRMActivities = (companyId: string | undefined, contactId?: stri
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-activities', companyId] });
-      toast({ title: 'Actividad registrada' });
+      toast({ title: t('toast.crm.activityCreated') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -109,10 +111,10 @@ export const useCRMActivities = (companyId: string | undefined, contactId?: stri
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-activities', companyId] });
-      toast({ title: 'Actividad completada' });
+      toast({ title: t('toast.crm.activityCompleted') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -126,10 +128,10 @@ export const useCRMActivities = (companyId: string | undefined, contactId?: stri
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-activities', companyId] });
-      toast({ title: 'Actividad eliminada' });
+      toast({ title: t('toast.crm.activityDeleted') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 

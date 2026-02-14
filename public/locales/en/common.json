@@ -1263,7 +1263,7 @@
     "overallScore": "Overall",
     "visibilityScore": "Digital Visibility",
     "trustScore": "Trust & Credibility",
-    "contentScore": "Content Maturity",
+    "positioningScore": "Positioning Clarity",
     "executiveSummary": "Executive Diagnosis",
     "currentState": "Current State",
     "primaryConstraint": "Primary Constraint",
@@ -1281,5 +1281,42 @@
     "continueStrategy": "Continue",
     "brainOnline": "Enterprise Brain Online",
     "analysisComplete": "Analysis Complete"
+  },
+  "scoring": {
+    "howCalculated": "Score breakdown by criteria",
+    "total": "Total",
+    "vis": {
+      "websiteUrl": "Website URL detected",
+      "seoTitle": "SEO title tag present",
+      "seoDescription": "Meta description present",
+      "seoKeywords": "SEO keywords found",
+      "socialChannels": "Social media channels linked",
+      "workingElements": "Active digital strengths",
+      "digitalFootprint": "Digital footprint summary",
+      "competitivePresence": "Competitive presence signal"
+    },
+    "trust": {
+      "companyName": "Company name identified",
+      "logo": "Logo detected",
+      "slogan": "Slogan / tagline present",
+      "email": "Contact email available",
+      "phone": "Phone number available",
+      "address": "Physical address listed",
+      "socialPresence": "Social media trust signals",
+      "lowRisks": "Low active risk profile",
+      "foundingDate": "Founding date disclosed"
+    },
+    "pos": {
+      "services": "Services/products defined",
+      "offers": "Value offers structured",
+      "audienceSegments": "Audience segments identified",
+      "audienceDetail": "Audience profiling depth",
+      "metaDescription": "Positioning via meta description",
+      "contentStrengths": "Content strengths detected",
+      "lowContentGaps": "Low content gaps",
+      "actionPlan": "Short-term action plan exists",
+      "differentiation": "Differentiation focus identified",
+      "competitiveClarity": "Competitive positioning clarity"
+    }
   }
 }

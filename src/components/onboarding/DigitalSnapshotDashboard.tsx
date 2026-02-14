@@ -1,12 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
-  Eye, ShieldCheck, FileText, Brain, TrendingUp, AlertTriangle,
+  Eye, ShieldCheck, Target, Brain, AlertTriangle,
   CheckCircle2, XCircle, ArrowRight, Activity, Cpu, Zap,
-  Globe2, Target, Users, BarChart3, Sparkles
+  Globe2, BarChart3, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { computeDigitalMaturityScores } from './scoring/digitalMaturityScoring';
+import { ScoreRingWithTooltip } from './scoring/ScoreRingWithTooltip';
 
 interface DigitalSnapshotDashboardProps {
   results: any;
@@ -15,125 +17,18 @@ interface DigitalSnapshotDashboardProps {
   onViewFullReport: () => void;
 }
 
-// Compute scores from extracted data
-function computeScores(results: any) {
-  const basic = results?.basic_info || {};
-  const digital = results?.digital_presence || {};
-  const identity = basic.identity || {};
-  const seo = basic.seo || {};
-  const products = basic.products || {};
-  const contact = basic.contact || {};
-  const audience = basic.audience || {};
-
-  // Digital Visibility Score (0-100)
-  let visibility = 0;
-  if (identity.url) visibility += 15;
-  if (seo.title) visibility += 10;
-  if (seo.description) visibility += 10;
-  if ((seo.keyword || seo.keywords || []).length > 0) visibility += 10;
-  if ((contact.social_links || []).length > 0) visibility += Math.min(20, (contact.social_links || []).length * 5);
-  if ((digital.what_is_working || []).length > 0) visibility += Math.min(20, (digital.what_is_working || []).length * 5);
-  if (digital.digital_footprint_summary) visibility += 10;
-  if (digital.competitive_positioning) visibility += 5;
-  visibility = Math.min(100, visibility);
-
-  // Trust & Credibility Score (0-100)
-  let trust = 0;
-  if (identity.company_name) trust += 10;
-  if (identity.logo) trust += 15;
-  if (identity.slogan) trust += 5;
-  if ((contact.email || []).length > 0) trust += 10;
-  if ((contact.phone || []).length > 0) trust += 10;
-  if ((contact.address || []).length > 0) trust += 10;
-  if ((contact.social_links || []).length >= 3) trust += 15;
-  else if ((contact.social_links || []).length > 0) trust += 8;
-  if ((digital.key_risks || []).length === 0) trust += 15;
-  else if ((digital.key_risks || []).length <= 2) trust += 8;
-  if (identity.founding_date) trust += 10;
-  trust = Math.min(100, trust);
-
-  // Content Maturity Score (0-100)
-  let content = 0;
-  if ((products.service || products.services || []).length > 0) content += 15;
-  if ((products.offer || products.offers || []).length > 0) content += 10;
-  if ((audience.segment || audience.segments || []).length > 0) content += 10;
-  if ((audience.profession || audience.professions || []).length > 0) content += 5;
-  if ((audience.target_user || audience.target_users || []).length > 0) content += 5;
-  if (seo.description) content += 10;
-  if ((digital.what_is_working || []).length >= 3) content += 15;
-  else if ((digital.what_is_working || []).length > 0) content += 8;
-  if ((digital.what_is_missing || []).length <= 2) content += 15;
-  else content += 5;
-  if (digital.action_plan?.short_term?.length > 0) content += 10;
-  if (digital.executive_diagnosis?.highest_leverage_focus) content += 5;
-  content = Math.min(100, content);
-
-  return { visibility, trust, content };
-}
-
-// Animated score ring
-const ScoreRing = ({ score, label, icon: Icon, color, delay = 0 }: {
-  score: number; label: string; icon: any; color: string; delay?: number;
-}) => {
-  const [displayScore, setDisplayScore] = useState(0);
-  const circumference = 2 * Math.PI * 42;
-  const offset = circumference - (displayScore / 100) * circumference;
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      let current = 0;
-      const interval = setInterval(() => {
-        current += 1;
-        if (current >= score) {
-          setDisplayScore(score);
-          clearInterval(interval);
-        } else {
-          setDisplayScore(current);
-        }
-      }, 20);
-      return () => clearInterval(interval);
-    }, delay);
-    return () => clearTimeout(timer);
-  }, [score, delay]);
-
-  const getScoreColor = (s: number) => {
-    if (s >= 75) return 'text-emerald-400';
-    if (s >= 50) return 'text-amber-400';
-    return 'text-red-400';
-  };
-
-  return (
+// Brain pulse animation
+const BrainPulse = () => (
+  <div className="absolute -top-3 -right-3 z-10">
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: delay / 1000, duration: 0.6, type: 'spring' }}
-      className="flex flex-col items-center gap-3"
+      animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
+      transition={{ duration: 2, repeat: Infinity }}
+      className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"
     >
-      <div className="relative w-28 h-28 sm:w-32 sm:h-32">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted)/0.2)" strokeWidth="4" />
-          <motion.circle
-            cx="50" cy="50" r="42" fill="none"
-            stroke={color}
-            strokeWidth="4" strokeLinecap="round"
-            strokeDasharray={circumference}
-            animate={{ strokeDashoffset: offset }}
-            transition={{ duration: 1.5, ease: 'easeOut', delay: delay / 1000 }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <Icon className="w-5 h-5 mb-1" style={{ color }} />
-          <span className={`text-2xl sm:text-3xl font-bold ${getScoreColor(displayScore)}`}>
-            {displayScore}
-          </span>
-        </div>
-      </div>
-      <span className="text-xs sm:text-sm text-slate-400 font-medium text-center max-w-[120px]">
-        {label}
-      </span>
+      <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
     </motion.div>
-  );
-};
+  </div>
+);
 
 // Animated stat card
 const StatCard = ({ icon: Icon, label, value, delay = 0 }: {
@@ -155,24 +50,11 @@ const StatCard = ({ icon: Icon, label, value, delay = 0 }: {
   </motion.div>
 );
 
-// Brain pulse animation
-const BrainPulse = () => (
-  <div className="absolute -top-3 -right-3 z-10">
-    <motion.div
-      animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
-      transition={{ duration: 2, repeat: Infinity }}
-      className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center"
-    >
-      <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-    </motion.div>
-  </div>
-);
-
 export const DigitalSnapshotDashboard = ({
   results, companyName, onContinue, onViewFullReport
 }: DigitalSnapshotDashboardProps) => {
   const { t } = useTranslation(['common']);
-  const scores = useMemo(() => computeScores(results), [results]);
+  const scores = useMemo(() => computeDigitalMaturityScores(results), [results]);
 
   const basic = results?.basic_info || {};
   const digital = results?.digital_presence || {};
@@ -181,7 +63,9 @@ export const DigitalSnapshotDashboard = ({
   const contact = basic.contact || {};
   const execDiag = digital.executive_diagnosis || {};
 
-  const overallScore = Math.round((scores.visibility + scores.trust + scores.content) / 3);
+  const overallScore = Math.round(
+    (scores.visibility.score + scores.trust.score + scores.positioning.score) / 3
+  );
 
   const workingCount = (digital.what_is_working || []).length;
   const missingCount = (digital.what_is_missing || []).length;
@@ -244,24 +128,24 @@ export const DigitalSnapshotDashboard = ({
           </div>
 
           <div className="flex flex-wrap justify-center gap-8 sm:gap-12">
-            <ScoreRing
-              score={scores.visibility}
+            <ScoreRingWithTooltip
+              breakdown={scores.visibility}
               label={t('common:snapshot.visibilityScore', 'Digital Visibility')}
               icon={Eye}
               color="#3b82f6"
               delay={300}
             />
-            <ScoreRing
-              score={scores.trust}
+            <ScoreRingWithTooltip
+              breakdown={scores.trust}
               label={t('common:snapshot.trustScore', 'Trust & Credibility')}
               icon={ShieldCheck}
               color="#8b5cf6"
               delay={600}
             />
-            <ScoreRing
-              score={scores.content}
-              label={t('common:snapshot.contentScore', 'Content Maturity')}
-              icon={FileText}
+            <ScoreRingWithTooltip
+              breakdown={scores.positioning}
+              label={t('common:snapshot.positioningScore', 'Positioning Clarity')}
+              icon={Target}
               color="#f59e0b"
               delay={900}
             />

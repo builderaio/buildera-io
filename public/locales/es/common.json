@@ -1317,7 +1317,7 @@
     "overallScore": "General",
     "visibilityScore": "Visibilidad Digital",
     "trustScore": "Confianza y Credibilidad",
-    "contentScore": "Madurez de Contenido",
+    "positioningScore": "Claridad de Posicionamiento",
     "executiveSummary": "Diagnóstico Ejecutivo",
     "currentState": "Estado Actual",
     "primaryConstraint": "Restricción Principal",
@@ -1335,5 +1335,42 @@
     "continueStrategy": "Continuar",
     "brainOnline": "Cerebro Empresarial Online",
     "analysisComplete": "Análisis Completado"
+  },
+  "scoring": {
+    "howCalculated": "Desglose del puntaje por criterio",
+    "total": "Total",
+    "vis": {
+      "websiteUrl": "URL del sitio web detectada",
+      "seoTitle": "Título SEO presente",
+      "seoDescription": "Meta descripción presente",
+      "seoKeywords": "Palabras clave SEO encontradas",
+      "socialChannels": "Canales de redes sociales vinculados",
+      "workingElements": "Fortalezas digitales activas",
+      "digitalFootprint": "Resumen de huella digital",
+      "competitivePresence": "Señal de presencia competitiva"
+    },
+    "trust": {
+      "companyName": "Nombre de empresa identificado",
+      "logo": "Logo detectado",
+      "slogan": "Eslogan / tagline presente",
+      "email": "Email de contacto disponible",
+      "phone": "Teléfono disponible",
+      "address": "Dirección física listada",
+      "socialPresence": "Señales de confianza en redes",
+      "lowRisks": "Perfil de riesgo bajo",
+      "foundingDate": "Fecha de fundación divulgada"
+    },
+    "pos": {
+      "services": "Servicios/productos definidos",
+      "offers": "Ofertas de valor estructuradas",
+      "audienceSegments": "Segmentos de audiencia identificados",
+      "audienceDetail": "Profundidad de perfil de audiencia",
+      "metaDescription": "Posicionamiento vía meta descripción",
+      "contentStrengths": "Fortalezas de contenido detectadas",
+      "lowContentGaps": "Pocas brechas de contenido",
+      "actionPlan": "Plan de acción a corto plazo existe",
+      "differentiation": "Foco de diferenciación identificado",
+      "competitiveClarity": "Claridad de posicionamiento competitivo"
+    }
   }
 }

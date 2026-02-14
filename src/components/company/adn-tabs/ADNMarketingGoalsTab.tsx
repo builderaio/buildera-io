@@ -14,25 +14,20 @@ interface ADNMarketingGoalsTabProps {
   companyId: string;
 }
 
-const GOAL_OPTIONS = [
-  'Aumentar ventas',
-  'Generar leads',
-  'Aumentar reconocimiento de marca',
-  'Aumentar engagement',
-  'Fidelizar clientes',
-  'Expandir mercado',
-  'Lanzar producto',
-];
+const GOAL_KEYS = [
+  'increase_sales',
+  'generate_leads',
+  'brand_awareness',
+  'increase_engagement',
+  'customer_loyalty',
+  'expand_market',
+  'product_launch',
+] as const;
 
-const TIMELINE_OPTIONS = [
-  { value: '3_months', label: '3 meses' },
-  { value: '6_months', label: '6 meses' },
-  { value: '12_months', label: '1 año' },
-  { value: '24_months', label: '2 años' },
-];
+const TIMELINE_KEYS = ['3_months', '6_months', '12_months', '24_months'] as const;
 
 export const ADNMarketingGoalsTab = ({ companyId }: ADNMarketingGoalsTabProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['company', 'common']);
   const { toast } = useToast();
   const { goals, loading, saving, saveGoals } = useMarketingGoals(companyId);
 
@@ -67,9 +62,9 @@ export const ADNMarketingGoalsTab = ({ companyId }: ADNMarketingGoalsTabProps) =
   const handleSave = async () => {
     try {
       await saveGoals(localGoals);
-      toast({ title: t('company.email.saved') });
+      toast({ title: t('company:email.saved') });
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
@@ -87,41 +82,41 @@ export const ADNMarketingGoalsTab = ({ companyId }: ADNMarketingGoalsTabProps) =
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
-            {t('company.marketing.goals_title', 'Objetivos de Marketing')}
+            {t('company:marketing.goals_title')}
           </CardTitle>
           <CardDescription>
-            {t('company.marketing.goals_desc', 'Define tus metas de marketing para guiar a los agentes')}
+            {t('company:marketing.goals_desc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>{t('company.marketing.primary_goal', 'Objetivo principal')}</Label>
+            <Label>{t('company:marketing.primary_goal')}</Label>
             <Select 
               value={localGoals.primary_goal} 
               onValueChange={(v) => setLocalGoals(prev => ({ ...prev, primary_goal: v }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder={t('company.marketing.select_goal', 'Selecciona un objetivo')} />
+                <SelectValue placeholder={t('company:marketing.select_goal')} />
               </SelectTrigger>
               <SelectContent>
-                {GOAL_OPTIONS.map(goal => (
-                  <SelectItem key={goal} value={goal}>{goal}</SelectItem>
+                {GOAL_KEYS.map(key => (
+                  <SelectItem key={key} value={key}>{t(`company:marketing.goals.${key}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>{t('company.marketing.timeline', 'Horizonte de tiempo')}</Label>
+            <Label>{t('company:marketing.timeline')}</Label>
             <Select 
               value={localGoals.growth_timeline} 
               onValueChange={(v) => setLocalGoals(prev => ({ ...prev, growth_timeline: v }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder={t('company.marketing.select_timeline', 'Selecciona horizonte')} />
+                <SelectValue placeholder={t('company:marketing.select_timeline')} />
               </SelectTrigger>
               <SelectContent>
-                {TIMELINE_OPTIONS.map(opt => (
-                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                {TIMELINE_KEYS.map(key => (
+                  <SelectItem key={key} value={key}>{t(`company:marketing.timelines.${key}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -133,13 +128,13 @@ export const ADNMarketingGoalsTab = ({ companyId }: ADNMarketingGoalsTabProps) =
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            {t('company.marketing.kpis', 'KPIs y Metas')}
+            {t('company:marketing.kpis')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t('company.marketing.audience_size', 'Tamaño audiencia objetivo')}</Label>
+              <Label>{t('company:marketing.audience_size')}</Label>
               <Input
                 type="number"
                 value={localGoals.target_audience_size}
@@ -147,7 +142,7 @@ export const ADNMarketingGoalsTab = ({ companyId }: ADNMarketingGoalsTabProps) =
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('company.marketing.lead_target', 'Leads mensuales objetivo')}</Label>
+              <Label>{t('company:marketing.lead_target')}</Label>
               <Input
                 type="number"
                 value={localGoals.monthly_lead_target}
@@ -155,7 +150,7 @@ export const ADNMarketingGoalsTab = ({ companyId }: ADNMarketingGoalsTabProps) =
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('company.marketing.conversion_target', 'Tasa conversión objetivo (%)')}</Label>
+              <Label>{t('company:marketing.conversion_target')}</Label>
               <Input
                 type="number"
                 step="0.1"
@@ -164,7 +159,7 @@ export const ADNMarketingGoalsTab = ({ companyId }: ADNMarketingGoalsTabProps) =
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('company.marketing.engagement_target', 'Engagement objetivo (%)')}</Label>
+              <Label>{t('company:marketing.engagement_target')}</Label>
               <Input
                 type="number"
                 step="0.1"
@@ -180,12 +175,12 @@ export const ADNMarketingGoalsTab = ({ companyId }: ADNMarketingGoalsTabProps) =
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            {t('company.marketing.budget', 'Presupuesto')}
+            {t('company:marketing.budget')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <Label>{t('company.marketing.monthly_budget', 'Presupuesto mensual de campañas')}</Label>
+            <Label>{t('company:marketing.monthly_budget')}</Label>
             <Input
               type="number"
               value={localGoals.campaign_budget_monthly}
@@ -197,7 +192,7 @@ export const ADNMarketingGoalsTab = ({ companyId }: ADNMarketingGoalsTabProps) =
 
       <Button onClick={handleSave} disabled={saving} className="w-full">
         {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-        {t('company.email.save', 'Guardar Configuración')}
+        {t('company:email.save')}
       </Button>
     </div>
   );

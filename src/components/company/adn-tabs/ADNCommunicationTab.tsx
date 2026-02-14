@@ -15,33 +15,14 @@ interface ADNCommunicationTabProps {
   companyId: string;
 }
 
-const TONE_OPTIONS = [
-  { value: 'professional', label: 'Profesional' },
-  { value: 'casual', label: 'Casual' },
-  { value: 'friendly', label: 'Amigable' },
-  { value: 'fun', label: 'Divertido' },
-  { value: 'conversational', label: 'Conversacional' },
-  { value: 'formal', label: 'Formal' },
-  { value: 'inspirational', label: 'Inspiracional' },
-];
-
-const EMOJI_OPTIONS = [
-  { value: 'none', label: 'Sin emojis' },
-  { value: 'minimal', label: 'Mínimo' },
-  { value: 'moderate', label: 'Moderado' },
-  { value: 'frequent', label: 'Frecuente' },
-];
-
-const FORMALITY_OPTIONS = [
-  { value: 'formal', label: 'Formal (Usted)' },
-  { value: 'semi-formal', label: 'Semi-formal' },
-  { value: 'informal', label: 'Informal (Tú)' },
-];
+const TONE_KEYS = ['professional', 'casual', 'friendly', 'fun', 'conversational', 'formal', 'inspirational'] as const;
+const EMOJI_KEYS = ['none', 'minimal', 'moderate', 'frequent'] as const;
+const FORMALITY_KEYS = ['formal', 'semi-formal', 'informal'] as const;
 
 const PLATFORMS = ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter'];
 
 export const ADNCommunicationTab = ({ companyId }: ADNCommunicationTabProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['company', 'common']);
   const { toast } = useToast();
   const { settings, loading, saving, saveSettings } = useCommunicationSettings(companyId);
 
@@ -81,9 +62,9 @@ export const ADNCommunicationTab = ({ companyId }: ADNCommunicationTabProps) => 
   const handleSave = async () => {
     try {
       await saveSettings(localSettings);
-      toast({ title: t('company.email.saved') });
+      toast({ title: t('company:communication.saved') });
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:communication.save_error'), variant: 'destructive' });
     }
   };
 
@@ -129,45 +110,45 @@ export const ADNCommunicationTab = ({ companyId }: ADNCommunicationTabProps) => 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            {t('company.communication.tone_title', 'Tono de Comunicación')}
+            {t('company:communication.tone_title')}
           </CardTitle>
           <CardDescription>
-            {t('company.communication.tone_desc', 'Configura el tono por plataforma')}
+            {t('company:communication.tone_desc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t('company.communication.emoji_usage', 'Uso de emojis')}</Label>
+              <Label>{t('company:communication.emoji_usage')}</Label>
               <Select 
                 value={localSettings.emoji_usage} 
                 onValueChange={(v) => setLocalSettings(prev => ({ ...prev, emoji_usage: v }))}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {EMOJI_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  {EMOJI_KEYS.map(key => (
+                    <SelectItem key={key} value={key}>{t(`company:communication.emoji.${key}`)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{t('company.communication.formality', 'Formalidad')}</Label>
+              <Label>{t('company:communication.formality')}</Label>
               <Select 
                 value={localSettings.language_formality} 
                 onValueChange={(v) => setLocalSettings(prev => ({ ...prev, language_formality: v }))}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {FORMALITY_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  {FORMALITY_KEYS.map(key => (
+                    <SelectItem key={key} value={key}>{t(`company:communication.formalityLevel.${key}`)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="space-y-3">
-            <Label>{t('company.communication.tone_by_platform', 'Tono por plataforma')}</Label>
+            <Label>{t('company:communication.tone_by_platform')}</Label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {PLATFORMS.map(platform => (
                 <div key={platform} className="space-y-1">
@@ -181,8 +162,8 @@ export const ADNCommunicationTab = ({ companyId }: ADNCommunicationTabProps) => 
                   >
                     <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {TONE_OPTIONS.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      {TONE_KEYS.map(key => (
+                        <SelectItem key={key} value={key}>{t(`company:communication.tone.${key}`)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -197,12 +178,12 @@ export const ADNCommunicationTab = ({ companyId }: ADNCommunicationTabProps) => 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Hash className="h-5 w-5" />
-            {t('company.communication.hashtag_title', 'Estrategia de Hashtags')}
+            {t('company:communication.hashtag_title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>{t('company.communication.always_use', 'Siempre usar')}</Label>
+            <Label>{t('company:communication.always_use')}</Label>
             <div className="flex gap-2">
               <Input
                 value={newHashtag}
@@ -234,10 +215,10 @@ export const ADNCommunicationTab = ({ companyId }: ADNCommunicationTabProps) => 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Ban className="h-5 w-5" />
-            {t('company.communication.forbidden_title', 'Palabras Prohibidas')}
+            {t('company:communication.forbidden_title')}
           </CardTitle>
           <CardDescription>
-            {t('company.communication.forbidden_desc', 'Los agentes evitarán usar estas palabras')}
+            {t('company:communication.forbidden_desc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -245,7 +226,7 @@ export const ADNCommunicationTab = ({ companyId }: ADNCommunicationTabProps) => 
             <Input
               value={newWord}
               onChange={(e) => setNewWord(e.target.value)}
-              placeholder={t('company.communication.add_word', 'Agregar palabra')}
+              placeholder={t('company:communication.add_word')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   addToArray('forbidden_words', newWord);
@@ -270,7 +251,7 @@ export const ADNCommunicationTab = ({ companyId }: ADNCommunicationTabProps) => 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
-            {t('company.communication.pillars_title', 'Pilares de Contenido')}
+            {t('company:communication.pillars_title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -278,7 +259,7 @@ export const ADNCommunicationTab = ({ companyId }: ADNCommunicationTabProps) => 
             <Input
               value={newPillar}
               onChange={(e) => setNewPillar(e.target.value)}
-              placeholder={t('company.communication.add_pillar', 'Ej: Educación, Entretenimiento')}
+              placeholder={t('company:communication.add_pillar')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   addToArray('content_pillars', newPillar);
@@ -301,7 +282,7 @@ export const ADNCommunicationTab = ({ companyId }: ADNCommunicationTabProps) => 
 
       <Button onClick={handleSave} disabled={saving} className="w-full">
         {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-        {t('company.email.save', 'Guardar Configuración')}
+        {t('company:communication.save')}
       </Button>
     </div>
   );

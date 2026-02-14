@@ -2,18 +2,20 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cpu, Sparkles, HelpCircle, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { PlayToWinStrategy } from '@/types/playToWin';
+import { InferredStrategicData } from '@/hooks/useDiagnosticInference';
+import InferredFieldCard from '../InferredFieldCard';
 import { cn } from '@/lib/utils';
 
 interface CoreMissionLogicStepProps {
   strategy: PlayToWinStrategy;
   onUpdate: (updates: Partial<PlayToWinStrategy>) => Promise<boolean>;
   isSaving: boolean;
+  diagnosticData?: InferredStrategicData | null;
 }
 
 const timelineOptions = [
@@ -21,14 +23,7 @@ const timelineOptions = [
   { value: '3_years', labelKey: 'journey.sdna.timeline3y', fallback: '3 Años', descKey: 'journey.sdna.timeline3yDesc', descFallback: 'Escalar operación y consolidar posición' },
 ];
 
-const problemPrompts = [
-  "El problema estructural que resuelvo es...",
-  "Mis clientes sufren porque...",
-  "El mercado falla en...",
-  "La ineficiencia que elimino es..."
-];
-
-export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving }: CoreMissionLogicStepProps) {
+export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, diagnosticData }: CoreMissionLogicStepProps) {
   const { t } = useTranslation();
   const [aspiration, setAspiration] = useState(strategy.winningAspiration || '');
   const [timeline, setTimeline] = useState<'1_year' | '3_years' | '5_years'>(
@@ -49,9 +44,11 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving }: C
 
   const handleChange = (value: string) => { setAspiration(value); setHasChanges(true); };
   const handleTimelineChange = (value: string) => { setTimeline(value as any); setHasChanges(true); };
-  const handlePromptClick = (prompt: string) => { setAspiration(prompt + ' '); setHasChanges(true); };
 
-  const isValid = aspiration.length >= 20;
+  // Build inferred text combining problem + transformation
+  const inferredMission = diagnosticData
+    ? [diagnosticData.structuralProblem, diagnosticData.transformation].filter(Boolean).join('\n\n') || null
+    : null;
 
   return (
     <div className="space-y-6">
@@ -94,7 +91,7 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving }: C
                 <TooltipContent side="left" className="max-w-xs">
                   <p className="font-medium mb-1">{t('journey.sdna.structuralProblemExample', 'Ejemplo:')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {t('journey.sdna.structuralProblemExampleText', '"Las PYMEs pierden 40% de oportunidades de venta por no tener presencia digital estructurada. Transformo su operación de marketing de reactiva a autónoma, generando leads predecibles en 90 días."')}
+                    {t('journey.sdna.structuralProblemExampleText', '"Las PYMEs pierden 40% de oportunidades de venta..."')}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -105,30 +102,23 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving }: C
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!aspiration && (
-            <div className="flex flex-wrap gap-2">
-              {problemPrompts.map((prompt, i) => (
-                <Button key={i} variant="outline" size="sm" onClick={() => handlePromptClick(prompt)} className="text-xs">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  {prompt}
-                </Button>
-              ))}
-            </div>
-          )}
-          <div className="space-y-2">
-            <Textarea
-              value={aspiration}
-              onChange={(e) => handleChange(e.target.value)}
-              placeholder={t('journey.sdna.structuralProblemPlaceholder', 'Ej: Los negocios locales pierden clientes porque no pueden competir digitalmente contra cadenas. Yo les doy la infraestructura de marketing que solo las grandes empresas pueden costear, automatizada y a una fracción del costo...')}
-              className="min-h-[140px] resize-none"
-            />
-            <div className="flex items-center justify-between text-sm">
-              <span className={cn("transition-colors", isValid ? "text-green-600" : "text-muted-foreground")}>
-                {aspiration.length}/20 {t('common.minCharacters', 'caracteres mínimos')}
-                {isValid && " ✓"}
-              </span>
-              {isSaving && <span className="text-muted-foreground">{t('common.saving', 'Guardando...')}</span>}
-            </div>
+          <InferredFieldCard
+            label={t('journey.sdna.currentVsDesired', 'Misión y transformación')}
+            inferredValue={inferredMission}
+            currentValue={aspiration}
+            onChange={handleChange}
+            placeholder={t('journey.sdna.structuralProblemPlaceholder', 'Ej: Los negocios locales pierden clientes porque no pueden competir digitalmente...')}
+            showDualState={!!inferredMission}
+            currentStateLabel={t('journey.sdna.detectedState', 'Estado actual detectado')}
+            desiredStateLabel={t('journey.sdna.desiredState', 'Posicionamiento futuro deseado')}
+            minHeight="140px"
+          />
+          <div className="flex items-center justify-between text-sm">
+            <span className={cn("transition-colors", aspiration.length >= 20 ? "text-green-600" : "text-muted-foreground")}>
+              {aspiration.length}/20 {t('common.minCharacters', 'caracteres mínimos')}
+              {aspiration.length >= 20 && " ✓"}
+            </span>
+            {isSaving && <span className="text-muted-foreground">{t('common.saving', 'Guardando...')}</span>}
           </div>
         </CardContent>
       </Card>

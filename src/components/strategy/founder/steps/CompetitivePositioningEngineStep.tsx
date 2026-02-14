@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shield, HelpCircle, DollarSign, Award, Heart, Layers } from 'lucide-react';
+import { Shield, HelpCircle, DollarSign, Award, Heart, Layers, AlertTriangle, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
 import { PlayToWinStrategy, MoatType } from '@/types/playToWin';
 import { InferredStrategicData } from '@/hooks/useDiagnosticInference';
 import InferredFieldCard from '../InferredFieldCard';
@@ -30,7 +29,10 @@ const moatOptions: { value: MoatType; labelKey: string; fallback: string; descKe
 export default function CompetitivePositioningEngineStep({ strategy, onUpdate, isSaving, diagnosticData }: CompetitivePositioningEngineStepProps) {
   const { t } = useTranslation();
   const [competitiveAdvantage, setCompetitiveAdvantage] = useState(strategy.competitiveAdvantage || '');
-  const [moatType, setMoatType] = useState<MoatType | null>(strategy.moatType || null);
+  const [moatType, setMoatType] = useState<MoatType | null>(
+    strategy.moatType || diagnosticData?.suggestedMoat || null
+  );
+  const [moatInferred] = useState(!!diagnosticData?.suggestedMoat && !strategy.moatType);
   const [category, setCategory] = useState(diagnosticData?.competitiveCategory || '');
   const [keyAssets, setKeyAssets] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
@@ -50,9 +52,9 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
   const handleMoatChange = (value: string) => { setMoatType(value as MoatType); setHasChanges(true); };
 
   const isValid = competitiveAdvantage.length >= 20;
-
-  // Build inferred positioning text
   const inferredPositioning = diagnosticData?.competitiveAdvantage || null;
+  const inferredKeyAssets = diagnosticData?.keyAssets || null;
+  const hasRisks = diagnosticData?.keyRisks && diagnosticData.keyRisks.length > 0;
 
   return (
     <div className="space-y-6">
@@ -78,6 +80,38 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
         </CardHeader>
       </Card>
 
+      {/* Key Risks from Diagnosis */}
+      {hasRisks && (
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {t('journey.sdna.detectedRisks', 'Riesgos competitivos detectados')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-start gap-2 mb-2">
+              <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-primary/20">
+                <Bot className="h-3 w-3" />
+                {t('journey.sdna.inferred', 'Inferido por el sistema')}
+              </Badge>
+            </div>
+            <ul className="space-y-1.5">
+              {diagnosticData!.keyRisks.map((risk, i) => (
+                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                  <span className="text-destructive mt-1">•</span>
+                  {risk}
+                </li>
+              ))}
+            </ul>
+            <p className="text-[11px] text-destructive/60 italic mt-2 flex items-center gap-1">
+              <Bot className="h-3 w-3" />
+              {t('journey.sdna.inferredSource', 'Inferido por el sistema – basado en análisis digital')}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Competitive Category */}
       <Card>
         <CardHeader>
@@ -91,6 +125,9 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
             currentValue={category}
             onChange={setCategory}
             placeholder={t('journey.sdna.competitiveCategoryPlaceholder', 'Ej: Automatización de marketing para PYMEs en LATAM')}
+            showDualState={!!diagnosticData?.competitiveCategory}
+            currentStateLabel={t('journey.sdna.detectedState', 'Estado actual detectado')}
+            desiredStateLabel={t('journey.sdna.desiredState', 'Posicionamiento futuro deseado')}
             minHeight="60px"
           />
         </CardContent>
@@ -99,11 +136,21 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
       {/* Structural Differentiator (Moat Type) */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Shield className="h-5 w-5 text-muted-foreground" />
-            {t('journey.sdna.structuralDiff', 'Diferenciador estructural')}
-          </CardTitle>
-          <CardDescription>{t('journey.sdna.structuralDiffHint', '¿Cuál es la barrera competitiva que te protege?')}</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Shield className="h-5 w-5 text-muted-foreground" />
+                {t('journey.sdna.structuralDiff', 'Diferenciador estructural')}
+              </CardTitle>
+              <CardDescription>{t('journey.sdna.structuralDiffHint', '¿Cuál es la barrera competitiva que te protege?')}</CardDescription>
+            </div>
+            {moatInferred && (
+              <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-primary/20">
+                <Bot className="h-3 w-3" />
+                {t('journey.sdna.inferred', 'Inferido')}
+              </Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <RadioGroup value={moatType || ''} onValueChange={handleMoatChange} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -180,11 +227,16 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
           <CardDescription>{t('journey.sdna.keyAssetsHint', '¿Qué necesitas desarrollar para sostener tu ventaja a largo plazo?')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Textarea
-            value={keyAssets}
-            onChange={(e) => setKeyAssets(e.target.value)}
+          <InferredFieldCard
+            label={t('journey.sdna.keyAssets', 'Activos estratégicos')}
+            inferredValue={inferredKeyAssets}
+            currentValue={keyAssets}
+            onChange={setKeyAssets}
             placeholder={t('journey.sdna.keyAssetsPlaceholder', 'Ej: 1) Base de datos de benchmarks por industria...')}
-            className="min-h-[100px] resize-none"
+            showDualState={!!inferredKeyAssets}
+            currentStateLabel={t('journey.sdna.detectedState', 'Activos actuales detectados')}
+            desiredStateLabel={t('journey.sdna.desiredState', 'Activos a construir')}
+            minHeight="100px"
           />
         </CardContent>
       </Card>

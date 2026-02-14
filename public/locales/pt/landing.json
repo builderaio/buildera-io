@@ -364,5 +364,95 @@
     "connect": {
       "title": "Conectar"
     }
+  },
+  "architecture": {
+    "badge": "// SYSTEM_ARCHITECTURE",
+    "title": "Arquitetura do Enterprise Autopilot Brain",
+    "subtitle": "Infraestrutura modular de IA projetada para operar departamentos empresariais com governança, rastreabilidade e aprendizagem contínua.",
+    "layers": {
+      "title": "Camadas do sistema",
+      "subtitle": "5 camadas independentes que se comunicam via eventos e compartilham um bus de contexto empresarial unificado.",
+      "items": {
+        "decisionEngine": {
+          "title": "Decision Engine",
+          "description": "Motor central que recebe sinais do ambiente empresarial, avalia opções mediante raciocínio multi-critério e gera decisões priorizadas por departamento. Opera sobre um contexto enriquecido com dados de marca, estratégia, audiência e métricas históricas.",
+          "components": { "1": "Context Builder", "2": "Multi-criteria Scorer", "3": "Priority Queue" }
+        },
+        "agentOrchestration": {
+          "title": "Agent Orchestration Layer",
+          "description": "Mapeia cada decisão ao agente especializado correspondente, injeta o contexto necessário (marca, audiência, estratégia) conforme o campo context_requirements do agente, e gerencia a execução paralela ou sequencial.",
+          "components": { "1": "Agent Router", "2": "Context Injector", "3": "Execution Manager" }
+        },
+        "guardrailCompliance": {
+          "title": "Guardrail & Compliance Layer",
+          "description": "Intercepta cada decisão antes da execução. Aplica regras de orçamento (Finanças pode bloquear Marketing), compliance regulatório (Jurídico valida antes de Vendas), e limites operacionais configurados pelo usuário.",
+          "components": { "1": "Budget Validator", "2": "Compliance Checker", "3": "Rate Limiter" }
+        },
+        "learningMemory": {
+          "title": "Learning & Memory Layer",
+          "description": "Avalia o resultado de cada decisão executada usando métricas reais (engajamento, ROI, taxa de conversão). Armazena lições aprendidas com context hash para recuperação em situações futuras similares.",
+          "components": { "1": "Impact Evaluator", "2": "Memory Store", "3": "Pattern Extractor" }
+        },
+        "capabilityGenesis": {
+          "title": "Capability Genesis Engine",
+          "description": "Analisa decisões bloqueadas ou falhadas para detectar vazios operacionais. Propõe novas capacidades autônomas com um ciclo de vida governado: Proposta → Teste (7 dias) → Ativação/Deprecação.",
+          "components": { "1": "Gap Detector", "2": "Capability Proposer", "3": "Trial Manager" }
+        }
+      }
+    },
+    "agentMap": {
+      "title": "Mapa de agentes por departamento",
+      "subtitle": "Cada departamento tem agentes especializados atribuídos. O Enterprise Brain os orquestra conforme as necessidades detectadas em cada ciclo.",
+      "brain": "Enterprise Brain",
+      "brainSub": "SENSE → THINK → GUARD → ACT → LEARN → EVOLVE",
+      "departments": {
+        "marketing": { "name": "Marketing", "agents": "Estrategista, Criador, Calendário, Otimizador" },
+        "sales": { "name": "Comercial", "agents": "Pipeline, Lead Scorer, Propostas" },
+        "finance": { "name": "Finanças", "agents": "Cashflow, Revenue, Expense" },
+        "legal": { "name": "Jurídico", "agents": "Contratos, Compliance, Regulatório" },
+        "hr": { "name": "RH", "agents": "Job Profiler, Clima, Talent Scout" },
+        "operations": { "name": "Operações", "agents": "Process, SLA, Task Automator" }
+      }
+    },
+    "cycle": {
+      "title": "O ciclo autônomo em detalhe operacional",
+      "subtitle": "Cada fase tem uma função técnica específica. O ciclo completo é executado periodicamente conforme a frequência configurada (1h, 6h, 24h).",
+      "phases": {
+        "sense": {
+          "title": "SENSE — Observar",
+          "description": "Coleta dados do ambiente: métricas de redes sociais, estado do pipeline de vendas, alertas de orçamento, sinais externos de mercado e concorrência.",
+          "details": { "1": "Fontes: APIs de redes sociais, CRM, métricas internas, scraping de concorrência", "2": "Resultado: Snapshot de estado empresarial com indicadores por departamento" }
+        },
+        "think": {
+          "title": "THINK — Analisar",
+          "description": "O Decision Engine avalia o snapshot contra objetivos definidos, estratégia vigente e lições aprendidas. Gera decisões candidatas com prioridade e agente atribuído.",
+          "details": { "1": "Entrada: Snapshot + estratégia + memória de decisões anteriores", "2": "Saída: Lista priorizada de decisões com agent_to_execute e parâmetros" }
+        },
+        "guard": {
+          "title": "GUARD — Validar",
+          "description": "Cada decisão passa pela camada de guardrails. Finanças pode bloquear ações que excedam orçamento. Jurídico pode frear operações sem compliance. O usuário configura limiares.",
+          "details": { "1": "Validações: orçamento, compliance, limites diários, políticas da empresa", "2": "Resultado: approved / blocked / requires_human_approval" }
+        },
+        "act": {
+          "title": "ACT — Executar",
+          "description": "As decisões aprovadas são executadas invocando a Edge Function do agente atribuído. O contexto empresarial completo é injetado conforme os context_requirements do agente.",
+          "details": { "1": "Execução: supabase.functions.invoke(agent_function) com payload contextual", "2": "Registro: agent_usage_log com créditos consumidos, tempo de execução, resultado" }
+        },
+        "learn": {
+          "title": "LEARN — Aprender",
+          "description": "Após a execução, o sistema avalia o impacto real usando métricas pós-ação (delta de engajamento, leads gerados, ROI). O resultado é armazenado em autopilot_memory.",
+          "details": { "1": "Métricas avaliadas: engajamento, conversão, ROI, satisfação, eficiência", "2": "Armazenamento: lesson_learned + outcome_score + context_hash para recuperação" }
+        },
+        "evolve": {
+          "title": "EVOLVE — Evoluir",
+          "description": "O Capability Genesis Engine analisa decisões bloqueadas ou com gaps. Se detecta vazios operacionais recorrentes, propõe novas capacidades autônomas com período de teste.",
+          "details": { "1": "Análise: decisões com action_taken=false ou outcome_score < limiar", "2": "Ciclo: Proposta → Trial 7 dias → Avaliação → Ativação ou Deprecação" }
+        }
+      }
+    },
+    "dataFlow": {
+      "title": "Fluxo de dados completo",
+      "description": "Cada ciclo gera um registro auditável em autopilot_execution_log com: context_snapshot, decisions_made, actions_taken, credits_consumed e execution_time_ms. Os logs são acessíveis no dashboard para revisão manual a qualquer momento."
+    }
   }
 }

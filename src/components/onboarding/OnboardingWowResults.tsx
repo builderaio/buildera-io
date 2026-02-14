@@ -116,7 +116,7 @@ export const OnboardingWowResults = ({
 
   // Generate professional PDF using jsPDF directly
   const handleDownloadPDF = async () => {
-    toast.info('Generando PDF...', { duration: 2000 });
+    toast.info(t('common:onboarding.report.generatingPdf'), { duration: 2000 });
 
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -131,7 +131,6 @@ export const OnboardingWowResults = ({
       const textColor: [number, number, number] = [55, 65, 81];
       const lightGray: [number, number, number] = [156, 163, 175];
 
-      // Helper functions
       const addPage = () => {
         pdf.addPage();
         yPos = margin;
@@ -145,7 +144,6 @@ export const OnboardingWowResults = ({
         return false;
       };
 
-      // Calculate text height without drawing
       const getTextHeight = (text: string, fontSize: number, maxWidth?: number): number => {
         pdf.setFontSize(fontSize);
         if (maxWidth) {
@@ -178,14 +176,13 @@ export const OnboardingWowResults = ({
       pdf.setFillColor(...primaryColor);
       pdf.rect(0, 0, pageWidth, 45, 'F');
       
-      drawText('DIAGNÓSTICO DIGITAL', margin, 15, { fontSize: 10, color: [255, 255, 255], fontStyle: 'normal' });
-      drawText(identity.company_name || 'Empresa', margin, 28, { fontSize: 22, color: [255, 255, 255], fontStyle: 'bold' });
+      drawText(t('common:onboarding.report.digitalDiagnosis'), margin, 15, { fontSize: 10, color: [255, 255, 255], fontStyle: 'normal' });
+      drawText(identity.company_name || t('common:onboarding.report.companyProfile'), margin, 28, { fontSize: 22, color: [255, 255, 255], fontStyle: 'bold' });
       
       if (identity.slogan) {
         drawText(`"${identity.slogan}"`, margin, 38, { fontSize: 9, color: [200, 200, 255], fontStyle: 'normal' });
       }
       
-      // Website and date on the right
       if (identity.url) {
         const urlText = identity.url.replace(/^https?:\/\//, '');
         pdf.setFontSize(9);
@@ -194,7 +191,7 @@ export const OnboardingWowResults = ({
       }
       pdf.setFontSize(8);
       pdf.setTextColor(180, 180, 220);
-      pdf.text(new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }), pageWidth - margin, 38, { align: 'right' });
+      pdf.text(new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }), pageWidth - margin, 38, { align: 'right' });
 
       yPos = 55;
 
@@ -202,7 +199,7 @@ export const OnboardingWowResults = ({
       if (execDiag.current_state || execDiag.primary_constraint || execDiag.highest_leverage_focus) {
         checkPageBreak(50);
         
-        drawText('DIAGNÓSTICO EJECUTIVO', margin, yPos, { fontSize: 12, color: primaryColor, fontStyle: 'bold' });
+        drawText(t('common:onboarding.report.executiveDiagnosis').toUpperCase(), margin, yPos, { fontSize: 12, color: primaryColor, fontStyle: 'bold' });
         yPos += 8;
         
         pdf.setDrawColor(...primaryColor);
@@ -211,7 +208,7 @@ export const OnboardingWowResults = ({
         yPos += 8;
 
         if (execDiag.current_state) {
-          drawText('Estado Actual:', margin, yPos, { fontSize: 9, color: primaryColor, fontStyle: 'bold' });
+          drawText(`${t('common:onboarding.report.currentState')}:`, margin, yPos, { fontSize: 9, color: primaryColor, fontStyle: 'bold' });
           yPos += 5;
           const h = drawText(execDiag.current_state, margin, yPos, { fontSize: 9, maxWidth: contentWidth });
           yPos += h + 6;
@@ -219,7 +216,7 @@ export const OnboardingWowResults = ({
 
         if (execDiag.primary_constraint) {
           checkPageBreak(20);
-          drawText('Restricción Principal:', margin, yPos, { fontSize: 9, color: accentColor, fontStyle: 'bold' });
+          drawText(`${t('common:onboarding.report.primaryConstraint')}:`, margin, yPos, { fontSize: 9, color: accentColor, fontStyle: 'bold' });
           yPos += 5;
           const h = drawText(execDiag.primary_constraint, margin, yPos, { fontSize: 9, maxWidth: contentWidth });
           yPos += h + 6;
@@ -227,7 +224,7 @@ export const OnboardingWowResults = ({
 
         if (execDiag.highest_leverage_focus) {
           checkPageBreak(20);
-          drawText('Foco de Mayor Impacto:', margin, yPos, { fontSize: 9, color: [22, 163, 74], fontStyle: 'bold' });
+          drawText(`${t('common:onboarding.report.highestLeverageFocus')}:`, margin, yPos, { fontSize: 9, color: [22, 163, 74], fontStyle: 'bold' });
           yPos += 5;
           const h = drawText(execDiag.highest_leverage_focus, margin, yPos, { fontSize: 9, maxWidth: contentWidth });
           yPos += h + 10;
@@ -242,12 +239,11 @@ export const OnboardingWowResults = ({
       let rightY = yPos;
 
       // --- LEFT COLUMN: COMPANY PROFILE ---
-      drawText('PERFIL DE EMPRESA', leftCol, leftY, { fontSize: 11, color: primaryColor, fontStyle: 'bold' });
+      drawText(t('common:onboarding.report.companyProfile').toUpperCase(), leftCol, leftY, { fontSize: 11, color: primaryColor, fontStyle: 'bold' });
       leftY += 10;
 
-      // Contact info
       if (contact.email?.length || contact.phone?.length || contact.address?.length) {
-        drawText('Contacto', leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
+        drawText(t('common:onboarding.report.contact'), leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
         leftY += 5;
         
         (contact.email || []).forEach((email: string) => {
@@ -265,9 +261,8 @@ export const OnboardingWowResults = ({
         leftY += 4;
       }
 
-      // Social links
       if (contact.social_links?.length > 0) {
-        drawText('Redes Sociales', leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
+        drawText(t('common:onboarding.report.socialNetworks'), leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
         leftY += 5;
         contact.social_links.forEach((link: string) => {
           const platform = getPlatformFromUrl(link);
@@ -278,9 +273,8 @@ export const OnboardingWowResults = ({
         leftY += 4;
       }
 
-      // Services - show ALL
       if (products.service?.length > 0) {
-        drawText('Servicios', leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
+        drawText(t('common:onboarding.report.services'), leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
         leftY += 5;
         products.service.forEach((s: string) => {
           checkPageBreak(6);
@@ -290,9 +284,8 @@ export const OnboardingWowResults = ({
         leftY += 4;
       }
 
-      // Offers - show ALL
       if (products.offer?.length > 0) {
-        drawText('Ofertas', leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
+        drawText(t('common:onboarding.report.offers'), leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
         leftY += 5;
         products.offer.forEach((o: string) => {
           checkPageBreak(6);
@@ -302,42 +295,40 @@ export const OnboardingWowResults = ({
         leftY += 4;
       }
 
-      // Audience & Market - show ALL
       if (audience.segment?.length || audience.profession?.length || audience.target_user?.length) {
-        drawText('Audiencia', leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
+        drawText(t('common:onboarding.report.audienceAndMarket'), leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
         leftY += 5;
         (audience.segment || []).forEach((s: string) => {
-          drawText(`• Segmento: ${s}`, leftCol, leftY, { fontSize: 8, color: lightGray });
+          drawText(`• ${t('common:onboarding.report.segment')}: ${s}`, leftCol, leftY, { fontSize: 8, color: lightGray });
           leftY += 4;
         });
         (audience.profession || []).forEach((p: string) => {
-          drawText(`• Profesión: ${p}`, leftCol, leftY, { fontSize: 8, color: lightGray });
+          drawText(`• ${t('common:onboarding.report.profession')}: ${p}`, leftCol, leftY, { fontSize: 8, color: lightGray });
           leftY += 4;
         });
-        (audience.target_user || []).forEach((t: string) => {
-          drawText(`• Usuario: ${t}`, leftCol, leftY, { fontSize: 8, color: lightGray });
+        (audience.target_user || []).forEach((tu: string) => {
+          drawText(`• ${t('common:onboarding.report.user')}: ${tu}`, leftCol, leftY, { fontSize: 8, color: lightGray });
           leftY += 4;
         });
         leftY += 4;
       }
 
       if (market.country?.length || market.city?.length) {
-        drawText('Mercado', leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
+        drawText(t('common:onboarding.report.market'), leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
         leftY += 5;
         (market.country || []).forEach((c: string) => {
-          drawText(`• País: ${c}`, leftCol, leftY, { fontSize: 8, color: lightGray });
+          drawText(`• ${t('common:onboarding.report.country')}: ${c}`, leftCol, leftY, { fontSize: 8, color: lightGray });
           leftY += 4;
         });
         (market.city || []).forEach((c: string) => {
-          drawText(`• Ciudad: ${c}`, leftCol, leftY, { fontSize: 8, color: lightGray });
+          drawText(`• ${t('common:onboarding.report.city')}: ${c}`, leftCol, leftY, { fontSize: 8, color: lightGray });
           leftY += 4;
         });
         leftY += 4;
       }
 
-      // SEO Keywords - show ALL
       if (seo.keyword?.length > 0) {
-        drawText('Keywords SEO', leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
+        drawText(t('common:onboarding.report.seoKeywords'), leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
         leftY += 5;
         seo.keyword.forEach((kw: string) => {
           checkPageBreak(6);
@@ -347,18 +338,16 @@ export const OnboardingWowResults = ({
       }
 
       // --- RIGHT COLUMN: DIGITAL PRESENCE ---
-      drawText('PRESENCIA DIGITAL', rightCol, rightY, { fontSize: 11, color: primaryColor, fontStyle: 'bold' });
+      drawText(t('common:onboarding.report.digitalPresence').toUpperCase(), rightCol, rightY, { fontSize: 11, color: primaryColor, fontStyle: 'bold' });
       rightY += 10;
 
-      // Digital footprint summary
       if (digitalPresence.digital_footprint_summary) {
         const h = drawText(digitalPresence.digital_footprint_summary, rightCol, rightY, { fontSize: 8, maxWidth: colWidth });
         rightY += h + 8;
       }
 
-      // What is working - show ALL
       if (digitalPresence.what_is_working?.length > 0) {
-        drawText('✓ Lo que Funciona Bien', rightCol, rightY, { fontSize: 9, color: [22, 163, 74], fontStyle: 'bold' });
+        drawText(`✓ ${t('common:onboarding.report.whatWorksWell')}`, rightCol, rightY, { fontSize: 9, color: [22, 163, 74], fontStyle: 'bold' });
         rightY += 5;
         digitalPresence.what_is_working.forEach((item: string) => {
           checkPageBreak(10);
@@ -368,9 +357,8 @@ export const OnboardingWowResults = ({
         rightY += 4;
       }
 
-      // What is missing - show ALL
       if (digitalPresence.what_is_missing?.length > 0) {
-        drawText('⚠ Lo que Falta', rightCol, rightY, { fontSize: 9, color: [202, 138, 4], fontStyle: 'bold' });
+        drawText(`⚠ ${t('common:onboarding.report.whatIsMissing')}`, rightCol, rightY, { fontSize: 9, color: [202, 138, 4], fontStyle: 'bold' });
         rightY += 5;
         digitalPresence.what_is_missing.forEach((item: string) => {
           checkPageBreak(10);
@@ -380,9 +368,8 @@ export const OnboardingWowResults = ({
         rightY += 4;
       }
 
-      // Key risks - show ALL
       if (digitalPresence.key_risks?.length > 0) {
-        drawText('✗ Riesgos Principales', rightCol, rightY, { fontSize: 9, color: accentColor, fontStyle: 'bold' });
+        drawText(`✗ ${t('common:onboarding.report.keyRisks')}`, rightCol, rightY, { fontSize: 9, color: accentColor, fontStyle: 'bold' });
         rightY += 5;
         digitalPresence.key_risks.forEach((risk: string) => {
           checkPageBreak(10);
@@ -392,22 +379,20 @@ export const OnboardingWowResults = ({
         rightY += 4;
       }
 
-      // Competitive positioning
       if (digitalPresence.competitive_positioning) {
-        drawText('Posicionamiento Competitivo', rightCol, rightY, { fontSize: 9, fontStyle: 'bold' });
+        drawText(t('common:onboarding.report.competitivePositioning'), rightCol, rightY, { fontSize: 9, fontStyle: 'bold' });
         rightY += 5;
         const h = drawText(digitalPresence.competitive_positioning, rightCol, rightY, { fontSize: 8, maxWidth: colWidth });
         rightY += h + 8;
       }
 
-      // === ACTION PLAN (new page for clean layout) ===
+      // === ACTION PLAN ===
       yPos = Math.max(leftY, rightY) + 15;
       
       if (actionPlan.short_term?.length || actionPlan.mid_term?.length || actionPlan.long_term?.length) {
-        // Always start action plan on a new page for clean layout
         addPage();
         
-        drawText('PLAN DE ACCIÓN', margin, yPos, { fontSize: 14, color: accentColor, fontStyle: 'bold' });
+        drawText(t('common:onboarding.report.actionPlan').toUpperCase(), margin, yPos, { fontSize: 14, color: accentColor, fontStyle: 'bold' });
         yPos += 10;
         
         pdf.setDrawColor(...accentColor);
@@ -421,14 +406,12 @@ export const OnboardingWowResults = ({
         const col3X = margin + (planColWidth + 8) * 2;
         const startY = yPos;
 
-        // Calculate heights for each column to render them properly
         let col1Y = startY;
         let col2Y = startY;
         let col3Y = startY;
 
-        // Short term column
         if (actionPlan.short_term?.length > 0) {
-          drawText('CORTO PLAZO', col1X, col1Y, { fontSize: 10, color: [22, 163, 74], fontStyle: 'bold' });
+          drawText(t('common:onboarding.report.shortTerm').toUpperCase(), col1X, col1Y, { fontSize: 10, color: [22, 163, 74], fontStyle: 'bold' });
           col1Y += 8;
           
           actionPlan.short_term.forEach((action: any, idx: number) => {
@@ -444,9 +427,8 @@ export const OnboardingWowResults = ({
           });
         }
 
-        // Mid term column
         if (actionPlan.mid_term?.length > 0) {
-          drawText('MEDIANO PLAZO', col2X, col2Y, { fontSize: 10, color: [37, 99, 235], fontStyle: 'bold' });
+          drawText(t('common:onboarding.report.midTerm').toUpperCase(), col2X, col2Y, { fontSize: 10, color: [37, 99, 235], fontStyle: 'bold' });
           col2Y += 8;
           
           actionPlan.mid_term.forEach((action: any, idx: number) => {
@@ -462,9 +444,8 @@ export const OnboardingWowResults = ({
           });
         }
 
-        // Long term column
         if (actionPlan.long_term?.length > 0) {
-          drawText('LARGO PLAZO', col3X, col3Y, { fontSize: 10, color: [147, 51, 234], fontStyle: 'bold' });
+          drawText(t('common:onboarding.report.longTerm').toUpperCase(), col3X, col3Y, { fontSize: 10, color: [147, 51, 234], fontStyle: 'bold' });
           col3Y += 8;
           
           actionPlan.long_term.forEach((action: any, idx: number) => {
@@ -489,17 +470,17 @@ export const OnboardingWowResults = ({
         pdf.setPage(i);
         pdf.setFontSize(8);
         pdf.setTextColor(150, 150, 150);
-        pdf.text(`Generado por Buildera | Página ${i} de ${totalPages}`, margin, pageHeight - 8);
+        pdf.text(t('common:onboarding.report.pageOf', { current: i, total: totalPages }), margin, pageHeight - 8);
         pdf.text(`© ${new Date().getFullYear()} Buildera.io`, pageWidth - margin, pageHeight - 8, { align: 'right' });
       }
 
       const companyName = identity.company_name || 'empresa';
       pdf.save(`diagnostico-digital-${companyName.toLowerCase().replace(/\s+/g, '-')}.pdf`);
       
-      toast.success('PDF descargado exitosamente');
+      toast.success(t('common:onboarding.report.pdfDownloaded'));
     } catch (error) {
       console.error('Error generating PDF:', error);
-      toast.error('Error al generar el PDF');
+      toast.error(t('common:onboarding.report.pdfError'));
     }
   };
 
@@ -554,9 +535,9 @@ export const OnboardingWowResults = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 text-white/70 text-sm mb-1">
                 <FileSearch className="w-4 h-4 flex-shrink-0" />
-                <span>DIAGNÓSTICO DIGITAL</span>
+                <span>{t('common:onboarding.report.digitalDiagnosis')}</span>
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-2 break-words">{identity.company_name || 'Empresa'}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold mb-2 break-words">{identity.company_name || t('common:onboarding.report.companyProfile')}</h1>
               {identity.slogan && (
                 <p className="text-white/80 italic text-base md:text-lg break-words">"{identity.slogan}"</p>
               )}
@@ -570,7 +551,7 @@ export const OnboardingWowResults = ({
                 {identity.founding_date && (
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4 flex-shrink-0" />
-                    Fundada en {identity.founding_date}
+                    {t('common:onboarding.report.foundedIn', { year: identity.founding_date })}
                   </span>
                 )}
               </div>
@@ -588,24 +569,24 @@ export const OnboardingWowResults = ({
                 <div className="w-8 h-8 rounded-full bg-[#3c46b2] flex items-center justify-center flex-shrink-0">
                   <FileSearch className="w-4 h-4 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Diagnóstico Ejecutivo</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t('common:onboarding.report.executiveDiagnosis')}</h2>
               </div>
               <div className="bg-gray-50 rounded-xl p-4 md:p-6 space-y-4">
                 {execDiag.current_state && (
                   <div>
-                    <p className="text-sm font-semibold text-[#3c46b2] mb-1">Estado Actual</p>
+                    <p className="text-sm font-semibold text-[#3c46b2] mb-1">{t('common:onboarding.report.currentState')}</p>
                     <p className="text-gray-700 text-sm md:text-base">{execDiag.current_state}</p>
                   </div>
                 )}
                 {execDiag.primary_constraint && (
                   <div>
-                    <p className="text-sm font-semibold text-[#f15438] mb-1">Restricción Principal</p>
+                    <p className="text-sm font-semibold text-[#f15438] mb-1">{t('common:onboarding.report.primaryConstraint')}</p>
                     <p className="text-gray-700 text-sm md:text-base">{execDiag.primary_constraint}</p>
                   </div>
                 )}
                 {execDiag.highest_leverage_focus && (
                   <div>
-                    <p className="text-sm font-semibold text-green-600 mb-1">Foco de Mayor Impacto</p>
+                    <p className="text-sm font-semibold text-green-600 mb-1">{t('common:onboarding.report.highestLeverageFocus')}</p>
                     <p className="text-gray-700 text-sm md:text-base">{execDiag.highest_leverage_focus}</p>
                   </div>
                 )}
@@ -624,15 +605,15 @@ export const OnboardingWowResults = ({
                 <div className="w-8 h-8 rounded-full bg-[#3c46b2] flex items-center justify-center flex-shrink-0">
                   <Building2 className="w-4 h-4 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Perfil de Empresa</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t('common:onboarding.report.companyProfile')}</h2>
               </div>
 
-              {/* Contact - Show ALL */}
+              {/* Contact */}
               {(contact.email?.length > 0 || contact.phone?.length > 0 || contact.address?.length > 0) && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <Mail className="w-4 h-4 text-[#3c46b2] flex-shrink-0" />
-                    Contacto
+                    {t('common:onboarding.report.contact')}
                   </p>
                   <div className="space-y-2 text-sm">
                     {(contact.email || []).map((email: string, idx: number) => (
@@ -651,7 +632,6 @@ export const OnboardingWowResults = ({
                       </p>
                     ))}
                   </div>
-                  {/* Social Links - Show ALL */}
                   {contact.social_links?.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">
                       {contact.social_links.map((link: string, idx: number) => {
@@ -675,12 +655,12 @@ export const OnboardingWowResults = ({
                 </div>
               )}
 
-              {/* Services - Show ALL */}
+              {/* Services */}
               {products.service?.length > 0 && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <Tag className="w-4 h-4 text-[#3c46b2] flex-shrink-0" />
-                    Servicios ({products.service.length})
+                    {t('common:onboarding.report.servicesCount', { count: products.service.length })}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {products.service.map((s: string, idx: number) => (
@@ -692,12 +672,12 @@ export const OnboardingWowResults = ({
                 </div>
               )}
 
-              {/* Offers - Show ALL */}
+              {/* Offers */}
               {products.offer?.length > 0 && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-[#f15438] flex-shrink-0" />
-                    Ofertas ({products.offer.length})
+                    {t('common:onboarding.report.offersCount', { count: products.offer.length })}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {products.offer.map((o: string, idx: number) => (
@@ -709,11 +689,11 @@ export const OnboardingWowResults = ({
                 </div>
               )}
 
-              {/* Audience & Market - Show ALL */}
+              {/* Audience & Market */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <Users className="w-4 h-4 text-[#3c46b2] flex-shrink-0" />
-                  Audiencia y Mercado
+                  {t('common:onboarding.report.audienceAndMarket')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {(audience.segment || []).map((s: string, idx: number) => (
@@ -726,9 +706,9 @@ export const OnboardingWowResults = ({
                       {p}
                     </span>
                   ))}
-                  {(audience.target_user || []).map((t: string, idx: number) => (
+                  {(audience.target_user || []).map((tu: string, idx: number) => (
                     <span key={`t-${idx}`} className="bg-purple-100 text-purple-700 rounded-full px-3 py-1 text-xs font-medium">
-                      {t}
+                      {tu}
                     </span>
                   ))}
                   {(market.country || []).map((c: string, idx: number) => (
@@ -744,12 +724,12 @@ export const OnboardingWowResults = ({
                 </div>
               </div>
 
-              {/* SEO Keywords - Show ALL */}
+              {/* SEO Keywords */}
               {seo.keyword?.length > 0 && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <Target className="w-4 h-4 text-[#3c46b2] flex-shrink-0" />
-                    Keywords SEO ({seo.keyword.length})
+                    {t('common:onboarding.report.seoKeywordsCount', { count: seo.keyword.length })}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {seo.keyword.map((kw: string, idx: number) => (
@@ -768,22 +748,20 @@ export const OnboardingWowResults = ({
                 <div className="w-8 h-8 rounded-full bg-[#3c46b2] flex items-center justify-center flex-shrink-0">
                   <Globe2 className="w-4 h-4 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Presencia Digital</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t('common:onboarding.report.digitalPresence')}</h2>
               </div>
 
-              {/* Digital Footprint */}
               {digitalPresence.digital_footprint_summary && (
                 <div className="bg-[#3c46b2]/5 border border-[#3c46b2]/20 rounded-lg p-4">
                   <p className="text-sm text-gray-700">{digitalPresence.digital_footprint_summary}</p>
                 </div>
               )}
 
-              {/* What is Working - Show ALL */}
               {digitalPresence.what_is_working?.length > 0 && (
                 <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-4">
                   <p className="text-sm font-semibold text-green-700 mb-3 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                    Lo que Funciona Bien ({digitalPresence.what_is_working.length})
+                    {t('common:onboarding.report.whatWorksWellCount', { count: digitalPresence.what_is_working.length })}
                   </p>
                   <ul className="space-y-2">
                     {digitalPresence.what_is_working.map((item: string, idx: number) => (
@@ -796,12 +774,11 @@ export const OnboardingWowResults = ({
                 </div>
               )}
 
-              {/* What is Missing - Show ALL */}
               {digitalPresence.what_is_missing?.length > 0 && (
                 <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-4">
                   <p className="text-sm font-semibold text-yellow-700 mb-3 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                    Lo que Falta ({digitalPresence.what_is_missing.length})
+                    {t('common:onboarding.report.whatIsMissingCount', { count: digitalPresence.what_is_missing.length })}
                   </p>
                   <ul className="space-y-2">
                     {digitalPresence.what_is_missing.map((item: string, idx: number) => (
@@ -814,12 +791,11 @@ export const OnboardingWowResults = ({
                 </div>
               )}
 
-              {/* Key Risks - Show ALL */}
               {digitalPresence.key_risks?.length > 0 && (
                 <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
                   <p className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
                     <Shield className="w-4 h-4 flex-shrink-0" />
-                    Riesgos Principales ({digitalPresence.key_risks.length})
+                    {t('common:onboarding.report.keyRisksCount', { count: digitalPresence.key_risks.length })}
                   </p>
                   <ul className="space-y-2">
                     {digitalPresence.key_risks.map((risk: string, idx: number) => (
@@ -832,12 +808,11 @@ export const OnboardingWowResults = ({
                 </div>
               )}
 
-              {/* Competitive Positioning */}
               {digitalPresence.competitive_positioning && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-[#3c46b2] flex-shrink-0" />
-                    Posicionamiento Competitivo
+                    {t('common:onboarding.report.competitivePositioning')}
                   </p>
                   <p className="text-sm text-gray-700">{digitalPresence.competitive_positioning}</p>
                 </div>
@@ -847,23 +822,22 @@ export const OnboardingWowResults = ({
 
           <Separator className="bg-gray-200" />
 
-          {/* Action Plan - Full Width - Show ALL */}
+          {/* Action Plan */}
           {(actionPlan.short_term?.length > 0 || actionPlan.mid_term?.length > 0 || actionPlan.long_term?.length > 0) && (
             <section>
               <div className="flex items-center gap-2 mb-6">
                 <div className="w-8 h-8 rounded-full bg-[#f15438] flex items-center justify-center flex-shrink-0">
                   <Zap className="w-4 h-4 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Plan de Acción</h2>
+                <h2 className="text-xl font-bold text-gray-900">{t('common:onboarding.report.actionPlan')}</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Short Term */}
                 {actionPlan.short_term?.length > 0 && (
                   <div className="bg-green-50 rounded-xl p-4 md:p-5 border border-green-200">
                     <div className="flex items-center gap-2 mb-4">
                       <Zap className="w-5 h-5 text-green-600 flex-shrink-0" />
-                      <h3 className="font-bold text-green-800">Corto Plazo ({actionPlan.short_term.length})</h3>
+                      <h3 className="font-bold text-green-800">{t('common:onboarding.report.shortTermCount', { count: actionPlan.short_term.length })}</h3>
                     </div>
                     <ul className="space-y-3">
                       {actionPlan.short_term.map((action: any, idx: number) => (
@@ -885,12 +859,11 @@ export const OnboardingWowResults = ({
                   </div>
                 )}
 
-                {/* Mid Term */}
                 {actionPlan.mid_term?.length > 0 && (
                   <div className="bg-blue-50 rounded-xl p-4 md:p-5 border border-blue-200">
                     <div className="flex items-center gap-2 mb-4">
                       <TrendingUp className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                      <h3 className="font-bold text-blue-800">Mediano Plazo ({actionPlan.mid_term.length})</h3>
+                      <h3 className="font-bold text-blue-800">{t('common:onboarding.report.midTermCount', { count: actionPlan.mid_term.length })}</h3>
                     </div>
                     <ul className="space-y-3">
                       {actionPlan.mid_term.map((action: any, idx: number) => (
@@ -912,12 +885,11 @@ export const OnboardingWowResults = ({
                   </div>
                 )}
 
-                {/* Long Term */}
                 {actionPlan.long_term?.length > 0 && (
                   <div className="bg-purple-50 rounded-xl p-4 md:p-5 border border-purple-200">
                     <div className="flex items-center gap-2 mb-4">
                       <Star className="w-5 h-5 text-purple-600 flex-shrink-0" />
-                      <h3 className="font-bold text-purple-800">Largo Plazo ({actionPlan.long_term.length})</h3>
+                      <h3 className="font-bold text-purple-800">{t('common:onboarding.report.longTermCount', { count: actionPlan.long_term.length })}</h3>
                     </div>
                     <ul className="space-y-3">
                       {actionPlan.long_term.map((action: any, idx: number) => (
@@ -947,9 +919,9 @@ export const OnboardingWowResults = ({
             <div className="flex items-center justify-between text-xs text-gray-500">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#3c46b2]" />
-                <span>Generado por Buildera</span>
+                <span>{t('common:onboarding.report.generatedBy')}</span>
               </div>
-              <span>{new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              <span>{new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
             </div>
           </div>
         </div>

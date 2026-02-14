@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +54,7 @@ const UserProfile = () => {
   const [formData, setFormData] = useState<Partial<UserProfileData>>({});
   const [saving, setSaving] = useState(false);
   
+  const { t } = useTranslation(['common']);
   const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,8 +82,8 @@ const UserProfile = () => {
       if (error) {
         console.error('Error fetching profile:', error);
         toast({
-          title: "Error",
-          description: "No se pudo cargar el perfil del usuario",
+          title: t('common:error'),
+          description: t('common:profile.loadFailed'),
           variant: "destructive",
         });
         setLoading(false);
@@ -91,8 +93,8 @@ const UserProfile = () => {
       if (!profileData) {
         console.error('No profile data found for user:', user.id);
         toast({
-          title: "Perfil no encontrado",
-          description: "No se encontró información del perfil",
+          title: t('common:error'),
+          description: t('common:profile.profileNotFound'),
           variant: "destructive",
         });
         setLoading(false);
@@ -104,8 +106,8 @@ const UserProfile = () => {
     } catch (error: any) {
       console.error('Error cargando perfil:', error);
       toast({
-        title: "Error",
-        description: error?.message || "No se pudo cargar el perfil del usuario",
+        title: t('common:error'),
+        description: error?.message || t('common:profile.loadFailed'),
         variant: "destructive",
       });
     } finally {
@@ -127,27 +129,26 @@ const UserProfile = () => {
       if (error) {
         console.error('Error updating profile:', error);
         toast({
-          title: "Error",
-          description: error?.message || "No se pudieron guardar los cambios",
+          title: t('common:error'),
+          description: error?.message || t('common:profile.saveFailed'),
           variant: "destructive",
         });
         setSaving(false);
         return;
       }
 
-      // Actualizar estado local
       setProfile({ ...profile, ...formData });
       setEditing(false);
 
       toast({
-        title: "Perfil actualizado",
-        description: "Los cambios se han guardado correctamente",
+        title: t('common:profile.updated'),
+        description: t('common:profile.updatedDesc'),
       });
     } catch (error: any) {
       console.error('Error actualizando perfil:', error);
       toast({
-        title: "Error",
-        description: error?.message || "No se pudieron guardar los cambios",
+        title: t('common:error'),
+        description: error?.message || t('common:profile.saveFailed'),
         variant: "destructive",
       });
     } finally {
@@ -187,7 +188,7 @@ const UserProfile = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-slate-800 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Cargando perfil...</p>
+          <p className="mt-4 text-lg text-gray-600">{t('common:profile.loading')}</p>
         </div>
       </div>
     );
@@ -199,9 +200,9 @@ const UserProfile = () => {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
             <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No se pudo cargar el perfil</p>
+            <p className="text-gray-600">{t('common:profile.loadFailed')}</p>
             <Button onClick={() => navigate('/')} className="mt-4">
-              Volver al inicio
+              {t('common:profile.backToHome')}
             </Button>
           </CardContent>
         </Card>
@@ -216,8 +217,8 @@ const UserProfile = () => {
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Mi Perfil</h1>
-              <p className="text-muted-foreground mt-2">Información personal y profesional</p>
+              <h1 className="text-3xl font-bold text-foreground">{t('common:profile.title')}</h1>
+              <p className="text-muted-foreground mt-2">{t('common:profile.subtitle')}</p>
             </div>
             
             <div className="flex items-center space-x-2">
@@ -232,7 +233,7 @@ const UserProfile = () => {
                     }}
                   >
                     <X className="w-4 h-4 mr-2" />
-                    Cancelar
+                    {t('common:actions.cancel')}
                   </Button>
                   <Button 
                     size="sm" 
@@ -240,7 +241,7 @@ const UserProfile = () => {
                     disabled={saving}
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    {saving ? 'Guardando...' : 'Guardar'}
+                    {saving ? t('common:status.saving') : t('common:actions.save')}
                   </Button>
                 </>
               ) : (
@@ -249,7 +250,7 @@ const UserProfile = () => {
                   onClick={() => setEditing(true)}
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  Editar Perfil
+                  {t('common:profile.editProfile')}
                 </Button>
               )}
             </div>
@@ -316,14 +317,13 @@ const UserProfile = () => {
 
                 <div className="mt-4">
                   <h2 className="text-xl font-bold text-gray-900">
-                    {profile.full_name || 'Sin nombre'}
+                    {profile.full_name || t('common:profile.noName')}
                   </h2>
                   <p className="text-gray-600">{profile.email}</p>
                   
                   <div className="mt-2 flex justify-center">
                     <Badge className={getUserTypeColor(profile.user_type)}>
-                      {profile.user_type === 'company' ? 'Empresa' :
-                       profile.user_type === 'developer' ? 'Desarrollador' : 'Experto'}
+                      {t(`common:profile.userTypes.${profile.user_type}`)}
                     </Badge>
                   </div>
 
@@ -345,7 +345,7 @@ const UserProfile = () => {
                 {/* Conexiones */}
                 {profile.linked_providers.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-xs text-gray-500 mb-2">Conexiones activas:</p>
+                    <p className="text-xs text-gray-500 mb-2">{t('common:profile.activeConnections')}</p>
                     <div className="flex flex-wrap gap-1 justify-center">
                       {profile.linked_providers.map((provider, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
@@ -359,17 +359,17 @@ const UserProfile = () => {
             </CardContent>
           </Card>
 
-          {/* Details Cards - Ahora con Tabs */}
+          {/* Details Cards - Tabs */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="profile" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="profile" className="flex items-center gap-2">
                   <User className="w-4 h-4" />
-                  Información Personal
+                  {t('common:profile.personalInfo')}
                 </TabsTrigger>
                 <TabsTrigger value="security" className="flex items-center gap-2">
                   <Lock className="w-4 h-4" />
-                  Seguridad
+                  {t('common:profile.security')}
                 </TabsTrigger>
               </TabsList>
 
@@ -379,13 +379,13 @@ const UserProfile = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <User className="w-5 h-5 mr-2" />
-                      Información Personal
+                      {t('common:profile.personalInfo')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="full_name">Nombre completo</Label>
+                        <Label htmlFor="full_name">{t('common:profile.fullName')}</Label>
                         {editing ? (
                           <Input
                             id="full_name"
@@ -393,7 +393,7 @@ const UserProfile = () => {
                             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                           />
                         ) : (
-                          <p className="mt-1 text-sm text-gray-900">{profile.full_name || 'No especificado'}</p>
+                          <p className="mt-1 text-sm text-gray-900">{profile.full_name || t('common:profile.notSpecified')}</p>
                         )}
                       </div>
 
@@ -406,35 +406,35 @@ const UserProfile = () => {
                       </div>
 
                       <div>
-                        <Label htmlFor="phone">Teléfono</Label>
+                        <Label htmlFor="phone">{t('common:profile.phone')}</Label>
                         {editing ? (
                           <Input
                             id="phone"
                             value={formData.phone || ''}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                            placeholder="+34 600 000 000"
+                            placeholder={t('common:profile.phonePlaceholder')}
                           />
                         ) : (
                           <p className="mt-1 text-sm text-gray-900 flex items-center">
                             <Phone className="w-3 h-3 mr-1" />
-                            {profile.phone || 'No especificado'}
+                            {profile.phone || t('common:profile.notSpecified')}
                           </p>
                         )}
                       </div>
 
                       <div>
-                        <Label htmlFor="location">Ubicación</Label>
+                        <Label htmlFor="location">{t('common:profile.location')}</Label>
                         {editing ? (
                           <Input
                             id="location"
                             value={formData.location || ''}
                             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                            placeholder="Madrid, España"
+                            placeholder={t('common:profile.locationPlaceholder')}
                           />
                         ) : (
                           <p className="mt-1 text-sm text-gray-900 flex items-center">
                             <MapPin className="w-3 h-3 mr-1" />
-                            {profile.location || 'No especificado'}
+                            {profile.location || t('common:profile.notSpecified')}
                           </p>
                         )}
                       </div>
@@ -443,18 +443,18 @@ const UserProfile = () => {
                     <Separator />
 
                     <div>
-                      <Label htmlFor="bio">Biografía</Label>
+                      <Label htmlFor="bio">{t('common:profile.bio')}</Label>
                       {editing ? (
                         <Textarea
                           id="bio"
                           value={formData.bio || ''}
                           onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                          placeholder="Cuéntanos un poco sobre ti..."
+                          placeholder={t('common:profile.bioPlaceholder')}
                           rows={3}
                         />
                       ) : (
                         <p className="mt-1 text-sm text-gray-900">
-                          {profile.bio || 'No hay biografía disponible'}
+                          {profile.bio || t('common:profile.noBio')}
                         </p>
                       )}
                     </div>
@@ -466,52 +466,50 @@ const UserProfile = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center">
                       <Briefcase className="w-5 h-5 mr-2" />
-                      Información Profesional
+                      {t('common:profile.professionalInfo')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="position">Cargo/Puesto</Label>
+                        <Label htmlFor="position">{t('common:profile.position')}</Label>
                         {editing ? (
                           <Input
                             id="position"
                             value={formData.position || ''}
                             onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                            placeholder="Ej: CEO, Desarrollador Senior..."
+                            placeholder={t('common:profile.positionPlaceholder')}
                           />
                         ) : (
-                          <p className="mt-1 text-sm text-gray-900">{profile.position || 'No especificado'}</p>
+                          <p className="mt-1 text-sm text-gray-900">{profile.position || t('common:profile.notSpecified')}</p>
                         )}
                       </div>
 
                       <div>
-                        <Label htmlFor="functional_area">Área Funcional</Label>
+                        <Label htmlFor="functional_area">{t('common:profile.functionalArea')}</Label>
                         {editing ? (
                           <Input
                             id="functional_area"
                             value={formData.functional_area || ''}
                             onChange={(e) => setFormData({ ...formData, functional_area: e.target.value })}
-                            placeholder="Ej: Tecnología, Marketing, Ventas..."
+                            placeholder={t('common:profile.functionalAreaPlaceholder')}
                           />
                         ) : (
-                          <p className="mt-1 text-sm text-gray-900">{profile.functional_area || 'No especificado'}</p>
+                          <p className="mt-1 text-sm text-gray-900">{profile.functional_area || t('common:profile.notSpecified')}</p>
                         )}
                       </div>
-
-                      {/* Company information is now stored in the companies table */}
                     </div>
 
                     <Separator />
 
                     <div>
-                      <Label htmlFor="linkedin_profile">Perfil de LinkedIn</Label>
+                      <Label htmlFor="linkedin_profile">{t('common:profile.linkedinProfile')}</Label>
                       {editing ? (
                         <Input
                           id="linkedin_profile"
                           value={formData.linkedin_profile || ''}
                           onChange={(e) => setFormData({ ...formData, linkedin_profile: e.target.value })}
-                          placeholder="https://linkedin.com/in/tu-perfil"
+                          placeholder={t('common:profile.linkedinPlaceholder')}
                         />
                       ) : profile.linkedin_profile ? (
                         <a 
@@ -521,10 +519,10 @@ const UserProfile = () => {
                           className="mt-1 text-sm text-blue-600 hover:underline flex items-center"
                         >
                           <Linkedin className="w-3 h-3 mr-1" />
-                          Ver perfil de LinkedIn
+                          {t('common:profile.viewLinkedin')}
                         </a>
                       ) : (
-                        <p className="mt-1 text-sm text-gray-900">No especificado</p>
+                        <p className="mt-1 text-sm text-gray-900">{t('common:profile.notSpecified')}</p>
                       )}
                     </div>
                   </CardContent>

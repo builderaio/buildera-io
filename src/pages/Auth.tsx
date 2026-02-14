@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,12 +14,12 @@ import { useGTM } from "@/hooks/useGTM";
 
 const Auth = () => {
   useGTM();
+  const { t } = useTranslation(['auth']);
   const [searchParams] = useSearchParams();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [activeTab, setActiveTab] = useState("company");
 
   useEffect(() => {
-    // Read URL parameters to set initial state
     const mode = searchParams.get("mode");
     const userType = searchParams.get("userType");
     
@@ -43,7 +44,6 @@ const Auth = () => {
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* Background overlay for better readability */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/20"></div>
       
       <div className="w-full max-w-lg md:max-w-2xl relative z-10">
@@ -51,8 +51,8 @@ const Auth = () => {
           <a href="/">
             <Button variant="ghost" size="sm" className="flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/10 text-sm md:text-base">
               <ArrowLeft className="h-3 w-3 md:h-4 md:w-4" />
-              <span className="hidden sm:inline">Volver al Inicio</span>
-              <span className="sm:hidden">Inicio</span>
+              <span className="hidden sm:inline">{t('auth:page.backToHome')}</span>
+              <span className="sm:hidden">{t('auth:page.home')}</span>
             </Button>
           </a>
           <ThemeSelector />
@@ -69,10 +69,10 @@ const Auth = () => {
             </div>
           </div>
           <h1 className="text-2xl md:text-3xl font-heading text-white mb-2">
-            Únete a Buildera
+            {t('auth:page.joinTitle')}
           </h1>
           <p className="text-white/80 mt-2 text-sm md:text-base px-4">
-            Conecta con el futuro de la automatización inteligente
+            {t('auth:page.joinSubtitle')}
           </p>
         </div>
 
@@ -87,7 +87,7 @@ const Auth = () => {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Iniciar Sesión
+                {t('auth:buttons.signin')}
               </button>
               <button
                 onClick={() => setAuthMode("signup")}
@@ -97,24 +97,24 @@ const Auth = () => {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Registrarse
+                {t('auth:buttons.signup')}
               </button>
             </div>
             <CardTitle>
-              {authMode === "signin" ? "Bienvenido de nuevo" : "Crear cuenta"}
+              {authMode === "signin" ? t('auth:page.welcomeBack') : t('auth:page.createAccount')}
             </CardTitle>
             <CardDescription>
               {authMode === "signin"
-                ? "Ingresa a tu cuenta"
-                : "Selecciona tu perfil para comenzar"}
+                ? t('auth:page.signinDesc')
+                : t('auth:page.signupDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="company">Negocio</TabsTrigger>
-                <TabsTrigger value="developer">Desarrollador</TabsTrigger>
-                <TabsTrigger value="expert">Experto</TabsTrigger>
+                <TabsTrigger value="company">{t('auth:page.business')}</TabsTrigger>
+                <TabsTrigger value="developer">{t('auth:page.developer')}</TabsTrigger>
+                <TabsTrigger value="expert">{t('auth:page.expert')}</TabsTrigger>
               </TabsList>
               <TabsContent value="company" className="mt-6">
                 <CompanyAuth mode={authMode} onModeChange={setAuthMode} />

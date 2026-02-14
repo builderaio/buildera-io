@@ -13,30 +13,24 @@ interface ADNScheduleSimplifiedProps {
   companyId: string;
 }
 
-const TIMEZONES = [
-  { value: 'America/Mexico_City', label: 'Ciudad de México (GMT-6)' },
-  { value: 'America/New_York', label: 'Nueva York (GMT-5)' },
-  { value: 'America/Los_Angeles', label: 'Los Ángeles (GMT-8)' },
-  { value: 'America/Bogota', label: 'Bogotá (GMT-5)' },
-  { value: 'America/Lima', label: 'Lima (GMT-5)' },
-  { value: 'America/Buenos_Aires', label: 'Buenos Aires (GMT-3)' },
-  { value: 'America/Sao_Paulo', label: 'São Paulo (GMT-3)' },
-  { value: 'Europe/Madrid', label: 'Madrid (GMT+1)' },
-  { value: 'Europe/London', label: 'Londres (GMT+0)' },
+const TIMEZONE_KEYS = [
+  'America/Mexico_City', 'America/New_York', 'America/Los_Angeles',
+  'America/Bogota', 'America/Lima', 'America/Buenos_Aires',
+  'America/Sao_Paulo', 'Europe/Madrid', 'Europe/London',
 ];
 
-const DAYS = [
-  { value: 1, label: 'L' },
-  { value: 2, label: 'M' },
-  { value: 3, label: 'X' },
-  { value: 4, label: 'J' },
-  { value: 5, label: 'V' },
-  { value: 6, label: 'S' },
-  { value: 0, label: 'D' },
+const DAY_KEYS = [
+  { value: 1, key: 'mon' },
+  { value: 2, key: 'tue' },
+  { value: 3, key: 'wed' },
+  { value: 4, key: 'thu' },
+  { value: 5, key: 'fri' },
+  { value: 6, key: 'sat' },
+  { value: 0, key: 'sun' },
 ];
 
 export const ADNScheduleSimplified = ({ companyId }: ADNScheduleSimplifiedProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['company']);
   const { toast } = useToast();
   const { config, loading, saveConfig } = useCompanySchedule(companyId);
 
@@ -69,7 +63,7 @@ export const ADNScheduleSimplified = ({ companyId }: ADNScheduleSimplifiedProps)
       <CardHeader className="py-3 px-4">
         <CardTitle className="text-sm flex items-center gap-2">
           <Clock className="h-4 w-4" />
-          {t('company.schedule.title', 'Horarios y Zona Horaria')}
+          {t('company:schedule.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="py-2 px-4 space-y-4">
@@ -77,7 +71,7 @@ export const ADNScheduleSimplified = ({ companyId }: ADNScheduleSimplifiedProps)
           <div className="space-y-1">
             <Label className="text-xs flex items-center gap-1">
               <Globe className="h-3 w-3" />
-              {t('company.schedule.timezone', 'Zona horaria')}
+              {t('company:schedule.timezone')}
             </Label>
             <Select 
               value={config?.timezone || 'America/Mexico_City'} 
@@ -87,14 +81,14 @@ export const ADNScheduleSimplified = ({ companyId }: ADNScheduleSimplifiedProps)
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIMEZONES.map(tz => (
-                  <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
+                {TIMEZONE_KEYS.map(tz => (
+                  <SelectItem key={tz} value={tz}>{t(`company:schedule.timezones.${tz.replace(/\//g, '_')}`, tz)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">{t('company.schedule.start_time', 'Hora inicio')}</Label>
+            <Label className="text-xs">{t('company:schedule.start_time')}</Label>
             <Input
               type="time"
               className="h-8 text-xs"
@@ -103,7 +97,7 @@ export const ADNScheduleSimplified = ({ companyId }: ADNScheduleSimplifiedProps)
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">{t('company.schedule.end_time', 'Hora fin')}</Label>
+            <Label className="text-xs">{t('company:schedule.end_time')}</Label>
             <Input
               type="time"
               className="h-8 text-xs"
@@ -114,16 +108,16 @@ export const ADNScheduleSimplified = ({ companyId }: ADNScheduleSimplifiedProps)
         </div>
         
         <div className="space-y-2">
-          <Label className="text-xs">{t('company.schedule.working_days', 'Días activos')}</Label>
+          <Label className="text-xs">{t('company:schedule.working_days')}</Label>
           <div className="flex gap-1">
-            {DAYS.map(day => (
+            {DAY_KEYS.map(day => (
               <Badge
                 key={day.value}
                 variant={(config?.working_days || [1,2,3,4,5]).includes(day.value) ? 'default' : 'outline'}
                 className="cursor-pointer w-8 h-8 flex items-center justify-center text-xs"
                 onClick={() => toggleDay(day.value)}
               >
-                {day.label}
+                {t(`company:schedule.days.${day.key}`)}
               </Badge>
             ))}
           </div>

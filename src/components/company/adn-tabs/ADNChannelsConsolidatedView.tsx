@@ -26,19 +26,12 @@ const PLATFORM_ICONS: Record<string, any> = {
   tiktok: () => <span className="text-lg">📱</span>,
 };
 
-const TONE_OPTIONS = [
-  { value: 'casual', label: 'Casual' },
-  { value: 'friendly', label: 'Amigable' },
-  { value: 'professional', label: 'Profesional' },
-  { value: 'fun', label: 'Divertido' },
-  { value: 'conversational', label: 'Conversacional' },
-  { value: 'formal', label: 'Formal' },
-];
+const TONE_KEYS = ['casual', 'friendly', 'professional', 'fun', 'conversational', 'formal'];
 
 const PLATFORMS = ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'];
 
 export const ADNChannelsConsolidatedView = ({ companyId }: ADNChannelsConsolidatedViewProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['company']);
   const { toast } = useToast();
   const { settings, loading: loadingPlatforms, savePlatformSetting } = usePlatformSettings(companyId);
   const { config: scheduleConfig, saveConfig: saveSchedule, loading: loadingSchedule } = useCompanySchedule(companyId);
@@ -111,7 +104,7 @@ export const ADNChannelsConsolidatedView = ({ companyId }: ADNChannelsConsolidat
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground mb-4">
-        {t('company.channels.desc', 'Configura cada plataforma de manera individual')}
+        {t('company:channels.desc')}
       </p>
       
       {PLATFORMS.map(platform => {
@@ -137,7 +130,7 @@ export const ADNChannelsConsolidatedView = ({ companyId }: ADNChannelsConsolidat
                     </div>
                     {isActive && (
                       <Badge variant="outline" className="text-xs">
-                        {getPlatformFrequency(platform)} posts/sem
+                        {getPlatformFrequency(platform)} {t('company:channels.posts_per_week_short', 'posts/sem')}
                       </Badge>
                     )}
                   </div>
@@ -160,7 +153,7 @@ export const ADNChannelsConsolidatedView = ({ companyId }: ADNChannelsConsolidat
                 <CardContent className="pt-0 pb-4 px-4 border-t">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
                     <div className="space-y-1">
-                      <Label className="text-xs">{t('company.channels.tone', 'Tono')}</Label>
+                      <Label className="text-xs">{t('company:channels.tone')}</Label>
                       <Select 
                         value={getPlatformTone(platform)} 
                         onValueChange={(v) => handleToneChange(platform, v)}
@@ -169,15 +162,15 @@ export const ADNChannelsConsolidatedView = ({ companyId }: ADNChannelsConsolidat
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {TONE_OPTIONS.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          {TONE_KEYS.map(key => (
+                            <SelectItem key={key} value={key}>{t(`company:communication.tone.${key}`)}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div className="space-y-1">
-                      <Label className="text-xs">{t('company.channels.frequency', 'Posts/semana')}</Label>
+                      <Label className="text-xs">{t('company:channels.frequency')}</Label>
                       <Input
                         type="number"
                         min={0}
@@ -189,7 +182,7 @@ export const ADNChannelsConsolidatedView = ({ companyId }: ADNChannelsConsolidat
                     </div>
                     
                     <div className="space-y-1">
-                      <Label className="text-xs">{t('company.channels.max_posts', 'Máx posts/día')}</Label>
+                      <Label className="text-xs">{t('company:channels.max_posts')}</Label>
                       <Input
                         type="number"
                         min={1}
@@ -201,7 +194,7 @@ export const ADNChannelsConsolidatedView = ({ companyId }: ADNChannelsConsolidat
                     </div>
                     
                     <div className="space-y-1">
-                      <Label className="text-xs">{t('company.channels.hashtag_limit', 'Límite hashtags')}</Label>
+                      <Label className="text-xs">{t('company:channels.hashtag_limit')}</Label>
                       <Input
                         type="number"
                         min={0}
@@ -221,7 +214,7 @@ export const ADNChannelsConsolidatedView = ({ companyId }: ADNChannelsConsolidat
                         onCheckedChange={(v) => handleSettingChange(platform, 'auto_publish', v)}
                       />
                       <Label htmlFor={`${platform}-auto-publish`} className="text-xs">
-                        {t('company.channels.auto_publish', 'Auto-publicar')}
+                        {t('company:channels.auto_publish')}
                       </Label>
                     </div>
                     <div className="flex items-center gap-2">
@@ -231,7 +224,7 @@ export const ADNChannelsConsolidatedView = ({ companyId }: ADNChannelsConsolidat
                         onCheckedChange={(v) => handleSettingChange(platform, 'require_approval', v)}
                       />
                       <Label htmlFor={`${platform}-approval`} className="text-xs">
-                        {t('company.channels.require_approval', 'Requiere aprobación')}
+                        {t('company:channels.require_approval')}
                       </Label>
                     </div>
                     <div className="flex items-center gap-2">
@@ -241,7 +234,7 @@ export const ADNChannelsConsolidatedView = ({ companyId }: ADNChannelsConsolidat
                         onCheckedChange={(v) => handleSettingChange(platform, 'analytics_tracking', v)}
                       />
                       <Label htmlFor={`${platform}-analytics`} className="text-xs">
-                        {t('company.channels.analytics', 'Rastrear métricas')}
+                        {t('company:channels.analytics')}
                       </Label>
                     </div>
                   </div>

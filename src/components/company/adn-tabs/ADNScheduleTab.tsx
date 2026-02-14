@@ -15,32 +15,26 @@ interface ADNScheduleTabProps {
   companyId: string;
 }
 
-const TIMEZONES = [
-  { value: 'America/Mexico_City', label: 'Ciudad de México (GMT-6)' },
-  { value: 'America/New_York', label: 'Nueva York (GMT-5)' },
-  { value: 'America/Los_Angeles', label: 'Los Ángeles (GMT-8)' },
-  { value: 'America/Bogota', label: 'Bogotá (GMT-5)' },
-  { value: 'America/Lima', label: 'Lima (GMT-5)' },
-  { value: 'America/Buenos_Aires', label: 'Buenos Aires (GMT-3)' },
-  { value: 'America/Sao_Paulo', label: 'São Paulo (GMT-3)' },
-  { value: 'Europe/Madrid', label: 'Madrid (GMT+1)' },
-  { value: 'Europe/London', label: 'Londres (GMT+0)' },
+const TIMEZONE_KEYS = [
+  'America/Mexico_City', 'America/New_York', 'America/Los_Angeles',
+  'America/Bogota', 'America/Lima', 'America/Buenos_Aires',
+  'America/Sao_Paulo', 'Europe/Madrid', 'Europe/London',
 ];
 
-const DAYS = [
-  { value: 1, label: 'Lun' },
-  { value: 2, label: 'Mar' },
-  { value: 3, label: 'Mié' },
-  { value: 4, label: 'Jue' },
-  { value: 5, label: 'Vie' },
-  { value: 6, label: 'Sáb' },
-  { value: 0, label: 'Dom' },
+const DAY_KEYS = [
+  { value: 1, key: 'monday' },
+  { value: 2, key: 'tuesday' },
+  { value: 3, key: 'wednesday' },
+  { value: 4, key: 'thursday' },
+  { value: 5, key: 'friday' },
+  { value: 6, key: 'saturday' },
+  { value: 0, key: 'sunday' },
 ];
 
 const PLATFORMS = ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter'];
 
 export const ADNScheduleTab = ({ companyId }: ADNScheduleTabProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['company']);
   const { toast } = useToast();
   const { config, loading, saving, saveConfig } = useCompanySchedule(companyId);
 
@@ -69,9 +63,9 @@ export const ADNScheduleTab = ({ companyId }: ADNScheduleTabProps) => {
   const handleSave = async () => {
     try {
       await saveConfig(localConfig);
-      toast({ title: t('company.email.saved') });
+      toast({ title: t('company:email.saved') });
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
@@ -94,17 +88,17 @@ export const ADNScheduleTab = ({ companyId }: ADNScheduleTabProps) => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
-            {t('company.schedule.timezone_title', 'Zona Horaria')}
+            {t('company:schedule.timezone_title')}
           </CardTitle>
           <CardDescription>
-            {t('company.schedule.timezone_desc', 'Configura la zona horaria para la programación de contenido')}
+            {t('company:schedule.timezone_desc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>{t('company.schedule.timezone', 'Zona horaria')}</Label>
+            <Label>{t('company:schedule.timezone')}</Label>
             <Select 
               value={localConfig.timezone} 
               onValueChange={(v) => setLocalConfig(prev => ({ ...prev, timezone: v }))}
@@ -113,8 +107,8 @@ export const ADNScheduleTab = ({ companyId }: ADNScheduleTabProps) => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TIMEZONES.map(tz => (
-                  <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>
+                {TIMEZONE_KEYS.map(tz => (
+                  <SelectItem key={tz} value={tz}>{t(`company:schedule.timezones.${tz.replace(/\//g, '_')}`, tz)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -126,13 +120,13 @@ export const ADNScheduleTab = ({ companyId }: ADNScheduleTabProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            {t('company.schedule.business_hours', 'Horario Laboral')}
+            {t('company:schedule.business_hours')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t('company.schedule.start_time', 'Hora inicio')}</Label>
+              <Label>{t('company:schedule.start_time')}</Label>
               <Input
                 type="time"
                 value={localConfig.business_hours_start}
@@ -140,7 +134,7 @@ export const ADNScheduleTab = ({ companyId }: ADNScheduleTabProps) => {
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('company.schedule.end_time', 'Hora fin')}</Label>
+              <Label>{t('company:schedule.end_time')}</Label>
               <Input
                 type="time"
                 value={localConfig.business_hours_end}
@@ -149,16 +143,16 @@ export const ADNScheduleTab = ({ companyId }: ADNScheduleTabProps) => {
             </div>
           </div>
           <div className="space-y-2">
-            <Label>{t('company.schedule.working_days', 'Días laborales')}</Label>
+            <Label>{t('company:schedule.working_days')}</Label>
             <div className="flex flex-wrap gap-2">
-              {DAYS.map(day => (
+              {DAY_KEYS.map(day => (
                 <Badge
                   key={day.value}
                   variant={localConfig.working_days.includes(day.value) ? 'default' : 'outline'}
                   className="cursor-pointer"
                   onClick={() => toggleDay(day.value)}
                 >
-                  {day.label}
+                  {t(`company:schedule.days.${day.key}`)}
                 </Badge>
               ))}
             </div>
@@ -170,10 +164,10 @@ export const ADNScheduleTab = ({ companyId }: ADNScheduleTabProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            {t('company.schedule.frequency', 'Frecuencia de Contenido')}
+            {t('company:schedule.frequency')}
           </CardTitle>
           <CardDescription>
-            {t('company.schedule.frequency_desc', 'Posts por semana en cada plataforma')}
+            {t('company:schedule.frequency_desc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -202,7 +196,7 @@ export const ADNScheduleTab = ({ companyId }: ADNScheduleTabProps) => {
 
       <Button onClick={handleSave} disabled={saving} className="w-full">
         {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-        {t('company.email.save', 'Guardar Configuración')}
+        {t('company:email.save')}
       </Button>
     </div>
   );

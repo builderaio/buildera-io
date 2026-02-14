@@ -604,5 +604,67 @@
       "title": "Buildera como infraestructura de valuación",
       "description": "Las empresas con operaciones sistematizadas y baja dependencia del fundador reciben múltiplos de valuación significativamente más altos. Buildera transforma tu negocio de una operación dependiente de personas a un sistema autónomo replicable — aumentando su valor ante inversores y compradores."
     }
+  },
+  "dashboardPreview": {
+    "badge": "Vista previa del centro de control",
+    "title": "Control total de la autonomía empresarial",
+    "subtitle": "Un panel enterprise-grade que te da visibilidad completa sobre cada decisión autónoma, aprobación pendiente y alerta de gobernanza — en tiempo real.",
+    "topbar": "Buildera · Autonomy Control Center",
+    "status": "Sistema activo",
+    "iq": {
+      "label": "Enterprise IQ",
+      "period": "este mes",
+      "nextLevel": "74% hacia nivel Experto"
+    },
+    "departments": {
+      "label": "Departamentos",
+      "items": {
+        "marketing": "Marketing",
+        "sales": "Comercial",
+        "finance": "Finanzas",
+        "legal": "Legal",
+        "hr": "RRHH",
+        "operations": "Operaciones"
+      }
+    },
+    "logs": {
+      "label": "Log de ejecución",
+      "today": "hoy",
+      "items": {
+        "log1": "Estrategia de contenido Q1 generada",
+        "log2": "127 leads puntuados y priorizados",
+        "log3": "Reporte de flujo de caja semanal",
+        "log4": "Revisión de cumplimiento pendiente",
+        "log5": "3 procesos optimizados"
+      }
+    },
+    "guardrails": {
+      "label": "Guardrails presupuestarios",
+      "items": {
+        "guardrail1": "Presupuesto mensual de Marketing al 87%",
+        "guardrail2": "Ahorro detectado en proveedores",
+        "guardrail3": "Todas las políticas en cumplimiento"
+      }
+    },
+    "approvals": {
+      "label": "Aprobaciones pendientes",
+      "pending": "pendientes"
+    },
+    "capabilities": {
+      "label": "Capacidades activas",
+      "active": "activas",
+      "items": {
+        "cap1": "Auto-segmentación de audiencia",
+        "cap2": "Optimización de pipeline",
+        "cap3": "Predicción de churn",
+        "cap4": "Análisis de sentimiento"
+      }
+    },
+    "footer": {
+      "cycle": "Ciclo",
+      "agents": "agentes activos",
+      "credits": "créditos usados hoy",
+      "nextCycle": "Próximo ciclo en"
+    }
   }
 }

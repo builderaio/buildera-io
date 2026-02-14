@@ -454,5 +454,112 @@
       "title": "Fluxo de dados completo",
       "description": "Cada ciclo gera um registro auditável em autopilot_execution_log com: context_snapshot, decisions_made, actions_taken, credits_consumed e execution_time_ms. Os logs são acessíveis no dashboard para revisão manual a qualquer momento."
     }
+  },
+  "genesis": {
+    "badge": "// CAPABILITY_GENESIS_ENGINE",
+    "title": "Expansão adaptativa de infraestrutura",
+    "subtitle": "O sistema não apenas executa — detecta vazios operacionais e propõe novas capacidades autônomas com governança completa. Sem intervenção manual. Sem código adicional.",
+    "pillars": {
+      "gapDetection": {
+        "title": "Detecção de brechas operacionais",
+        "description": "O Gap Detector analisa decisões bloqueadas, falhadas ou com outcome_score abaixo do limiar configurado. Quando detecta um padrão recorrente de falha em uma área específica, classifica como brecha operacional.",
+        "details": {
+          "1": "Analisa autopilot_decisions com action_taken=false ou guardrail_result=blocked",
+          "2": "Correlaciona falhas por departamento, tipo de decisão e frequência temporal",
+          "3": "Gera gap_evidence com dados verificáveis: número de incidências, período e departamento afetado"
+        }
+      },
+      "agentProposal": {
+        "title": "Proposta de novos agentes",
+        "description": "O Capability Proposer gera uma especificação completa do novo agente: nome, departamento, trigger_condition, dados necessários e métricas de sucesso — tudo baseado na evidência do gap detectado.",
+        "details": {
+          "1": "Define capability_code, capability_name e departamento destino",
+          "2": "Especifica trigger_condition: condições que ativam o agente automaticamente",
+          "3": "Estabelece required_data e required_maturity mínima do negócio para ativar"
+        }
+      },
+      "governance": {
+        "title": "Governança de novas capacidades",
+        "description": "Cada capacidade proposta passa por um ciclo de aprovação configurável. As de baixo risco se auto-ativam com período de teste. As de alto impacto requerem aprovação humana explícita.",
+        "details": {
+          "1": "auto_activate=true para capacidades de baixo risco (monitoramento, alertas)",
+          "2": "Aprovação humana necessária para capacidades que executam ações (envios, gastos)",
+          "3": "Log auditável em autopilot_capabilities com status, activation_reason e gap_evidence"
+        }
+      },
+      "integration": {
+        "title": "Integração em fluxos existentes",
+        "description": "As capacidades ativadas se integram ao ciclo SENSE-THINK-GUARD-ACT-LEARN sem intervenção manual. O Agent Router as detecta automaticamente e as inclui na orquestração departamental.",
+        "details": {
+          "1": "Registrada em autopilot_capabilities com is_active=true",
+          "2": "O Decision Engine inclui a nova capacidade na avaliação de decisões",
+          "3": "As métricas do agente alimentam a camada Learning & Memory desde o primeiro ciclo"
+        }
+      }
+    },
+    "lifecycle": {
+      "title": "Ciclo de vida de uma capacidade autônoma",
+      "subtitle": "Da detecção do gap à integração produtiva — cada etapa é auditável e reversível.",
+      "steps": {
+        "detect": {
+          "title": "Gap detectado",
+          "description": "Decisões bloqueadas ou falhadas analisadas"
+        },
+        "propose": {
+          "title": "Capacidade proposta",
+          "description": "Especificação gerada por IA com evidência"
+        },
+        "govern": {
+          "title": "Aprovação",
+          "description": "Auto-aprovada ou revisão humana conforme risco"
+        },
+        "trial": {
+          "title": "Período de teste",
+          "description": "7 dias de execução monitorizada"
+        },
+        "evaluate": {
+          "title": "Avaliação",
+          "description": "Métricas de sucesso vs. limiar mínimo"
+        },
+        "integrate": {
+          "title": "Ativação",
+          "description": "Integrada ao ciclo autônomo ou depreciada"
+        }
+      }
+    },
+    "useCase": {
+      "title": "Exemplo real: Agente de alertas regulatórias",
+      "subtitle": "Como o sistema detectou um gap em compliance e gerou um novo agente autônomo sem intervenção humana.",
+      "triggerLabel": "Sinal detectado",
+      "trigger": "O módulo Jurídico bloqueou 3 decisões de Vendas em 2 semanas por falta de validação regulatória. A equipe comercial não tinha visibilidade de mudanças em normas do seu setor.",
+      "steps": {
+        "step1": {
+          "title": "Gap Detector identifica o padrão",
+          "description": "3 decisões bloqueadas no Jurídico com guardrail_result='compliance_missing'. Departamento afetado: Comercial. Frequência: 1.5x/semana. Classificação: brecha operacional recorrente."
+        },
+        "step2": {
+          "title": "Capability Proposer gera especificação",
+          "description": "Proposta: 'Monitor Regulatório Setorial' — agente que monitora mudanças regulatórias relevantes ao setor da empresa e gera alertas preventivos antes que afetem operações comerciais."
+        },
+        "step3": {
+          "title": "Governança avalia o risco",
+          "description": "Classificação: baixo risco (apenas monitoramento e alertas, não executa ações). Resultado: auto_activate=true com período de teste de 7 dias. Não requer aprovação humana."
+        },
+        "step4": {
+          "title": "Período de teste: 7 dias",
+          "description": "O agente monitora fontes regulatórias, gera 4 alertas relevantes e 0 falsos positivos. Taxa de utilidade avaliada pela equipe Jurídica: 92%."
+        },
+        "step5": {
+          "title": "Ativação permanente",
+          "description": "Resultado: status='active'. O agente se integra ao ciclo autônomo do departamento Jurídico. As decisões de Vendas agora são pré-validadas com dados regulatórios atualizados."
+        }
+      },
+      "outcomeLabel": "Resultado operacional",
+      "outcome": "Decisões comerciais bloqueadas por compliance: de 3/semana para 0. Tempo de resposta a mudanças regulatórias: de dias para horas. Custo adicional: 0 — o agente foi gerado e ativado pelo sistema."
+    },
+    "governanceNote": {
+      "title": "Toda expansão é governada",
+      "description": "Nenhuma capacidade é ativada permanentemente sem avaliação. Capacidades com outcome_score abaixo do limiar são depreciadas automaticamente. Cada ativação e depreciação fica registrada no log auditável com a evidência completa que a justifica."
+    }
   }
 }

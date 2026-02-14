@@ -454,5 +454,112 @@
       "title": "Complete data flow",
       "description": "Each cycle generates an auditable record in autopilot_execution_log with: context_snapshot, decisions_made, actions_taken, credits_consumed, and execution_time_ms. Logs are accessible from the dashboard for manual review at any time."
     }
+  },
+  "genesis": {
+    "badge": "// CAPABILITY_GENESIS_ENGINE",
+    "title": "Adaptive infrastructure expansion",
+    "subtitle": "The system doesn't just execute — it detects operational gaps and proposes new autonomous capabilities with full governance. No manual intervention. No additional code.",
+    "pillars": {
+      "gapDetection": {
+        "title": "Operational gap detection",
+        "description": "The Gap Detector analyzes blocked, failed, or below-threshold decisions. When it detects a recurring failure pattern in a specific area, it classifies it as an operational gap.",
+        "details": {
+          "1": "Analyzes autopilot_decisions with action_taken=false or guardrail_result=blocked",
+          "2": "Correlates failures by department, decision type, and temporal frequency",
+          "3": "Generates gap_evidence with verifiable data: incident count, period, and affected department"
+        }
+      },
+      "agentProposal": {
+        "title": "New agent proposal",
+        "description": "The Capability Proposer generates a complete agent specification: name, department, trigger_condition, required data, and success metrics — all based on the detected gap evidence.",
+        "details": {
+          "1": "Defines capability_code, capability_name, and target department",
+          "2": "Specifies trigger_condition: conditions that activate the agent automatically",
+          "3": "Establishes required_data and minimum required_maturity for activation"
+        }
+      },
+      "governance": {
+        "title": "New capability governance",
+        "description": "Each proposed capability goes through a configurable approval cycle. Low-risk ones auto-activate with a trial period. High-impact ones require explicit human approval.",
+        "details": {
+          "1": "auto_activate=true for low-risk capabilities (monitoring, alerts)",
+          "2": "Human approval required for action-executing capabilities (sends, spending)",
+          "3": "Auditable log in autopilot_capabilities with status, activation_reason, and gap_evidence"
+        }
+      },
+      "integration": {
+        "title": "Integration into existing workflows",
+        "description": "Activated capabilities integrate into the SENSE-THINK-GUARD-ACT-LEARN cycle without manual intervention. The Agent Router detects them automatically and includes them in departmental orchestration.",
+        "details": {
+          "1": "Registered in autopilot_capabilities with is_active=true",
+          "2": "The Decision Engine includes the new capability in its decision evaluation",
+          "3": "Agent metrics feed the Learning & Memory layer from the first cycle"
+        }
+      }
+    },
+    "lifecycle": {
+      "title": "Autonomous capability lifecycle",
+      "subtitle": "From gap detection to production integration — every stage is auditable and reversible.",
+      "steps": {
+        "detect": {
+          "title": "Gap detected",
+          "description": "Blocked or failed decisions analyzed"
+        },
+        "propose": {
+          "title": "Capability proposed",
+          "description": "AI-generated specification with evidence"
+        },
+        "govern": {
+          "title": "Approval",
+          "description": "Auto-approved or human review based on risk"
+        },
+        "trial": {
+          "title": "Trial period",
+          "description": "7 days of monitored execution"
+        },
+        "evaluate": {
+          "title": "Evaluation",
+          "description": "Success metrics vs. minimum threshold"
+        },
+        "integrate": {
+          "title": "Activation",
+          "description": "Integrated into autonomous cycle or deprecated"
+        }
+      }
+    },
+    "useCase": {
+      "title": "Real example: Regulatory alert agent",
+      "subtitle": "How the system detected a compliance gap and generated a new autonomous agent without human intervention.",
+      "triggerLabel": "Signal detected",
+      "trigger": "The Legal module blocked 3 Sales decisions in 2 weeks due to missing regulatory validation. The sales team had no visibility into sector-specific regulatory changes.",
+      "steps": {
+        "step1": {
+          "title": "Gap Detector identifies the pattern",
+          "description": "3 blocked decisions in Legal with guardrail_result='compliance_missing'. Affected department: Sales. Frequency: 1.5x/week. Classification: recurring operational gap."
+        },
+        "step2": {
+          "title": "Capability Proposer generates specification",
+          "description": "Proposal: 'Sector Regulatory Monitor' — agent that monitors regulatory changes relevant to the company's sector and generates preventive alerts before they affect commercial operations."
+        },
+        "step3": {
+          "title": "Governance evaluates risk",
+          "description": "Classification: low risk (monitoring and alerts only, no action execution). Result: auto_activate=true with 7-day trial period. No human approval required."
+        },
+        "step4": {
+          "title": "Trial period: 7 days",
+          "description": "The agent monitors regulatory sources, generates 4 relevant alerts and 0 false positives. Utility rate evaluated by Legal team: 92%."
+        },
+        "step5": {
+          "title": "Permanent activation",
+          "description": "Result: status='active'. The agent integrates into the Legal department's autonomous cycle. Sales decisions are now pre-validated with updated regulatory data."
+        }
+      },
+      "outcomeLabel": "Operational outcome",
+      "outcome": "Sales decisions blocked by compliance: from 3/week to 0. Response time to regulatory changes: from days to hours. Additional cost: 0 — the agent was generated and activated by the system."
+    },
+    "governanceNote": {
+      "title": "All expansion is governed",
+      "description": "No capability is permanently activated without evaluation. Capabilities with outcome_score below threshold are automatically deprecated. Every activation and deprecation is recorded in the auditable log with the complete evidence that justifies it."
+    }
   }
 }

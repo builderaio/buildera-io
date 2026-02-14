@@ -99,7 +99,7 @@ const PlanSubscription = () => {
   const getCurrentPlan = (): SubscriptionPlan | undefined => {
     if (subscription?.plan) return subscription.plan;
     // Default to starter/free plan
-    return plans.find(p => p.name === "starter") || plans[0] || undefined;
+    return plans.find(p => p.name === "Assisted Mode") || plans[0] || undefined;
   };
 
   const currentPlan = getCurrentPlan();

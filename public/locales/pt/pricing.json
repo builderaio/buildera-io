@@ -1,0 +1,83 @@
+{
+  "header": {
+    "badge": "// AUTONOMY_TIERS",
+    "title": "Escolha seu nível de autonomia",
+    "subtitle": "Da assistência inteligente à operação empresarial autônoma completa. Cada nível desbloqueia mais departamentos, mais agentes e maior autonomia."
+  },
+  "pricing": {
+    "monthly": "Mensal",
+    "yearly": "Anual",
+    "yearlyDiscount": "2 meses grátis",
+    "month": "/mês",
+    "year": "/ano",
+    "free": "Grátis",
+    "contact": "Contatar",
+    "savings": "Economize ${{amount}}/ano"
+  },
+  "metrics": {
+    "agents": "Agentes IA",
+    "departments": "Departamentos",
+    "autonomy": "Nível de autonomia",
+    "governance": "Governança",
+    "credits": "Créditos",
+    "unlimited": "Ilimitados"
+  },
+  "autonomyLevels": {
+    "assisted": "Assistido",
+    "semi_autonomous": "Semi-autônomo",
+    "full_autopilot": "Autopilot",
+    "adaptive": "Adaptativo"
+  },
+  "governanceLevels": {
+    "basic": "Básica",
+    "standard": "Padrão",
+    "advanced": "Avançada",
+    "custom": "Personalizada"
+  },
+  "labels": {
+    "popular": "Mais Popular",
+    "currentPlan": "Plano Atual"
+  },
+  "cta": {
+    "login": "Entrar",
+    "current": "Plano Atual",
+    "contact": "Contatar Vendas",
+    "assisted": "Começar Grátis",
+    "growth": "Acelerar Crescimento",
+    "autopilot": "Ativar Autopilot",
+    "custom": "Contatar Vendas",
+    "default": "Selecionar Plano"
+  },
+  "errors": {
+    "loginRequired": "Você precisa entrar para assinar",
+    "alreadyFree": "Você já está no plano Assisted gratuito",
+    "checkoutFailed": "Erro ao criar sessão de pagamento",
+    "processingFailed": "Erro ao processar assinatura"
+  },
+  "currentPlan": {
+    "label": "Plano atual",
+    "renewsOn": "Renova em {{date}}"
+  },
+  "benefits": {
+    "freeMonths": {
+      "icon": "🎁",
+      "title": "2 meses grátis",
+      "description": "Com pagamento anual"
+    },
+    "migration": {
+      "icon": "🚀",
+      "title": "Migração gratuita",
+      "description": "De outras plataformas"
+    },
+    "onboarding": {
+      "icon": "💼",
+      "title": "Onboarding personalizado",
+      "description": "Em planos Autopilot+"
+    },
+    "governance": {
+      "icon": "🛡️",
+      "title": "Governança incluída",
+      "description": "Controles em todos os planos"
+    }
+  }
+}

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 import Hero from "@/components/Hero";
 import AutonomousEnterprise from "@/components/home/AutonomousEnterprise";
-import AgentShowcase from "@/components/home/AgentShowcase";
+
 import HowItWorks from "@/components/home/HowItWorks";
 import ProductArchitecture from "@/components/home/ProductArchitecture";
 import CapabilityGenesis from "@/components/home/CapabilityGenesis";
@@ -42,7 +42,7 @@ const Index = () => {
         <HowItWorks />
         <ProductArchitecture />
         <CapabilityGenesis />
-        <AgentShowcase />
+        
         <ValueHighlights />
         <AgentsInAction />
         <WhatWeDoNot />

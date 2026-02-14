@@ -25,7 +25,7 @@ interface Props {
 
 export default function UnifiedContentCreator({ profile, topPosts = [], selectedPlatform = 'general', prepopulatedContent, onContentUsed }: Props) {
   const { toast } = useToast();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<'insights' | 'create' | 'library'>('insights');
   const [createMode, setCreateMode] = useState<'ai' | 'manual'>('ai');
   
@@ -78,12 +78,12 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
 
   const handleGenerateAI = async () => {
     if (!profile.user_id) {
-      toast({ title: "Error", description: "Usuario no autenticado", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.content.notAuthenticated'), variant: "destructive" });
       return;
     }
 
     if (!aiPrompt.trim()) {
-      toast({ title: "Error", description: "Por favor ingresa una descripción", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.content.enterDescription'), variant: "destructive" });
       return;
     }
 
@@ -95,14 +95,14 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
       setGeneratedText(text);
       
       toast({ 
-        title: "¡Contenido generado!", 
-        description: "El texto ha sido generado exitosamente" 
+        title: t('toast.content.generated'), 
+        description: t('toast.content.generatedDesc') 
       });
     } catch (error) {
       console.error('Error generating content:', error);
       toast({ 
-        title: "Error", 
-        description: "No se pudo generar el contenido", 
+        title: t('toast.error'), 
+        description: t('toast.content.errorGenerate'), 
         variant: "destructive" 
       });
     } finally {
@@ -112,7 +112,7 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
 
   const handleGenerateImage = async () => {
     if (!profile.user_id || !generatedText) {
-      toast({ title: "Error", description: "Primero genera el texto", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.content.generateTextFirst'), variant: "destructive" });
       return;
     }
 
@@ -126,10 +126,10 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
       if (error) throw error;
       
       setGeneratedImage(data?.imageUrl || '');
-      toast({ title: "¡Imagen generada!", description: "La imagen ha sido creada exitosamente" });
+      toast({ title: t('toast.content.imageGenerated'), description: t('toast.content.imageGeneratedDesc') });
     } catch (error) {
       console.error('Error generating image:', error);
-      toast({ title: "Error", description: "No se pudo generar la imagen", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.content.errorImage'), variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
@@ -137,7 +137,7 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
 
   const handleOptimizeWithEra = async () => {
     if (!profile.user_id || !manualText.trim()) {
-      toast({ title: "Error", description: "Escribe algo primero", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.content.writeFirst'), variant: "destructive" });
       return;
     }
 
@@ -155,10 +155,10 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
       if (error) throw error;
       
       setManualText(data?.optimizedContent || manualText);
-      toast({ title: "¡Contenido optimizado!", description: "Tu contenido ha sido mejorado por Era" });
+      toast({ title: t('toast.content.optimized'), description: t('toast.content.optimizedDesc') });
     } catch (error) {
       console.error('Error optimizing:', error);
-      toast({ title: "Error", description: "No se pudo optimizar el contenido", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.content.errorGenerate'), variant: "destructive" });
     } finally {
       setIsOptimizing(false);
     }

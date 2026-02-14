@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import type { Json } from '@/integrations/supabase/types';
 
 export interface CRMAccount {
@@ -48,6 +49,7 @@ export interface CreateAccountInput {
 
 export const useCRMAccounts = (companyId: string | undefined) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: accounts, isLoading, refetch } = useQuery({
@@ -80,10 +82,10 @@ export const useCRMAccounts = (companyId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-accounts', companyId] });
-      toast({ title: 'Cuenta creada' });
+      toast({ title: t('toast.crm.accountCreated') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -103,10 +105,10 @@ export const useCRMAccounts = (companyId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-accounts', companyId] });
-      toast({ title: 'Cuenta actualizada' });
+      toast({ title: t('toast.crm.accountUpdated') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -120,10 +122,10 @@ export const useCRMAccounts = (companyId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-accounts', companyId] });
-      toast({ title: 'Cuenta eliminada' });
+      toast({ title: t('toast.crm.accountDeleted') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import type { Json } from '@/integrations/supabase/types';
 
 export interface CRMDeal {
@@ -73,6 +74,7 @@ export interface CreateDealInput {
 
 export const useCRMDeals = (companyId: string | undefined) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [selectedPipelineId, setSelectedPipelineId] = useState<string | null>(null);
 
@@ -156,10 +158,10 @@ export const useCRMDeals = (companyId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-pipelines', companyId] });
-      toast({ title: 'Pipeline creado' });
+      toast({ title: t('toast.crm.pipelineCreated') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -186,10 +188,10 @@ export const useCRMDeals = (companyId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-deals', companyId] });
-      toast({ title: 'Deal creado' });
+      toast({ title: t('toast.crm.dealCreated') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -225,7 +227,7 @@ export const useCRMDeals = (companyId: string | undefined) => {
       queryClient.invalidateQueries({ queryKey: ['crm-deals', companyId] });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -260,10 +262,10 @@ export const useCRMDeals = (companyId: string | undefined) => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['crm-deals', companyId] });
-      toast({ title: data.status === 'won' ? '¡Deal ganado!' : 'Deal perdido' });
+      toast({ title: data.status === 'won' ? t('toast.crm.dealWon') : t('toast.crm.dealLost') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 

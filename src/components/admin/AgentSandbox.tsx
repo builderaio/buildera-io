@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Play, RotateCcw, AlertTriangle, FlaskConical, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { SandboxResultsViewer } from "./SandboxResultsViewer";
 import { SandboxInputGenerator, extractVariables, getDefaultValue } from "./SandboxInputGenerator";
@@ -59,6 +60,7 @@ interface SandboxResult {
 
 export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
   const { toast } = useToast();
+  const { t } = useTranslation('admin');
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<SandboxResult | null>(null);
   
@@ -87,7 +89,7 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
       setInputValues(defaults);
     }
     setResult(null);
-    toast({ title: "Datos reseteados a valores predeterminados" });
+    toast({ title: t('sandbox.resetComplete') });
   };
 
   const validateConfig = (): string[] => {
@@ -241,7 +243,7 @@ export const AgentSandbox = ({ agentConfig }: AgentSandboxProps) => {
           variant: "destructive"
         });
       } else {
-        toast({ title: "Prueba ejecutada exitosamente" });
+        toast({ title: t('sandbox.success') });
       }
 
     } catch (error: any) {

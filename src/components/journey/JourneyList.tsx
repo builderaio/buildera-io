@@ -103,50 +103,50 @@ export function JourneyList({ onEditJourney }: JourneyListProps) {
   const handleCreateJourney = async () => {
     try {
       const journey = await createJourney(newJourneyData);
-      toast({ title: 'Journey creado', description: 'Ahora puedes añadir pasos al journey' });
+      toast({ title: t('toast.journey.created'), description: t('toast.journey.createdDesc') });
       setIsCreateDialogOpen(false);
       setNewJourneyData({ name: '', description: '', trigger_type: 'manual' });
       if (onEditJourney) {
         onEditJourney(journey.id);
       }
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo crear el journey', variant: 'destructive' });
+      toast({ title: t('toast.error'), description: t('toast.journey.errorCreate'), variant: 'destructive' });
     }
   };
 
   const handleActivate = async (journeyId: string) => {
     try {
       await activateJourney(journeyId);
-      toast({ title: 'Journey activado' });
+      toast({ title: t('toast.journey.activated') });
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo activar', variant: 'destructive' });
+      toast({ title: t('toast.error'), description: t('toast.journey.errorActivate'), variant: 'destructive' });
     }
   };
 
   const handlePause = async (journeyId: string) => {
     try {
       await pauseJourney(journeyId);
-      toast({ title: 'Journey pausado' });
+      toast({ title: t('toast.journey.paused') });
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo pausar', variant: 'destructive' });
+      toast({ title: t('toast.error'), description: t('toast.journey.errorPause'), variant: 'destructive' });
     }
   };
 
   const handleClone = async (journeyId: string) => {
     try {
       await cloneJourney(journeyId);
-      toast({ title: 'Journey clonado' });
+      toast({ title: t('toast.journey.cloned') });
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo clonar', variant: 'destructive' });
+      toast({ title: t('toast.error'), description: t('toast.journey.errorClone'), variant: 'destructive' });
     }
   };
 
   const handleDelete = async (journeyId: string) => {
     try {
       await deleteJourney(journeyId);
-      toast({ title: 'Journey eliminado' });
+      toast({ title: t('toast.journey.deleted') });
     } catch (error) {
-      toast({ title: 'Error', description: 'No se pudo eliminar', variant: 'destructive' });
+      toast({ title: t('toast.error'), description: t('toast.journey.errorDelete'), variant: 'destructive' });
     }
   };
 

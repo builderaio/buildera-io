@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from 'react-i18next';
 import type { Json } from '@/integrations/supabase/types';
 
 export interface CRMContact {
@@ -71,6 +72,7 @@ export interface ContactFilters {
 
 export const useCRMContacts = (companyId: string | undefined) => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ContactFilters>({});
 
@@ -118,10 +120,10 @@ export const useCRMContacts = (companyId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-contacts', companyId] });
-      toast({ title: 'Contacto creado', description: 'El contacto se ha creado exitosamente' });
+      toast({ title: t('toast.crm.contactCreated'), description: t('toast.crm.contactCreatedDesc') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -141,10 +143,10 @@ export const useCRMContacts = (companyId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-contacts', companyId] });
-      toast({ title: 'Contacto actualizado' });
+      toast({ title: t('toast.crm.contactUpdated') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -158,10 +160,10 @@ export const useCRMContacts = (companyId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crm-contacts', companyId] });
-      toast({ title: 'Contacto eliminado' });
+      toast({ title: t('toast.crm.contactDeleted') });
     },
     onError: (error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('toast.error'), description: error.message, variant: 'destructive' });
     },
   });
 

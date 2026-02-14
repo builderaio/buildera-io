@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import { PlusCircle, Sparkles, Lightbulb, Copy, Brain, Target, TrendingUp, Clock, ArrowRight, Edit3, Image, Send, Calendar, Loader2, Heart, MessageCircle } from "lucide-react";
@@ -33,6 +34,7 @@ interface Props {
 
 export default function ContentCreatorTab({ profile, topPosts, selectedPlatform, prepopulatedContent, onContentUsed }: Props) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [generatingContent, setGeneratingContent] = useState(false);
   const [contentPrompt, setContentPrompt] = useState('');
   const [generatedContent, setGeneratedContent] = useState('');
@@ -87,7 +89,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
 
   const generateContent = async () => {
     if (!contentPrompt.trim()) {
-      toast({ title: "Error", description: "Por favor ingresa una descripción para el contenido", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.content.enterPrompt'), variant: "destructive" });
       return;
     }
     setGeneratingContent(true);
@@ -135,10 +137,10 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
         }
       }
       
-      toast({ title: "¡Contenido generado!", description: "Tu nuevo contenido está listo para revisar" });
+      toast({ title: t('toast.content.generated'), description: t('toast.content.generatedDesc') });
     } catch (error) {
       console.error('Error generating content:', error);
-      toast({ title: "Error", description: "No se pudo generar el contenido. Intenta de nuevo.", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.content.errorGenerate'), variant: "destructive" });
     } finally {
       setGeneratingContent(false);
     }
@@ -147,7 +149,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
   const generateImageWithEra = async () => {
     const contentToUse = manualContent || generatedContent;
     if (!contentToUse.trim()) {
-      toast({ title: "Error", description: "Necesitas contenido para generar una imagen", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.content.needContent'), variant: "destructive" });
       return;
     }
     
@@ -182,10 +184,10 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
         }
       }
       
-      toast({ title: "¡Imagen generada!", description: "Tu imagen está lista" });
+      toast({ title: t('toast.content.imageGenerated'), description: t('toast.content.imageGeneratedDesc') });
     } catch (error) {
       console.error('Error generating image:', error);
-      toast({ title: "Error", description: "No se pudo generar la imagen. Intenta de nuevo.", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.content.errorImage'), variant: "destructive" });
     } finally {
       setGeneratingImage(false);
     }
@@ -464,7 +466,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                         variant="outline"
                         onClick={() => {
                           navigator.clipboard.writeText(manualContent || generatedContent);
-                          toast({ title: "¡Copiado!", description: "Contenido copiado al portapapeles" });
+                          toast({ title: t('toast.copied'), description: t('toast.copiedClipboard') });
                         }}
                         className="hover-scale"
                       >
@@ -538,7 +540,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                       className="text-xs hover:bg-primary hover:text-white cursor-pointer transition-all duration-200 hover-scale"
                       onClick={() => {
                         navigator.clipboard.writeText(`#${tag}`);
-                        toast({ title: "Copiado", description: `#${tag} copiado al portapapeles` });
+                        toast({ title: t('toast.copied'), description: `#${tag} ${t('toast.copiedClipboard')}` });
                       }}
                     >
                       #{tag}

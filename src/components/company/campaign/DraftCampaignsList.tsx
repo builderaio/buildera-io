@@ -15,7 +15,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getDateLocale } from '@/utils/dateLocale';
 
 interface DraftCampaign {
   id: string;
@@ -121,7 +121,7 @@ export const DraftCampaignsList = ({
         const IconComponent = stepInfo.icon;
         const timeAgo = formatDistanceToNow(new Date(draft.last_saved_at), {
           addSuffix: true,
-          locale: es
+          locale: getDateLocale()
         });
 
         return (

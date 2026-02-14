@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getDateLocale } from '@/utils/dateLocale';
 
 interface DashboardAlert {
   id: string;
@@ -296,7 +296,7 @@ export const SmartNotifications = () => {
                           <p className="text-xs text-muted-foreground">
                             {formatDistanceToNow(new Date(notification.created_at), { 
                               addSuffix: true,
-                              locale: es 
+                              locale: getDateLocale() 
                             })}
                           </p>
                           

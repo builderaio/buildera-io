@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { OnboardingWowLoader } from '@/components/onboarding/OnboardingWowLoader';
 import { ExecutiveDigitalDiagnosis } from '@/components/onboarding/ExecutiveDigitalDiagnosis';
 import { DigitalSnapshotDashboard } from '@/components/onboarding/DigitalSnapshotDashboard';
+import { computeDigitalMaturityScores } from '@/components/onboarding/scoring/digitalMaturityScoring';
 import JourneySelector, { JourneyType } from '@/components/onboarding/JourneySelector';
 
 interface OnboardingOrchestratorProps {
@@ -463,6 +464,62 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   // Complete onboarding and redirect
   const handleContinue = async () => {
     try {
+      // Persist Executive Digital Diagnosis scores to DB
+      if (results && companyData?.id) {
+        try {
+          const scores = computeDigitalMaturityScores(results);
+          const overallScore = Math.round(
+            (scores.visibility.score + scores.trust.score + scores.positioning.score) / 3
+          );
+          
+          const diagnosisPayload = {
+            scores: {
+              visibility: scores.visibility.score,
+              trust: scores.trust.score,
+              positioning: scores.positioning.score,
+              overall: overallScore,
+            },
+            criteria: JSON.parse(JSON.stringify({
+              visibility: scores.visibility.criteria,
+              trust: scores.trust.criteria,
+              positioning: scores.positioning.criteria,
+            })),
+            computed_at: new Date().toISOString(),
+          } as Record<string, unknown>;
+
+          // Upsert into company_digital_presence.executive_diagnosis
+          const { data: existing } = await supabase
+            .from('company_digital_presence')
+            .select('id, executive_diagnosis')
+            .eq('company_id', companyData.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (existing) {
+            const prev = typeof existing.executive_diagnosis === 'object' && existing.executive_diagnosis !== null
+              ? existing.executive_diagnosis as Record<string, unknown>
+              : {};
+            const mergedDiagnosis = { ...prev, ...diagnosisPayload };
+            await supabase
+              .from('company_digital_presence')
+              .update({ executive_diagnosis: mergedDiagnosis as any, updated_at: new Date().toISOString() })
+              .eq('id', existing.id);
+            console.log('✅ Executive diagnosis scores persisted');
+          } else {
+            await supabase
+              .from('company_digital_presence')
+              .insert([{
+                company_id: companyData.id,
+                executive_diagnosis: diagnosisPayload as any,
+              }]);
+            console.log('✅ Created digital presence with diagnosis scores');
+          }
+        } catch (scoreErr) {
+          console.warn('⚠️ Failed to persist diagnosis scores:', scoreErr);
+        }
+      }
+
       // Mark onboarding as complete
       await supabase
         .from('user_onboarding_status')

@@ -518,6 +518,27 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
 
         {/* Overview */}
         <TabsContent value="overview" className="space-y-4">
+          {/* Cold Start Banner - BRECHA 1 */}
+          {decisions.some(d => d.decision_type === 'cold_start_content') && (
+            <Alert className="border-primary/30 bg-primary/5">
+              <Zap className="h-4 w-4" />
+              <AlertTitle>{t('autopilot.coldStart.title')}</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <p>{decisions.find(d => d.decision_type === 'cold_start_content')?.description || t('autopilot.coldStart.description')}</p>
+                <div className="flex gap-2 mt-2">
+                  <Button size="sm" onClick={() => navigate('/company-dashboard?view=marketing-hub&tab=create')}>
+                    <Zap className="w-4 h-4 mr-1" />
+                    {t('autopilot.coldStart.createContent')}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => navigate('/company-dashboard?view=marketing-hub&action=connect')}>
+                    <Link2 className="w-4 h-4 mr-1" />
+                    {t('autopilot.coldStart.importData')}
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">{t('autopilot.recentDecisions')}</CardTitle>

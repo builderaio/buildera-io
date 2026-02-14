@@ -42,12 +42,19 @@ export const useJourneyProgression = (companyId?: string) => {
     if (!companyId) return;
 
     try {
-      const [socialRes, postsRes, autopilotRes, deptRes] = await Promise.all([
+      const [socialRes, postsRes, autopilotRes, deptRes, strategyRes] = await Promise.all([
         supabase.from('social_accounts').select('id').eq('is_connected', true).limit(1),
         supabase.from('scheduled_posts').select('id').limit(1),
         supabase.from('company_autopilot_config').select('autopilot_enabled').eq('company_id', companyId).eq('autopilot_enabled', true).maybeSingle(),
         supabase.from('company_department_config').select('id').eq('company_id', companyId).eq('autopilot_enabled', true).limit(1),
+        // Step 2: Check if onboarding/diagnostic was completed
+        supabase.from('company_strategy').select('id').eq('company_id', companyId).maybeSingle(),
       ]);
+
+      // Step 2: Onboarding completed (strategy or digital presence exists)
+      if (strategyRes.data) {
+        await advanceToStep(2);
+      }
 
       // Step 5: ANY autopilot active (marketing OR enterprise department)
       const anyAutopilotActive = !!autopilotRes.data || (deptRes.data?.length || 0) > 0;

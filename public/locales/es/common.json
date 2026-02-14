@@ -677,6 +677,41 @@
       "action": "Ir a Academia",
       "impact": "Mejora tus habilidades",
       "time": "15 minutos"
+    },
+    "setupCRM": {
+      "title": "Configura tu CRM de ventas",
+      "description": "Agrega tu primer deal o contacto para activar el autopilot comercial.",
+      "action": "Ir al CRM",
+      "impact": "Habilita seguimiento automático de ventas",
+      "time": "5 minutos"
+    },
+    "setupFinance": {
+      "title": "Activa el monitoreo financiero",
+      "description": "Ejecuta un agente para que el cerebro empresarial comience a monitorear tus finanzas.",
+      "action": "Explorar agentes financieros",
+      "impact": "Alertas proactivas de presupuesto",
+      "time": "3 minutos"
+    },
+    "setupLegal": {
+      "title": "Configura parámetros legales",
+      "description": "Define al menos un parámetro legal para activar el monitoreo de cumplimiento.",
+      "action": "Configurar en ADN",
+      "impact": "Monitoreo automático de compliance",
+      "time": "5 minutos"
+    },
+    "setupHR": {
+      "title": "Completa tu equipo",
+      "description": "Invita al menos 2 miembros para activar el autopilot de recursos humanos.",
+      "action": "Invitar miembros",
+      "impact": "Gestión automatizada de talento",
+      "time": "3 minutos"
+    },
+    "setupOperations": {
+      "title": "Crea tu primer equipo AI",
+      "description": "Configura un equipo de AI workforce para activar la optimización operativa.",
+      "action": "Crear equipo AI",
+      "impact": "Automatización de procesos",
+      "time": "5 minutos"
     }
   },
   "common": {
@@ -911,7 +946,17 @@
       "operationsRequired": "Necesitas al menos 1 equipo de AI workforce configurado para activar el autopilot de operaciones.",
       "connectNow": "Conectar redes sociales",
       "importData": "Importar datos de redes",
-      "setupCRM": "Configurar CRM"
+      "setupCRM": "Configurar CRM",
+      "createWithAI": "Crear contenido con IA",
+      "runFirstAgent": "Ejecutar primer agente",
+      "inviteMembers": "Invitar miembros al equipo",
+      "configureLegal": "Configurar parámetros legales",
+      "createTeam": "Crear equipo AI workforce",
+      "salesBootstrapHint": "Crea un deal o importa contactos para que el Autopilot comercial pueda analizar tu pipeline.",
+      "financeBootstrapHint": "Ejecuta cualquier agente de la plataforma para generar actividad que el Autopilot financiero pueda monitorear.",
+      "hrBootstrapHint": "Invita al menos 2 miembros a tu equipo desde Configuración > Equipo.",
+      "legalBootstrapHint": "Ve a ADN de Empresa y configura al menos un parámetro con prefijo 'legal_'.",
+      "operationsBootstrapHint": "Crea un equipo de AI workforce desde el panel de Operaciones."
     },
     "preflight": {
       "aborted": "Ciclo abortado: datos insuficientes"

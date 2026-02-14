@@ -251,6 +251,9 @@
     "continue": "Continue to Dashboard",
     "allComplete": "Setup completed!",
     "allCompleteDesc": "Your business profile is ready",
+    "generatedIn": "Generated in {{time}}s",
+    "downloadPdf": "Download PDF",
+    "continueBtn": "Continue",
     "wow": {
       "analyzing": "Analyzing your business",
       "strategy": "Generating personalized marketing strategy...",

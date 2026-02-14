@@ -250,9 +250,11 @@ const AdminCustomers = () => {
       const { error } = await supabase.rpc('delete_user_cascade', { target_user_id: userId });
       if (error) throw error;
       toast({ title: "Eliminado", description: `Usuario "${userName}" eliminado permanentemente` });
-      loadUsers();
+      // Refetch both users and companies since user deletion may affect company members
+      await Promise.all([loadUsers(), loadCompanies()]);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      console.error('Error deleting user:', error);
+      toast({ title: "Error al eliminar usuario", description: error.message, variant: "destructive" });
     }
   };
 
@@ -261,9 +263,11 @@ const AdminCustomers = () => {
       const { error } = await supabase.rpc('delete_company_cascade', { target_company_id: companyId });
       if (error) throw error;
       toast({ title: "Eliminado", description: `Empresa "${companyName}" eliminada permanentemente` });
-      loadCompanies();
+      // Refetch both companies and users since company deletion removes members
+      await Promise.all([loadCompanies(), loadUsers()]);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      console.error('Error deleting company:', error);
+      toast({ title: "Error al eliminar empresa", description: error.message, variant: "destructive" });
     }
   };
 

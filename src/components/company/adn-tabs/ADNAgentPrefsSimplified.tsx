@@ -15,14 +15,10 @@ interface ADNAgentPrefsSimplifiedProps {
   companyId: string;
 }
 
-const CONTENT_LENGTH_OPTIONS = [
-  { value: 'short', label: 'Corto' },
-  { value: 'medium', label: 'Medio' },
-  { value: 'long', label: 'Largo' },
-];
+const CONTENT_LENGTH_KEYS = ['short', 'medium', 'long'] as const;
 
 export const ADNAgentPrefsSimplified = ({ companyId }: ADNAgentPrefsSimplifiedProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['company', 'common']);
   const { toast } = useToast();
   const { preferences, loading, savePreferences } = useAgentPreferences(companyId);
 
@@ -45,20 +41,25 @@ export const ADNAgentPrefsSimplified = ({ companyId }: ADNAgentPrefsSimplifiedPr
   const creativityLevel = preferences?.default_creativity_level || 0.7;
   const qualityThreshold = preferences?.quality_threshold || 0.8;
 
+  const getCreativityLabel = (level: number) => {
+    if (level < 0.4) return t('company:agent_prefs.creativity_conservative');
+    if (level < 0.7) return t('company:agent_prefs.creativity_balanced');
+    return t('company:agent_prefs.creativity_creative');
+  };
+
   return (
     <div className="space-y-4">
-      {/* Creativity & Style */}
       <Card>
         <CardHeader className="py-3 px-4">
           <CardTitle className="text-sm flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
-            {t('company.agent_prefs.creativity_title', 'Creatividad y Estilo')}
+            {t('company:agent_prefs.creativity_title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="py-2 px-4 space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs">{t('company.agent_prefs.creativity_level', 'Nivel de creatividad')}</Label>
+              <Label className="text-xs">{t('company:agent_prefs.creativity_level')}</Label>
               <span className="text-xs text-muted-foreground">{Math.round(creativityLevel * 100)}%</span>
             </div>
             <Slider
@@ -70,13 +71,13 @@ export const ADNAgentPrefsSimplified = ({ companyId }: ADNAgentPrefsSimplifiedPr
               className="py-2"
             />
             <p className="text-xs text-muted-foreground">
-              {creativityLevel < 0.4 ? 'Conservador' : creativityLevel < 0.7 ? 'Balanceado' : 'Creativo'}
+              {getCreativityLabel(creativityLevel)}
             </p>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label className="text-xs">{t('company.agent_prefs.content_length', 'Longitud')}</Label>
+              <Label className="text-xs">{t('company:agent_prefs.content_length')}</Label>
               <Select 
                 value={preferences?.default_content_length || 'medium'} 
                 onValueChange={(v) => handleSaveField('default_content_length', v)}
@@ -85,14 +86,14 @@ export const ADNAgentPrefsSimplified = ({ companyId }: ADNAgentPrefsSimplifiedPr
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CONTENT_LENGTH_OPTIONS.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  {CONTENT_LENGTH_KEYS.map(key => (
+                    <SelectItem key={key} value={key}>{t(`company:agent_prefs.content_length_${key}`)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{t('company.agent_prefs.max_executions', 'Máx/día')}</Label>
+              <Label className="text-xs">{t('company:agent_prefs.max_executions')}</Label>
               <Input
                 type="number"
                 className="h-8 text-xs"
@@ -104,18 +105,17 @@ export const ADNAgentPrefsSimplified = ({ companyId }: ADNAgentPrefsSimplifiedPr
         </CardContent>
       </Card>
 
-      {/* Control & Review */}
       <Card>
         <CardHeader className="py-3 px-4">
           <CardTitle className="text-sm flex items-center gap-2">
             <Shield className="h-4 w-4" />
-            {t('company.agent_prefs.review_title', 'Control y Revisión')}
+            {t('company:agent_prefs.review_title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="py-2 px-4 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <Label className="text-xs">{t('company.agent_prefs.require_review', 'Requiere revisión humana')}</Label>
+              <Label className="text-xs">{t('company:agent_prefs.require_review')}</Label>
             </div>
             <Switch
               checked={preferences?.require_human_review ?? true}
@@ -124,7 +124,7 @@ export const ADNAgentPrefsSimplified = ({ companyId }: ADNAgentPrefsSimplifiedPr
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <Label className="text-xs">{t('company.agent_prefs.auto_approve', 'Auto-aprobar contenido')}</Label>
+              <Label className="text-xs">{t('company:agent_prefs.auto_approve')}</Label>
             </div>
             <Switch
               checked={preferences?.auto_approve_content || false}
@@ -134,7 +134,7 @@ export const ADNAgentPrefsSimplified = ({ companyId }: ADNAgentPrefsSimplifiedPr
           
           <div className="space-y-2 pt-2 border-t">
             <div className="flex items-center justify-between">
-              <Label className="text-xs">{t('company.agent_prefs.quality_threshold', 'Umbral de calidad')}</Label>
+              <Label className="text-xs">{t('company:agent_prefs.quality_threshold')}</Label>
               <span className="text-xs text-muted-foreground">{Math.round(qualityThreshold * 100)}%</span>
             </div>
             <Slider
@@ -149,19 +149,18 @@ export const ADNAgentPrefsSimplified = ({ companyId }: ADNAgentPrefsSimplifiedPr
         </CardContent>
       </Card>
 
-      {/* Guidelines */}
       <Card>
         <CardHeader className="py-3 px-4">
           <CardTitle className="text-sm flex items-center gap-2">
             <Bot className="h-4 w-4" />
-            {t('company.agent_prefs.guidelines_title', 'Guías para Agentes')}
+            {t('company:agent_prefs.guidelines_title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="py-2 px-4">
           <Textarea
             value={preferences?.content_guidelines || ''}
             onChange={(e) => handleSaveField('content_guidelines', e.target.value)}
-            placeholder={t('company.agent_prefs.guidelines_placeholder', 'Instrucciones adicionales para todos los agentes...')}
+            placeholder={t('company:agent_prefs.guidelines_placeholder')}
             rows={3}
             className="text-xs resize-none"
           />

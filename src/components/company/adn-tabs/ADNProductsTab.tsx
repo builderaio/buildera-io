@@ -16,17 +16,17 @@ interface ADNProductsTabProps {
 }
 
 export const ADNProductsTab = ({ companyId }: ADNProductsTabProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['company', 'common']);
   const { toast } = useToast();
   const { products, loading, saving, addProduct, updateProduct, deleteProduct } = useCompanyProducts(companyId);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const handleAdd = async () => {
     try {
-      await addProduct({ name: 'Nuevo Producto' });
-      toast({ title: t('company.products.added', 'Producto agregado') });
+      await addProduct({ name: t('company:products.newProduct') });
+      toast({ title: t('company:products.added') });
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
@@ -34,16 +34,16 @@ export const ADNProductsTab = ({ companyId }: ADNProductsTabProps) => {
     try {
       await updateProduct(id, updates);
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteProduct(id);
-      toast({ title: t('company.products.deleted', 'Producto eliminado') });
+      toast({ title: t('company:products.deleted') });
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
@@ -61,22 +61,22 @@ export const ADNProductsTab = ({ companyId }: ADNProductsTabProps) => {
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Package className="h-5 w-5" />
-            {t('company.products.title', 'Productos y Servicios')}
+            {t('company:products.title')}
           </h3>
           <p className="text-sm text-muted-foreground">
-            {t('company.products.desc', 'Los agentes usarán esta información para crear contenido específico')}
+            {t('company:products.desc')}
           </p>
         </div>
         <Button onClick={handleAdd} disabled={saving}>
           <Plus className="h-4 w-4 mr-2" />
-          {t('company.products.add', 'Agregar')}
+          {t('company:products.add')}
         </Button>
       </div>
 
       {products.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            {t('company.products.empty', 'No hay productos configurados')}
+            {t('company:products.empty')}
           </CardContent>
         </Card>
       ) : (
@@ -90,19 +90,19 @@ export const ADNProductsTab = ({ companyId }: ADNProductsTabProps) => {
                       value={product.name}
                       onChange={(e) => handleUpdate(product.id, { name: e.target.value })}
                       className="font-semibold text-lg border-none px-0 focus-visible:ring-0"
-                      placeholder={t('company.products.name', 'Nombre del producto')}
+                      placeholder={t('company:products.name')}
                     />
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
                         <Star className={`h-4 w-4 ${product.is_featured ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`} />
-                        <Label className="text-sm">{t('company.products.featured', 'Destacado')}</Label>
+                        <Label className="text-sm">{t('company:products.featured')}</Label>
                         <Switch
                           checked={product.is_featured}
                           onCheckedChange={(v) => handleUpdate(product.id, { is_featured: v })}
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm">{t('company.products.active', 'Activo')}</Label>
+                        <Label className="text-sm">{t('company:products.active')}</Label>
                         <Switch
                           checked={product.is_active}
                           onCheckedChange={(v) => handleUpdate(product.id, { is_active: v })}
@@ -118,15 +118,15 @@ export const ADNProductsTab = ({ companyId }: ADNProductsTabProps) => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>{t('company.products.category', 'Categoría')}</Label>
+                    <Label>{t('company:products.category')}</Label>
                     <Input
                       value={product.category || ''}
                       onChange={(e) => handleUpdate(product.id, { category: e.target.value })}
-                      placeholder="Ej: Software, Consultoría"
+                      placeholder={t('company:products.categoryPlaceholder')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t('company.products.price', 'Precio')}</Label>
+                    <Label>{t('company:products.price')}</Label>
                     <div className="flex gap-2">
                       <Input
                         type="number"
@@ -144,25 +144,25 @@ export const ADNProductsTab = ({ companyId }: ADNProductsTabProps) => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('company.products.description', 'Descripción')}</Label>
+                  <Label>{t('company:products.description')}</Label>
                   <Textarea
                     value={product.description || ''}
                     onChange={(e) => handleUpdate(product.id, { description: e.target.value })}
-                    placeholder={t('company.products.description_placeholder', 'Describe tu producto o servicio...')}
+                    placeholder={t('company:products.description_placeholder')}
                     rows={2}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('company.products.value_prop', 'Propuesta de valor')}</Label>
+                  <Label>{t('company:products.value_prop')}</Label>
                   <Textarea
                     value={product.value_proposition || ''}
                     onChange={(e) => handleUpdate(product.id, { value_proposition: e.target.value })}
-                    placeholder={t('company.products.value_prop_placeholder', '¿Por qué elegir este producto?')}
+                    placeholder={t('company:products.value_prop_placeholder')}
                     rows={2}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('company.products.landing_url', 'URL de landing')}</Label>
+                  <Label>{t('company:products.landing_url')}</Label>
                   <Input
                     value={product.landing_url || ''}
                     onChange={(e) => handleUpdate(product.id, { landing_url: e.target.value })}

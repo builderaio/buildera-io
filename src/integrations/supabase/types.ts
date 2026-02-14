@@ -10540,6 +10540,10 @@ export type Database = {
         Args: { target_company_id: string }
         Returns: undefined
       }
+      delete_user_cascade: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       deprecate_unused_capabilities: { Args: never; Returns: undefined }
       expire_old_invitations: { Args: never; Returns: undefined }
       extract_hashtags: { Args: { caption: string }; Returns: string[] }

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { 
   Users, 
   Building2, 
@@ -244,6 +245,28 @@ const AdminCustomers = () => {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    try {
+      const { error } = await supabase.rpc('delete_user_cascade', { target_user_id: userId });
+      if (error) throw error;
+      toast({ title: "Eliminado", description: `Usuario "${userName}" eliminado permanentemente` });
+      loadUsers();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleDeleteCompany = async (companyId: string, companyName: string) => {
+    try {
+      const { error } = await supabase.rpc('delete_company_cascade', { target_company_id: companyId });
+      if (error) throw error;
+      toast({ title: "Eliminado", description: `Empresa "${companyName}" eliminada permanentemente` });
+      loadCompanies();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
   const getUserTypeIcon = (type: string) => {
     switch (type) {
       case 'company': return Building2;
@@ -425,6 +448,30 @@ const AdminCustomers = () => {
                           >
                             {user.is_active === false ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
                           </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>¿Eliminar usuario permanentemente?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción eliminará a <strong>{user.full_name || user.email}</strong> y todos sus datos asociados. Esta acción no se puede deshacer.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteUser(user.user_id, user.full_name || user.email)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Eliminar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     );
@@ -493,6 +540,30 @@ const AdminCustomers = () => {
                         >
                           {company.is_active ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Eliminar empresa permanentemente?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción eliminará <strong>{company.name}</strong> y todos sus datos asociados (agentes, créditos, configuraciones, etc.). Esta acción no se puede deshacer.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteCompany(company.id, company.name)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Eliminar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   ))}

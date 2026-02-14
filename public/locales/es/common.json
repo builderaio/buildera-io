@@ -1372,5 +1372,35 @@
       "differentiation": "Foco de diferenciación identificado",
       "competitiveClarity": "Claridad de posicionamiento competitivo"
     }
+  },
+  "execDiagnosis": {
+    "engineLabel": "Diagnóstico Digital Ejecutivo",
+    "companyProfile": "Perfil de Empresa",
+    "snapshotOverview": "Resumen General",
+    "industrySignals": "Señales de Industria",
+    "seoKeywords": "Palabras Clave SEO",
+    "marketPresence": "Presencia de Mercado",
+    "productExtraction": "Extracción de Productos y Servicios",
+    "servicesDetected": "Servicios Detectados",
+    "offersDetected": "Ofertas Detectadas",
+    "audienceDetected": "Señales de Audiencia",
+    "founded": "Fundada",
+    "performanceSignals": "Señales de Rendimiento",
+    "aiDiagnosis": "Diagnóstico Ejecutivo IA",
+    "whatIsWorking": "Lo que Funciona",
+    "whatIsMissing": "Lo que Falta",
+    "keyRisks": "Riesgos Clave",
+    "competitivePositioning": "Evaluación de Posicionamiento Competitivo",
+    "actionPlan": "Plan de Acción Recomendado",
+    "shortTerm": "Corto Plazo",
+    "midTerm": "Mediano Plazo",
+    "longTerm": "Largo Plazo",
+    "days": "días",
+    "months": "meses",
+    "maturityScores": "Evaluación de Madurez Digital",
+    "ctaTitle": "Listo para Construir tu ADN Estratégico",
+    "ctaDescription": "El Cerebro Empresarial te guiará en la definición de tu misión, visión, propuesta de valor y estrategia competitiva basada en los insights anteriores.",
+    "proceedDNA": "Continuar al ADN Estratégico",
+    "fullDiagnosisComplete": "Diagnóstico Completo"
   }
 }

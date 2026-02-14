@@ -12,7 +12,7 @@ import { useCRMContacts, CreateContactInput } from '@/hooks/useCRMContacts';
 import { useCompanyManagement } from '@/hooks/useCompanyManagement';
 import { Search, Plus, Mail, Phone, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getDateLocale } from '@/utils/dateLocale';
 
 export const ContactsList = () => {
   const { t } = useTranslation();
@@ -250,10 +250,10 @@ export const ContactsList = () => {
                     </div>
 
                     <div className="text-right text-sm text-muted-foreground">
-                      <p>{format(new Date(contact.created_at), "d MMM yyyy", { locale: es })}</p>
+                      <p>{format(new Date(contact.created_at), "d MMM yyyy", { locale: getDateLocale() })}</p>
                       {contact.last_activity_at && (
                         <p className="text-xs">
-                          {t('crm.contacts.lastActivity', 'Última actividad')}: {format(new Date(contact.last_activity_at), "d MMM", { locale: es })}
+                          {t('crm.contacts.lastActivity', 'Última actividad')}: {format(new Date(contact.last_activity_at), "d MMM", { locale: getDateLocale() })}
                         </p>
                       )}
                     </div>

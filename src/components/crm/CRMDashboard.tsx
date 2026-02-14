@@ -8,7 +8,7 @@ import { useCRMActivities } from '@/hooks/useCRMActivities';
 import { useCompanyManagement } from '@/hooks/useCompanyManagement';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getDateLocale } from '@/utils/dateLocale';
 
 export const CRMDashboard = () => {
   const { t } = useTranslation();
@@ -148,7 +148,7 @@ export const CRMDashboard = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{activity.subject}</p>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(activity.activity_date), "d MMM, HH:mm", { locale: es })}
+                        {format(new Date(activity.activity_date), "d MMM, HH:mm", { locale: getDateLocale() })}
                       </p>
                     </div>
                   </div>
@@ -179,7 +179,7 @@ export const CRMDashboard = () => {
                       <p className="text-sm font-medium">{task.subject}</p>
                       {task.due_date && (
                         <p className="text-xs text-muted-foreground">
-                          {t('crm.dashboard.dueDate', 'Vence')}: {format(new Date(task.due_date), "d MMM", { locale: es })}
+                          {t('crm.dashboard.dueDate', 'Vence')}: {format(new Date(task.due_date), "d MMM", { locale: getDateLocale() })}
                         </p>
                       )}
                     </div>

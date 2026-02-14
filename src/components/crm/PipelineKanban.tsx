@@ -12,7 +12,7 @@ import { useCRMContacts } from '@/hooks/useCRMContacts';
 import { useCompanyManagement } from '@/hooks/useCompanyManagement';
 import { Plus, DollarSign, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getDateLocale } from '@/utils/dateLocale';
 
 export const PipelineKanban = () => {
   const { t } = useTranslation();
@@ -265,7 +265,7 @@ export const PipelineKanban = () => {
                       {deal.expected_close_date && (
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          <span>{format(new Date(deal.expected_close_date), "d MMM", { locale: es })}</span>
+                          <span>{format(new Date(deal.expected_close_date), "d MMM", { locale: getDateLocale() })}</span>
                         </div>
                       )}
                     </div>

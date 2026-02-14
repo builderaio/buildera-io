@@ -1077,5 +1077,68 @@
     "updated": "Profile updated",
     "updatedDesc": "Changes have been saved successfully",
     "saveFailed": "Could not save changes"
+  },
+  "crm": {
+    "dashboard": {
+      "totalContacts": "Total Contacts",
+      "accounts": "Accounts",
+      "activeAccounts": "Active accounts",
+      "pipelineValue": "Pipeline Value",
+      "openDeals": "open deals",
+      "wonThisMonth": "Won this month",
+      "deals": "deals",
+      "recentActivity": "Recent Activity",
+      "noActivity": "No recent activity",
+      "pendingTasks": "Pending Tasks",
+      "noTasks": "No pending tasks",
+      "dueDate": "Due"
+    },
+    "contacts": {
+      "searchPlaceholder": "Search contacts...",
+      "type": "Type",
+      "all": "All",
+      "add": "Add",
+      "addNew": "New Contact",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "phone": "Phone",
+      "businessType": "Business type",
+      "contactType": "Contact type",
+      "jobTitle": "Job Title",
+      "create": "Create Contact",
+      "noContacts": "No contacts",
+      "lastActivity": "Last activity"
+    },
+    "lifecycle": {
+      "subscriber": "Subscriber",
+      "lead": "Lead",
+      "mql": "MQL",
+      "sql": "SQL",
+      "opportunity": "Opportunity",
+      "customer": "Customer",
+      "evangelist": "Evangelist",
+      "prospect": "Prospect",
+      "churned": "Churned"
+    },
+    "pipeline": {
+      "noPipelines": "No pipelines",
+      "createFirst": "Create your first sales pipeline",
+      "create": "Create Pipeline",
+      "createNew": "New Pipeline",
+      "name": "Name",
+      "namePlaceholder": "E.g.: Sales Pipeline",
+      "select": "Select pipeline",
+      "noDeals": "No deals"
+    },
+    "deals": {
+      "add": "Add Deal",
+      "addNew": "New Deal",
+      "name": "Name",
+      "contact": "Contact",
+      "selectContact": "Select contact",
+      "amount": "Amount",
+      "create": "Create Deal"
+    }
   }
 }

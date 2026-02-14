@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Heart, MessageCircle, Share2, Eye, Calendar, TrendingUp } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getDateLocale } from '@/utils/dateLocale';
 
 interface SocialPost {
   id: string;
@@ -250,13 +250,13 @@ export const SocialMediaTimeline: React.FC<SocialMediaTimelineProps> = ({ userId
                               <p className="text-xs text-muted-foreground capitalize">
                                 {post.platform} • {formatDistanceToNow(new Date(post.postedAt), { 
                                   addSuffix: true, 
-                                  locale: es 
+                                  locale: getDateLocale() 
                                 })}
                               </p>
                             </div>
                           </div>
                           <Badge variant="outline" className="text-xs">
-                            {format(new Date(post.postedAt), 'dd MMM', { locale: es })}
+                            {format(new Date(post.postedAt), 'dd MMM', { locale: getDateLocale() })}
                           </Badge>
                         </div>
                         

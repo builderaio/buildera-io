@@ -1131,5 +1131,68 @@
     "updated": "Perfil actualizado",
     "updatedDesc": "Los cambios se han guardado correctamente",
     "saveFailed": "No se pudieron guardar los cambios"
+  },
+  "crm": {
+    "dashboard": {
+      "totalContacts": "Total Contactos",
+      "accounts": "Cuentas",
+      "activeAccounts": "Cuentas activas",
+      "pipelineValue": "Valor Pipeline",
+      "openDeals": "deals abiertos",
+      "wonThisMonth": "Ganado este mes",
+      "deals": "deals",
+      "recentActivity": "Actividad Reciente",
+      "noActivity": "No hay actividad reciente",
+      "pendingTasks": "Tareas Pendientes",
+      "noTasks": "No hay tareas pendientes",
+      "dueDate": "Vence"
+    },
+    "contacts": {
+      "searchPlaceholder": "Buscar contactos...",
+      "type": "Tipo",
+      "all": "Todos",
+      "add": "Agregar",
+      "addNew": "Nuevo Contacto",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "email": "Email",
+      "phone": "Teléfono",
+      "businessType": "Tipo de negocio",
+      "contactType": "Tipo de contacto",
+      "jobTitle": "Cargo",
+      "create": "Crear Contacto",
+      "noContacts": "No hay contactos",
+      "lastActivity": "Última actividad"
+    },
+    "lifecycle": {
+      "subscriber": "Suscriptor",
+      "lead": "Lead",
+      "mql": "MQL",
+      "sql": "SQL",
+      "opportunity": "Oportunidad",
+      "customer": "Cliente",
+      "evangelist": "Evangelista",
+      "prospect": "Prospecto",
+      "churned": "Perdido"
+    },
+    "pipeline": {
+      "noPipelines": "No hay pipelines",
+      "createFirst": "Crea tu primer pipeline de ventas",
+      "create": "Crear Pipeline",
+      "createNew": "Nuevo Pipeline",
+      "name": "Nombre",
+      "namePlaceholder": "Ej: Pipeline de Ventas",
+      "select": "Seleccionar pipeline",
+      "noDeals": "Sin deals"
+    },
+    "deals": {
+      "add": "Agregar Deal",
+      "addNew": "Nuevo Deal",
+      "name": "Nombre",
+      "contact": "Contacto",
+      "selectContact": "Seleccionar contacto",
+      "amount": "Monto",
+      "create": "Crear Deal"
+    }
   }
 }

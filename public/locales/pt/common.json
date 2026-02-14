@@ -1077,5 +1077,68 @@
     "updated": "Perfil atualizado",
     "updatedDesc": "As alterações foram salvas com sucesso",
     "saveFailed": "Não foi possível salvar as alterações"
+  },
+  "crm": {
+    "dashboard": {
+      "totalContacts": "Total de Contatos",
+      "accounts": "Contas",
+      "activeAccounts": "Contas ativas",
+      "pipelineValue": "Valor do Pipeline",
+      "openDeals": "deals abertos",
+      "wonThisMonth": "Ganho este mês",
+      "deals": "deals",
+      "recentActivity": "Atividade Recente",
+      "noActivity": "Nenhuma atividade recente",
+      "pendingTasks": "Tarefas Pendentes",
+      "noTasks": "Nenhuma tarefa pendente",
+      "dueDate": "Vence"
+    },
+    "contacts": {
+      "searchPlaceholder": "Buscar contatos...",
+      "type": "Tipo",
+      "all": "Todos",
+      "add": "Adicionar",
+      "addNew": "Novo Contato",
+      "firstName": "Nome",
+      "lastName": "Sobrenome",
+      "email": "Email",
+      "phone": "Telefone",
+      "businessType": "Tipo de negócio",
+      "contactType": "Tipo de contato",
+      "jobTitle": "Cargo",
+      "create": "Criar Contato",
+      "noContacts": "Nenhum contato",
+      "lastActivity": "Última atividade"
+    },
+    "lifecycle": {
+      "subscriber": "Assinante",
+      "lead": "Lead",
+      "mql": "MQL",
+      "sql": "SQL",
+      "opportunity": "Oportunidade",
+      "customer": "Cliente",
+      "evangelist": "Evangelista",
+      "prospect": "Prospecto",
+      "churned": "Perdido"
+    },
+    "pipeline": {
+      "noPipelines": "Nenhum pipeline",
+      "createFirst": "Crie seu primeiro pipeline de vendas",
+      "create": "Criar Pipeline",
+      "createNew": "Novo Pipeline",
+      "name": "Nome",
+      "namePlaceholder": "Ex: Pipeline de Vendas",
+      "select": "Selecionar pipeline",
+      "noDeals": "Sem deals"
+    },
+    "deals": {
+      "add": "Adicionar Deal",
+      "addNew": "Novo Deal",
+      "name": "Nome",
+      "contact": "Contato",
+      "selectContact": "Selecionar contato",
+      "amount": "Valor",
+      "create": "Criar Deal"
+    }
   }
 }

@@ -5,7 +5,7 @@ import {
   Building2, Globe2, Tag, Mail, Phone, MapPin, Users, Target,
   CheckCircle2, AlertTriangle, XCircle, Shield, TrendingUp,
   Zap, Star, ArrowRight, Cpu, Activity, Brain, Sparkles,
-  Calendar, Eye, ShieldCheck, Download, FileSearch
+  Calendar, Eye, ShieldCheck, Download, FileSearch, BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { computeDigitalMaturityScores } from './scoring/digitalMaturityScoring';
@@ -568,30 +568,42 @@ export const ExecutiveDigitalDiagnosis = ({
         {/* ══════════════════════════════════════════════════════ */}
         {/* CTA: PROCEED TO STRATEGIC DNA */}
         {/* ══════════════════════════════════════════════════════ */}
-        <motion.div {...fadeUp(0.6)} className="bg-gradient-to-r from-primary/20 via-slate-900 to-blue-600/20 border border-primary/30 rounded-xl p-6 sm:p-8 text-center">
-          <div className="flex justify-center mb-4">
+        <motion.div {...fadeUp(0.6)} className="bg-slate-900/80 border border-primary/30 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
             <motion.div
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-              className="w-14 h-14 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center"
+              className="w-11 h-11 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center shrink-0"
             >
-              <Brain className="w-7 h-7 text-primary" />
+              <Brain className="w-5 h-5 text-primary" />
             </motion.div>
+            <div className="text-left">
+              <h3 className="text-sm font-bold text-white">
+                {t('common:execDiagnosis.ctaNextStep', 'Next: Strategic DNA Configuration')}
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {t('common:execDiagnosis.ctaNextStepSub', 'Define your mission, vision, and value proposition with AI assistance.')}
+              </p>
+            </div>
           </div>
-          <h3 className="text-lg font-bold text-white mb-2">
-            {t('common:execDiagnosis.ctaTitle', 'Ready to Build Your Strategic DNA')}
-          </h3>
-          <p className="text-sm text-slate-400 max-w-lg mx-auto mb-5">
-            {t('common:execDiagnosis.ctaDescription', 'The Enterprise Brain will now guide you through defining your mission, vision, value proposition, and competitive strategy based on the insights above.')}
-          </p>
-          <Button
-            onClick={onContinue}
-            size="lg"
-            className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-base px-8"
-          >
-            {t('common:execDiagnosis.proceedDNA', 'Proceed to Strategic DNA')}
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
+          <div className="flex items-center gap-3 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-slate-600 text-slate-300 hover:bg-slate-800 gap-2"
+            >
+              <BarChart3 className="w-4 h-4" />
+              {t('common:execDiagnosis.fullReport', 'Full Report')}
+            </Button>
+            <Button
+              onClick={onContinue}
+              size="sm"
+              className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 gap-2 px-5"
+            >
+              {t('common:execDiagnosis.continue', 'Continue')}
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
         </motion.div>
 
         {/* Footer Status */}

@@ -4,6 +4,7 @@ import Hero from "@/components/Hero";
 import AutonomousEnterprise from "@/components/home/AutonomousEnterprise";
 import AgentShowcase from "@/components/home/AgentShowcase";
 import HowItWorks from "@/components/home/HowItWorks";
+import WhatWeDoNot from "@/components/home/WhatWeDoNot";
 import ValueHighlights from "@/components/home/ValueHighlights";
 import AgentsInAction from "@/components/home/AgentsInAction";
 import UseCases from "@/components/UseCases";
@@ -14,7 +15,6 @@ import Header from "@/components/Header";
 
 const Index = () => {
   useEffect(() => {
-    // Load Metricool tracking script
     const loadMetricoolScript = () => {
       const head = document.getElementsByTagName("head")[0];
       const script = document.createElement("script");
@@ -37,10 +37,11 @@ const Index = () => {
       <main>
         <Hero />
         <AutonomousEnterprise />
-        <AgentShowcase />
         <HowItWorks />
+        <AgentShowcase />
         <ValueHighlights />
         <AgentsInAction />
+        <WhatWeDoNot />
         <UseCases />
         <EcosystemSolution />
         <FinalCTA />

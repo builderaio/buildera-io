@@ -9,8 +9,6 @@ import {
   BarChart3, 
   Activity,
   DollarSign,
-  TrendingUp,
-  TrendingDown,
   Eye,
   UserCheck,
   Database,
@@ -34,6 +32,7 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AutopilotSection from '@/components/admin/AutopilotSection';
 
 interface DashboardStats {
   totalUsers: number;
@@ -212,7 +211,7 @@ const AdminDashboard = () => {
           type: 'critical',
           title: 'Alta tasa de errores',
           description: `${errorRate.toFixed(1)}% de las ejecuciones de agentes fallaron en los últimos 7 días`,
-          action: { label: 'Ver detalles', path: '/admin/agent-usage' }
+          action: { label: 'Ver detalles', path: '/admin/agent-performance' }
         });
       }
 
@@ -228,7 +227,7 @@ const AdminDashboard = () => {
           type: 'warning',
           title: 'Sin nuevos usuarios',
           description: 'No se han registrado nuevos usuarios en los últimos 7 días',
-          action: { label: 'Ver analytics', path: '/admin/analytics' }
+          action: { label: 'Ver clientes', path: '/admin/customers' }
         });
       }
 
@@ -239,7 +238,7 @@ const AdminDashboard = () => {
           type: 'warning',
           title: 'Sin suscripciones activas',
           description: 'No hay usuarios con suscripciones activas',
-          action: { label: 'Ver suscripciones', path: '/admin/subscriptions' }
+          action: { label: 'Ver clientes', path: '/admin/customers' }
         });
       }
 
@@ -288,16 +287,11 @@ const AdminDashboard = () => {
     : 0;
 
   const quickActions = [
-    { title: "Usuarios", icon: UserCheck, path: '/admin/users', count: stats.totalUsers },
-    { title: "Empresas", icon: Building2, path: '/admin/companies', count: stats.totalCompanies },
-    { title: "Suscripciones", icon: CreditCard, path: '/admin/subscriptions', count: stats.activeSubscriptions },
-    { title: "Uso de Agentes", icon: Bot, path: '/admin/agent-usage', count: stats.totalAgentExecutions },
-    { title: "Constructor Agentes", icon: Brain, path: '/admin/agent-builder' },
-    { title: "Configuración IA", icon: Settings, path: '/admin/ai-config' },
-    { title: "Monitoreo IA", icon: Eye, path: '/admin/ai-monitoring' },
-    { title: "Base de Datos", icon: Database, path: '/admin/database' },
-    { title: "Email System", icon: Mail, path: '/admin/email-system' },
-    { title: "Analytics", icon: BarChart3, path: '/admin/analytics' },
+    { title: "Clientes", icon: Users, path: '/admin/customers', count: stats.totalUsers },
+    { title: "Constructor Agentes", icon: Bot, path: '/admin/agent-builder' },
+    { title: "Rendimiento", icon: Activity, path: '/admin/agent-performance', count: stats.totalAgentExecutions },
+    { title: "Configuración IA", icon: Brain, path: '/admin/ai-config' },
+    { title: "Sistema", icon: Settings, path: '/admin/system' },
   ];
 
   return (
@@ -498,6 +492,11 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Enterprise Autopilot Section */}
+        <div className="mb-6">
+          <AutopilotSection />
         </div>
 
         {/* Quick Actions Grid */}

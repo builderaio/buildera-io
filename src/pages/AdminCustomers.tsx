@@ -29,15 +29,16 @@ import {
   Sparkles,
   TrendingUp,
   DollarSign,
-  Code,
   User,
-  RefreshCw
+  RefreshCw,
+  Coins
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import CreditsPanel from '@/components/admin/CreditsPanel';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 // Types
@@ -246,7 +247,6 @@ const AdminCustomers = () => {
   const getUserTypeIcon = (type: string) => {
     switch (type) {
       case 'company': return Building2;
-      case 'developer': return Code;
       default: return User;
     }
   };
@@ -351,7 +351,7 @@ const AdminCustomers = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-lg grid-cols-4">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Usuarios</span>
@@ -363,6 +363,10 @@ const AdminCustomers = () => {
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
               <span className="hidden sm:inline">Suscripciones</span>
+            </TabsTrigger>
+            <TabsTrigger value="credits" className="flex items-center gap-2">
+              <Coins className="w-4 h-4" />
+              <span className="hidden sm:inline">Créditos</span>
             </TabsTrigger>
           </TabsList>
 
@@ -381,7 +385,7 @@ const AdminCustomers = () => {
                     />
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    {['all', 'active', 'inactive', 'company', 'developer', 'expert'].map(f => (
+                    {['all', 'active', 'inactive', 'company'].map(f => (
                       <Button
                         key={f}
                         size="sm"
@@ -389,7 +393,7 @@ const AdminCustomers = () => {
                         onClick={() => setUserFilter(f)}
                         className="text-xs"
                       >
-                        {f === 'all' ? 'Todos' : f === 'active' ? 'Activos' : f === 'inactive' ? 'Inactivos' : f.charAt(0).toUpperCase() + f.slice(1)}
+                        {f === 'all' ? 'Todos' : f === 'active' ? 'Activos' : f === 'inactive' ? 'Inactivos' : 'Empresa'}
                       </Button>
                     ))}
                   </div>
@@ -621,6 +625,11 @@ const AdminCustomers = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Credits Tab */}
+          <TabsContent value="credits" className="space-y-4">
+            <CreditsPanel />
           </TabsContent>
         </Tabs>
       </main>

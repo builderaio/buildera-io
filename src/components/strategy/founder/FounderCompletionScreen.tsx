@@ -13,14 +13,14 @@ import confetti from 'canvas-confetti';
 interface FounderCompletionScreenProps {
   companyName?: string;
   strategy: PlayToWinStrategy | null;
-  onGoToDashboard: () => void;
+  onGoToADN: () => void;
   onExpandStrategy: () => void;
 }
 
 export default function FounderCompletionScreen({ 
   companyName, 
   strategy,
-  onGoToDashboard,
+  onGoToADN,
   onExpandStrategy
 }: FounderCompletionScreenProps) {
   const { t } = useTranslation();
@@ -149,16 +149,16 @@ export default function FounderCompletionScreen({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Button
               size="lg"
-              onClick={onGoToDashboard}
+              onClick={onGoToADN}
               className="gap-2 h-auto py-4"
             >
               <ArrowRight className="h-5 w-5" />
               <div className="text-left">
                 <div className="font-semibold">
-                  {t('journey.founder.goToDashboard', 'Ir al Dashboard')}
+                  {t('journey.founder.goToADN', 'Configurar mi Negocio')}
                 </div>
                 <div className="text-xs opacity-80">
-                  {t('journey.founder.goToDashboardHint', 'Ver acciones recomendadas')}
+                  {t('journey.founder.goToADNHint', 'Completar perfil de empresa')}
                 </div>
               </div>
             </Button>

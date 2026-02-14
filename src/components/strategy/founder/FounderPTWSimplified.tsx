@@ -93,11 +93,11 @@ export default function FounderPTWSimplified({
     }
   };
 
-  const handleGoToDashboard = () => {
+  const handleGoToADN = () => {
     if (onComplete) {
       onComplete();
     } else {
-      navigate('/company-dashboard?view=mando-central');
+      navigate('/company-dashboard?view=negocio');
     }
   };
 
@@ -177,7 +177,7 @@ export default function FounderPTWSimplified({
       <FounderCompletionScreen
         companyName={companyName}
         strategy={strategy}
-        onGoToDashboard={handleGoToDashboard}
+        onGoToADN={handleGoToADN}
         onExpandStrategy={handleExpandStrategy}
       />
     );

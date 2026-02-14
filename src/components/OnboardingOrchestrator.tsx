@@ -261,15 +261,13 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   // Complete onboarding without diagnostic and redirect to PTW
   const completeOnboardingAndRedirectToPTW = async (companyId: string) => {
     try {
-      // Mark onboarding as complete (partial - no diagnostic)
+      // Mark first login completed but NOT onboarding - ADN de empresa is still pending
       await supabase
         .from('user_onboarding_status')
         .upsert({
           user_id: user.id,
-          onboarding_completed_at: new Date().toISOString(),
-          dna_empresarial_completed: true,
           first_login_completed: true,
-          current_step: 5
+          current_step: 3
         }, {
           onConflict: 'user_id'
         });
@@ -279,9 +277,6 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         .from('companies')
         .update({ journey_current_step: 2 })
         .eq('id', companyId);
-
-      // Dispatch completion event
-      window.dispatchEvent(new CustomEvent('onboarding-completed'));
 
       toast({
         title: t('common:onboarding.completed'),

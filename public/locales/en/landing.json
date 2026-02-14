@@ -561,5 +561,48 @@
       "title": "All expansion is governed",
       "description": "No capability is permanently activated without evaluation. Capabilities with outcome_score below threshold are automatically deprecated. Every activation and deprecation is recorded in the auditable log with the complete evidence that justifies it."
     }
+  },
+  "businessImpact": {
+    "badge": "Measurable business impact",
+    "title": "Results that transform your company's valuation",
+    "subtitle": "Buildera isn't just another tool — it's infrastructure that reduces founder dependency, institutionalizes knowledge, and increases your company's value.",
+    "metrics": {
+      "efficiency": "Operational efficiency increase",
+      "decisionSpeed": "Faster decision-making",
+      "marketingROI": "Marketing ROI improvement",
+      "complianceRisk": "Compliance risk reduction",
+      "knowledge": "Knowledge institutionalized"
+    },
+    "comparison": {
+      "title": "Before vs After Buildera",
+      "before": "Without Buildera",
+      "after": "With Buildera",
+      "items": {
+        "founderDependency": {
+          "before": "The founder is the bottleneck — every decision flows through one person",
+          "after": "Operational decisions automated with guardrails — founder focuses on strategy"
+        },
+        "decisionBottleneck": {
+          "before": "Days or weeks to analyze data and make critical decisions",
+          "after": "Real-time analysis and autonomous decisions in minutes"
+        },
+        "knowledgeLoss": {
+          "before": "Critical knowledge lives in the heads of key employees",
+          "after": "All operational knowledge captured, learned, and available 24/7"
+        },
+        "manualProcesses": {
+          "before": "Repetitive manual processes consuming hours every week",
+          "after": "40+ specialized agents executing tasks autonomously"
+        },
+        "reactiveStrategy": {
+          "before": "Reactive strategy based on intuition and limited data",
+          "after": "Proactive AI-driven strategy with continuous learning cycle"
+        }
+      }
+    },
+    "valuation": {
+      "title": "Buildera as valuation infrastructure",
+      "description": "Companies with systematized operations and low founder dependency receive significantly higher valuation multiples. Buildera transforms your business from a people-dependent operation to a replicable autonomous system — increasing its value to investors and acquirers."
+    }
   }
 }

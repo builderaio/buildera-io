@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Trophy, Users, Zap, 
-  ChevronRight, Sparkles, CheckCircle2,
-  ArrowLeft, ArrowRight, Loader2, PartyPopper
+  Cpu, Crosshair, Shield,
+  ChevronRight, CheckCircle2,
+  ArrowLeft, ArrowRight, Loader2, Rocket,
+  Dna, AlertTriangle, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -13,11 +14,10 @@ import { cn } from '@/lib/utils';
 import { usePlayToWin } from '@/hooks/usePlayToWin';
 import { useNavigate } from 'react-router-dom';
 
-// Import simplified step components
-import FounderAspirationStep from './steps/FounderAspirationStep';
-import FounderTargetCustomerStep from './steps/FounderTargetCustomerStep';
-import FounderDifferentiatorStep from './steps/FounderDifferentiatorStep';
-import FounderCompletionScreen from './FounderCompletionScreen';
+import CoreMissionLogicStep from './steps/CoreMissionLogicStep';
+import TargetMarketDefinitionStep from './steps/TargetMarketDefinitionStep';
+import CompetitivePositioningEngineStep from './steps/CompetitivePositioningEngineStep';
+import StrategicProfileGenerated from './StrategicProfileGenerated';
 
 interface FounderPTWSimplifiedProps {
   companyId: string;
@@ -25,27 +25,21 @@ interface FounderPTWSimplifiedProps {
   onComplete?: () => void;
 }
 
-const FOUNDER_STEPS = [
+const STRATEGIC_MODULES = [
   {
     id: 1,
-    key: 'aspiration',
-    title: 'Tu Visión de Éxito',
-    description: '¿Qué significa ganar para ti en 1 año?',
-    icon: Trophy
+    key: 'core_mission',
+    icon: Cpu,
   },
   {
     id: 2,
-    key: 'target_customer',
-    title: 'Tu Cliente Ideal',
-    description: '¿A quién vas a servir?',
-    icon: Users
+    key: 'target_market',
+    icon: Crosshair,
   },
   {
     id: 3,
-    key: 'differentiator',
-    title: 'Tu Diferenciador',
-    description: '¿Qué te hace único?',
-    icon: Zap
+    key: 'competitive_positioning',
+    icon: Shield,
   }
 ];
 
@@ -56,7 +50,7 @@ export default function FounderPTWSimplified({
 }: FounderPTWSimplifiedProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0); // 0 = intro
   const [isComplete, setIsComplete] = useState(false);
   
   const {
@@ -67,7 +61,6 @@ export default function FounderPTWSimplified({
     updateStrategy
   } = usePlayToWin(companyId);
 
-  // Initialize strategy if none exists
   useEffect(() => {
     if (!isLoading && !strategy && companyId) {
       initializeStrategy();
@@ -75,10 +68,11 @@ export default function FounderPTWSimplified({
   }, [isLoading, strategy, companyId, initializeStrategy]);
 
   const handleNext = async () => {
-    if (currentStep < 3) {
+    if (currentStep === 0) {
+      setCurrentStep(1);
+    } else if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Mark as complete
       await updateStrategy({ 
         status: 'in_progress',
         generatedWithAI: false 
@@ -88,7 +82,7 @@ export default function FounderPTWSimplified({
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
+    if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
@@ -105,57 +99,24 @@ export default function FounderPTWSimplified({
     navigate('/company-dashboard?view=estrategia-ptw');
   };
 
-  // Calculate progress for simplified wizard
-  const calculateProgress = () => {
+  const calculateActivation = () => {
     if (!strategy) return 0;
-    let progress = 0;
-    
-    // Step 1: Aspiration (33%)
-    if (strategy.winningAspiration && strategy.winningAspiration.length >= 20) {
-      progress += 33;
-    }
-    
-    // Step 2: Target Customer (33%)
-    if (strategy.targetSegments && strategy.targetSegments.length > 0) {
-      progress += 33;
-    }
-    
-    // Step 3: Differentiator (34%)
-    if (strategy.competitiveAdvantage && strategy.competitiveAdvantage.length >= 20) {
-      progress += 34;
-    }
-    
-    return progress;
+    let activation = 0;
+    if (strategy.winningAspiration && strategy.winningAspiration.length >= 20) activation += 33;
+    if (strategy.targetSegments && strategy.targetSegments.length > 0) activation += 33;
+    if (strategy.competitiveAdvantage && strategy.competitiveAdvantage.length >= 20) activation += 34;
+    return activation;
   };
 
   const renderStepContent = () => {
     if (!strategy) return null;
-
     switch (currentStep) {
       case 1:
-        return (
-          <FounderAspirationStep
-            strategy={strategy}
-            onUpdate={updateStrategy}
-            isSaving={isSaving}
-          />
-        );
+        return <CoreMissionLogicStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} />;
       case 2:
-        return (
-          <FounderTargetCustomerStep
-            strategy={strategy}
-            onUpdate={updateStrategy}
-            isSaving={isSaving}
-          />
-        );
+        return <TargetMarketDefinitionStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} />;
       case 3:
-        return (
-          <FounderDifferentiatorStep
-            strategy={strategy}
-            onUpdate={updateStrategy}
-            isSaving={isSaving}
-          />
-        );
+        return <CompetitivePositioningEngineStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} />;
       default:
         return null;
     }
@@ -174,7 +135,7 @@ export default function FounderPTWSimplified({
 
   if (isComplete) {
     return (
-      <FounderCompletionScreen
+      <StrategicProfileGenerated
         companyName={companyName}
         strategy={strategy}
         onGoToADN={handleGoToADN}
@@ -183,61 +144,176 @@ export default function FounderPTWSimplified({
     );
   }
 
-  const progress = calculateProgress();
+  const activation = calculateActivation();
 
+  // Intro screen
+  if (currentStep === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8 max-w-3xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-8"
+          >
+            {/* Title */}
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center">
+                <Dna className="h-8 w-8 text-primary" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold">
+                {t('journey.sdna.title', 'Strategic DNA Activation')}
+              </h1>
+              <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+                {companyName && <span className="text-foreground font-medium">{companyName} — </span>}
+                {t('journey.sdna.subtitle', 'Configura el núcleo operativo de tu sistema de inteligencia empresarial.')}
+              </p>
+            </div>
+
+            {/* Why this matters */}
+            <Card className="border-destructive/20 bg-destructive/5">
+              <CardContent className="pt-5">
+                <div className="flex gap-3">
+                  <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-destructive">
+                      {t('journey.sdna.whyCriticalTitle', '¿Por qué es crítica esta configuración?')}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t('journey.sdna.whyCriticalDesc', 'Sin estos datos, el sistema opera a ciegas. Cada agente de IA, cada decisión autónoma y cada contenido generado depende de estas 3 definiciones. Completarlas correctamente multiplica la precisión del sistema en un orden de magnitud.')}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* System impact */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-primary" />
+                  {t('journey.sdna.systemImpactTitle', '¿Cómo impactará al sistema?')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3 text-sm">
+                  {[
+                    t('journey.sdna.impact1', 'Los agentes de marketing generarán contenido alineado con tu posicionamiento real.'),
+                    t('journey.sdna.impact2', 'Las decisiones autónomas se calibrarán según tu mercado objetivo y nivel competitivo.'),
+                    t('journey.sdna.impact3', 'El Autopilot priorizará acciones que construyan tus activos estratégicos clave.'),
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <span className="text-muted-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* What changes after */}
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="pt-5">
+                <div className="flex gap-3">
+                  <Rocket className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="space-y-2">
+                    <h3 className="font-semibold">
+                      {t('journey.sdna.afterTitle', '¿Qué cambiará después de completarlo?')}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t('journey.sdna.afterDesc', 'Se generará tu Strategic Operating Profile — el documento que define cómo opera tu negocio dentro del sistema. Todos los módulos se desbloquean y el Cerebro Empresarial comienza a tomar decisiones informadas.')}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 3 Modules Preview */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-center text-sm text-muted-foreground uppercase tracking-wider">
+                {t('journey.sdna.modulesPreview', '3 Módulos Estratégicos')}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {STRATEGIC_MODULES.map((mod) => {
+                  const Icon = mod.icon;
+                  return (
+                    <div key={mod.id} className="p-4 rounded-lg border bg-card text-center space-y-2">
+                      <Icon className="h-6 w-6 mx-auto text-primary" />
+                      <p className="font-medium text-sm">
+                        {t(`journey.sdna.module${mod.id}Title`)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t(`journey.sdna.module${mod.id}Desc`)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="text-center pt-4">
+              <Button size="lg" onClick={handleNext} className="gap-2 px-8">
+                {t('journey.sdna.startActivation', 'Iniciar Activación')}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Module screens (steps 1-3)
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Header with activation bar */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Sparkles className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold">
-                  {t('journey.founder.wizardTitle', 'Define tu Estrategia')}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {companyName ? `${companyName} • ` : ''}
-                  {t('journey.founder.wizardSubtitle', '3 decisiones clave para empezar')}
-                </p>
-              </div>
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <Dna className="h-5 w-5 text-primary" />
+              <span className="font-bold text-sm">
+                {t('journey.sdna.title', 'Strategic DNA Activation')}
+              </span>
             </div>
-            
-            {/* Progress indicator */}
-            <div className="hidden sm:flex items-center gap-2 bg-muted/50 rounded-full px-4 py-2">
-              <span className="text-sm font-medium">{progress}%</span>
-              <Progress value={progress} className="w-24 h-2" />
-            </div>
+            <span className="text-xs font-mono text-muted-foreground">
+              {activation}% → 100%
+            </span>
+          </div>
+          {/* Activation Progress Bar */}
+          <div className="space-y-1">
+            <Progress value={activation} className="h-2" />
+            <p className="text-[11px] text-muted-foreground text-center">
+              {t('journey.sdna.activationLabel', 'Activación del Sistema')}: {activation}%
+            </p>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar - Step Navigation */}
+          {/* Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-24">
+            <Card className="sticky top-28">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">
-                  {t('journey.founder.stepsTitle', 'Tu Estrategia')}
+                  {t('journey.sdna.modulesTitle', 'Módulos Estratégicos')}
                 </CardTitle>
                 <CardDescription>
-                  {t('journey.founder.stepsSubtitle', '3 pasos esenciales')}
+                  {t('journey.sdna.modulesSubtitle', '3 definiciones críticas')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                {FOUNDER_STEPS.map((step) => {
-                  const isActive = currentStep === step.id;
-                  const isCompleted = currentStep > step.id;
-                  const StepIcon = step.icon;
+                {STRATEGIC_MODULES.map((mod) => {
+                  const isActive = currentStep === mod.id;
+                  const isCompleted = currentStep > mod.id;
+                  const ModIcon = mod.icon;
                   
                   return (
                     <button
-                      key={step.id}
-                      onClick={() => setCurrentStep(step.id)}
+                      key={mod.id}
+                      onClick={() => setCurrentStep(mod.id)}
                       className={cn(
                         "w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all",
                         isActive 
@@ -256,21 +332,21 @@ export default function FounderPTWSimplified({
                         {isCompleted && !isActive ? (
                           <CheckCircle2 className="h-5 w-5" />
                         ) : (
-                          <StepIcon className="h-5 w-5" />
+                          <ModIcon className="h-5 w-5" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate">{step.title}</div>
+                        <div className="font-medium text-sm truncate">
+                          {t(`journey.sdna.module${mod.id}Title`)}
+                        </div>
                         <div className={cn(
                           "text-xs truncate",
                           isActive ? "text-primary-foreground/70" : "text-muted-foreground"
                         )}>
-                          {step.description}
+                          {t(`journey.sdna.module${mod.id}Desc`)}
                         </div>
                       </div>
-                      {isActive && (
-                        <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                      )}
+                      {isActive && <ChevronRight className="h-4 w-4 flex-shrink-0" />}
                     </button>
                   );
                 })}
@@ -280,7 +356,6 @@ export default function FounderPTWSimplified({
 
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Step Content */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentStep}
@@ -298,7 +373,7 @@ export default function FounderPTWSimplified({
               <Button
                 variant="outline"
                 onClick={handlePrevious}
-                disabled={currentStep === 1}
+                disabled={currentStep <= 1}
                 className="gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -306,29 +381,26 @@ export default function FounderPTWSimplified({
               </Button>
               
               <div className="flex items-center gap-2">
-                {FOUNDER_STEPS.map((step) => (
+                {STRATEGIC_MODULES.map((mod) => (
                   <button
-                    key={step.id}
-                    onClick={() => setCurrentStep(step.id)}
+                    key={mod.id}
+                    onClick={() => setCurrentStep(mod.id)}
                     className={cn(
                       "w-2 h-2 rounded-full transition-all",
-                      currentStep === step.id 
+                      currentStep === mod.id 
                         ? "w-6 bg-primary" 
                         : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
                     )}
-                    aria-label={`Ir al paso ${step.id}`}
+                    aria-label={`Module ${mod.id}`}
                   />
                 ))}
               </div>
               
-              <Button
-                onClick={handleNext}
-                className="gap-2"
-              >
+              <Button onClick={handleNext} className="gap-2">
                 {currentStep === 3 ? (
                   <>
-                    <PartyPopper className="h-4 w-4" />
-                    {t('common.finish', 'Finalizar')}
+                    <Rocket className="h-4 w-4" />
+                    {t('journey.sdna.generateProfile', 'Generar Perfil')}
                   </>
                 ) : (
                   <>

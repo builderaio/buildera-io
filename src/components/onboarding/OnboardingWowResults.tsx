@@ -523,13 +523,13 @@ export const OnboardingWowResults = ({
             className="flex items-center gap-2"
           >
             <Download className="w-4 h-4" />
-            Descargar PDF
+            {t('common:onboarding.downloadPdf')}
           </Button>
           <Button 
             onClick={onContinue}
             className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
           >
-            Continuar
+            {t('common:onboarding.continueBtn')}
             <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
         </div>

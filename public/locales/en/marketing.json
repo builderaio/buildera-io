@@ -183,7 +183,7 @@
         "completeBrand": "Complete brand DNA",
         "firstCampaign": "Create first campaign",
         "firstVideo": "Generate first video",
-        "importSocialData": "Import social media data",
+        "importSocialData": "Get initial data",
         "firstPost": "Schedule first post",
         "activateAutopilot": "Activate Marketing Autopilot",
         "configureGuardrails": "Configure brand guardrails",
@@ -643,6 +643,40 @@
       "socialRequired": "You need to connect at least one social network or import at least 5 posts to activate the marketing autopilot.",
       "connectNow": "Connect social networks",
       "importData": "Import social data"
+    },
+    "bootstrap": {
+      "title": "Prepare data for Autopilot",
+      "descConnected": "Import your existing posts so Autopilot can analyze and generate smart decisions.",
+      "descNoAccounts": "Connect at least one social network for Autopilot to work.",
+      "import": "Import",
+      "importing": "Importing...",
+      "imported": "Imported",
+      "retry": "Retry",
+      "importAll": "Import all",
+      "importSuccess": "Data imported from {{platform}}",
+      "importError": "Error importing from {{platform}}",
+      "autoActivated": "Autopilot has been automatically activated with the imported data.",
+      "connectMore": "Connect more networks",
+      "coldStartDesc": "Is your company new and has no posts? Generate your first content with AI.",
+      "generateContent": "Create first content with AI",
+      "noUsername": "Enter username first",
+      "noUsernameDesc": "Use the social data importer to enter the profile."
     }
+  },
+  "import": {
+    "title": "Import Social Media Data",
+    "description": "Enter the username or page to import posts and engagement data.",
+    "platform": "Platform",
+    "selectPlatform": "Select a platform",
+    "username": "Username or page",
+    "importing": "Importing...",
+    "importBtn": "Import Data",
+    "validationError": "Please select a platform and enter the username",
+    "scraperUnavailable": "Scraper not available for this platform",
+    "genericError": "Error importing data. Check the username and try again.",
+    "successTitle": "Data imported from {{platform}}",
+    "successDesc": "{{count}} posts found",
+    "zeroPosts": "We didn't find any posts on this profile. If your company is new to the digital world, you can create your first content with AI.",
+    "createWithAI": "Create content with AI"
   }
 }

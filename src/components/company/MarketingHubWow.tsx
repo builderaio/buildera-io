@@ -29,6 +29,7 @@ import { ContentApprovalPanel } from './marketing/ContentApprovalPanel';
 import { AutopilotDashboard } from './marketing/AutopilotDashboard';
 import { SocialConnectionManager } from './SocialConnectionManager';
 import { SocialDataImportDialog } from '../agents/SocialDataImportDialog';
+import { useJourneyProgression } from '@/hooks/useJourneyProgression';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -187,6 +188,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   });
 
   const { toast } = useToast();
+  const { checkAndAdvance } = useJourneyProgression(profile?.company_id);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -206,7 +208,10 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   }, [profile?.user_id]);
 
   useEffect(() => {
-    if (userId) initializeMarketingHub();
+    if (userId) {
+      initializeMarketingHub();
+      checkAndAdvance();
+    }
   }, [userId]);
 
   const initializeMarketingHub = async () => {
@@ -685,7 +690,9 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           companyId={profile?.company_id || ''}
           onSuccess={() => {
             initializeMarketingHub();
+            checkAndAdvance();
           }}
+          onNavigateToCreate={() => handleTabChange('create')}
         />
       )}
     </div>

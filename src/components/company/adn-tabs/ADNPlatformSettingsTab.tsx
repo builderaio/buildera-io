@@ -24,14 +24,10 @@ const PLATFORM_ICONS: Record<string, string> = {
   youtube: '📺',
 };
 
-const VISIBILITY_OPTIONS = [
-  { value: 'public', label: 'Público' },
-  { value: 'private', label: 'Privado' },
-  { value: 'followers', label: 'Solo seguidores' },
-];
+const VISIBILITY_KEYS = ['public', 'private', 'followers'] as const;
 
 export const ADNPlatformSettingsTab = ({ companyId }: ADNPlatformSettingsTabProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['company']);
   const { toast } = useToast();
   const { settings, loading, saving, savePlatformSetting, availablePlatforms, getSettingForPlatform } = usePlatformSettings(companyId);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
@@ -39,9 +35,9 @@ export const ADNPlatformSettingsTab = ({ companyId }: ADNPlatformSettingsTabProp
   const handleAddPlatform = async (platform: string) => {
     try {
       await savePlatformSetting(platform, { is_active: true });
-      toast({ title: t('company.platforms.added', 'Plataforma agregada') });
+      toast({ title: t('company:platforms.added') });
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
@@ -49,7 +45,7 @@ export const ADNPlatformSettingsTab = ({ companyId }: ADNPlatformSettingsTabProp
     try {
       await savePlatformSetting(platform, updates);
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
@@ -69,17 +65,17 @@ export const ADNPlatformSettingsTab = ({ companyId }: ADNPlatformSettingsTabProp
       <div>
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Share2 className="h-5 w-5" />
-          {t('company.platforms.title', 'Configuración de Plataformas')}
+          {t('company:platforms.title')}
         </h3>
         <p className="text-sm text-muted-foreground">
-          {t('company.platforms.desc', 'Configura los parámetros de publicación para cada red social')}
+          {t('company:platforms.desc')}
         </p>
       </div>
 
       {unconfiguredPlatforms.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">{t('company.platforms.add_platform', 'Agregar plataforma')}</CardTitle>
+            <CardTitle className="text-base">{t('company:platforms.add_platform')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -103,7 +99,7 @@ export const ADNPlatformSettingsTab = ({ companyId }: ADNPlatformSettingsTabProp
       {settings.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            {t('company.platforms.empty', 'No hay plataformas configuradas')}
+            {t('company:platforms.empty')}
           </CardContent>
         </Card>
       ) : (
@@ -115,7 +111,7 @@ export const ADNPlatformSettingsTab = ({ companyId }: ADNPlatformSettingsTabProp
                   <CardTitle className="text-base flex items-center gap-2">
                     <span>{PLATFORM_ICONS[setting.platform]}</span>
                     <span className="capitalize">{setting.platform}</span>
-                    {setting.is_active && <Badge variant="secondary" className="ml-2">{t('company.platforms.active', 'Activo')}</Badge>}
+                    {setting.is_active && <Badge variant="secondary" className="ml-2">{t('company:platforms.active')}</Badge>}
                   </CardTitle>
                   <Switch
                     checked={setting.is_active}
@@ -126,7 +122,7 @@ export const ADNPlatformSettingsTab = ({ companyId }: ADNPlatformSettingsTabProp
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>{t('company.platforms.max_posts', 'Posts/día máx')}</Label>
+                    <Label>{t('company:platforms.max_posts')}</Label>
                     <Input
                       type="number"
                       value={setting.max_posts_per_day}
@@ -134,24 +130,24 @@ export const ADNPlatformSettingsTab = ({ companyId }: ADNPlatformSettingsTabProp
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t('company.platforms.hashtag_limit', 'Límite hashtags')}</Label>
+                    <Label>{t('company:platforms.hashtag_limit')}</Label>
                     <Input
                       type="number"
                       value={setting.hashtag_limit || ''}
                       onChange={(e) => handleUpdateSetting(setting.platform, { hashtag_limit: parseInt(e.target.value) || null })}
-                      placeholder="Sin límite"
+                      placeholder={t('company:platforms.no_limit')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t('company.platforms.visibility', 'Visibilidad')}</Label>
+                    <Label>{t('company:platforms.visibility')}</Label>
                     <Select
                       value={setting.default_visibility}
                       onValueChange={(v) => handleUpdateSetting(setting.platform, { default_visibility: v })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {VISIBILITY_OPTIONS.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        {VISIBILITY_KEYS.map(key => (
+                          <SelectItem key={key} value={key}>{t(`company:platforms.visibility_${key}`)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -163,28 +159,28 @@ export const ADNPlatformSettingsTab = ({ companyId }: ADNPlatformSettingsTabProp
                       checked={setting.auto_publish}
                       onCheckedChange={(v) => handleUpdateSetting(setting.platform, { auto_publish: v })}
                     />
-                    <Label className="text-sm">{t('company.platforms.auto_publish', 'Auto-publicar')}</Label>
+                    <Label className="text-sm">{t('company:platforms.auto_publish')}</Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={setting.require_approval}
                       onCheckedChange={(v) => handleUpdateSetting(setting.platform, { require_approval: v })}
                     />
-                    <Label className="text-sm">{t('company.platforms.require_approval', 'Requiere aprobación')}</Label>
+                    <Label className="text-sm">{t('company:platforms.require_approval')}</Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={setting.scheduling_enabled}
                       onCheckedChange={(v) => handleUpdateSetting(setting.platform, { scheduling_enabled: v })}
                     />
-                    <Label className="text-sm">{t('company.platforms.scheduling', 'Programación')}</Label>
+                    <Label className="text-sm">{t('company:platforms.scheduling')}</Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={setting.analytics_tracking}
                       onCheckedChange={(v) => handleUpdateSetting(setting.platform, { analytics_tracking: v })}
                     />
-                    <Label className="text-sm">{t('company.platforms.analytics', 'Analytics')}</Label>
+                    <Label className="text-sm">{t('company:platforms.analytics')}</Label>
                   </div>
                 </div>
               </CardContent>

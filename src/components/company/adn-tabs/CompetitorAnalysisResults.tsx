@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Globe, MapPin, Building2, Target, TrendingUp, ExternalLink } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface CompetitorData {
   nombre: string;
@@ -24,10 +25,12 @@ interface CompetitorAnalysisResultsProps {
 
 const CompetitorCard = ({ 
   competitor, 
-  onAdd 
+  onAdd,
+  addLabel
 }: { 
   competitor: CompetitorData; 
   onAdd: () => void;
+  addLabel: string;
 }) => (
   <Card className="hover:shadow-md transition-shadow">
     <CardContent className="pt-4 space-y-3">
@@ -40,7 +43,7 @@ const CompetitorCard = ({
           </div>
         </div>
         <Button size="sm" variant="outline" onClick={onAdd}>
-          Agregar
+          {addLabel}
         </Button>
       </div>
       
@@ -75,12 +78,14 @@ const CompetitorSection = ({
   competitors,
   badgeVariant,
   onAddCompetitor,
+  addLabel,
 }: {
   title: string;
   icon: React.ElementType;
   competitors: CompetitorData[];
   badgeVariant: 'default' | 'secondary' | 'outline';
   onAddCompetitor: (competitor: CompetitorData) => void;
+  addLabel: string;
 }) => {
   if (!competitors || competitors.length === 0) return null;
   
@@ -97,6 +102,7 @@ const CompetitorSection = ({
             key={`${competitor.nombre}-${index}`}
             competitor={competitor}
             onAdd={() => onAddCompetitor(competitor)}
+            addLabel={addLabel}
           />
         ))}
       </div>
@@ -108,6 +114,8 @@ export const CompetitorAnalysisResults = ({
   analysis, 
   onAddCompetitor 
 }: CompetitorAnalysisResultsProps) => {
+  const { t } = useTranslation(['company']);
+
   const totalCompetitors = 
     (analysis.competidores_locales?.length || 0) +
     (analysis.competidores_regionales?.length || 0) +
@@ -118,33 +126,36 @@ export const CompetitorAnalysisResults = ({
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-lg">
           <TrendingUp className="h-5 w-5 text-primary" />
-          Análisis de Competidores IA
-          <Badge variant="secondary">{totalCompetitors} encontrados</Badge>
+          {t('company:competitors.analysis.title')}
+          <Badge variant="secondary">{totalCompetitors} {t('company:competitors.analysis.found')}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <CompetitorSection
-          title="Competidores Locales"
+          title={t('company:competitors.analysis.localCompetitors')}
           icon={MapPin}
           competitors={analysis.competidores_locales}
           badgeVariant="default"
           onAddCompetitor={onAddCompetitor}
+          addLabel={t('company:competitors.analysis.addButton')}
         />
         
         <CompetitorSection
-          title="Competidores Regionales"
+          title={t('company:competitors.analysis.regionalCompetitors')}
           icon={Globe}
           competitors={analysis.competidores_regionales}
           badgeVariant="secondary"
           onAddCompetitor={onAddCompetitor}
+          addLabel={t('company:competitors.analysis.addButton')}
         />
         
         <CompetitorSection
-          title="Referentes del Mercado"
+          title={t('company:competitors.analysis.marketReferences')}
           icon={Building2}
           competitors={analysis.referentes}
           badgeVariant="outline"
           onAddCompetitor={onAddCompetitor}
+          addLabel={t('company:competitors.analysis.addButton')}
         />
       </CardContent>
     </Card>

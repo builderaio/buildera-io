@@ -319,5 +319,24 @@
     "saved": "Configuração salva",
     "save_error": "Erro ao salvar configuração",
     "save": "Salvar Configuração"
+  },
+  "platforms": {
+    "title": "Configuração de Plataformas",
+    "desc": "Configure os parâmetros de publicação para cada rede social",
+    "add_platform": "Adicionar plataforma",
+    "added": "Plataforma adicionada",
+    "empty": "Nenhuma plataforma configurada",
+    "active": "Ativo",
+    "max_posts": "Posts/dia máx",
+    "hashtag_limit": "Limite de hashtags",
+    "no_limit": "Sem limite",
+    "visibility": "Visibilidade",
+    "visibility_public": "Público",
+    "visibility_private": "Privado",
+    "visibility_followers": "Apenas seguidores",
+    "auto_publish": "Auto-publicar",
+    "require_approval": "Requer aprovação",
+    "scheduling": "Agendamento",
+    "analytics": "Analytics"
   }
 }

@@ -1,27 +1,27 @@
 {
   "hero": {
-    "badge": "The autonomous brain for your business",
-    "title": "Your business runs",
-    "subtitle": "itself, intelligently and limitlessly",
-    "description": "An AI enterprise brain that operates 6 departments, learns from every decision, and creates new capabilities in real time. You set the vision, Buildera executes.",
+    "badge": "AI-powered enterprise automation platform",
+    "title": "Automate operations.",
+    "subtitle": "Focus on strategy.",
+    "description": "Buildera diagnoses your digital presence, generates your strategy with AI, and activates an autonomous system that operates Marketing, Sales, Finance, Legal, HR, and Operations — with human oversight and guardrails on every decision.",
     "stats": {
-      "companies": "Companies trusting",
-      "costReduction": "Autonomous decisions",
-      "implementation": "Activation time"
+      "departments": "Departments automated",
+      "agents": "Specialized agents",
+      "cycle": "Governed autonomous cycle"
     },
     "cta": {
-      "start": "Activate my enterprise brain",
+      "start": "Start free diagnosis",
       "useCases": "See how it works"
     },
     "trust": {
-      "message": "Growing companies already operate with Buildera's autonomous intelligence",
-      "badge": "Pioneers in autonomous enterprise management"
+      "message": "Designed for founders and CEOs of growth-stage SMEs",
+      "badge": "Progressive autonomy with built-in governance"
     }
   },
   "autonomousEnterprise": {
     "badge": "Enterprise Autopilot Brain",
-    "title": "6 Departments. 1 Brain. Zero friction.",
-    "subtitle": "An autonomous system that observes your business, thinks of solutions, applies guardrails, executes actions, learns from results, and evolves by creating new capabilities.",
+    "title": "Progressive autonomy, not full replacement",
+    "subtitle": "The system starts with simple tasks and, as it learns about your business, assumes greater responsibility — always under your supervision and with active safety controls.",
     "departments": {
       "marketing": "Marketing",
       "sales": "Sales",
@@ -30,35 +30,44 @@
       "hr": "HR",
       "operations": "Operations"
     },
-    "cycleTitle": "The Autonomous Intelligence Cycle",
+    "cycleTitle": "The Governed Intelligence Cycle",
     "cycle": {
-      "sense": "Sense",
-      "think": "Think",
-      "guard": "Guard",
-      "act": "Act",
+      "sense": "Observe",
+      "think": "Analyze",
+      "guard": "Validate",
+      "act": "Execute",
       "learn": "Learn",
       "evolve": "Evolve"
     },
     "features": {
       "adaptive": {
-        "title": "Adaptive Intelligence",
-        "description": "Every decision is evaluated. Every result is memorized. The system learns what works for YOUR company and improves with each cycle."
+        "title": "Verifiable learning",
+        "description": "Every autonomous decision is logged with its outcome. The system memorizes what works for your specific context and adjusts behavior with real data, not assumptions."
       },
       "genesis": {
-        "title": "Capability Genesis",
-        "description": "AI detects needs that didn't exist in the catalog and proposes new personalized capabilities: competitive monitoring, regulatory compliance, process optimization."
+        "title": "On-demand capabilities",
+        "description": "When the system detects an operational gap (e.g., no competitive monitoring), it proposes a new capability with a 7-day trial period before permanent activation."
       },
       "crossDept": {
-        "title": "Cross-Department Orchestration",
-        "description": "Finance stops excessive Marketing spend. Legal reviews before Sales closes. All departments operate coordinated with intelligent guardrails."
+        "title": "Cross-departmental governance",
+        "description": "Finance can halt campaigns exceeding budget. Legal validates before Sales closes. Every action goes through configurable guardrails before execution."
       }
     },
-    "cta": "Activate Enterprise Autopilot"
+    "governance": {
+      "title": "You stay in control",
+      "items": {
+        "approval": "Human approval required for high-impact actions",
+        "audit": "Complete log of every autonomous decision and its outcome",
+        "limits": "Configurable daily credit and execution limits",
+        "override": "Manual override available at any time"
+      }
+    },
+    "cta": "Start with free diagnosis"
   },
   "agentShowcase": {
-    "badge": "27+ Agent Ecosystem",
-    "title": "AI Specialists for Every Area",
-    "subtitle": "A complete team of virtual experts that execute the autonomous brain's decisions across every department.",
+    "badge": "Specialized Agent Ecosystem",
+    "title": "Each agent has a specific function",
+    "subtitle": "AI agents trained to execute concrete tasks in each department. Not chatbots — operational tools that generate measurable deliverables.",
     "categories": {
       "strategy": "Strategy",
       "content": "Content",
@@ -68,247 +77,270 @@
     "agents": {
       "strategist": {
         "name": "Marketing Strategist",
-        "description": "Generates complete strategies with mission, vision, and value proposition aligned to your goals."
+        "description": "Generates mission, vision, and value proposition based on your company's digital diagnosis."
       },
       "content": {
         "name": "Content Creator",
-        "description": "Produces posts, articles, and multimedia content adapted to each social platform."
+        "description": "Produces posts and articles adapted per platform, aligned with your brand strategy."
       },
       "calendar": {
         "name": "Calendar Planner",
-        "description": "Organizes your content into a strategic calendar with optimal dates and times."
+        "description": "Organizes your content with dates and times optimized by engagement data."
       },
       "insights": {
         "name": "Insights Generator",
-        "description": "Analyzes data and discovers hidden opportunities to drive your growth."
+        "description": "Analyzes real metrics and detects actionable patterns to improve results."
       },
       "brand": {
         "name": "Brand Designer",
-        "description": "Creates consistent visual identity with color palette, typography, and style guides."
+        "description": "Creates visual identity with consistent color palette, typography, and style guides."
       },
       "image": {
         "name": "Image Creator",
-        "description": "Generates professional images and graphics for social media and marketing."
+        "description": "Generates graphics and visual assets aligned with your brand identity."
       },
       "audience": {
         "name": "Audience Analyst",
-        "description": "Identifies and segments your target audience with demographic and behavioral data."
+        "description": "Segments your target audience with verifiable demographic and behavioral data."
       },
       "optimizer": {
         "name": "Campaign Optimizer",
-        "description": "Improves your campaign performance with data-driven recommendations."
+        "description": "Evaluates performance by channel and recommends adjustments based on real data."
       }
     },
     "cta": "See all agents"
   },
   "howItWorks": {
-    "badge": "Activate in minutes",
-    "title": "From signup to autonomous enterprise",
-    "subtitle": "Three steps to activate your enterprise brain and start operating with autonomous intelligence.",
-    "timeLabel": "First autonomous cycle in",
+    "badge": "How it actually works",
+    "title": "3 phases to activate your intelligent enterprise",
+    "subtitle": "A structured process from diagnosis to operational autonomy — no magic jumps or empty promises.",
+    "timeLabel": "First autonomous actions in",
     "steps": {
       "1": {
-        "title": "Register Your Company",
-        "description": "Enter your company. Our AI diagnoses your digital presence, identifies opportunities, and analyzes your market automatically.",
+        "title": "Digital Diagnosis",
+        "description": "When you register your company, the system automatically analyzes your website, social media, SEO, competition, and digital positioning to create an operational X-ray.",
         "features": {
-          "1": "Complete digital diagnosis",
-          "2": "AI market analysis",
-          "3": "Company profile in 30 seconds"
+          "1": "SEO and web presence audit",
+          "2": "Automated competitive analysis",
+          "3": "Strengths and risks detection"
         }
       },
       "2": {
-        "title": "AI Generates Your Strategy",
-        "description": "Specialized agents work in parallel: strategy, brand, content, and audience analysis. Your complete operating kit.",
+        "title": "Strategic DNA",
+        "description": "Using diagnosis data, specialized agents generate your business strategy: mission, vision, brand, audiences, and content plan — all aligned with your current reality.",
         "features": {
-          "1": "Multi-department strategy",
-          "2": "Brand identity generated",
-          "3": "First content ready"
+          "1": "Strategy based on real data",
+          "2": "AI-generated brand identity",
+          "3": "Content and audience plan"
         }
       },
       "3": {
-        "title": "Autopilot Activates",
-        "description": "The Enterprise Brain starts its autonomous cycle. Observes, decides, executes, and learns. New capabilities emerge based on your business needs.",
+        "title": "Enterprise Autopilot",
+        "description": "The Enterprise Brain activates its autonomous cycle: observes indicators, analyzes options, validates with guardrails, executes actions, and learns from results — with configurable human oversight.",
         "features": {
-          "1": "6 autonomous departments",
-          "2": "AI-generated capabilities",
-          "3": "Continuous evolution"
+          "1": "Progressive autonomy per department",
+          "2": "Guardrails and human approval",
+          "3": "Documented continuous learning"
         }
       }
     }
   },
+  "whatWeDoNot": {
+    "badge": "Transparency",
+    "title": "What Buildera does NOT do",
+    "subtitle": "We believe trust is built with clarity. Here's what you won't find on our platform.",
+    "items": {
+      "replace": {
+        "title": "Does not replace your business judgment",
+        "description": "The system suggests and executes operational tasks. High-impact strategic decisions always require your approval."
+      },
+      "magic": {
+        "title": "Does not generate magic results",
+        "description": "Autonomy is progressive. The system needs your business data to learn and improve. The first cycles are calibration."
+      },
+      "data": {
+        "title": "Does not invent data or metrics",
+        "description": "Every insight is based on real data from your company. If there's not enough data, the system tells you and suggests how to get it."
+      },
+      "unsupervised": {
+        "title": "Does not operate unsupervised",
+        "description": "Every autonomous action has an auditable log. You can configure which actions require manual approval and set daily limits."
+      }
+    }
+  },
   "agentsInAction": {
-    "badge": "Live Demo",
-    "title": "Autonomous Intelligence in Action",
-    "subtitle": "Watch how the enterprise brain makes decisions, executes agents, and learns from results.",
-    "inputLabel": "Your company needs...",
+    "badge": "Real workflow example",
+    "title": "How the Enterprise Brain operates",
+    "subtitle": "Concrete examples of how the system processes a need, analyzes it, and generates an action — with full traceability.",
+    "inputLabel": "Situation detected...",
     "demos": {
       "strategist": {
-        "agentName": "Enterprise Brain",
-        "input": "My company sells sustainable clothing and I need to grow on all fronts: marketing, sales, and operations.",
+        "agentName": "Autonomous Cycle",
+        "input": "The system detects that Instagram engagement dropped 40% in the last 2 weeks.",
         "output": {
-          "title": "3 Departments Activated",
-          "content": "Marketing: organic content campaign across 4 platforms. Sales: qualified lead pipeline with automatic scoring. Operations: response time optimization. All coordinated by cross-departmental guardrails.",
+          "title": "Analysis and proposed action",
+          "content": "Diagnosis: algorithm change affected static image posts. Action: migrate 60% of calendar to Reels with brand templates. Guardrail: don't exceed weekly content budget. Status: pending approval.",
           "tags": {
-            "1": "✓ 12 autonomous decisions",
-            "2": "✓ 3 agents executed",
-            "3": "✓ Learning recorded"
+            "1": "✓ Verified data",
+            "2": "✓ Guardrail applied",
+            "3": "✓ Requires approval"
           }
         }
       },
       "content": {
         "agentName": "Capability Genesis",
-        "input": "The system detected a new competitor entered the market but I have no capability to monitor them.",
+        "input": "A competitor launched a similar product with aggressive pricing.",
         "output": {
-          "title": "New Capability Proposed",
-          "content": "3 external signals about competition detected with no response capability. System proposes: 'Competitive Response Engine' — automatic monitoring of competitive movements with alerts and counter-strategies.",
+          "title": "New capability proposed",
+          "content": "Gap detected: no competitive pricing monitoring. Proposal: 'Competitive Pricing Monitor' — weekly tracking of competitor prices with alerts. Trial period: 7 days before permanent activation.",
           "tags": {
-            "1": "✓ Gap detected",
-            "2": "✓ Capability auto-created",
-            "3": "✓ 7-day trial period"
+            "1": "✓ Documented evidence",
+            "2": "✓ Trial period",
+            "3": "✓ Reversible"
           }
         }
       },
       "insights": {
-        "agentName": "Adaptive Intelligence",
-        "input": "What has the system learned about my business in recent weeks?",
+        "agentName": "Documented Learning",
+        "input": "What patterns has the system identified in the last 4 weeks?",
         "output": {
-          "title": "5 Lessons Learned",
-          "content": "Posts with real people generate 3.2x more engagement. Tuesdays at 7PM have the best reach. Campaigns with budget < $50 don't generate positive ROI. Leads that respond within 1 hour close 60% more.",
+          "title": "3 patterns identified with data",
+          "content": "1. Posts with real people: +3.2x engagement (based on 45 posts analyzed). 2. Best schedule: Tue/Thu 7-8PM (based on 120 publications). 3. Leads responding in <1h close 58% more (based on 32 opportunities).",
           "tags": {
-            "1": "✓ IQ Score: 78/100",
-            "2": "✓ 23 decisions evaluated",
-            "3": "✓ 4 rules extracted"
+            "1": "✓ Source: real data",
+            "2": "✓ Verifiable sample",
+            "3": "✓ Rules extracted: 3"
           }
         }
       }
     },
-    "cta": "Activate My Autonomous Enterprise"
+    "cta": "Start free diagnosis"
   },
   "values": {
     "secure": {
-      "title": "Intelligent guardrails",
-      "description": "Automatic cross-departmental protection"
+      "title": "Configurable guardrails",
+      "description": "Cross-departmental controls before every execution"
     },
     "scalable": {
-      "title": "Self-evolving",
-      "description": "New capabilities emerge via AI"
+      "title": "Progressive autonomy",
+      "description": "Starts simple, grows with your business"
     },
     "flexible": {
-      "title": "Learns from you",
-      "description": "Every cycle gets smarter"
+      "title": "Human oversight",
+      "description": "You decide what gets auto-approved"
     }
   },
   "problem": {
-    "title": "The problem in companies and our solution",
-    "subtitle": "You need results without inflating your structure. We give you an autonomous enterprise brain that operates, learns, and evolves.",
+    "title": "The real problem for growth-stage SMEs",
+    "subtitle": "You need to scale operations without multiplying headcount costs. Buildera gives you an AI operations team with built-in governance.",
     "challenges": {
-      "title": "The reality of many companies",
+      "title": "The operational reality",
       "dispersed": {
-        "title": "Scattered operation and little time",
-        "description": "you spend more time operating than generating value."
+        "title": "More time operating than leading",
+        "description": "the CEO ends up managing social media, invoices, and vendors instead of defining strategy."
       },
       "expertise": {
-        "title": "Expensive or hard to find expertise",
-        "description": "specialists per area increase costs and complexity."
+        "title": "Specialized expertise is expensive",
+        "description": "a team of marketing + finance + legal + HR can cost $15K+/month for an SME."
       },
       "visibility": {
-        "title": "Lack of visibility and control",
-        "description": "decisions without data and processes that are hard to measure."
+        "title": "Decisions without data",
+        "description": "acting on intuition because there's no time or tools to analyze metrics."
       }
     },
     "solution": {
-      "title": "How Buildera helps you",
+      "title": "How Buildera solves it",
       "specialists": {
-        "title": "Multi-department autonomous brain",
-        "description": "marketing, sales, finance, legal, HR, and operations operating coordinately 24/7."
+        "title": "AI operations team",
+        "description": "specialized agents executing tasks across 6 departments, coordinated by a central brain."
       },
       "security": {
-        "title": "Guardrails and governance",
-        "description": "every decision goes through cross-departmental security controls before execution."
+        "title": "Governance and traceability",
+        "description": "every autonomous action has an auditable log with the reasoning, outcome, and guardrail applied."
       },
       "measurable": {
-        "title": "Intelligence that evolves",
-        "description": "the system learns from every result and proposes new capabilities based on your business's real needs."
+        "title": "Measurable results",
+        "description": "impact metrics per department: engagement, leads, hours saved, autonomous decision success rate."
       }
     }
   },
   "ecosystem": {
-    "title": "An ecosystem that thinks, executes, and evolves",
-    "subtitle": "Companies, AI agents, and external intelligence working together in a continuous improvement cycle.",
+    "title": "System architecture",
+    "subtitle": "Three layers working together: your company defines objectives, the AI brain executes, and external signals feed the intelligence.",
     "roles": {
       "companies": "Your Company",
       "developers": "AI Brain",
-      "experts": "External Intelligence"
+      "experts": "External Signals"
     },
     "companies": {
       "title": "Your Company",
-      "description": "Define the vision and objectives. The brain handles the rest.",
+      "description": "Defines objectives, approves critical actions, and configures system guardrails.",
       "benefits": {
-        "lessOperation": "Zero manual operation",
-        "moreGrowth": "Autonomous growth",
+        "lessOperation": "Less manual operation",
+        "moreGrowth": "More time for strategy",
         "measurable": "Traceable results"
       }
     },
     "developers": {
       "title": "Enterprise Brain",
-      "description": "27+ agents coordinated by autonomous intelligence across 6 departments.",
+      "description": "Specialized agents coordinated by an autonomous cycle with 6 governance phases.",
       "benefits": {
-        "timeToMarket": "Real-time decisions",
-        "reusable": "Continuous learning",
-        "scalability": "Self-generated capabilities"
+        "timeToMarket": "Continuous execution",
+        "reusable": "Cumulative learning",
+        "scalability": "Expandable capabilities"
       }
     },
     "experts": {
-      "title": "External Intelligence",
-      "description": "Market, competition, and regulatory signals feed the decisions.",
+      "title": "External Signals",
+      "description": "Market, competition, and regulatory data feeding system decisions.",
       "benefits": {
         "bestPractices": "Market trends",
         "governance": "Regulatory alerts",
         "reliable": "Competitive intelligence"
       }
     },
-    "impact": "Result: a company that runs itself, learns from every decision, and evolves with your business."
+    "impact": "Result: scalable operations with human oversight, continuous learning, and built-in governance."
   },
   "useCases": {
-    "title": "Use cases",
-    "subtitle": "What your autonomous company can do today without human intervention.",
+    "title": "Use cases by department",
+    "subtitle": "Concrete examples of what each autonomous department can execute with human oversight.",
     "cases": {
       "socialMedia": {
-        "title": "Autonomous marketing",
-        "description": "Content, publishing, analysis, and automatic optimization across all platforms.",
-        "features": ["AI-generated content", "Autonomous publishing", "Results-based optimization"]
+        "title": "Marketing",
+        "description": "Content generation, calendar planning, and optimization based on engagement metrics.",
+        "features": ["Brand-aligned content", "Data-optimized calendar", "Performance analysis"]
       },
       "customerService": {
-        "title": "Intelligent sales",
-        "description": "Automatic pipeline with qualification, follow-up, and AI-assisted closing.",
-        "features": ["Autonomous lead scoring", "Automatic proposals", "Predictive forecast"]
+        "title": "Sales",
+        "description": "Lead qualification, proposal generation, and forecast based on pipeline data.",
+        "features": ["Criteria-based lead scoring", "AI-generated proposals", "Data-backed forecast"]
       },
       "sales": {
-        "title": "Vigilant finance",
-        "description": "Credit, budget, and cashflow monitoring with proactive alerts.",
-        "features": ["Budget control", "Spend alerts", "Cross-dept guardrails"]
+        "title": "Finance",
+        "description": "Budget monitoring, spend alerts, and guardrails preventing over-execution.",
+        "features": ["Budget control", "Proactive alerts", "Spend guardrails"]
       },
       "ecommerce": {
-        "title": "Proactive legal",
-        "description": "Regulatory monitoring and automatic compliance review.",
-        "features": ["Regulatory alerts", "Contract review", "Automatic compliance"]
+        "title": "Legal",
+        "description": "Regulatory monitoring and compliance alerts adapted to your sector.",
+        "features": ["Regulatory alerts", "Compliance review", "Sector-adapted"]
       },
       "professionalServices": {
-        "title": "Strategic HR",
-        "description": "Talent profiles, organizational climate, and training recommendations.",
-        "features": ["AI job profiling", "Organizational climate", "Talent matching"]
+        "title": "HR",
+        "description": "Talent profiles, organizational climate analysis, and training recommendations.",
+        "features": ["AI job profiling", "Climate analysis", "Talent recommendations"]
       },
       "education": {
-        "title": "Optimized operations",
-        "description": "Bottleneck detection, task automation, and operational efficiency.",
-        "features": ["Bottleneck detection", "Smart automation", "SLA monitoring"]
+        "title": "Operations",
+        "description": "Bottleneck detection, repetitive task automation, and SLA monitoring.",
+        "features": ["Bottleneck detection", "Task automation", "SLA monitoring"]
       }
     }
   },
   "finalCta": {
-    "title": "Ready for your business to run itself?",
-    "description": "Activate an AI enterprise brain that operates 6 departments, learns from every decision, and creates new capabilities automatically.",
-    "button": "Activate my Enterprise Brain"
+    "title": "Start with a free diagnosis of your company",
+    "description": "In less than 60 seconds, the system analyzes your digital presence and generates a personalized action plan. No commitment, no credit card.",
+    "button": "Diagnose my company free"
   },
   "footer": {
     "brand": {

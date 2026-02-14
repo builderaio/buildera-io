@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
   Brain, TrendingUp, ShoppingCart, DollarSign, Scale, Users, Settings2,
-  Sparkles, ArrowRight, Zap, Eye, Shield, BookOpen
+  ArrowRight, Zap, Eye, Shield, BookOpen, CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,15 +22,16 @@ const cycleSteps = [
   { id: "guard", icon: Shield },
   { id: "act", icon: Zap },
   { id: "learn", icon: BookOpen },
-  { id: "evolve", icon: Sparkles },
+  { id: "evolve", icon: TrendingUp },
 ];
+
+const governanceItems = ["approval", "audit", "limits", "override"];
 
 const AutonomousEnterprise = () => {
   const { t } = useTranslation('landing');
 
   return (
     <section className="py-24 bg-background relative overflow-hidden">
-      {/* Decorative bg */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
 
       <div className="container mx-auto px-6 relative z-10">
@@ -82,7 +83,7 @@ const AutonomousEnterprise = () => {
           ))}
         </motion.div>
 
-        {/* Autonomous Cycle */}
+        {/* Governed Intelligence Cycle */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -115,12 +116,12 @@ const AutonomousEnterprise = () => {
           </div>
         </motion.div>
 
-        {/* Capability Genesis Highlight */}
+        {/* Features */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="max-w-5xl mx-auto"
+          className="max-w-5xl mx-auto mb-16"
         >
           <div className="grid md:grid-cols-3 gap-6">
             {['adaptive', 'genesis', 'crossDept'].map((feature, i) => (
@@ -134,7 +135,7 @@ const AutonomousEnterprise = () => {
               >
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   {feature === 'adaptive' && <BookOpen className="w-5 h-5 text-primary" />}
-                  {feature === 'genesis' && <Sparkles className="w-5 h-5 text-primary" />}
+                  {feature === 'genesis' && <Zap className="w-5 h-5 text-primary" />}
                   {feature === 'crossDept' && <Shield className="w-5 h-5 text-primary" />}
                 </div>
                 <h4 className="font-heading font-bold text-lg mb-2">
@@ -148,13 +149,40 @@ const AutonomousEnterprise = () => {
           </div>
         </motion.div>
 
+        {/* Governance section - NEW */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-3xl mx-auto mb-12"
+        >
+          <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <Shield className="w-6 h-6 text-primary" />
+              <h3 className="text-xl font-heading font-bold">
+                {t('autonomousEnterprise.governance.title')}
+              </h3>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {governanceItems.map((item) => (
+                <div key={item} className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground">
+                    {t(`autonomousEnterprise.governance.items.${item}`)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
         {/* CTA */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.4 }}
-          className="text-center mt-12"
+          className="text-center"
         >
           <a href="/auth?mode=signup&userType=company">
             <Button variant="hero" size="lg" className="group">

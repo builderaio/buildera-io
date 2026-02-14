@@ -1399,6 +1399,9 @@
     "archetypeClosing_micro_early": "Atualmente compete por narrativa. Para competir por autoridade, precisa de evidência estruturada.",
     "archetypeClosing_boutique_specialized": "Atualmente compete por especialização. Para competir por confiança, precisa de provas verificáveis em escala.",
     "archetypeClosing_structured_firm": "Atualmente compete por substância. Para competir por liderança de categoria, precisa de domínio do ecossistema.",
-    "archetypeClosing_market_leader": "Compete por autoridade e evidência. Mantenha sua vantagem inovando continuamente sua infraestrutura de confiança."
+    "archetypeClosing_market_leader": "Compete por autoridade e evidência. Mantenha sua vantagem inovando continuamente sua infraestrutura de confiança.",
+    "projectedIndex": "Índice Digital Estratégico Projetado",
+    "projectionMessage": "Se você executar estas {{count}} ações em {{days}} dias, seu índice poderia subir de {{from}} para {{to}}.",
+    "indexPoints": "pontos de índice"
   }
 }

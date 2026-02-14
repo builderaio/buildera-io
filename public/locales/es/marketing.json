@@ -183,7 +183,7 @@
         "completeBrand": "Completar ADN de marca",
         "firstCampaign": "Crear primera campaña",
         "firstVideo": "Generar primer video",
-        "importSocialData": "Importar datos de redes sociales",
+        "importSocialData": "Obtener datos iniciales",
         "firstPost": "Programar primera publicación",
         "activateAutopilot": "Activar Marketing Autopilot",
         "configureGuardrails": "Configurar guardrails de marca",
@@ -643,6 +643,40 @@
       "socialRequired": "Necesitas conectar al menos una red social o importar al menos 5 publicaciones para activar el autopilot de marketing.",
       "connectNow": "Conectar redes sociales",
       "importData": "Importar datos de redes"
+    },
+    "bootstrap": {
+      "title": "Preparar datos para Autopilot",
+      "descConnected": "Importa tus publicaciones existentes para que el Autopilot pueda analizar y generar decisiones inteligentes.",
+      "descNoAccounts": "Conecta al menos una red social para que el Autopilot pueda funcionar.",
+      "import": "Importar",
+      "importing": "Importando...",
+      "imported": "Importado",
+      "retry": "Reintentar",
+      "importAll": "Importar todo",
+      "importSuccess": "Datos importados de {{platform}}",
+      "importError": "Error importando de {{platform}}",
+      "autoActivated": "El Autopilot se ha activado automáticamente con los datos importados.",
+      "connectMore": "Conectar más redes",
+      "coldStartDesc": "¿Tu empresa es nueva y no tiene publicaciones? Genera tu primer contenido con IA.",
+      "generateContent": "Crear primer contenido con IA",
+      "noUsername": "Ingresa el nombre de usuario primero",
+      "noUsernameDesc": "Usa el importador de datos sociales para ingresar el perfil."
     }
+  },
+  "import": {
+    "title": "Importar Datos de Redes Sociales",
+    "description": "Ingresa el nombre de usuario o página para importar publicaciones y datos de engagement.",
+    "platform": "Plataforma",
+    "selectPlatform": "Selecciona una plataforma",
+    "username": "Nombre de usuario o página",
+    "importing": "Importando...",
+    "importBtn": "Importar Datos",
+    "validationError": "Por favor selecciona una plataforma e ingresa el nombre de usuario",
+    "scraperUnavailable": "Scraper no disponible para esta plataforma",
+    "genericError": "Error al importar datos. Verifica el nombre de usuario e intenta nuevamente.",
+    "successTitle": "Datos importados de {{platform}}",
+    "successDesc": "{{count}} publicaciones encontradas",
+    "zeroPosts": "No encontramos publicaciones en este perfil. Si tu empresa es nueva en el mundo digital, puedes crear tu primer contenido con IA.",
+    "createWithAI": "Crear contenido con IA"
   }
 }

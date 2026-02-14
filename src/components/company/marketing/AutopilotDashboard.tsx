@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useJourneyProgression } from '@/hooks/useJourneyProgression';
 import {
   Brain, Zap, Shield, BookOpen, Eye, Settings, Play, Pause,
   CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp,
@@ -95,6 +96,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
   const { t } = useTranslation('marketing');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { advanceToStep } = useJourneyProgression(companyId);
   const [config, setConfig] = useState<AutopilotConfig | null>(null);
   const [logs, setLogs] = useState<ExecutionLog[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
@@ -186,6 +188,21 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
     }
   };
 
+  /** Extract username/slug from a full profile URL */
+  const extractSlugFromUrl = (plat: string, url: string): string | null => {
+    if (!url) return null;
+    try {
+      const cleaned = url.trim().replace(/\/+$/, '');
+      switch (plat) {
+        case 'linkedin': { const m = cleaned.match(/linkedin\.com\/(company|in)\/([^/?#]+)/i); return m ? m[2] : null; }
+        case 'instagram': { const m = cleaned.match(/instagram\.com\/([^/?#]+)/i); return m && m[1] !== 'p' ? m[1] : null; }
+        case 'facebook': { const m = cleaned.match(/facebook\.com\/([^/?#]+)/i); return m && !['profile.php','pages','groups'].includes(m[1]) ? m[1] : null; }
+        case 'tiktok': { const m = cleaned.match(/tiktok\.com\/@?([^/?#]+)/i); return m ? m[1].replace(/^@/, '') : null; }
+        default: return null;
+      }
+    } catch { return null; }
+  };
+
   const handleBootstrapImport = async (platform: string) => {
     const scraperInfo = PLATFORM_SCRAPERS[platform];
     if (!scraperInfo) return;
@@ -195,12 +212,47 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase.functions.invoke(scraperInfo.scraper, {
-        body: {
-          user_id: user.id,
-          company_id: companyId,
-        }
-      });
+      // Resolve slug from company URLs or social_accounts
+      const urlField = `${platform}_url`;
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select(urlField)
+        .eq('id', companyId)
+        .maybeSingle();
+
+      let slug = extractSlugFromUrl(platform, companyData?.[urlField as keyof typeof companyData] as string);
+
+      if (!slug) {
+        const { data: acc } = await supabase
+          .from('social_accounts')
+          .select('platform_username')
+          .eq('company_id', companyId)
+          .eq('platform', platform)
+          .maybeSingle();
+        slug = acc?.platform_username || null;
+      }
+
+      if (!slug) {
+        setImportingPlatforms(prev => ({ ...prev, [platform]: 'error' }));
+        toast({
+          title: t('autopilot.bootstrap.noUsername', 'Ingresa el nombre de usuario primero'),
+          description: t('autopilot.bootstrap.noUsernameDesc', 'Usa el importador de datos sociales para ingresar el perfil.'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Build platform-specific payload
+      let body: Record<string, any> = {};
+      switch (platform) {
+        case 'linkedin': body = { action: 'get_company_posts', company_identifier: slug, user_id: user.id }; break;
+        case 'tiktok': body = { action: 'get_posts', unique_id: slug }; break;
+        case 'instagram': body = { action: 'get_posts', username: slug, user_id: user.id, company_id: companyId }; break;
+        case 'facebook': body = { action: 'get_posts', page_id: slug, user_id: user.id, company_id: companyId }; break;
+        default: body = { profile_url: `https://${platform}.com/${slug}`, user_id: user.id, company_id: companyId };
+      }
+
+      const { data, error } = await supabase.functions.invoke(scraperInfo.scraper, { body });
 
       if (error) throw error;
 
@@ -248,7 +300,6 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
 
   const toggleAutopilotAfterBootstrap = async () => {
     if (!config?.id) {
-      // First-time smart config
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user || !companyId) return;
@@ -259,6 +310,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
           max_posts_per_day: 3,
           max_credits_per_cycle: 50,
         });
+        advanceToStep(5);
         toast({
           title: t('autopilot.smartConfigApplied'),
           description: t('autopilot.bootstrap.autoActivated'),
@@ -268,6 +320,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
       }
     } else {
       await saveConfig({ autopilot_enabled: true });
+      advanceToStep(5);
     }
   };
 
@@ -322,6 +375,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
           max_credits_per_cycle: 50,
         });
 
+        advanceToStep(5);
         toast({ 
           title: t('autopilot.smartConfigApplied'),
           description: t('autopilot.smartConfigDesc'),
@@ -333,6 +387,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
     }
     
     await saveConfig({ autopilot_enabled: newState });
+    if (newState) advanceToStep(5);
   };
 
   const runManualCycle = async () => {

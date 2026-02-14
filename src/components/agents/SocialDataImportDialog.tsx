@@ -132,6 +132,8 @@ export function SocialDataImportDialog({
     } else {
       setUsername('');
     }
+    setZeroPosts(false);
+    setError(null);
   }, [platform, resolvedUsernames]);
 
   const selectedPlatform = PLATFORMS.find(p => p.id === platform);
@@ -143,7 +145,7 @@ export function SocialDataImportDialog({
 
   const handleImport = async () => {
     if (!platform || !username.trim()) {
-      setError('Por favor selecciona una plataforma e ingresa el nombre de usuario');
+      setError(t('marketing:import.validationError', 'Por favor selecciona una plataforma e ingresa el nombre de usuario'));
       return;
     }
 
@@ -154,7 +156,7 @@ export function SocialDataImportDialog({
     try {
       const scraperFunction = selectedPlatform?.scraper;
       if (!scraperFunction) {
-        throw new Error('Scraper no disponible para esta plataforma');
+        throw new Error(t('marketing:import.scraperUnavailable', 'Scraper no disponible para esta plataforma'));
       }
 
       // Build platform-specific payload
@@ -218,8 +220,8 @@ export function SocialDataImportDialog({
       }
 
       toast.success(
-        `Datos importados de ${selectedPlatform?.name}`,
-        { description: `${postsImported} publicaciones encontradas` }
+        t('marketing:import.successTitle', { platform: selectedPlatform?.name, defaultValue: `Datos importados de ${selectedPlatform?.name}` }),
+        { description: t('marketing:import.successDesc', { count: postsImported, defaultValue: `${postsImported} publicaciones encontradas` }) }
       );
 
       onSuccess?.();
@@ -228,7 +230,7 @@ export function SocialDataImportDialog({
       setPlatform('');
     } catch (err: any) {
       console.error('Error importing social data:', err);
-      setError(err.message || 'Error al importar datos. Verifica el nombre de usuario e intenta nuevamente.');
+      setError(err.message || t('marketing:import.genericError', 'Error al importar datos. Verifica el nombre de usuario e intenta nuevamente.'));
     } finally {
       setLoading(false);
     }
@@ -240,10 +242,10 @@ export function SocialDataImportDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ExternalLink className="h-5 w-5 text-primary" />
-            Importar Datos de Redes Sociales
+            {t('marketing:import.title', 'Importar Datos de Redes Sociales')}
           </DialogTitle>
           <DialogDescription>
-            Ingresa el nombre de usuario o página para importar publicaciones y datos de engagement.
+            {t('marketing:import.description', 'Ingresa el nombre de usuario o página para importar publicaciones y datos de engagement.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -252,7 +254,7 @@ export function SocialDataImportDialog({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="space-y-2">
-                <p>{t('marketing:hub.import.zeroPosts', 'No encontramos publicaciones en este perfil. Si tu empresa es nueva en el mundo digital, puedes crear tu primer contenido con IA.')}</p>
+                <p>{t('marketing:import.zeroPosts', 'No encontramos publicaciones en este perfil. Si tu empresa es nueva en el mundo digital, puedes crear tu primer contenido con IA.')}</p>
                 {onNavigateToCreate && (
                   <Button
                     variant="outline"
@@ -262,7 +264,7 @@ export function SocialDataImportDialog({
                       onNavigateToCreate();
                     }}
                   >
-                    {t('marketing:hub.import.createWithAI', 'Crear contenido con IA')}
+                    {t('marketing:import.createWithAI', 'Crear contenido con IA')}
                   </Button>
                 )}
               </AlertDescription>
@@ -277,10 +279,10 @@ export function SocialDataImportDialog({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="platform">Plataforma</Label>
+            <Label htmlFor="platform">{t('marketing:import.platform', 'Plataforma')}</Label>
             <Select value={platform} onValueChange={setPlatform}>
               <SelectTrigger id="platform">
-                <SelectValue placeholder="Selecciona una plataforma" />
+                <SelectValue placeholder={t('marketing:import.selectPlatform', 'Selecciona una plataforma')} />
               </SelectTrigger>
               <SelectContent>
                 {PLATFORMS.map((p) => (
@@ -296,7 +298,7 @@ export function SocialDataImportDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username">Nombre de usuario o página</Label>
+            <Label htmlFor="username">{t('marketing:import.username', 'Nombre de usuario o página')}</Label>
             <div className="flex items-center gap-0">
               {selectedPlatform && (
                 <span className="inline-flex items-center px-3 h-10 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground text-xs font-mono whitespace-nowrap">
@@ -325,7 +327,7 @@ export function SocialDataImportDialog({
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              Cancelar
+              {t('common:cancel', 'Cancelar')}
             </Button>
             <Button 
               onClick={handleImport}
@@ -334,10 +336,10 @@ export function SocialDataImportDialog({
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Importando...
+                  {t('marketing:import.importing', 'Importando...')}
                 </>
               ) : (
-                'Importar Datos'
+                t('marketing:import.importBtn', 'Importar Datos')
               )}
             </Button>
           </div>

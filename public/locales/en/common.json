@@ -1368,6 +1368,19 @@
     "withVerifiableAssets": "With verifiable assets",
     "withoutVerifiableAssets": "Without verifiable assets",
     "scenarioWith": "Structured digital presence with case studies, testimonials, public metrics, and accessible contact information generates trust and reduces friction in decision-making.",
-    "scenarioWithout": "Absence of verifiable assets forces prospects to rely solely on referrals, significantly limiting scalability and increasing customer acquisition cost."
+    "scenarioWithout": "Absence of verifiable assets forces prospects to rely solely on referrals, significantly limiting scalability and increasing customer acquisition cost.",
+    "strategicDigitalIndex": "Strategic Digital Index",
+    "sdiTier_emerging": "Emerging",
+    "sdiTier_building": "Building",
+    "sdiTier_competitive": "Competitive",
+    "sdiTier_reference": "Industry Reference",
+    "sdiInterpretation_emerging": "Your digital presence has significant gaps that limit discoverability and trust. Prospects evaluating your company will find insufficient evidence to support a decision, increasing reliance on personal referrals.",
+    "sdiInterpretation_building": "Your digital foundation exists but lacks key trust signals. You have basic visibility but critical verification assets (case studies, testimonials, structured data) are missing or incomplete.",
+    "sdiInterpretation_competitive": "Your digital presence is functional and supports most business processes. Optimization of trust signals and content strategy will accelerate lead conversion and reduce acquisition costs.",
+    "sdiInterpretation_reference": "Your digital ecosystem is robust, well-structured, and trust-generating. You operate at a level comparable to market leaders, with verifiable assets that facilitate decision-making at scale.",
+    "sdiBenchmark_emerging": "Typical of early-stage businesses or companies that have relied exclusively on offline channels and personal networks.",
+    "sdiBenchmark_building": "Common in SMBs with 1–3 years of digital activity that haven't yet systematized their online credibility.",
+    "sdiBenchmark_competitive": "Characteristic of established businesses with dedicated marketing efforts and structured digital operations.",
+    "sdiBenchmark_reference": "Typical of market leaders and digitally mature organizations with comprehensive online strategies."
   }
 }

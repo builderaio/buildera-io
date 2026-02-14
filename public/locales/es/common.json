@@ -1422,6 +1422,19 @@
     "withVerifiableAssets": "Con activos verificables",
     "withoutVerifiableAssets": "Sin activos verificables",
     "scenarioWith": "Presencia digital estructurada con casos de éxito, testimonios, métricas públicas e información de contacto accesible genera confianza y reduce fricción en la toma de decisiones.",
-    "scenarioWithout": "La ausencia de activos verificables obliga a los prospectos a depender exclusivamente de referencias, limitando significativamente la escalabilidad y aumentando el costo de adquisición de clientes."
+    "scenarioWithout": "La ausencia de activos verificables obliga a los prospectos a depender exclusivamente de referencias, limitando significativamente la escalabilidad y aumentando el costo de adquisición de clientes.",
+    "strategicDigitalIndex": "Índice Digital Estratégico",
+    "sdiTier_emerging": "Emergente",
+    "sdiTier_building": "En Construcción",
+    "sdiTier_competitive": "Competitiva",
+    "sdiTier_reference": "Referente del Sector",
+    "sdiInterpretation_emerging": "Tu presencia digital tiene brechas significativas que limitan la descubribilidad y la confianza. Los prospectos que evalúen tu empresa encontrarán evidencia insuficiente para respaldar una decisión, aumentando la dependencia de referencias personales.",
+    "sdiInterpretation_building": "Tu base digital existe pero carece de señales clave de confianza. Tienes visibilidad básica pero los activos de verificación críticos (casos de éxito, testimonios, datos estructurados) están ausentes o incompletos.",
+    "sdiInterpretation_competitive": "Tu presencia digital es funcional y soporta la mayoría de los procesos de negocio. La optimización de señales de confianza y estrategia de contenido acelerará la conversión de leads y reducirá costos de adquisición.",
+    "sdiInterpretation_reference": "Tu ecosistema digital es robusto, bien estructurado y generador de confianza. Operas a un nivel comparable a los líderes del mercado, con activos verificables que facilitan la toma de decisiones a escala.",
+    "sdiBenchmark_emerging": "Típico de empresas en etapa temprana o negocios que han dependido exclusivamente de canales offline y redes personales.",
+    "sdiBenchmark_building": "Común en PyMEs con 1–3 años de actividad digital que aún no han sistematizado su credibilidad online.",
+    "sdiBenchmark_competitive": "Característico de empresas establecidas con esfuerzos de marketing dedicados y operaciones digitales estructuradas.",
+    "sdiBenchmark_reference": "Típico de líderes de mercado y organizaciones digitalmente maduras con estrategias online integrales."
   }
 }

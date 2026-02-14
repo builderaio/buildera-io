@@ -349,7 +349,7 @@ const CompanyDashboard = () => {
           <FounderPTWSimplified 
             companyId={profile?.primary_company_id}
             companyName={profile?.company_name}
-            onComplete={() => handleNavigate('mando-central')}
+            onComplete={() => handleNavigate('negocio')}
           />
         );
       

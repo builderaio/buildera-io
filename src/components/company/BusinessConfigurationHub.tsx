@@ -74,6 +74,42 @@ const BusinessConfigurationHub = ({ profile, onProfileUpdate }: BusinessConfigur
     }
   }, [profile?.user_id]);
 
+  const [onboardingMarked, setOnboardingMarked] = useState(false);
+
+  const markOnboardingCompleteIfNeeded = useCallback(async (userId: string) => {
+    if (onboardingMarked) return;
+    try {
+      const { data } = await supabase
+        .from('user_onboarding_status')
+        .select('dna_empresarial_completed')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (data?.dna_empresarial_completed) {
+        setOnboardingMarked(true);
+        return;
+      }
+
+      await supabase
+        .from('user_onboarding_status')
+        .upsert({
+          user_id: userId,
+          dna_empresarial_completed: true,
+          onboarding_completed_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+
+      window.dispatchEvent(new CustomEvent('onboarding-completed'));
+      setOnboardingMarked(true);
+      
+      toast({
+        title: t('common:onboarding.completed', '¡Configuración completa!'),
+        description: t('common:onboarding.adnReady', 'Tu negocio está listo para operar con el Autopilot'),
+      });
+    } catch (error) {
+      console.error('Error marking onboarding complete:', error);
+    }
+  }, [onboardingMarked, toast, t]);
+
   const calculateCompleteness = useCallback(() => {
     const sections: ConfigSection[] = [
       {
@@ -125,7 +161,13 @@ const BusinessConfigurationHub = ({ profile, onProfileUpdate }: BusinessConfigur
 
 
     setSectionStats(sections);
-  }, [companyData, strategyData, brandingData]);
+    
+    // Auto-complete onboarding when ADN reaches minimum threshold (~40%)
+    const totalCompleteness = sections.reduce((sum, s) => sum + s.completeness, 0) / sections.length;
+    if (totalCompleteness >= 40 && profile?.user_id) {
+      markOnboardingCompleteIfNeeded(profile.user_id);
+    }
+  }, [companyData, strategyData, brandingData, profile?.user_id]);
 
   useEffect(() => {
     calculateCompleteness();

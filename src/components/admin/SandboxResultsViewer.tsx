@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -38,15 +39,16 @@ interface SandboxResultsViewerProps {
 export const SandboxResultsViewer = ({ result, isLoading }: SandboxResultsViewerProps) => {
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const copyToClipboard = async (content: any, tab: string) => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(content, null, 2));
       setCopiedTab(tab);
       setTimeout(() => setCopiedTab(null), 2000);
-      toast({ title: "Copiado al portapapeles" });
+      toast({ title: t('toast.admin.copiedClipboard') });
     } catch (err) {
-      toast({ title: "Error al copiar", variant: "destructive" });
+      toast({ title: t('toast.admin.errorCopy'), variant: "destructive" });
     }
   };
 

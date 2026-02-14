@@ -1253,7 +1253,60 @@
       "invalidAmount": "Ingresa una cantidad válida",
       "creditsAssigned": "{amount} créditos asignados a {company}",
       "dataReset": "Datos reseteados a valores predeterminados",
-      "testSuccess": "Prueba ejecutada exitosamente"
+      "testSuccess": "Prueba ejecutada exitosamente",
+      "userToggled": "Usuario {{action}}",
+      "companyToggled": "Empresa {{action}}",
+      "userDeleted": "Usuario \"{{name}}\" eliminado permanentemente",
+      "companyDeleted": "Empresa \"{{name}}\" eliminada permanentemente",
+      "errorDeleteUser": "Error al eliminar usuario",
+      "errorDeleteCompany": "Error al eliminar empresa",
+      "deactivated": "inactivado",
+      "reactivated": "reactivado",
+      "deactivatedF": "inactivada",
+      "reactivatedF": "reactivada",
+      "copiedClipboard": "Copiado al portapapeles",
+      "errorCopy": "Error al copiar"
+    },
+    "publisher": {
+      "errorLoadAccounts": "No se pudieron cargar las cuentas sociales",
+      "selectionRequired": "Selección requerida",
+      "selectionRequiredDesc": "Selecciona contenido y al menos una plataforma",
+      "published": "¡Contenido publicado!",
+      "publishedDesc": "Se ha publicado en {{count}} plataforma(s)",
+      "trackingId": "Estado de publicación",
+      "trackingIdDesc": "ID de seguimiento: {{id}}. Puedes verificar el estado en el historial.",
+      "errorPublish": "Error al publicar",
+      "errorPublishDesc": "No se pudo publicar el contenido"
+    },
+    "advancedContent": {
+      "insightDeleted": "Insight eliminado",
+      "insightDeletedDesc": "El insight y su contenido relacionado han sido eliminados",
+      "errorDeleteInsight": "No se pudo eliminar el insight",
+      "contentCreated": "✨ ¡Contenido creado!",
+      "contentCreatedDesc": "Tu nuevo post está listo para publicar",
+      "errorGenerateContent": "No se pudo generar el contenido",
+      "imageCreated": "🖼️ ¡Imagen creada!",
+      "imageCreatedDesc": "Tu imagen profesional está lista",
+      "errorGenerateImage": "No se pudo generar la imagen",
+      "videoCreated": "🎥 ¡Video creado!",
+      "videoCreatedDesc": "Tu video promocional está listo",
+      "errorGenerateVideo": "No se pudo generar el video"
+    },
+    "postHistory": {
+      "errorLoad": "No se pudo cargar el historial de posts",
+      "refreshed": "Historial actualizado",
+      "refreshedDesc": "Se ha actualizado el historial de posts",
+      "noFile": "Sin archivo",
+      "noFileDesc": "Este post no contiene imágenes o videos para guardar",
+      "assetSaved": "Asset guardado",
+      "assetSavedDesc": "El archivo se ha guardado en tu biblioteca de contenidos",
+      "errorSaveAsset": "No se pudo guardar el archivo en la biblioteca"
+    },
+    "email": {
+      "selectTemplate": "Selecciona una plantilla y proporciona un email de prueba",
+      "sent": "¡Email enviado!",
+      "sentDesc": "El email de prueba se envió correctamente",
+      "errorSend": "Error enviando email"
     }
   }
 }

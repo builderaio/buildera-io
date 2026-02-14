@@ -226,10 +226,10 @@ const AdminCustomers = () => {
       const action = isActive ? 'deactivate_user' : 'reactivate_user';
       const { error } = await supabase.rpc(action, { target_user_id: userId });
       if (error) throw error;
-      toast({ title: "Éxito", description: `Usuario ${isActive ? 'inactivado' : 'reactivado'}` });
+      toast({ title: t('toast.success'), description: t('toast.admin.userToggled', { action: isActive ? t('toast.admin.deactivated') : t('toast.admin.reactivated') }) });
       loadUsers();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t('toast.error'), description: error.message, variant: "destructive" });
     }
   };
 
@@ -238,10 +238,10 @@ const AdminCustomers = () => {
       const action = isActive ? 'deactivate_company' : 'reactivate_company';
       const { error } = await supabase.rpc(action, { target_company_id: companyId });
       if (error) throw error;
-      toast({ title: "Éxito", description: `Empresa ${isActive ? 'inactivada' : 'reactivada'}` });
+      toast({ title: t('toast.success'), description: t('toast.admin.companyToggled', { action: isActive ? t('toast.admin.deactivatedF') : t('toast.admin.reactivatedF') }) });
       loadCompanies();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t('toast.error'), description: error.message, variant: "destructive" });
     }
   };
 
@@ -249,12 +249,11 @@ const AdminCustomers = () => {
     try {
       const { error } = await supabase.rpc('delete_user_cascade', { target_user_id: userId });
       if (error) throw error;
-      toast({ title: "Eliminado", description: `Usuario "${userName}" eliminado permanentemente` });
-      // Refetch both users and companies since user deletion may affect company members
+      toast({ title: t('toast.deleted'), description: t('toast.admin.userDeleted', { name: userName }) });
       await Promise.all([loadUsers(), loadCompanies()]);
     } catch (error: any) {
       console.error('Error deleting user:', error);
-      toast({ title: "Error al eliminar usuario", description: error.message, variant: "destructive" });
+      toast({ title: t('toast.admin.errorDeleteUser'), description: error.message, variant: "destructive" });
     }
   };
 
@@ -262,12 +261,11 @@ const AdminCustomers = () => {
     try {
       const { error } = await supabase.rpc('delete_company_cascade', { target_company_id: companyId });
       if (error) throw error;
-      toast({ title: "Eliminado", description: `Empresa "${companyName}" eliminada permanentemente` });
-      // Refetch both companies and users since company deletion removes members
+      toast({ title: t('toast.deleted'), description: t('toast.admin.companyDeleted', { name: companyName }) });
       await Promise.all([loadCompanies(), loadUsers()]);
     } catch (error: any) {
       console.error('Error deleting company:', error);
-      toast({ title: "Error al eliminar empresa", description: error.message, variant: "destructive" });
+      toast({ title: t('toast.admin.errorDeleteCompany'), description: error.message, variant: "destructive" });
     }
   };
 

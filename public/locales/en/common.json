@@ -1199,7 +1199,60 @@
       "invalidAmount": "Enter a valid amount",
       "creditsAssigned": "{amount} credits assigned to {company}",
       "dataReset": "Data reset to default values",
-      "testSuccess": "Test executed successfully"
+      "testSuccess": "Test executed successfully",
+      "userToggled": "User {{action}}",
+      "companyToggled": "Company {{action}}",
+      "userDeleted": "User \"{{name}}\" permanently deleted",
+      "companyDeleted": "Company \"{{name}}\" permanently deleted",
+      "errorDeleteUser": "Error deleting user",
+      "errorDeleteCompany": "Error deleting company",
+      "deactivated": "deactivated",
+      "reactivated": "reactivated",
+      "deactivatedF": "deactivated",
+      "reactivatedF": "reactivated",
+      "copiedClipboard": "Copied to clipboard",
+      "errorCopy": "Error copying"
+    },
+    "publisher": {
+      "errorLoadAccounts": "Could not load social accounts",
+      "selectionRequired": "Selection required",
+      "selectionRequiredDesc": "Select content and at least one platform",
+      "published": "Content published!",
+      "publishedDesc": "Published on {{count}} platform(s)",
+      "trackingId": "Publishing status",
+      "trackingIdDesc": "Tracking ID: {{id}}. You can check the status in the history.",
+      "errorPublish": "Error publishing",
+      "errorPublishDesc": "Could not publish the content"
+    },
+    "advancedContent": {
+      "insightDeleted": "Insight deleted",
+      "insightDeletedDesc": "The insight and its related content have been deleted",
+      "errorDeleteInsight": "Could not delete the insight",
+      "contentCreated": "✨ Content created!",
+      "contentCreatedDesc": "Your new post is ready to publish",
+      "errorGenerateContent": "Could not generate the content",
+      "imageCreated": "🖼️ Image created!",
+      "imageCreatedDesc": "Your professional image is ready",
+      "errorGenerateImage": "Could not generate the image",
+      "videoCreated": "🎥 Video created!",
+      "videoCreatedDesc": "Your promotional video is ready",
+      "errorGenerateVideo": "Could not generate the video"
+    },
+    "postHistory": {
+      "errorLoad": "Could not load post history",
+      "refreshed": "History updated",
+      "refreshedDesc": "Post history has been updated",
+      "noFile": "No file",
+      "noFileDesc": "This post does not contain images or videos to save",
+      "assetSaved": "Asset saved",
+      "assetSavedDesc": "The file has been saved to your content library",
+      "errorSaveAsset": "Could not save the file to the library"
+    },
+    "email": {
+      "selectTemplate": "Select a template and provide a test email",
+      "sent": "Email sent!",
+      "sentDesc": "The test email was sent successfully",
+      "errorSend": "Error sending email"
     }
   }
 }

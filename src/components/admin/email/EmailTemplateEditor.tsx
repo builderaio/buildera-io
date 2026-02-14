@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +32,7 @@ export const EmailTemplateEditor = ({
   const [preview, setPreview] = useState("");
 
   const { toast } = useToast();
+  const { t } = useTranslation();
   const { sendEmail, loading } = useEmailSystem();
 
   const currentTemplate = templates.find(t => t.id === templateId);
@@ -57,8 +59,8 @@ export const EmailTemplateEditor = ({
   const handleSendTest = async () => {
     if (!templateId || !testEmail) {
       toast({
-        title: "Error",
-        description: "Selecciona una plantilla y proporciona un email de prueba",
+        title: t('toast.error'),
+        description: t('toast.email.selectTemplate'),
         variant: "destructive",
       });
       return;
@@ -77,12 +79,12 @@ export const EmailTemplateEditor = ({
       });
 
       toast({
-        title: "¡Email enviado!",
-        description: "El email de prueba se envió correctamente",
+        title: t('toast.email.sent'),
+        description: t('toast.email.sentDesc'),
       });
     } catch (error: any) {
       toast({
-        title: "Error enviando email",
+        title: t('toast.email.errorSend'),
         description: error.message,
         variant: "destructive",
       });

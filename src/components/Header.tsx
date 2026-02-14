@@ -13,7 +13,7 @@ const Header = () => {
   const navLinks = [
     { href: "#valores", label: t('header.whyBuildera') },
     { href: "#ecosistema", label: t('header.ecosystem') },
-    { href: "#casos-de-uso", label: t('header.cases') },
+    { href: "/governance", label: t('header.governance') },
     { href: "/pricing", label: t('header.pricing', 'Pricing') },
     { href: "#contacto", label: t('header.contact') },
   ];

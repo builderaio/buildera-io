@@ -1,0 +1,174 @@
+{
+  "hero": {
+    "badge": "// GOVERNANCE_FRAMEWORK",
+    "title": "Autonomous, but accountable.",
+    "subtitle": "Every autonomous action has an approval level, a guardrail, and an auditable log.",
+    "description": "Buildera operates with progressive autonomy — but every decision goes through budget controls, legal compliance, and configurable human oversight. You define the rules, the system enforces them.",
+    "cta": "Start free diagnosis",
+    "ctaSecondary": "View system architecture"
+  },
+  "approvalLevels": {
+    "badge": "Human approval levels",
+    "title": "Control proportional to risk",
+    "subtitle": "Not all decisions require the same level of oversight. The system classifies each action by its potential impact and applies the corresponding control.",
+    "levels": {
+      "auto": {
+        "risk": "Low risk",
+        "title": "Automatic execution",
+        "description": "Routine operational tasks that don't generate spending or compromise the brand. Executed without waiting for approval.",
+        "examples": {
+          "1": "Internal analytics insight generation",
+          "2": "Dashboard metrics updates"
+        }
+      },
+      "review": {
+        "risk": "Medium risk",
+        "title": "Post-execution review",
+        "description": "Actions that execute but are flagged for human review afterward. Reversible if issues are detected.",
+        "examples": {
+          "1": "Content draft creation",
+          "2": "Editorial calendar adjustments"
+        }
+      },
+      "approval": {
+        "risk": "High risk",
+        "title": "Prior approval required",
+        "description": "Decisions affecting budget, customers, or brand. The system prepares the action but waits for your confirmation before executing.",
+        "examples": {
+          "1": "Social media content publishing",
+          "2": "Sending commercial proposals to clients"
+        }
+      },
+      "escalation": {
+        "risk": "Critical risk",
+        "title": "Executive escalation",
+        "description": "Strategic decisions requiring multi-stakeholder validation. The system generates the recommendation but does not act.",
+        "examples": {
+          "1": "Significant pricing changes",
+          "2": "Decisions compromising legal obligations"
+        }
+      }
+    }
+  },
+  "budgetCaps": {
+    "badge": "Budget control",
+    "title": "Financial guardrails at every level",
+    "subtitle": "The Finance department operates as a cross-departmental guardian. Every action involving spending is validated against configurable limits before execution.",
+    "controls": {
+      "daily": {
+        "title": "Daily credit limits",
+        "description": "Each company has a daily AI credit cap that cannot be exceeded. When reached, actions are queued for the next day.",
+        "mechanism": "company_credits.daily_limit"
+      },
+      "campaign": {
+        "title": "Campaign caps",
+        "description": "Each marketing campaign has an assigned maximum budget. The system automatically halts execution as it approaches the limit.",
+        "mechanism": "campaign_budget_cap"
+      },
+      "department": {
+        "title": "Departmental budget",
+        "description": "Each department operates within an allocated budget. Actions exceeding the budget require upper-level approval.",
+        "mechanism": "department_budget_allocation"
+      },
+      "crossDept": {
+        "title": "Cross-departmental validation",
+        "description": "Finance can block Marketing or Sales actions if it detects they compromise financial health. This guardrail operates in the GUARD phase of the cycle.",
+        "mechanism": "guardrail_budget_validator"
+      }
+    }
+  },
+  "legalReview": {
+    "badge": "Legal automation",
+    "title": "Compliance integrated into the operational cycle",
+    "subtitle": "The Legal department validates operations before they execute — not after. The system ensures every commercial action complies with applicable policies and regulations.",
+    "features": {
+      "preValidation": {
+        "title": "Pre-validation of commercial operations",
+        "description": "Before Sales closes a deal or sends a proposal, the Legal module verifies that terms comply with company policies and sector regulations."
+      },
+      "regulatory": {
+        "title": "Continuous regulatory monitoring",
+        "description": "Specialized agents monitor regulatory changes relevant to your company's sector and generate preventive alerts before they affect operations."
+      },
+      "contractReview": {
+        "title": "Automated contract review",
+        "description": "The system analyzes contractual terms against internal policies and detects risk clauses before they reach signature."
+      },
+      "sectorCompliance": {
+        "title": "Sector-adapted compliance",
+        "description": "Validation rules are configured by your company's sector: fintech, healthcare, retail, professional services, etc. Each sector has its own compliance criteria."
+      }
+    }
+  },
+  "riskMonitoring": {
+    "badge": "Risk monitoring",
+    "title": "Real-time visibility into operational status",
+    "subtitle": "A control dashboard centralizing risk indicators across every department. Proactive alerts when any indicator exceeds configured thresholds.",
+    "dashboardTitle": "Risk Monitoring Dashboard",
+    "liveLabel": "● LIVE",
+    "indicators": {
+      "anomaly": {
+        "value": "2",
+        "label": "Anomalies detected today"
+      },
+      "budget": {
+        "value": "78%",
+        "label": "Monthly budget used"
+      },
+      "performance": {
+        "value": "94%",
+        "label": "Decision success rate"
+      },
+      "compliance": {
+        "value": "100%",
+        "label": "Regulatory compliance"
+      }
+    },
+    "description": "Indicators update on every Autopilot cycle. Anomalies are classified by severity and affected department. Configurable alerts via email or in-platform notification."
+  },
+  "auditLogs": {
+    "badge": "Auditable records",
+    "title": "Every decision has a complete record",
+    "subtitle": "No black boxes. Every autonomous action is logged with its context, reasoning, guardrail applied, outcome, and impact metrics.",
+    "capabilities": {
+      "decision": {
+        "title": "Decision log",
+        "description": "Every Enterprise Brain decision is recorded with its reasoning, priority, assigned agent, and expected vs. actual outcome."
+      },
+      "credit": {
+        "title": "Credit consumption",
+        "description": "Detailed record of credits consumed by agent, department, and action type. Full traceability of operational cost."
+      },
+      "guardrail": {
+        "title": "Guardrail interventions",
+        "description": "Every time a guardrail blocks or modifies an action, it's recorded: which guardrail, why, and what would have happened without it."
+      },
+      "learning": {
+        "title": "Learning record",
+        "description": "Every lesson the system learns is documented: context, decision made, outcome, and the rule extracted for the future."
+      }
+    },
+    "sampleTitle": "autopilot_execution_log — sample record",
+    "sample": {
+      "cycleId": "cyc_2025_0214_08h",
+      "phase": "ACT",
+      "decision": "Migrate 60% calendar to Reels due to engagement drop",
+      "guardrail": "approved — within weekly budget",
+      "agent": "CONTENT_CREATOR",
+      "credits": "12",
+      "outcome": "0.87 (engagement +23% in 7 days)",
+      "approval": "auto — risk classified as medium"
+    }
+  },
+  "accountability": {
+    "title": "Autonomous, but accountable.",
+    "description": "Autonomy without governance is irresponsible. Buildera operates under the principle that every autonomous action must be explainable, reversible, auditable, and proportional to the risk it represents.",
+    "principles": {
+      "1": "Every action is explainable",
+      "2": "Every decision is reversible",
+      "3": "Every outcome is auditable",
+      "4": "Every control is configurable"
+    },
+    "cta": "Diagnose my company free"
+  }
+}

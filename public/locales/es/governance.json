@@ -1,0 +1,174 @@
+{
+  "hero": {
+    "badge": "// GOVERNANCE_FRAMEWORK",
+    "title": "Autónomo, pero responsable.",
+    "subtitle": "Cada acción autónoma tiene un nivel de aprobación, un guardrail y un log auditable.",
+    "description": "Buildera opera con autonomía progresiva — pero cada decisión pasa por controles de presupuesto, compliance legal y supervisión humana configurable. Tú defines las reglas, el sistema las ejecuta.",
+    "cta": "Comenzar diagnóstico gratuito",
+    "ctaSecondary": "Ver arquitectura del sistema"
+  },
+  "approvalLevels": {
+    "badge": "Niveles de aprobación humana",
+    "title": "Control proporcional al riesgo",
+    "subtitle": "No todas las decisiones requieren el mismo nivel de supervisión. El sistema clasifica cada acción por su impacto potencial y aplica el control correspondiente.",
+    "levels": {
+      "auto": {
+        "risk": "Riesgo bajo",
+        "title": "Ejecución automática",
+        "description": "Tareas operativas de rutina que no generan gasto ni comprometen la marca. Se ejecutan sin esperar aprobación.",
+        "examples": {
+          "1": "Generación de insights internos de analytics",
+          "2": "Actualización de métricas del dashboard"
+        }
+      },
+      "review": {
+        "risk": "Riesgo medio",
+        "title": "Revisión post-ejecución",
+        "description": "Acciones que se ejecutan pero quedan marcadas para revisión humana posterior. Reversibles si se detectan problemas.",
+        "examples": {
+          "1": "Creación de borradores de contenido",
+          "2": "Ajustes de calendario editorial"
+        }
+      },
+      "approval": {
+        "risk": "Riesgo alto",
+        "title": "Aprobación previa requerida",
+        "description": "Decisiones que afectan presupuesto, clientes o marca. El sistema prepara la acción pero espera tu confirmación antes de ejecutar.",
+        "examples": {
+          "1": "Publicación de contenido en redes sociales",
+          "2": "Envío de propuestas comerciales a clientes"
+        }
+      },
+      "escalation": {
+        "risk": "Riesgo crítico",
+        "title": "Escalamiento ejecutivo",
+        "description": "Decisiones estratégicas que requieren validación de múltiples stakeholders. El sistema genera la recomendación pero no actúa.",
+        "examples": {
+          "1": "Cambios significativos en pricing",
+          "2": "Decisiones que comprometen obligaciones legales"
+        }
+      }
+    }
+  },
+  "budgetCaps": {
+    "badge": "Control presupuestario",
+    "title": "Guardrails financieros en cada nivel",
+    "subtitle": "El departamento de Finanzas opera como guardián cross-departamental. Cada acción que implique gasto se valida contra límites configurables antes de ejecutarse.",
+    "controls": {
+      "daily": {
+        "title": "Límites diarios de créditos",
+        "description": "Cada empresa tiene un tope diario de créditos de IA que no puede excederse. Cuando se alcanza, las acciones se encolan para el día siguiente.",
+        "mechanism": "company_credits.daily_limit"
+      },
+      "campaign": {
+        "title": "Topes por campaña",
+        "description": "Cada campaña de marketing tiene un presupuesto máximo asignado. El sistema detiene la ejecución automáticamente al acercarse al límite.",
+        "mechanism": "campaign_budget_cap"
+      },
+      "department": {
+        "title": "Presupuesto departamental",
+        "description": "Cada departamento opera dentro de un presupuesto asignado. Las acciones que excedan el presupuesto requieren aprobación del nivel superior.",
+        "mechanism": "department_budget_allocation"
+      },
+      "crossDept": {
+        "title": "Validación cross-departamental",
+        "description": "Finanzas puede bloquear acciones de Marketing o Ventas si detecta que comprometen la salud financiera. Este guardrail opera en la fase GUARD del ciclo.",
+        "mechanism": "guardrail_budget_validator"
+      }
+    }
+  },
+  "legalReview": {
+    "badge": "Automatización legal",
+    "title": "Compliance integrado en el ciclo operativo",
+    "subtitle": "El departamento Legal valida operaciones antes de que se ejecuten — no después. El sistema asegura que cada acción comercial cumpla con las políticas y regulaciones aplicables.",
+    "features": {
+      "preValidation": {
+        "title": "Pre-validación de operaciones comerciales",
+        "description": "Antes de que Ventas cierre un deal o envíe una propuesta, el módulo Legal verifica que los términos cumplan con las políticas de la empresa y la regulación del sector."
+      },
+      "regulatory": {
+        "title": "Monitoreo regulatorio continuo",
+        "description": "Agentes especializados monitorean cambios regulatorios relevantes al sector de tu empresa y generan alertas preventivas antes de que afecten las operaciones."
+      },
+      "contractReview": {
+        "title": "Revisión automatizada de contratos",
+        "description": "El sistema analiza términos contractuales contra las políticas internas y detecta cláusulas de riesgo antes de que lleguen a firma."
+      },
+      "sectorCompliance": {
+        "title": "Compliance adaptado por sector",
+        "description": "Las reglas de validación se configuran según el sector de tu empresa: fintech, salud, retail, servicios profesionales, etc. Cada sector tiene sus propios criterios de cumplimiento."
+      }
+    }
+  },
+  "riskMonitoring": {
+    "badge": "Monitoreo de riesgos",
+    "title": "Visibilidad en tiempo real del estado operativo",
+    "subtitle": "Un dashboard de control que centraliza indicadores de riesgo en cada departamento. Alertas proactivas cuando algún indicador supera los umbrales configurados.",
+    "dashboardTitle": "Risk Monitoring Dashboard",
+    "liveLabel": "● EN VIVO",
+    "indicators": {
+      "anomaly": {
+        "value": "2",
+        "label": "Anomalías detectadas hoy"
+      },
+      "budget": {
+        "value": "78%",
+        "label": "Presupuesto mensual utilizado"
+      },
+      "performance": {
+        "value": "94%",
+        "label": "Tasa de éxito de decisiones"
+      },
+      "compliance": {
+        "value": "100%",
+        "label": "Compliance regulatorio"
+      }
+    },
+    "description": "Los indicadores se actualizan en cada ciclo del Autopilot. Las anomalías se clasifican por severidad y departamento afectado. Alertas configurables por email o notificación en plataforma."
+  },
+  "auditLogs": {
+    "badge": "Registro auditable",
+    "title": "Cada decisión tiene un registro completo",
+    "subtitle": "No hay cajas negras. Cada acción autónoma se registra con su contexto, razonamiento, guardrail aplicado, resultado y métricas de impacto.",
+    "capabilities": {
+      "decision": {
+        "title": "Log de decisiones",
+        "description": "Cada decisión del Enterprise Brain se registra con su razonamiento, prioridad, agente asignado y resultado esperado vs. real."
+      },
+      "credit": {
+        "title": "Consumo de créditos",
+        "description": "Registro detallado de créditos consumidos por agente, departamento y tipo de acción. Trazabilidad completa del costo operativo."
+      },
+      "guardrail": {
+        "title": "Intervenciones de guardrails",
+        "description": "Cada vez que un guardrail bloquea o modifica una acción, se registra: qué guardrail, por qué, y qué hubiera pasado sin él."
+      },
+      "learning": {
+        "title": "Registro de aprendizaje",
+        "description": "Cada lección aprendida por el sistema se documenta: contexto, decisión tomada, resultado y la regla extraída para el futuro."
+      }
+    },
+    "sampleTitle": "autopilot_execution_log — ejemplo de registro",
+    "sample": {
+      "cycleId": "cyc_2025_0214_08h",
+      "phase": "ACT",
+      "decision": "Migrar 60% calendario a Reels por caída de engagement",
+      "guardrail": "approved — dentro de presupuesto semanal",
+      "agent": "CONTENT_CREATOR",
+      "credits": "12",
+      "outcome": "0.87 (engagement +23% en 7 días)",
+      "approval": "auto — riesgo clasificado como medio"
+    }
+  },
+  "accountability": {
+    "title": "Autónomo, pero responsable.",
+    "description": "La autonomía sin gobernanza es irresponsable. Buildera opera bajo el principio de que cada acción autónoma debe ser explicable, reversible, auditable y proporcional al riesgo que representa.",
+    "principles": {
+      "1": "Cada acción es explicable",
+      "2": "Cada decisión es reversible",
+      "3": "Cada resultado es auditable",
+      "4": "Cada control es configurable"
+    },
+    "cta": "Diagnosticar mi empresa gratis"
+  }
+}

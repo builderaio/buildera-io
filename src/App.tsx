@@ -31,6 +31,7 @@ import TikTokCallback from "./pages/TikTokCallback";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Pricing from "./pages/Pricing";
+import Governance from "./pages/Governance";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import { AdminAuthProvider } from "./hooks/useAdminAuth";
 import AdminLogin from "./pages/AdminLogin";
@@ -97,6 +98,7 @@ const App = () => {
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/pricing" element={<Pricing />} />
+                <Route path="/governance" element={<Governance />} />
                 <Route path="/subscription-success" element={<SubscriptionSuccess />} />
                 <Route path="/invite/:token" element={<InviteAccept />} />
                 

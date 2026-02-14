@@ -1309,5 +1309,31 @@
       "sentDesc": "El email de prueba se envió correctamente",
       "errorSend": "Error enviando email"
     }
+  },
+  "snapshot": {
+    "engineActive": "Digital Snapshot Engine • Activo",
+    "subtitle": "El Cerebro Empresarial ha completado el análisis inicial. Aquí tienes tu radiografía digital.",
+    "digitalHealth": "Evaluación de Salud Digital",
+    "overallScore": "General",
+    "visibilityScore": "Visibilidad Digital",
+    "trustScore": "Confianza y Credibilidad",
+    "contentScore": "Madurez de Contenido",
+    "executiveSummary": "Diagnóstico Ejecutivo",
+    "currentState": "Estado Actual",
+    "primaryConstraint": "Restricción Principal",
+    "highestLeverage": "Mayor Palanca de Impacto",
+    "socialChannels": "Canales Sociales",
+    "services": "Servicios",
+    "strengths": "Fortalezas",
+    "gaps": "Brechas Detectadas",
+    "risks": "Riesgos Activos",
+    "whatWorks": "Lo que Funciona",
+    "whatsMissing": "Brechas Críticas",
+    "nextPhase": "Siguiente: Configuración de ADN Estratégico",
+    "nextPhaseDesc": "Define tu misión, visión y propuesta de valor con asistencia de IA.",
+    "viewFullReport": "Reporte Completo",
+    "continueStrategy": "Continuar",
+    "brainOnline": "Cerebro Empresarial Online",
+    "analysisComplete": "Análisis Completado"
   }
 }

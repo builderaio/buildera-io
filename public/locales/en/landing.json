@@ -604,5 +604,67 @@
       "title": "Buildera as valuation infrastructure",
       "description": "Companies with systematized operations and low founder dependency receive significantly higher valuation multiples. Buildera transforms your business from a people-dependent operation to a replicable autonomous system — increasing its value to investors and acquirers."
     }
+  },
+  "dashboardPreview": {
+    "badge": "Control center preview",
+    "title": "Total control over enterprise autonomy",
+    "subtitle": "An enterprise-grade panel giving you full visibility over every autonomous decision, pending approval, and governance alert — in real time.",
+    "topbar": "Buildera · Autonomy Control Center",
+    "status": "System active",
+    "iq": {
+      "label": "Enterprise IQ",
+      "period": "this month",
+      "nextLevel": "74% to Expert level"
+    },
+    "departments": {
+      "label": "Departments",
+      "items": {
+        "marketing": "Marketing",
+        "sales": "Sales",
+        "finance": "Finance",
+        "legal": "Legal",
+        "hr": "HR",
+        "operations": "Operations"
+      }
+    },
+    "logs": {
+      "label": "Execution log",
+      "today": "today",
+      "items": {
+        "log1": "Q1 content strategy generated",
+        "log2": "127 leads scored and prioritized",
+        "log3": "Weekly cashflow report completed",
+        "log4": "Compliance review pending",
+        "log5": "3 processes optimized"
+      }
+    },
+    "guardrails": {
+      "label": "Budget guardrails",
+      "items": {
+        "guardrail1": "Marketing monthly budget at 87%",
+        "guardrail2": "Vendor savings detected",
+        "guardrail3": "All policies in compliance"
+      }
+    },
+    "approvals": {
+      "label": "Pending approvals",
+      "pending": "pending"
+    },
+    "capabilities": {
+      "label": "Active capabilities",
+      "active": "active",
+      "items": {
+        "cap1": "Auto audience segmentation",
+        "cap2": "Pipeline optimization",
+        "cap3": "Churn prediction",
+        "cap4": "Sentiment analysis"
+      }
+    },
+    "footer": {
+      "cycle": "Cycle",
+      "agents": "active agents",
+      "credits": "credits used today",
+      "nextCycle": "Next cycle in"
+    }
   }
 }

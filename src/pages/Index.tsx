@@ -5,6 +5,7 @@ import AutonomousEnterprise from "@/components/home/AutonomousEnterprise";
 
 import HowItWorks from "@/components/home/HowItWorks";
 import BusinessImpact from "@/components/home/BusinessImpact";
+import AutonomyDashboardPreview from "@/components/home/AutonomyDashboardPreview";
 import ProductArchitecture from "@/components/home/ProductArchitecture";
 import CapabilityGenesis from "@/components/home/CapabilityGenesis";
 import WhatWeDoNot from "@/components/home/WhatWeDoNot";
@@ -42,6 +43,7 @@ const Index = () => {
         <AutonomousEnterprise />
         <HowItWorks />
         <BusinessImpact />
+        <AutonomyDashboardPreview />
         <ProductArchitecture />
         <CapabilityGenesis />
         

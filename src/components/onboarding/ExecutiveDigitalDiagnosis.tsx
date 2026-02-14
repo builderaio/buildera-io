@@ -60,6 +60,57 @@ const DataChip = ({ children, variant = 'default' }: { children: React.ReactNode
   );
 };
 
+// ── Strategic Digital Index ──
+type SDITier = 'emerging' | 'building' | 'competitive' | 'reference';
+
+function getSDITier(score: number): SDITier {
+  if (score >= 75) return 'reference';
+  if (score >= 55) return 'competitive';
+  if (score >= 35) return 'building';
+  return 'emerging';
+}
+
+const tierConfig: Record<SDITier, { color: string; border: string; bg: string; dot: string }> = {
+  emerging:    { color: 'text-red-400',     border: 'border-red-500/30',     bg: 'bg-red-500/10',     dot: 'bg-red-500' },
+  building:    { color: 'text-amber-400',   border: 'border-amber-500/30',   bg: 'bg-amber-500/10',   dot: 'bg-amber-500' },
+  competitive: { color: 'text-blue-400',    border: 'border-blue-500/30',    bg: 'bg-blue-500/10',    dot: 'bg-blue-500' },
+  reference:   { color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/10', dot: 'bg-emerald-500' },
+};
+
+const StrategicDigitalIndex = ({ overallScore, t }: { overallScore: number; t: any }) => {
+  const tier = getSDITier(overallScore);
+  const cfg = tierConfig[tier];
+  const tierLabel = t(`common:execDiagnosis.sdiTier_${tier}`);
+  const interpretation = t(`common:execDiagnosis.sdiInterpretation_${tier}`);
+  const benchmark = t(`common:execDiagnosis.sdiBenchmark_${tier}`);
+
+  return (
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+      {/* Score display */}
+      <div className="flex items-center gap-4">
+        <div className={`relative w-16 h-16 rounded-xl ${cfg.bg} border ${cfg.border} flex flex-col items-center justify-center`}>
+          <span className={`text-2xl font-bold font-mono ${cfg.color}`}>{overallScore}</span>
+          <span className="text-[8px] text-slate-500 uppercase">/100</span>
+        </div>
+        <div>
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">
+            {t('common:execDiagnosis.strategicDigitalIndex', 'Strategic Digital Index')}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <div className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+            <span className={`text-sm font-bold ${cfg.color}`}>{tierLabel}</span>
+          </div>
+        </div>
+      </div>
+      {/* Interpretation */}
+      <div className="flex-1 min-w-0 sm:border-l border-slate-700/50 sm:pl-5 space-y-1">
+        <p className="text-xs text-slate-300 leading-relaxed">{interpretation}</p>
+        <p className="text-[11px] text-slate-500 italic">{benchmark}</p>
+      </div>
+    </div>
+  );
+};
+
 // ── Deterministic Revenue at Risk Estimation ──
 type ImpactLevel = 'low' | 'medium' | 'high';
 
@@ -636,17 +687,10 @@ export const ExecutiveDigitalDiagnosis = ({
         {/* SECTION 5: MATURITY SCORES */}
         {/* ══════════════════════════════════════════════════════ */}
         <motion.section {...fadeUp(0.5)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
-          <div className="flex items-center justify-between mb-6">
-            <SectionHeader icon={Brain} title={t('common:execDiagnosis.maturityScores', 'Digital Maturity Assessment')} />
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700">
-              <div className={`w-2 h-2 rounded-full ${overallScore >= 60 ? 'bg-emerald-500' : overallScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} />
-              <span className="text-xs font-mono text-slate-300">
-                {t('common:snapshot.overallScore', 'Overall')}: {overallScore}/100
-              </span>
-            </div>
-          </div>
+          {/* Strategic Digital Index Header */}
+          <StrategicDigitalIndex overallScore={overallScore} t={t} />
 
-          <div className="flex flex-wrap justify-center gap-8 sm:gap-16">
+          <div className="flex flex-wrap justify-center gap-8 sm:gap-16 mt-6">
             <ScoreRingWithTooltip
               breakdown={scores.visibility}
               label={t('common:snapshot.visibilityScore', 'Digital Visibility')}

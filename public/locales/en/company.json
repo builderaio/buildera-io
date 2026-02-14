@@ -243,7 +243,29 @@
       "friday": "Fri",
       "saturday": "Sat",
       "sunday": "Sun"
+    },
+    "timezones": {
+      "America_Mexico_City": "Mexico City (GMT-6)",
+      "America_New_York": "New York (GMT-5)",
+      "America_Los_Angeles": "Los Angeles (GMT-8)",
+      "America_Bogota": "Bogotá (GMT-5)",
+      "America_Lima": "Lima (GMT-5)",
+      "America_Buenos_Aires": "Buenos Aires (GMT-3)",
+      "America_Sao_Paulo": "São Paulo (GMT-3)",
+      "Europe_Madrid": "Madrid (GMT+1)",
+      "Europe_London": "London (GMT+0)"
     }
+  },
+  "channels": {
+    "desc": "Configure each platform individually",
+    "tone": "Tone",
+    "frequency": "Posts/week",
+    "max_posts": "Max posts/day",
+    "hashtag_limit": "Hashtag limit",
+    "auto_publish": "Auto-publish",
+    "require_approval": "Requires approval",
+    "analytics": "Track metrics",
+    "posts_per_week_short": "posts/wk"
   },
   "marketing": {
     "goals_title": "Marketing Goals",

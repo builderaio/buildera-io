@@ -33,14 +33,11 @@ interface CompetitorAnalysis {
   referentes: CompetitorData[];
 }
 
-const PRIORITY_OPTIONS = [
-  { value: 1, label: 'Alta' },
-  { value: 2, label: 'Media' },
-  { value: 3, label: 'Baja' },
-];
+const PRIORITY_KEYS = ['high', 'medium', 'low'] as const;
+const PRIORITY_VALUES = [1, 2, 3];
 
 export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['company']);
   const { toast } = useToast();
   const { competitors, loading, saving, addCompetitor, updateCompetitor, deleteCompetitor, refetch } = useCompanyCompetitors(companyId);
   
@@ -55,10 +52,10 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
 
   const handleAdd = async () => {
     try {
-      await addCompetitor({ competitor_name: 'Nuevo Competidor' });
-      toast({ title: t('company.competitors.added', 'Competidor agregado') });
+      await addCompetitor({ competitor_name: t('company:competitors.newCompetitor') });
+      toast({ title: t('company:competitors.added') });
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
@@ -66,16 +63,16 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
     try {
       await updateCompetitor(id, updates);
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteCompetitor(id);
-      toast({ title: t('company.competitors.deleted', 'Competidor eliminado') });
+      toast({ title: t('company:competitors.deleted') });
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
@@ -91,15 +88,15 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
       if (data?.analysis) {
         setAnalysisResults(data.analysis);
         toast({ 
-          title: 'Análisis completado',
-          description: 'Se encontraron competidores relevantes para tu empresa'
+          title: t('company:competitors.analysisComplete'),
+          description: t('company:competitors.analysisCompleteDesc')
         });
       }
     } catch (error) {
       console.error('Error analyzing competitors:', error);
       toast({ 
-        title: 'Error al analizar',
-        description: 'No se pudo completar el análisis de competidores',
+        title: t('company:competitors.analysisError'),
+        description: t('company:competitors.analysisErrorDesc'),
         variant: 'destructive' 
       });
     } finally {
@@ -117,19 +114,19 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
         priority_level: 2,
       });
       toast({ 
-        title: 'Competidor agregado',
-        description: `${competitor.nombre} fue agregado a tu lista`
+        title: t('company:competitors.addedFromAnalysis'),
+        description: t('company:competitors.addedFromAnalysisDesc', { name: competitor.nombre })
       });
     } catch {
-      toast({ title: t('company.email.save_error'), variant: 'destructive' });
+      toast({ title: t('company:email.save_error'), variant: 'destructive' });
     }
   };
 
   const handleAnalyzeSingleCompetitor = async (competitor: CompanyCompetitor, forceReanalyze = false) => {
     if (!competitor.website_url) {
       toast({ 
-        title: 'URL requerida',
-        description: 'Este competidor no tiene sitio web configurado',
+        title: t('company:competitors.urlRequired'),
+        description: t('company:competitors.urlRequiredDesc'),
         variant: 'destructive' 
       });
       return;
@@ -183,8 +180,8 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
         await updateCompetitor(competitor.id, enrichedData);
         
         toast({ 
-          title: 'Análisis completado',
-          description: `Se analizó la información de ${data.competitor.name || competitor.competitor_name}`
+          title: t('company:competitors.singleAnalysisComplete'),
+          description: t('company:competitors.singleAnalysisCompleteDesc', { name: data.competitor.name || competitor.competitor_name })
         });
       } else {
         throw new Error('No se pudo obtener información del competidor');
@@ -192,8 +189,8 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
     } catch (error) {
       console.error('Error analyzing single competitor:', error);
       toast({ 
-        title: 'Error al analizar',
-        description: 'No se pudo completar el análisis del competidor',
+        title: t('company:competitors.singleAnalysisError'),
+        description: t('company:competitors.singleAnalysisErrorDesc'),
         variant: 'destructive' 
       });
     } finally {
@@ -224,10 +221,10 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {t('company.competitors.title', 'Competidores')}
+            {t('company:competitors.title')}
           </h3>
           <p className="text-sm text-muted-foreground">
-            {t('company.competitors.desc', 'Los agentes de inteligencia competitiva monitorearán estos competidores')}
+            {t('company:competitors.desc')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -242,11 +239,11 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
-            {analyzing ? 'Analizando...' : 'Generar con IA'}
+            {analyzing ? t('company:competitors.analyzing') : t('company:competitors.generateWithAI')}
           </Button>
           <Button onClick={handleAdd} disabled={saving}>
             <Plus className="h-4 w-4 mr-2" />
-            {t('company.competitors.add', 'Agregar')}
+            {t('company:competitors.add')}
           </Button>
         </div>
       </div>
@@ -265,9 +262,9 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
           <CardContent className="py-8 text-center text-muted-foreground">
             <div className="space-y-3">
               <Users className="h-12 w-12 mx-auto opacity-50" />
-              <p>{t('company.competitors.empty', 'No hay competidores configurados')}</p>
+              <p>{t('company:competitors.empty')}</p>
               <p className="text-sm">
-                Usa "Generar con IA" para descubrir competidores automáticamente
+                {t('company:competitors.useAIHint')}
               </p>
             </div>
           </CardContent>
@@ -275,7 +272,7 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
       ) : competitors.length > 0 && (
         <div className="space-y-4">
           <h4 className="font-medium text-sm text-muted-foreground">
-            Mis Competidores ({competitors.length})
+            {t('company:competitors.myCompetitors')} ({competitors.length})
           </h4>
           {competitors.map(competitor => (
             <Card key={competitor.id}>
@@ -286,18 +283,18 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                       value={competitor.competitor_name}
                       onChange={(e) => handleUpdate(competitor.id, { competitor_name: e.target.value })}
                       className="font-semibold text-lg border-none px-0 focus-visible:ring-0"
-                      placeholder={t('company.competitors.name', 'Nombre del competidor')}
+                      placeholder={t('company:competitors.name')}
                     />
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm">{t('company.competitors.direct', 'Competidor directo')}</Label>
+                        <Label className="text-sm">{t('company:competitors.direct')}</Label>
                         <Switch
                           checked={competitor.is_direct_competitor}
                           onCheckedChange={(v) => handleUpdate(competitor.id, { is_direct_competitor: v })}
                         />
                       </div>
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm">{t('company.competitors.priority', 'Prioridad')}</Label>
+                        <Label className="text-sm">{t('company:competitors.priority')}</Label>
                         <Select
                           value={String(competitor.priority_level)}
                           onValueChange={(v) => handleUpdate(competitor.id, { priority_level: parseInt(v) })}
@@ -306,8 +303,8 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {PRIORITY_OPTIONS.map(opt => (
-                              <SelectItem key={opt.value} value={String(opt.value)}>{opt.label}</SelectItem>
+                            {PRIORITY_KEYS.map((key, idx) => (
+                              <SelectItem key={PRIORITY_VALUES[idx]} value={String(PRIORITY_VALUES[idx])}>{t(`company:competitors.priority${key.charAt(0).toUpperCase() + key.slice(1)}`)}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -336,10 +333,10 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                         </TooltipTrigger>
                         <TooltipContent>
                           {!competitor.website_url 
-                            ? 'Agrega un sitio web para analizar'
+                            ? t('company:competitors.addWebsiteToAnalyze')
                             : competitor.ai_analysis
-                              ? 'Ver análisis guardado'
-                              : 'Analizar competidor con IA'
+                              ? t('company:competitors.viewSavedAnalysis')
+                              : t('company:competitors.analyzeWithAI')
                           }
                         </TooltipContent>
                       </Tooltip>
@@ -360,7 +357,7 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            Re-analizar competidor
+                            {t('company:competitors.reanalyze')}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -376,7 +373,7 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                       <Globe className="h-4 w-4" />
-                      {t('company.competitors.website', 'Sitio web')}
+                      {t('company:competitors.website')}
                     </Label>
                     <Input
                       value={competitor.website_url || ''}
@@ -385,7 +382,7 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t('company.competitors.instagram', 'Instagram')}</Label>
+                    <Label>{t('company:competitors.instagram')}</Label>
                     <Input
                       value={competitor.instagram_url || ''}
                       onChange={(e) => handleUpdate(competitor.id, { instagram_url: e.target.value })}
@@ -393,7 +390,7 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t('company.competitors.linkedin', 'LinkedIn')}</Label>
+                    <Label>{t('company:competitors.linkedin')}</Label>
                     <Input
                       value={competitor.linkedin_url || ''}
                       onChange={(e) => handleUpdate(competitor.id, { linkedin_url: e.target.value })}
@@ -401,7 +398,7 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t('company.competitors.facebook', 'Facebook')}</Label>
+                    <Label>{t('company:competitors.facebook')}</Label>
                     <Input
                       value={competitor.facebook_url || ''}
                       onChange={(e) => handleUpdate(competitor.id, { facebook_url: e.target.value })}
@@ -411,11 +408,11 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>{t('company.competitors.notes', 'Notas')}</Label>
+                  <Label>{t('company:competitors.notes')}</Label>
                   <Textarea
                     value={competitor.notes || ''}
                     onChange={(e) => handleUpdate(competitor.id, { notes: e.target.value })}
-                    placeholder={t('company.competitors.notes_placeholder', 'Información adicional sobre este competidor...')}
+                    placeholder={t('company:competitors.notes_placeholder')}
                     rows={2}
                   />
                 </div>
@@ -426,21 +423,21 @@ export const ADNCompetitorsTab = ({ companyId }: ADNCompetitorsTabProps) => {
                       checked={competitor.monitor_pricing}
                       onCheckedChange={(v) => handleUpdate(competitor.id, { monitor_pricing: v })}
                     />
-                    <Label className="text-sm">{t('company.competitors.monitor_pricing', 'Monitorear precios')}</Label>
+                    <Label className="text-sm">{t('company:competitors.monitor_pricing')}</Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={competitor.monitor_content}
                       onCheckedChange={(v) => handleUpdate(competitor.id, { monitor_content: v })}
                     />
-                    <Label className="text-sm">{t('company.competitors.monitor_content', 'Monitorear contenido')}</Label>
+                    <Label className="text-sm">{t('company:competitors.monitor_content')}</Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={competitor.monitor_campaigns}
                       onCheckedChange={(v) => handleUpdate(competitor.id, { monitor_campaigns: v })}
                     />
-                    <Label className="text-sm">{t('company.competitors.monitor_campaigns', 'Monitorear campañas')}</Label>
+                    <Label className="text-sm">{t('company:competitors.monitor_campaigns')}</Label>
                   </div>
                 </div>
               </CardContent>

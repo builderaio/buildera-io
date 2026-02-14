@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PlayToWinStrategy } from '@/types/playToWin';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -111,15 +112,47 @@ export default function FounderPTWSimplified({
     return activation;
   };
 
+  // Default empty strategy to render modules even if DB init fails
+  const defaultStrategy: PlayToWinStrategy = {
+    id: '',
+    companyId: companyId,
+    winningAspiration: '',
+    aspirationMetrics: [],
+    aspirationTimeline: '1_year',
+    targetMarkets: [],
+    targetSegments: [],
+    geographicFocus: [],
+    channelsFocus: [],
+    competitiveAdvantage: '',
+    differentiationFactors: [],
+    valuePropositionCanvas: null,
+    moatType: null,
+    requiredCapabilities: [],
+    capabilityRoadmap: [],
+    reviewCadence: 'monthly',
+    okrs: [],
+    kpiDefinitions: [],
+    governanceModel: null,
+    currentStep: 1,
+    completionPercentage: 0,
+    status: 'draft',
+    generatedWithAI: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    lastReviewDate: undefined,
+    nextReviewDate: undefined,
+  };
+
+  const activeStrategy = strategy || defaultStrategy;
+
   const renderStepContent = () => {
-    if (!strategy) return null;
     switch (currentStep) {
       case 1:
-        return <CoreMissionLogicStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} />;
+        return <CoreMissionLogicStep strategy={activeStrategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} />;
       case 2:
-        return <TargetMarketDefinitionStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} />;
+        return <TargetMarketDefinitionStep strategy={activeStrategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} />;
       case 3:
-        return <CompetitivePositioningEngineStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} />;
+        return <CompetitivePositioningEngineStep strategy={activeStrategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} />;
       default:
         return null;
     }

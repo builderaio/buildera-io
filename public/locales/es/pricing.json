@@ -1,0 +1,83 @@
+{
+  "header": {
+    "badge": "// AUTONOMY_TIERS",
+    "title": "Elige tu nivel de autonomía",
+    "subtitle": "Desde asistencia inteligente hasta operación empresarial autónoma completa. Cada nivel desbloquea más departamentos, más agentes y mayor autonomía."
+  },
+  "pricing": {
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "yearlyDiscount": "2 meses gratis",
+    "month": "/mes",
+    "year": "/año",
+    "free": "Gratis",
+    "contact": "Contactar",
+    "savings": "Ahorra ${{amount}}/año"
+  },
+  "metrics": {
+    "agents": "Agentes IA",
+    "departments": "Departamentos",
+    "autonomy": "Nivel autonomía",
+    "governance": "Gobernanza",
+    "credits": "Créditos",
+    "unlimited": "Ilimitados"
+  },
+  "autonomyLevels": {
+    "assisted": "Asistido",
+    "semi_autonomous": "Semi-autónomo",
+    "full_autopilot": "Autopilot",
+    "adaptive": "Adaptativo"
+  },
+  "governanceLevels": {
+    "basic": "Básica",
+    "standard": "Estándar",
+    "advanced": "Avanzada",
+    "custom": "Personalizada"
+  },
+  "labels": {
+    "popular": "Más Popular",
+    "currentPlan": "Plan Actual"
+  },
+  "cta": {
+    "login": "Iniciar Sesión",
+    "current": "Plan Actual",
+    "contact": "Contactar Ventas",
+    "assisted": "Comenzar Gratis",
+    "growth": "Acelerar mi Crecimiento",
+    "autopilot": "Activar Autopilot",
+    "custom": "Contactar Ventas",
+    "default": "Seleccionar Plan"
+  },
+  "errors": {
+    "loginRequired": "Debes iniciar sesión para suscribirte",
+    "alreadyFree": "Ya estás en el plan Assisted gratuito",
+    "checkoutFailed": "Error al crear la sesión de pago",
+    "processingFailed": "Error al procesar la suscripción"
+  },
+  "currentPlan": {
+    "label": "Plan actual",
+    "renewsOn": "Renueva el {{date}}"
+  },
+  "benefits": {
+    "freeMonths": {
+      "icon": "🎁",
+      "title": "2 meses gratis",
+      "description": "Al pagar anualmente"
+    },
+    "migration": {
+      "icon": "🚀",
+      "title": "Migración gratuita",
+      "description": "Desde otras plataformas"
+    },
+    "onboarding": {
+      "icon": "💼",
+      "title": "Onboarding personalizado",
+      "description": "En planes Autopilot+"
+    },
+    "governance": {
+      "icon": "🛡️",
+      "title": "Gobernanza incluida",
+      "description": "Controles en todos los planes"
+    }
+  }
+}

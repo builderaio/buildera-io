@@ -15,6 +15,7 @@ import EnterpriseAutopilotDashboard from "@/components/company/EnterpriseAutopil
 // Strategy components
 import PlayToWinModule from "@/components/strategy/PlayToWinModule";
 import FounderPTWSimplified from "@/components/strategy/founder/FounderPTWSimplified";
+import StrategicControlCenter from "@/components/strategy/StrategicControlCenter";
 
 // Legacy components (for backwards compatibility during transition)
 import MisArchivos from "@/components/company/BaseConocimiento";
@@ -349,9 +350,13 @@ const CompanyDashboard = () => {
           <FounderPTWSimplified 
             companyId={profile?.primary_company_id}
             companyName={profile?.company_name}
-            onComplete={() => handleNavigate('negocio')}
+            onComplete={() => handleNavigate('strategic-control')}
           />
         );
+      
+      // Strategic Control Center (post-activation)
+      case "strategic-control":
+        return <StrategicControlCenter profile={profile} />;
       
       // === NEW CONSOLIDATED VIEWS ===
       // Panel Principal (Centro de Comando Estratégico)

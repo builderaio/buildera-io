@@ -174,6 +174,83 @@ export const useNextBestAction = ({
       });
     }
 
+    // === Enterprise Department Rules ===
+
+    // Rule 10: Sales CRM empty - Medium
+    if (companyState.areas.sales.status === 'incomplete') {
+      nbas.push({
+        id: 'setup-crm',
+        priority: 'medium',
+        type: 'profile',
+        title: t('nba.setupCRM.title'),
+        description: t('nba.setupCRM.description'),
+        action: { label: t('nba.setupCRM.action'), view: 'crm' },
+        estimatedImpact: t('nba.setupCRM.impact'),
+        requiredTime: t('nba.setupCRM.time'),
+        icon: '🛒',
+      });
+    }
+
+    // Rule 11: Finance not configured - Low
+    if (companyState.areas.finance.status === 'incomplete') {
+      nbas.push({
+        id: 'setup-finance',
+        priority: 'low',
+        type: 'profile',
+        title: t('nba.setupFinance.title'),
+        description: t('nba.setupFinance.description'),
+        action: { label: t('nba.setupFinance.action'), view: 'enterprise-autopilot' },
+        estimatedImpact: t('nba.setupFinance.impact'),
+        requiredTime: t('nba.setupFinance.time'),
+        icon: '💰',
+      });
+    }
+
+    // Rule 12: Legal not configured - Low (non-starter only)
+    if (companyState.areas.legal.status === 'incomplete' && companyState.maturityLevel !== 'starter') {
+      nbas.push({
+        id: 'setup-legal',
+        priority: 'low',
+        type: 'profile',
+        title: t('nba.setupLegal.title'),
+        description: t('nba.setupLegal.description'),
+        action: { label: t('nba.setupLegal.action'), view: 'adn-empresa' },
+        estimatedImpact: t('nba.setupLegal.impact'),
+        requiredTime: t('nba.setupLegal.time'),
+        icon: '⚖️',
+      });
+    }
+
+    // Rule 13: HR not configured - Low (non-starter only)
+    if (companyState.areas.hr.status === 'incomplete' && companyState.maturityLevel !== 'starter') {
+      nbas.push({
+        id: 'setup-hr',
+        priority: 'low',
+        type: 'profile',
+        title: t('nba.setupHR.title'),
+        description: t('nba.setupHR.description'),
+        action: { label: t('nba.setupHR.action'), view: 'adn-empresa' },
+        estimatedImpact: t('nba.setupHR.impact'),
+        requiredTime: t('nba.setupHR.time'),
+        icon: '👥',
+      });
+    }
+
+    // Rule 14: Operations not configured - Low (non-starter only)
+    if (companyState.areas.operations.status === 'incomplete' && companyState.maturityLevel !== 'starter') {
+      nbas.push({
+        id: 'setup-operations',
+        priority: 'low',
+        type: 'profile',
+        title: t('nba.setupOperations.title'),
+        description: t('nba.setupOperations.description'),
+        action: { label: t('nba.setupOperations.action'), view: 'ai-workforce' },
+        estimatedImpact: t('nba.setupOperations.impact'),
+        requiredTime: t('nba.setupOperations.time'),
+        icon: '⚙️',
+      });
+    }
+
     // Sort by priority
     const priorityOrder: Record<NBAPriority, number> = {
       critical: 0,

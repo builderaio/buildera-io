@@ -681,6 +681,41 @@
       "action": "Go to Academy",
       "impact": "Improve your skills",
       "time": "15 minutes"
+    },
+    "setupCRM": {
+      "title": "Set up your sales CRM",
+      "description": "Add your first deal or contact to activate the sales autopilot.",
+      "action": "Go to CRM",
+      "impact": "Enable automatic sales tracking",
+      "time": "5 minutes"
+    },
+    "setupFinance": {
+      "title": "Activate financial monitoring",
+      "description": "Run an agent so the enterprise brain starts monitoring your finances.",
+      "action": "Explore financial agents",
+      "impact": "Proactive budget alerts",
+      "time": "3 minutes"
+    },
+    "setupLegal": {
+      "title": "Configure legal parameters",
+      "description": "Define at least one legal parameter to activate compliance monitoring.",
+      "action": "Configure in DNA",
+      "impact": "Automatic compliance monitoring",
+      "time": "5 minutes"
+    },
+    "setupHR": {
+      "title": "Complete your team",
+      "description": "Invite at least 2 members to activate the HR autopilot.",
+      "action": "Invite members",
+      "impact": "Automated talent management",
+      "time": "3 minutes"
+    },
+    "setupOperations": {
+      "title": "Create your first AI team",
+      "description": "Configure an AI workforce team to activate operational optimization.",
+      "action": "Create AI team",
+      "impact": "Process automation",
+      "time": "5 minutes"
     }
   },
   "common": {
@@ -857,7 +892,17 @@
       "operationsRequired": "You need at least 1 AI workforce team configured to activate the operations autopilot.",
       "connectNow": "Connect social networks",
       "importData": "Import social data",
-      "setupCRM": "Set up CRM"
+      "setupCRM": "Set up CRM",
+      "createWithAI": "Create content with AI",
+      "runFirstAgent": "Run first agent",
+      "inviteMembers": "Invite team members",
+      "configureLegal": "Configure legal parameters",
+      "createTeam": "Create AI workforce team",
+      "salesBootstrapHint": "Create a deal or import contacts so the Sales Autopilot can analyze your pipeline.",
+      "financeBootstrapHint": "Run any platform agent to generate activity the Finance Autopilot can monitor.",
+      "hrBootstrapHint": "Invite at least 2 members to your team from Settings > Team.",
+      "legalBootstrapHint": "Go to Business DNA and configure at least one parameter with 'legal_' prefix.",
+      "operationsBootstrapHint": "Create an AI workforce team from the Operations panel."
     },
     "preflight": {
       "aborted": "Cycle aborted: insufficient data"

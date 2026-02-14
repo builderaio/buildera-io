@@ -660,6 +660,12 @@
       "generateContent": "Criar primeiro conteúdo com IA",
       "noUsername": "Insira o nome de usuário primeiro",
       "noUsernameDesc": "Use o importador de dados sociais para inserir o perfil."
+    },
+    "coldStart": {
+      "title": "Sua empresa é nova — Vamos começar!",
+      "description": "O Autopilot detectou que você ainda não tem histórico digital. Crie seu primeiro conteúdo com IA ou importe dados das suas redes.",
+      "createContent": "Criar conteúdo com IA",
+      "importData": "Importar dados de redes"
     }
   },
   "import": {

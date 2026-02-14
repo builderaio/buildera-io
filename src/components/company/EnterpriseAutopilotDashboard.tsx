@@ -708,7 +708,7 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
         </Card>
       )}
 
-      {/* Prerequisite Dialog */}
+      {/* Prerequisite Dialog - with Bootstrap CTAs */}
       <Dialog open={!!prerequisiteDialogDept} onOpenChange={() => setPrerequisiteDialogDept(null)}>
         <DialogContent>
           <DialogHeader>
@@ -730,6 +730,13 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
                 </Button>
                 <Button variant="outline" className="w-full justify-start gap-2" onClick={() => {
                   setPrerequisiteDialogDept(null);
+                  navigate('/company-dashboard?view=marketing-hub&tab=create');
+                }}>
+                  <Zap className="w-4 h-4" />
+                  {t('enterprise.prerequisites.createWithAI')}
+                </Button>
+                <Button variant="outline" className="w-full justify-start gap-2" onClick={() => {
+                  setPrerequisiteDialogDept(null);
                   navigate('/company-dashboard?view=marketing');
                 }}>
                   <Upload className="w-4 h-4" />
@@ -738,49 +745,74 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
               </>
             )}
             {prerequisiteDialogDept === 'sales' && (
-              <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
-                setPrerequisiteDialogDept(null);
-                navigate('/company-dashboard?view=crm');
-              }}>
-                <ShoppingCart className="w-4 h-4" />
-                {t('enterprise.prerequisites.setupCRM')}
-              </Button>
+              <>
+                <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                  setPrerequisiteDialogDept(null);
+                  navigate('/company-dashboard?view=crm');
+                }}>
+                  <ShoppingCart className="w-4 h-4" />
+                  {t('enterprise.prerequisites.setupCRM')}
+                </Button>
+                <p className="text-xs text-muted-foreground px-1">
+                  {t('enterprise.prerequisites.salesBootstrapHint')}
+                </p>
+              </>
             )}
             {prerequisiteDialogDept === 'finance' && (
-              <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
-                setPrerequisiteDialogDept(null);
-                navigate('/company-dashboard?view=comando');
-              }}>
-                <DollarSign className="w-4 h-4" />
-                {t('enterprise.prerequisites.financeRequired')}
-              </Button>
+              <>
+                <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                  setPrerequisiteDialogDept(null);
+                  navigate('/company-dashboard?view=marketplace');
+                }}>
+                  <DollarSign className="w-4 h-4" />
+                  {t('enterprise.prerequisites.runFirstAgent')}
+                </Button>
+                <p className="text-xs text-muted-foreground px-1">
+                  {t('enterprise.prerequisites.financeBootstrapHint')}
+                </p>
+              </>
             )}
             {prerequisiteDialogDept === 'hr' && (
-              <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
-                setPrerequisiteDialogDept(null);
-                navigate('/company-dashboard?view=adn-empresa');
-              }}>
-                <Users className="w-4 h-4" />
-                {t('enterprise.prerequisites.hrRequired')}
-              </Button>
+              <>
+                <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                  setPrerequisiteDialogDept(null);
+                  navigate('/company-dashboard?view=adn-empresa');
+                }}>
+                  <Users className="w-4 h-4" />
+                  {t('enterprise.prerequisites.inviteMembers')}
+                </Button>
+                <p className="text-xs text-muted-foreground px-1">
+                  {t('enterprise.prerequisites.hrBootstrapHint')}
+                </p>
+              </>
             )}
             {prerequisiteDialogDept === 'legal' && (
-              <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
-                setPrerequisiteDialogDept(null);
-                navigate('/company-dashboard?view=adn-empresa');
-              }}>
-                <Scale className="w-4 h-4" />
-                {t('enterprise.prerequisites.legalRequired')}
-              </Button>
+              <>
+                <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                  setPrerequisiteDialogDept(null);
+                  navigate('/company-dashboard?view=adn-empresa');
+                }}>
+                  <Scale className="w-4 h-4" />
+                  {t('enterprise.prerequisites.configureLegal')}
+                </Button>
+                <p className="text-xs text-muted-foreground px-1">
+                  {t('enterprise.prerequisites.legalBootstrapHint')}
+                </p>
+              </>
             )}
             {prerequisiteDialogDept === 'operations' && (
-              <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
-                setPrerequisiteDialogDept(null);
-                navigate('/company-dashboard?view=ai-workforce');
-              }}>
-                <Settings2 className="w-4 h-4" />
-                {t('enterprise.prerequisites.operationsRequired')}
-              </Button>
+              <>
+                <Button variant="default" className="w-full justify-start gap-2" onClick={() => {
+                  setPrerequisiteDialogDept(null);
+                  navigate('/company-dashboard?view=ai-workforce');
+                }}>
+                  <Settings2 className="w-4 h-4" />
+                  {t('enterprise.prerequisites.createTeam')}
+                </Button>
+                <p className="text-xs text-muted-foreground px-1">
+                  {t('enterprise.prerequisites.operationsBootstrapHint')}
+                </p>
+              </>
             )}
           </div>
           <DialogFooter>

@@ -326,11 +326,16 @@ async function preflightCheck(companyId: string, department: string): Promise<Pr
 
     const connectedAccounts = (socialAccounts || []).length;
 
+    // Resolve owner user_id (posts use user_id, not company_id)
+    const { data: companyRow } = await supabase.from('companies')
+      .select('created_by').eq('id', companyId).single();
+    const ownerUserId = companyRow?.created_by;
+
     const [igCount, liCount, fbCount, tkCount] = await Promise.all([
-      supabase.from('instagram_posts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
-      supabase.from('linkedin_posts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
-      supabase.from('facebook_posts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
-      supabase.from('tiktok_posts').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+      supabase.from('instagram_posts').select('id', { count: 'exact', head: true }).eq('user_id', ownerUserId || ''),
+      supabase.from('linkedin_posts').select('id', { count: 'exact', head: true }).eq('user_id', ownerUserId || ''),
+      supabase.from('facebook_posts').select('id', { count: 'exact', head: true }).eq('user_id', ownerUserId || ''),
+      supabase.from('tiktok_posts').select('id', { count: 'exact', head: true }).eq('user_id', ownerUserId || ''),
     ]);
     const totalPosts = (igCount.count || 0) + (liCount.count || 0) + (fbCount.count || 0) + (tkCount.count || 0);
 
@@ -665,6 +670,29 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
       console.log(`⚡ [${department}] Invoking agent: ${agent.name} (${agent.edge_function_name})`);
       const execStart = Date.now();
       
+      // Load agent context requirements for rich payload
+      const { data: agentFull } = await supabase.from('platform_agents')
+        .select('context_requirements').eq('id', agent.id).single();
+      
+      let companyContext: any = {};
+      const contextReqs = agentFull?.context_requirements as string[] || [];
+      if (contextReqs.length > 0) {
+        const contextLoaders: Record<string, () => Promise<any>> = {
+          strategy: () => supabase.from('company_strategy').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
+          branding: () => supabase.from('company_branding').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
+          audiences: () => supabase.from('company_audiences').select('*').eq('company_id', companyId).then(r => r.data),
+          communication: () => supabase.from('company_communication_settings').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
+          objectives: () => supabase.from('company_objectives').select('*').eq('company_id', companyId).then(r => r.data),
+          products: () => supabase.from('company_products').select('*').eq('company_id', companyId).then(r => r.data),
+          competitors: () => supabase.from('company_competitors').select('*').eq('company_id', companyId).then(r => r.data),
+        };
+        const contextPromises = contextReqs
+          .filter(req => contextLoaders[req])
+          .map(async req => ({ [req]: await contextLoaders[req]() }));
+        const contextResults = await Promise.all(contextPromises);
+        companyContext = Object.assign({}, ...contextResults);
+      }
+
       const agentRes = await fetch(`${supabaseUrl}/functions/v1/${agent.edge_function_name}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
@@ -675,6 +703,7 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
           parameters: decision.action_parameters || {},
           cycle_id: cycleId,
           autopilot: true,
+          company_context: companyContext,
         }),
       });
       
@@ -748,12 +777,57 @@ async function learnPhase(companyId: string, department: string, cycleId: string
     .lte('created_at', sevenDaysAgo).limit(5);
 
   if (pendingEvals?.length) {
-    // Simple auto-evaluation: mark as neutral if no actual_impact data is available
     for (const pe of pendingEvals) {
+      let evaluation = 'neutral';
+      let score = 0;
+      let lesson = `Decision "${pe.decision_type}" was executed but no measurable impact data was available for evaluation.`;
+
+      try {
+        // Metric-based impact evaluation by decision type
+        if (pe.decision_type === 'create_content' || pe.decision_type === 'publish') {
+          // Check if new posts were created after this decision and measure engagement
+          const { data: recentPosts } = await supabase.from('scheduled_posts')
+            .select('id, engagement_score')
+            .eq('company_id', companyId)
+            .gte('created_at', pe.created_at)
+            .limit(10);
+          if (recentPosts?.length) {
+            const avgEngagement = recentPosts.reduce((s, p) => s + ((p as any).engagement_score || 0), 0) / recentPosts.length;
+            score = avgEngagement > 0 ? Math.min(10, Math.round(avgEngagement)) : 0;
+            evaluation = score >= 5 ? 'positive' : score >= 2 ? 'neutral' : 'negative';
+            lesson = `Content decision resulted in ${recentPosts.length} posts with avg engagement score ${avgEngagement.toFixed(1)}.`;
+          }
+        } else if (pe.decision_type === 'qualify_lead' || pe.decision_type === 'advance_deal') {
+          // Check if deals advanced in pipeline after this decision
+          const { data: advancedDeals } = await supabase.from('crm_deals')
+            .select('id, stage')
+            .eq('company_id', companyId)
+            .gte('updated_at', pe.created_at)
+            .limit(10);
+          if (advancedDeals?.length) {
+            score = Math.min(10, advancedDeals.length * 2);
+            evaluation = score >= 4 ? 'positive' : 'neutral';
+            lesson = `Sales decision correlated with ${advancedDeals.length} deal updates in the pipeline.`;
+          }
+        } else if (pe.decision_type === 'analyze') {
+          // Check if insights were generated
+          const { count } = await supabase.from('content_insights')
+            .select('id', { count: 'exact', head: true })
+            .gte('created_at', pe.created_at);
+          if ((count || 0) > 0) {
+            score = 5;
+            evaluation = 'positive';
+            lesson = `Analysis decision resulted in ${count} new insights generated.`;
+          }
+        }
+      } catch (evalErr) {
+        console.warn(`⚠️ Impact evaluation failed for ${pe.id}:`, evalErr);
+      }
+
       await supabase.from('autopilot_memory').update({
-        outcome_evaluation: 'neutral',
-        outcome_score: 0,
-        lesson_learned: `Decision "${pe.decision_type}" was executed but no measurable impact data was available for evaluation.`,
+        outcome_evaluation: evaluation,
+        outcome_score: score,
+        lesson_learned: lesson,
         evaluated_at: new Date().toISOString(),
       }).eq('id', pe.id);
     }

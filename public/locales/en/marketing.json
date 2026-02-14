@@ -661,6 +661,12 @@
       "generateContent": "Create first content with AI",
       "noUsername": "Enter username first",
       "noUsernameDesc": "Use the social data importer to enter the profile."
+    },
+    "coldStart": {
+      "title": "Your company is new — Let's get started!",
+      "description": "Autopilot detected you don't have digital history yet. Create your first content with AI or import data from your networks.",
+      "createContent": "Create content with AI",
+      "importData": "Import social data"
     }
   },
   "import": {

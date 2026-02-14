@@ -90,6 +90,34 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab, onImportData }:
 
       const level1Complete = level1Steps.every(s => s.completed);
 
+      // Check enterprise department autopilot status
+      const { data: enterpriseDepts } = await supabase
+        .from('company_department_config')
+        .select('id')
+        .eq('company_id', userId) // company_id is resolved later
+        .neq('department', 'marketing')
+        .eq('autopilot_enabled', true)
+        .limit(1);
+
+      // Get actual company_id for enterprise check
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('primary_company_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      let hasEnterpriseDept = false;
+      if (userProfile?.primary_company_id) {
+        const { data: entDepts } = await supabase
+          .from('company_department_config')
+          .select('id')
+          .eq('company_id', userProfile.primary_company_id)
+          .neq('department', 'marketing')
+          .eq('autopilot_enabled', true)
+          .limit(1);
+        hasEnterpriseDept = (entDepts?.length || 0) > 0;
+      }
+
       const level2Steps: OnboardingStep[] = [
         {
           key: "configureGuardrails",
@@ -117,8 +145,8 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab, onImportData }:
         },
         {
           key: "exploreEnterpriseBrain",
-          completed: false,
-          action: () => navigate("/company-dashboard?view=autopilot"),
+          completed: hasEnterpriseDept,
+          action: () => navigate("/company-dashboard?view=enterprise-autopilot"),
           level: 2,
         },
       ];

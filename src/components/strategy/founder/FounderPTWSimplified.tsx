@@ -91,7 +91,7 @@ export default function FounderPTWSimplified({
     if (onComplete) {
       onComplete();
     } else {
-      navigate('/company-dashboard?view=negocio');
+      navigate('/company-dashboard?view=strategic-control');
     }
   };
 

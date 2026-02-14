@@ -1318,5 +1318,35 @@
       "differentiation": "Differentiation focus identified",
       "competitiveClarity": "Competitive positioning clarity"
     }
+  },
+  "execDiagnosis": {
+    "engineLabel": "Executive Digital Diagnosis",
+    "companyProfile": "Company Profile",
+    "snapshotOverview": "Snapshot Overview",
+    "industrySignals": "Industry Signals",
+    "seoKeywords": "SEO Keywords",
+    "marketPresence": "Market Presence",
+    "productExtraction": "Product & Service Extraction",
+    "servicesDetected": "Services Detected",
+    "offersDetected": "Offers Detected",
+    "audienceDetected": "Audience Signals",
+    "founded": "Founded",
+    "performanceSignals": "Performance Signals",
+    "aiDiagnosis": "AI Executive Diagnosis",
+    "whatIsWorking": "What is Working",
+    "whatIsMissing": "What is Missing",
+    "keyRisks": "Key Risks",
+    "competitivePositioning": "Competitive Positioning Assessment",
+    "actionPlan": "Recommended Action Plan",
+    "shortTerm": "Short Term",
+    "midTerm": "Mid Term",
+    "longTerm": "Long Term",
+    "days": "days",
+    "months": "months",
+    "maturityScores": "Digital Maturity Assessment",
+    "ctaTitle": "Ready to Build Your Strategic DNA",
+    "ctaDescription": "The Enterprise Brain will now guide you through defining your mission, vision, value proposition, and competitive strategy based on the insights above.",
+    "proceedDNA": "Proceed to Strategic DNA",
+    "fullDiagnosisComplete": "Full Diagnosis Complete"
   }
 }

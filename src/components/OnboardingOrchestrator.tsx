@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { OnboardingWowLoader } from '@/components/onboarding/OnboardingWowLoader';
-import { OnboardingWowResults } from '@/components/onboarding/OnboardingWowResults';
+import { ExecutiveDigitalDiagnosis } from '@/components/onboarding/ExecutiveDigitalDiagnosis';
 import { DigitalSnapshotDashboard } from '@/components/onboarding/DigitalSnapshotDashboard';
 import JourneySelector, { JourneyType } from '@/components/onboarding/JourneySelector';
 
@@ -562,16 +562,12 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
 
   if (phase === 'results' && results) {
     return (
-      <div className="min-h-screen bg-background p-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <OnboardingWowResults
-            results={results}
-            summary={results.summary}
-            totalTime={totalTime}
-            onContinue={handleContinue}
-          />
-        </div>
-      </div>
+      <ExecutiveDigitalDiagnosis
+        results={results}
+        summary={results.summary}
+        totalTime={totalTime}
+        onContinue={handleContinue}
+      />
     );
   }
 

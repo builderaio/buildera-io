@@ -1,0 +1,616 @@
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import {
+  Building2, Globe2, Tag, Mail, Phone, MapPin, Users, Target,
+  CheckCircle2, AlertTriangle, XCircle, Shield, TrendingUp,
+  Zap, Star, ArrowRight, Cpu, Activity, Brain, Sparkles,
+  Calendar, Eye, ShieldCheck, Download, FileSearch
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { computeDigitalMaturityScores } from './scoring/digitalMaturityScoring';
+import { ScoreRingWithTooltip } from './scoring/ScoreRingWithTooltip';
+import { Instagram, Linkedin, Facebook, Twitter, Youtube } from 'lucide-react';
+
+interface ExecutiveDigitalDiagnosisProps {
+  results: any;
+  summary?: any;
+  totalTime?: number;
+  onContinue: () => void;
+}
+
+const platformIcons: Record<string, any> = {
+  instagram: Instagram, linkedin: Linkedin, facebook: Facebook,
+  twitter: Twitter, youtube: Youtube, tiktok: Globe2,
+};
+
+const getPlatformFromUrl = (url: string): string => {
+  const l = url.toLowerCase();
+  if (l.includes('linkedin')) return 'linkedin';
+  if (l.includes('instagram')) return 'instagram';
+  if (l.includes('facebook')) return 'facebook';
+  if (l.includes('twitter') || l.includes('x.com')) return 'twitter';
+  if (l.includes('youtube')) return 'youtube';
+  if (l.includes('tiktok')) return 'tiktok';
+  return 'other';
+};
+
+const SectionHeader = ({ icon: Icon, title, color = 'text-primary' }: { icon: any; title: string; color?: string }) => (
+  <div className="flex items-center gap-3 mb-5">
+    <div className="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center">
+      <Icon className={`w-4.5 h-4.5 ${color}`} />
+    </div>
+    <h2 className="text-base font-bold text-slate-200 uppercase tracking-wide">{title}</h2>
+  </div>
+);
+
+const DataChip = ({ children, variant = 'default' }: { children: React.ReactNode; variant?: 'default' | 'primary' | 'accent' | 'success' | 'warning' }) => {
+  const styles = {
+    default: 'bg-slate-800 text-slate-300 border-slate-700',
+    primary: 'bg-primary/10 text-blue-300 border-primary/30',
+    accent: 'bg-orange-500/10 text-orange-300 border-orange-500/30',
+    success: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+    warning: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${styles[variant]}`}>
+      {children}
+    </span>
+  );
+};
+
+export const ExecutiveDigitalDiagnosis = ({
+  results, summary, totalTime, onContinue
+}: ExecutiveDigitalDiagnosisProps) => {
+  const { t } = useTranslation(['common']);
+  const scores = useMemo(() => computeDigitalMaturityScores(results), [results]);
+
+  const basic = results?.basic_info || {};
+  const digital = results?.digital_presence || {};
+  const identity = basic.identity || {};
+  const seo = basic.seo || {};
+  const products = basic.products || {};
+  const contact = basic.contact || {};
+  const market = basic.market || {};
+  const audience = basic.audience || {};
+  const execDiag = digital.executive_diagnosis || {};
+  const actionPlan = digital.action_plan || {};
+
+  const overallScore = Math.round(
+    (scores.visibility.score + scores.trust.score + scores.positioning.score) / 3
+  );
+
+  const fadeUp = (delay: number) => ({
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { delay, duration: 0.5 },
+  });
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      {/* Sticky Top Bar */}
+      <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
+              <Cpu className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] text-emerald-400 font-mono uppercase tracking-widest flex items-center gap-1">
+                <Activity className="w-2.5 h-2.5" />
+                {t('common:execDiagnosis.engineLabel', 'Executive Digital Diagnosis')}
+              </p>
+              <p className="text-sm font-semibold text-white leading-tight">
+                {identity.company_name || t('common:execDiagnosis.companyProfile', 'Company Profile')}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {totalTime && (
+              <span className="text-[10px] text-slate-500 font-mono hidden sm:block">
+                {t('common:onboarding.generatedIn', { time: (totalTime / 1000).toFixed(1) })}
+              </span>
+            )}
+            <Button
+              onClick={onContinue}
+              size="sm"
+              className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-xs"
+            >
+              {t('common:execDiagnosis.proceedDNA', 'Proceed to Strategic DNA')}
+              <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* SECTION 1: SNAPSHOT OVERVIEW */}
+        {/* ══════════════════════════════════════════════════════ */}
+        <motion.section {...fadeUp(0.1)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+          <SectionHeader icon={Building2} title={t('common:execDiagnosis.snapshotOverview', 'Snapshot Overview')} />
+
+          {/* Identity Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Company Identity */}
+            <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700/50 space-y-3">
+              <div className="flex items-center gap-3">
+                {identity.logo && (
+                  <img
+                    src={identity.logo}
+                    alt="Logo"
+                    className="w-12 h-12 rounded-lg object-contain bg-white/5 p-1"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{identity.company_name || '—'}</p>
+                  {identity.slogan && (
+                    <p className="text-xs text-slate-400 italic truncate">"{identity.slogan}"</p>
+                  )}
+                </div>
+              </div>
+              {identity.url && (
+                <p className="text-xs text-blue-400 truncate flex items-center gap-1">
+                  <Globe2 className="w-3 h-3 flex-shrink-0" />
+                  {identity.url}
+                </p>
+              )}
+              {identity.founding_date && (
+                <p className="text-xs text-slate-500 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {t('common:execDiagnosis.founded', 'Founded')}: {identity.founding_date}
+                </p>
+              )}
+              {/* Contact info */}
+              <div className="space-y-1 pt-1 border-t border-slate-700/50">
+                {(contact.email || []).slice(0, 2).map((e: string, i: number) => (
+                  <p key={i} className="text-[11px] text-slate-400 flex items-center gap-1.5 truncate">
+                    <Mail className="w-3 h-3 flex-shrink-0 text-slate-500" /> {e}
+                  </p>
+                ))}
+                {(contact.phone || []).slice(0, 2).map((p: string, i: number) => (
+                  <p key={i} className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                    <Phone className="w-3 h-3 flex-shrink-0 text-slate-500" /> {p}
+                  </p>
+                ))}
+                {(contact.address || []).slice(0, 1).map((a: string, i: number) => (
+                  <p key={i} className="text-[11px] text-slate-400 flex items-center gap-1.5 truncate">
+                    <MapPin className="w-3 h-3 flex-shrink-0 text-slate-500" /> {a}
+                  </p>
+                ))}
+              </div>
+              {/* Social Links */}
+              {contact.social_links?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {contact.social_links.map((link: string, idx: number) => {
+                    const platform = getPlatformFromUrl(link);
+                    const Icon = platformIcons[platform] || Globe2;
+                    return (
+                      <a
+                        key={idx} href={link} target="_blank" rel="noopener noreferrer"
+                        className="w-7 h-7 rounded-md bg-slate-700/80 hover:bg-slate-600 flex items-center justify-center transition-colors"
+                        title={platform}
+                      >
+                        <Icon className="w-3.5 h-3.5 text-slate-300" />
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Industry Signals */}
+            <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700/50 space-y-3">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                {t('common:execDiagnosis.industrySignals', 'Industry Signals')}
+              </p>
+              {seo.title && (
+                <div>
+                  <p className="text-[10px] text-slate-500 mb-0.5">SEO Title</p>
+                  <p className="text-xs text-slate-300">{seo.title}</p>
+                </div>
+              )}
+              {seo.description && (
+                <div>
+                  <p className="text-[10px] text-slate-500 mb-0.5">Meta Description</p>
+                  <p className="text-xs text-slate-300 line-clamp-3">{seo.description}</p>
+                </div>
+              )}
+              {(seo.keyword || seo.keywords || []).length > 0 && (
+                <div>
+                  <p className="text-[10px] text-slate-500 mb-1">{t('common:execDiagnosis.seoKeywords', 'SEO Keywords')}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(seo.keyword || seo.keywords || []).slice(0, 8).map((kw: string, i: number) => (
+                      <DataChip key={i}>{kw}</DataChip>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Market */}
+              {(market.country?.length > 0 || market.city?.length > 0) && (
+                <div>
+                  <p className="text-[10px] text-slate-500 mb-1">{t('common:execDiagnosis.marketPresence', 'Market Presence')}</p>
+                  <div className="flex flex-wrap gap-1">
+                    {(market.country || []).map((c: string, i: number) => (
+                      <DataChip key={`c-${i}`} variant="primary">🌍 {c}</DataChip>
+                    ))}
+                    {(market.city || []).map((c: string, i: number) => (
+                      <DataChip key={`ci-${i}`}>📍 {c}</DataChip>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Product/Service Extraction */}
+            <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700/50 space-y-3">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                {t('common:execDiagnosis.productExtraction', 'Product & Service Extraction')}
+              </p>
+              {(products.service || products.services || []).length > 0 && (
+                <div>
+                  <p className="text-[10px] text-slate-500 mb-1 flex items-center gap-1">
+                    <Tag className="w-2.5 h-2.5" />
+                    {t('common:execDiagnosis.servicesDetected', 'Services Detected')}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {(products.service || products.services || []).map((s: string, i: number) => (
+                      <DataChip key={i} variant="primary">{s}</DataChip>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(products.offer || products.offers || []).length > 0 && (
+                <div>
+                  <p className="text-[10px] text-slate-500 mb-1 flex items-center gap-1">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    {t('common:execDiagnosis.offersDetected', 'Offers Detected')}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {(products.offer || products.offers || []).map((o: string, i: number) => (
+                      <DataChip key={i} variant="accent">{o}</DataChip>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Audience */}
+              {((audience.segment || audience.segments || []).length > 0 ||
+                (audience.profession || audience.professions || []).length > 0 ||
+                (audience.target_user || audience.target_users || []).length > 0) && (
+                <div>
+                  <p className="text-[10px] text-slate-500 mb-1 flex items-center gap-1">
+                    <Users className="w-2.5 h-2.5" />
+                    {t('common:execDiagnosis.audienceDetected', 'Audience Signals')}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {(audience.segment || audience.segments || []).map((s: string, i: number) => (
+                      <DataChip key={`s-${i}`} variant="success">{s}</DataChip>
+                    ))}
+                    {(audience.profession || audience.professions || []).map((p: string, i: number) => (
+                      <DataChip key={`p-${i}`} variant="primary">{p}</DataChip>
+                    ))}
+                    {(audience.target_user || audience.target_users || []).map((tu: string, i: number) => (
+                      <DataChip key={`t-${i}`} variant="warning">{tu}</DataChip>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* SECTION 2: PERFORMANCE SIGNALS */}
+        {/* ══════════════════════════════════════════════════════ */}
+        <motion.section {...fadeUp(0.2)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+          <SectionHeader icon={Activity} title={t('common:execDiagnosis.performanceSignals', 'Performance Signals')} />
+
+          {/* Executive Diagnosis Banner */}
+          {(execDiag.current_state || execDiag.primary_constraint || execDiag.highest_leverage_focus) && (
+            <div className="bg-slate-800/80 rounded-lg p-4 mb-5 border border-slate-700/50 space-y-3">
+              <p className="text-[10px] text-primary font-mono uppercase tracking-widest mb-2">
+                {t('common:execDiagnosis.aiDiagnosis', 'AI Executive Diagnosis')}
+              </p>
+              {execDiag.current_state && (
+                <div className="border-l-2 border-primary pl-3">
+                  <p className="text-[10px] text-primary font-semibold">{t('common:snapshot.currentState')}</p>
+                  <p className="text-sm text-slate-300">{execDiag.current_state}</p>
+                </div>
+              )}
+              {execDiag.primary_constraint && (
+                <div className="border-l-2 border-red-500/70 pl-3">
+                  <p className="text-[10px] text-red-400 font-semibold">{t('common:snapshot.primaryConstraint')}</p>
+                  <p className="text-sm text-slate-300">{execDiag.primary_constraint}</p>
+                </div>
+              )}
+              {execDiag.highest_leverage_focus && (
+                <div className="border-l-2 border-emerald-500/70 pl-3">
+                  <p className="text-[10px] text-emerald-400 font-semibold">{t('common:snapshot.highestLeverage')}</p>
+                  <p className="text-sm text-slate-300">{execDiag.highest_leverage_focus}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Digital Footprint */}
+          {digital.digital_footprint_summary && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-5">
+              <p className="text-xs text-slate-300">{digital.digital_footprint_summary}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* What's Working */}
+            {(digital.what_is_working || []).length > 0 && (
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+                    {t('common:execDiagnosis.whatIsWorking', 'What is Working')}
+                    <span className="ml-1.5 text-emerald-500/60">({(digital.what_is_working || []).length})</span>
+                  </p>
+                </div>
+                <ul className="space-y-2">
+                  {(digital.what_is_working || []).map((item: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-500/60 mt-0.5 flex-shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* What's Missing */}
+            {(digital.what_is_missing || []).length > 0 && (
+              <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
+                    {t('common:execDiagnosis.whatIsMissing', 'What is Missing')}
+                    <span className="ml-1.5 text-amber-500/60">({(digital.what_is_missing || []).length})</span>
+                  </p>
+                </div>
+                <ul className="space-y-2">
+                  {(digital.what_is_missing || []).map((item: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                      <AlertTriangle className="w-3 h-3 text-amber-500/60 mt-0.5 flex-shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Key Risks */}
+            {(digital.key_risks || []).length > 0 && (
+              <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield className="w-4 h-4 text-red-400" />
+                  <p className="text-xs font-semibold text-red-400 uppercase tracking-wider">
+                    {t('common:execDiagnosis.keyRisks', 'Key Risks')}
+                    <span className="ml-1.5 text-red-500/60">({(digital.key_risks || []).length})</span>
+                  </p>
+                </div>
+                <ul className="space-y-2">
+                  {(digital.key_risks || []).map((risk: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                      <XCircle className="w-3 h-3 text-red-500/60 mt-0.5 flex-shrink-0" />
+                      <span>{risk}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </motion.section>
+
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* SECTION 3: COMPETITIVE POSITIONING */}
+        {/* ══════════════════════════════════════════════════════ */}
+        {digital.competitive_positioning && (
+          <motion.section {...fadeUp(0.3)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+            <SectionHeader icon={TrendingUp} title={t('common:execDiagnosis.competitivePositioning', 'Competitive Positioning Assessment')} />
+            <div className="bg-slate-800/60 rounded-lg p-5 border border-slate-700/50">
+              <p className="text-sm text-slate-300 leading-relaxed">{digital.competitive_positioning}</p>
+            </div>
+          </motion.section>
+        )}
+
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* SECTION 4: ACTION PLAN */}
+        {/* ══════════════════════════════════════════════════════ */}
+        {(actionPlan.short_term?.length > 0 || actionPlan.mid_term?.length > 0 || actionPlan.long_term?.length > 0) && (
+          <motion.section {...fadeUp(0.4)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+            <SectionHeader icon={Zap} title={t('common:execDiagnosis.actionPlan', 'Recommended Action Plan')} color="text-orange-400" />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Short Term */}
+              {actionPlan.short_term?.length > 0 && (
+                <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Zap className="w-4 h-4 text-emerald-400" />
+                    <div>
+                      <p className="text-xs font-bold text-emerald-400 uppercase">
+                        {t('common:execDiagnosis.shortTerm', 'Short Term')}
+                      </p>
+                      <p className="text-[10px] text-emerald-500/60">30 {t('common:execDiagnosis.days', 'days')}</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-3">
+                    {actionPlan.short_term.map((action: any, idx: number) => (
+                      <li key={idx} className="text-xs">
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+                            {idx + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-200">{action.action || action}</p>
+                            {action.reason && (
+                              <p className="text-slate-500 text-[11px] mt-1">{action.reason}</p>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Mid Term */}
+              {actionPlan.mid_term?.length > 0 && (
+                <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <TrendingUp className="w-4 h-4 text-blue-400" />
+                    <div>
+                      <p className="text-xs font-bold text-blue-400 uppercase">
+                        {t('common:execDiagnosis.midTerm', 'Mid Term')}
+                      </p>
+                      <p className="text-[10px] text-blue-500/60">90 {t('common:execDiagnosis.days', 'days')}</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-3">
+                    {actionPlan.mid_term.map((action: any, idx: number) => (
+                      <li key={idx} className="text-xs">
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+                            {idx + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-200">{action.action || action}</p>
+                            {action.reason && (
+                              <p className="text-slate-500 text-[11px] mt-1">{action.reason}</p>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Long Term */}
+              {actionPlan.long_term?.length > 0 && (
+                <div className="bg-purple-500/5 border border-purple-500/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Star className="w-4 h-4 text-purple-400" />
+                    <div>
+                      <p className="text-xs font-bold text-purple-400 uppercase">
+                        {t('common:execDiagnosis.longTerm', 'Long Term')}
+                      </p>
+                      <p className="text-[10px] text-purple-500/60">6-12 {t('common:execDiagnosis.months', 'months')}</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-3">
+                    {actionPlan.long_term.map((action: any, idx: number) => (
+                      <li key={idx} className="text-xs">
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+                            {idx + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-200">{action.action || action}</p>
+                            {action.reason && (
+                              <p className="text-slate-500 text-[11px] mt-1">{action.reason}</p>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </motion.section>
+        )}
+
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* SECTION 5: MATURITY SCORES */}
+        {/* ══════════════════════════════════════════════════════ */}
+        <motion.section {...fadeUp(0.5)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+          <div className="flex items-center justify-between mb-6">
+            <SectionHeader icon={Brain} title={t('common:execDiagnosis.maturityScores', 'Digital Maturity Assessment')} />
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700">
+              <div className={`w-2 h-2 rounded-full ${overallScore >= 60 ? 'bg-emerald-500' : overallScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} />
+              <span className="text-xs font-mono text-slate-300">
+                {t('common:snapshot.overallScore', 'Overall')}: {overallScore}/100
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-8 sm:gap-16">
+            <ScoreRingWithTooltip
+              breakdown={scores.visibility}
+              label={t('common:snapshot.visibilityScore', 'Digital Visibility')}
+              icon={Eye}
+              color="#3b82f6"
+              delay={200}
+            />
+            <ScoreRingWithTooltip
+              breakdown={scores.trust}
+              label={t('common:snapshot.trustScore', 'Trust & Credibility')}
+              icon={ShieldCheck}
+              color="#8b5cf6"
+              delay={400}
+            />
+            <ScoreRingWithTooltip
+              breakdown={scores.positioning}
+              label={t('common:snapshot.positioningScore', 'Positioning Clarity')}
+              icon={Target}
+              color="#f59e0b"
+              delay={600}
+            />
+          </div>
+        </motion.section>
+
+        {/* ══════════════════════════════════════════════════════ */}
+        {/* CTA: PROCEED TO STRATEGIC DNA */}
+        {/* ══════════════════════════════════════════════════════ */}
+        <motion.div {...fadeUp(0.6)} className="bg-gradient-to-r from-primary/20 via-slate-900 to-blue-600/20 border border-primary/30 rounded-xl p-6 sm:p-8 text-center">
+          <div className="flex justify-center mb-4">
+            <motion.div
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+              className="w-14 h-14 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center"
+            >
+              <Brain className="w-7 h-7 text-primary" />
+            </motion.div>
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">
+            {t('common:execDiagnosis.ctaTitle', 'Ready to Build Your Strategic DNA')}
+          </h3>
+          <p className="text-sm text-slate-400 max-w-lg mx-auto mb-5">
+            {t('common:execDiagnosis.ctaDescription', 'The Enterprise Brain will now guide you through defining your mission, vision, value proposition, and competitive strategy based on the insights above.')}
+          </p>
+          <Button
+            onClick={onContinue}
+            size="lg"
+            className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-base px-8"
+          >
+            {t('common:execDiagnosis.proceedDNA', 'Proceed to Strategic DNA')}
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
+        </motion.div>
+
+        {/* Footer Status */}
+        <motion.div
+          {...fadeUp(0.7)}
+          className="flex items-center justify-center gap-4 text-[10px] text-slate-600 py-3"
+        >
+          <span className="flex items-center gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            {t('common:snapshot.brainOnline', 'Enterprise Brain Online')}
+          </span>
+          <span>•</span>
+          <span>{t('common:execDiagnosis.fullDiagnosisComplete', 'Full Diagnosis Complete')}</span>
+          <span>•</span>
+          <span>{new Date().toLocaleDateString()}</span>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+export default ExecutiveDigitalDiagnosis;

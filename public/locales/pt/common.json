@@ -1351,6 +1351,23 @@
     "ctaNextStepSub": "Defina sua missão, visão e proposta de valor com assistência de IA.",
     "fullReport": "Relatório Completo",
     "continue": "Continuar",
-    "fullDiagnosisComplete": "Diagnóstico Completo"
+    "fullDiagnosisComplete": "Diagnóstico Completo",
+    "revenueAtRisk": "Estimativa de Receita em Risco",
+    "revenueAtRiskDesc": "Estimativa conservadora do impacto comercial das lacunas digitais identificadas.",
+    "leadGenImpact": "Impacto na Geração de Leads",
+    "leadGenImpactDesc": "Leads potenciais perdidos por falta de acessibilidade e descoberta em canais digitais.",
+    "missedOpportunities": "Oportunidades Perdidas",
+    "missedOpportunitiesDesc": "Oportunidades de negócio perdidas por ausência de casos de sucesso verificáveis, depoimentos ou portfólio.",
+    "dueDiligenceRisk": "Risco em Due Diligence",
+    "dueDiligenceRiskDesc": "Risco em processos de avaliação formal por falta de informação pública estruturada.",
+    "impactLevel": "Nível de Impacto",
+    "impactLow": "Baixo",
+    "impactMedium": "Médio",
+    "impactHigh": "Alto",
+    "scenarioComparison": "Cenário Comparativo",
+    "withVerifiableAssets": "Com ativos verificáveis",
+    "withoutVerifiableAssets": "Sem ativos verificáveis",
+    "scenarioWith": "Presença digital estruturada com casos de sucesso, depoimentos, métricas públicas e informações de contato acessíveis gera confiança e reduz o atrito na tomada de decisões.",
+    "scenarioWithout": "A ausência de ativos verificáveis obriga os prospects a depender exclusivamente de referências, limitando significativamente a escalabilidade e aumentando o custo de aquisição de clientes."
   }
 }

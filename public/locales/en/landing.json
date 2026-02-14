@@ -364,5 +364,95 @@
     "connect": {
       "title": "Connect"
     }
+  },
+  "architecture": {
+    "badge": "// SYSTEM_ARCHITECTURE",
+    "title": "Enterprise Autopilot Brain Architecture",
+    "subtitle": "Modular AI infrastructure designed to operate business departments with governance, traceability, and continuous learning.",
+    "layers": {
+      "title": "System layers",
+      "subtitle": "5 independent layers communicating via events and sharing a unified business context bus.",
+      "items": {
+        "decisionEngine": {
+          "title": "Decision Engine",
+          "description": "Central engine that receives signals from the business environment, evaluates options through multi-criteria reasoning, and generates prioritized decisions per department. Operates on enriched context with brand, strategy, audience, and historical metrics data.",
+          "components": { "1": "Context Builder", "2": "Multi-criteria Scorer", "3": "Priority Queue" }
+        },
+        "agentOrchestration": {
+          "title": "Agent Orchestration Layer",
+          "description": "Maps each decision to the corresponding specialized agent, injects required context (brand, audience, strategy) based on the agent's context_requirements field, and manages parallel or sequential execution.",
+          "components": { "1": "Agent Router", "2": "Context Injector", "3": "Execution Manager" }
+        },
+        "guardrailCompliance": {
+          "title": "Guardrail & Compliance Layer",
+          "description": "Intercepts every decision before execution. Applies budget rules (Finance can block Marketing), regulatory compliance (Legal validates before Sales), and user-configured operational limits.",
+          "components": { "1": "Budget Validator", "2": "Compliance Checker", "3": "Rate Limiter" }
+        },
+        "learningMemory": {
+          "title": "Learning & Memory Layer",
+          "description": "Evaluates the outcome of each executed decision using real metrics (engagement, ROI, conversion rate). Stores lessons learned with context hash for retrieval in similar future situations.",
+          "components": { "1": "Impact Evaluator", "2": "Memory Store", "3": "Pattern Extractor" }
+        },
+        "capabilityGenesis": {
+          "title": "Capability Genesis Engine",
+          "description": "Analyzes blocked or failed decisions to detect operational gaps. Proposes new autonomous capabilities with a governed lifecycle: Proposal → Trial (7 days) → Activation/Deprecation.",
+          "components": { "1": "Gap Detector", "2": "Capability Proposer", "3": "Trial Manager" }
+        }
+      }
+    },
+    "agentMap": {
+      "title": "Agent-to-department map",
+      "subtitle": "Each department has assigned specialized agents. The Enterprise Brain orchestrates them based on needs detected in each cycle.",
+      "brain": "Enterprise Brain",
+      "brainSub": "SENSE → THINK → GUARD → ACT → LEARN → EVOLVE",
+      "departments": {
+        "marketing": { "name": "Marketing", "agents": "Strategist, Creator, Calendar, Optimizer" },
+        "sales": { "name": "Sales", "agents": "Pipeline, Lead Scorer, Proposals" },
+        "finance": { "name": "Finance", "agents": "Cashflow, Revenue, Expense" },
+        "legal": { "name": "Legal", "agents": "Contracts, Compliance, Regulatory" },
+        "hr": { "name": "HR", "agents": "Job Profiler, Climate, Talent Scout" },
+        "operations": { "name": "Operations", "agents": "Process, SLA, Task Automator" }
+      }
+    },
+    "cycle": {
+      "title": "The autonomous cycle in operational detail",
+      "subtitle": "Each phase has a specific technical function. The full cycle executes periodically based on configured frequency (1h, 6h, 24h).",
+      "phases": {
+        "sense": {
+          "title": "SENSE — Observe",
+          "description": "Collects environmental data: social media metrics, sales pipeline status, budget alerts, external market and competitive signals.",
+          "details": { "1": "Sources: Social APIs, CRM, internal metrics, competitive scraping", "2": "Output: Business state snapshot with per-department indicators" }
+        },
+        "think": {
+          "title": "THINK — Analyze",
+          "description": "The Decision Engine evaluates the snapshot against defined objectives, active strategy, and learned lessons. Generates candidate decisions with priority and assigned agent.",
+          "details": { "1": "Input: Snapshot + strategy + previous decision memory", "2": "Output: Prioritized decision list with agent_to_execute and parameters" }
+        },
+        "guard": {
+          "title": "GUARD — Validate",
+          "description": "Every decision goes through the guardrail layer. Finance can block actions exceeding budget. Legal can halt operations without compliance. Users configure thresholds.",
+          "details": { "1": "Validations: budget, compliance, daily limits, company policies", "2": "Result: approved / blocked / requires_human_approval" }
+        },
+        "act": {
+          "title": "ACT — Execute",
+          "description": "Approved decisions are executed by invoking the assigned agent's Edge Function. Full business context is injected based on the agent's context_requirements.",
+          "details": { "1": "Execution: supabase.functions.invoke(agent_function) with contextual payload", "2": "Logging: agent_usage_log with credits consumed, execution time, result" }
+        },
+        "learn": {
+          "title": "LEARN — Learn",
+          "description": "After execution, the system evaluates real impact using post-action metrics (engagement delta, leads generated, ROI). Results are stored in autopilot_memory.",
+          "details": { "1": "Metrics evaluated: engagement, conversion, ROI, satisfaction, efficiency", "2": "Storage: lesson_learned + outcome_score + context_hash for retrieval" }
+        },
+        "evolve": {
+          "title": "EVOLVE — Evolve",
+          "description": "The Capability Genesis Engine analyzes blocked decisions or gaps. If recurring operational gaps are detected, it proposes new autonomous capabilities with a trial period.",
+          "details": { "1": "Analysis: decisions with action_taken=false or outcome_score < threshold", "2": "Lifecycle: Proposal → 7-day Trial → Evaluation → Activation or Deprecation" }
+        }
+      }
+    },
+    "dataFlow": {
+      "title": "Complete data flow",
+      "description": "Each cycle generates an auditable record in autopilot_execution_log with: context_snapshot, decisions_made, actions_taken, credits_consumed, and execution_time_ms. Logs are accessible from the dashboard for manual review at any time."
+    }
   }
 }

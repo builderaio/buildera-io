@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { OnboardingWowLoader } from '@/components/onboarding/OnboardingWowLoader';
 import { OnboardingWowResults } from '@/components/onboarding/OnboardingWowResults';
+import { DigitalSnapshotDashboard } from '@/components/onboarding/DigitalSnapshotDashboard';
 import JourneySelector, { JourneyType } from '@/components/onboarding/JourneySelector';
 
 interface OnboardingOrchestratorProps {
@@ -18,9 +19,10 @@ interface OnboardingOrchestratorProps {
 
 type OnboardingPhase = 
   | 'checking' 
-  | 'journey-selection'  // NEW: Bifurcation step
+  | 'journey-selection'
   | 'form' 
   | 'loading' 
+  | 'snapshot-dashboard'
   | 'results';
 
 interface CompanyBasicData {
@@ -354,7 +356,8 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         // Transform data for OnboardingWowResults with NEW structure
         const transformedResults = transformExtractorResults(data);
         setResults(transformedResults);
-        setPhase('results');
+        // Show Digital Snapshot Dashboard first
+        setPhase('snapshot-dashboard');
       } else {
         throw new Error(data?.error || 'Extraction failed');
       }
@@ -543,6 +546,17 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
           estimatedTotalSeconds={180}
         />
       </div>
+    );
+  }
+
+  if (phase === 'snapshot-dashboard' && results) {
+    return (
+      <DigitalSnapshotDashboard
+        results={results}
+        companyName={results.summary?.title || companyData?.name || 'Tu Empresa'}
+        onContinue={handleContinue}
+        onViewFullReport={() => setPhase('results')}
+      />
     );
   }
 

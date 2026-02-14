@@ -1255,5 +1255,31 @@
       "sentDesc": "The test email was sent successfully",
       "errorSend": "Error sending email"
     }
+  },
+  "snapshot": {
+    "engineActive": "Digital Snapshot Engine • Active",
+    "subtitle": "Enterprise Brain has completed the initial analysis. Here's your digital snapshot.",
+    "digitalHealth": "Digital Health Assessment",
+    "overallScore": "Overall",
+    "visibilityScore": "Digital Visibility",
+    "trustScore": "Trust & Credibility",
+    "contentScore": "Content Maturity",
+    "executiveSummary": "Executive Diagnosis",
+    "currentState": "Current State",
+    "primaryConstraint": "Primary Constraint",
+    "highestLeverage": "Highest Leverage Focus",
+    "socialChannels": "Social Channels",
+    "services": "Services",
+    "strengths": "Strengths",
+    "gaps": "Gaps Detected",
+    "risks": "Active Risks",
+    "whatWorks": "What's Working",
+    "whatsMissing": "Critical Gaps",
+    "nextPhase": "Next: Strategic DNA Configuration",
+    "nextPhaseDesc": "Define your mission, vision, and value proposition with AI assistance.",
+    "viewFullReport": "Full Report",
+    "continueStrategy": "Continue",
+    "brainOnline": "Enterprise Brain Online",
+    "analysisComplete": "Analysis Complete"
   }
 }

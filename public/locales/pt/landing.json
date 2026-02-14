@@ -561,5 +561,48 @@
       "title": "Toda expansão é governada",
       "description": "Nenhuma capacidade é ativada permanentemente sem avaliação. Capacidades com outcome_score abaixo do limiar são depreciadas automaticamente. Cada ativação e depreciação fica registrada no log auditável com a evidência completa que a justifica."
     }
+  },
+  "businessImpact": {
+    "badge": "Impacto empresarial mensurável",
+    "title": "Resultados que transformam a avaliação da sua empresa",
+    "subtitle": "Buildera não é mais uma ferramenta — é infraestrutura que reduz a dependência do fundador, institucionaliza o conhecimento e aumenta o valor da sua empresa.",
+    "metrics": {
+      "efficiency": "Aumento na eficiência operacional",
+      "decisionSpeed": "Mais rápido na tomada de decisões",
+      "marketingROI": "Melhoria no ROI de marketing",
+      "complianceRisk": "Redução de risco regulatório",
+      "knowledge": "Conhecimento institucionalizado"
+    },
+    "comparison": {
+      "title": "Antes vs Depois da Buildera",
+      "before": "Sem Buildera",
+      "after": "Com Buildera",
+      "items": {
+        "founderDependency": {
+          "before": "O fundador é o gargalo — todas as decisões passam por uma pessoa",
+          "after": "Decisões operacionais automatizadas com guardrails — o fundador foca na estratégia"
+        },
+        "decisionBottleneck": {
+          "before": "Dias ou semanas para analisar dados e tomar decisões críticas",
+          "after": "Análise em tempo real e decisões autônomas em minutos"
+        },
+        "knowledgeLoss": {
+          "before": "Conhecimento crítico vive na cabeça de funcionários-chave",
+          "after": "Todo o conhecimento operacional capturado, aprendido e disponível 24/7"
+        },
+        "manualProcesses": {
+          "before": "Processos manuais repetitivos consumindo horas toda semana",
+          "after": "40+ agentes especializados executando tarefas autonomamente"
+        },
+        "reactiveStrategy": {
+          "before": "Estratégia reativa baseada em intuição e dados limitados",
+          "after": "Estratégia proativa impulsionada por IA com ciclo de aprendizado contínuo"
+        }
+      }
+    },
+    "valuation": {
+      "title": "Buildera como infraestrutura de avaliação",
+      "description": "Empresas com operações sistematizadas e baixa dependência do fundador recebem múltiplos de avaliação significativamente maiores. A Buildera transforma seu negócio de uma operação dependente de pessoas em um sistema autônomo replicável — aumentando seu valor para investidores e compradores."
+    }
   }
 }

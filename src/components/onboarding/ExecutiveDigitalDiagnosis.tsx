@@ -111,6 +111,116 @@ const StrategicDigitalIndex = ({ overallScore, t }: { overallScore: number; t: a
   );
 };
 
+// ── Competitive Positioning Assessment ──
+type CompArchetype = 'micro_early' | 'boutique_specialized' | 'structured_firm' | 'market_leader';
+
+function getCompArchetype(score: number): CompArchetype {
+  if (score >= 75) return 'market_leader';
+  if (score >= 55) return 'structured_firm';
+  if (score >= 35) return 'boutique_specialized';
+  return 'micro_early';
+}
+
+const archetypeLevels: CompArchetype[] = ['micro_early', 'boutique_specialized', 'structured_firm', 'market_leader'];
+
+const CompetitivePositioningAssessment = ({ digital, scores, t }: { digital: any; scores: any; t: any }) => {
+  const avg = Math.round((scores.visibility.score + scores.trust.score + scores.positioning.score) / 3);
+  const archetype = getCompArchetype(avg);
+  const currentIdx = archetypeLevels.indexOf(archetype);
+
+  const archetypeColors: Record<CompArchetype, { dot: string; text: string; bg: string; border: string }> = {
+    micro_early:          { dot: 'bg-red-500',     text: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/30' },
+    boutique_specialized: { dot: 'bg-amber-500',   text: 'text-amber-400',   bg: 'bg-amber-500/10',   border: 'border-amber-500/30' },
+    structured_firm:      { dot: 'bg-blue-500',    text: 'text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/30' },
+    market_leader:        { dot: 'bg-emerald-500', text: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' },
+  };
+
+  const cfg = archetypeColors[archetype];
+
+  return (
+    <div className="space-y-5">
+      {/* Original AI positioning text */}
+      {digital.competitive_positioning && (
+        <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700/50">
+          <p className="text-sm text-slate-300 leading-relaxed">{digital.competitive_positioning}</p>
+        </div>
+      )}
+
+      {/* Archetype classification */}
+      <div className={`${cfg.bg} border ${cfg.border} rounded-lg p-5 space-y-4`}>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-mono mb-1">
+              {t('common:execDiagnosis.compArchetypeLabel', 'Current Competitive Archetype')}
+            </p>
+            <div className="flex items-center gap-2">
+              <div className={`w-2.5 h-2.5 rounded-full ${cfg.dot}`} />
+              <span className={`text-base font-bold ${cfg.text}`}>
+                {t(`common:execDiagnosis.archetype_${archetype}`)}
+              </span>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+              {t('common:execDiagnosis.competitiveLevel', 'Competitive Level')}
+            </p>
+            <p className="text-sm font-mono text-slate-300">{currentIdx + 1}/4</p>
+          </div>
+        </div>
+
+        {/* Level progression bar */}
+        <div className="space-y-2">
+          <div className="flex gap-1">
+            {archetypeLevels.map((level, idx) => {
+              const lvlCfg = archetypeColors[level];
+              const isActive = idx <= currentIdx;
+              return (
+                <div key={level} className="flex-1 space-y-1">
+                  <div className={`h-1.5 rounded-full ${isActive ? lvlCfg.dot : 'bg-slate-700/50'}`} />
+                  <p className={`text-[9px] text-center truncate ${isActive ? lvlCfg.text : 'text-slate-600'}`}>
+                    {t(`common:execDiagnosis.archetype_${level}`)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-400 leading-relaxed">
+          {t(`common:execDiagnosis.archetypeDesc_${archetype}`)}
+        </p>
+      </div>
+
+      {/* What's needed to compete */}
+      {archetype !== 'market_leader' && (
+        <div className="bg-slate-800/60 rounded-lg p-4 border border-slate-700/50 space-y-3">
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-primary" />
+            <p className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
+              {t('common:execDiagnosis.toCompeteNext', 'What You Need to Compete at the Next Level')}
+            </p>
+          </div>
+          <ul className="space-y-2">
+            {(t(`common:execDiagnosis.archetypeUpgrade_${archetype}`, { returnObjects: true }) as string[]).map((item: string, i: number) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                <ArrowRight className="w-3 h-3 text-primary/60 mt-0.5 flex-shrink-0" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Closing statement */}
+      <div className="border-l-2 border-primary/50 pl-4 py-2">
+        <p className="text-sm text-slate-300 italic font-medium leading-relaxed">
+          {t(`common:execDiagnosis.archetypeClosing_${archetype}`)}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // ── Deterministic Revenue at Risk Estimation ──
 type ImpactLevel = 'low' | 'medium' | 'high';
 
@@ -567,14 +677,10 @@ export const ExecutiveDigitalDiagnosis = ({
         {/* ══════════════════════════════════════════════════════ */}
         {/* SECTION 3: COMPETITIVE POSITIONING */}
         {/* ══════════════════════════════════════════════════════ */}
-        {digital.competitive_positioning && (
-          <motion.section {...fadeUp(0.3)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
-            <SectionHeader icon={TrendingUp} title={t('common:execDiagnosis.competitivePositioning', 'Competitive Positioning Assessment')} />
-            <div className="bg-slate-800/60 rounded-lg p-5 border border-slate-700/50">
-              <p className="text-sm text-slate-300 leading-relaxed">{digital.competitive_positioning}</p>
-            </div>
-          </motion.section>
-        )}
+        <motion.section {...fadeUp(0.3)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+          <SectionHeader icon={TrendingUp} title={t('common:execDiagnosis.competitivePositioning', 'Competitive Positioning Assessment')} />
+          <CompetitivePositioningAssessment digital={digital} scores={scores} t={t} />
+        </motion.section>
 
         {/* ══════════════════════════════════════════════════════ */}
         {/* SECTION 4: ACTION PLAN */}

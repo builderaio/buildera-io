@@ -1381,6 +1381,24 @@
     "sdiBenchmark_emerging": "Typical of early-stage businesses or companies that have relied exclusively on offline channels and personal networks.",
     "sdiBenchmark_building": "Common in SMBs with 1–3 years of digital activity that haven't yet systematized their online credibility.",
     "sdiBenchmark_competitive": "Characteristic of established businesses with dedicated marketing efforts and structured digital operations.",
-    "sdiBenchmark_reference": "Typical of market leaders and digitally mature organizations with comprehensive online strategies."
+    "sdiBenchmark_reference": "Typical of market leaders and digitally mature organizations with comprehensive online strategies.",
+    "compArchetypeLabel": "Current Competitive Archetype",
+    "competitiveLevel": "Competitive Level",
+    "archetype_micro_early": "Early-Stage Micro-Firm",
+    "archetype_boutique_specialized": "Specialized Boutique",
+    "archetype_structured_firm": "Structured Firm",
+    "archetype_market_leader": "Market Leader",
+    "archetypeDesc_micro_early": "You operate at an early-stage level with minimal structured digital evidence. Your competitive advantage relies on personal networks and word-of-mouth rather than demonstrable authority.",
+    "archetypeDesc_boutique_specialized": "You have niche positioning but lack the trust infrastructure to compete beyond your immediate network. Your specialization is an asset, but it's not yet digitally validated.",
+    "archetypeDesc_structured_firm": "Your digital presence supports business operations effectively. You compete on substance but could strengthen your authority signals to win against larger players.",
+    "archetypeDesc_market_leader": "Your digital ecosystem positions you as a reference in your category. You compete on authority, evidence, and structured trust.",
+    "toCompeteNext": "What You Need to Compete at the Next Level",
+    "archetypeUpgrade_micro_early": ["Establish verifiable case studies with measurable outcomes", "Create structured service pages with clear methodology", "Build a testimonial system with named clients and roles", "Implement basic SEO with targeted industry keywords"],
+    "archetypeUpgrade_boutique_specialized": ["Develop a portfolio of documented success stories with metrics", "Publish thought leadership content consistently", "Obtain third-party validations (certifications, awards, media mentions)", "Systematize your client acquisition beyond referrals"],
+    "archetypeUpgrade_structured_firm": ["Scale content production with authority-building assets", "Invest in competitive intelligence and market positioning", "Build automated trust signals (real-time metrics, client dashboards)", "Establish strategic partnerships and ecosystem presence"],
+    "archetypeClosing_micro_early": "Currently competing on narrative. To compete on authority, you need structured evidence.",
+    "archetypeClosing_boutique_specialized": "Currently competing on specialization. To compete on trust, you need verifiable proof at scale.",
+    "archetypeClosing_structured_firm": "Currently competing on substance. To compete on category leadership, you need ecosystem dominance.",
+    "archetypeClosing_market_leader": "You compete on authority and evidence. Maintain your edge by continuously innovating your trust infrastructure."
   }
 }

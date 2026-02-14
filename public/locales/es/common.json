@@ -1401,6 +1401,10 @@
     "ctaTitle": "Listo para Construir tu ADN Estratégico",
     "ctaDescription": "El Cerebro Empresarial te guiará en la definición de tu misión, visión, propuesta de valor y estrategia competitiva basada en los insights anteriores.",
     "proceedDNA": "Continuar al ADN Estratégico",
+    "ctaNextStep": "Siguiente: Configuración de ADN Estratégico",
+    "ctaNextStepSub": "Define tu misión, visión y propuesta de valor con asistencia de IA.",
+    "fullReport": "Reporte Completo",
+    "continue": "Continuar",
     "fullDiagnosisComplete": "Diagnóstico Completo"
   }
 }

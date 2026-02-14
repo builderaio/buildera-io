@@ -1347,6 +1347,10 @@
     "ctaTitle": "Pronto para Construir seu DNA Estratégico",
     "ctaDescription": "O Cérebro Empresarial irá guiá-lo na definição de sua missão, visão, proposta de valor e estratégia competitiva com base nos insights acima.",
     "proceedDNA": "Prosseguir para o DNA Estratégico",
+    "ctaNextStep": "Próximo: Configuração do DNA Estratégico",
+    "ctaNextStepSub": "Defina sua missão, visão e proposta de valor com assistência de IA.",
+    "fullReport": "Relatório Completo",
+    "continue": "Continuar",
     "fullDiagnosisComplete": "Diagnóstico Completo"
   }
 }

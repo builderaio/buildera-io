@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ interface Props {
 
 export default function InsightPublisher({ insight, generatedContents, userId }: Props) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
@@ -70,7 +72,7 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
       }
     } catch (error) {
       console.error('Error loading social accounts:', error);
-      toast({ title: "Error", description: "No se pudieron cargar las cuentas sociales", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.publisher.errorLoadAccounts'), variant: "destructive" });
     }
   };
 
@@ -112,7 +114,7 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
 
   const publishContent = async () => {
     if (!selectedContent || selectedPlatforms.length === 0) {
-      toast({ title: "Selección requerida", description: "Selecciona contenido y al menos una plataforma", variant: "destructive" });
+      toast({ title: t('toast.publisher.selectionRequired'), description: t('toast.publisher.selectionRequiredDesc'), variant: "destructive" });
       return;
     }
 
@@ -170,8 +172,8 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
       if (error) throw error;
 
       toast({ 
-        title: "¡Contenido publicado!", 
-        description: `Se ha publicado en ${selectedPlatforms.length} plataforma(s)`,
+        title: t('toast.publisher.published'), 
+        description: t('toast.publisher.publishedDesc', { count: selectedPlatforms.length }),
         duration: 5000
       });
 
@@ -181,8 +183,8 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
       if (data?.requestId) {
         setTimeout(() => {
           toast({ 
-            title: "Estado de publicación", 
-            description: `ID de seguimiento: ${data.requestId}. Puedes verificar el estado en el historial.`,
+            title: t('toast.publisher.trackingId'), 
+            description: t('toast.publisher.trackingIdDesc', { id: data.requestId }),
             duration: 8000
           });
         }, 2000);
@@ -191,8 +193,8 @@ export default function InsightPublisher({ insight, generatedContents, userId }:
     } catch (error) {
       console.error('Error publishing content:', error);
       toast({ 
-        title: "Error al publicar", 
-        description: error instanceof Error ? error.message : "No se pudo publicar el contenido", 
+        title: t('toast.publisher.errorPublish'), 
+        description: error instanceof Error ? error.message : t('toast.publisher.errorPublishDesc'), 
         variant: "destructive" 
       });
     } finally {

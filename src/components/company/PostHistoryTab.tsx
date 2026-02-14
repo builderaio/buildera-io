@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ interface Post {
 
 export default function PostHistoryTab({ profile }: { profile: Profile }) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [historyLoading, setHistoryLoading] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
 
@@ -77,8 +79,8 @@ export default function PostHistoryTab({ profile }: { profile: Profile }) {
     } catch (error) {
       console.error('Error loading post history:', error);
       toast({
-        title: "Error",
-        description: "No se pudo cargar el historial de posts",
+        title: t('toast.error'),
+        description: t('toast.postHistory.errorLoad'),
         variant: "destructive"
       });
     }
@@ -90,8 +92,8 @@ export default function PostHistoryTab({ profile }: { profile: Profile }) {
     const assetUrl = post.image || post.post_image_url || post.videoLink || post.video_url;
     if (!assetUrl) {
       toast({
-        title: "Sin archivo",
-        description: "Este post no contiene imágenes o videos para guardar",
+        title: t('toast.postHistory.noFile'),
+        description: t('toast.postHistory.noFileDesc'),
         variant: "destructive"
       });
       return;
@@ -119,14 +121,14 @@ export default function PostHistoryTab({ profile }: { profile: Profile }) {
       if (error) throw error;
 
       toast({
-        title: "Asset guardado",
-        description: "El archivo se ha guardado en tu biblioteca de contenidos"
+        title: t('toast.postHistory.assetSaved'),
+        description: t('toast.postHistory.assetSavedDesc')
       });
     } catch (error) {
       console.error('Error saving asset:', error);
       toast({
-        title: "Error",
-        description: "No se pudo guardar el archivo en la biblioteca",
+        title: t('toast.error'),
+        description: t('toast.postHistory.errorSaveAsset'),
         variant: "destructive"
       });
     }
@@ -136,7 +138,7 @@ export default function PostHistoryTab({ profile }: { profile: Profile }) {
     setHistoryLoading(true);
     await loadPostHistory();
     setHistoryLoading(false);
-    toast({ title: "Historial actualizado", description: "Se ha actualizado el historial de posts" });
+    toast({ title: t('toast.postHistory.refreshed'), description: t('toast.postHistory.refreshedDesc') });
   };
 
   useEffect(() => {

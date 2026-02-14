@@ -1199,7 +1199,60 @@
       "invalidAmount": "Insira um valor válido",
       "creditsAssigned": "{amount} créditos atribuídos a {company}",
       "dataReset": "Dados resetados para valores padrão",
-      "testSuccess": "Teste executado com sucesso"
+      "testSuccess": "Teste executado com sucesso",
+      "userToggled": "Usuário {{action}}",
+      "companyToggled": "Empresa {{action}}",
+      "userDeleted": "Usuário \"{{name}}\" excluído permanentemente",
+      "companyDeleted": "Empresa \"{{name}}\" excluída permanentemente",
+      "errorDeleteUser": "Erro ao excluir usuário",
+      "errorDeleteCompany": "Erro ao excluir empresa",
+      "deactivated": "desativado",
+      "reactivated": "reativado",
+      "deactivatedF": "desativada",
+      "reactivatedF": "reativada",
+      "copiedClipboard": "Copiado para a área de transferência",
+      "errorCopy": "Erro ao copiar"
+    },
+    "publisher": {
+      "errorLoadAccounts": "Não foi possível carregar as contas sociais",
+      "selectionRequired": "Seleção necessária",
+      "selectionRequiredDesc": "Selecione conteúdo e pelo menos uma plataforma",
+      "published": "Conteúdo publicado!",
+      "publishedDesc": "Publicado em {{count}} plataforma(s)",
+      "trackingId": "Status da publicação",
+      "trackingIdDesc": "ID de rastreamento: {{id}}. Você pode verificar o status no histórico.",
+      "errorPublish": "Erro ao publicar",
+      "errorPublishDesc": "Não foi possível publicar o conteúdo"
+    },
+    "advancedContent": {
+      "insightDeleted": "Insight excluído",
+      "insightDeletedDesc": "O insight e seu conteúdo relacionado foram excluídos",
+      "errorDeleteInsight": "Não foi possível excluir o insight",
+      "contentCreated": "✨ Conteúdo criado!",
+      "contentCreatedDesc": "Seu novo post está pronto para publicar",
+      "errorGenerateContent": "Não foi possível gerar o conteúdo",
+      "imageCreated": "🖼️ Imagem criada!",
+      "imageCreatedDesc": "Sua imagem profissional está pronta",
+      "errorGenerateImage": "Não foi possível gerar a imagem",
+      "videoCreated": "🎥 Vídeo criado!",
+      "videoCreatedDesc": "Seu vídeo promocional está pronto",
+      "errorGenerateVideo": "Não foi possível gerar o vídeo"
+    },
+    "postHistory": {
+      "errorLoad": "Não foi possível carregar o histórico de posts",
+      "refreshed": "Histórico atualizado",
+      "refreshedDesc": "O histórico de posts foi atualizado",
+      "noFile": "Sem arquivo",
+      "noFileDesc": "Este post não contém imagens ou vídeos para salvar",
+      "assetSaved": "Asset salvo",
+      "assetSavedDesc": "O arquivo foi salvo na sua biblioteca de conteúdos",
+      "errorSaveAsset": "Não foi possível salvar o arquivo na biblioteca"
+    },
+    "email": {
+      "selectTemplate": "Selecione um modelo e forneça um email de teste",
+      "sent": "Email enviado!",
+      "sentDesc": "O email de teste foi enviado com sucesso",
+      "errorSend": "Erro ao enviar email"
     }
   }
 }

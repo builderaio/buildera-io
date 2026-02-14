@@ -40,7 +40,7 @@ interface GeneratedContent {
 
 export default function AdvancedContentCreator({ profile, topPosts, selectedPlatform }: Props) {
   const { toast } = useToast();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   
   // Loading states
   const [loadingInsights, setLoadingInsights] = useState(false);
@@ -386,10 +386,10 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
       await loadInsights();
       await loadGeneratedContents();
       
-      toast({ title: "Insight eliminado", description: "El insight y su contenido relacionado han sido eliminados" });
+      toast({ title: t('toast.advancedContent.insightDeleted'), description: t('toast.advancedContent.insightDeletedDesc') });
     } catch (error) {
       console.error('Error deleting insight:', error);
-      toast({ title: "Error", description: "No se pudo eliminar el insight", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.advancedContent.errorDeleteInsight'), variant: "destructive" });
     }
   };
 
@@ -448,12 +448,12 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
       await loadGeneratedContents();
       
       toast({ 
-        title: "✨ ¡Contenido creado!", 
-        description: "Tu nuevo post está listo para publicar" 
+        title: t('toast.advancedContent.contentCreated'), 
+        description: t('toast.advancedContent.contentCreatedDesc') 
       });
     } catch (error) {
       console.error('Error generating content:', error);
-      toast({ title: "Error", description: "No se pudo generar el contenido", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.advancedContent.errorGenerateContent'), variant: "destructive" });
     } finally {
       setLoadingContent(null);
       setCurrentLoadingStep("");
@@ -497,10 +497,10 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
         
       await loadGeneratedContents();
       
-      toast({ title: "🖼️ ¡Imagen creada!", description: "Tu imagen profesional está lista" });
+      toast({ title: t('toast.advancedContent.imageCreated'), description: t('toast.advancedContent.imageCreatedDesc') });
     } catch (error) {
       console.error('Error generating image:', error);
-      toast({ title: "Error", description: "No se pudo generar la imagen", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.advancedContent.errorGenerateImage'), variant: "destructive" });
     } finally {
       setLoadingMedia(null);
       setCurrentLoadingStep("");
@@ -544,10 +544,10 @@ export default function AdvancedContentCreator({ profile, topPosts, selectedPlat
         
       await loadGeneratedContents();
       
-      toast({ title: "🎥 ¡Video creado!", description: "Tu video promocional está listo" });
+      toast({ title: t('toast.advancedContent.videoCreated'), description: t('toast.advancedContent.videoCreatedDesc') });
     } catch (error) {
       console.error('Error generating video:', error);
-      toast({ title: "Error", description: "No se pudo generar el video", variant: "destructive" });
+      toast({ title: t('toast.error'), description: t('toast.advancedContent.errorGenerateVideo'), variant: "destructive" });
     } finally {
       setLoadingMedia(null);
       setCurrentLoadingStep("");
@@ -688,10 +688,10 @@ function InsightCard({
   userId: string;
 }) {
   const { toast } = useToast();
-
+  const { t } = useTranslation();
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: "Copiado", description: "Contenido copiado al portapapeles" });
+    toast({ title: t('toast.copied'), description: t('toast.copiedClipboard') });
   };
 
   return (

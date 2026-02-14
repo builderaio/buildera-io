@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Crosshair, Plus, Trash2, UserCheck, Bot, Check } from 'lucide-react';
+import { Crosshair, Plus, Trash2, UserCheck, Bot, Check, Users, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { PlayToWinStrategy, TargetSegment } from '@/types/playToWin';
 import { InferredStrategicData } from '@/hooks/useDiagnosticInference';
+import InferredFieldCard from '../InferredFieldCard';
 import { cn } from '@/lib/utils';
 
 interface TargetMarketDefinitionStepProps {
@@ -39,7 +40,7 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
     id: 'inferred-icp',
     name: diagnosticData.icpName,
     description: diagnosticData.icpDescription || '',
-    size: '',
+    size: diagnosticData.marketSize || '',
     growthPotential: 'medium',
   } : null;
 
@@ -70,15 +71,8 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
     return () => clearTimeout(timer);
   }, [hasChanges, saveChanges]);
 
-  const handleConfirmICP = () => {
-    setIcpInferred(false);
-    setHasChanges(true);
-  };
-
-  const handleEditICP = () => {
-    setIcpInferred(false);
-    setHasChanges(true);
-  };
+  const handleConfirmICP = () => { setIcpInferred(false); setHasChanges(true); };
+  const handleEditICP = () => { setIcpInferred(false); setHasChanges(true); };
 
   const addSegment = () => {
     const newSegment: TargetSegment = {
@@ -104,6 +98,17 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
   };
 
   const hasValidSegment = segments.some(s => s.name.length > 0 && s.description.length > 0);
+  const hasPainPoints = diagnosticData?.icpPainPoints && diagnosticData.icpPainPoints.length > 0;
+  const hasGoals = diagnosticData?.icpGoals && diagnosticData.icpGoals.length > 0;
+
+  // Build inferred ICP detail text for display
+  const inferredIcpDetail = diagnosticData?.icpDescription 
+    ? [
+        diagnosticData.icpDescription,
+        hasPainPoints ? `\nDolores: ${diagnosticData.icpPainPoints.join(', ')}` : '',
+        hasGoals ? `\nObjetivos: ${diagnosticData.icpGoals.join(', ')}` : '',
+      ].filter(Boolean).join('')
+    : null;
 
   return (
     <div className="space-y-6">
@@ -128,6 +133,30 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
           </div>
         </CardHeader>
       </Card>
+
+      {/* Inferred Audience Context */}
+      {inferredIcpDetail && (
+        <Card className="border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              {t('journey.sdna.detectedAudience', 'Audiencia detectada por análisis digital')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <InferredFieldCard
+              label={t('journey.sdna.audienceProfile', 'Perfil de audiencia')}
+              inferredValue={inferredIcpDetail}
+              currentValue=""
+              onChange={() => {}}
+              showDualState={true}
+              currentStateLabel={t('journey.sdna.detectedState', 'Estado actual detectado')}
+              desiredStateLabel={t('journey.sdna.desiredState', 'Posicionamiento futuro deseado')}
+              minHeight="100px"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* ICP - Inferred or editable */}
       <Card>
@@ -162,7 +191,7 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
             <div className="flex flex-wrap gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
               <p className="w-full text-xs text-primary/70 italic flex items-center gap-1 mb-1">
                 <Bot className="h-3 w-3" />
-                {t('journey.sdna.inferredSource', 'Basado en análisis digital')}
+                {t('journey.sdna.inferredSource', 'Inferido por el sistema – basado en análisis digital')}
               </p>
               <Button size="sm" onClick={handleConfirmICP} className="gap-1 h-8 text-xs">
                 <Check className="h-3 w-3" />

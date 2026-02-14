@@ -1056,7 +1056,20 @@
       "detectedState": "Estado atual detectado",
       "desiredState": "Posicionamento futuro desejado",
       "currentVsDesired": "Missão e transformação",
-      "noIcpEvidence": "Não foi encontrada evidência suficiente para inferir seu ICP. Defina manualmente."
+      "noIcpEvidence": "Não foi encontrada evidência suficiente para inferir seu ICP. Defina manualmente.",
+      "diagnosisContext": "Contexto do Diagnóstico Digital Executivo",
+      "scoreVisibility": "Visibilidade",
+      "scoreTrust": "Confiança",
+      "scorePositioning": "Posicionamento",
+      "scoresUsedForInference": "Estas pontuações foram usadas para pré-preencher os campos abaixo.",
+      "detectedStateDesc": "O que o sistema identificou sobre sua situação atual.",
+      "currentSituation": "Situação atual",
+      "desiredStateDesc": "Ações recomendadas para alcançar sua posição ideal.",
+      "futurePositioning": "Posicionamento objetivo",
+      "problemAndTransformation": "Problema e transformação",
+      "detectedAudience": "Audiência detectada por análise digital",
+      "audienceProfile": "Perfil de audiência",
+      "detectedRisks": "Riscos competitivos detectados"
     },
     "scc": {
       "title": "Strategic Control Center",

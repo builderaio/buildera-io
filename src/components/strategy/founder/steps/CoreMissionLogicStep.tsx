@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Cpu, Sparkles, HelpCircle, Target } from 'lucide-react';
+import { Cpu, HelpCircle, Target, TrendingUp, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { PlayToWinStrategy } from '@/types/playToWin';
 import { InferredStrategicData } from '@/hooks/useDiagnosticInference';
 import InferredFieldCard from '../InferredFieldCard';
@@ -45,10 +46,10 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
   const handleChange = (value: string) => { setAspiration(value); setHasChanges(true); };
   const handleTimelineChange = (value: string) => { setTimeline(value as any); setHasChanges(true); };
 
-  // Build inferred text combining problem + transformation
-  const inferredMission = diagnosticData
-    ? [diagnosticData.structuralProblem, diagnosticData.transformation].filter(Boolean).join('\n\n') || null
-    : null;
+  // Build inferred texts
+  const inferredProblem = diagnosticData?.structuralProblem || null;
+  const inferredTransformation = diagnosticData?.transformation || null;
+  const hasScores = !!diagnosticData?.executiveDiagnosis;
 
   return (
     <div className="space-y-6">
@@ -74,12 +75,66 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
         </CardHeader>
       </Card>
 
-      {/* Structural Problem + Transformation */}
+      {/* Executive Diagnosis Score Context */}
+      {hasScores && (
+        <Card className="border-amber-500/20 bg-amber-500/5">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-start gap-3">
+              <TrendingUp className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-2 flex-1">
+                <p className="text-sm font-medium text-amber-800">
+                  {t('journey.sdna.diagnosisContext', 'Contexto del Diagnóstico Digital Ejecutivo')}
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: t('journey.sdna.scoreVisibility', 'Visibilidad'), value: diagnosticData!.executiveDiagnosis!.visibility },
+                    { label: t('journey.sdna.scoreTrust', 'Confianza'), value: diagnosticData!.executiveDiagnosis!.trust },
+                    { label: t('journey.sdna.scorePositioning', 'Posicionamiento'), value: diagnosticData!.executiveDiagnosis!.positioning },
+                  ].map(s => (
+                    <div key={s.label} className="text-center p-2 rounded-md bg-background/60">
+                      <p className="text-lg font-bold text-foreground">{s.value}</p>
+                      <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-amber-700/70 italic">
+                  {t('journey.sdna.scoresUsedForInference', 'Estas puntuaciones se usaron para pre-llenar los campos a continuación.')}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Current State Detected */}
+      {diagnosticData?.currentState && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-muted-foreground" />
+              {t('journey.sdna.detectedState', 'Estado actual detectado')}
+            </CardTitle>
+            <CardDescription>{t('journey.sdna.detectedStateDesc', 'Lo que el sistema identificó sobre tu situación actual.')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InferredFieldCard
+              label={t('journey.sdna.currentSituation', 'Situación actual')}
+              inferredValue={diagnosticData.currentState}
+              currentValue=""
+              onChange={() => {}}
+              showDualState={false}
+              minHeight="80px"
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Structural Problem */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">
-              {t('journey.sdna.structuralProblem', 'Problema estructural y transformación prometida')}
+              {t('journey.sdna.structuralProblem', 'Problema estructural que resuelves')}
             </CardTitle>
             <TooltipProvider>
               <Tooltip>
@@ -103,12 +158,12 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
         </CardHeader>
         <CardContent className="space-y-4">
           <InferredFieldCard
-            label={t('journey.sdna.currentVsDesired', 'Misión y transformación')}
-            inferredValue={inferredMission}
+            label={t('journey.sdna.problemAndTransformation', 'Problema y transformación')}
+            inferredValue={inferredProblem}
             currentValue={aspiration}
             onChange={handleChange}
             placeholder={t('journey.sdna.structuralProblemPlaceholder', 'Ej: Los negocios locales pierden clientes porque no pueden competir digitalmente...')}
-            showDualState={!!inferredMission}
+            showDualState={!!inferredProblem}
             currentStateLabel={t('journey.sdna.detectedState', 'Estado actual detectado')}
             desiredStateLabel={t('journey.sdna.desiredState', 'Posicionamiento futuro deseado')}
             minHeight="140px"
@@ -122,6 +177,29 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
           </div>
         </CardContent>
       </Card>
+
+      {/* Desired Future State */}
+      {diagnosticData?.desiredState && (
+        <Card className="border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              {t('journey.sdna.desiredState', 'Posicionamiento futuro deseado')}
+            </CardTitle>
+            <CardDescription>{t('journey.sdna.desiredStateDesc', 'Acciones recomendadas para alcanzar tu posición ideal.')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InferredFieldCard
+              label={t('journey.sdna.futurePositioning', 'Posicionamiento objetivo')}
+              inferredValue={diagnosticData.desiredState}
+              currentValue=""
+              onChange={() => {}}
+              showDualState={false}
+              minHeight="80px"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Impact Timeline */}
       <Card>

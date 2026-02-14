@@ -1351,6 +1351,23 @@
     "ctaNextStepSub": "Define your mission, vision, and value proposition with AI assistance.",
     "fullReport": "Full Report",
     "continue": "Continue",
-    "fullDiagnosisComplete": "Full Diagnosis Complete"
+    "fullDiagnosisComplete": "Full Diagnosis Complete",
+    "revenueAtRisk": "Revenue at Risk Estimation",
+    "revenueAtRiskDesc": "Conservative estimation of business impact from identified digital gaps.",
+    "leadGenImpact": "Lead Generation Impact",
+    "leadGenImpactDesc": "Potential leads lost due to lack of accessibility and discoverability in digital channels.",
+    "missedOpportunities": "Missed Opportunities",
+    "missedOpportunitiesDesc": "Business opportunities lost due to absence of verifiable case studies, testimonials, or portfolio.",
+    "dueDiligenceRisk": "Due Diligence Risk",
+    "dueDiligenceRiskDesc": "Risk in formal evaluation processes due to lack of structured public information.",
+    "impactLevel": "Impact Level",
+    "impactLow": "Low",
+    "impactMedium": "Medium",
+    "impactHigh": "High",
+    "scenarioComparison": "Comparative Scenario",
+    "withVerifiableAssets": "With verifiable assets",
+    "withoutVerifiableAssets": "Without verifiable assets",
+    "scenarioWith": "Structured digital presence with case studies, testimonials, public metrics, and accessible contact information generates trust and reduces friction in decision-making.",
+    "scenarioWithout": "Absence of verifiable assets forces prospects to rely solely on referrals, significantly limiting scalability and increasing customer acquisition cost."
   }
 }

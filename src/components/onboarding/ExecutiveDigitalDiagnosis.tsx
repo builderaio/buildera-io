@@ -5,7 +5,8 @@ import {
   Building2, Globe2, Tag, Mail, Phone, MapPin, Users, Target,
   CheckCircle2, AlertTriangle, XCircle, Shield, TrendingUp,
   Zap, Star, ArrowRight, Cpu, Activity, Brain, Sparkles,
-  Calendar, Eye, ShieldCheck, Download, FileSearch, BarChart3
+  Calendar, Eye, ShieldCheck, Download, FileSearch, BarChart3,
+  DollarSign, TrendingDown, Scale
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { computeDigitalMaturityScores } from './scoring/digitalMaturityScoring';
@@ -56,6 +57,108 @@ const DataChip = ({ children, variant = 'default' }: { children: React.ReactNode
     <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${styles[variant]}`}>
       {children}
     </span>
+  );
+};
+
+// ── Deterministic Revenue at Risk Estimation ──
+type ImpactLevel = 'low' | 'medium' | 'high';
+
+function computeRevenueRisks(digital: any, scores: any): {
+  leadGen: ImpactLevel;
+  missedOpps: ImpactLevel;
+  dueDiligence: ImpactLevel;
+} {
+  const visScore = scores?.visibility?.score ?? 50;
+  const trustScore = scores?.trust?.score ?? 50;
+  const posScore = scores?.positioning?.score ?? 50;
+  const missingCount = (digital?.what_is_missing || []).length;
+  const riskCount = (digital?.key_risks || []).length;
+
+  // Lead Gen: driven by visibility + missing items
+  const leadGen: ImpactLevel = visScore < 30 || missingCount >= 5 ? 'high'
+    : visScore < 55 || missingCount >= 3 ? 'medium' : 'low';
+
+  // Missed Opportunities: driven by trust + positioning
+  const missedOpps: ImpactLevel = trustScore < 30 && posScore < 40 ? 'high'
+    : trustScore < 50 || posScore < 50 ? 'medium' : 'low';
+
+  // Due Diligence: driven by trust + risk count
+  const dueDiligence: ImpactLevel = trustScore < 30 || riskCount >= 5 ? 'high'
+    : trustScore < 55 || riskCount >= 3 ? 'medium' : 'low';
+
+  return { leadGen, missedOpps, dueDiligence };
+}
+
+const ImpactBadge = ({ level, t }: { level: ImpactLevel; t: any }) => {
+  const config = {
+    low: { bg: 'bg-emerald-500/10 border-emerald-500/30', text: 'text-emerald-400', label: t('common:execDiagnosis.impactLow', 'Low') },
+    medium: { bg: 'bg-amber-500/10 border-amber-500/30', text: 'text-amber-400', label: t('common:execDiagnosis.impactMedium', 'Medium') },
+    high: { bg: 'bg-red-500/10 border-red-500/30', text: 'text-red-400', label: t('common:execDiagnosis.impactHigh', 'High') },
+  };
+  const c = config[level];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${c.bg} ${c.text}`}>
+      {level === 'high' ? <TrendingDown className="w-3 h-3" /> : level === 'medium' ? <AlertTriangle className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
+      {c.label}
+    </span>
+  );
+};
+
+const RevenueAtRiskEstimation = ({ digital, scores, t }: { digital: any; scores: any; t: any }) => {
+  const risks = useMemo(() => computeRevenueRisks(digital, scores), [digital, scores]);
+
+  const riskItems = [
+    { key: 'leadGen', icon: TrendingDown, level: risks.leadGen, title: t('common:execDiagnosis.leadGenImpact'), desc: t('common:execDiagnosis.leadGenImpactDesc') },
+    { key: 'missedOpps', icon: Target, level: risks.missedOpps, title: t('common:execDiagnosis.missedOpportunities'), desc: t('common:execDiagnosis.missedOpportunitiesDesc') },
+    { key: 'dueDiligence', icon: Scale, level: risks.dueDiligence, title: t('common:execDiagnosis.dueDiligenceRisk'), desc: t('common:execDiagnosis.dueDiligenceRiskDesc') },
+  ];
+
+  return (
+    <div className="mt-5 bg-red-500/5 border border-red-500/20 rounded-lg p-5">
+      <div className="flex items-center gap-2 mb-1">
+        <DollarSign className="w-4 h-4 text-red-400" />
+        <p className="text-xs font-semibold text-red-400 uppercase tracking-wider">
+          {t('common:execDiagnosis.revenueAtRisk', 'Revenue at Risk Estimation')}
+        </p>
+      </div>
+      <p className="text-[11px] text-slate-500 mb-4">
+        {t('common:execDiagnosis.revenueAtRiskDesc')}
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+        {riskItems.map(item => (
+          <div key={item.key} className="bg-slate-800/60 rounded-lg p-4 border border-slate-700/50 space-y-2.5">
+            <div className="flex items-center gap-2">
+              <item.icon className="w-4 h-4 text-slate-400" />
+              <p className="text-xs font-semibold text-slate-200">{item.title}</p>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed">{item.desc}</p>
+            <div className="flex items-center gap-2 pt-1">
+              <span className="text-[10px] text-slate-600 uppercase tracking-wider">{t('common:execDiagnosis.impactLevel')}:</span>
+              <ImpactBadge level={item.level} t={t} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Comparative Scenario */}
+      <div className="bg-slate-800/40 rounded-lg border border-slate-700/40 p-4">
+        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+          <Scale className="w-3 h-3" />
+          {t('common:execDiagnosis.scenarioComparison')}
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="border-l-2 border-emerald-500/50 pl-3 space-y-1">
+            <p className="text-[10px] font-bold text-emerald-400 uppercase">{t('common:execDiagnosis.withVerifiableAssets')}</p>
+            <p className="text-xs text-slate-400 leading-relaxed">{t('common:execDiagnosis.scenarioWith')}</p>
+          </div>
+          <div className="border-l-2 border-red-500/50 pl-3 space-y-1">
+            <p className="text-[10px] font-bold text-red-400 uppercase">{t('common:execDiagnosis.withoutVerifiableAssets')}</p>
+            <p className="text-xs text-slate-400 leading-relaxed">{t('common:execDiagnosis.scenarioWithout')}</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -405,6 +508,9 @@ export const ExecutiveDigitalDiagnosis = ({
               </div>
             )}
           </div>
+
+          {/* ── Revenue at Risk Estimation ── */}
+          <RevenueAtRiskEstimation digital={digital} scores={scores} t={t} />
         </motion.section>
 
         {/* ══════════════════════════════════════════════════════ */}

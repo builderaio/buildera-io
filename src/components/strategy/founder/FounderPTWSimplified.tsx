@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { usePlayToWin } from '@/hooks/usePlayToWin';
+import { useDiagnosticInference } from '@/hooks/useDiagnosticInference';
 import { useNavigate } from 'react-router-dom';
 
 import CoreMissionLogicStep from './steps/CoreMissionLogicStep';
@@ -60,6 +61,8 @@ export default function FounderPTWSimplified({
     initializeStrategy,
     updateStrategy
   } = usePlayToWin(companyId);
+
+  const { inferredData, isLoading: isDiagnosticLoading } = useDiagnosticInference(companyId);
 
   useEffect(() => {
     if (!isLoading && !strategy && companyId) {
@@ -112,11 +115,11 @@ export default function FounderPTWSimplified({
     if (!strategy) return null;
     switch (currentStep) {
       case 1:
-        return <CoreMissionLogicStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} />;
+        return <CoreMissionLogicStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} />;
       case 2:
-        return <TargetMarketDefinitionStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} />;
+        return <TargetMarketDefinitionStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} />;
       case 3:
-        return <CompetitivePositioningEngineStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} />;
+        return <CompetitivePositioningEngineStep strategy={strategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} />;
       default:
         return null;
     }

@@ -1044,7 +1044,19 @@
       "goToADN": "Configurar DNA Completo",
       "goToADNHint": "Marca, canais, produtos",
       "expandStrategy": "Expandir Estratégia",
-      "expandStrategyHint": "Capacidades e sistemas"
+      "expandStrategyHint": "Capacidades e sistemas",
+      "inferred": "Inferido pelo sistema",
+      "inferredSource": "Baseado em análise digital",
+      "confirmed": "Confirmado",
+      "manualRequired": "Requer input manual",
+      "confirmAction": "Confirmar",
+      "editAction": "Editar",
+      "rewriteAction": "Reescrever",
+      "viewInferred": "Ver valor inferido",
+      "detectedState": "Estado atual detectado",
+      "desiredState": "Posicionamento futuro desejado",
+      "currentVsDesired": "Missão e transformação",
+      "noIcpEvidence": "Não foi encontrada evidência suficiente para inferir seu ICP. Defina manualmente."
     },
     "scc": {
       "title": "Strategic Control Center",

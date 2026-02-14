@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shield, Sparkles, HelpCircle, DollarSign, Award, Heart, Layers } from 'lucide-react';
+import { Shield, HelpCircle, DollarSign, Award, Heart, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -9,12 +9,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PlayToWinStrategy, MoatType } from '@/types/playToWin';
+import { InferredStrategicData } from '@/hooks/useDiagnosticInference';
+import InferredFieldCard from '../InferredFieldCard';
 import { cn } from '@/lib/utils';
 
 interface CompetitivePositioningEngineStepProps {
   strategy: PlayToWinStrategy;
   onUpdate: (updates: Partial<PlayToWinStrategy>) => Promise<boolean>;
   isSaving: boolean;
+  diagnosticData?: InferredStrategicData | null;
 }
 
 const moatOptions: { value: MoatType; labelKey: string; fallback: string; descKey: string; descFallback: string; icon: React.ComponentType<any> }[] = [
@@ -24,17 +27,11 @@ const moatOptions: { value: MoatType; labelKey: string; fallback: string; descKe
   { value: 'network_effects', labelKey: 'journey.sdna.moatNetwork', fallback: 'Efectos de red', descKey: 'journey.sdna.moatNetworkDesc', descFallback: 'Más usuarios = más valor', icon: Heart },
 ];
 
-const diffPrompts = [
-  "A diferencia de la competencia, mi enfoque...",
-  "Lo que ningún competidor puede replicar es...",
-  "Mi diferenciador estructural es..."
-];
-
-export default function CompetitivePositioningEngineStep({ strategy, onUpdate, isSaving }: CompetitivePositioningEngineStepProps) {
+export default function CompetitivePositioningEngineStep({ strategy, onUpdate, isSaving, diagnosticData }: CompetitivePositioningEngineStepProps) {
   const { t } = useTranslation();
   const [competitiveAdvantage, setCompetitiveAdvantage] = useState(strategy.competitiveAdvantage || '');
   const [moatType, setMoatType] = useState<MoatType | null>(strategy.moatType || null);
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState(diagnosticData?.competitiveCategory || '');
   const [keyAssets, setKeyAssets] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -51,9 +48,11 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
 
   const handleAdvantageChange = (value: string) => { setCompetitiveAdvantage(value); setHasChanges(true); };
   const handleMoatChange = (value: string) => { setMoatType(value as MoatType); setHasChanges(true); };
-  const handlePromptClick = (prompt: string) => { setCompetitiveAdvantage(prompt + ' '); setHasChanges(true); };
 
   const isValid = competitiveAdvantage.length >= 20;
+
+  // Build inferred positioning text
+  const inferredPositioning = diagnosticData?.competitiveAdvantage || null;
 
   return (
     <div className="space-y-6">
@@ -86,10 +85,13 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
           <CardDescription>{t('journey.sdna.competitiveCategoryHint', '¿En qué mercado/categoría te posicionas? Sé específico.')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Input
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+          <InferredFieldCard
+            label={t('journey.sdna.competitiveCategory', 'Categoría competitiva')}
+            inferredValue={diagnosticData?.competitiveCategory || null}
+            currentValue={category}
+            onChange={setCategory}
             placeholder={t('journey.sdna.competitiveCategoryPlaceholder', 'Ej: Automatización de marketing para PYMEs en LATAM')}
+            minHeight="60px"
           />
         </CardContent>
       </Card>
@@ -141,7 +143,7 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
                 </TooltipTrigger>
                 <TooltipContent side="left" className="max-w-xs">
                   <p className="text-sm text-muted-foreground">
-                    {t('journey.sdna.advantageExampleText', '"Combinamos IA propietaria + metodología de consultoría estratégica. Los competidores venden herramientas; nosotros vendemos resultados operativos medibles."')}
+                    {t('journey.sdna.advantageExampleText', '"Combinamos IA propietaria + metodología de consultoría estratégica..."')}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -150,30 +152,23 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
           <CardDescription>{t('journey.sdna.advantageHint', '¿Por qué un cliente informado te elegiría sobre la mejor alternativa?')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!competitiveAdvantage && (
-            <div className="flex flex-wrap gap-2">
-              {diffPrompts.map((prompt, i) => (
-                <Button key={i} variant="outline" size="sm" onClick={() => handlePromptClick(prompt)} className="text-xs">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  {prompt}
-                </Button>
-              ))}
-            </div>
-          )}
-          <div className="space-y-2">
-            <Textarea
-              value={competitiveAdvantage}
-              onChange={(e) => handleAdvantageChange(e.target.value)}
-              placeholder={t('journey.sdna.advantagePlaceholder', 'Ej: Mi plataforma integra diagnóstico, estrategia y ejecución en un solo sistema autónomo. Los competidores solo ofrecen piezas del rompecabezas...')}
-              className="min-h-[120px] resize-none"
-            />
-            <div className="flex items-center justify-between text-sm">
-              <span className={cn("transition-colors", isValid ? "text-green-600" : "text-muted-foreground")}>
-                {competitiveAdvantage.length}/20 {t('common.minCharacters', 'caracteres mínimos')}
-                {isValid && " ✓"}
-              </span>
-              {isSaving && <span className="text-muted-foreground">{t('common.saving', 'Guardando...')}</span>}
-            </div>
+          <InferredFieldCard
+            label={t('journey.sdna.advantageDesc', 'Ventaja competitiva')}
+            inferredValue={inferredPositioning}
+            currentValue={competitiveAdvantage}
+            onChange={handleAdvantageChange}
+            placeholder={t('journey.sdna.advantagePlaceholder', 'Ej: Mi plataforma integra diagnóstico, estrategia y ejecución...')}
+            showDualState={!!inferredPositioning}
+            currentStateLabel={t('journey.sdna.detectedState', 'Estado actual detectado')}
+            desiredStateLabel={t('journey.sdna.desiredState', 'Posicionamiento futuro deseado')}
+            minHeight="120px"
+          />
+          <div className="flex items-center justify-between text-sm">
+            <span className={cn("transition-colors", isValid ? "text-green-600" : "text-muted-foreground")}>
+              {competitiveAdvantage.length}/20 {t('common.minCharacters', 'caracteres mínimos')}
+              {isValid && " ✓"}
+            </span>
+            {isSaving && <span className="text-muted-foreground">{t('common.saving', 'Guardando...')}</span>}
           </div>
         </CardContent>
       </Card>
@@ -188,7 +183,7 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
           <Textarea
             value={keyAssets}
             onChange={(e) => setKeyAssets(e.target.value)}
-            placeholder={t('journey.sdna.keyAssetsPlaceholder', 'Ej: 1) Base de datos de benchmarks por industria. 2) Red de partners certificados. 3) Motor de IA entrenado con datos reales de clientes...')}
+            placeholder={t('journey.sdna.keyAssetsPlaceholder', 'Ej: 1) Base de datos de benchmarks por industria...')}
             className="min-h-[100px] resize-none"
           />
         </CardContent>

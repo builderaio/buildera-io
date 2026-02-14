@@ -1381,6 +1381,24 @@
     "sdiBenchmark_emerging": "Típico de empresas em estágio inicial ou negócios que dependeram exclusivamente de canais offline e redes pessoais.",
     "sdiBenchmark_building": "Comum em PMEs com 1–3 anos de atividade digital que ainda não sistematizaram sua credibilidade online.",
     "sdiBenchmark_competitive": "Característico de empresas estabelecidas com esforços de marketing dedicados e operações digitais estruturadas.",
-    "sdiBenchmark_reference": "Típico de líderes de mercado e organizações digitalmente maduras com estratégias online abrangentes."
+    "sdiBenchmark_reference": "Típico de líderes de mercado e organizações digitalmente maduras com estratégias online abrangentes.",
+    "compArchetypeLabel": "Arquétipo Competitivo Atual",
+    "competitiveLevel": "Nível Competitivo",
+    "archetype_micro_early": "Micro-Consultoria Inicial",
+    "archetype_boutique_specialized": "Boutique Especializada",
+    "archetype_structured_firm": "Firma Estruturada",
+    "archetype_market_leader": "Líder de Mercado",
+    "archetypeDesc_micro_early": "Você opera em um nível inicial com evidência digital estruturada mínima. Sua vantagem competitiva depende de redes pessoais e boca a boca em vez de autoridade demonstrável.",
+    "archetypeDesc_boutique_specialized": "Você tem posicionamento de nicho mas carece da infraestrutura de confiança para competir além da sua rede imediata. Sua especialização é um ativo, mas ainda não está validada digitalmente.",
+    "archetypeDesc_structured_firm": "Sua presença digital suporta as operações comerciais de forma eficaz. Você compete com substância mas poderia fortalecer seus sinais de autoridade para vencer contra players maiores.",
+    "archetypeDesc_market_leader": "Seu ecossistema digital posiciona você como referência na sua categoria. Você compete com autoridade, evidência e confiança estruturada.",
+    "toCompeteNext": "O Que Você Precisa para Competir no Próximo Nível",
+    "archetypeUpgrade_micro_early": ["Estabelecer casos de sucesso verificáveis com resultados mensuráveis", "Criar páginas de serviços estruturadas com metodologia clara", "Construir um sistema de depoimentos com clientes identificados e cargos", "Implementar SEO básico com palavras-chave do setor"],
+    "archetypeUpgrade_boutique_specialized": ["Desenvolver um portfólio de histórias de sucesso documentadas com métricas", "Publicar conteúdo de liderança de pensamento de forma consistente", "Obter validações de terceiros (certificações, prêmios, menções na mídia)", "Sistematizar a aquisição de clientes além das referências"],
+    "archetypeUpgrade_structured_firm": ["Escalar a produção de conteúdo com ativos de construção de autoridade", "Investir em inteligência competitiva e posicionamento de mercado", "Construir sinais de confiança automatizados (métricas em tempo real, dashboards de clientes)", "Estabelecer parcerias estratégicas e presença no ecossistema"],
+    "archetypeClosing_micro_early": "Atualmente compete por narrativa. Para competir por autoridade, precisa de evidência estruturada.",
+    "archetypeClosing_boutique_specialized": "Atualmente compete por especialização. Para competir por confiança, precisa de provas verificáveis em escala.",
+    "archetypeClosing_structured_firm": "Atualmente compete por substância. Para competir por liderança de categoria, precisa de domínio do ecossistema.",
+    "archetypeClosing_market_leader": "Compete por autoridade e evidência. Mantenha sua vantagem inovando continuamente sua infraestrutura de confiança."
   }
 }

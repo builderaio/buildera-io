@@ -319,5 +319,24 @@
     "saved": "Configuration saved",
     "save_error": "Error saving configuration",
     "save": "Save Configuration"
+  },
+  "platforms": {
+    "title": "Platform Settings",
+    "desc": "Configure publishing parameters for each social network",
+    "add_platform": "Add platform",
+    "added": "Platform added",
+    "empty": "No platforms configured",
+    "active": "Active",
+    "max_posts": "Max posts/day",
+    "hashtag_limit": "Hashtag limit",
+    "no_limit": "No limit",
+    "visibility": "Visibility",
+    "visibility_public": "Public",
+    "visibility_private": "Private",
+    "visibility_followers": "Followers only",
+    "auto_publish": "Auto-publish",
+    "require_approval": "Requires approval",
+    "scheduling": "Scheduling",
+    "analytics": "Analytics"
   }
 }

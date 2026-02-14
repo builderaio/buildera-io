@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import CompanyAuth from "@/components/auth/CompanyAuth";
-import DeveloperAuth from "@/components/auth/DeveloperAuth";
-import ExpertAuth from "@/components/auth/ExpertAuth";
 import ThemeSelector from "@/components/ThemeSelector";
 import authBackground from "@/assets/auth-background.jpg";
 import { useGTM } from "@/hooks/useGTM";
@@ -17,20 +14,14 @@ const Auth = () => {
   const { t } = useTranslation(['auth']);
   const [searchParams] = useSearchParams();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [activeTab, setActiveTab] = useState("company");
 
   useEffect(() => {
     const mode = searchParams.get("mode");
-    const userType = searchParams.get("userType");
     
     if (mode === "register" || mode === "signup") {
       setAuthMode("signup");
     } else if (mode === "login" || mode === "signin") {
       setAuthMode("signin");
-    }
-    
-    if (userType === "developer" || userType === "expert" || userType === "company") {
-      setActiveTab(userType);
     }
   }, [searchParams]);
 
@@ -110,22 +101,7 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="company">{t('auth:page.business')}</TabsTrigger>
-                <TabsTrigger value="developer">{t('auth:page.developer')}</TabsTrigger>
-                <TabsTrigger value="expert">{t('auth:page.expert')}</TabsTrigger>
-              </TabsList>
-              <TabsContent value="company" className="mt-6">
-                <CompanyAuth mode={authMode} onModeChange={setAuthMode} />
-              </TabsContent>
-              <TabsContent value="developer" className="mt-6">
-                <DeveloperAuth mode={authMode} onModeChange={setAuthMode} />
-              </TabsContent>
-              <TabsContent value="expert" className="mt-6">
-                <ExpertAuth mode={authMode} onModeChange={setAuthMode} />
-              </TabsContent>
-            </Tabs>
+            <CompanyAuth mode={authMode} onModeChange={setAuthMode} />
           </CardContent>
         </Card>
       </div>

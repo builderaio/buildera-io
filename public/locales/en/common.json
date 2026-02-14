@@ -1347,6 +1347,10 @@
     "ctaTitle": "Ready to Build Your Strategic DNA",
     "ctaDescription": "The Enterprise Brain will now guide you through defining your mission, vision, value proposition, and competitive strategy based on the insights above.",
     "proceedDNA": "Proceed to Strategic DNA",
+    "ctaNextStep": "Next: Strategic DNA Configuration",
+    "ctaNextStepSub": "Define your mission, vision, and value proposition with AI assistance.",
+    "fullReport": "Full Report",
+    "continue": "Continue",
     "fullDiagnosisComplete": "Full Diagnosis Complete"
   }
 }

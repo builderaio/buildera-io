@@ -61,6 +61,8 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
   const inferredPositioning = diagnosticData?.competitiveAdvantage || null;
   const inferredKeyAssets = diagnosticData?.keyAssets || null;
   const hasRisks = diagnosticData?.keyRisks && diagnosticData.keyRisks.length > 0;
+  const hasSeoKeywords = diagnosticData?.seoKeywords && diagnosticData.seoKeywords.length > 0;
+  const hasProductAdvantage = !!diagnosticData?.productBasedAdvantage;
 
   // Sort moat options: emphasized ones first based on business model
   const sortedMoatOptions = [...moatOptions].sort((a, b) => {
@@ -127,6 +129,40 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
               <Bot className="h-3 w-3" />
               {t('journey.sdna.inferredSource')}
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* SEO Keywords & Product Signals */}
+      {(hasSeoKeywords || hasProductAdvantage) && (
+        <Card className="border-muted">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Bot className="h-5 w-5 text-primary" />
+              {t('journey.sdna.marketSignals', 'Señales de Mercado Detectadas')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {hasSeoKeywords && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                  {t('journey.sdna.seoKeywords', 'Keywords SEO')}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {diagnosticData!.seoKeywords.slice(0, 8).map((kw, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">{kw}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {hasProductAdvantage && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">
+                  {t('journey.sdna.productAdvantage', 'Ventaja por Portafolio')}
+                </p>
+                <p className="text-sm text-muted-foreground">{diagnosticData!.productBasedAdvantage}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

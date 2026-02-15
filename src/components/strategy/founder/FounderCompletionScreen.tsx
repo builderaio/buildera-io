@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { 
   PartyPopper, Trophy, Users, Zap, 
-  ArrowRight, Expand, CheckCircle2, Sparkles
+  ArrowRight, CheckCircle2, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,14 +14,12 @@ interface FounderCompletionScreenProps {
   companyName?: string;
   strategy: PlayToWinStrategy | null;
   onGoToADN: () => void;
-  onExpandStrategy: () => void;
 }
 
 export default function FounderCompletionScreen({ 
   companyName, 
   strategy,
-  onGoToADN,
-  onExpandStrategy
+  onGoToADN
 }: FounderCompletionScreenProps) {
   const { t } = useTranslation();
 
@@ -146,40 +144,21 @@ export default function FounderCompletionScreen({
             {t('journey.founder.nextStepsTitle', '¿Qué quieres hacer ahora?')}
           </h3>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button
-              size="lg"
-              onClick={onGoToADN}
-              className="gap-2 h-auto py-4"
-            >
-              <ArrowRight className="h-5 w-5" />
-              <div className="text-left">
-                <div className="font-semibold">
-                  {t('journey.founder.goToADN', 'Configurar mi Negocio')}
-                </div>
-                <div className="text-xs opacity-80">
-                  {t('journey.founder.goToADNHint', 'Completar perfil de empresa')}
-                </div>
+          <Button
+            size="lg"
+            onClick={onGoToADN}
+            className="gap-2 h-auto py-4 w-full"
+          >
+            <ArrowRight className="h-5 w-5" />
+            <div className="text-left">
+              <div className="font-semibold">
+                {t('journey.founder.goToADN', 'Configurar mi Negocio')}
               </div>
-            </Button>
-            
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={onExpandStrategy}
-              className="gap-2 h-auto py-4"
-            >
-              <Expand className="h-5 w-5" />
-              <div className="text-left">
-                <div className="font-semibold">
-                  {t('journey.founder.expandStrategy', 'Expandir Estrategia')}
-                </div>
-                <div className="text-xs opacity-80">
-                  {t('journey.founder.expandStrategyHint', 'Completar los 5 pasos')}
-                </div>
+              <div className="text-xs opacity-80">
+                {t('journey.founder.goToADNHint', 'Completar perfil de empresa')}
               </div>
-            </Button>
-          </div>
+            </div>
+          </Button>
         </motion.div>
 
         {/* Encouragement */}

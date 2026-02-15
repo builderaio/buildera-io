@@ -31,8 +31,8 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
   const { t } = useTranslation();
   const bmCtx = getBusinessModelContext(businessModel || null);
   const [aspiration, setAspiration] = useState(strategy.winningAspiration || '');
-  const [currentSituation, setCurrentSituation] = useState('');
-  const [futurePositioning, setFuturePositioning] = useState('');
+  const [currentSituation, setCurrentSituation] = useState(strategy.currentSituation || '');
+  const [futurePositioning, setFuturePositioning] = useState(strategy.futurePositioning || '');
   const [timeline, setTimeline] = useState<'1_year' | '3_years' | '5_years'>(
     strategy.aspirationTimeline || '1_year'
   );
@@ -40,9 +40,14 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
 
   const saveChanges = useCallback(async () => {
     if (!hasChanges) return;
-    await onUpdate({ winningAspiration: aspiration, aspirationTimeline: timeline });
+    await onUpdate({ 
+      winningAspiration: aspiration, 
+      aspirationTimeline: timeline,
+      currentSituation,
+      futurePositioning
+    });
     setHasChanges(false);
-  }, [aspiration, timeline, hasChanges, onUpdate]);
+  }, [aspiration, timeline, currentSituation, futurePositioning, hasChanges, onUpdate]);
 
   useEffect(() => {
     const timer = setTimeout(() => { if (hasChanges) saveChanges(); }, 1500);

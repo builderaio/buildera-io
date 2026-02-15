@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { 
   Cpu, Crosshair, Shield, 
-  ArrowRight, Expand, CheckCircle2, Dna
+  ArrowRight, CheckCircle2, Dna
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,14 +14,12 @@ interface StrategicProfileGeneratedProps {
   companyName?: string;
   strategy: PlayToWinStrategy | null;
   onGoToADN: () => void;
-  onExpandStrategy: () => void;
 }
 
 export default function StrategicProfileGenerated({ 
   companyName, 
   strategy,
-  onGoToADN,
-  onExpandStrategy
+  onGoToADN
 }: StrategicProfileGeneratedProps) {
   const { t } = useTranslation();
 
@@ -135,22 +133,13 @@ export default function StrategicProfileGenerated({
 
         {/* Actions */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Button size="lg" onClick={onGoToADN} className="gap-2 h-auto py-4">
-              <ArrowRight className="h-5 w-5" />
-              <div className="text-left">
-                <div className="font-semibold">{t('journey.sdna.goToADN', 'Configurar ADN Completo')}</div>
-                <div className="text-xs opacity-80">{t('journey.sdna.goToADNHint', 'Marca, canales, productos')}</div>
-              </div>
-            </Button>
-            <Button size="lg" variant="outline" onClick={onExpandStrategy} className="gap-2 h-auto py-4">
-              <Expand className="h-5 w-5" />
-              <div className="text-left">
-                <div className="font-semibold">{t('journey.sdna.expandStrategy', 'Expandir Estrategia')}</div>
-                <div className="text-xs opacity-80">{t('journey.sdna.expandStrategyHint', 'Capacidades y sistemas')}</div>
-              </div>
-            </Button>
-          </div>
+          <Button size="lg" onClick={onGoToADN} className="gap-2 h-auto py-4 w-full">
+            <ArrowRight className="h-5 w-5" />
+            <div className="text-left">
+              <div className="font-semibold">{t('journey.sdna.goToADN', 'Configurar ADN Completo')}</div>
+              <div className="text-xs opacity-80">{t('journey.sdna.goToADNHint', 'Marca, canales, productos')}</div>
+            </div>
+          </Button>
         </motion.div>
       </motion.div>
     </div>

@@ -3157,18 +3157,24 @@ export type Database = {
         Row: {
           aspiration_metrics: Json | null
           aspiration_timeline: string | null
+          business_model: string | null
           capability_roadmap: Json | null
           channels_focus: Json | null
           company_id: string
           competitive_advantage: string | null
+          competitive_category: string | null
           completion_percentage: number | null
           created_at: string | null
+          current_situation: string | null
           current_step: number | null
+          desired_audience_positioning: string | null
           differentiation_factors: Json | null
+          future_positioning: string | null
           generated_with_ai: boolean | null
           geographic_focus: Json | null
           governance_model: Json | null
           id: string
+          key_assets: string | null
           kpi_definitions: Json | null
           last_review_date: string | null
           moat_type: string | null
@@ -3186,18 +3192,24 @@ export type Database = {
         Insert: {
           aspiration_metrics?: Json | null
           aspiration_timeline?: string | null
+          business_model?: string | null
           capability_roadmap?: Json | null
           channels_focus?: Json | null
           company_id: string
           competitive_advantage?: string | null
+          competitive_category?: string | null
           completion_percentage?: number | null
           created_at?: string | null
+          current_situation?: string | null
           current_step?: number | null
+          desired_audience_positioning?: string | null
           differentiation_factors?: Json | null
+          future_positioning?: string | null
           generated_with_ai?: boolean | null
           geographic_focus?: Json | null
           governance_model?: Json | null
           id?: string
+          key_assets?: string | null
           kpi_definitions?: Json | null
           last_review_date?: string | null
           moat_type?: string | null
@@ -3215,18 +3227,24 @@ export type Database = {
         Update: {
           aspiration_metrics?: Json | null
           aspiration_timeline?: string | null
+          business_model?: string | null
           capability_roadmap?: Json | null
           channels_focus?: Json | null
           company_id?: string
           competitive_advantage?: string | null
+          competitive_category?: string | null
           completion_percentage?: number | null
           created_at?: string | null
+          current_situation?: string | null
           current_step?: number | null
+          desired_audience_positioning?: string | null
           differentiation_factors?: Json | null
+          future_positioning?: string | null
           generated_with_ai?: boolean | null
           geographic_focus?: Json | null
           governance_model?: Json | null
           id?: string
+          key_assets?: string | null
           kpi_definitions?: Json | null
           last_review_date?: string | null
           moat_type?: string | null

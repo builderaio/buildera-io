@@ -51,12 +51,13 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
   const [decisionMaker, setDecisionMaker] = useState(diagnosticData?.decisionMaker || 'founder');
   const [dmInferred] = useState(!!diagnosticData?.decisionMaker);
   const [hasChanges, setHasChanges] = useState(false);
+  const [desiredPositioning, setDesiredPositioning] = useState(strategy.desiredAudiencePositioning || '');
 
   const saveChanges = useCallback(async () => {
     if (!hasChanges) return;
-    await onUpdate({ targetSegments: segments });
+    await onUpdate({ targetSegments: segments, desiredAudiencePositioning: desiredPositioning });
     setHasChanges(false);
-  }, [segments, hasChanges, onUpdate]);
+  }, [segments, desiredPositioning, hasChanges, onUpdate]);
 
   useEffect(() => {
     const timer = setTimeout(() => { if (hasChanges) saveChanges(); }, 1500);
@@ -92,8 +93,6 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
   const hasValidSegment = segments.some(s => s.name.length > 0 && s.description.length > 0);
   const hasPainPoints = diagnosticData?.icpPainPoints && diagnosticData.icpPainPoints.length > 0;
   const hasGoals = diagnosticData?.icpGoals && diagnosticData.icpGoals.length > 0;
-
-  const [desiredPositioning, setDesiredPositioning] = useState('');
 
   const inferredIcpDetail = diagnosticData?.icpDescription
     ? [

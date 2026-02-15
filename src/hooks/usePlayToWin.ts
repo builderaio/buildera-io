@@ -26,17 +26,23 @@ import { Json } from '@/integrations/supabase/types';
 const dbToStrategy = (row: any): PlayToWinStrategy => ({
   id: row.id,
   companyId: row.company_id,
+  businessModel: row.business_model || null,
   winningAspiration: row.winning_aspiration || '',
   aspirationMetrics: (row.aspiration_metrics as AspirationMetric[]) || [],
   aspirationTimeline: row.aspiration_timeline || '3_years',
+  currentSituation: row.current_situation || '',
+  futurePositioning: row.future_positioning || '',
   targetMarkets: (row.target_markets as TargetMarket[]) || [],
   targetSegments: (row.target_segments as TargetSegment[]) || [],
   geographicFocus: (row.geographic_focus as GeographicFocus[]) || [],
   channelsFocus: (row.channels_focus as ChannelFocus[]) || [],
+  desiredAudiencePositioning: row.desired_audience_positioning || '',
   competitiveAdvantage: row.competitive_advantage || '',
   differentiationFactors: (row.differentiation_factors as DifferentiationFactor[]) || [],
   valuePropositionCanvas: row.value_proposition_canvas as ValuePropositionCanvas | null,
   moatType: row.moat_type as MoatType | null,
+  competitiveCategory: row.competitive_category || '',
+  keyAssets: row.key_assets || '',
   requiredCapabilities: (row.required_capabilities as RequiredCapability[]) || [],
   capabilityRoadmap: (row.capability_roadmap as CapabilityMilestone[]) || [],
   reviewCadence: (row.review_cadence as ReviewCadence) || 'monthly',
@@ -57,17 +63,23 @@ const dbToStrategy = (row: any): PlayToWinStrategy => ({
 const strategyToDb = (strategy: Partial<PlayToWinStrategy>): Record<string, Json | string | number | boolean | null> => {
   const result: Record<string, Json | string | number | boolean | null> = {};
   
+  if (strategy.businessModel !== undefined) result.business_model = strategy.businessModel;
   if (strategy.winningAspiration !== undefined) result.winning_aspiration = strategy.winningAspiration;
   if (strategy.aspirationMetrics !== undefined) result.aspiration_metrics = strategy.aspirationMetrics as unknown as Json;
   if (strategy.aspirationTimeline !== undefined) result.aspiration_timeline = strategy.aspirationTimeline;
+  if (strategy.currentSituation !== undefined) result.current_situation = strategy.currentSituation;
+  if (strategy.futurePositioning !== undefined) result.future_positioning = strategy.futurePositioning;
   if (strategy.targetMarkets !== undefined) result.target_markets = strategy.targetMarkets as unknown as Json;
   if (strategy.targetSegments !== undefined) result.target_segments = strategy.targetSegments as unknown as Json;
   if (strategy.geographicFocus !== undefined) result.geographic_focus = strategy.geographicFocus as unknown as Json;
   if (strategy.channelsFocus !== undefined) result.channels_focus = strategy.channelsFocus as unknown as Json;
+  if (strategy.desiredAudiencePositioning !== undefined) result.desired_audience_positioning = strategy.desiredAudiencePositioning;
   if (strategy.competitiveAdvantage !== undefined) result.competitive_advantage = strategy.competitiveAdvantage;
   if (strategy.differentiationFactors !== undefined) result.differentiation_factors = strategy.differentiationFactors as unknown as Json;
   if (strategy.valuePropositionCanvas !== undefined) result.value_proposition_canvas = strategy.valuePropositionCanvas as unknown as Json;
   if (strategy.moatType !== undefined) result.moat_type = strategy.moatType;
+  if (strategy.competitiveCategory !== undefined) result.competitive_category = strategy.competitiveCategory;
+  if (strategy.keyAssets !== undefined) result.key_assets = strategy.keyAssets;
   if (strategy.requiredCapabilities !== undefined) result.required_capabilities = strategy.requiredCapabilities as unknown as Json;
   if (strategy.capabilityRoadmap !== undefined) result.capability_roadmap = strategy.capabilityRoadmap as unknown as Json;
   if (strategy.reviewCadence !== undefined) result.review_cadence = strategy.reviewCadence;

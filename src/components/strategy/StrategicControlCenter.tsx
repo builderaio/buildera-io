@@ -5,138 +5,48 @@ import { useNavigate } from 'react-router-dom';
 import {
   Dna, TrendingUp, Target, Zap, Brain,
   ArrowRight, CheckCircle2, Clock, AlertTriangle,
-  BarChart3, Crosshair, Shield, Cpu
+  BarChart3, Crosshair, Shield, Cpu, Eye, Lock,
+  Activity, FileWarning
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { usePlayToWin } from '@/hooks/usePlayToWin';
+import {
+  useStrategicControlData,
+  generateIntegratedPriorities,
+  generateIntegratedDecisions,
+  calculateIntegratedScore,
+  StrategicPriority,
+  WeeklyDecision,
+} from '@/hooks/useStrategicControlData';
 import { cn } from '@/lib/utils';
 
 interface StrategicControlCenterProps {
   profile: any;
 }
 
-// Deterministic priority generator based on strategy completeness
-function generatePriorities(strategy: any, t: any) {
-  const priorities: {
-    id: string;
-    title: string;
-    description: string;
-    urgency: 'high' | 'medium' | 'low';
-    impact: number;
-    icon: typeof Target;
-    actionView: string;
-  }[] = [];
+const variableIcons: Record<string, typeof Target> = {
+  positioning: Crosshair,
+  channel: Zap,
+  offer: BarChart3,
+  authority: Shield,
+  audience: Target,
+  brand: Dna,
+  visibility: Eye,
+  trust: Lock,
+};
 
-  // Check brand identity
-  priorities.push({
-    id: 'brand',
-    title: t('journey.scc.priorityBrand', 'Definir identidad de marca'),
-    description: t('journey.scc.priorityBrandDesc', 'Tu marca visual y verbal es necesaria para que los agentes generen contenido alineado.'),
-    urgency: 'high',
-    impact: 25,
-    icon: Target,
-    actionView: 'adn-empresa',
-  });
-
-  // Check channels
-  priorities.push({
-    id: 'channels',
-    title: t('journey.scc.priorityChannels', 'Conectar canales digitales'),
-    description: t('journey.scc.priorityChannelsDesc', 'Sin canales conectados, el sistema no puede publicar ni analizar rendimiento.'),
-    urgency: 'high',
-    impact: 20,
-    icon: Zap,
-    actionView: 'marketing-hub',
-  });
-
-  // Check products/services
-  priorities.push({
-    id: 'products',
-    title: t('journey.scc.priorityProducts', 'Registrar productos o servicios'),
-    description: t('journey.scc.priorityProductsDesc', 'Los agentes necesitan conocer tu oferta para generar estrategias de contenido relevantes.'),
-    urgency: 'medium',
-    impact: 15,
-    icon: BarChart3,
-    actionView: 'negocio',
-  });
-
-  // Check audiences
-  if (!strategy?.targetSegments?.length) {
-    priorities.push({
-      id: 'audience',
-      title: t('journey.scc.priorityAudience', 'Profundizar perfil de audiencia'),
-      description: t('journey.scc.priorityAudienceDesc', 'Expande tus segmentos objetivo con datos demográficos y comportamentales.'),
-      urgency: 'medium',
-      impact: 15,
-      icon: Crosshair,
-      actionView: 'negocio',
-    });
-  }
-
-  // Activate autopilot
-  priorities.push({
-    id: 'autopilot',
-    title: t('journey.scc.priorityAutopilot', 'Activar Autopilot de Marketing'),
-    description: t('journey.scc.priorityAutopilotDesc', 'Permite que el sistema ejecute decisiones de contenido autónomamente.'),
-    urgency: 'low',
-    impact: 30,
-    icon: Brain,
-    actionView: 'autopilot',
-  });
-
-  return priorities.sort((a, b) => {
-    const urgencyOrder = { high: 0, medium: 1, low: 2 };
-    return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
-  });
-}
-
-// Generate weekly decisions based on strategy
-function generateWeeklyDecisions(strategy: any, t: any) {
-  const decisions: { title: string; reason: string; action: string; actionView: string }[] = [];
-
-  if (strategy?.winningAspiration) {
-    decisions.push({
-      title: t('journey.scc.decision1', 'Completar el ADN de marca'),
-      reason: t('journey.scc.decision1Reason', 'Tu misión está definida pero el sistema necesita tu identidad visual para generar contenido alineado.'),
-      action: t('journey.scc.decision1Action', 'Configurar marca'),
-      actionView: 'adn-empresa',
-    });
-  }
-
-  decisions.push({
-    title: t('journey.scc.decision2', 'Conectar al menos 1 red social'),
-    reason: t('journey.scc.decision2Reason', 'Sin conexión a canales, el Autopilot no puede ejecutar. Esta acción desbloquea el 60% del sistema.'),
-    action: t('journey.scc.decision2Action', 'Conectar canal'),
-    actionView: 'marketing-hub',
-  });
-
-  decisions.push({
-    title: t('journey.scc.decision3', 'Revisar perfil estratégico'),
-    reason: t('journey.scc.decision3Reason', 'Completar el ADN de la empresa mejora la precisión de las decisiones autónomas en un 40%.'),
-    action: t('journey.scc.decision3Action', 'Configurar ADN'),
-    actionView: 'adn-empresa',
-  });
-
-  return decisions.slice(0, 3);
-}
-
-// Calculate projected score
-function calculateProjectedScore(strategy: any): { current: number; projected: number } {
-  let current = 0;
-  if (strategy?.winningAspiration && strategy.winningAspiration.length >= 20) current += 15;
-  if (strategy?.targetSegments?.length > 0) current += 15;
-  if (strategy?.competitiveAdvantage && strategy.competitiveAdvantage.length >= 20) current += 15;
-  if (strategy?.aspirationTimeline) current += 5;
-  if (strategy?.moatType) current += 5;
-
-  // Projected: what score would be with full ADN completion
-  const projected = Math.min(100, current + 45); // brand(15) + channels(15) + products(10) + audience(5)
-
-  return { current, projected };
-}
+const variableLabels: Record<string, string> = {
+  positioning: 'Posicionamiento',
+  channel: 'Canal',
+  offer: 'Oferta',
+  authority: 'Autoridad',
+  audience: 'Audiencia',
+  brand: 'Marca',
+  visibility: 'Visibilidad',
+  trust: 'Confianza',
+};
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 15 },
@@ -151,20 +61,24 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
   const companyName = profile?.company_name;
 
   const { strategy } = usePlayToWin(companyId);
+  const { diagnostic } = useStrategicControlData(companyId);
 
-  const priorities = useMemo(() => generatePriorities(strategy, t), [strategy, t]);
-  const decisions = useMemo(() => generateWeeklyDecisions(strategy, t), [strategy, t]);
-  const scores = useMemo(() => calculateProjectedScore(strategy), [strategy]);
+  const priorities = useMemo(() => generateIntegratedPriorities(strategy, diagnostic, t), [strategy, diagnostic, t]);
+  const decisions = useMemo(() => generateIntegratedDecisions(strategy, diagnostic, t), [strategy, diagnostic, t]);
+  const scores = useMemo(() => calculateIntegratedScore(strategy, diagnostic), [strategy, diagnostic]);
 
   const handleNavigate = (view: string) => {
     navigate(`/company-dashboard?view=${view}`);
   };
 
   const urgencyConfig = {
+    critical: { label: t('journey.scc.urgencyCritical', 'Crítico'), color: 'bg-destructive/10 text-destructive border-destructive/30' },
     high: { label: t('journey.scc.urgencyHigh', 'Urgente'), color: 'bg-destructive/10 text-destructive border-destructive/30' },
     medium: { label: t('journey.scc.urgencyMedium', 'Importante'), color: 'bg-amber-500/10 text-amber-600 border-amber-500/30' },
     low: { label: t('journey.scc.urgencyLow', 'Recomendado'), color: 'bg-primary/10 text-primary border-primary/30' },
   };
+
+  const diagScores = diagnostic?.executiveDiagnosis?.scores;
 
   return (
     <div className="space-y-6 p-4 sm:p-6 max-w-6xl mx-auto">
@@ -181,16 +95,16 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
             <p className="text-muted-foreground">
               {companyName && <span className="font-medium text-foreground">{companyName}</span>}
               {companyName && ' — '}
-              {t('journey.scc.subtitle', 'Prioridades operativas post-activación')}
+              {t('journey.scc.subtitle', 'Motor de ejecución estratégica')}
             </p>
           </div>
         </div>
       </motion.div>
 
-      {/* Score Projection */}
+      {/* Score Projection + Diagnostic Breakdown */}
       <motion.div {...fadeUp(0.1)}>
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-          <CardContent className="pt-5">
+          <CardContent className="pt-5 space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               <div className="flex-1 w-full space-y-3">
                 <div className="flex items-center justify-between">
@@ -219,14 +133,29 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
                     transition={{ duration: 1, ease: 'easeOut' }}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {t('journey.scc.scoreProjection', 'Si completas las prioridades activas, tu índice subirá de {{from}} a {{to}} esta semana.', {
-                    from: scores.current,
-                    to: scores.projected,
-                  })}
-                </p>
               </div>
             </div>
+
+            {/* Diagnostic Sub-Scores */}
+            {diagScores && (
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { key: 'visibility', icon: Eye, label: t('journey.scc.scoreVisibility', 'Visibilidad'), value: diagScores.visibility },
+                  { key: 'trust', icon: Lock, label: t('journey.scc.scoreTrust', 'Confianza'), value: diagScores.trust },
+                  { key: 'positioning', icon: Crosshair, label: t('journey.scc.scorePositioning', 'Posicionamiento'), value: diagScores.positioning },
+                ].map((s) => {
+                  const Icon = s.icon;
+                  const color = s.value < 40 ? 'text-destructive' : s.value < 60 ? 'text-amber-600' : 'text-primary';
+                  return (
+                    <div key={s.key} className="text-center p-3 rounded-lg bg-background/60 border">
+                      <Icon className={cn('h-4 w-4 mx-auto mb-1', color)} />
+                      <p className={cn('text-xl font-bold', color)}>{s.value}</p>
+                      <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -240,56 +169,23 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
               {t('journey.scc.dynamicPriorities', 'Prioridades Dinámicas')}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {t('journey.scc.dynamicPrioritiesDesc', 'Generadas automáticamente basándose en tu Strategic DNA.')}
+              {t('journey.scc.dynamicPrioritiesDesc', 'Generadas desde tu Strategic DNA y el Diagnóstico Ejecutivo.')}
             </p>
           </motion.div>
 
-          {priorities.slice(0, 5).map((priority, i) => {
-            const Icon = priority.icon;
-            const urgency = urgencyConfig[priority.urgency];
-            return (
-              <motion.div key={priority.id} {...fadeUp(0.2 + i * 0.05)}>
-                <Card className="hover:shadow-md transition-shadow">
-                  <CardContent className="pt-4">
-                    <div className="flex items-start gap-4">
-                      <div className="p-2 bg-muted rounded-lg shrink-0">
-                        <Icon className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0 space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <h3 className="font-semibold text-sm">{priority.title}</h3>
-                            <p className="text-xs text-muted-foreground mt-0.5">{priority.description}</p>
-                          </div>
-                          <Badge variant="outline" className={cn('text-[10px] shrink-0', urgency.color)}>
-                            {urgency.label}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <TrendingUp className="h-3 w-3" />
-                            +{priority.impact} {t('journey.scc.indexPoints', 'pts al índice')}
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 text-xs gap-1"
-                            onClick={() => handleNavigate(priority.actionView)}
-                          >
-                            {t('journey.scc.execute', 'Ejecutar')}
-                            <ArrowRight className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
+          {priorities.slice(0, 6).map((priority, i) => (
+            <PriorityCard
+              key={priority.id}
+              priority={priority}
+              urgencyConfig={urgencyConfig}
+              onNavigate={handleNavigate}
+              t={t}
+              delay={0.2 + i * 0.05}
+            />
+          ))}
         </div>
 
-        {/* Right Column: Decisions + Agent */}
+        {/* Right Column: Decisions + Agent + DNA */}
         <div className="space-y-4">
           {/* Weekly Decisions */}
           <motion.div {...fadeUp(0.2)}>
@@ -300,34 +196,49 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
                   {t('journey.scc.weeklyDecisions', '3 Decisiones Esta Semana')}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  {t('journey.scc.weeklyDecisionsDesc', 'Recomendaciones del sistema basadas en tu perfil operativo.')}
+                  {t('journey.scc.weeklyDecisionsDesc', 'Recomendaciones basadas en DNA + Diagnóstico.')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {decisions.map((decision, i) => (
-                  <div key={i} className="space-y-2 pb-3 last:pb-0 border-b last:border-0">
-                    <div className="flex items-start gap-2">
-                      <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-primary">{i + 1}</span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm">{decision.title}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{decision.reason}</p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full h-7 text-xs"
-                      onClick={() => handleNavigate(decision.actionView)}
-                    >
-                      {decision.action}
-                    </Button>
-                  </div>
+                  <DecisionItem
+                    key={i}
+                    decision={decision}
+                    index={i}
+                    onNavigate={handleNavigate}
+                    t={t}
+                  />
                 ))}
               </CardContent>
             </Card>
           </motion.div>
+
+          {/* Detected Risks from Diagnostic */}
+          {diagnostic?.keyRisks && diagnostic.keyRisks.length > 0 && (
+            <motion.div {...fadeUp(0.25)}>
+              <Card className="border-destructive/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <FileWarning className="h-4 w-4 text-destructive" />
+                    {t('journey.scc.detectedRisks', 'Riesgos Detectados')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {diagnostic.keyRisks.slice(0, 3).map((risk, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                        <AlertTriangle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
+                        <span>{risk}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Badge variant="outline" className="mt-3 text-[10px] bg-destructive/5 text-destructive border-destructive/20">
+                    {t('journey.scc.sourceDiagnostic', 'Diagnóstico')}
+                  </Badge>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {/* AI Agent Card */}
           <motion.div {...fadeUp(0.3)}>
@@ -340,22 +251,21 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                    <span>{t('journey.scc.agentDNA', 'Strategic DNA cargado')}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                    <span>{t('journey.scc.agentMission', 'Core Mission Logic configurada')}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                    <span>{t('journey.scc.agentICP', 'ICP primario definido')}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                    <span>{t('journey.scc.agentPositioning', 'Positioning Engine activo')}</span>
-                  </div>
+                  {[
+                    { done: !!strategy?.winningAspiration, label: t('journey.scc.agentDNA', 'Strategic DNA cargado') },
+                    { done: !!strategy?.targetSegments?.length, label: t('journey.scc.agentICP', 'ICP primario definido') },
+                    { done: !!strategy?.competitiveAdvantage, label: t('journey.scc.agentPositioning', 'Positioning Engine activo') },
+                    { done: !!diagScores, label: t('journey.scc.agentDiag', 'Diagnóstico ejecutivo integrado') },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      {item.done ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <Activity className="h-3.5 w-3.5 text-muted-foreground/40" />
+                      )}
+                      <span className={cn(!item.done && 'opacity-50')}>{item.label}</span>
+                    </div>
+                  ))}
                 </div>
 
                 <Button
@@ -370,7 +280,7 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
             </Card>
           </motion.div>
 
-          {/* Strategic DNA Summary */}
+          {/* DNA Snapshot */}
           <motion.div {...fadeUp(0.35)}>
             <Card>
               <CardHeader className="pb-3">
@@ -403,6 +313,126 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
           </motion.div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Sub-components ───
+
+function PriorityCard({
+  priority,
+  urgencyConfig,
+  onNavigate,
+  t,
+  delay,
+}: {
+  priority: StrategicPriority;
+  urgencyConfig: Record<string, { label: string; color: string }>;
+  onNavigate: (view: string) => void;
+  t: any;
+  delay: number;
+}) {
+  const Icon = variableIcons[priority.variable] || Target;
+  const urgency = urgencyConfig[priority.urgency];
+  const sourceLabel = priority.source === 'diagnostic'
+    ? t('journey.scc.sourceDiagnostic', 'Diagnóstico')
+    : t('journey.scc.sourceDNA', 'DNA');
+  const sourceColor = priority.source === 'diagnostic'
+    ? 'bg-amber-500/10 text-amber-700 border-amber-500/20'
+    : 'bg-primary/10 text-primary border-primary/20';
+
+  return (
+    <motion.div {...fadeUp(delay)}>
+      <Card className="hover:shadow-md transition-shadow">
+        <CardContent className="pt-4">
+          <div className="flex items-start gap-4">
+            <div className="p-2 bg-muted rounded-lg shrink-0">
+              <Icon className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h3 className="font-semibold text-sm">{priority.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{priority.description}</p>
+                </div>
+                <Badge variant="outline" className={cn('text-[10px] shrink-0', urgency.color)}>
+                  {urgency.label}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={cn('text-[10px]', sourceColor)}>
+                    {sourceLabel}
+                  </Badge>
+                  <Badge variant="secondary" className="text-[10px] bg-muted">
+                    {variableLabels[priority.variable] || priority.variable}
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    +{priority.impactPoints} pts
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-xs gap-1"
+                  onClick={() => onNavigate(priority.actionView)}
+                >
+                  {t('journey.scc.execute', 'Ejecutar')}
+                  <ArrowRight className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+function DecisionItem({
+  decision,
+  index,
+  onNavigate,
+  t,
+}: {
+  decision: WeeklyDecision;
+  index: number;
+  onNavigate: (view: string) => void;
+  t: any;
+}) {
+  const sourceLabel = decision.source === 'diagnostic'
+    ? t('journey.scc.sourceDiagnostic', 'Diagnóstico')
+    : t('journey.scc.sourceDNA', 'DNA');
+  const sourceColor = decision.source === 'diagnostic'
+    ? 'bg-amber-500/10 text-amber-700 border-amber-500/20'
+    : 'bg-primary/10 text-primary border-primary/20';
+
+  return (
+    <div className="space-y-2 pb-3 last:pb-0 border-b last:border-0">
+      <div className="flex items-start gap-2">
+        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+          <span className="text-[10px] font-bold text-primary">{index + 1}</span>
+        </div>
+        <div className="min-w-0">
+          <p className="font-medium text-sm">{decision.title}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{decision.reason}</p>
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <Badge variant="outline" className={cn('text-[9px]', sourceColor)}>{sourceLabel}</Badge>
+            <Badge variant="secondary" className="text-[9px] bg-muted">
+              {variableLabels[decision.variable] || decision.variable}
+            </Badge>
+          </div>
+        </div>
+      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        className="w-full h-7 text-xs"
+        onClick={() => onNavigate(decision.actionView)}
+      >
+        {decision.action}
+      </Button>
     </div>
   );
 }

@@ -93,7 +93,9 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
   const hasPainPoints = diagnosticData?.icpPainPoints && diagnosticData.icpPainPoints.length > 0;
   const hasGoals = diagnosticData?.icpGoals && diagnosticData.icpGoals.length > 0;
 
-  const inferredIcpDetail = diagnosticData?.icpDescription 
+  const [desiredPositioning, setDesiredPositioning] = useState('');
+
+  const inferredIcpDetail = diagnosticData?.icpDescription
     ? [
         diagnosticData.icpDescription,
         hasPainPoints ? `\n${t('journey.sdna.bm.painPointsLabel', 'Dolores')}: ${diagnosticData.icpPainPoints.join(', ')}` : '',
@@ -148,8 +150,8 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
             <InferredFieldCard
               label={t('journey.sdna.audienceProfile')}
               inferredValue={inferredIcpDetail}
-              currentValue=""
-              onChange={() => {}}
+              currentValue={desiredPositioning}
+              onChange={(v) => { setDesiredPositioning(v); setHasChanges(true); }}
               showDualState={true}
               currentStateLabel={t('journey.sdna.detectedState')}
               desiredStateLabel={t('journey.sdna.desiredState')}

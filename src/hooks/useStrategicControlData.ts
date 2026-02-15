@@ -46,38 +46,74 @@ export interface DiagnosticPresence {
 export interface StrategicScores {
   current: number;
   projected: number;
-  breakdown: { label: string; value: number; max: number }[];
+  breakdown: { label: string; value: number; max: number; category: 'foundation' | 'presence' | 'execution' | 'gaps' }[];
+  categoryTotals: { foundation: number; presence: number; execution: number; gaps: number };
+}
+
+export interface OperationalMaturity {
+  activeAgents: number;
+  totalExecutions: number;
+  successfulExecutions: number;
+  connectedChannels: number;
+  priorityChannelsConnected: number;
+  hasBrandIdentity: boolean;
+  hasProducts: boolean;
+  hasAudiences: boolean;
 }
 
 // ─── Hook ───
 
 export function useStrategicControlData(companyId: string | undefined) {
   const [diagnostic, setDiagnostic] = useState<DiagnosticPresence | null>(null);
+  const [operational, setOperational] = useState<OperationalMaturity | null>(null);
   const [isLoadingDiagnostic, setIsLoadingDiagnostic] = useState(true);
 
   useEffect(() => {
     if (!companyId) return;
     
-    const fetch = async () => {
+    const fetchAll = async () => {
       setIsLoadingDiagnostic(true);
       try {
-        const { data } = await supabase
-          .from('company_digital_presence')
-          .select('*')
-          .eq('company_id', companyId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // Parallel fetches
+        const [diagRes, agentsRes, companyRes, productsRes, audiencesRes] = await Promise.all([
+          supabase
+            .from('company_digital_presence')
+            .select('*')
+            .eq('company_id', companyId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from('company_agent_configurations')
+            .select('is_active, total_executions, last_execution_status')
+            .eq('company_id', companyId),
+          supabase
+            .from('companies')
+            .select('facebook_url, twitter_url, linkedin_url, instagram_url, youtube_url, tiktok_url, logo_url')
+            .eq('id', companyId)
+            .maybeSingle(),
+          supabase
+            .from('company_products')
+            .select('id')
+            .eq('company_id', companyId)
+            .limit(1),
+          supabase
+            .from('company_audiences')
+            .select('id')
+            .eq('company_id', companyId)
+            .limit(1),
+        ]);
 
-        if (data) {
-          const exec = data.executive_diagnosis as any;
+        // Diagnostic
+        if (diagRes.data) {
+          const exec = diagRes.data.executive_diagnosis as any;
           setDiagnostic({
-            digitalFootprintSummary: data.digital_footprint_summary,
-            whatIsWorking: Array.isArray(data.what_is_working) ? data.what_is_working as string[] : [],
-            whatIsMissing: Array.isArray(data.what_is_missing) ? data.what_is_missing as string[] : [],
-            keyRisks: Array.isArray(data.key_risks) ? data.key_risks as string[] : [],
-            competitivePositioning: data.competitive_positioning,
-            actionPlan: Array.isArray(data.action_plan) ? data.action_plan as string[] : [],
+            digitalFootprintSummary: diagRes.data.digital_footprint_summary,
+            whatIsWorking: Array.isArray(diagRes.data.what_is_working) ? diagRes.data.what_is_working as string[] : [],
+            whatIsMissing: Array.isArray(diagRes.data.what_is_missing) ? diagRes.data.what_is_missing as string[] : [],
+            keyRisks: Array.isArray(diagRes.data.key_risks) ? diagRes.data.key_risks as string[] : [],
+            competitivePositioning: diagRes.data.competitive_positioning,
+            actionPlan: Array.isArray(diagRes.data.action_plan) ? diagRes.data.action_plan as string[] : [],
             executiveDiagnosis: exec ? {
               scores: exec.scores || null,
               sdiLevel: exec.sdi_level || exec.sdiLevel || null,
@@ -87,17 +123,38 @@ export function useStrategicControlData(companyId: string | undefined) {
             } : null,
           });
         }
+
+        // Operational maturity
+        const agents = agentsRes.data || [];
+        const activeAgents = agents.filter((a: any) => a.is_active).length;
+        const totalExec = agents.reduce((sum: number, a: any) => sum + (a.total_executions || 0), 0);
+        const successExec = agents.filter((a: any) => a.last_execution_status === 'success').length;
+
+        const comp = companyRes.data;
+        const socialUrls = comp ? [comp.facebook_url, comp.twitter_url, comp.linkedin_url, comp.instagram_url, comp.youtube_url, comp.tiktok_url] : [];
+        const connectedChannels = socialUrls.filter(Boolean).length;
+
+        setOperational({
+          activeAgents,
+          totalExecutions: totalExec,
+          successfulExecutions: successExec,
+          connectedChannels,
+          priorityChannelsConnected: Math.min(connectedChannels, 3),
+          hasBrandIdentity: !!comp?.logo_url,
+          hasProducts: !!(productsRes.data && productsRes.data.length > 0),
+          hasAudiences: !!(audiencesRes.data && audiencesRes.data.length > 0),
+        });
       } catch (err) {
-        console.error('Error fetching diagnostic for SCC:', err);
+        console.error('Error fetching strategic control data:', err);
       } finally {
         setIsLoadingDiagnostic(false);
       }
     };
 
-    fetch();
+    fetchAll();
   }, [companyId]);
 
-  return { diagnostic, isLoadingDiagnostic };
+  return { diagnostic, operational, isLoadingDiagnostic };
 }
 
 // ─── Priority Generation ───
@@ -352,45 +409,100 @@ export function generateIntegratedDecisions(
 
 export function calculateIntegratedScore(
   strategy: PlayToWinStrategy | null,
-  diagnostic: DiagnosticPresence | null
+  diagnostic: DiagnosticPresence | null,
+  operational: OperationalMaturity | null
 ): StrategicScores {
-  const breakdown: { label: string; value: number; max: number }[] = [];
-  let current = 0;
+  const breakdown: StrategicScores['breakdown'] = [];
 
-  // DNA contribution (max 55)
-  const missionScore = strategy?.winningAspiration && strategy.winningAspiration.length >= 20 ? 15 : 0;
-  const targetScore = strategy?.targetSegments?.length ? 15 : 0;
-  const advantageScore = strategy?.competitiveAdvantage && strategy.competitiveAdvantage.length >= 20 ? 15 : 0;
-  const moatScore = strategy?.moatType ? 5 : 0;
-  const timelineScore = strategy?.aspirationTimeline ? 5 : 0;
+  // ═══ 1. STRATEGIC FOUNDATION (max 30) ═══
+  // Mission + audience + advantage + moat + timeline
+  const mission = strategy?.winningAspiration && strategy.winningAspiration.length >= 20 ? 8 : 0;
+  const target = strategy?.targetSegments?.length ? 7 : 0;
+  const advantage = strategy?.competitiveAdvantage && strategy.competitiveAdvantage.length >= 20 ? 7 : 0;
+  const moat = strategy?.moatType ? 4 : 0;
+  const timeline = strategy?.aspirationTimeline ? 4 : 0;
 
-  breakdown.push({ label: 'Mission', value: missionScore, max: 15 });
-  breakdown.push({ label: 'Target', value: targetScore, max: 15 });
-  breakdown.push({ label: 'Advantage', value: advantageScore, max: 15 });
-  breakdown.push({ label: 'Moat', value: moatScore, max: 5 });
-  breakdown.push({ label: 'Timeline', value: timelineScore, max: 5 });
+  breakdown.push({ label: 'Misión Estratégica', value: mission, max: 8, category: 'foundation' });
+  breakdown.push({ label: 'Audiencia Definida', value: target, max: 7, category: 'foundation' });
+  breakdown.push({ label: 'Ventaja Competitiva', value: advantage, max: 7, category: 'foundation' });
+  breakdown.push({ label: 'Moat Estratégico', value: moat, max: 4, category: 'foundation' });
+  breakdown.push({ label: 'Horizonte Temporal', value: timeline, max: 4, category: 'foundation' });
 
-  current += missionScore + targetScore + advantageScore + moatScore + timelineScore;
+  const foundationTotal = mission + target + advantage + moat + timeline;
 
-  // Diagnostic contribution (max 45)
+  // ═══ 2. DIGITAL PRESENCE (max 25) ═══
+  // Diagnostic scores (visibility, trust, positioning)
   const scores = diagnostic?.executiveDiagnosis?.scores;
+  let visVal = 0, trustVal = 0, posVal = 0;
   if (scores) {
-    const visScore = Math.round((scores.visibility / 100) * 15);
-    const trustScore = Math.round((scores.trust / 100) * 15);
-    const posScore = Math.round((scores.positioning / 100) * 15);
-
-    breakdown.push({ label: 'Visibility', value: visScore, max: 15 });
-    breakdown.push({ label: 'Trust', value: trustScore, max: 15 });
-    breakdown.push({ label: 'Positioning (Diag)', value: posScore, max: 15 });
-
-    current += visScore + trustScore + posScore;
-  } else {
-    breakdown.push({ label: 'Visibility', value: 0, max: 15 });
-    breakdown.push({ label: 'Trust', value: 0, max: 15 });
-    breakdown.push({ label: 'Positioning (Diag)', value: 0, max: 15 });
+    visVal = Math.round((scores.visibility / 100) * 9);
+    trustVal = Math.round((scores.trust / 100) * 8);
+    posVal = Math.round((scores.positioning / 100) * 8);
   }
+  breakdown.push({ label: 'Visibilidad Digital', value: visVal, max: 9, category: 'presence' });
+  breakdown.push({ label: 'Confianza Online', value: trustVal, max: 8, category: 'presence' });
+  breakdown.push({ label: 'Posicionamiento (Diag)', value: posVal, max: 8, category: 'presence' });
 
-  const projected = Math.min(100, current + 20);
+  const presenceTotal = visVal + trustVal + posVal;
 
-  return { current, projected, breakdown };
+  // ═══ 3. OPERATIONAL EXECUTION (max 25) ═══
+  // Agents active, executions, channels connected, brand, products, audiences
+  const agentsScore = operational
+    ? Math.min(6, operational.activeAgents * 2)
+    : 0;
+  const execScore = operational
+    ? Math.min(5, Math.floor(operational.totalExecutions / 5))
+    : 0;
+  const channelsScore = operational
+    ? Math.min(6, operational.connectedChannels * 2)
+    : 0;
+  const brandScore = operational?.hasBrandIdentity ? 3 : 0;
+  const productsScore = operational?.hasProducts ? 3 : 0;
+  const audiencesScore = operational?.hasAudiences ? 2 : 0;
+
+  breakdown.push({ label: 'Agentes Activos', value: agentsScore, max: 6, category: 'execution' });
+  breakdown.push({ label: 'Ejecuciones Realizadas', value: execScore, max: 5, category: 'execution' });
+  breakdown.push({ label: 'Canales Conectados', value: channelsScore, max: 6, category: 'execution' });
+  breakdown.push({ label: 'Identidad de Marca', value: brandScore, max: 3, category: 'execution' });
+  breakdown.push({ label: 'Productos Definidos', value: productsScore, max: 3, category: 'execution' });
+  breakdown.push({ label: 'Audiencias Configuradas', value: audiencesScore, max: 2, category: 'execution' });
+
+  const executionTotal = agentsScore + execScore + channelsScore + brandScore + productsScore + audiencesScore;
+
+  // ═══ 4. GAP REDUCTION (max 20) ═══
+  // Rewards for reducing critical gaps and risks
+  const missingCount = diagnostic?.whatIsMissing?.length || 0;
+  const risksCount = diagnostic?.keyRisks?.length || 0;
+  const actionPlanCount = diagnostic?.actionPlan?.length || 0;
+
+  // Fewer gaps = higher score (inverse)
+  const gapReduction = missingCount === 0 ? 8 : missingCount <= 2 ? 5 : missingCount <= 4 ? 2 : 0;
+  const riskReduction = risksCount === 0 ? 7 : risksCount <= 1 ? 4 : risksCount <= 3 ? 2 : 0;
+  // Having action plans means diagnostic was done (base credit)
+  const planCredit = actionPlanCount > 0 ? 5 : 0;
+
+  breakdown.push({ label: 'Brechas Resueltas', value: gapReduction, max: 8, category: 'gaps' });
+  breakdown.push({ label: 'Riesgos Mitigados', value: riskReduction, max: 7, category: 'gaps' });
+  breakdown.push({ label: 'Plan Estratégico Activo', value: planCredit, max: 5, category: 'gaps' });
+
+  const gapsTotal = gapReduction + riskReduction + planCredit;
+
+  // ═══ TOTAL ═══
+  const current = foundationTotal + presenceTotal + executionTotal + gapsTotal;
+
+  // Projected: estimate if top 3 priorities were resolved
+  const projectedGain = Math.min(20, (missingCount > 0 ? 6 : 0) + (risksCount > 0 ? 5 : 0) + (!strategy?.winningAspiration ? 8 : 0) + (channelsScore < 6 ? 4 : 0));
+  const projected = Math.min(100, current + projectedGain);
+
+  return {
+    current,
+    projected,
+    breakdown,
+    categoryTotals: {
+      foundation: foundationTotal,
+      presence: presenceTotal,
+      execution: executionTotal,
+      gaps: gapsTotal,
+    },
+  };
 }

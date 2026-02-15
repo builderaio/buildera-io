@@ -11,12 +11,15 @@ import { PlayToWinStrategy } from '@/types/playToWin';
 import { InferredStrategicData } from '@/hooks/useDiagnosticInference';
 import InferredFieldCard from '../InferredFieldCard';
 import { cn } from '@/lib/utils';
+import { BusinessModel } from './BusinessModelStep';
+import { getBusinessModelContext } from '@/lib/businessModelContext';
 
 interface CoreMissionLogicStepProps {
   strategy: PlayToWinStrategy;
   onUpdate: (updates: Partial<PlayToWinStrategy>) => Promise<boolean>;
   isSaving: boolean;
   diagnosticData?: InferredStrategicData | null;
+  businessModel?: BusinessModel | null;
 }
 
 const timelineOptions = [
@@ -24,8 +27,9 @@ const timelineOptions = [
   { value: '3_years', labelKey: 'journey.sdna.timeline3y', fallback: '3 Años', descKey: 'journey.sdna.timeline3yDesc', descFallback: 'Escalar operación y consolidar posición' },
 ];
 
-export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, diagnosticData }: CoreMissionLogicStepProps) {
+export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, diagnosticData, businessModel }: CoreMissionLogicStepProps) {
   const { t } = useTranslation();
+  const bmCtx = getBusinessModelContext(businessModel || null);
   const [aspiration, setAspiration] = useState(strategy.winningAspiration || '');
   const [timeline, setTimeline] = useState<'1_year' | '3_years' | '5_years'>(
     strategy.aspirationTimeline || '1_year'
@@ -46,7 +50,6 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
   const handleChange = (value: string) => { setAspiration(value); setHasChanges(true); };
   const handleTimelineChange = (value: string) => { setTimeline(value as any); setHasChanges(true); };
 
-  // Build inferred texts
   const inferredProblem = diagnosticData?.structuralProblem || null;
   const inferredTransformation = diagnosticData?.transformation || null;
   const hasScores = !!diagnosticData?.executiveDiagnosis;
@@ -68,8 +71,12 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
                 {t('journey.sdna.module1Title', 'Core Mission Logic')}
               </CardTitle>
               <CardDescription className="text-base mt-1">
-                {t('journey.sdna.module1LongDesc', 'Define el problema estructural que resuelves, la transformación que prometes y el horizonte temporal de impacto.')}
+                {t('journey.sdna.module1LongDesc')}
               </CardDescription>
+              {/* Business model context hint */}
+              <p className="text-xs text-primary/70 mt-2 italic">
+                {t(bmCtx.problemFocus)}
+              </p>
             </div>
           </div>
         </CardHeader>
@@ -83,13 +90,13 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
               <TrendingUp className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="space-y-2 flex-1">
                 <p className="text-sm font-medium text-amber-800">
-                  {t('journey.sdna.diagnosisContext', 'Contexto del Diagnóstico Digital Ejecutivo')}
+                  {t('journey.sdna.diagnosisContext')}
                 </p>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: t('journey.sdna.scoreVisibility', 'Visibilidad'), value: diagnosticData!.executiveDiagnosis!.visibility },
-                    { label: t('journey.sdna.scoreTrust', 'Confianza'), value: diagnosticData!.executiveDiagnosis!.trust },
-                    { label: t('journey.sdna.scorePositioning', 'Posicionamiento'), value: diagnosticData!.executiveDiagnosis!.positioning },
+                    { label: t('journey.sdna.scoreVisibility'), value: diagnosticData!.executiveDiagnosis!.visibility },
+                    { label: t('journey.sdna.scoreTrust'), value: diagnosticData!.executiveDiagnosis!.trust },
+                    { label: t('journey.sdna.scorePositioning'), value: diagnosticData!.executiveDiagnosis!.positioning },
                   ].map(s => (
                     <div key={s.label} className="text-center p-2 rounded-md bg-background/60">
                       <p className="text-lg font-bold text-foreground">{s.value}</p>
@@ -98,7 +105,7 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
                   ))}
                 </div>
                 <p className="text-xs text-amber-700/70 italic">
-                  {t('journey.sdna.scoresUsedForInference', 'Estas puntuaciones se usaron para pre-llenar los campos a continuación.')}
+                  {t('journey.sdna.scoresUsedForInference')}
                 </p>
               </div>
             </div>
@@ -112,13 +119,13 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-muted-foreground" />
-              {t('journey.sdna.detectedState', 'Estado actual detectado')}
+              {t('journey.sdna.detectedState')}
             </CardTitle>
-            <CardDescription>{t('journey.sdna.detectedStateDesc', 'Lo que el sistema identificó sobre tu situación actual.')}</CardDescription>
+            <CardDescription>{t('journey.sdna.detectedStateDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <InferredFieldCard
-              label={t('journey.sdna.currentSituation', 'Situación actual')}
+              label={t('journey.sdna.currentSituation')}
               inferredValue={diagnosticData.currentState}
               currentValue=""
               onChange={() => {}}
@@ -129,12 +136,12 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
         </Card>
       )}
 
-      {/* Structural Problem */}
+      {/* Structural Problem - with BM-aware placeholders */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">
-              {t('journey.sdna.structuralProblem', 'Problema estructural que resuelves')}
+              {t('journey.sdna.structuralProblem')}
             </CardTitle>
             <TooltipProvider>
               <Tooltip>
@@ -144,28 +151,28 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left" className="max-w-xs">
-                  <p className="font-medium mb-1">{t('journey.sdna.structuralProblemExample', 'Ejemplo:')}</p>
+                  <p className="font-medium mb-1">{t('journey.sdna.structuralProblemExample')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {t('journey.sdna.structuralProblemExampleText', '"Las PYMEs pierden 40% de oportunidades de venta..."')}
+                    {t('journey.sdna.structuralProblemExampleText')}
                   </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
           <CardDescription>
-            {t('journey.sdna.structuralProblemHint', 'Describe qué falla en el mercado y qué transformación entregas. Sé específico con datos o métricas.')}
+            {t(bmCtx.transformationFocus)}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <InferredFieldCard
-            label={t('journey.sdna.problemAndTransformation', 'Problema y transformación')}
+            label={t('journey.sdna.problemAndTransformation')}
             inferredValue={inferredProblem}
             currentValue={aspiration}
             onChange={handleChange}
-            placeholder={t('journey.sdna.structuralProblemPlaceholder', 'Ej: Los negocios locales pierden clientes porque no pueden competir digitalmente...')}
+            placeholder={t(bmCtx.problemPlaceholderKey)}
             showDualState={!!inferredProblem}
-            currentStateLabel={t('journey.sdna.detectedState', 'Estado actual detectado')}
-            desiredStateLabel={t('journey.sdna.desiredState', 'Posicionamiento futuro deseado')}
+            currentStateLabel={t('journey.sdna.detectedState')}
+            desiredStateLabel={t('journey.sdna.desiredState')}
             minHeight="140px"
           />
           <div className="flex items-center justify-between text-sm">
@@ -184,13 +191,13 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
-              {t('journey.sdna.desiredState', 'Posicionamiento futuro deseado')}
+              {t('journey.sdna.desiredState')}
             </CardTitle>
-            <CardDescription>{t('journey.sdna.desiredStateDesc', 'Acciones recomendadas para alcanzar tu posición ideal.')}</CardDescription>
+            <CardDescription>{t('journey.sdna.desiredStateDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <InferredFieldCard
-              label={t('journey.sdna.futurePositioning', 'Posicionamiento objetivo')}
+              label={t('journey.sdna.futurePositioning')}
               inferredValue={diagnosticData.desiredState}
               currentValue=""
               onChange={() => {}}
@@ -206,10 +213,10 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Target className="h-5 w-5 text-muted-foreground" />
-            {t('journey.sdna.impactTimeline', 'Horizonte temporal de impacto')}
+            {t('journey.sdna.impactTimeline')}
           </CardTitle>
           <CardDescription>
-            {t('journey.sdna.impactTimelineHint', '¿En cuánto tiempo tu cliente verá la transformación?')}
+            {t('journey.sdna.impactTimelineHint')}
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -12,29 +12,21 @@ import { PlayToWinStrategy, TargetSegment } from '@/types/playToWin';
 import { InferredStrategicData } from '@/hooks/useDiagnosticInference';
 import InferredFieldCard from '../InferredFieldCard';
 import { cn } from '@/lib/utils';
+import { BusinessModel } from './BusinessModelStep';
+import { getBusinessModelContext } from '@/lib/businessModelContext';
 
 interface TargetMarketDefinitionStepProps {
   strategy: PlayToWinStrategy;
   onUpdate: (updates: Partial<PlayToWinStrategy>) => Promise<boolean>;
   isSaving: boolean;
   diagnosticData?: InferredStrategicData | null;
+  businessModel?: BusinessModel | null;
 }
 
-const maturityLevels = [
-  { value: 'early', labelKey: 'journey.sdna.maturityEarly', fallback: 'Etapa temprana', descKey: 'journey.sdna.maturityEarlyDesc', descFallback: 'Buscando solución, aún no decidido' },
-  { value: 'growing', labelKey: 'journey.sdna.maturityGrowing', fallback: 'En crecimiento', descKey: 'journey.sdna.maturityGrowingDesc', descFallback: 'Ya invierte, busca optimizar' },
-  { value: 'established', labelKey: 'journey.sdna.maturityEstablished', fallback: 'Establecido', descKey: 'journey.sdna.maturityEstablishedDesc', descFallback: 'Operación estable, busca escalar' },
-];
-
-const decisionMakers = [
-  { value: 'founder', labelKey: 'journey.sdna.dmFounder', fallback: 'Founder / Dueño' },
-  { value: 'clevel', labelKey: 'journey.sdna.dmCLevel', fallback: 'C-Level / Director' },
-  { value: 'corporate', labelKey: 'journey.sdna.dmCorporate', fallback: 'Corporativo / Comité' },
-];
-
-export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSaving, diagnosticData }: TargetMarketDefinitionStepProps) {
+export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSaving, diagnosticData, businessModel }: TargetMarketDefinitionStepProps) {
   const { t } = useTranslation();
-  
+  const bmCtx = getBusinessModelContext(businessModel || null);
+
   // Pre-fill from diagnostic if available and no existing data
   const inferredSegment: TargetSegment | null = diagnosticData?.icpName ? {
     id: 'inferred-icp',
@@ -101,14 +93,23 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
   const hasPainPoints = diagnosticData?.icpPainPoints && diagnosticData.icpPainPoints.length > 0;
   const hasGoals = diagnosticData?.icpGoals && diagnosticData.icpGoals.length > 0;
 
-  // Build inferred ICP detail text for display
   const inferredIcpDetail = diagnosticData?.icpDescription 
     ? [
         diagnosticData.icpDescription,
-        hasPainPoints ? `\nDolores: ${diagnosticData.icpPainPoints.join(', ')}` : '',
-        hasGoals ? `\nObjetivos: ${diagnosticData.icpGoals.join(', ')}` : '',
+        hasPainPoints ? `\n${t('journey.sdna.bm.painPointsLabel', 'Dolores')}: ${diagnosticData.icpPainPoints.join(', ')}` : '',
+        hasGoals ? `\n${t('journey.sdna.bm.goalsLabel', 'Objetivos')}: ${diagnosticData.icpGoals.join(', ')}` : '',
       ].filter(Boolean).join('')
     : null;
+
+  // Use BM-aware maturity options
+  const maturityOptions = bmCtx.maturityOptions;
+
+  // Decision maker options (only for B2B / B2B2C / Mixed)
+  const decisionMakers = [
+    { value: 'founder', labelKey: 'journey.sdna.dmFounder', fallback: 'Founder / Dueño' },
+    { value: 'clevel', labelKey: 'journey.sdna.dmCLevel', fallback: 'C-Level / Director' },
+    { value: 'corporate', labelKey: 'journey.sdna.dmCorporate', fallback: 'Corporativo / Comité' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -124,10 +125,10 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
                 {t('journey.sdna.moduleLabel', 'Módulo')} 2/3
               </p>
               <CardTitle className="text-xl sm:text-2xl">
-                {t('journey.sdna.module2Title', 'Target Market Definition')}
+                {t('journey.sdna.module2Title')}
               </CardTitle>
               <CardDescription className="text-base mt-1">
-                {t('journey.sdna.module2LongDesc', 'Define tu ICP primario, el nivel de madurez de tu cliente y el tipo de decisor que influencias.')}
+                {t(bmCtx.icpLabel)}
               </CardDescription>
             </div>
           </div>
@@ -140,40 +141,40 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              {t('journey.sdna.detectedAudience', 'Audiencia detectada por análisis digital')}
+              {t('journey.sdna.detectedAudience')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <InferredFieldCard
-              label={t('journey.sdna.audienceProfile', 'Perfil de audiencia')}
+              label={t('journey.sdna.audienceProfile')}
               inferredValue={inferredIcpDetail}
               currentValue=""
               onChange={() => {}}
               showDualState={true}
-              currentStateLabel={t('journey.sdna.detectedState', 'Estado actual detectado')}
-              desiredStateLabel={t('journey.sdna.desiredState', 'Posicionamiento futuro deseado')}
+              currentStateLabel={t('journey.sdna.detectedState')}
+              desiredStateLabel={t('journey.sdna.desiredState')}
               minHeight="100px"
             />
           </CardContent>
         </Card>
       )}
 
-      {/* ICP - Inferred or editable */}
+      {/* ICP */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-muted-foreground" />
-                {t('journey.sdna.icpDefined', 'Tu ICP Primario')}
+                {t('journey.sdna.icpDefined')}
               </CardTitle>
-              <CardDescription>{t('journey.sdna.icpDefinedHint', 'Define 1-2 perfiles para máxima precisión')}</CardDescription>
+              <CardDescription>{t('journey.sdna.icpDefinedHint')}</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               {icpInferred && (
                 <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-primary/20">
                   <Bot className="h-3 w-3" />
-                  {t('journey.sdna.inferred', 'Inferido por el sistema')}
+                  {t('journey.sdna.inferred')}
                 </Badge>
               )}
               {segments.length < 2 && !icpInferred && (
@@ -186,19 +187,18 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Inferred confirmation bar */}
           {icpInferred && segments.length > 0 && (
             <div className="flex flex-wrap gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
               <p className="w-full text-xs text-primary/70 italic flex items-center gap-1 mb-1">
                 <Bot className="h-3 w-3" />
-                {t('journey.sdna.inferredSource', 'Inferido por el sistema – basado en análisis digital')}
+                {t('journey.sdna.inferredSource')}
               </p>
               <Button size="sm" onClick={handleConfirmICP} className="gap-1 h-8 text-xs">
                 <Check className="h-3 w-3" />
-                {t('journey.sdna.confirmAction', 'Confirmar')}
+                {t('journey.sdna.confirmAction')}
               </Button>
               <Button size="sm" variant="outline" onClick={handleEditICP} className="gap-1 h-8 text-xs">
-                {t('journey.sdna.editAction', 'Editar')}
+                {t('journey.sdna.editAction')}
               </Button>
             </div>
           )}
@@ -206,14 +206,14 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
           {segments.length === 0 && (
             <div className="text-center py-6">
               <Badge variant="secondary" className="gap-1 mb-3 bg-amber-500/10 text-amber-700 border-amber-500/20">
-                {t('journey.sdna.manualRequired', 'Requiere input manual')}
+                {t('journey.sdna.manualRequired')}
               </Badge>
               <p className="text-sm text-muted-foreground mb-4">
-                {t('journey.sdna.noIcpEvidence', 'No se encontró evidencia suficiente para inferir tu ICP. Defínelo manualmente.')}
+                {t('journey.sdna.noIcpEvidence')}
               </p>
               <Button onClick={addSegment} variant="outline" className="gap-2">
                 <Plus className="h-4 w-4" />
-                {t('journey.sdna.createCustomICP', 'Crear perfil personalizado')}
+                {t('journey.sdna.createCustomICP')}
               </Button>
             </div>
           )}
@@ -228,16 +228,16 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
               </div>
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <Label className="text-sm">{t('journey.sdna.icpWho', '¿Quiénes son?')}</Label>
-                  <Input value={segment.name} onChange={(e) => updateSegment(segment.id, 'name', e.target.value)} placeholder={t('journey.sdna.icpWhoPlaceholder', 'Ej: Agencias de marketing digital con 3-15 empleados')} className="mt-1" />
+                  <Label className="text-sm">{t('journey.sdna.icpWho')}</Label>
+                  <Input value={segment.name} onChange={(e) => updateSegment(segment.id, 'name', e.target.value)} placeholder={t(bmCtx.icpWhoPlaceholderKey)} className="mt-1" />
                 </div>
                 <div>
-                  <Label className="text-sm">{t('journey.sdna.icpProblem', '¿Qué problema crítico tienen?')}</Label>
-                  <Textarea value={segment.description} onChange={(e) => updateSegment(segment.id, 'description', e.target.value)} placeholder={t('journey.sdna.icpProblemPlaceholder', 'Ej: No pueden escalar más allá de 10 clientes...')} className="mt-1 min-h-[80px] resize-none" />
+                  <Label className="text-sm">{t('journey.sdna.icpProblem')}</Label>
+                  <Textarea value={segment.description} onChange={(e) => updateSegment(segment.id, 'description', e.target.value)} placeholder={t(bmCtx.icpProblemPlaceholderKey)} className="mt-1 min-h-[80px] resize-none" />
                 </div>
                 <div>
-                  <Label className="text-sm">{t('journey.sdna.icpSize', 'Tamaño estimado del mercado')}</Label>
-                  <Input value={segment.size} onChange={(e) => updateSegment(segment.id, 'size', e.target.value)} placeholder={t('journey.sdna.icpSizePlaceholder', 'Ej: 2,000 agencias en LATAM')} className="mt-1" />
+                  <Label className="text-sm">{t('journey.sdna.icpSize')}</Label>
+                  <Input value={segment.size} onChange={(e) => updateSegment(segment.id, 'size', e.target.value)} placeholder={t('journey.sdna.icpSizePlaceholder')} className="mt-1" />
                 </div>
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
           {segments.length > 0 && (
             <div className="flex items-center justify-between text-sm pt-2">
               <span className={cn("transition-colors", hasValidSegment ? "text-green-600" : "text-muted-foreground")}>
-                {hasValidSegment ? '✓ ' : ''}{segments.length}/2 {t('journey.sdna.icpCount', 'perfiles definidos')}
+                {hasValidSegment ? '✓ ' : ''}{segments.length}/2 {t('journey.sdna.icpCount')}
               </span>
               {isSaving && <span className="text-muted-foreground">{t('common.saving', 'Guardando...')}</span>}
             </div>
@@ -254,33 +254,33 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
         </CardContent>
       </Card>
 
-      {/* Client Maturity Level */}
+      {/* Client Maturity Level - BM aware */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-lg">{t('journey.sdna.clientMaturity', 'Nivel de madurez del cliente')}</CardTitle>
-              <CardDescription>{t('journey.sdna.clientMaturityHint', '¿En qué etapa se encuentra tu cliente cuando te busca?')}</CardDescription>
+              <CardTitle className="text-lg">{t('journey.sdna.clientMaturity')}</CardTitle>
+              <CardDescription>{t('journey.sdna.clientMaturityHint')}</CardDescription>
             </div>
             {maturityInferred && (
               <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-primary/20">
                 <Bot className="h-3 w-3" />
-                {t('journey.sdna.inferred', 'Inferido')}
+                {t('journey.sdna.inferred')}
               </Badge>
             )}
           </div>
         </CardHeader>
         <CardContent>
           <RadioGroup value={maturity} onValueChange={(v) => setMaturity(v as any)} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {maturityLevels.map(opt => (
+            {maturityOptions.map(opt => (
               <div key={opt.value}>
                 <RadioGroupItem value={opt.value} id={`mat-${opt.value}`} className="peer sr-only" />
                 <Label htmlFor={`mat-${opt.value}`} className={cn(
                   "flex flex-col items-start gap-1 rounded-lg border-2 p-3 cursor-pointer transition-all hover:bg-muted/50",
                   maturity === opt.value ? "border-primary bg-primary/5" : "border-transparent bg-muted/30"
                 )}>
-                  <span className="font-semibold text-sm">{t(opt.labelKey, opt.fallback)}</span>
-                  <span className="text-xs text-muted-foreground">{t(opt.descKey, opt.descFallback)}</span>
+                  <span className="font-semibold text-sm">{t(opt.labelKey)}</span>
+                  <span className="text-xs text-muted-foreground">{t(opt.descKey)}</span>
                 </Label>
               </div>
             ))}
@@ -288,38 +288,40 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
         </CardContent>
       </Card>
 
-      {/* Decision Maker */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">{t('journey.sdna.decisionMaker', 'Tipo de decisión que influencias')}</CardTitle>
-              <CardDescription>{t('journey.sdna.decisionMakerHint', '¿Quién toma la decisión de compra?')}</CardDescription>
-            </div>
-            {dmInferred && (
-              <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-primary/20">
-                <Bot className="h-3 w-3" />
-                {t('journey.sdna.inferred', 'Inferido')}
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <RadioGroup value={decisionMaker} onValueChange={(v) => setDecisionMaker(v as any)} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {decisionMakers.map(opt => (
-              <div key={opt.value}>
-                <RadioGroupItem value={opt.value} id={`dm-${opt.value}`} className="peer sr-only" />
-                <Label htmlFor={`dm-${opt.value}`} className={cn(
-                  "flex flex-col items-center gap-1 rounded-lg border-2 p-3 cursor-pointer transition-all hover:bg-muted/50 text-center",
-                  decisionMaker === opt.value ? "border-primary bg-primary/5" : "border-transparent bg-muted/30"
-                )}>
-                  <span className="font-semibold text-sm">{t(opt.labelKey, opt.fallback)}</span>
-                </Label>
+      {/* Decision Maker - only shown for B2B/B2B2C/Mixed */}
+      {bmCtx.showDecisionMaker && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">{t(bmCtx.decisionMakerLabel, t('journey.sdna.decisionMaker'))}</CardTitle>
+                <CardDescription>{t('journey.sdna.decisionMakerHint')}</CardDescription>
               </div>
-            ))}
-          </RadioGroup>
-        </CardContent>
-      </Card>
+              {dmInferred && (
+                <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-primary/20">
+                  <Bot className="h-3 w-3" />
+                  {t('journey.sdna.inferred')}
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup value={decisionMaker} onValueChange={(v) => setDecisionMaker(v as any)} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {decisionMakers.map(opt => (
+                <div key={opt.value}>
+                  <RadioGroupItem value={opt.value} id={`dm-${opt.value}`} className="peer sr-only" />
+                  <Label htmlFor={`dm-${opt.value}`} className={cn(
+                    "flex flex-col items-center gap-1 rounded-lg border-2 p-3 cursor-pointer transition-all hover:bg-muted/50 text-center",
+                    decisionMaker === opt.value ? "border-primary bg-primary/5" : "border-transparent bg-muted/30"
+                  )}>
+                    <span className="font-semibold text-sm">{t(opt.labelKey, opt.fallback)}</span>
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

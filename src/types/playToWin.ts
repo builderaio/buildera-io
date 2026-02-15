@@ -109,26 +109,36 @@ export interface GovernanceModel {
 
 export type PTWStatus = 'draft' | 'in_progress' | 'complete' | 'reviewing';
 
+export type BusinessModelType = 'b2b' | 'b2c' | 'b2b2c' | 'mixed';
+
 export interface PlayToWinStrategy {
   id: string;
   companyId: string;
+  
+  // Business Model
+  businessModel: BusinessModelType | null;
   
   // Step 1: Winning Aspiration
   winningAspiration: string;
   aspirationMetrics: AspirationMetric[];
   aspirationTimeline: '1_year' | '3_years' | '5_years';
+  currentSituation: string;
+  futurePositioning: string;
   
   // Step 2: Where to Play
   targetMarkets: TargetMarket[];
   targetSegments: TargetSegment[];
   geographicFocus: GeographicFocus[];
   channelsFocus: ChannelFocus[];
+  desiredAudiencePositioning: string;
   
   // Step 3: How to Win
   competitiveAdvantage: string;
   differentiationFactors: DifferentiationFactor[];
   valuePropositionCanvas: ValuePropositionCanvas | null;
   moatType: MoatType | null;
+  competitiveCategory: string;
+  keyAssets: string;
   
   // Step 4: Capabilities
   requiredCapabilities: RequiredCapability[];

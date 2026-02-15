@@ -68,6 +68,9 @@ export default function FounderPTWSimplified({
     if (currentStep === 'intro') {
       setCurrentStep('business_model');
     } else if (currentStep === 'business_model') {
+      if (businessModel) {
+        await updateStrategy({ businessModel: businessModel as any });
+      }
       setCurrentStep(1);
     } else if (typeof currentStep === 'number' && currentStep < 3) {
       setCurrentStep((currentStep + 1) as 1 | 2 | 3);
@@ -98,9 +101,6 @@ export default function FounderPTWSimplified({
     }
   };
 
-  const handleExpandStrategy = () => {
-    navigate('/company-dashboard?view=estrategia-ptw');
-  };
 
   const calculateActivation = () => {
     if (!strategy) return 0;
@@ -114,17 +114,23 @@ export default function FounderPTWSimplified({
   const defaultStrategy: PlayToWinStrategy = {
     id: '',
     companyId: companyId,
+    businessModel: businessModel as any || null,
     winningAspiration: '',
     aspirationMetrics: [],
     aspirationTimeline: '1_year',
+    currentSituation: '',
+    futurePositioning: '',
     targetMarkets: [],
     targetSegments: [],
     geographicFocus: [],
     channelsFocus: [],
+    desiredAudiencePositioning: '',
     competitiveAdvantage: '',
     differentiationFactors: [],
     valuePropositionCanvas: null,
     moatType: null,
+    competitiveCategory: '',
+    keyAssets: '',
     requiredCapabilities: [],
     capabilityRoadmap: [],
     reviewCadence: 'monthly',
@@ -137,8 +143,8 @@ export default function FounderPTWSimplified({
     generatedWithAI: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    lastReviewDate: undefined,
-    nextReviewDate: undefined,
+    lastReviewDate: null,
+    nextReviewDate: null,
   };
 
   const activeStrategy = strategy || defaultStrategy;
@@ -173,7 +179,6 @@ export default function FounderPTWSimplified({
         companyName={companyName}
         strategy={strategy}
         onGoToADN={handleGoToADN}
-        onExpandStrategy={handleExpandStrategy}
       />
     );
   }

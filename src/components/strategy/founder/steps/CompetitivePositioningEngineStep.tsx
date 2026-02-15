@@ -37,15 +37,15 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
     strategy.moatType || diagnosticData?.suggestedMoat || null
   );
   const [moatInferred] = useState(!!diagnosticData?.suggestedMoat && !strategy.moatType);
-  const [category, setCategory] = useState(diagnosticData?.competitiveCategory || '');
-  const [keyAssets, setKeyAssets] = useState('');
+  const [category, setCategory] = useState(strategy.competitiveCategory || diagnosticData?.competitiveCategory || '');
+  const [keyAssets, setKeyAssets] = useState(strategy.keyAssets || '');
   const [hasChanges, setHasChanges] = useState(false);
 
   const saveChanges = useCallback(async () => {
     if (!hasChanges) return;
-    await onUpdate({ competitiveAdvantage, moatType });
+    await onUpdate({ competitiveAdvantage, moatType, competitiveCategory: category, keyAssets });
     setHasChanges(false);
-  }, [competitiveAdvantage, moatType, hasChanges, onUpdate]);
+  }, [competitiveAdvantage, moatType, category, keyAssets, hasChanges, onUpdate]);
 
   useEffect(() => {
     const timer = setTimeout(() => { if (hasChanges) saveChanges(); }, 1500);
@@ -54,6 +54,8 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
 
   const handleAdvantageChange = (value: string) => { setCompetitiveAdvantage(value); setHasChanges(true); };
   const handleMoatChange = (value: string) => { setMoatType(value as MoatType); setHasChanges(true); };
+  const handleCategoryChange = (value: string) => { setCategory(value); setHasChanges(true); };
+  const handleKeyAssetsChange = (value: string) => { setKeyAssets(value); setHasChanges(true); };
 
   const isValid = competitiveAdvantage.length >= 20;
   const inferredPositioning = diagnosticData?.competitiveAdvantage || null;
@@ -140,7 +142,7 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
             label={t('journey.sdna.competitiveCategory')}
             inferredValue={diagnosticData?.competitiveCategory || null}
             currentValue={category}
-            onChange={setCategory}
+            onChange={handleCategoryChange}
             placeholder={t('journey.sdna.competitiveCategoryPlaceholder')}
             showDualState={!!diagnosticData?.competitiveCategory}
             currentStateLabel={t('journey.sdna.detectedState')}
@@ -254,7 +256,7 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
             label={t('journey.sdna.keyAssets')}
             inferredValue={inferredKeyAssets}
             currentValue={keyAssets}
-            onChange={setKeyAssets}
+            onChange={handleKeyAssetsChange}
             placeholder={t('journey.sdna.keyAssetsPlaceholder')}
             showDualState={!!inferredKeyAssets}
             currentStateLabel={t('journey.sdna.detectedState')}

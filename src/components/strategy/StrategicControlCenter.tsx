@@ -114,10 +114,10 @@ function generateWeeklyDecisions(strategy: any, t: any) {
   });
 
   decisions.push({
-    title: t('journey.scc.decision3', 'Revisar estrategia expandida'),
-    reason: t('journey.scc.decision3Reason', 'Completar los 5 pilares estratégicos aumenta la precisión de las decisiones autónomas en un 40%.'),
-    action: t('journey.scc.decision3Action', 'Expandir estrategia'),
-    actionView: 'estrategia-ptw',
+    title: t('journey.scc.decision3', 'Revisar perfil estratégico'),
+    reason: t('journey.scc.decision3Reason', 'Completar el ADN de la empresa mejora la precisión de las decisiones autónomas en un 40%.'),
+    action: t('journey.scc.decision3Action', 'Configurar ADN'),
+    actionView: 'adn-empresa',
   });
 
   return decisions.slice(0, 3);

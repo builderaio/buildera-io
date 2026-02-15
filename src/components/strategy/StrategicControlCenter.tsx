@@ -6,7 +6,7 @@ import {
   Dna, TrendingUp, Target, Zap, Brain,
   ArrowRight, CheckCircle2, Clock, AlertTriangle,
   BarChart3, Crosshair, Shield, Cpu, Eye, Lock,
-  Activity, FileWarning
+  Activity, FileWarning, Lightbulb, Flame, Sparkles
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -100,6 +100,16 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
           </div>
         </div>
       </motion.div>
+
+      {/* Insight Estratégico Actual */}
+      <StrategicInsightBlock
+        diagnostic={diagnostic}
+        priorities={priorities}
+        strategy={strategy}
+        urgencyConfig={urgencyConfig}
+        onNavigate={handleNavigate}
+        t={t}
+      />
 
       {/* Score Projection + Diagnostic Breakdown */}
       <motion.div {...fadeUp(0.1)}>
@@ -434,5 +444,171 @@ function DecisionItem({
         {decision.action}
       </Button>
     </div>
+  );
+}
+
+// ─── Strategic Insight Block ───
+
+function StrategicInsightBlock({
+  diagnostic,
+  priorities,
+  strategy,
+  urgencyConfig,
+  onNavigate,
+  t,
+}: {
+  diagnostic: any;
+  priorities: StrategicPriority[];
+  strategy: any;
+  urgencyConfig: Record<string, { label: string; color: string }>;
+  onNavigate: (view: string) => void;
+  t: any;
+}) {
+  const topPriority = priorities[0];
+  const scores = diagnostic?.executiveDiagnosis?.scores;
+
+  // Derive the main gap from diagnostic scores
+  const mainGap = useMemo(() => {
+    if (!scores) return null;
+    const areas = [
+      { key: 'visibility', label: t('journey.scc.scoreVisibility', 'Visibilidad'), score: scores.visibility, icon: Eye },
+      { key: 'trust', label: t('journey.scc.scoreTrust', 'Confianza'), score: scores.trust, icon: Lock },
+      { key: 'positioning', label: t('journey.scc.scorePositioning', 'Posicionamiento'), score: scores.positioning, icon: Crosshair },
+    ];
+    return areas.sort((a, b) => a.score - b.score)[0];
+  }, [scores, t]);
+
+  // Derive risk from diagnostic
+  const primaryRisk = diagnostic?.keyRisks?.[0] || null;
+
+  // Derive opportunity from what's working + top priority
+  const opportunity = useMemo(() => {
+    if (diagnostic?.actionPlan?.[0]) return diagnostic.actionPlan[0];
+    if (topPriority) return topPriority.description;
+    return null;
+  }, [diagnostic, topPriority]);
+
+  // Urgency level
+  const urgencyLevel = useMemo(() => {
+    if (!scores) return 'medium';
+    const overall = scores.overall ?? Math.round((scores.visibility + scores.trust + scores.positioning) / 3);
+    if (overall < 30) return 'critical';
+    if (overall < 50) return 'high';
+    if (overall < 70) return 'medium';
+    return 'low';
+  }, [scores]);
+
+  const urgency = urgencyConfig[urgencyLevel];
+  const hasData = mainGap || primaryRisk || opportunity;
+
+  if (!hasData) return null;
+
+  const GapIcon = mainGap?.icon || AlertTriangle;
+
+  return (
+    <motion.div {...fadeUp(0.05)}>
+      <Card className="border-amber-500/30 bg-gradient-to-r from-amber-500/5 via-transparent to-primary/5 overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-amber-500" />
+              {t('journey.scc.insightTitle', 'Insight Estratégico Actual')}
+            </CardTitle>
+            <Badge variant="outline" className={cn('text-[10px]', urgency.color)}>
+              {urgency.label}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Main Gap */}
+            {mainGap && (
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
+                <div className="p-1.5 bg-destructive/10 rounded-md shrink-0">
+                  <GapIcon className="h-4 w-4 text-destructive" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {t('journey.scc.insightGap', 'Principal Brecha')}
+                  </p>
+                  <p className="text-sm font-semibold mt-0.5">
+                    {mainGap.label}: <span className="text-destructive">{mainGap.score}/100</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Associated Risk */}
+            {primaryRisk && (
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
+                <div className="p-1.5 bg-destructive/10 rounded-md shrink-0">
+                  <Flame className="h-4 w-4 text-destructive" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {t('journey.scc.insightRisk', 'Riesgo Asociado')}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{primaryRisk}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Priority Opportunity */}
+            {opportunity && (
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
+                <div className="p-1.5 bg-primary/10 rounded-md shrink-0">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {t('journey.scc.insightOpportunity', 'Oportunidad Prioritaria')}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{opportunity}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Urgency Level */}
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
+              <div className={cn('p-1.5 rounded-md shrink-0', urgencyLevel === 'critical' || urgencyLevel === 'high' ? 'bg-destructive/10' : 'bg-amber-500/10')}>
+                <AlertTriangle className={cn('h-4 w-4', urgencyLevel === 'critical' || urgencyLevel === 'high' ? 'text-destructive' : 'text-amber-600')} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                  {t('journey.scc.insightUrgency', 'Nivel de Urgencia')}
+                </p>
+                <p className="text-sm font-semibold mt-0.5">
+                  <span className={cn(
+                    urgencyLevel === 'critical' || urgencyLevel === 'high' ? 'text-destructive' : 
+                    urgencyLevel === 'medium' ? 'text-amber-600' : 'text-primary'
+                  )}>
+                    {urgency.label}
+                  </span>
+                  {scores && (
+                    <span className="text-xs text-muted-foreground ml-1.5 font-normal">
+                      (SDI: {scores.overall ?? Math.round((scores.visibility + scores.trust + scores.positioning) / 3)}/100)
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          {topPriority && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full gap-2 text-xs"
+              onClick={() => onNavigate(topPriority.actionView)}
+            >
+              <ArrowRight className="h-3.5 w-3.5" />
+              {t('journey.scc.insightAction', 'Resolver brecha prioritaria')}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

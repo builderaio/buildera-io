@@ -61,11 +61,11 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
   const companyName = profile?.company_name;
 
   const { strategy } = usePlayToWin(companyId);
-  const { diagnostic } = useStrategicControlData(companyId);
+  const { diagnostic, operational } = useStrategicControlData(companyId);
 
   const priorities = useMemo(() => generateIntegratedPriorities(strategy, diagnostic, t), [strategy, diagnostic, t]);
   const decisions = useMemo(() => generateIntegratedDecisions(strategy, diagnostic, t), [strategy, diagnostic, t]);
-  const scores = useMemo(() => calculateIntegratedScore(strategy, diagnostic), [strategy, diagnostic]);
+  const scores = useMemo(() => calculateIntegratedScore(strategy, diagnostic, operational), [strategy, diagnostic, operational]);
 
   const handleNavigate = (view: string) => {
     navigate(`/company-dashboard?view=${view}`);
@@ -146,26 +146,29 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
               </div>
             </div>
 
-            {/* Diagnostic Sub-Scores */}
-            {diagScores && (
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { key: 'visibility', icon: Eye, label: t('journey.scc.scoreVisibility', 'Visibilidad'), value: diagScores.visibility },
-                  { key: 'trust', icon: Lock, label: t('journey.scc.scoreTrust', 'Confianza'), value: diagScores.trust },
-                  { key: 'positioning', icon: Crosshair, label: t('journey.scc.scorePositioning', 'Posicionamiento'), value: diagScores.positioning },
-                ].map((s) => {
-                  const Icon = s.icon;
-                  const color = s.value < 40 ? 'text-destructive' : s.value < 60 ? 'text-amber-600' : 'text-primary';
-                  return (
-                    <div key={s.key} className="text-center p-3 rounded-lg bg-background/60 border">
-                      <Icon className={cn('h-4 w-4 mx-auto mb-1', color)} />
-                      <p className={cn('text-xl font-bold', color)}>{s.value}</p>
-                      <p className="text-[10px] text-muted-foreground">{s.label}</p>
+            {/* 4-Pillar Strategic Maturity Breakdown */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { key: 'foundation', icon: Dna, label: t('journey.scc.pillarFoundation', 'Fundamento'), value: scores.categoryTotals.foundation, max: 30 },
+                { key: 'presence', icon: Eye, label: t('journey.scc.pillarPresence', 'Presencia'), value: scores.categoryTotals.presence, max: 25 },
+                { key: 'execution', icon: Zap, label: t('journey.scc.pillarExecution', 'Ejecución'), value: scores.categoryTotals.execution, max: 25 },
+                { key: 'gaps', icon: Shield, label: t('journey.scc.pillarGaps', 'Brechas'), value: scores.categoryTotals.gaps, max: 20 },
+              ].map((pillar) => {
+                const Icon = pillar.icon;
+                const pct = Math.round((pillar.value / pillar.max) * 100);
+                const color = pct < 30 ? 'text-destructive' : pct < 60 ? 'text-amber-600' : 'text-primary';
+                return (
+                  <div key={pillar.key} className="text-center p-3 rounded-lg bg-background/60 border space-y-1.5">
+                    <Icon className={cn('h-4 w-4 mx-auto', color)} />
+                    <p className={cn('text-lg font-bold', color)}>{pillar.value}<span className="text-xs text-muted-foreground font-normal">/{pillar.max}</span></p>
+                    <p className="text-[10px] text-muted-foreground">{pillar.label}</p>
+                    <div className="h-1 bg-muted rounded-full overflow-hidden">
+                      <div className={cn('h-full rounded-full', pct < 30 ? 'bg-destructive' : pct < 60 ? 'bg-amber-500' : 'bg-primary')} style={{ width: `${pct}%` }} />
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       </motion.div>

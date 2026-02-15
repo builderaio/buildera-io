@@ -31,6 +31,8 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
   const { t } = useTranslation();
   const bmCtx = getBusinessModelContext(businessModel || null);
   const [aspiration, setAspiration] = useState(strategy.winningAspiration || '');
+  const [currentSituation, setCurrentSituation] = useState('');
+  const [futurePositioning, setFuturePositioning] = useState('');
   const [timeline, setTimeline] = useState<'1_year' | '3_years' | '5_years'>(
     strategy.aspirationTimeline || '1_year'
   );
@@ -127,8 +129,8 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
             <InferredFieldCard
               label={t('journey.sdna.currentSituation')}
               inferredValue={diagnosticData.currentState}
-              currentValue=""
-              onChange={() => {}}
+              currentValue={currentSituation}
+              onChange={(v) => { setCurrentSituation(v); setHasChanges(true); }}
               showDualState={false}
               minHeight="80px"
             />
@@ -199,8 +201,8 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
             <InferredFieldCard
               label={t('journey.sdna.futurePositioning')}
               inferredValue={diagnosticData.desiredState}
-              currentValue=""
-              onChange={() => {}}
+              currentValue={futurePositioning}
+              onChange={(v) => { setFuturePositioning(v); setHasChanges(true); }}
               showDualState={false}
               minHeight="80px"
             />

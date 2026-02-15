@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { PlayToWinStrategy, TargetSegment } from '@/types/playToWin';
-import { InferredStrategicData } from '@/hooks/useDiagnosticInference';
+import { InferredStrategicData, InferredAudienceSegment } from '@/hooks/useDiagnosticInference';
 import InferredFieldCard from '../InferredFieldCard';
 import { cn } from '@/lib/utils';
 import { BusinessModel } from './BusinessModelStep';
@@ -93,12 +93,16 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
   const hasValidSegment = segments.some(s => s.name.length > 0 && s.description.length > 0);
   const hasPainPoints = diagnosticData?.icpPainPoints && diagnosticData.icpPainPoints.length > 0;
   const hasGoals = diagnosticData?.icpGoals && diagnosticData.icpGoals.length > 0;
+  const allAudiences = diagnosticData?.allAudiences || [];
+  const hasMultipleAudiences = allAudiences.length > 1;
 
+  // Build rich ICP detail from primary audience + supplemental data
   const inferredIcpDetail = diagnosticData?.icpDescription
     ? [
         diagnosticData.icpDescription,
         hasPainPoints ? `\n${t('journey.sdna.bm.painPointsLabel', 'Dolores')}: ${diagnosticData.icpPainPoints.join(', ')}` : '',
         hasGoals ? `\n${t('journey.sdna.bm.goalsLabel', 'Objetivos')}: ${diagnosticData.icpGoals.join(', ')}` : '',
+        hasMultipleAudiences ? `\n${t('journey.sdna.otherSegments', 'Otros segmentos detectados')}: ${allAudiences.slice(1).map(a => a.name).join(', ')}` : '',
       ].filter(Boolean).join('')
     : null;
 
@@ -156,6 +160,40 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
               desiredStateLabel={t('journey.sdna.desiredState')}
               minHeight="100px"
             />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* All Detected Audience Segments */}
+      {hasMultipleAudiences && (
+        <Card className="border-muted">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              {t('journey.sdna.allDetectedSegments', 'Segmentos de Audiencia Detectados')}
+              <Badge variant="secondary" className="gap-1 text-xs bg-primary/10 text-primary border-primary/20">
+                <Bot className="h-3 w-3" />
+                {allAudiences.length}
+              </Badge>
+            </CardTitle>
+            <CardDescription>{t('journey.sdna.allDetectedSegmentsDesc', 'Estos segmentos fueron identificados en el diagnóstico y pueden convertirse en ICPs')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {allAudiences.map((audience, i) => (
+                <div key={i} className="p-3 rounded-lg bg-muted/30 border space-y-1">
+                  <p className="font-medium text-sm">{audience.name}</p>
+                  {audience.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">{audience.description}</p>
+                  )}
+                  {audience.painPoints.length > 0 && (
+                    <p className="text-xs text-destructive/70">
+                      {t('journey.sdna.bm.painPointsLabel', 'Dolores')}: {audience.painPoints.slice(0, 2).join(', ')}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

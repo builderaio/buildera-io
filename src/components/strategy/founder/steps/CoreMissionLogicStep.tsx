@@ -60,6 +60,8 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
   const inferredProblem = diagnosticData?.structuralProblem || null;
   const inferredTransformation = diagnosticData?.transformation || null;
   const hasScores = !!diagnosticData?.executiveDiagnosis;
+  const hasPrimaryConstraint = !!diagnosticData?.primaryConstraint;
+  const hasLeverageFocus = !!diagnosticData?.highestLeverageFocus;
 
   return (
     <div className="space-y-6">
@@ -116,6 +118,30 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
                 </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Primary Constraint & Highest Leverage Focus */}
+      {(hasPrimaryConstraint || hasLeverageFocus) && (
+        <Card className="border-muted">
+          <CardContent className="pt-4 space-y-3">
+            {hasPrimaryConstraint && (
+              <div>
+                <p className="text-xs font-medium text-destructive/80 mb-1">
+                  {t('journey.sdna.primaryConstraint', 'Restricción Principal Detectada')}
+                </p>
+                <p className="text-sm text-muted-foreground">{diagnosticData!.primaryConstraint}</p>
+              </div>
+            )}
+            {hasLeverageFocus && (
+              <div>
+                <p className="text-xs font-medium text-primary/80 mb-1">
+                  {t('journey.sdna.highestLeverage', 'Mayor Punto de Apalancamiento')}
+                </p>
+                <p className="text-sm text-muted-foreground">{diagnosticData!.highestLeverageFocus}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

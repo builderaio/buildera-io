@@ -833,6 +833,23 @@ async function learnPhase(companyId: string, department: string, cycleId: string
     }
   }
 
+  // === MARKETING DIAGNOSTIC FEEDBACK LOOP (Larry Methodology) ===
+  if (department === 'marketing') {
+    try {
+      const diagResponse = await fetch(`${supabaseUrl}/functions/v1/marketing-diagnostic-loop`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_id: companyId, days: 7, source: 'autopilot' }),
+      });
+      const diagResult = await diagResponse.json();
+      if (diagResult.success) {
+        console.log(`📊 Diagnostic: ${diagResult.diagnostic?.action} (Views: ${diagResult.diagnostic?.views_level}, Conversions: ${diagResult.diagnostic?.conversions_level})`);
+      }
+    } catch (diagErr) {
+      console.warn('⚠️ Marketing diagnostic loop failed (non-blocking):', diagErr);
+    }
+  }
+
   // Update config
   await supabase.from('company_department_config')
     .update({ last_execution_at: new Date().toISOString() })

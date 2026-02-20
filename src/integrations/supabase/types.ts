@@ -7896,6 +7896,119 @@ export type Database = {
           },
         ]
       }
+      marketing_diagnostic_snapshots: {
+        Row: {
+          company_id: string
+          conversions_level: string | null
+          conversions_threshold: number | null
+          created_at: string
+          cycle_id: string | null
+          diagnostic_action: string | null
+          diagnostic_reasoning: string | null
+          id: string
+          platform_breakdown: Json | null
+          recommended_actions: Json | null
+          snapshot_date: string
+          total_conversions: number | null
+          total_engagements: number | null
+          total_views: number | null
+          views_level: string | null
+          views_threshold: number | null
+        }
+        Insert: {
+          company_id: string
+          conversions_level?: string | null
+          conversions_threshold?: number | null
+          created_at?: string
+          cycle_id?: string | null
+          diagnostic_action?: string | null
+          diagnostic_reasoning?: string | null
+          id?: string
+          platform_breakdown?: Json | null
+          recommended_actions?: Json | null
+          snapshot_date?: string
+          total_conversions?: number | null
+          total_engagements?: number | null
+          total_views?: number | null
+          views_level?: string | null
+          views_threshold?: number | null
+        }
+        Update: {
+          company_id?: string
+          conversions_level?: string | null
+          conversions_threshold?: number | null
+          created_at?: string
+          cycle_id?: string | null
+          diagnostic_action?: string | null
+          diagnostic_reasoning?: string | null
+          id?: string
+          platform_breakdown?: Json | null
+          recommended_actions?: Json | null
+          snapshot_date?: string
+          total_conversions?: number | null
+          total_engagements?: number | null
+          total_views?: number | null
+          views_level?: string | null
+          views_threshold?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_diagnostic_snapshots_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_hook_templates: {
+        Row: {
+          category: string
+          created_at: string
+          example_caption: string | null
+          hook_description: string | null
+          hook_text: string
+          id: string
+          is_active: boolean | null
+          language: string
+          platform_optimized: string[] | null
+          sort_order: number | null
+          tier: number
+          tier_name: string
+          views_reference: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          example_caption?: string | null
+          hook_description?: string | null
+          hook_text: string
+          id?: string
+          is_active?: boolean | null
+          language?: string
+          platform_optimized?: string[] | null
+          sort_order?: number | null
+          tier?: number
+          tier_name: string
+          views_reference?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          example_caption?: string | null
+          hook_description?: string | null
+          hook_text?: string
+          id?: string
+          is_active?: boolean | null
+          language?: string
+          platform_optimized?: string[] | null
+          sort_order?: number | null
+          tier?: number
+          tier_name?: string
+          views_reference?: string | null
+        }
+        Relationships: []
+      }
       marketing_insights: {
         Row: {
           confidence_score: number | null

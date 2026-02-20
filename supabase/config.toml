@@ -83,3 +83,9 @@ verify_jwt = false
 
 [functions.enterprise-autopilot-engine]
 verify_jwt = false
+
+[functions.slideshow-generator]
+verify_jwt = false
+
+[functions.marketing-diagnostic-loop]
+verify_jwt = false

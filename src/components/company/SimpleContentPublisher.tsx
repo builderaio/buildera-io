@@ -15,6 +15,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import ContentImageSelector from "./ContentImageSelector";
+import HookTemplateSelector from "./HookTemplateSelector";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import { getPlatformIcon, getPlatformColor, getPlatform } from "@/lib/socialPlatforms";
 import { useTranslation } from "react-i18next";
@@ -690,6 +691,18 @@ export default function SimpleContentPublisher({
                       {editingContent || content.content}
                     </p>
                   )}
+
+                  {/* Hook Template Selector */}
+                  <div className="mt-3">
+                    <HookTemplateSelector
+                      onSelect={(hookText) => {
+                        const newContent = hookText + '\n\n' + (editingContent || '');
+                        setEditingContent(newContent);
+                        setIsEditing(true);
+                      }}
+                      selectedPlatforms={selectedPlatforms}
+                    />
+                  </div>
 
                   {/* Media Section */}
                   <div className="mt-4">

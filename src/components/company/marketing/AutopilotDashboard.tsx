@@ -397,8 +397,8 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
     if (!companyId) return;
     setRunning(true);
     try {
-      const { data, error } = await supabase.functions.invoke('marketing-autopilot-engine', {
-        body: { company_id: companyId },
+      const { data, error } = await supabase.functions.invoke('enterprise-autopilot-engine', {
+        body: { company_id: companyId, department: 'marketing' },
       });
       if (error) throw error;
       toast({ title: t('autopilot.cycleComplete'), description: `${data.results?.[0]?.total_decisions || 0} ${t('autopilot.decisionsGenerated')}` });

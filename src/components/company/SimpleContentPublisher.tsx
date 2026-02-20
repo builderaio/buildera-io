@@ -49,17 +49,49 @@ interface Props {
 interface PlatformParams {
   instagram_media_type?: string;
   instagram_collaborators?: string;
+  instagram_share_mode?: string;
+  instagram_cover_url?: string;
+  instagram_user_tags?: string;
+  instagram_location_id?: string;
   tiktok_privacy_level?: string;
   tiktok_is_aigc?: boolean;
+  tiktok_post_mode?: string;
+  tiktok_disable_comment?: boolean;
+  tiktok_auto_add_music?: boolean;
+  tiktok_brand_content_toggle?: boolean;
+  tiktok_brand_organic_toggle?: boolean;
   youtube_tags?: string[];
   youtube_privacy_status?: string;
   youtube_category_id?: string;
   youtube_contains_synthetic_media?: boolean;
+  youtube_thumbnail_url?: string;
+  youtube_made_for_kids?: boolean;
   facebook_media_type?: string;
+  facebook_link_url?: string;
   pinterest_board_id?: string;
   pinterest_link?: string;
+  pinterest_alt_text?: string;
   subreddit?: string;
   flair_id?: string;
+  // X/Twitter
+  x_poll_options?: string[];
+  x_poll_duration?: number;
+  x_community_id?: string;
+  x_reply_settings?: string;
+  x_long_text_as_post?: boolean;
+  x_thread_image_layout?: string;
+  // Threads
+  threads_thread_media_layout?: string;
+  // Platform-specific first comments
+  instagram_first_comment?: string;
+  facebook_first_comment?: string;
+  x_first_comment?: string;
+  threads_first_comment?: string;
+  youtube_first_comment?: string;
+  reddit_first_comment?: string;
+  bluesky_first_comment?: string;
+  // Platform-specific titles
+  [key: string]: any;
 }
 
 export default function SimpleContentPublisher({ 

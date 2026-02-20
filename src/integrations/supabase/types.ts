@@ -3453,6 +3453,65 @@ export type Database = {
           },
         ]
       }
+      company_strategic_gaps: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string
+          detected_at: string
+          gap_key: string
+          id: string
+          impact_weight: number
+          resolved_at: string | null
+          resolved_by_action: string | null
+          source: string
+          title: string
+          updated_at: string
+          urgency: string
+          variable: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string
+          detected_at?: string
+          gap_key: string
+          id?: string
+          impact_weight?: number
+          resolved_at?: string | null
+          resolved_by_action?: string | null
+          source?: string
+          title: string
+          updated_at?: string
+          urgency?: string
+          variable?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string
+          detected_at?: string
+          gap_key?: string
+          id?: string
+          impact_weight?: number
+          resolved_at?: string | null
+          resolved_by_action?: string | null
+          source?: string
+          title?: string
+          updated_at?: string
+          urgency?: string
+          variable?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_strategic_gaps_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_strategy: {
         Row: {
           company_id: string
@@ -3487,6 +3546,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "company_strategy_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_weekly_decisions: {
+        Row: {
+          action_view: string | null
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          decision_key: string
+          id: string
+          reason: string
+          source: string
+          title: string
+          variable: string
+          week_start: string
+        }
+        Insert: {
+          action_view?: string | null
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          decision_key: string
+          id?: string
+          reason?: string
+          source?: string
+          title: string
+          variable?: string
+          week_start: string
+        }
+        Update: {
+          action_view?: string | null
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          decision_key?: string
+          id?: string
+          reason?: string
+          source?: string
+          title?: string
+          variable?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_weekly_decisions_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

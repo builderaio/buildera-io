@@ -287,8 +287,8 @@ const AdvancedMarketingDashboard = ({ profile }: AdvancedMarketingDashboardProps
         updateStep(5, "Análisis Cross-Platform", "Integrando datos de múltiples plataformas...");
         console.log('🔄 Ejecutando análisis cross-platform...');
         try {
-          await supabase.functions.invoke('content-insights-analyzer', {
-            body: { platform: null } // Analizar todas las plataformas
+          await supabase.functions.invoke('content-insights-generator', {
+            body: { platform: null, mode: 'cross_platform' }
           });
           console.log('✅ Análisis cross-platform completado');
         } catch (error) {

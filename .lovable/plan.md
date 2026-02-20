@@ -1,152 +1,187 @@
 
-# Plan: Alinear integracion Creatify.ai con API oficial y mejores practicas
+
+# Plan: Alinear integracion Upload-Post con API oficial y mejores practicas
 
 ## Resumen de hallazgos
 
-Tras investigar la documentacion oficial de Creatify.ai (`docs.creatify.ai/api-reference`), se detectaron multiples gaps entre lo que la API ofrece y lo que Buildera implementa actualmente.
+Tras analizar la documentacion oficial de Upload-Post (`docs.upload-post.com/api/reference`) y compararla con la implementacion actual en `upload-post-manager/index.ts`, se detectaron multiples gaps criticos y oportunidades de mejora.
 
 ---
 
-## 1. Endpoint incorrecto para URL-to-Video
+## 1. Endpoint de Video incorrecto (CRITICO)
 
-**Problema critico**: El proxy usa `/lipsyncs/` para `url-to-video`, pero la API oficial usa `/link_to_videos/`.
+**Problema**: El codigo usa `POST /api/upload_videos` pero la documentacion oficial dice `POST /api/upload`.
 
-- `/lipsyncs/` es para **AI Avatar (lipsync)** solamente
-- `/link_to_videos/` es el endpoint correcto para **URL-to-Video**
-- Actualmente ambas acciones (`url-to-video` y `avatar-video`) apuntan al mismo endpoint, lo que causa confusion y posibles errores
+- Linea 842: `fetch('https://api.upload-post.com/api/upload_videos'` -- INCORRECTO
+- La API real es: `POST https://api.upload-post.com/api/upload`
 
-**Correccion**:
-- `case "url-to-video"` -> endpoint = `/link_to_videos/`
-- `case "avatar-video"` -> endpoint = `/lipsyncs/` (correcto)
-- `case "check-video-status"` -> endpoint = `/link_to_videos/${params.id}/` (no `/lipsyncs/`)
-
-Misma correccion en `marketing-hub-video-creator/index.ts`.
+**Correccion**: Cambiar el endpoint de video de `/api/upload_videos` a `/api/upload`.
 
 ---
 
-## 2. Campo `link_id` vs `link`
+## 2. Header de Authorization inconsistente (CRITICO)
 
-**Problema**: El cliente envia `link_id` pero la API espera `link` (campo UUID).
+**Problema**: Se usan 3 formatos distintos de Authorization header en el mismo archivo:
 
-**Correccion**: En el proxy, antes de enviar a Creatify, renombrar `link_id` -> `link` para la accion `url-to-video`.
+- `ApiKey ${apiKey}` (lineas 182, 221, etc.)
+- `Api-Key ${apiKey}` (linea 557 -- getFacebookPages)
+- `Apikey ${apiKey}` (lineas 806, 827, etc. -- upload endpoints)
 
----
+**Documentacion oficial**: `Authorization: Apikey your-api-key-here` (con A mayuscula, resto minuscula)
 
-## 3. Visual Style invalido
-
-**Problema**: `VideoGenerationForm.tsx` envia `visual_style: "modern"` que no es un valor valido de la API.
-
-**Valores validos**: `AvatarBubbleTemplate`, `DynamicProductTemplate`, `FullScreenTemplate`, `VanillaTemplate`, `MotionCardsTemplate`, etc. (21+ opciones oficiales).
-
-**Correccion**: Reemplazar `"modern"` por `"AvatarBubbleTemplate"` como default, y agregar selector de visual style al formulario con las opciones mas relevantes.
+**Correccion**: Estandarizar TODOS los headers a `Apikey ${apiKey}`.
 
 ---
 
-## 4. Script Styles incompletos
+## 3. Parametros faltantes en uploads
 
-**Problema**: Solo se ofrecen 5 script styles de los 40+ disponibles.
+### 3.1 `description` (campo global)
 
-**Script styles faltantes de alto valor**:
-- `BenefitsV2` (Benefits)
-- `ProblemSolutionV2` (Problem Solution)
-- `ProductHighlightsV2` (Product Highlights)
-- `EmotionalWriter` (Emotional)
-- `MotivationalWriter` (Motivational)
-- `ThreeReasonsWriter` (3 Reasons Why)
-- `GenzWriter` (Gen Z)
-- `TrendingTopicsV2` (Trending Topics)
-- Hooks virales: `NegativeHook`, `SecretHook`, `NumberOneHook`, etc.
+**Problema**: El proxy nunca envia el campo `description` que la API usa para:
+- LinkedIn: commentary
+- YouTube: video description  
+- Facebook: description
+- Pinterest: pin notes
+- Reddit: post body
 
-**Correccion**: Agregar al menos 10-15 script styles adicionales al selector, agrupados por categoria (Clasicos, Hooks Virales, Emocionales).
+Actualmente el codigo combina title + content en un solo campo `title` para videos (linea 838), perdiendo la separacion semantica.
 
----
+**Correccion**: Enviar `description` como campo separado en FormData para todos los tipos de post.
 
-## 5. Parametros de video no expuestos
+### 3.2 `first_comment`
 
-**Parametros disponibles en la API que no se usan**:
+**Problema**: No se soporta. La API permite publicar un primer comentario automatico en Instagram, Facebook, Threads, Bluesky, Reddit, X y YouTube.
 
-| Parametro | Descripcion | Valor |
-|---|---|---|
-| `video_length` | Duracion (15, 30, 45, 60 seg) | No expuesto |
-| `target_audience` | Audiencia objetivo (texto libre) | Se envia pero no se captura del usuario |
-| `override_script` | Script personalizado | No disponible |
-| `override_avatar` | Avatar personalizado para URL-to-Video | No disponible |
-| `override_voice` | Voz personalizada para URL-to-Video | No disponible |
-| `no_background_music` | Sin musica de fondo | No disponible |
-| `no_caption` | Sin subtitulos | No disponible |
-| `no_cta` | Sin call-to-action | No disponible |
-| `model_version` | Standard / Aurora v1 / Aurora v1 Fast | No disponible |
-| `webhook_url` | Callback para status updates | No implementado |
-| `caption_setting` | Personalizacion de subtitulos | No disponible |
+**Correccion**: Agregar campo `first_comment` al publisher y al proxy.
 
-**Correccion**: Agregar selectores para `video_length`, `target_audience`, y un panel "Avanzado" colapsable con `override_script`, `no_background_music`, `no_caption`, `model_version`.
+### 3.3 `timezone`
+
+**Problema**: No se envia. Las fechas programadas se interpretan como UTC por defecto.
+
+**Correccion**: Detectar la timezone del navegador del usuario y enviarla con `scheduled_date`.
+
+### 3.4 `add_to_queue`
+
+**Problema**: No se soporta el sistema de Queue. Es una alternativa a `scheduled_date` que asigna automaticamente el post al siguiente slot disponible.
+
+**Correccion**: Agregar opcion "Agregar a cola" en el publisher como tercera opcion junto a "Inmediato" y "Programado".
 
 ---
 
-## 6. Response handling incompleto
+## 4. Parametros platform-specific no expuestos
 
-**Problema**: El output del video usa `job.output.output` pero la API de `/link_to_videos/` retorna:
-- `video_output` (URL del video final)
-- `video_thumbnail` (thumbnail)
-- `preview` / `previews` (previews antes de renderizar)
-- `editor_url` (link al editor de Creatify, expira en 24h)
-- `credits_used` (creditos consumidos)
-- `duration` (duracion real)
-- `outputs[]` (multiples outputs con status individual)
+### 4.1 Platform-specific titles
 
-**Correccion**: Actualizar el polling y la UI para leer `video_output` en vez de `output`, y mostrar `video_thumbnail`, `credits_used`, `duration`, y link al `editor_url`.
+**Problema**: Se envia un unico `title` para todas las plataformas. La API permite `instagram_title`, `linkedin_title`, `x_title`, `facebook_title`, `tiktok_title`, etc.
+
+**Correccion**: Agregar panel colapsable "Personalizar por plataforma" en el publisher.
+
+### 4.2 Parametros de plataforma criticos faltantes
+
+| Plataforma | Parametro | Descripcion | Impacto |
+|---|---|---|---|
+| Instagram | `media_type` | REELS vs STORIES vs IMAGE | Alto - usuarios no pueden elegir tipo |
+| Instagram | `collaborators` | Colaboradores | Medio |
+| TikTok | `privacy_level` | Privacidad del post | Alto |
+| TikTok | `is_aigc` | Marca contenido como IA | Legal/Compliance |
+| YouTube | `tags[]` | Tags del video | SEO |
+| YouTube | `privacyStatus` | public/unlisted/private | Alto |
+| YouTube | `categoryId` | Categoria | Medio |
+| YouTube | `containsSyntheticMedia` | AI transparency | Legal |
+| Facebook | `facebook_media_type` | REELS vs STORIES vs VIDEO | Alto |
+| Pinterest | `pinterest_board_id` | Board destino | Critico - requerido |
+| Pinterest | `pinterest_link` | URL destino | Medio |
+| Reddit | `subreddit` | Subreddit destino | Critico - requerido |
+| Reddit | `flair_id` | Flair del post | Medio |
+
+**Correccion**: Agregar selector de parametros especificos segun plataformas seleccionadas.
 
 ---
 
-## 7. `OBJECTIVE_SCRIPT_STYLE` mapping limitado
+## 5. Plataformas faltantes en el filtro
 
-**Problema actual** (5 mappings):
+**Problema**: `filterPlatformsByPostType` no incluye `reddit` en las plataformas soportadas para text, photo y video.
+
+**Codigo actual**:
 ```
-brand_awareness -> BrandStoryV2
-lead_generation -> CallToActionV2
-sales -> SpecialOffersV2
-engagement -> DiscoveryWriter
-education -> HowToV2
-```
-
-**Mappings faltantes sugeridos**:
-```
-traffic -> ProblemSolutionV2
-conversions -> BenefitsV2
-product_launch -> ProductHighlightsV2
-viral -> NegativeHook o SecretHook
-community -> EmotionalWriter
-retention -> MotivationalWriter
+text: ['linkedin', 'x', 'facebook', 'threads', 'reddit', 'bluesky']  -- OK
+photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'x', 'threads', 'pinterest', 'bluesky'] -- FALTA reddit
+video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'twitter', 'threads', 'pinterest', 'bluesky'] -- FALTA reddit, usa 'twitter' en vez de 'x'
 ```
 
+**Correccion**: Agregar `reddit` a photo y video. Cambiar `twitter` a `x` en video (consistencia, pero mantener backward compat con el API que acepta ambos para video).
+
 ---
 
-## 8. Credits tracking ausente
+## 6. `validateToken` funcion rota (BUG)
 
-**Problema**: La API retorna `credits_used` en cada respuesta pero no se persiste ni se muestra.
+**Problema critico**: La funcion `validateToken` tiene llaves mal cerradas. En linea 1061 se cierra la funcion prematuramente con `}` pero el `try/catch` del token validation continua desde linea 1218.
 
-**Correccion**: Guardar `credits_used` en `creatify_jobs.output_data` y agregar un contador de creditos consumidos en la galeria/dashboard.
+```
+async function validateToken(data: any) {
+  const { token } = data || {};
+  if (!token) {
+    return { success: false, error: 'Missing token' };
+}    // <-- cierra la funcion aqui
+
+// Codigo suelto fuera de cualquier funcion:
+  try {
+    const response = await fetch('...');
+    ...
+  }
+}
+```
+
+**Correccion**: Cerrar correctamente la funcion envolviendo todo el bloque.
+
+---
+
+## 7. Analytics API no integrada en el proxy principal
+
+**Problema**: Existe una edge function separada `get-upload-post-analytics` pero no esta integrada como accion del `upload-post-manager`. Esto fragmenta la logica.
+
+**Correccion**: Agregar accion `get_analytics` al switch del manager para centralizacion, o documentar que es intencionalmente separada.
+
+---
+
+## 8. Respuesta de upload no parseada completamente
+
+**Problema**: La respuesta de la API incluye campos utiles que no se persisten:
+
+- `usage.count` / `usage.limit` (creditos consumidos vs limite)
+- Per-platform `url`, `post_id`, `publish_id` (links directos al post publicado)
+- `request_id` (para async uploads -- se retorna pero no se persiste en DB)
+
+**Correccion**: Persistir `request_id` y `usage` en `scheduled_social_posts.upload_post_response`, y mostrar links directos a posts publicados en la UI.
+
+---
+
+## 9. Video upload: soporte de media type
+
+**Problema**: Para videos, el codigo solo envia `video=URL`. No soporta:
+- Instagram Stories (`media_type: "STORIES"`)
+- Facebook Stories (`facebook_media_type: "STORIES"`)
+- Facebook Videos normales (`facebook_media_type: "VIDEO"`)
+
+**Correccion**: Agregar selector de tipo de contenido por plataforma (Reel vs Story vs Video normal).
 
 ---
 
 ## Archivos a modificar
 
-| Archivo | Cambio |
-|---|---|
-| `supabase/functions/creatify-proxy/index.ts` | Corregir endpoint `/link_to_videos/`, renombrar `link_id`->`link`, guardar `credits_used` |
-| `supabase/functions/marketing-hub-video-creator/index.ts` | Corregir endpoint de `/lipsyncs/` a `/link_to_videos/` |
-| `src/lib/api/creatify.ts` | Agregar `video_length`, `target_audience`, `override_script`, `model_version` a tipos. Agregar mappings de `OBJECTIVE_SCRIPT_STYLE`. Actualizar `createUrlToVideo` params |
-| `src/components/company/creatify/VideoGenerationForm.tsx` | Agregar selector visual_style real, video_length, target_audience. Corregir lectura de `video_output` en vez de `output`. Panel avanzado colapsable |
-| `src/components/company/creatify/GenerationStatusTracker.tsx` | Mostrar `credits_used`, `duration`, thumbnail |
-| `src/hooks/useCreatifyJob.ts` | Leer `video_output` ademas de `output` para compatibilidad |
-| `public/locales/{es,en,pt}/creatify.json` | Agregar traducciones para nuevos script styles, visual styles, y parametros |
+| Archivo | Cambio | Prioridad |
+|---|---|---|
+| `supabase/functions/upload-post-manager/index.ts` | Fix endpoint video, fix Auth headers, fix validateToken bug, agregar `description`, `first_comment`, `timezone`, `add_to_queue`, platform-specific params, fix filtro plataformas | Critica |
+| `src/components/company/SimpleContentPublisher.tsx` | Agregar campos: first_comment, timezone, add_to_queue, panel platform-specific params, selector media_type (Reel/Story/Video) | Alta |
+| `public/locales/{es,en,pt}/marketing.json` | Traducciones para nuevos campos | Media |
 
 ---
 
 ## Impacto esperado
 
-- **Funcionalidad**: De usar un endpoint incorrecto a alineacion completa con la API oficial
-- **Opciones creativas**: De 5 script styles a 15+, de 0 visual styles a 10+
-- **Control del usuario**: Duracion de video, audiencia, opciones avanzadas
-- **Fiabilidad**: Response handling correcto para `video_output`, credits tracking
-- **Competitividad**: Acceso al 90%+ de las capacidades de Creatify vs el ~30% actual
+- **Fiabilidad**: Fix de endpoint video + Auth headers + validateToken bug = publicaciones de video que actualmente pueden fallar pasaran a funcionar
+- **Funcionalidad**: De ~60% de los parametros de la API a ~90%
+- **UX**: First comment, queue system, platform-specific titles y parametros por plataforma
+- **Compliance**: Soporte de `is_aigc` (TikTok) y `containsSyntheticMedia` (YouTube) para transparencia de contenido IA
+- **Competitividad**: Exposicion de capacidades avanzadas como Trial Reels, X Threads, Reddit flairs y Pinterest boards
+

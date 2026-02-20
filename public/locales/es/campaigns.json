@@ -52,6 +52,15 @@
       "aiCampaignsGenerated": "¡Campañas generadas!",
       "aiCampaignsCount": "Se generaron {count} campañas personalizadas",
       "aiError": "No se pudieron generar las campañas con IA"
+    },
+    "strategicAlignment": {
+      "title": "Alineación Estratégica",
+      "required": "Requerido",
+      "brand": "🎯 Marca",
+      "acquisition": "📈 Adquisición",
+      "authority": "🏆 Autoridad",
+      "operations": "⚙️ Operaciones",
+      "activeGaps": "Brechas activas (vincular a campaña):"
     }
   },
   "dashboard": {

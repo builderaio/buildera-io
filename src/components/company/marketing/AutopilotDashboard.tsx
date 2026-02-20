@@ -23,8 +23,9 @@ import {
   Brain, Zap, Shield, BookOpen, Eye, Settings, Play, Pause,
   CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp,
   Activity, BarChart3, RefreshCw, Link2, Upload, Loader2,
-  Instagram, Linkedin, Facebook, Music2, Download
+  Instagram, Linkedin, Facebook, Music2, Download, Info
 } from "lucide-react";
+import { useMarketingStrategicBridge } from "@/hooks/useMarketingStrategicBridge";
 
 interface AutopilotDashboardProps {
   companyId?: string;
@@ -97,6 +98,8 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
   const { toast } = useToast();
   const navigate = useNavigate();
   const { advanceToStep } = useJourneyProgression(companyId);
+  const { getAutopilotMaturityGate, strategicContext } = useMarketingStrategicBridge(companyId);
+  const maturityGate = getAutopilotMaturityGate();
   const [config, setConfig] = useState<AutopilotConfig | null>(null);
   const [logs, setLogs] = useState<ExecutionLog[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
@@ -432,6 +435,22 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
 
   return (
     <div className="space-y-6">
+      {/* Maturity Gate Badge */}
+      <Alert className="border-primary/30 bg-primary/5">
+        <Info className="h-4 w-4" />
+        <AlertTitle className="text-sm font-semibold">
+          {t('autopilot.maturityGate', 'Nivel recomendado')}: {maturityGate.label}
+        </AlertTitle>
+        <AlertDescription className="text-xs text-muted-foreground">
+          {strategicContext.maturityStage === 'early'
+            ? t('autopilot.earlyWarning', 'En etapa Early, se recomienda modo supervisado para asegurar alineación estratégica.')
+            : strategicContext.maturityStage === 'growth'
+            ? t('autopilot.growthInfo', 'En etapa Growth, puedes activar automatizaciones parciales con aprobaciones optimizadas.')
+            : t('autopilot.consolidatedInfo', 'Tu madurez estratégica permite modo autónomo opcional con todas las capacidades.')
+          }
+        </AlertDescription>
+      </Alert>
+
       {/* Header with Toggle */}
       <Card className="border-0 shadow-lg overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-[#3c46b2] to-[#5a63d4] text-white">

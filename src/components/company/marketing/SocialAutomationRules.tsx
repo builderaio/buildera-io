@@ -13,6 +13,7 @@ import {
   MessageCircle, UserPlus, AtSign, Reply, Send, PenTool,
   Zap, Plus, Trash2, ToggleLeft, Bot, ArrowLeft
 } from "lucide-react";
+import { useMarketingStrategicBridge } from "@/hooks/useMarketingStrategicBridge";
 
 interface SocialAutomationRulesProps {
   companyId?: string;
@@ -47,6 +48,7 @@ const ACTIONS = [
 export const SocialAutomationRules = ({ companyId, onBack }: SocialAutomationRulesProps) => {
   const { t } = useTranslation("marketing");
   const { toast } = useToast();
+  const { recordMarketingImpact } = useMarketingStrategicBridge(companyId);
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newRule, setNewRule] = useState<Partial<AutomationRule>>({
@@ -78,12 +80,27 @@ export const SocialAutomationRules = ({ companyId, onBack }: SocialAutomationRul
     setIsCreating(false);
     setNewRule({ name: "", trigger: "new_comment", action: "ai_reply_comment", platform: "instagram", triggerConfig: {}, actionConfig: {}, isActive: true });
     toast({ title: t("socialAutomation.ruleCreated") });
+    recordMarketingImpact({
+      eventType: 'automation_activated',
+      eventSource: 'automation_rule',
+      sourceId: rule.id,
+      dimension: 'operations',
+      evidence: { trigger: rule.trigger, action: rule.action, platform: rule.platform },
+    });
   };
 
   const toggleRule = (id: string) => {
+    const rule = rules.find(r => r.id === id);
+    const newActive = rule ? !rule.isActive : false;
     setRules((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r))
+      prev.map((r) => (r.id === id ? { ...r, isActive: newActive } : r))
     );
+    recordMarketingImpact({
+      eventType: newActive ? 'automation_activated' : 'automation_deactivated',
+      eventSource: 'automation_rule',
+      sourceId: id,
+      dimension: 'operations',
+    });
   };
 
   const deleteRule = (id: string) => {

@@ -49,16 +49,16 @@ serve(async (req) => {
         endpoint = "/links/";
         break;
 
-      // === URL TO VIDEO ===
+      // === URL TO VIDEO (correct endpoint: /link_to_videos/) ===
       case "url-to-video":
-        endpoint = "/lipsyncs/";
+        endpoint = "/link_to_videos/";
         break;
       case "check-video-status":
-        endpoint = `/lipsyncs/${params.id}/`;
+        endpoint = `/link_to_videos/${params.id}/`;
         method = "GET";
         break;
 
-      // === AI AVATAR (Lipsync v2) ===
+      // === AI AVATAR (Lipsync) ===
       case "avatar-video":
         endpoint = "/lipsyncs/";
         break;
@@ -134,6 +134,13 @@ serve(async (req) => {
     if (method === "POST" && params) {
       // Remove internal fields not needed by Creatify API
       const { id, company_id, campaign_id, calendar_item_id, ...creatifyParams } = params;
+
+      // Rename link_id -> link for url-to-video (API expects "link" field)
+      if (action === "url-to-video" && creatifyParams.link_id) {
+        creatifyParams.link = creatifyParams.link_id;
+        delete creatifyParams.link_id;
+      }
+
       fetchOptions.body = JSON.stringify(creatifyParams);
     }
 
@@ -178,6 +185,10 @@ serve(async (req) => {
       const updateData: any = { status: data.status, updated_at: new Date().toISOString() };
       if (data.status === "done") {
         updateData.output_data = data;
+        // Persist credits_used if returned by API
+        if (data.credits_used !== undefined) {
+          updateData.credits_used = data.credits_used;
+        }
       }
       await supabase.from("creatify_jobs")
         .update(updateData)

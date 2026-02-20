@@ -21,7 +21,6 @@ serve(async (req) => {
     const CREATIFY_API_ID = Deno.env.get("CREATIFY_API_ID");
     const CREATIFY_API_KEY = Deno.env.get("CREATIFY_API_KEY");
 
-    // JWT auth verification
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Authorization header required' }), {
@@ -43,10 +42,6 @@ serve(async (req) => {
     const body = await req.json();
     console.log('Marketing Hub Video Creator Request:', JSON.stringify(body));
 
-    // Support two input modes:
-    // 1. Direct: { prompt, userId, platform }  (from contentGeneration.ts)
-    // 2. Calendar item: { input: { identidad_visual, calendario_item } }
-
     let prompt: string;
     let platform = 'general';
 
@@ -64,7 +59,7 @@ serve(async (req) => {
       });
     }
 
-    // If Creatify credentials are available, use Creatify URL-to-Video
+    // Use Creatify URL-to-Video with correct /link_to_videos/ endpoint
     if (CREATIFY_API_ID && CREATIFY_API_KEY) {
       console.log('Using Creatify API for video generation...');
 
@@ -84,25 +79,25 @@ serve(async (req) => {
       if (!linkRes.ok) {
         const linkErr = await linkRes.text();
         console.error('Creatify link creation failed:', linkRes.status, linkErr);
-        // Fall through to simulation if Creatify fails
       } else {
         const linkData = await linkRes.json();
         console.log('Creatify link created:', linkData.id);
 
-        // Create video from link
         const aspectMap: Record<string, string> = {
           tiktok: '9x16', instagram_reels: '9x16', youtube_shorts: '9x16',
           youtube: '16x9', linkedin: '16x9',
           instagram_feed: '1x1', facebook_feed: '1x1',
         };
 
-        const videoRes = await fetch(`${CREATIFY_BASE}/lipsyncs/`, {
+        // Use correct endpoint /link_to_videos/ and field name "link"
+        const videoRes = await fetch(`${CREATIFY_BASE}/link_to_videos/`, {
           method: "POST",
           headers: creatifyHeaders,
           body: JSON.stringify({
-            link_id: linkData.id,
+            link: linkData.id,
             aspect_ratio: aspectMap[platform] || '16x9',
             script_style: 'BrandStoryV2',
+            visual_style: 'AvatarBubbleTemplate',
           }),
         });
 
@@ -110,7 +105,6 @@ serve(async (req) => {
           const videoData = await videoRes.json();
           console.log('Creatify video job created:', videoData.id);
 
-          // Save to creatify_jobs
           const companyRes = await supabase
             .from('company_members')
             .select('company_id')
@@ -131,7 +125,7 @@ serve(async (req) => {
 
           return new Response(JSON.stringify({
             success: true,
-            videoUrl: videoData.output || null,
+            videoUrl: videoData.video_output || videoData.output || null,
             jobId: videoData.id,
             status: videoData.status || 'pending',
             message: `Video generation started (job: ${videoData.id})`,
@@ -145,7 +139,7 @@ serve(async (req) => {
       }
     }
 
-    // Fallback: return a processing status (no real video generation without Creatify)
+    // Fallback
     console.log('Creatify not available or failed, returning processing status');
     return new Response(JSON.stringify({
       success: true,

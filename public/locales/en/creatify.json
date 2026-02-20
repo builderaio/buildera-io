@@ -11,14 +11,51 @@
     "productUrl": "Product or website URL",
     "platform": "Target platform",
     "scriptStyle": "Script style",
-    "aspectRatio": "Format"
+    "visualStyle": "Visual style",
+    "aspectRatio": "Format",
+    "videoLength": "Duration",
+    "targetAudience": "Target audience",
+    "targetAudiencePlaceholder": "e.g. Women 25-45, interested in fitness...",
+    "advancedOptions": "Advanced options",
+    "overrideScript": "Custom script",
+    "overrideScriptPlaceholder": "Write your own script to override AI-generated one...",
+    "modelVersion": "Model version",
+    "noBackgroundMusic": "No background music",
+    "noCaption": "No captions",
+    "noCta": "No call-to-action"
   },
   "scriptStyles": {
     "brandStory": "Brand Story",
     "callToAction": "Call to Action",
     "specialOffers": "Special Offers",
     "discovery": "Discovery",
-    "howTo": "How-To"
+    "howTo": "How-To",
+    "benefits": "Benefits",
+    "problemSolution": "Problem & Solution",
+    "productHighlights": "Product Highlights",
+    "emotional": "Emotional",
+    "motivational": "Motivational",
+    "threeReasons": "3 Reasons Why",
+    "negativeHook": "Negative Hook",
+    "secretHook": "Secret Hook",
+    "numberOneHook": "#1 Hook",
+    "genZ": "Gen Z",
+    "trendingTopics": "Trending Topics"
+  },
+  "visualStyles": {
+    "avatarBubble": "Avatar Bubble",
+    "dynamicProduct": "Dynamic Product",
+    "fullScreen": "Full Screen",
+    "vanilla": "Classic",
+    "motionCards": "Motion Cards",
+    "splitScreen": "Split Screen",
+    "productShowcase": "Product Showcase",
+    "minimalist": "Minimalist"
+  },
+  "modelVersions": {
+    "standard": "Standard",
+    "auroraV1": "Aurora v1",
+    "auroraV1Fast": "Aurora v1 Fast"
   },
   "avatar": {
     "title": "AI Avatar Video",
@@ -56,7 +93,8 @@
     "generating": "Generating content...",
     "preparing": "Preparing...",
     "jobCreated": "Job started successfully",
-    "loadingResources": "Loading resources..."
+    "loadingResources": "Loading resources...",
+    "credits": "credits"
   },
   "actions": {
     "generateVideo": "Generate Video",
@@ -67,7 +105,8 @@
     "retry": "Retry",
     "download": "Download",
     "view": "View",
-    "delete": "Delete"
+    "delete": "Delete",
+    "openEditor": "Open Editor"
   },
   "errors": {
     "urlRequired": "URL is required",

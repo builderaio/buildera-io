@@ -67,7 +67,10 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
     diagnostic, operational, strategicProfile,
     strategicGaps, weeklyDecisions, weekStart, daysRemaining,
     syncStrategicGaps, completeDecision, createWeeklyDecisions,
-    updateBusinessModel,
+    updateBusinessModel, persistSnapshot,
+    // SSE data
+    maturityStage, structuralRisks, capabilityIndex,
+    scoreHistory, behavioralPattern, recalibration,
   } = useStrategicControlData(companyId);
 
   // Update business model from strategy
@@ -105,17 +108,41 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
     }
   }, [diagnostic, companyId]); // intentionally sparse deps
 
+  // SSE: Persist snapshot when scores change meaningfully
+  useEffect(() => {
+    if (scores.current > 0 && companyId && operational) {
+      persistSnapshot(strategy, scores, 'scc_loaded');
+    }
+  }, [scores.current, companyId]); // intentionally sparse deps
+
   const handleNavigate = (view: string) => {
     navigate(`/company-dashboard?view=${view}`);
   };
 
   const handleCompleteDecision = async (decision: WeeklyDecision) => {
     if (!decision.id) return;
-    const prevScore = scores.current;
-    await completeDecision(decision.id, decision.gapKey);
+    await completeDecision(decision.id, decision.gapKey, scores);
+    // Re-persist snapshot after decision
+    if (operational) {
+      await persistSnapshot(strategy, scores, 'decision_completed');
+    }
     toast.success(t('journey.scc.decisionCompleted', '¡Decisión completada!'), {
       description: t('journey.scc.decisionCompletedDesc', 'El sistema está recalculando tu índice estratégico.'),
     });
+  };
+
+  const maturityStageLabels: Record<string, string> = {
+    early: t('journey.scc.maturityEarly', 'Temprana'),
+    growth: t('journey.scc.maturityGrowth', 'Crecimiento'),
+    consolidated: t('journey.scc.maturityConsolidated', 'Consolidada'),
+    scale: t('journey.scc.maturityScale', 'Escala'),
+  };
+
+  const maturityStageColors: Record<string, string> = {
+    early: 'bg-destructive/10 text-destructive border-destructive/30',
+    growth: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
+    consolidated: 'bg-primary/10 text-primary border-primary/30',
+    scale: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30',
   };
 
   const urgencyConfig = {
@@ -169,7 +196,7 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
               {t('journey.scc.profileTitle', 'Tu Perfil Estratégico Actual')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-2">
               {/* Archetype */}
               <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-xs bg-primary/5 border-primary/20">
@@ -190,7 +217,48 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
                   ? bmLabels[strategy.businessModel] || strategy.businessModel
                   : t('journey.scc.profileNoBM', 'Modelo no definido')}
               </Badge>
+              {/* Maturity Stage */}
+              <Badge variant="outline" className={cn('gap-1.5 px-3 py-1.5 text-xs', maturityStageColors[maturityStage])}>
+                <Activity className="h-3.5 w-3.5" />
+                {t('journey.scc.maturityLabel', 'Madurez')}: {maturityStageLabels[maturityStage] || maturityStage}
+              </Badge>
+              {/* Capability Index */}
+              <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-xs bg-accent/50 border-accent/30">
+                <Cpu className="h-3.5 w-3.5" />
+                {t('journey.scc.capabilityIndex', 'Capacidad')}: {capabilityIndex}/100
+              </Badge>
+              {/* Behavioral Pattern */}
+              {behavioralPattern !== 'new-user' && (
+                <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-xs bg-muted border-muted-foreground/20">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {behavioralPattern.replace(/-/g, ' ')}
+                </Badge>
+              )}
             </div>
+            {/* Structural Risks */}
+            {structuralRisks.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {structuralRisks.map(risk => (
+                  <Badge key={risk} variant="outline" className="text-[10px] px-2 py-0.5 bg-destructive/5 text-destructive border-destructive/20">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    {risk.replace(/_/g, ' ')}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            {/* Recalibration info */}
+            {recalibration && recalibration.stagnationPenalty > 0 && (
+              <p className="text-[11px] text-muted-foreground mt-1">
+                <FileWarning className="h-3 w-3 inline mr-1" />
+                {t('journey.scc.stagnationWarning', 'Penalización por estancamiento: -{{pts}} pts. Algunas dimensiones llevan semanas sin mejorar.', { pts: recalibration.stagnationPenalty })}
+              </p>
+            )}
+            {recalibration && recalibration.consistencyBonus > 0 && (
+              <p className="text-[11px] text-emerald-600 mt-1">
+                <TrendingUp className="h-3 w-3 inline mr-1" />
+                {t('journey.scc.consistencyBonus', 'Bonificación por consistencia: +{{pts}} pts. Todas las dimensiones mejoraron.', { pts: recalibration.consistencyBonus })}
+              </p>
+            )}
           </CardContent>
         </Card>
       </motion.div>

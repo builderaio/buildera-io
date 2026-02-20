@@ -3,6 +3,24 @@ import { supabase } from '@/integrations/supabase/client';
 import { PlayToWinStrategy, BusinessModelType } from '@/types/playToWin';
 import { getBusinessModelPriorityWeights } from '@/lib/businessModelContext';
 import { startOfWeek, differenceInDays, endOfWeek, format } from 'date-fns';
+import {
+  deriveMaturityStage,
+  calculateCapabilityIndex,
+  calculateRecalibration,
+  createStrategicSnapshot,
+  recordScoreHistory,
+  recordStrategicMemory,
+  deriveStructuralRisks,
+  detectBehavioralPattern,
+  fetchScoreHistory,
+  fetchStrategicMemory,
+  fetchLatestSnapshot,
+  type MaturityStage,
+  type StrategicStateSnapshot,
+  type ScoreHistoryEntry,
+  type StrategicMemoryEntry,
+  type RecalibrationResult,
+} from '@/lib/strategicStateEngine';
 
 // ─── Types ───
 
@@ -50,6 +68,13 @@ export interface StrategicGap {
   detected_at: string;
   resolved_at: string | null;
   resolved_by_action: string | null;
+  category?: string;
+  severity_weight?: number;
+  linked_priority_id?: string;
+  resolution_impact_score?: number;
+  resolution_evidence?: string;
+  weeks_active?: number;
+  escalated_at?: string | null;
 }
 
 export interface StrategicProfile {
@@ -126,6 +151,16 @@ export function useStrategicControlData(companyId: string | undefined) {
     sdiLevel: 'Emerging',
     businessModel: null,
   });
+
+  // SSE state
+  const [latestSnapshot, setLatestSnapshot] = useState<StrategicStateSnapshot | null>(null);
+  const [scoreHistory, setScoreHistory] = useState<ScoreHistoryEntry[]>([]);
+  const [strategicMemory, setStrategicMemory] = useState<StrategicMemoryEntry[]>([]);
+  const [maturityStage, setMaturityStage] = useState<MaturityStage>('early');
+  const [recalibration, setRecalibration] = useState<RecalibrationResult | null>(null);
+  const [structuralRisks, setStructuralRisks] = useState<string[]>([]);
+  const [capabilityIndex, setCapabilityIndex] = useState(0);
+  const [behavioralPattern, setBehavioralPattern] = useState<string>('new-user');
 
   const weekStart = getCurrentWeekStart();
   const daysRemaining = getDaysRemainingInWeek();
@@ -253,6 +288,20 @@ export function useStrategicControlData(companyId: string | undefined) {
 
         // Fetch persistent data
         await Promise.all([fetchGaps(), fetchWeeklyDecisions()]);
+
+        // SSE: Fetch history, memory, and latest snapshot
+        if (companyId) {
+          const [history, memory, snapshot, pattern] = await Promise.all([
+            fetchScoreHistory(companyId, 12),
+            fetchStrategicMemory(companyId, 20),
+            fetchLatestSnapshot(companyId),
+            detectBehavioralPattern(companyId),
+          ]);
+          setScoreHistory(history);
+          setStrategicMemory(memory);
+          setLatestSnapshot(snapshot);
+          setBehavioralPattern(pattern);
+        }
       } catch (err) {
         console.error('Error fetching strategic control data:', err);
       } finally {
@@ -315,9 +364,16 @@ export function useStrategicControlData(companyId: string | undefined) {
     await fetchGaps();
   }, [companyId, fetchGaps]);
 
-  // ─── Complete a weekly decision ───
-  const completeDecision = useCallback(async (decisionId: string, gapKey?: string) => {
-    if (!decisionId) return;
+  // ─── Complete a weekly decision (with SSE feedback loop) ───
+  const completeDecision = useCallback(async (
+    decisionId: string,
+    gapKey?: string,
+    currentScores?: StrategicScores
+  ) => {
+    if (!decisionId || !companyId) return;
+    
+    const sdiBefore = currentScores?.current || 0;
+
     await supabase
       .from('company_weekly_decisions')
       .update({ completed_at: new Date().toISOString() })
@@ -328,8 +384,80 @@ export function useStrategicControlData(companyId: string | undefined) {
       await resolveGap(gapKey);
     }
 
-    await fetchWeeklyDecisions();
-  }, [resolveGap, fetchWeeklyDecisions]);
+    await Promise.all([fetchWeeklyDecisions(), fetchGaps()]);
+
+    // Record memory entry
+    await recordStrategicMemory(companyId, {
+      decisionId,
+      actionType: 'decision_completed',
+      actionKey: gapKey || decisionId,
+      actionDescription: `Decision completed${gapKey ? `, resolved gap: ${gapKey}` : ''}`,
+      sdiBefore,
+      sdiAfter: sdiBefore, // Will be recalculated on next render
+      dimensionImpacted: gapKey ? 'gaps' : undefined,
+      maturityStage,
+      businessModel: strategicProfile.businessModel || undefined,
+    });
+
+    // Update behavioral pattern
+    const pattern = await detectBehavioralPattern(companyId);
+    setBehavioralPattern(pattern);
+  }, [companyId, resolveGap, fetchWeeklyDecisions, fetchGaps, maturityStage, strategicProfile.businessModel]);
+
+  // ─── SSE: Persist strategic snapshot ───
+  const persistSnapshot = useCallback(async (
+    strategy: PlayToWinStrategy | null,
+    scores: StrategicScores,
+    triggerReason: string
+  ) => {
+    if (!companyId || !operational) return;
+
+    const capIdx = calculateCapabilityIndex(operational, strategicGaps, scores);
+    setCapabilityIndex(capIdx);
+
+    const risks = deriveStructuralRisks(strategicGaps, scores, maturityStage);
+    setStructuralRisks(risks);
+
+    // Derive maturity
+    const resolvedCount = strategicGaps.filter(g => g.resolved_at).length;
+    const activeCount = strategicGaps.filter(g => !g.resolved_at).length;
+    const stage = deriveMaturityStage(scores.current, operational.totalExecutions, resolvedCount, activeCount);
+    setMaturityStage(stage);
+
+    // Recalibration
+    const recal = await calculateRecalibration(companyId, scores, stage);
+    setRecalibration(recal);
+
+    // Record score history
+    await recordScoreHistory(companyId, scores, recal);
+
+    // Create snapshot
+    const snapshot = await createStrategicSnapshot(companyId, {
+      maturityStage: stage,
+      businessModel: strategicProfile.businessModel,
+      dnaSnapshot: strategy ? {
+        winningAspiration: strategy.winningAspiration,
+        targetSegments: strategy.targetSegments,
+        competitiveAdvantage: strategy.competitiveAdvantage,
+        moatType: strategy.moatType,
+      } : {},
+      gaps: strategicGaps,
+      scores,
+      capabilityIndex: capIdx,
+      structuralRisks: risks,
+      triggerReason,
+    });
+
+    if (snapshot) setLatestSnapshot(snapshot);
+
+    // Refresh memory
+    const [history, memory] = await Promise.all([
+      fetchScoreHistory(companyId, 12),
+      fetchStrategicMemory(companyId, 20),
+    ]);
+    setScoreHistory(history);
+    setStrategicMemory(memory);
+  }, [companyId, operational, strategicGaps, maturityStage, strategicProfile.businessModel]);
 
   // ─── Create weekly decisions if none exist ───
   const createWeeklyDecisions = useCallback(async (
@@ -340,11 +468,9 @@ export function useStrategicControlData(companyId: string | undefined) {
   ) => {
     if (!companyId) return;
     
-    // Check if already exist
     const existing = await fetchWeeklyDecisions();
     if (existing && existing.length > 0) return;
 
-    // Generate from gaps, scores, and business model
     const decisions = generateDynamicWeeklyDecisions(strategy, diagnostic, strategicGaps, businessModel, t);
     
     const records = decisions.slice(0, 3).map(d => ({
@@ -370,6 +496,7 @@ export function useStrategicControlData(companyId: string | undefined) {
   }, []);
 
   return {
+    // Core data
     diagnostic,
     operational,
     isLoadingDiagnostic,
@@ -378,11 +505,22 @@ export function useStrategicControlData(companyId: string | undefined) {
     weeklyDecisions,
     weekStart,
     daysRemaining,
+    // SSE data
+    latestSnapshot,
+    scoreHistory,
+    strategicMemory,
+    maturityStage,
+    recalibration,
+    structuralRisks,
+    capabilityIndex,
+    behavioralPattern,
+    // Actions
     syncStrategicGaps,
     resolveGap,
     completeDecision,
     createWeeklyDecisions,
     updateBusinessModel,
+    persistSnapshot,
     refetchGaps: fetchGaps,
   };
 }

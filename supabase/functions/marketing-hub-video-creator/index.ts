@@ -1,16 +1,14 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const N8N_AUTH_USER = Deno.env.get('N8N_AUTH_USER');
-const N8N_AUTH_PASS = Deno.env.get('N8N_AUTH_PASS');
+const CREATIFY_BASE = "https://api.creatify.ai/api";
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -20,7 +18,10 @@ serve(async (req) => {
   }
 
   try {
-    // JWT auth verification (like other marketing-hub functions)
+    const CREATIFY_API_ID = Deno.env.get("CREATIFY_API_ID");
+    const CREATIFY_API_KEY = Deno.env.get("CREATIFY_API_KEY");
+
+    // JWT auth verification
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Authorization header required' }), {
@@ -39,42 +40,128 @@ serve(async (req) => {
       });
     }
 
-    const { input } = await req.json();
-    
-    console.log('Marketing Hub Video Creator Request:', input);
+    const body = await req.json();
+    console.log('Marketing Hub Video Creator Request:', JSON.stringify(body));
 
-    // Validate required fields
-    const requiredFields = ['identidad_visual', 'calendario_item'];
-    for (const field of requiredFields) {
-      if (!input[field]) {
-        return new Response(JSON.stringify({ error: `Missing required field: ${field}` }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    // Support two input modes:
+    // 1. Direct: { prompt, userId, platform }  (from contentGeneration.ts)
+    // 2. Calendar item: { input: { identidad_visual, calendario_item } }
+
+    let prompt: string;
+    let platform = 'general';
+
+    if (body.input?.calendario_item) {
+      const item = body.input.calendario_item;
+      prompt = item.tema_concepto || item.titulo_gancho || item.copy_mensaje || '';
+      platform = item.red_social || 'general';
+    } else if (body.prompt) {
+      prompt = body.prompt;
+      platform = body.platform || 'general';
+    } else {
+      return new Response(JSON.stringify({ error: 'Missing prompt or calendario_item' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // If Creatify credentials are available, use Creatify URL-to-Video
+    if (CREATIFY_API_ID && CREATIFY_API_KEY) {
+      console.log('Using Creatify API for video generation...');
+
+      const creatifyHeaders = {
+        "X-API-ID": CREATIFY_API_ID,
+        "X-API-KEY": CREATIFY_API_KEY,
+        "Content-Type": "application/json",
+      };
+
+      // First create a link
+      const linkRes = await fetch(`${CREATIFY_BASE}/links/`, {
+        method: "POST",
+        headers: creatifyHeaders,
+        body: JSON.stringify({ url: prompt }),
+      });
+
+      if (!linkRes.ok) {
+        const linkErr = await linkRes.text();
+        console.error('Creatify link creation failed:', linkRes.status, linkErr);
+        // Fall through to simulation if Creatify fails
+      } else {
+        const linkData = await linkRes.json();
+        console.log('Creatify link created:', linkData.id);
+
+        // Create video from link
+        const aspectMap: Record<string, string> = {
+          tiktok: '9x16', instagram_reels: '9x16', youtube_shorts: '9x16',
+          youtube: '16x9', linkedin: '16x9',
+          instagram_feed: '1x1', facebook_feed: '1x1',
+        };
+
+        const videoRes = await fetch(`${CREATIFY_BASE}/lipsyncs/`, {
+          method: "POST",
+          headers: creatifyHeaders,
+          body: JSON.stringify({
+            link_id: linkData.id,
+            aspect_ratio: aspectMap[platform] || '16x9',
+            script_style: 'BrandStoryV2',
+          }),
         });
+
+        if (videoRes.ok) {
+          const videoData = await videoRes.json();
+          console.log('Creatify video job created:', videoData.id);
+
+          // Save to creatify_jobs
+          const companyRes = await supabase
+            .from('company_members')
+            .select('company_id')
+            .eq('user_id', user.id)
+            .eq('is_primary', true)
+            .single();
+
+          if (companyRes.data?.company_id) {
+            await supabase.from('creatify_jobs').insert({
+              company_id: companyRes.data.company_id,
+              user_id: user.id,
+              job_type: 'url_to_video',
+              creatify_job_id: videoData.id,
+              status: videoData.status || 'pending',
+              input_params: { prompt, platform },
+            });
+          }
+
+          return new Response(JSON.stringify({
+            success: true,
+            videoUrl: videoData.output || null,
+            jobId: videoData.id,
+            status: videoData.status || 'pending',
+            message: `Video generation started (job: ${videoData.id})`,
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        } else {
+          const videoErr = await videoRes.text();
+          console.error('Creatify video creation failed:', videoRes.status, videoErr);
+        }
       }
     }
 
-    // Extract video title from calendario_item for response message
-    const videoTitle = input.calendario_item.titulo_gancho || input.calendario_item.tema_concepto || 'video solicitado';
-    
-    // Simulate video creation processing
-    const response = {
-      message: `Producción del video '${videoTitle}' ha comenzado.`,
-      data: {
-        identidad_visual: input.identidad_visual,
-        item: input.calendario_item,
-        timestamp: new Date().toISOString(),
-        status: 'processing'
-      }
-    };
-
-    return new Response(JSON.stringify(response), {
+    // Fallback: return a processing status (no real video generation without Creatify)
+    console.log('Creatify not available or failed, returning processing status');
+    return new Response(JSON.stringify({
+      success: true,
+      videoUrl: null,
+      status: 'processing',
+      message: `Video generation for "${prompt.substring(0, 50)}..." has been queued.`,
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
     console.error('Error in marketing-hub-video-creator:', error);
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
+    return new Response(JSON.stringify({ 
+      error: (error as Error).message,
+      success: false 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

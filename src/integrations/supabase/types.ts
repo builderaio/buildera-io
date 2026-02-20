@@ -7977,6 +7977,69 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_strategic_impact: {
+        Row: {
+          company_id: string
+          created_at: string
+          dimension_delta: Json | null
+          event_source: string
+          event_type: string
+          evidence: Json | null
+          gap_id: string | null
+          id: string
+          sdi_after: number
+          sdi_before: number
+          snapshot_version: number | null
+          source_id: string | null
+          strategic_dimension: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          dimension_delta?: Json | null
+          event_source: string
+          event_type: string
+          evidence?: Json | null
+          gap_id?: string | null
+          id?: string
+          sdi_after?: number
+          sdi_before?: number
+          snapshot_version?: number | null
+          source_id?: string | null
+          strategic_dimension: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          dimension_delta?: Json | null
+          event_source?: string
+          event_type?: string
+          evidence?: Json | null
+          gap_id?: string | null
+          id?: string
+          sdi_after?: number
+          sdi_before?: number
+          snapshot_version?: number | null
+          source_id?: string | null
+          strategic_dimension?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_strategic_impact_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_strategic_impact_gap_id_fkey"
+            columns: ["gap_id"]
+            isOneToOne: false
+            referencedRelation: "company_strategic_gaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_strategies: {
         Row: {
           campaign_id: string
@@ -8444,10 +8507,12 @@ export type Database = {
           created_at: string
           error_message: string | null
           id: string
+          linked_gap_id: string | null
           platform: string
           published_at: string | null
           scheduled_for: string
           status: string
+          strategic_dimension: string | null
           updated_at: string
           user_id: string
         }
@@ -8457,10 +8522,12 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          linked_gap_id?: string | null
           platform: string
           published_at?: string | null
           scheduled_for: string
           status?: string
+          strategic_dimension?: string | null
           updated_at?: string
           user_id: string
         }
@@ -8470,10 +8537,12 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          linked_gap_id?: string | null
           platform?: string
           published_at?: string | null
           scheduled_for?: string
           status?: string
+          strategic_dimension?: string | null
           updated_at?: string
           user_id?: string
         }

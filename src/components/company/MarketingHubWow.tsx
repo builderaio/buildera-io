@@ -10,9 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   BarChart3, Calendar, TrendingUp, Users, Heart, Plus, 
   Zap, Target, Brain, Rocket, PenTool, Network, Video, Image,
-  FolderOpen, Ear, Link2, FileText, Bot, CheckCircle
+  FolderOpen, Ear, Link2, FileText, Bot, CheckCircle, Shield
 } from "lucide-react";
 import { getPlatformDisplayName } from '@/lib/socialPlatforms';
+import { useMarketingStrategicBridge } from "@/hooks/useMarketingStrategicBridge";
 import ContentCalendar from './ContentCalendar';
 import AudienceHighlightsWidget from './AudienceHighlightsWidget';
 import ConnectionStatusBar from './ConnectionStatusBar';
@@ -190,6 +191,8 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
   const { toast } = useToast();
   const { checkAndAdvance } = useJourneyProgression(profile?.company_id);
   const [userId, setUserId] = useState<string | null>(null);
+  const { fetchStrategicImpactSummary, strategicContext } = useMarketingStrategicBridge(profile?.company_id);
+  const [impactSummary, setImpactSummary] = useState<any>(null);
 
   useEffect(() => {
     const resolve = async () => {
@@ -211,6 +214,7 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
     if (userId) {
       initializeMarketingHub();
       checkAndAdvance();
+      fetchStrategicImpactSummary().then(s => setImpactSummary(s));
     }
   }, [userId]);
 
@@ -503,11 +507,42 @@ const MarketingHubWow = ({ profile }: MarketingHubWowProps) => {
           {dashboardSubTab === 'overview' && (
             <>
               <ConnectionStatusBar connections={socialConnections} onConnectClick={() => setShowConnectDialog(true)} />
-              
-              {userId && (
-                <MarketingGettingStarted userId={userId} onNavigateTab={handleTabChange} onImportData={() => setShowImportDialog(true)} />
-              )}
-              
+               
+               {userId && (
+                 <MarketingGettingStarted userId={userId} companyId={profile?.company_id} onNavigateTab={handleTabChange} onImportData={() => setShowImportDialog(true)} />
+               )}
+               
+               {/* Strategic Impact Section */}
+               {impactSummary && (
+                 <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 overflow-hidden">
+                   <CardHeader className="pb-3">
+                     <CardTitle className="flex items-center gap-2 text-base">
+                       <Shield className="h-5 w-5 text-primary" />
+                       {t("hub.strategicImpact", "Impacto Estratégico del Marketing")}
+                     </CardTitle>
+                   </CardHeader>
+                   <CardContent className="space-y-3">
+                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                       <div className="p-3 rounded-lg bg-card border">
+                         <p className="text-2xl font-bold text-primary">+{impactSummary.totalSdiContribution}</p>
+                         <p className="text-xs text-muted-foreground">{t("hub.sdiContribution", "Contribución al SDI")}</p>
+                       </div>
+                       <div className="p-3 rounded-lg bg-card border">
+                         <p className="text-2xl font-bold">{impactSummary.gapsReduced}</p>
+                         <p className="text-xs text-muted-foreground">{t("hub.gapsReduced", "Brechas impactadas")}</p>
+                       </div>
+                       <div className="p-3 rounded-lg bg-card border">
+                         <p className="text-2xl font-bold capitalize">{impactSummary.mostReinforcedDimension || '-'}</p>
+                         <p className="text-xs text-muted-foreground">{t("hub.strongestDimension", "Dimensión más reforzada")}</p>
+                       </div>
+                       <div className="p-3 rounded-lg bg-card border">
+                         <p className="text-2xl font-bold capitalize">{strategicContext.maturityStage}</p>
+                         <p className="text-xs text-muted-foreground">{t("hub.maturityStage", "Etapa de madurez")}</p>
+                       </div>
+                     </div>
+                   </CardContent>
+                 </Card>
+               )}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Platform Performance */}
                 <Card className="lg:col-span-2 overflow-hidden border shadow-sm">

@@ -10,9 +10,11 @@ import {
   ArrowRight, Sparkles, Brain, Shield, Eye, Zap, Download
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useMarketingStrategicBridge } from "@/hooks/useMarketingStrategicBridge";
 
 interface MarketingGettingStartedProps {
   userId: string;
+  companyId?: string;
   onNavigateTab: (tab: string) => void;
   onImportData?: () => void;
 }
@@ -24,12 +26,13 @@ interface OnboardingStep {
   level: 1 | 2;
 }
 
-export const MarketingGettingStarted = ({ userId, onNavigateTab, onImportData }: MarketingGettingStartedProps) => {
+export const MarketingGettingStarted = ({ userId, companyId, onNavigateTab, onImportData }: MarketingGettingStartedProps) => {
   const { t } = useTranslation("marketing");
   const navigate = useNavigate();
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLevel2, setShowLevel2] = useState(false);
+  const { recordOnboardingImpact } = useMarketingStrategicBridge(companyId);
 
   useEffect(() => {
     if (userId) checkProgress();
@@ -210,7 +213,7 @@ export const MarketingGettingStarted = ({ userId, onNavigateTab, onImportData }:
                   ? "bg-primary/5 text-muted-foreground"
                   : "bg-card hover:bg-muted/50 cursor-pointer"
               }`}
-              onClick={!step.completed ? step.action : undefined}
+              onClick={!step.completed ? () => { step.action(); recordOnboardingImpact(step.key); } : undefined}
             >
               <div className="flex items-center gap-3">
                 {step.completed ? (

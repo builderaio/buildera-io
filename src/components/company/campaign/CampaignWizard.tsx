@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMarketingDataPersistence } from '@/hooks/useMarketingDataPersistence';
 import { useCompany } from '@/contexts/CompanyContext';
 import { useCampaignDrafts } from '@/hooks/useCampaignDrafts';
+import { useMarketingStrategicBridge, type StrategicDimension } from '@/hooks/useMarketingStrategicBridge';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Target, 
@@ -39,7 +40,7 @@ interface CampaignData {
     budget?: number;
   };
   company: {
-    id: string;  // ← CRÍTICO: Siempre debe existir
+    id: string;
     name?: string;
     nombre_empresa: string;
     pais: string;
@@ -62,6 +63,9 @@ interface CampaignData {
   content?: any[];
   schedule?: any[];
   measurements?: any;
+  // Strategic alignment
+  strategic_dimension?: StrategicDimension;
+  linked_gap_id?: string;
 }
 
 interface CampaignState {
@@ -178,8 +182,11 @@ export const CampaignWizard = ({
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selectedDimension, setSelectedDimension] = useState<StrategicDimension | ''>('');
+  const [selectedGapId, setSelectedGapId] = useState<string>('');
 
   const { company, loading: companyLoading } = useCompany();
+  const { recordMarketingImpact, getRecommendedDimension, getGapCampaignSuggestions, strategicContext } = useMarketingStrategicBridge(company?.id);
   const { toast } = useToast();
   const { 
     storeTargetAudienceData, 
@@ -269,9 +276,13 @@ export const CampaignWizard = ({
     switch(state.currentStep) {
       case 1:
         updatedCampaignData.objective = { ...updatedCampaignData.objective, ...stepData };
-        // Guardar nombre y descripción en el nivel superior para fácil acceso
         (updatedCampaignData as any).name = stepData.name || (updatedCampaignData as any).name;
         (updatedCampaignData as any).description = stepData.description || (updatedCampaignData as any).description;
+        // Attach strategic alignment
+        if (selectedDimension) {
+          updatedCampaignData.strategic_dimension = selectedDimension;
+          updatedCampaignData.linked_gap_id = selectedGapId || undefined;
+        }
         break;
       case 2:
         updatedCampaignData.audience = stepData;
@@ -297,17 +308,25 @@ export const CampaignWizard = ({
         break;
       case 7:
         updatedCampaignData.measurements = stepData;
-        // Complete the draft when reaching the final step
         if (state.draftId) {
           await completeDraft(state.draftId);
         }
-        // Show success message and redirect
+        // Record strategic impact
+        if (updatedCampaignData.strategic_dimension) {
+          await recordMarketingImpact({
+            eventType: 'campaign_created',
+            eventSource: 'campaign',
+            sourceId: state.campaignId || state.draftId,
+            dimension: updatedCampaignData.strategic_dimension,
+            gapId: updatedCampaignData.linked_gap_id,
+            evidence: { objective: updatedCampaignData.objective?.goal },
+          });
+        }
         setTimeout(() => {
           toast({
             title: "¡Campaña creada exitosamente!",
             description: "Tu campaña ha sido guardada y está lista para su ejecución.",
           });
-          // Navigate back to campaign dashboard after a delay
           window.location.href = '/company-dashboard';
         }, 2000);
         break;
@@ -509,6 +528,46 @@ export const CampaignWizard = ({
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Crea campañas de marketing que generen resultados reales con el poder de la IA
           </p>
+
+          {/* Strategic Alignment Selector */}
+          <Card className="max-w-2xl mx-auto border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Target className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-sm">Alineación Estratégica</h3>
+                {!selectedDimension && <Badge variant="destructive" className="text-xs">Requerido</Badge>}
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+                {(['brand', 'acquisition', 'authority', 'operations'] as StrategicDimension[]).map(dim => (
+                  <Button
+                    key={dim}
+                    variant={selectedDimension === dim ? 'default' : 'outline'}
+                    size="sm"
+                    className="capitalize text-xs"
+                    onClick={() => setSelectedDimension(dim)}
+                  >
+                    {dim === 'brand' ? '🎯 Marca' : dim === 'acquisition' ? '📈 Adquisición' : dim === 'authority' ? '🏆 Autoridad' : '⚙️ Operaciones'}
+                  </Button>
+                ))}
+              </div>
+              {getGapCampaignSuggestions.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground font-medium">Brechas activas (vincular a campaña):</p>
+                  {getGapCampaignSuggestions.slice(0, 3).map(s => (
+                    <Button
+                      key={s.gapKey}
+                      variant={selectedGapId === s.gapKey ? 'default' : 'ghost'}
+                      size="sm"
+                      className="w-full justify-start text-xs h-auto py-1.5"
+                      onClick={() => { setSelectedGapId(s.gapKey); setSelectedDimension(s.dimension); }}
+                    >
+                      <span className="truncate">📌 {s.gapTitle} → {s.campaignType}</span>
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
           
           {/* Progress */}
           <div className="max-w-lg mx-auto space-y-3">

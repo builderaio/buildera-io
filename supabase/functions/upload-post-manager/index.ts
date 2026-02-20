@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const AUTH_HEADER = (apiKey: string) => `Apikey ${apiKey}`;
+
 interface RequestBody {
   action: string;
   data?: any;
@@ -133,7 +135,6 @@ serve(async (req) => {
 });
 
 async function generateCompanyUsername(supabaseClient: any, userId: string): Promise<string> {
-  // Obtener información de la empresa del usuario
   const { data: companies } = await supabaseClient
     .from('companies')
     .select('name')
@@ -175,22 +176,19 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
   const companyUsername = await generateCompanyUsername(supabaseClient, userId);
 
   try {
-    // Verificar si el perfil ya existe
     const checkResponse = await fetch(`https://api.upload-post.com/api/uploadposts/users/${companyUsername}`, {
       method: 'GET',
       headers: {
-        'Authorization': `ApiKey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       }
     });
 
     if (checkResponse.ok) {
-      // El perfil ya existe: sincronizar conexiones desde el perfil existente
       const existing = await checkResponse.json();
       const socialAccounts = existing?.profile?.social_accounts || {};
       await updateSocialAccountsFromProfile(supabaseClient, userId, companyUsername, socialAccounts);
 
-      // Asegurar bandera de existencia del perfil en la base local
       const companyId = await getPrimaryCompanyId(supabaseClient, userId);
       await supabaseClient
         .from('social_accounts')
@@ -214,11 +212,10 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
     }
 
     if (checkResponse.status === 404) {
-      // Crear nuevo perfil
       const createResponse = await fetch('https://api.upload-post.com/api/uploadposts/users', {
         method: 'POST',
         headers: {
-          'Authorization': `ApiKey ${apiKey}`,
+          'Authorization': AUTH_HEADER(apiKey),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username: companyUsername }),
@@ -229,7 +226,6 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
         throw new Error(`Error creando perfil: ${createResponse.status} - ${errorText}`);
       }
 
-      // Actualizar base de datos local
       const companyId = await getPrimaryCompanyId(supabaseClient, userId);
       await supabaseClient
         .from('social_accounts')
@@ -267,7 +263,7 @@ async function generateJWT(supabaseClient: any, userId: string, apiKey: string, 
     const response = await fetch('https://api.upload-post.com/api/uploadposts/users/generate-jwt', {
       method: 'POST',
       headers: {
-        'Authorization': `ApiKey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -291,12 +287,8 @@ async function generateJWT(supabaseClient: any, userId: string, apiKey: string, 
     }
 
     const result = await response.json();
-    
-    // Log de telemetría
     console.log('JWT Generated:', { userId, companyUsername, platforms, result });
     
-    // Mapear la respuesta para que sea compatible con el frontend
-    // El frontend espera access_url, pero el API puede devolver url o access_url
     const mappedResult = {
       ...result,
       access_url: result.access_url || result.url || result.auth_url || result.connection_url
@@ -319,7 +311,7 @@ async function getConnections(supabaseClient: any, userId: string, apiKey: strin
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/users/${companyUsername}`, {
       method: 'GET',
       headers: {
-        'Authorization': `ApiKey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       }
     });
@@ -344,11 +336,9 @@ async function getConnections(supabaseClient: any, userId: string, apiKey: strin
       throw new Error('Invalid profile response format from upload-post API');
     }
 
-    // Actualizar base de datos local con las conexiones usando la estructura correcta
     const socialAccounts = result.profile.social_accounts || {};
     await updateSocialAccountsFromProfile(supabaseClient, userId, companyUsername, socialAccounts);
 
-    // Asegurar bandera de existencia del perfil en la base local
     const companyId = await getPrimaryCompanyId(supabaseClient, userId);
     await supabaseClient
       .from('social_accounts')
@@ -449,7 +439,6 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
     const platforms = Object.keys(socialAccountsData || {});
     console.log('📱 Platforms to process:', platforms);
 
-    // Fetch company URLs to extract real usernames
     let companyUrls: Record<string, string> = {};
     if (companyId) {
       const { data: companyData } = await supabaseClient
@@ -468,9 +457,6 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
       const hasData = platformData && typeof platformData === 'object';
       const isConnected = !!(hasData && (platformData.username || platformData.display_name || platformData.social_images));
 
-      // Determine the best platform_username:
-      // 1. Try extracting from company URL (most reliable for scrapers)
-      // 2. Fall back to API-provided username
       let resolvedUsername: string | null = null;
       const urlField = platformUrlFields[platform];
       if (urlField && companyUrls[urlField]) {
@@ -486,7 +472,6 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
         }
       }
 
-      // Obtener la fila existente para preservar selected_page_name
       const { data: existingRow } = await supabaseClient
         .from('social_accounts')
         .select('metadata, linkedin_page_id, facebook_page_id, platform_username')
@@ -494,12 +479,10 @@ async function updateSocialAccountsFromProfile(supabaseClient: any, userId: stri
         .eq('platform', platform)
         .single();
 
-      // If existing row already has a manually-set username from URL, preserve it
       if (!resolvedUsername && existingRow?.platform_username) {
         resolvedUsername = existingRow.platform_username;
       }
 
-      // Preparar metadata - preservar selected_page_name si ya existe
       const metadata = hasData ? { 
         ...platformData,
         ...((platform === 'linkedin' || platform === 'facebook') && 
@@ -550,11 +533,10 @@ async function getFacebookPages(supabaseClient: any, userId: string, apiKey: str
   try {
     console.log(`📘 Getting Facebook pages for profile: ${companyUsername}`);
     
-    // Según documentación oficial: https://docs.upload-post.com/api/get-facebook-pages
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/facebook/pages?profile=${companyUsername}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Api-Key ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       }
     });
@@ -584,7 +566,7 @@ async function getLinkedInPages(supabaseClient: any, userId: string, apiKey: str
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/linkedin/pages?profile=${companyUsername}`, {
       method: 'GET',
       headers: {
-        'Authorization': `ApiKey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       }
     });
@@ -605,7 +587,7 @@ async function getPinterestBoards(supabaseClient: any, userId: string, apiKey: s
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/pinterest/boards?profile=${companyUsername}`, {
       method: 'GET',
       headers: {
-        'Authorization': `ApiKey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       }
     });
@@ -627,7 +609,6 @@ async function updateFacebookPage(supabaseClient: any, userId: string, data: any
     facebook_page_id: facebookPageId,
   };
   
-  // Actualizar metadata con el nombre de la página si se proporciona
   if (facebookPageName) {
     const { data: currentData } = await supabaseClient
       .from('social_accounts')
@@ -660,7 +641,6 @@ async function updateLinkedInPage(supabaseClient: any, userId: string, data: any
     linkedin_page_id: linkedinPageId,
   };
   
-  // Actualizar metadata con el nombre de la página si se proporciona
   if (linkedinPageName) {
     const { data: currentData } = await supabaseClient
       .from('social_accounts')
@@ -688,21 +668,18 @@ async function updateLinkedInPage(supabaseClient: any, userId: string, data: any
 
 // Platform filtering based on Upload-Post API restrictions
 function filterPlatformsByPostType(platforms: string[], postType: string): string[] {
-  const supportedPlatforms = {
+  const supportedPlatforms: Record<string, string[]> = {
     text: ['linkedin', 'x', 'facebook', 'threads', 'reddit', 'bluesky'],
-    photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'x', 'threads', 'pinterest', 'bluesky'],
-    video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'twitter', 'threads', 'pinterest', 'bluesky']
+    photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'x', 'threads', 'pinterest', 'reddit', 'bluesky'],
+    video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'x', 'twitter', 'threads', 'pinterest', 'reddit', 'bluesky']
   };
 
-  // Convert twitter to x for text and photo posts
+  // Normalize twitter to x for consistency (API accepts both for video)
   const normalizedPlatforms = platforms.map((p: string) => {
-    if (p === 'twitter') {
-      return (postType === 'video') ? 'twitter' : 'x';
-    }
+    if (p === 'twitter') return 'x';
     return p;
   });
 
-  // Filter platforms based on post type support
   const validPlatforms = normalizedPlatforms.filter((platform: string) => {
     return supportedPlatforms[postType as keyof typeof supportedPlatforms]?.includes(platform);
   });
@@ -718,11 +695,18 @@ function filterPlatformsByPostType(platforms: string[], postType: string): strin
 }
 
 async function postContent(supabaseClient: any, userId: string, apiKey: string, data: any) {
-  const { companyUsername, platforms, title, content, mediaUrls, postType, scheduledDate, async_upload } = data;
+  const { 
+    companyUsername, platforms, title, content, mediaUrls, postType, scheduledDate, async_upload,
+    // New fields from plan
+    description, first_comment, timezone, add_to_queue,
+    // Platform-specific params
+    platform_params
+  } = data;
   
   console.log(`📝 postContent called with:`, { 
     companyUsername, platforms, title, postType, 
-    mediaCount: mediaUrls?.length || 0, scheduledDate, async_upload
+    mediaCount: mediaUrls?.length || 0, scheduledDate, async_upload,
+    hasDescription: !!description, hasFirstComment: !!first_comment, timezone, add_to_queue
   });
 
   // Obtener Platform-Specific Parameters (IDs de páginas)
@@ -744,10 +728,10 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
   const platformsToSend = filterPlatformsByPostType(platforms, postType);
   
   if (platformsToSend.length === 0) {
-    const supportedPlatforms = {
+    const supportedPlatforms: Record<string, string[]> = {
       text: ['LinkedIn', 'X (Twitter)', 'Facebook', 'Threads', 'Reddit'],
-      photo: ['TikTok', 'Instagram', 'LinkedIn', 'Facebook', 'X (Twitter)', 'Threads', 'Pinterest'],
-      video: ['TikTok', 'Instagram', 'LinkedIn', 'YouTube', 'Facebook', 'Twitter', 'Threads', 'Pinterest']
+      photo: ['TikTok', 'Instagram', 'LinkedIn', 'Facebook', 'X (Twitter)', 'Threads', 'Pinterest', 'Reddit'],
+      video: ['TikTok', 'Instagram', 'LinkedIn', 'YouTube', 'Facebook', 'X (Twitter)', 'Threads', 'Pinterest', 'Reddit']
     };
     
     const unsupportedPlatforms = platforms.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(', ');
@@ -767,14 +751,13 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     const formData = new FormData();
     formData.append('user', companyUsername);
     
-    // Agregar Platform-Specific Parameters según la documentación de Upload-Post
+    // Platform-Specific Page IDs
     if (platformsToSend.includes('facebook') && facebookAccount?.facebook_page_id) {
       formData.append('facebook_page_id', facebookAccount.facebook_page_id);
       console.log('✅ Added Facebook Page ID:', facebookAccount.facebook_page_id);
     }
     
     if (platformsToSend.includes('linkedin') && linkedinAccount?.linkedin_page_id) {
-      // Extract numeric ID from URN format (urn:li:organization:108477120 -> 108477120)
       const linkedinPageId = linkedinAccount.linkedin_page_id.includes('urn:li:organization:')
         ? linkedinAccount.linkedin_page_id.split('urn:li:organization:')[1]
         : linkedinAccount.linkedin_page_id;
@@ -788,7 +771,29 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     });
     
     formData.append('title', title);
-    if (scheduledDate) {
+    
+    // === NEW: description field (used by LinkedIn commentary, YouTube description, etc.) ===
+    if (description && description.trim()) {
+      formData.append('description', description.trim());
+    } else if (content && content.trim()) {
+      // Fallback: use content as description for semantic separation
+      formData.append('description', content.trim());
+    }
+    
+    // === NEW: first_comment (auto first comment on IG, FB, Threads, X, YT, Reddit, Bluesky) ===
+    if (first_comment && first_comment.trim()) {
+      formData.append('first_comment', first_comment.trim());
+    }
+    
+    // === NEW: timezone for scheduled posts ===
+    if (timezone) {
+      formData.append('timezone', timezone);
+    }
+    
+    // === NEW: add_to_queue as alternative to scheduled_date ===
+    if (add_to_queue) {
+      formData.append('add_to_queue', 'true');
+    } else if (scheduledDate) {
       formData.append('scheduled_date', scheduledDate);
     }
     
@@ -796,26 +801,81 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
     if (async_upload) {
       formData.append('async_upload', 'true');
     }
+    
+    // === NEW: Platform-specific parameters ===
+    if (platform_params) {
+      // Instagram
+      if (platform_params.instagram_media_type) {
+        formData.append('media_type', platform_params.instagram_media_type);
+      }
+      if (platform_params.instagram_collaborators) {
+        formData.append('collaborators', platform_params.instagram_collaborators);
+      }
+      // TikTok
+      if (platform_params.tiktok_privacy_level) {
+        formData.append('privacy_level', platform_params.tiktok_privacy_level);
+      }
+      if (platform_params.tiktok_is_aigc) {
+        formData.append('is_aigc', 'true');
+      }
+      // YouTube
+      if (platform_params.youtube_tags && platform_params.youtube_tags.length > 0) {
+        platform_params.youtube_tags.forEach((tag: string) => {
+          formData.append('tags[]', tag);
+        });
+      }
+      if (platform_params.youtube_privacy_status) {
+        formData.append('privacyStatus', platform_params.youtube_privacy_status);
+      }
+      if (platform_params.youtube_category_id) {
+        formData.append('categoryId', platform_params.youtube_category_id);
+      }
+      if (platform_params.youtube_contains_synthetic_media) {
+        formData.append('containsSyntheticMedia', 'true');
+      }
+      // Facebook
+      if (platform_params.facebook_media_type) {
+        formData.append('facebook_media_type', platform_params.facebook_media_type);
+      }
+      // Pinterest
+      if (platform_params.pinterest_board_id) {
+        formData.append('pinterest_board_id', platform_params.pinterest_board_id);
+      }
+      if (platform_params.pinterest_link) {
+        formData.append('pinterest_link', platform_params.pinterest_link);
+      }
+      // Reddit
+      if (platform_params.subreddit) {
+        formData.append('subreddit', platform_params.subreddit);
+      }
+      if (platform_params.flair_id) {
+        formData.append('flair_id', platform_params.flair_id);
+      }
+      // Platform-specific titles
+      if (platform_params.instagram_title) formData.append('instagram_title', platform_params.instagram_title);
+      if (platform_params.linkedin_title) formData.append('linkedin_title', platform_params.linkedin_title);
+      if (platform_params.x_title) formData.append('x_title', platform_params.x_title);
+      if (platform_params.facebook_title) formData.append('facebook_title', platform_params.facebook_title);
+      if (platform_params.tiktok_title) formData.append('tiktok_title', platform_params.tiktok_title);
+      if (platform_params.youtube_title) formData.append('youtube_title', platform_params.youtube_title);
+    }
 
     if (postType === 'text') {
-      // Para texto solo necesitamos user, platform[], title y scheduled_date
       console.log('📄 Sending text post to /api/upload_text');
       response = await fetch('https://api.upload-post.com/api/upload_text', {
         method: 'POST',
         headers: {
-          'Authorization': `Apikey ${apiKey}`,
+          'Authorization': AUTH_HEADER(apiKey),
         },
         body: formData,
       });
     } else if (postType === 'photo' && mediaUrls?.length) {
-      // Para fotos: user, platform[], photos[], title, caption, scheduled_date
       mediaUrls.forEach((url: string) => {
         if (url.trim()) {
           formData.append('photos[]', url.trim());
         }
       });
       
-      // El contenido va como 'caption' para fotos, no como 'title' adicional
       if (content && content.trim()) {
         formData.append('caption', content.trim());
       }
@@ -824,25 +884,21 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       response = await fetch('https://api.upload-post.com/api/upload_photos', {
         method: 'POST',
         headers: {
-          'Authorization': `Apikey ${apiKey}`,
+          'Authorization': AUTH_HEADER(apiKey),
         },
         body: formData,
       });
     } else if (postType === 'video' && mediaUrls?.length) {
-      // Para videos: user, platform[], video, title, scheduled_date
       formData.append('video', mediaUrls[0]);
       
-      // Si hay contenido adicional, podemos incluirlo en el title o como descripción
-      if (content && content.trim()) {
-        // Combinar title y content para videos
-        formData.set('title', `${title}\n\n${content.trim()}`);
-      }
+      // FIX: Use description field instead of combining into title
+      // title stays as title, content goes as description (already appended above)
       
-      console.log('🎥 Sending video post to /api/upload_videos');
-      response = await fetch('https://api.upload-post.com/api/upload_videos', {
+      console.log('🎥 Sending video post to /api/upload');
+      response = await fetch('https://api.upload-post.com/api/upload', {
         method: 'POST',
         headers: {
-          'Authorization': `Apikey ${apiKey}`,
+          'Authorization': AUTH_HEADER(apiKey),
         },
         body: formData,
       });
@@ -857,34 +913,38 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
 
     const result = await response.json();
     
-    // Guardar en ambas tablas de base de datos local
-    if (result.job_id) {
-      // Guardar en scheduled_social_posts (tabla legacy)
+    // Persist full response including request_id and usage data
+    if (result.job_id || result.request_id) {
+      const responseToStore = {
+        ...result,
+        request_id: result.request_id || result.job_id,
+        usage: result.usage || null,
+      };
+      
       await supabaseClient
         .from('scheduled_social_posts')
         .insert({
           user_id: userId,
           company_username: companyUsername,
-          job_id: result.job_id,
+          job_id: result.job_id || result.request_id,
           platforms,
           title,
           content,
           media_urls: mediaUrls,
           post_type: postType,
           scheduled_date: scheduledDate || new Date().toISOString(),
-          upload_post_response: result,
+          upload_post_response: responseToStore,
         });
       
-      // Guardar en scheduled_posts (para el calendario de contenido)
-      if (scheduledDate) {
+      if (scheduledDate || add_to_queue) {
         const contentData = {
           text: content || title,
           mediaUrls: mediaUrls || [],
           title: title,
-          job_id: result.job_id
+          job_id: result.job_id || result.request_id,
+          first_comment: first_comment || null,
         };
         
-        // Insertar un registro por plataforma
         for (const platform of platforms) {
           try {
             await supabaseClient
@@ -894,8 +954,8 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
                 company_page_id: companyUsername,
                 platform: platform,
                 content: contentData,
-                scheduled_for: scheduledDate,
-                status: 'scheduled'
+                scheduled_for: scheduledDate || new Date().toISOString(),
+                status: add_to_queue ? 'queued' : 'scheduled'
               });
           } catch (insertError) {
             console.warn(`Could not insert into scheduled_posts for ${platform}:`, insertError);
@@ -917,7 +977,7 @@ async function getScheduledPosts(supabaseClient: any, userId: string, apiKey: st
     const response = await fetch('https://api.upload-post.com/api/uploadposts/schedule', {
       method: 'GET',
       headers: {
-        'Authorization': `Apikey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       }
     });
@@ -942,7 +1002,7 @@ async function cancelScheduledPost(supabaseClient: any, userId: string, apiKey: 
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/schedule/${jobId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Apikey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       }
     });
@@ -952,7 +1012,6 @@ async function cancelScheduledPost(supabaseClient: any, userId: string, apiKey: 
       throw new Error(`Error cancelando post: ${response.status} - ${errorText}`);
     }
 
-    // Actualizar estado en base de datos local
     await supabaseClient
       .from('scheduled_social_posts')
       .update({ status: 'cancelled' })
@@ -1005,7 +1064,7 @@ async function getUploadStatus(apiKey: string, data: any) {
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/status?request_id=${requestId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Apikey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       },
     });
@@ -1034,7 +1093,7 @@ async function getUploadHistory(apiKey: string, data: any) {
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/history?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Apikey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       },
     });
@@ -1058,9 +1117,31 @@ async function validateToken(data: any) {
   const { token } = data || {};
   if (!token) {
     return { success: false, error: 'Missing token' };
+  }
+
+  try {
+    const response = await fetch('https://api.upload-post.com/api/uploadposts/users/validate-jwt', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error validando token: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log('Token validated:', { isValid: true, result });
+    return result;
+  } catch (error) {
+    console.error('Error in validateToken:', error);
+    return { success: false, error: (error as any).message };
+  }
 }
 
-// ============= NEW API INTEGRATIONS =============
+// ============= ADDITIONAL API INTEGRATIONS =============
 
 async function getCurrentUser(apiKey: string) {
   console.log('👤 Getting current user info from Upload-Post');
@@ -1068,7 +1149,7 @@ async function getCurrentUser(apiKey: string) {
     const response = await fetch('https://api.upload-post.com/api/uploadposts/me', {
       method: 'GET',
       headers: {
-        'Authorization': `Apikey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       },
     });
@@ -1093,7 +1174,7 @@ async function getInstagramMedia(apiKey: string, data: any) {
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/media?profile=${profile}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Apikey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       },
     });
@@ -1122,7 +1203,7 @@ async function getInstagramComments(apiKey: string, data: any) {
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/comments?${params.toString()}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Apikey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       },
     });
@@ -1147,7 +1228,7 @@ async function replyInstagramComment(apiKey: string, data: any) {
     const response = await fetch('https://api.upload-post.com/api/uploadposts/comments/reply', {
       method: 'POST',
       headers: {
-        'Authorization': `Apikey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ media_id, comment_id, message, profile }),
@@ -1173,7 +1254,7 @@ async function sendInstagramDM(apiKey: string, data: any) {
     const response = await fetch('https://api.upload-post.com/api/uploadposts/dms/send', {
       method: 'POST',
       headers: {
-        'Authorization': `Apikey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ recipient_id, message, profile }),
@@ -1199,7 +1280,7 @@ async function getInstagramConversations(apiKey: string, data: any) {
     const response = await fetch(`https://api.upload-post.com/api/uploadposts/dms/conversations?profile=${profile}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Apikey ${apiKey}`,
+        'Authorization': AUTH_HEADER(apiKey),
         'Content-Type': 'application/json',
       },
     });
@@ -1213,26 +1294,5 @@ async function getInstagramConversations(apiKey: string, data: any) {
   } catch (error) {
     console.error('Error in getInstagramConversations:', error);
     throw error;
-  }
-}
-  try {
-    const response = await fetch('https://api.upload-post.com/api/uploadposts/users/validate-jwt', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error validando token: ${response.status} - ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log('Token validated:', { isValid: true, result });
-    return result;
-  } catch (error) {
-    console.error('Error in validateToken:', error);
-    return { success: false, error: (error as any).message };
   }
 }

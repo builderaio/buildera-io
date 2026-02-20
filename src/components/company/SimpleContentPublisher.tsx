@@ -9,11 +9,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X, Calendar, Image, Sparkles, FileUp, Video, FileText } from "lucide-react";
+import { Share2, Upload, CheckCircle2, Clock, AlertCircle, Loader2, Edit3, Save, X, Calendar, Image, Sparkles, FileUp, Video, FileText, ChevronDown, ListPlus, MessageSquare, Globe } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import ContentImageSelector from "./ContentImageSelector";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import { getPlatformIcon, getPlatformColor, getPlatform } from "@/lib/socialPlatforms";
+import { useTranslation } from "react-i18next";
 
 interface SocialAccount {
   platform: string;
@@ -41,6 +45,22 @@ interface Props {
   source?: 'insight' | 'manual' | 'ai';
 }
 
+interface PlatformParams {
+  instagram_media_type?: string;
+  instagram_collaborators?: string;
+  tiktok_privacy_level?: string;
+  tiktok_is_aigc?: boolean;
+  youtube_tags?: string[];
+  youtube_privacy_status?: string;
+  youtube_category_id?: string;
+  youtube_contains_synthetic_media?: boolean;
+  facebook_media_type?: string;
+  pinterest_board_id?: string;
+  pinterest_link?: string;
+  subreddit?: string;
+  flair_id?: string;
+}
+
 export default function SimpleContentPublisher({ 
   isOpen, 
   onClose, 
@@ -51,13 +71,14 @@ export default function SimpleContentPublisher({
   generatedContentId,
   source = 'manual'
 }: Props) {
+  const { t } = useTranslation('marketing');
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [editingContent, setEditingContent] = useState<string>(content.content);
   const [isEditing, setIsEditing] = useState(false);
-  const [publishMode, setPublishMode] = useState<'immediate' | 'scheduled'>('immediate');
+  const [publishMode, setPublishMode] = useState<'immediate' | 'scheduled' | 'queue'>('immediate');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [showImageSelector, setShowImageSelector] = useState(false);
@@ -68,6 +89,10 @@ export default function SimpleContentPublisher({
   const [uploadedMediaUrl, setUploadedMediaUrl] = useState<string>('');
   const [uploadedMediaType, setUploadedMediaType] = useState<'image' | 'video' | 'pdf' | null>(null);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  // New fields
+  const [firstComment, setFirstComment] = useState('');
+  const [platformParamsOpen, setPlatformParamsOpen] = useState(false);
+  const [platformParams, setPlatformParams] = useState<PlatformParams>({});
 
   // Fetch social accounts when dialog opens
   useEffect(() => {
@@ -79,7 +104,6 @@ export default function SimpleContentPublisher({
   // Update editing content when prop changes and detect if needs generation
   useEffect(() => {
     setEditingContent(content.content);
-    // Detectar si necesita generación de contenido
     setNeedsGeneration(!!contentIdeaId && source === 'insight');
   }, [content.content, contentIdeaId, source]);
 
@@ -87,7 +111,6 @@ export default function SimpleContentPublisher({
     try {
       const accounts: SocialAccount[] = [];
 
-      // 1) Prefer unified social_accounts table
       const { data: unified, error: unifiedError } = await supabase
         .from('social_accounts')
         .select('platform, platform_display_name, is_connected, company_username, facebook_page_id, linkedin_page_id, platform_username')
@@ -112,9 +135,7 @@ export default function SimpleContentPublisher({
         });
       }
 
-      // 2) Fallback to legacy connection tables if nothing found
       if (accounts.length === 0) {
-        // Facebook/Instagram legacy
         const { data: fbData } = await supabase
           .from('facebook_instagram_connections')
           .select('*')
@@ -133,10 +154,8 @@ export default function SimpleContentPublisher({
               page_name: userData?.name,
             });
           }
-          // Instagram could be added here if needed
         }
 
-        // LinkedIn legacy
         const { data: linkedinData } = await supabase
           .from('linkedin_connections')
           .select('*')
@@ -154,7 +173,6 @@ export default function SimpleContentPublisher({
           });
         }
 
-        // TikTok legacy
         const { data: tiktokData } = await supabase
           .from('tiktok_connections')
           .select('*')
@@ -177,7 +195,7 @@ export default function SimpleContentPublisher({
       console.error('Error fetching social accounts:', error);
       toast({
         title: 'Error',
-        description: 'No se pudieron cargar las cuentas sociales',
+        description: t('publisher.errorLoadingAccounts', 'No se pudieron cargar las cuentas sociales'),
         variant: 'destructive'
       });
     }
@@ -194,8 +212,8 @@ export default function SimpleContentPublisher({
   const saveEditedContent = () => {
     setIsEditing(false);
     toast({
-      title: "Contenido actualizado",
-      description: "Los cambios han sido guardados"
+      title: t('publisher.contentUpdated', 'Contenido actualizado'),
+      description: t('publisher.changesSaved', 'Los cambios han sido guardados')
     });
   };
 
@@ -206,8 +224,8 @@ export default function SimpleContentPublisher({
     
     try {
       toast({
-        title: "Generando contenido",
-        description: "La IA está creando tu publicación...",
+        title: t('publisher.generatingContent', 'Generando contenido'),
+        description: t('publisher.aiCreating', 'La IA está creando tu publicación...'),
       });
 
       const { data, error } = await supabase.functions.invoke('generate-company-content', {
@@ -227,15 +245,15 @@ export default function SimpleContentPublisher({
         setEditingContent(data.content);
         setNeedsGeneration(false);
         toast({
-          title: "¡Contenido generado!",
-          description: "Revisa y edita el contenido antes de publicar",
+          title: t('publisher.contentGenerated', '¡Contenido generado!'),
+          description: t('publisher.reviewBeforePublish', 'Revisa y edita el contenido antes de publicar'),
         });
       }
     } catch (error) {
       console.error('Error generating content:', error);
       toast({
         title: "Error",
-        description: "No se pudo generar el contenido",
+        description: t('publisher.errorGenerating', 'No se pudo generar el contenido'),
         variant: "destructive"
       });
     } finally {
@@ -247,7 +265,6 @@ export default function SimpleContentPublisher({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validar tipo de archivo
     const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     const validVideoTypes = ['video/mp4', 'video/mov', 'video/avi', 'video/quicktime'];
     const validPdfType = 'application/pdf';
@@ -261,19 +278,18 @@ export default function SimpleContentPublisher({
       mediaType = 'pdf';
     } else {
       toast({
-        title: "Tipo de archivo no válido",
-        description: "Solo se permiten imágenes (JPG, PNG, GIF, WEBP), videos (MP4, MOV, AVI) o PDFs",
+        title: t('publisher.invalidFileType', 'Tipo de archivo no válido'),
+        description: t('publisher.allowedFiles', 'Solo se permiten imágenes (JPG, PNG, GIF, WEBP), videos (MP4, MOV, AVI) o PDFs'),
         variant: "destructive",
       });
       return;
     }
 
-    // Validar tamaño (máx 20MB)
-    const maxSize = 20 * 1024 * 1024; // 20MB
+    const maxSize = 20 * 1024 * 1024;
     if (file.size > maxSize) {
       toast({
-        title: "Archivo muy grande",
-        description: "El archivo no debe superar los 20MB",
+        title: t('publisher.fileTooLarge', 'Archivo muy grande'),
+        description: t('publisher.maxFileSize', 'El archivo no debe superar los 20MB'),
         variant: "destructive",
       });
       return;
@@ -281,7 +297,6 @@ export default function SimpleContentPublisher({
 
     setIsUploadingMedia(true);
     try {
-      // Subir archivo a Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${profile.user_id}/${Date.now()}.${fileExt}`;
       const bucketName = mediaType === 'image' ? 'content-media' : 
@@ -294,7 +309,6 @@ export default function SimpleContentPublisher({
 
       if (uploadError) throw uploadError;
 
-      // Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
         .from(bucketName)
         .getPublicUrl(fileName);
@@ -302,25 +316,23 @@ export default function SimpleContentPublisher({
       setUploadedMediaUrl(publicUrl);
       setUploadedMediaType(mediaType);
       
-      // Si es imagen, también setear en selectedContentImage para compatibilidad
       if (mediaType === 'image') {
         setSelectedContentImage(publicUrl);
       }
 
       toast({
-        title: "¡Archivo cargado!",
+        title: t('publisher.fileUploaded', '¡Archivo cargado!'),
         description: `${mediaType === 'image' ? 'Imagen' : mediaType === 'video' ? 'Video' : 'PDF'} cargado exitosamente`,
       });
     } catch (error) {
       console.error("Error uploading media:", error);
       toast({
         title: "Error",
-        description: "No se pudo cargar el archivo",
+        description: t('publisher.uploadError', 'No se pudo cargar el archivo'),
         variant: "destructive",
       });
     } finally {
       setIsUploadingMedia(false);
-      // Limpiar el input
       event.target.value = '';
     }
   };
@@ -329,7 +341,7 @@ export default function SimpleContentPublisher({
     if (!editingContent) {
       toast({
         title: "Error",
-        description: "No hay contenido para generar la imagen",
+        description: t('publisher.noContentForImage', 'No hay contenido para generar la imagen'),
         variant: "destructive",
       });
       return;
@@ -352,15 +364,15 @@ export default function SimpleContentPublisher({
         setUploadedMediaUrl(data.imageUrl);
         setUploadedMediaType('image');
         toast({
-          title: "¡Imagen generada!",
-          description: "La imagen ha sido generada con IA exitosamente",
+          title: t('publisher.imageGenerated', '¡Imagen generada!'),
+          description: t('publisher.imageGeneratedDesc', 'La imagen ha sido generada con IA exitosamente'),
         });
       }
     } catch (error) {
       console.error("Error generating image:", error);
       toast({
         title: "Error",
-        description: "No se pudo generar la imagen",
+        description: t('publisher.imageError', 'No se pudo generar la imagen'),
         variant: "destructive",
       });
     } finally {
@@ -372,7 +384,7 @@ export default function SimpleContentPublisher({
     if (selectedPlatforms.length === 0) {
       toast({
         title: "Error",
-        description: "Selecciona al menos una plataforma",
+        description: t('publisher.selectPlatform', 'Selecciona al menos una plataforma'),
         variant: "destructive"
       });
       return;
@@ -381,7 +393,7 @@ export default function SimpleContentPublisher({
     if (publishMode === 'scheduled' && (!scheduledDate || !scheduledTime)) {
       toast({
         title: "Error",
-        description: "Selecciona fecha y hora para la publicación programada",
+        description: t('publisher.selectDateTime', 'Selecciona fecha y hora para la publicación programada'),
         variant: "destructive"
       });
       return;
@@ -389,7 +401,6 @@ export default function SimpleContentPublisher({
 
     setLoading(true);
     try {
-      // Determinar el username del perfil en Upload-Post
       let companyUsername = socialAccounts[0]?.company_username;
       if (!companyUsername && profile.user_id) {
         const { data: initData, error: initError } = await supabase.functions.invoke('upload-post-manager', {
@@ -402,7 +413,6 @@ export default function SimpleContentPublisher({
         throw new Error('No se encontró el perfil de Upload-Post (companyUsername)');
       }
 
-      // Si hay imagen generada o seleccionada, guardarla en la biblioteca de contenidos
       const finalImage = selectedContentImage || content.generatedImage;
       if (finalImage && !selectedContentImage) {
         try {
@@ -426,14 +436,17 @@ export default function SimpleContentPublisher({
         }
       }
 
-      // Preparar payload para la función edge
       const isPhoto = Boolean(finalImage);
-      const postType: 'text' | 'photo' | 'video' = isPhoto ? 'photo' : 'text';
+      const isVideo = uploadedMediaType === 'video';
+      const postType: 'text' | 'photo' | 'video' = isVideo ? 'video' : isPhoto ? 'photo' : 'text';
       const title = content.title?.trim() || editingContent.slice(0, 80);
-      const mediaUrls = isPhoto && finalImage ? [finalImage] : undefined;
+      const mediaUrls = (isPhoto || isVideo) && (uploadedMediaUrl || finalImage) ? [uploadedMediaUrl || finalImage] : undefined;
       const scheduledISO = publishMode === 'scheduled'
         ? new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString()
         : undefined;
+
+      // Detect user timezone
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
       const { data, error } = await supabase.functions.invoke('upload-post-manager', {
         body: {
@@ -443,10 +456,15 @@ export default function SimpleContentPublisher({
             platforms: selectedPlatforms,
             title,
             content: editingContent,
+            description: editingContent,
             mediaUrls,
             postType,
             scheduledDate: scheduledISO,
             async_upload: true,
+            first_comment: firstComment || undefined,
+            timezone: userTimezone,
+            add_to_queue: publishMode === 'queue',
+            platform_params: Object.keys(platformParams).length > 0 ? platformParams : undefined,
           }
         }
       });
@@ -455,7 +473,6 @@ export default function SimpleContentPublisher({
 
       console.log('Successfully published via edge function:', data);
       
-      // Guardar en scheduled_posts para el calendario
       if (publishMode === 'scheduled' && scheduledISO) {
         try {
           const contentData = typeof editingContent === 'string' ? editingContent : JSON.stringify(editingContent);
@@ -464,7 +481,7 @@ export default function SimpleContentPublisher({
             .insert({
               user_id: profile.user_id,
               company_page_id: companyUsername,
-              platform: selectedPlatforms[0], // Primary platform
+              platform: selectedPlatforms[0],
               content: { text: contentData, mediaUrls, title },
               scheduled_for: scheduledISO,
               status: 'scheduled'
@@ -474,15 +491,17 @@ export default function SimpleContentPublisher({
         }
       }
       
+      const modeLabel = publishMode === 'immediate' ? t('publisher.published', '¡Publicado!') : 
+                         publishMode === 'queue' ? t('publisher.queued', '¡Añadido a la cola!') :
+                         t('publisher.scheduled', '¡Programado!');
+      
       toast({
-        title: publishMode === 'immediate' ? '¡Publicado!' : '¡Programado!',
-        description: `Contenido ${publishMode === 'immediate' ? 'publicado' : 'programado'} en ${selectedPlatforms.length} plataforma(s)`,
+        title: modeLabel,
+        description: `${t('publisher.contentIn', 'Contenido en')} ${selectedPlatforms.length} ${t('publisher.platforms', 'plataforma(s)')}`,
       });
       
-      // Mark content idea as completed and update tracking
       if (contentIdeaId) {
         try {
-          // Update insight status to completed and mark as having generated content
           await supabase
             .from('content_insights')
             .update({ 
@@ -492,7 +511,6 @@ export default function SimpleContentPublisher({
             })
             .eq('id', contentIdeaId);
           
-          // Keep legacy table for backward compatibility
           await supabase
             .from('completed_content_ideas')
             .insert({
@@ -505,7 +523,6 @@ export default function SimpleContentPublisher({
         }
       }
       
-      // Update generated content status if provided
       if (generatedContentId) {
         try {
           await supabase
@@ -522,13 +539,9 @@ export default function SimpleContentPublisher({
       
       console.log('📊 Content tracking:', { source, contentIdeaId, generatedContentId, publishMode });
       
-      // Call success callback to reset form
       onSuccess?.();
-      
-      // Close dialog and navigate to posts tab
       onClose();
       
-      // Navigate to calendar tab if scheduled
       if (publishMode === 'scheduled') {
         setTimeout(() => {
           const calendarTab = document.querySelector('[data-value="calendar"]');
@@ -537,7 +550,6 @@ export default function SimpleContentPublisher({
           }
         }, 500);
       } else {
-        // Navigate to content tab for immediate posts
         setTimeout(() => {
           const contentTab = document.querySelector('[data-value="content"]');
           if (contentTab) {
@@ -555,7 +567,7 @@ export default function SimpleContentPublisher({
       console.error('Error publishing content:', error);
       toast({
         title: 'Error',
-        description: error.message || 'No se pudo publicar el contenido',
+        description: error.message || t('publisher.publishError', 'No se pudo publicar el contenido'),
         variant: 'destructive'
       });
     } finally {
@@ -563,17 +575,13 @@ export default function SimpleContentPublisher({
     }
   };
 
-  const getPlatformBadgeColor = (platform: string) => {
-    const colors: Record<string, string> = {
-      'facebook': 'bg-blue-600',
-      'instagram': 'bg-gradient-to-r from-purple-600 to-pink-600',
-      'twitter': 'bg-sky-500',
-      'linkedin': 'bg-blue-800',
-      'tiktok': 'bg-black',
-      'youtube': 'bg-red-600'
-    };
-    return colors[platform] || 'bg-gray-600';
-  };
+  const hasInstagram = selectedPlatforms.includes('instagram');
+  const hasTikTok = selectedPlatforms.includes('tiktok');
+  const hasYouTube = selectedPlatforms.includes('youtube');
+  const hasFacebook = selectedPlatforms.includes('facebook');
+  const hasPinterest = selectedPlatforms.includes('pinterest');
+  const hasReddit = selectedPlatforms.includes('reddit');
+  const showPlatformParams = hasInstagram || hasTikTok || hasYouTube || hasFacebook || hasPinterest || hasReddit;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -581,11 +589,11 @@ export default function SimpleContentPublisher({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
-            Publicar Contenido
+            {t('publisher.title', 'Publicar Contenido')}
             {contentIdeaId && (
               <Badge variant="secondary" className="ml-2 animate-pulse">
                 <Sparkles className="w-3 h-3 mr-1" />
-                Desde Insight
+                {t('publisher.fromInsight', 'Desde Insight')}
               </Badge>
             )}
           </DialogTitle>
@@ -596,13 +604,12 @@ export default function SimpleContentPublisher({
           <Card>
             <CardContent className="pt-6">
               {needsGeneration ? (
-                // Modo: Generar contenido desde insight
                 <div className="space-y-4">
                   <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                     <div className="flex items-start gap-3">
                       <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                       <div className="flex-1">
-                        <h4 className="font-semibold text-sm mb-2">Estrategia del Insight</h4>
+                        <h4 className="font-semibold text-sm mb-2">{t('publisher.insightStrategy', 'Estrategia del Insight')}</h4>
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                           {content.content}
                         </p>
@@ -619,32 +626,31 @@ export default function SimpleContentPublisher({
                     {isGeneratingContent ? (
                       <>
                         <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                        Generando contenido...
+                        {t('publisher.generating', 'Generando contenido...')}
                       </>
                     ) : (
                       <>
                         <Sparkles className="h-5 w-5 mr-2" />
-                        Generar Contenido con IA
+                        {t('publisher.generateWithAI', 'Generar Contenido con IA')}
                       </>
                     )}
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">
-                    La IA creará una publicación profesional basada en esta estrategia
+                    {t('publisher.aiWillCreate', 'La IA creará una publicación profesional basada en esta estrategia')}
                   </p>
                 </div>
               ) : (
-                // Modo: Editar contenido generado
                 <>
                   <div className="flex items-center justify-between mb-3">
-                    <Label className="text-sm font-medium">Contenido</Label>
+                    <Label className="text-sm font-medium">{t('publisher.content', 'Contenido')}</Label>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => setIsEditing(!isEditing)}
                     >
                       {isEditing ? <Save className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
-                      {isEditing ? 'Guardar' : 'Editar'}
+                      {isEditing ? t('publisher.save', 'Guardar') : t('publisher.edit', 'Editar')}
                     </Button>
                   </div>
                   
@@ -654,12 +660,12 @@ export default function SimpleContentPublisher({
                         value={editingContent}
                         onChange={(e) => setEditingContent(e.target.value)}
                         className="min-h-[120px]"
-                        placeholder="Edita tu contenido..."
+                        placeholder={t('publisher.editPlaceholder', 'Edita tu contenido...')}
                       />
                       <div className="flex gap-2">
                         <Button size="sm" onClick={saveEditedContent}>
                           <Save className="h-4 w-4 mr-2" />
-                          Guardar
+                          {t('publisher.save', 'Guardar')}
                         </Button>
                         <Button 
                           size="sm" 
@@ -668,14 +674,14 @@ export default function SimpleContentPublisher({
                           disabled={isGeneratingImage}
                         >
                           <Sparkles className="h-4 w-4 mr-2" />
-                          {isGeneratingImage ? "Generando..." : "Generar Imagen"}
+                          {isGeneratingImage ? t('publisher.generatingImage', 'Generando...') : t('publisher.generateImage', 'Generar Imagen')}
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => {
                           setEditingContent(content.content);
                           setIsEditing(false);
                         }}>
                           <X className="h-4 w-4 mr-2" />
-                          Cancelar
+                          {t('publisher.cancel', 'Cancelar')}
                         </Button>
                       </div>
                     </div>
@@ -688,10 +694,9 @@ export default function SimpleContentPublisher({
                   {/* Media Section */}
                   <div className="mt-4">
                     <div className="flex items-center justify-between mb-3">
-                      <Label className="text-sm font-medium">Archivos multimedia</Label>
+                      <Label className="text-sm font-medium">{t('publisher.media', 'Archivos multimedia')}</Label>
                     </div>
                     
-                    {/* Media Upload Options */}
                     <div className="grid grid-cols-3 gap-2 mb-4">
                       <Button 
                         size="sm" 
@@ -705,7 +710,7 @@ export default function SimpleContentPublisher({
                         ) : (
                           <FileUp className="h-4 w-4 mr-2" />
                         )}
-                        Cargar archivo
+                        {t('publisher.uploadFile', 'Cargar archivo')}
                       </Button>
                       <input 
                         id="media-upload-input"
@@ -722,7 +727,7 @@ export default function SimpleContentPublisher({
                         className="w-full"
                       >
                         <Image className="h-4 w-4 mr-2" />
-                        Biblioteca
+                        {t('publisher.library', 'Biblioteca')}
                       </Button>
                       
                       <Button 
@@ -737,7 +742,7 @@ export default function SimpleContentPublisher({
                         ) : (
                           <Sparkles className="h-4 w-4 mr-2" />
                         )}
-                        Generar IA
+                        {t('publisher.generateAI', 'Generar IA')}
                       </Button>
                     </div>
                     
@@ -755,14 +760,14 @@ export default function SimpleContentPublisher({
                             <div className="flex items-center gap-3">
                               <FileText className="h-8 w-8 text-red-600" />
                               <div className="flex-1">
-                                <p className="text-sm font-medium">Documento PDF adjunto</p>
+                                <p className="text-sm font-medium">{t('publisher.pdfAttached', 'Documento PDF adjunto')}</p>
                                 <a 
                                   href={uploadedMediaUrl} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
                                   className="text-xs text-primary hover:underline"
                                 >
-                                  Ver documento
+                                  {t('publisher.viewDocument', 'Ver documento')}
                                 </a>
                               </div>
                             </div>
@@ -796,10 +801,24 @@ export default function SimpleContentPublisher({
                           <Video className="h-6 w-6 text-muted-foreground" />
                           <FileText className="h-6 w-6 text-muted-foreground" />
                         </div>
-                        <p className="text-sm text-muted-foreground mb-1">No hay archivos multimedia</p>
-                        <p className="text-xs text-muted-foreground">Imágenes, videos o PDFs (máx 20MB)</p>
+                        <p className="text-sm text-muted-foreground mb-1">{t('publisher.noMedia', 'No hay archivos multimedia')}</p>
+                        <p className="text-xs text-muted-foreground">{t('publisher.mediaHint', 'Imágenes, videos o PDFs (máx 20MB)')}</p>
                       </div>
                     )}
+                  </div>
+
+                  {/* First Comment */}
+                  <div className="mt-4">
+                    <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+                      <MessageSquare className="h-4 w-4" />
+                      {t('publisher.firstComment', 'Primer comentario (opcional)')}
+                    </Label>
+                    <Textarea
+                      value={firstComment}
+                      onChange={(e) => setFirstComment(e.target.value)}
+                      placeholder={t('publisher.firstCommentPlaceholder', 'Añade un primer comentario automático (IG, FB, X, YT, Reddit, Threads, Bluesky)...')}
+                      className="min-h-[60px]"
+                    />
                   </div>
                 </>
               )}
@@ -809,20 +828,27 @@ export default function SimpleContentPublisher({
           {/* Publishing Mode */}
           <Card>
             <CardContent className="pt-6">
-              <Label className="text-sm font-medium mb-3 block">Modo de Publicación</Label>
-              <RadioGroup value={publishMode} onValueChange={(value: 'immediate' | 'scheduled') => setPublishMode(value)}>
+              <Label className="text-sm font-medium mb-3 block">{t('publisher.publishMode', 'Modo de Publicación')}</Label>
+              <RadioGroup value={publishMode} onValueChange={(value: 'immediate' | 'scheduled' | 'queue') => setPublishMode(value)}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="immediate" id="immediate" />
                   <Label htmlFor="immediate" className="flex items-center gap-2">
                     <Upload className="h-4 w-4" />
-                    Publicar inmediatamente
+                    {t('publisher.publishImmediately', 'Publicar inmediatamente')}
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="scheduled" id="scheduled" />
                   <Label htmlFor="scheduled" className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    Programar publicación
+                    {t('publisher.schedulePost', 'Programar publicación')}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="queue" id="queue" />
+                  <Label htmlFor="queue" className="flex items-center gap-2">
+                    <ListPlus className="h-4 w-4" />
+                    {t('publisher.addToQueue', 'Agregar a la cola')}
                   </Label>
                 </div>
               </RadioGroup>
@@ -830,7 +856,7 @@ export default function SimpleContentPublisher({
               {publishMode === 'scheduled' && (
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="date" className="text-sm font-medium">Fecha</Label>
+                    <Label htmlFor="date" className="text-sm font-medium">{t('publisher.date', 'Fecha')}</Label>
                     <Input
                       id="date"
                       type="date"
@@ -840,7 +866,7 @@ export default function SimpleContentPublisher({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="time" className="text-sm font-medium">Hora</Label>
+                    <Label htmlFor="time" className="text-sm font-medium">{t('publisher.time', 'Hora')}</Label>
                     <Input
                       id="time"
                       type="time"
@@ -848,7 +874,19 @@ export default function SimpleContentPublisher({
                       onChange={(e) => setScheduledTime(e.target.value)}
                     />
                   </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Globe className="h-3 w-3" />
+                      {t('publisher.timezoneNote', 'Se usará tu zona horaria local')}: {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                    </p>
+                  </div>
                 </div>
+              )}
+
+              {publishMode === 'queue' && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {t('publisher.queueNote', 'El post se asignará automáticamente al siguiente slot disponible en tu cola de publicación.')}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -856,12 +894,12 @@ export default function SimpleContentPublisher({
           {/* Platform Selection */}
           <Card>
             <CardContent className="pt-6">
-              <Label className="text-sm font-medium mb-3 block">Plataformas</Label>
+              <Label className="text-sm font-medium mb-3 block">{t('publisher.platforms', 'Plataformas')}</Label>
               {socialAccounts.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground">
                   <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                  <p>No hay cuentas sociales conectadas</p>
-                  <p className="text-sm">Conecta tus cuentas en configuración</p>
+                  <p>{t('publisher.noAccounts', 'No hay cuentas sociales conectadas')}</p>
+                  <p className="text-sm">{t('publisher.connectInSettings', 'Conecta tus cuentas en configuración')}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
@@ -873,7 +911,7 @@ export default function SimpleContentPublisher({
                     return (
                       <div
                         key={account.platform}
-                        className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                        className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
                         onClick={() => handlePlatformToggle(account.platform)}
                       >
                         <Checkbox
@@ -898,7 +936,7 @@ export default function SimpleContentPublisher({
                           </p>
                           {account.page_name && (account.platform === 'facebook' || account.platform === 'linkedin') && (
                             <p className="text-xs text-muted-foreground truncate">
-                              Página: {account.page_name}
+                              {t('publisher.page', 'Página')}: {account.page_name}
                             </p>
                           )}
                         </div>
@@ -910,10 +948,194 @@ export default function SimpleContentPublisher({
             </CardContent>
           </Card>
 
+          {/* Platform-Specific Parameters */}
+          {showPlatformParams && (
+            <Collapsible open={platformParamsOpen} onOpenChange={setPlatformParamsOpen}>
+              <Card>
+                <CardContent className="pt-6">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full">
+                    <Label className="text-sm font-medium cursor-pointer">
+                      {t('publisher.platformSettings', 'Configuración por plataforma')}
+                    </Label>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${platformParamsOpen ? 'rotate-180' : ''}`} />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-4 space-y-4">
+                    {/* Instagram params */}
+                    {hasInstagram && (uploadedMediaType === 'video' || uploadedMediaType === 'image') && (
+                      <div className="space-y-2 p-3 border rounded-lg">
+                        <Label className="text-xs font-semibold text-pink-600">Instagram</Label>
+                        <div>
+                          <Label className="text-xs">{t('publisher.mediaType', 'Tipo de contenido')}</Label>
+                          <Select 
+                            value={platformParams.instagram_media_type || ''} 
+                            onValueChange={(v) => setPlatformParams(p => ({ ...p, instagram_media_type: v }))}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder={t('publisher.selectType', 'Seleccionar tipo')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="REELS">Reels</SelectItem>
+                              <SelectItem value="STORIES">Stories</SelectItem>
+                              <SelectItem value="IMAGE">Image</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TikTok params */}
+                    {hasTikTok && (
+                      <div className="space-y-2 p-3 border rounded-lg">
+                        <Label className="text-xs font-semibold">TikTok</Label>
+                        <div>
+                          <Label className="text-xs">{t('publisher.privacyLevel', 'Privacidad')}</Label>
+                          <Select 
+                            value={platformParams.tiktok_privacy_level || ''} 
+                            onValueChange={(v) => setPlatformParams(p => ({ ...p, tiktok_privacy_level: v }))}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder={t('publisher.selectPrivacy', 'Seleccionar')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="PUBLIC_TO_EVERYONE">Público</SelectItem>
+                              <SelectItem value="MUTUAL_FOLLOW_FRIENDS">Amigos</SelectItem>
+                              <SelectItem value="SELF_ONLY">Solo yo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch 
+                            checked={platformParams.tiktok_is_aigc || false}
+                            onCheckedChange={(v) => setPlatformParams(p => ({ ...p, tiktok_is_aigc: v }))}
+                          />
+                          <Label className="text-xs">{t('publisher.aiGenerated', 'Contenido generado por IA')}</Label>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* YouTube params */}
+                    {hasYouTube && (
+                      <div className="space-y-2 p-3 border rounded-lg">
+                        <Label className="text-xs font-semibold text-red-600">YouTube</Label>
+                        <div>
+                          <Label className="text-xs">{t('publisher.privacy', 'Privacidad')}</Label>
+                          <Select 
+                            value={platformParams.youtube_privacy_status || ''} 
+                            onValueChange={(v) => setPlatformParams(p => ({ ...p, youtube_privacy_status: v }))}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder={t('publisher.selectPrivacy', 'Seleccionar')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="public">Público</SelectItem>
+                              <SelectItem value="unlisted">No listado</SelectItem>
+                              <SelectItem value="private">Privado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">{t('publisher.tags', 'Tags (separados por comas)')}</Label>
+                          <Input 
+                            className="h-8 text-xs"
+                            placeholder="tag1, tag2, tag3"
+                            onChange={(e) => setPlatformParams(p => ({ 
+                              ...p, 
+                              youtube_tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) 
+                            }))}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch 
+                            checked={platformParams.youtube_contains_synthetic_media || false}
+                            onCheckedChange={(v) => setPlatformParams(p => ({ ...p, youtube_contains_synthetic_media: v }))}
+                          />
+                          <Label className="text-xs">{t('publisher.syntheticMedia', 'Contiene medios sintéticos/IA')}</Label>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Facebook params */}
+                    {hasFacebook && uploadedMediaType === 'video' && (
+                      <div className="space-y-2 p-3 border rounded-lg">
+                        <Label className="text-xs font-semibold text-blue-600">Facebook</Label>
+                        <div>
+                          <Label className="text-xs">{t('publisher.mediaType', 'Tipo de contenido')}</Label>
+                          <Select 
+                            value={platformParams.facebook_media_type || ''} 
+                            onValueChange={(v) => setPlatformParams(p => ({ ...p, facebook_media_type: v }))}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder={t('publisher.selectType', 'Seleccionar tipo')} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="REELS">Reels</SelectItem>
+                              <SelectItem value="STORIES">Stories</SelectItem>
+                              <SelectItem value="VIDEO">Video</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pinterest params */}
+                    {hasPinterest && (
+                      <div className="space-y-2 p-3 border rounded-lg">
+                        <Label className="text-xs font-semibold text-red-700">Pinterest</Label>
+                        <div>
+                          <Label className="text-xs">{t('publisher.boardId', 'Board ID')}</Label>
+                          <Input 
+                            className="h-8 text-xs"
+                            placeholder={t('publisher.boardIdPlaceholder', 'ID del tablero de Pinterest')}
+                            value={platformParams.pinterest_board_id || ''}
+                            onChange={(e) => setPlatformParams(p => ({ ...p, pinterest_board_id: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">{t('publisher.destinationLink', 'Link de destino')}</Label>
+                          <Input 
+                            className="h-8 text-xs"
+                            placeholder="https://..."
+                            value={platformParams.pinterest_link || ''}
+                            onChange={(e) => setPlatformParams(p => ({ ...p, pinterest_link: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Reddit params */}
+                    {hasReddit && (
+                      <div className="space-y-2 p-3 border rounded-lg">
+                        <Label className="text-xs font-semibold text-orange-600">Reddit</Label>
+                        <div>
+                          <Label className="text-xs">{t('publisher.subreddit', 'Subreddit')}</Label>
+                          <Input 
+                            className="h-8 text-xs"
+                            placeholder="r/subreddit"
+                            value={platformParams.subreddit || ''}
+                            onChange={(e) => setPlatformParams(p => ({ ...p, subreddit: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">{t('publisher.flairId', 'Flair ID (opcional)')}</Label>
+                          <Input 
+                            className="h-8 text-xs"
+                            placeholder={t('publisher.flairIdPlaceholder', 'ID del flair')}
+                            value={platformParams.flair_id || ''}
+                            onChange={(e) => setPlatformParams(p => ({ ...p, flair_id: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </CardContent>
+              </Card>
+            </Collapsible>
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <Button onClick={onClose} variant="outline" className="flex-1">
-              Cancelar
+              {t('publisher.cancel', 'Cancelar')}
             </Button>
             <Button 
               onClick={handlePublish}
@@ -923,19 +1145,24 @@ export default function SimpleContentPublisher({
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Publicando...
+                  {t('publisher.publishing', 'Publicando...')}
                 </>
               ) : needsGeneration ? (
-                'Genera contenido primero'
+                t('publisher.generateFirst', 'Genera contenido primero')
               ) : publishMode === 'immediate' ? (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Publicar Ahora
+                  {t('publisher.publishNow', 'Publicar Ahora')}
+                </>
+              ) : publishMode === 'queue' ? (
+                <>
+                  <ListPlus className="h-4 w-4 mr-2" />
+                  {t('publisher.addToQueueBtn', 'Agregar a Cola')}
                 </>
               ) : (
                 <>
                   <Clock className="h-4 w-4 mr-2" />
-                  Programar
+                  {t('publisher.schedule', 'Programar')}
                 </>
               )}
             </Button>
@@ -960,7 +1187,9 @@ export default function SimpleContentPublisher({
       <SmartLoader
         isVisible={loading}
         type="publishing"
-        message={publishMode === 'immediate' ? 'Publicando en redes sociales...' : 'Programando publicación...'}
+        message={publishMode === 'immediate' ? t('publisher.publishingMessage', 'Publicando en redes sociales...') : 
+                 publishMode === 'queue' ? t('publisher.queuingMessage', 'Añadiendo a la cola...') :
+                 t('publisher.schedulingMessage', 'Programando publicación...')}
         size="md"
       />
     </Dialog>

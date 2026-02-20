@@ -534,8 +534,8 @@ export const CampaignWizard = ({
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Target className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold text-sm">Alineación Estratégica</h3>
-                {!selectedDimension && <Badge variant="destructive" className="text-xs">Requerido</Badge>}
+                <h3 className="font-semibold text-sm">{t('wizard.strategicAlignment.title', 'Alineación Estratégica')}</h3>
+                {!selectedDimension && <Badge variant="destructive" className="text-xs">{t('wizard.strategicAlignment.required', 'Requerido')}</Badge>}
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
                 {(['brand', 'acquisition', 'authority', 'operations'] as StrategicDimension[]).map(dim => (
@@ -546,13 +546,13 @@ export const CampaignWizard = ({
                     className="capitalize text-xs"
                     onClick={() => setSelectedDimension(dim)}
                   >
-                    {dim === 'brand' ? '🎯 Marca' : dim === 'acquisition' ? '📈 Adquisición' : dim === 'authority' ? '🏆 Autoridad' : '⚙️ Operaciones'}
+                    {t(`wizard.strategicAlignment.${dim}`, dim)}
                   </Button>
                 ))}
               </div>
               {getGapCampaignSuggestions.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground font-medium">Brechas activas (vincular a campaña):</p>
+                  <p className="text-xs text-muted-foreground font-medium">{t('wizard.strategicAlignment.activeGaps', 'Brechas activas (vincular a campaña):')}</p>
                   {getGapCampaignSuggestions.slice(0, 3).map(s => (
                     <Button
                       key={s.gapKey}

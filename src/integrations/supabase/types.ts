@@ -3453,58 +3453,276 @@ export type Database = {
           },
         ]
       }
+      company_score_history: {
+        Row: {
+          company_id: string
+          consistency_bonus: number
+          execution_score: number
+          foundation_score: number
+          gaps_score: number
+          id: string
+          presence_score: number
+          recorded_at: string
+          sdi_score: number
+          stagnation_penalty: number
+          weeks_below_threshold: Json | null
+          weight_adjustments: Json | null
+        }
+        Insert: {
+          company_id: string
+          consistency_bonus?: number
+          execution_score?: number
+          foundation_score?: number
+          gaps_score?: number
+          id?: string
+          presence_score?: number
+          recorded_at?: string
+          sdi_score: number
+          stagnation_penalty?: number
+          weeks_below_threshold?: Json | null
+          weight_adjustments?: Json | null
+        }
+        Update: {
+          company_id?: string
+          consistency_bonus?: number
+          execution_score?: number
+          foundation_score?: number
+          gaps_score?: number
+          id?: string
+          presence_score?: number
+          recorded_at?: string
+          sdi_score?: number
+          stagnation_penalty?: number
+          weeks_below_threshold?: Json | null
+          weight_adjustments?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_score_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_strategic_gaps: {
         Row: {
+          category: string | null
           company_id: string
           created_at: string
           description: string
           detected_at: string
+          escalated_at: string | null
           gap_key: string
           id: string
           impact_weight: number
+          linked_priority_id: string | null
+          resolution_evidence: string | null
+          resolution_impact_score: number | null
           resolved_at: string | null
           resolved_by_action: string | null
+          severity_weight: number | null
           source: string
           title: string
           updated_at: string
           urgency: string
           variable: string
+          weeks_active: number | null
         }
         Insert: {
+          category?: string | null
           company_id: string
           created_at?: string
           description?: string
           detected_at?: string
+          escalated_at?: string | null
           gap_key: string
           id?: string
           impact_weight?: number
+          linked_priority_id?: string | null
+          resolution_evidence?: string | null
+          resolution_impact_score?: number | null
           resolved_at?: string | null
           resolved_by_action?: string | null
+          severity_weight?: number | null
           source?: string
           title: string
           updated_at?: string
           urgency?: string
           variable?: string
+          weeks_active?: number | null
         }
         Update: {
+          category?: string | null
           company_id?: string
           created_at?: string
           description?: string
           detected_at?: string
+          escalated_at?: string | null
           gap_key?: string
           id?: string
           impact_weight?: number
+          linked_priority_id?: string | null
+          resolution_evidence?: string | null
+          resolution_impact_score?: number | null
           resolved_at?: string | null
           resolved_by_action?: string | null
+          severity_weight?: number | null
           source?: string
           title?: string
           updated_at?: string
           urgency?: string
           variable?: string
+          weeks_active?: number | null
         }
         Relationships: [
           {
             foreignKeyName: "company_strategic_gaps_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_strategic_memory: {
+        Row: {
+          action_description: string | null
+          action_key: string
+          action_type: string
+          behavioral_pattern: string | null
+          business_model_at_time: string | null
+          company_id: string
+          context_snapshot: Json | null
+          created_at: string
+          decision_id: string | null
+          dimension_impacted: string | null
+          gap_id: string | null
+          id: string
+          impact_magnitude: string | null
+          maturity_stage_at_time: string | null
+          sdi_after: number | null
+          sdi_before: number | null
+          sdi_delta: number | null
+        }
+        Insert: {
+          action_description?: string | null
+          action_key: string
+          action_type: string
+          behavioral_pattern?: string | null
+          business_model_at_time?: string | null
+          company_id: string
+          context_snapshot?: Json | null
+          created_at?: string
+          decision_id?: string | null
+          dimension_impacted?: string | null
+          gap_id?: string | null
+          id?: string
+          impact_magnitude?: string | null
+          maturity_stage_at_time?: string | null
+          sdi_after?: number | null
+          sdi_before?: number | null
+          sdi_delta?: number | null
+        }
+        Update: {
+          action_description?: string | null
+          action_key?: string
+          action_type?: string
+          behavioral_pattern?: string | null
+          business_model_at_time?: string | null
+          company_id?: string
+          context_snapshot?: Json | null
+          created_at?: string
+          decision_id?: string | null
+          dimension_impacted?: string | null
+          gap_id?: string | null
+          id?: string
+          impact_magnitude?: string | null
+          maturity_stage_at_time?: string | null
+          sdi_after?: number | null
+          sdi_before?: number | null
+          sdi_delta?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_strategic_memory_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_strategic_memory_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "company_weekly_decisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_strategic_memory_gap_id_fkey"
+            columns: ["gap_id"]
+            isOneToOne: false
+            referencedRelation: "company_strategic_gaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_strategic_state_snapshots: {
+        Row: {
+          active_gaps: Json
+          business_model: string | null
+          capability_index: number
+          company_id: string
+          created_at: string
+          id: string
+          maturity_stage: string
+          resolved_gaps: Json
+          score_breakdown: Json
+          sdi_score: number
+          strategic_dna_snapshot: Json
+          structural_risks: Json
+          trigger_reason: string
+          triggered_by: string | null
+          version: number
+        }
+        Insert: {
+          active_gaps?: Json
+          business_model?: string | null
+          capability_index?: number
+          company_id: string
+          created_at?: string
+          id?: string
+          maturity_stage?: string
+          resolved_gaps?: Json
+          score_breakdown?: Json
+          sdi_score?: number
+          strategic_dna_snapshot?: Json
+          structural_risks?: Json
+          trigger_reason?: string
+          triggered_by?: string | null
+          version?: number
+        }
+        Update: {
+          active_gaps?: Json
+          business_model?: string | null
+          capability_index?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          maturity_stage?: string
+          resolved_gaps?: Json
+          score_breakdown?: Json
+          sdi_score?: number
+          strategic_dna_snapshot?: Json
+          structural_risks?: Json
+          trigger_reason?: string
+          triggered_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_strategic_state_snapshots_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -10795,6 +11013,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_dimension_stagnation: {
+        Args: {
+          p_company_id: string
+          p_dimension: string
+          p_threshold?: number
+        }
+        Returns: number
+      }
       get_expert_pricing: {
         Args: { expert_id: string }
         Returns: {
@@ -10863,6 +11089,10 @@ export type Database = {
       mark_onboarding_completed: {
         Args: { _registration_method?: string; _user_id: string }
         Returns: undefined
+      }
+      next_strategic_state_version: {
+        Args: { p_company_id: string }
+        Returns: number
       }
       promote_trial_capabilities: { Args: never; Returns: undefined }
       reactivate_company: {

@@ -1,187 +1,108 @@
 
 
-# Plan: Alinear integracion Upload-Post con API oficial y mejores practicas
+# Plan Estrategico de Optimizacion de Edge Functions
 
-## Resumen de hallazgos
+## Resumen Ejecutivo
 
-Tras analizar la documentacion oficial de Upload-Post (`docs.upload-post.com/api/reference`) y compararla con la implementacion actual en `upload-post-manager/index.ts`, se detectaron multiples gaps criticos y oportunidades de mejora.
-
----
-
-## 1. Endpoint de Video incorrecto (CRITICO)
-
-**Problema**: El codigo usa `POST /api/upload_videos` pero la documentacion oficial dice `POST /api/upload`.
-
-- Linea 842: `fetch('https://api.upload-post.com/api/upload_videos'` -- INCORRECTO
-- La API real es: `POST https://api.upload-post.com/api/upload`
-
-**Correccion**: Cambiar el endpoint de video de `/api/upload_videos` a `/api/upload`.
+El proyecto tiene **95 Edge Functions** desplegadas. El analisis cruzado entre invocaciones en `src/` y llamadas internas (edge-to-edge) revela oportunidades claras de eliminacion, fusion y redireccionamiento. El objetivo es liberar slots para nuevas funciones (social-automation-engine, social-listening-engine, slideshow-generator) y reducir complejidad operativa.
 
 ---
 
-## 2. Header de Authorization inconsistente (CRITICO)
+## Categoria 1: ELIMINAR (Zero Usage / Obsoletas)
 
-**Problema**: Se usan 3 formatos distintos de Authorization header en el mismo archivo:
+Funciones sin ninguna invocacion activa en frontend ni backend:
 
-- `ApiKey ${apiKey}` (lineas 182, 221, etc.)
-- `Api-Key ${apiKey}` (linea 557 -- getFacebookPages)
-- `Apikey ${apiKey}` (lineas 806, 827, etc. -- upload endpoints)
+| Funcion | Razon | Riesgo |
+|---------|-------|--------|
+| `execute-workforce-mission` | Sistema AI Workforce decomisionado. Zero refs en `src/`. Solo llama a `create-response-agent` internamente. | Ninguno |
+| `generate-analytics-data` | Zero refs en `src/`. Genera datos mock en `system_analytics`. No invocado por nada. | Ninguno |
+| `sync-api-usage` | Zero refs en `src/`. La funcion `getDecryptedApiKey()` retorna `null` siempre -- produce datos random. Inutil. | Ninguno |
+| `social-tags-resolver` | Zero refs en `src/`. Usa RapidAPI Instagram Statistics para tags. Nunca se consume. | Ninguno |
+| `social-media-bulk-processor` | Zero refs en `src/`. Solo invocado internamente por si mismo para `content-embeddings-generator`. Flujo sin trigger. | Ninguno |
 
-**Documentacion oficial**: `Authorization: Apikey your-api-key-here` (con A mayuscula, resto minuscula)
-
-**Correccion**: Estandarizar TODOS los headers a `Apikey ${apiKey}`.
-
----
-
-## 3. Parametros faltantes en uploads
-
-### 3.1 `description` (campo global)
-
-**Problema**: El proxy nunca envia el campo `description` que la API usa para:
-- LinkedIn: commentary
-- YouTube: video description  
-- Facebook: description
-- Pinterest: pin notes
-- Reddit: post body
-
-Actualmente el codigo combina title + content en un solo campo `title` para videos (linea 838), perdiendo la separacion semantica.
-
-**Correccion**: Enviar `description` como campo separado en FormData para todos los tipos de post.
-
-### 3.2 `first_comment`
-
-**Problema**: No se soporta. La API permite publicar un primer comentario automatico en Instagram, Facebook, Threads, Bluesky, Reddit, X y YouTube.
-
-**Correccion**: Agregar campo `first_comment` al publisher y al proxy.
-
-### 3.3 `timezone`
-
-**Problema**: No se envia. Las fechas programadas se interpretan como UTC por defecto.
-
-**Correccion**: Detectar la timezone del navegador del usuario y enviarla con `scheduled_date`.
-
-### 3.4 `add_to_queue`
-
-**Problema**: No se soporta el sistema de Queue. Es una alternativa a `scheduled_date` que asigna automaticamente el post al siguiente slot disponible.
-
-**Correccion**: Agregar opcion "Agregar a cola" en el publisher como tercera opcion junto a "Inmediato" y "Programado".
+**Total a eliminar: 5 funciones**
 
 ---
 
-## 4. Parametros platform-specific no expuestos
+## Categoria 2: FUSIONAR (Redundancia Funcional)
 
-### 4.1 Platform-specific titles
+### 2a. `marketing-autopilot-engine` -> absorber en `enterprise-autopilot-engine`
 
-**Problema**: Se envia un unico `title` para todas las plataformas. La API permite `instagram_title`, `linkedin_title`, `x_title`, `facebook_title`, `tiktok_title`, etc.
+- `marketing-autopilot-engine` es un thin wrapper que solo hace `fetch()` a `enterprise-autopilot-engine` con `department=marketing`
+- Tiene **1 invocacion** en `AutopilotDashboard.tsx`
+- **Accion**: Cambiar la invocacion en `AutopilotDashboard.tsx` de `marketing-autopilot-engine` a `enterprise-autopilot-engine` con `{ department: 'marketing' }`. Eliminar la funcion wrapper.
 
-**Correccion**: Agregar panel colapsable "Personalizar por plataforma" en el publisher.
+### 2b. `content-insights-analyzer` vs `content-insights-generator`
 
-### 4.2 Parametros de plataforma criticos faltantes
+- `content-insights-analyzer`: 1 invocacion en `AdvancedMarketingDashboard.tsx`
+- `content-insights-generator`: 4+ invocaciones activas (ContentCreatorHub, SimpleContentPublisher, etc.)
+- Ambas hacen analisis de contenido con OpenAI
+- **Accion**: Migrar la unica invocacion de `content-insights-analyzer` hacia `content-insights-generator` anadiendo un parametro `mode: 'cross_platform_analysis'`. Eliminar `content-insights-analyzer`.
 
-| Plataforma | Parametro | Descripcion | Impacto |
-|---|---|---|---|
-| Instagram | `media_type` | REELS vs STORIES vs IMAGE | Alto - usuarios no pueden elegir tipo |
-| Instagram | `collaborators` | Colaboradores | Medio |
-| TikTok | `privacy_level` | Privacidad del post | Alto |
-| TikTok | `is_aigc` | Marca contenido como IA | Legal/Compliance |
-| YouTube | `tags[]` | Tags del video | SEO |
-| YouTube | `privacyStatus` | public/unlisted/private | Alto |
-| YouTube | `categoryId` | Categoria | Medio |
-| YouTube | `containsSyntheticMedia` | AI transparency | Legal |
-| Facebook | `facebook_media_type` | REELS vs STORIES vs VIDEO | Alto |
-| Pinterest | `pinterest_board_id` | Board destino | Critico - requerido |
-| Pinterest | `pinterest_link` | URL destino | Medio |
-| Reddit | `subreddit` | Subreddit destino | Critico - requerido |
-| Reddit | `flair_id` | Flair del post | Medio |
-
-**Correccion**: Agregar selector de parametros especificos segun plataformas seleccionadas.
+**Total a fusionar/eliminar: 2 funciones adicionales**
 
 ---
 
-## 5. Plataformas faltantes en el filtro
+## Categoria 3: MANTENER (Con Uso Activo Verificado)
 
-**Problema**: `filterPlatformsByPostType` no incluye `reddit` en las plataformas soportadas para text, photo y video.
+Funciones con invocaciones activas confirmadas que **no se tocan**:
 
-**Codigo actual**:
-```
-text: ['linkedin', 'x', 'facebook', 'threads', 'reddit', 'bluesky']  -- OK
-photo: ['tiktok', 'instagram', 'linkedin', 'facebook', 'x', 'threads', 'pinterest', 'bluesky'] -- FALTA reddit
-video: ['tiktok', 'instagram', 'linkedin', 'youtube', 'facebook', 'twitter', 'threads', 'pinterest', 'bluesky'] -- FALTA reddit, usa 'twitter' en vez de 'x'
-```
-
-**Correccion**: Agregar `reddit` a photo y video. Cambiar `twitter` a `x` en video (consistencia, pero mantener backward compat con el API que acepta ambos para video).
-
----
-
-## 6. `validateToken` funcion rota (BUG)
-
-**Problema critico**: La funcion `validateToken` tiene llaves mal cerradas. En linea 1061 se cierra la funcion prematuramente con `}` pero el `try/catch` del token validation continua desde linea 1218.
-
-```
-async function validateToken(data: any) {
-  const { token } = data || {};
-  if (!token) {
-    return { success: false, error: 'Missing token' };
-}    // <-- cierra la funcion aqui
-
-// Codigo suelto fuera de cualquier funcion:
-  try {
-    const response = await fetch('...');
-    ...
-  }
-}
-```
-
-**Correccion**: Cerrar correctamente la funcion envolviendo todo el bloque.
+| Grupo | Funciones |
+|-------|-----------|
+| **Core Social** | `upload-post-manager`, `advanced-social-analyzer`, `analyze-social-audience`, `analyze-social-content`, `analyze-social-activity`, `analyze-social-retrospective` |
+| **Scrapers** | `linkedin-scraper`, `instagram-scraper`, `facebook-scraper`, `tiktok-scraper` |
+| **Intelligent Analysis** | `linkedin-intelligent-analysis`, `instagram-intelligent-analysis`, `facebook-intelligent-analysis`, `tiktok-intelligent-analysis` |
+| **AI Core** | `universal-ai-handler`, `ai-provider-handler`, `openai-responses-handler`, `agent-sdk-executor` |
+| **Marketing Hub** | `marketing-hub-post-creator`, `marketing-hub-image-creator`, `marketing-hub-video-creator`, `marketing-hub-reel-creator`, `marketing-hub-content-calendar`, `marketing-hub-marketing-strategy` |
+| **Content** | `generate-company-content`, `content-insights-generator`, `content-embeddings-generator` |
+| **Strategy/DNA** | `company-strategy`, `brand-identity`, `generate-business-objectives`, `manage-company-objectives`, `company-info-extractor` |
+| **Auth** | `webauthn-*` (4), `facebook-instagram-auth`, `linkedin-oauth-callback`, `tiktok-auth` |
+| **Email** | `send-buildera-email`, `send-verification-email`, `send-password-reset-email`, `process-inbound-email`, `send-company-invitation`, `accept-company-invitation` |
+| **Admin** | `fetch-available-models`, `ai-model-monitoring`, `run-champion-challenge`, `sandbox-agent-executor`, `check-subscription-status` |
+| **Misc Active** | `translate-content`, `analyze-competitors`, `analyze-single-competitor`, `competitive-intelligence-agent`, `era-chat`, `era-content-optimizer`, `era-campaign-optimizer`, `ai-audience-generator`, `ai-learning-tutor`, `premium-ai-insights`, `semantic-content-analyzer`, `calculate-social-analytics`, `calculate-dashboard-metrics`, `download-content-asset`, `get-upload-post-analytics`, `audience-intelligence-analysis`, `create-company-agent`, `company-agent-chat`, `create-response-agent`, `execute-n8n-agent`, `onboarding-agent-orchestrator`, `delete-user`, `creatify-proxy`, `smart-link-manager`, `create-subscription-checkout`, `handle-subscription-webhook`, `advanced-content-analyzer`, `generate-next-best-actions` |
+| **Autopilot** | `enterprise-autopilot-engine`, `marketing-diagnostic-loop` |
 
 ---
 
-## 7. Analytics API no integrada en el proxy principal
+## Categoria 4: PENDIENTES DE DEPLOY (Requieren Slots)
 
-**Problema**: Existe una edge function separada `get-upload-post-analytics` pero no esta integrada como accion del `upload-post-manager`. Esto fragmenta la logica.
+Estas 3 funciones estan escritas pero **no se pudieron desplegar** por limite:
 
-**Correccion**: Agregar accion `get_analytics` al switch del manager para centralizacion, o documentar que es intencionalmente separada.
-
----
-
-## 8. Respuesta de upload no parseada completamente
-
-**Problema**: La respuesta de la API incluye campos utiles que no se persisten:
-
-- `usage.count` / `usage.limit` (creditos consumidos vs limite)
-- Per-platform `url`, `post_id`, `publish_id` (links directos al post publicado)
-- `request_id` (para async uploads -- se retorna pero no se persiste en DB)
-
-**Correccion**: Persistir `request_id` y `usage` en `scheduled_social_posts.upload_post_response`, y mostrar links directos a posts publicados en la UI.
+| Funcion | Estado |
+|---------|--------|
+| `social-automation-engine` | Codigo listo, no deployado |
+| `social-listening-engine` | Codigo listo, no deployado |
+| `slideshow-generator` | Codigo listo, no integrado en UI aun |
 
 ---
 
-## 9. Video upload: soporte de media type
+## Plan de Ejecucion
 
-**Problema**: Para videos, el codigo solo envia `video=URL`. No soporta:
-- Instagram Stories (`media_type: "STORIES"`)
-- Facebook Stories (`facebook_media_type: "STORIES"`)
-- Facebook Videos normales (`facebook_media_type: "VIDEO"`)
+### Paso 1: Eliminar 5 funciones obsoletas
+- Borrar directorios de: `execute-workforce-mission`, `generate-analytics-data`, `sync-api-usage`, `social-tags-resolver`, `social-media-bulk-processor`
+- Eliminar sus entradas de `supabase/config.toml`
+- Llamar `delete_edge_functions` para removerlas del deploy
 
-**Correccion**: Agregar selector de tipo de contenido por plataforma (Reel vs Story vs Video normal).
+### Paso 2: Fusionar `marketing-autopilot-engine`
+- En `AutopilotDashboard.tsx`: cambiar invoke de `marketing-autopilot-engine` a `enterprise-autopilot-engine` con `{ company_id, department: 'marketing' }`
+- Borrar directorio y config de `marketing-autopilot-engine`
+
+### Paso 3: Fusionar `content-insights-analyzer`
+- En `AdvancedMarketingDashboard.tsx`: cambiar invoke a `content-insights-generator` con parametro adicional `mode: 'cross_platform'`
+- Agregar handling del modo `cross_platform` en `content-insights-generator` si no existe
+- Borrar directorio y config de `content-insights-analyzer`
+
+### Paso 4: Desplegar funciones pendientes
+- Con los 7 slots liberados, deployar: `social-automation-engine`, `social-listening-engine`, `slideshow-generator`
 
 ---
 
-## Archivos a modificar
+## Resultado Esperado
 
-| Archivo | Cambio | Prioridad |
-|---|---|---|
-| `supabase/functions/upload-post-manager/index.ts` | Fix endpoint video, fix Auth headers, fix validateToken bug, agregar `description`, `first_comment`, `timezone`, `add_to_queue`, platform-specific params, fix filtro plataformas | Critica |
-| `src/components/company/SimpleContentPublisher.tsx` | Agregar campos: first_comment, timezone, add_to_queue, panel platform-specific params, selector media_type (Reel/Story/Video) | Alta |
-| `public/locales/{es,en,pt}/marketing.json` | Traducciones para nuevos campos | Media |
-
----
-
-## Impacto esperado
-
-- **Fiabilidad**: Fix de endpoint video + Auth headers + validateToken bug = publicaciones de video que actualmente pueden fallar pasaran a funcionar
-- **Funcionalidad**: De ~60% de los parametros de la API a ~90%
-- **UX**: First comment, queue system, platform-specific titles y parametros por plataforma
-- **Compliance**: Soporte de `is_aigc` (TikTok) y `containsSyntheticMedia` (YouTube) para transparencia de contenido IA
-- **Competitividad**: Exposicion de capacidades avanzadas como Trial Reels, X Threads, Reddit flairs y Pinterest boards
+| Metrica | Antes | Despues |
+|---------|-------|---------|
+| Total Edge Functions | 95 | 88 |
+| Funciones sin uso | 7 | 0 |
+| Slots libres para nuevas | 0 | 4+ |
+| Funciones Autopilot deployadas | 1 | 4 |
 

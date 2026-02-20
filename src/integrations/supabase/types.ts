@@ -1041,6 +1041,69 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_execution_log: {
+        Row: {
+          action_payload: Json | null
+          action_result: Json | null
+          action_type: string
+          company_id: string
+          created_at: string
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          platform: string
+          rule_id: string
+          status: string
+          trigger_data: Json | null
+          trigger_type: string
+        }
+        Insert: {
+          action_payload?: Json | null
+          action_result?: Json | null
+          action_type: string
+          company_id: string
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          platform: string
+          rule_id: string
+          status?: string
+          trigger_data?: Json | null
+          trigger_type: string
+        }
+        Update: {
+          action_payload?: Json | null
+          action_result?: Json | null
+          action_type?: string
+          company_id?: string
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          platform?: string
+          rule_id?: string
+          status?: string
+          trigger_data?: Json | null
+          trigger_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_execution_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_execution_log_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "social_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       autopilot_capabilities: {
         Row: {
           activated_at: string | null
@@ -4144,12 +4207,15 @@ export type Database = {
       }
       content_approvals: {
         Row: {
+          auto_published: boolean
           company_id: string
           content_data: Json | null
           content_id: string
           content_type: string
           created_at: string
           id: string
+          published_at: string | null
+          published_by: string | null
           reviewed_at: string | null
           reviewer_comments: string | null
           reviewer_id: string | null
@@ -4159,12 +4225,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_published?: boolean
           company_id: string
           content_data?: Json | null
           content_id: string
           content_type?: string
           created_at?: string
           id?: string
+          published_at?: string | null
+          published_by?: string | null
           reviewed_at?: string | null
           reviewer_comments?: string | null
           reviewer_id?: string | null
@@ -4174,12 +4243,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_published?: boolean
           company_id?: string
           content_data?: Json | null
           content_id?: string
           content_type?: string
           created_at?: string
           id?: string
+          published_at?: string | null
+          published_by?: string | null
           reviewed_at?: string | null
           reviewer_comments?: string | null
           reviewer_id?: string | null
@@ -9341,6 +9413,127 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      social_listening_config: {
+        Row: {
+          alert_on_competitor_ad: boolean
+          alert_on_negative: boolean
+          alert_threshold: number
+          company_id: string
+          competitor_handles: string[] | null
+          created_at: string
+          id: string
+          is_active: boolean
+          keywords: string[] | null
+          last_scan_at: string | null
+          platforms: string[] | null
+          scan_frequency_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          alert_on_competitor_ad?: boolean
+          alert_on_negative?: boolean
+          alert_threshold?: number
+          company_id: string
+          competitor_handles?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          last_scan_at?: string | null
+          platforms?: string[] | null
+          scan_frequency_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          alert_on_competitor_ad?: boolean
+          alert_on_negative?: boolean
+          alert_threshold?: number
+          company_id?: string
+          competitor_handles?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          keywords?: string[] | null
+          last_scan_at?: string | null
+          platforms?: string[] | null
+          scan_frequency_minutes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_listening_config_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_listening_events: {
+        Row: {
+          actioned_at: string | null
+          actioned_by: string | null
+          company_id: string
+          content_text: string | null
+          created_at: string
+          detected_at: string
+          event_type: string
+          id: string
+          is_actioned: boolean
+          is_read: boolean
+          metadata: Json | null
+          platform: string
+          sentiment: string | null
+          sentiment_score: number | null
+          source_url: string | null
+          source_username: string | null
+        }
+        Insert: {
+          actioned_at?: string | null
+          actioned_by?: string | null
+          company_id: string
+          content_text?: string | null
+          created_at?: string
+          detected_at?: string
+          event_type: string
+          id?: string
+          is_actioned?: boolean
+          is_read?: boolean
+          metadata?: Json | null
+          platform: string
+          sentiment?: string | null
+          sentiment_score?: number | null
+          source_url?: string | null
+          source_username?: string | null
+        }
+        Update: {
+          actioned_at?: string | null
+          actioned_by?: string | null
+          company_id?: string
+          content_text?: string | null
+          created_at?: string
+          detected_at?: string
+          event_type?: string
+          id?: string
+          is_actioned?: boolean
+          is_read?: boolean
+          metadata?: Json | null
+          platform?: string
+          sentiment?: string | null
+          sentiment_score?: number | null
+          source_url?: string | null
+          source_username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_listening_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       social_media_analytics: {
         Row: {

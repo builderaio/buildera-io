@@ -113,6 +113,27 @@ serve(async (req) => {
       case 'get_instagram_conversations':
         result = await getInstagramConversations(uploadPostApiKey, data);
         break;
+      // === GAP 1: Upload Document (LinkedIn PDF/PPT carousels) ===
+      case 'upload_document':
+        result = await uploadDocument(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
+      // === GAP 2: Edit Scheduled Post ===
+      case 'edit_scheduled_post':
+        result = await editScheduledPost(supabaseClient, user.id, uploadPostApiKey, data);
+        break;
+      // === GAP 3: Queue Management ===
+      case 'get_queue_settings':
+        result = await getQueueSettings(uploadPostApiKey, data);
+        break;
+      case 'update_queue_settings':
+        result = await updateQueueSettings(uploadPostApiKey, data);
+        break;
+      case 'get_queue_preview':
+        result = await getQueuePreview(uploadPostApiKey, data);
+        break;
+      case 'get_next_queue_slot':
+        result = await getNextQueueSlot(uploadPostApiKey, data);
+        break;
       default:
         return new Response(
           JSON.stringify({ error: 'Acción no válida' }),
@@ -811,12 +832,41 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       if (platform_params.instagram_collaborators) {
         formData.append('collaborators', platform_params.instagram_collaborators);
       }
+      // === GAP 4: Instagram share_mode (Trial Reels) ===
+      if (platform_params.instagram_share_mode) {
+        formData.append('share_mode', platform_params.instagram_share_mode);
+      }
+      // === GAP 4: Instagram cover_url ===
+      if (platform_params.instagram_cover_url) {
+        formData.append('cover_url', platform_params.instagram_cover_url);
+      }
+      if (platform_params.instagram_user_tags) {
+        formData.append('user_tags', platform_params.instagram_user_tags);
+      }
+      if (platform_params.instagram_location_id) {
+        formData.append('location_id', platform_params.instagram_location_id);
+      }
       // TikTok
       if (platform_params.tiktok_privacy_level) {
         formData.append('privacy_level', platform_params.tiktok_privacy_level);
       }
       if (platform_params.tiktok_is_aigc) {
         formData.append('is_aigc', 'true');
+      }
+      if (platform_params.tiktok_post_mode) {
+        formData.append('post_mode', platform_params.tiktok_post_mode);
+      }
+      if (platform_params.tiktok_disable_comment) {
+        formData.append('disable_comment', 'true');
+      }
+      if (platform_params.tiktok_auto_add_music) {
+        formData.append('auto_add_music', 'true');
+      }
+      if (platform_params.tiktok_brand_content_toggle) {
+        formData.append('brand_content_toggle', 'true');
+      }
+      if (platform_params.tiktok_brand_organic_toggle) {
+        formData.append('brand_organic_toggle', 'true');
       }
       // YouTube
       if (platform_params.youtube_tags && platform_params.youtube_tags.length > 0) {
@@ -833,9 +883,19 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       if (platform_params.youtube_contains_synthetic_media) {
         formData.append('containsSyntheticMedia', 'true');
       }
+      // === GAP 4: YouTube thumbnail_url ===
+      if (platform_params.youtube_thumbnail_url) {
+        formData.append('thumbnail_url', platform_params.youtube_thumbnail_url);
+      }
+      if (platform_params.youtube_made_for_kids !== undefined) {
+        formData.append('madeForKids', platform_params.youtube_made_for_kids ? 'true' : 'false');
+      }
       // Facebook
       if (platform_params.facebook_media_type) {
         formData.append('facebook_media_type', platform_params.facebook_media_type);
+      }
+      if (platform_params.facebook_link_url) {
+        formData.append('facebook_link_url', platform_params.facebook_link_url);
       }
       // Pinterest
       if (platform_params.pinterest_board_id) {
@@ -844,6 +904,9 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       if (platform_params.pinterest_link) {
         formData.append('pinterest_link', platform_params.pinterest_link);
       }
+      if (platform_params.pinterest_alt_text) {
+        formData.append('pinterest_alt_text', platform_params.pinterest_alt_text);
+      }
       // Reddit
       if (platform_params.subreddit) {
         formData.append('subreddit', platform_params.subreddit);
@@ -851,6 +914,39 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       if (platform_params.flair_id) {
         formData.append('flair_id', platform_params.flair_id);
       }
+      // === GAP 5: X/Twitter polls & community ===
+      if (platform_params.x_poll_options && platform_params.x_poll_options.length >= 2) {
+        platform_params.x_poll_options.forEach((opt: string) => {
+          formData.append('poll_options[]', opt);
+        });
+        if (platform_params.x_poll_duration) {
+          formData.append('poll_duration', String(platform_params.x_poll_duration));
+        }
+      }
+      if (platform_params.x_community_id) {
+        formData.append('community_id', platform_params.x_community_id);
+      }
+      if (platform_params.x_reply_settings) {
+        formData.append('reply_settings', platform_params.x_reply_settings);
+      }
+      if (platform_params.x_long_text_as_post) {
+        formData.append('x_long_text_as_post', 'true');
+      }
+      if (platform_params.x_thread_image_layout) {
+        formData.append('x_thread_image_layout', platform_params.x_thread_image_layout);
+      }
+      // === GAP 5: Threads media layout ===
+      if (platform_params.threads_thread_media_layout) {
+        formData.append('threads_thread_media_layout', platform_params.threads_thread_media_layout);
+      }
+      // Platform-specific first comments
+      if (platform_params.instagram_first_comment) formData.append('instagram_first_comment', platform_params.instagram_first_comment);
+      if (platform_params.facebook_first_comment) formData.append('facebook_first_comment', platform_params.facebook_first_comment);
+      if (platform_params.x_first_comment) formData.append('x_first_comment', platform_params.x_first_comment);
+      if (platform_params.threads_first_comment) formData.append('threads_first_comment', platform_params.threads_first_comment);
+      if (platform_params.youtube_first_comment) formData.append('youtube_first_comment', platform_params.youtube_first_comment);
+      if (platform_params.reddit_first_comment) formData.append('reddit_first_comment', platform_params.reddit_first_comment);
+      if (platform_params.bluesky_first_comment) formData.append('bluesky_first_comment', platform_params.bluesky_first_comment);
       // Platform-specific titles
       if (platform_params.instagram_title) formData.append('instagram_title', platform_params.instagram_title);
       if (platform_params.linkedin_title) formData.append('linkedin_title', platform_params.linkedin_title);
@@ -858,6 +954,10 @@ async function postContent(supabaseClient: any, userId: string, apiKey: string, 
       if (platform_params.facebook_title) formData.append('facebook_title', platform_params.facebook_title);
       if (platform_params.tiktok_title) formData.append('tiktok_title', platform_params.tiktok_title);
       if (platform_params.youtube_title) formData.append('youtube_title', platform_params.youtube_title);
+      if (platform_params.threads_title) formData.append('threads_title', platform_params.threads_title);
+      if (platform_params.pinterest_title) formData.append('pinterest_title', platform_params.pinterest_title);
+      if (platform_params.reddit_title) formData.append('reddit_title', platform_params.reddit_title);
+      if (platform_params.bluesky_title) formData.append('bluesky_title', platform_params.bluesky_title);
     }
 
     if (postType === 'text') {
@@ -1295,4 +1395,230 @@ async function getInstagramConversations(apiKey: string, data: any) {
     console.error('Error in getInstagramConversations:', error);
     throw error;
   }
+}
+
+// ============= GAP 1: Upload Document (LinkedIn PDF/PPT carousels) =============
+
+async function uploadDocument(supabaseClient: any, userId: string, apiKey: string, data: any) {
+  const { 
+    companyUsername, documentUrl, title, description, visibility, 
+    target_linkedin_page_id 
+  } = data;
+
+  if (!documentUrl) throw new Error('Missing document URL');
+  if (!title) throw new Error('Missing document title');
+
+  console.log(`📄 Uploading document to LinkedIn for ${companyUsername}`);
+
+  // Get LinkedIn page ID from social_accounts if not provided
+  let linkedinPageId = target_linkedin_page_id;
+  if (!linkedinPageId) {
+    const { data: linkedinAccount } = await supabaseClient
+      .from('social_accounts')
+      .select('linkedin_page_id')
+      .eq('user_id', userId)
+      .eq('platform', 'linkedin')
+      .single();
+    
+    if (linkedinAccount?.linkedin_page_id) {
+      linkedinPageId = linkedinAccount.linkedin_page_id.includes('urn:li:organization:')
+        ? linkedinAccount.linkedin_page_id.split('urn:li:organization:')[1]
+        : linkedinAccount.linkedin_page_id;
+    }
+  }
+
+  const formData = new FormData();
+  formData.append('user', companyUsername);
+  formData.append('platform[]', 'linkedin');
+  formData.append('document', documentUrl);
+  formData.append('title', title);
+  
+  if (description) formData.append('description', description);
+  if (visibility) formData.append('visibility', visibility);
+  if (linkedinPageId) formData.append('target_linkedin_page_id', linkedinPageId);
+
+  const response = await fetch('https://api.upload-post.com/api/upload_document', {
+    method: 'POST',
+    headers: { 'Authorization': AUTH_HEADER(apiKey) },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error uploading document: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  console.log('✅ Document uploaded:', result);
+
+  // Persist in scheduled_social_posts
+  if (result.job_id || result.request_id) {
+    await supabaseClient
+      .from('scheduled_social_posts')
+      .insert({
+        user_id: userId,
+        company_username: companyUsername,
+        job_id: result.job_id || result.request_id,
+        platforms: ['linkedin'],
+        title,
+        content: description,
+        post_type: 'document',
+        scheduled_date: new Date().toISOString(),
+        upload_post_response: result,
+      });
+  }
+
+  return result;
+}
+
+// ============= GAP 2: Edit Scheduled Post =============
+
+async function editScheduledPost(supabaseClient: any, userId: string, apiKey: string, data: any) {
+  const { jobId, scheduled_date, title, caption } = data;
+
+  if (!jobId) throw new Error('Missing jobId parameter');
+
+  console.log(`✏️ Editing scheduled post: ${jobId}`);
+
+  const body: any = {};
+  if (scheduled_date) body.scheduled_date = scheduled_date;
+  if (title) body.title = title;
+  if (caption) body.caption = caption;
+
+  const response = await fetch(`https://api.upload-post.com/api/uploadposts/schedule/${jobId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': AUTH_HEADER(apiKey),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error editing scheduled post: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+
+  // Update local record
+  const updateData: any = {};
+  if (scheduled_date) updateData.scheduled_date = scheduled_date;
+  if (title) updateData.title = title;
+  if (caption) updateData.content = caption;
+
+  if (Object.keys(updateData).length > 0) {
+    await supabaseClient
+      .from('scheduled_social_posts')
+      .update(updateData)
+      .eq('user_id', userId)
+      .eq('job_id', jobId);
+  }
+
+  console.log('✅ Scheduled post edited:', result);
+  return { success: true, ...result };
+}
+
+// ============= GAP 3: Queue Management =============
+
+async function getQueueSettings(apiKey: string, data: any) {
+  const { companyUsername } = data;
+  if (!companyUsername) throw new Error('Missing companyUsername');
+
+  console.log(`⚙️ Getting queue settings for: ${companyUsername}`);
+
+  const response = await fetch(
+    `https://api.upload-post.com/api/uploadposts/queue/settings?profile_username=${companyUsername}`,
+    {
+      method: 'GET',
+      headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error getting queue settings: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  console.log('✅ Queue settings retrieved:', result);
+  return { success: true, ...result };
+}
+
+async function updateQueueSettings(apiKey: string, data: any) {
+  const { companyUsername, timezone, slots, days_of_week } = data;
+  if (!companyUsername) throw new Error('Missing companyUsername');
+
+  console.log(`⚙️ Updating queue settings for: ${companyUsername}`);
+
+  const body: any = { profile_username: companyUsername };
+  if (timezone) body.timezone = timezone;
+  if (slots) body.slots = slots;
+  if (days_of_week) body.days_of_week = days_of_week;
+
+  const response = await fetch('https://api.upload-post.com/api/uploadposts/queue/settings', {
+    method: 'POST',
+    headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error updating queue settings: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  console.log('✅ Queue settings updated:', result);
+  return { success: true, ...result };
+}
+
+async function getQueuePreview(apiKey: string, data: any) {
+  const { companyUsername, count } = data;
+  if (!companyUsername) throw new Error('Missing companyUsername');
+
+  const params = new URLSearchParams({ profile_username: companyUsername });
+  if (count) params.append('count', String(count));
+
+  console.log(`👁️ Getting queue preview for: ${companyUsername}`);
+
+  const response = await fetch(
+    `https://api.upload-post.com/api/uploadposts/queue/preview?${params.toString()}`,
+    {
+      method: 'GET',
+      headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error getting queue preview: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  console.log('✅ Queue preview retrieved:', result);
+  return { success: true, ...result };
+}
+
+async function getNextQueueSlot(apiKey: string, data: any) {
+  const { companyUsername } = data;
+  if (!companyUsername) throw new Error('Missing companyUsername');
+
+  console.log(`⏭️ Getting next queue slot for: ${companyUsername}`);
+
+  const response = await fetch(
+    `https://api.upload-post.com/api/uploadposts/queue/next-slot?profile_username=${companyUsername}`,
+    {
+      method: 'GET',
+      headers: { 'Authorization': AUTH_HEADER(apiKey), 'Content-Type': 'application/json' },
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error getting next queue slot: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  console.log('✅ Next queue slot:', result);
+  return { success: true, ...result };
 }

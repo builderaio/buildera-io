@@ -49,7 +49,7 @@ serve(async (req) => {
     // Obtener las cuentas conectadas del usuario desde social_accounts
     const { data: socialAccounts, error: accountsError } = await supabaseClient
       .from('social_accounts')
-      .select('*')
+      .select('*, facebook_page_id, linkedin_page_id')
       .eq('user_id', user.id)
       .eq('is_connected', true)
       .neq('platform', 'upload_post_profile');
@@ -73,18 +73,20 @@ serve(async (req) => {
     console.log('🔍 Cuentas conectadas encontradas:', socialAccounts.length);
 
     // Agrupar por company_username para hacer una sola llamada por perfil
-    const profilesMap = new Map<string, string[]>();
+    const profilesMap = new Map<string, { platforms: string[], accounts: any[] }>();
     
     for (const account of socialAccounts) {
       const companyUsername = account.company_username;
       const platform = mapPlatformName(account.platform);
       
       if (!profilesMap.has(companyUsername)) {
-        profilesMap.set(companyUsername, []);
+        profilesMap.set(companyUsername, { platforms: [], accounts: [] });
       }
       
       if (platform) {
-        profilesMap.get(companyUsername)!.push(platform);
+        const entry = profilesMap.get(companyUsername)!;
+        entry.platforms.push(platform);
+        entry.accounts.push(account);
       }
     }
 
@@ -93,13 +95,30 @@ serve(async (req) => {
     // Obtener analítica para cada perfil
     const analyticsResults: AnalyticsResult[] = [];
 
-    for (const [companyUsername, platforms] of profilesMap.entries()) {
+    for (const [companyUsername, { platforms, accounts }] of profilesMap.entries()) {
       const platformsParam = platforms.join(',');
       
+      // === GAP 6: Build query params with page_id and page_urn ===
+      const queryParams = new URLSearchParams({ platforms: platformsParam });
+      
+      // Find Facebook account and add page_id if available
+      const facebookAccount = accounts.find((a: any) => a.platform === 'facebook');
+      if (facebookAccount?.facebook_page_id) {
+        queryParams.append('page_id', facebookAccount.facebook_page_id);
+        console.log(`📘 Added Facebook page_id: ${facebookAccount.facebook_page_id}`);
+      }
+      
+      // Find LinkedIn account and add page_urn if available
+      const linkedinAccount = accounts.find((a: any) => a.platform === 'linkedin');
+      if (linkedinAccount?.linkedin_page_id) {
+        queryParams.append('page_urn', linkedinAccount.linkedin_page_id);
+        console.log(`💼 Added LinkedIn page_urn: ${linkedinAccount.linkedin_page_id}`);
+      }
+
       try {
         console.log(`📡 Obteniendo analítica para ${companyUsername} en plataformas: ${platformsParam}`);
         
-        const analyticsUrl = `https://api.upload-post.com/api/analytics/${companyUsername}?platforms=${platformsParam}`;
+        const analyticsUrl = `https://api.upload-post.com/api/analytics/${companyUsername}?${queryParams.toString()}`;
         
         const response = await fetch(analyticsUrl, {
           method: 'GET',

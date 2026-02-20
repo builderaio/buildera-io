@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, RefreshCw, Clock, Coins } from "lucide-react";
 
 interface GenerationStatusTrackerProps {
   status: string;
@@ -11,6 +11,9 @@ interface GenerationStatusTrackerProps {
   onRetry?: () => void;
   output?: any;
   children?: React.ReactNode;
+  creditsUsed?: number | null;
+  duration?: number | null;
+  thumbnailUrl?: string | null;
 }
 
 export const GenerationStatusTracker = ({
@@ -19,6 +22,9 @@ export const GenerationStatusTracker = ({
   error,
   onRetry,
   children,
+  creditsUsed,
+  duration,
+  thumbnailUrl,
 }: GenerationStatusTrackerProps) => {
   const { t } = useTranslation("creatify");
 
@@ -29,6 +35,16 @@ export const GenerationStatusTracker = ({
           <div className="flex items-center gap-3 mb-4">
             <CheckCircle2 className="h-6 w-6 text-green-600" />
             <p className="text-green-800 font-medium">{t("status.completed")}</p>
+            {creditsUsed != null && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
+                <Coins className="h-3 w-3" /> {creditsUsed} {t("status.credits")}
+              </span>
+            )}
+            {duration != null && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" /> {duration}s
+              </span>
+            )}
           </div>
           {children}
         </CardContent>
@@ -68,6 +84,9 @@ export const GenerationStatusTracker = ({
              t("status.preparing")}
           </p>
         </div>
+        {thumbnailUrl && (
+          <img src={thumbnailUrl} alt="Preview" className="w-full rounded-lg max-h-[200px] object-cover mb-3" />
+        )}
         <Progress value={progress} className="h-2 mb-2" />
         <p className="text-xs text-muted-foreground text-right">{Math.round(progress)}%</p>
       </CardContent>

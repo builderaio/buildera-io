@@ -4,9 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Video, Loader2, ExternalLink } from "lucide-react";
-import { createLink, createUrlToVideo, checkVideoStatus, PLATFORM_ASPECT_RATIO, OBJECTIVE_SCRIPT_STYLE } from "@/lib/api/creatify";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
+import { Video, Loader2, ExternalLink, ChevronDown, Settings2 } from "lucide-react";
+import {
+  createLink, createUrlToVideo, checkVideoStatus,
+  PLATFORM_ASPECT_RATIO, OBJECTIVE_SCRIPT_STYLE,
+  VISUAL_STYLES, SCRIPT_STYLES, VIDEO_LENGTHS, MODEL_VERSIONS,
+} from "@/lib/api/creatify";
 import { useCreatifyJob } from "@/hooks/useCreatifyJob";
 import { GenerationStatusTracker } from "./GenerationStatusTracker";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +44,16 @@ export const VideoGenerationForm = ({
   const [scriptStyle, setScriptStyle] = useState(
     campaignObjective ? OBJECTIVE_SCRIPT_STYLE[campaignObjective] || "BrandStoryV2" : "BrandStoryV2"
   );
+  const [visualStyle, setVisualStyle] = useState("AvatarBubbleTemplate");
   const [platform, setPlatform] = useState(targetPlatform || "instagram_feed");
+  const [videoLength, setVideoLength] = useState<number>(30);
+  const [targetAudience, setTargetAudience] = useState("");
+  const [overrideScript, setOverrideScript] = useState("");
+  const [noBackgroundMusic, setNoBackgroundMusic] = useState(false);
+  const [noCaption, setNoCaption] = useState(false);
+  const [noCta, setNoCta] = useState(false);
+  const [modelVersion, setModelVersion] = useState("standard");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
 
@@ -51,17 +67,22 @@ export const VideoGenerationForm = ({
 
     setCreating(true);
     try {
-      // Step 1: Create link from URL
       const link = await createLink(url);
 
-      // Step 2: Generate video
       const video = await createUrlToVideo({
         link_id: link.id,
-        visual_style: "modern",
+        visual_style: visualStyle,
         script_style: scriptStyle,
         aspect_ratio: aspectRatio,
         target_platform: platform,
+        target_audience: targetAudience || undefined,
         language,
+        video_length: videoLength,
+        override_script: overrideScript || undefined,
+        no_background_music: noBackgroundMusic || undefined,
+        no_caption: noCaption || undefined,
+        no_cta: noCta || undefined,
+        model_version: modelVersion !== "standard" ? modelVersion : undefined,
         company_id: companyId,
         campaign_id: campaignId,
       });
@@ -74,6 +95,8 @@ export const VideoGenerationForm = ({
       setCreating(false);
     }
   };
+
+  const isDisabled = creating || job.isLoading;
 
   return (
     <div className="space-y-4">
@@ -91,17 +114,17 @@ export const VideoGenerationForm = ({
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://..."
-              disabled={creating || job.isLoading}
+              disabled={isDisabled}
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label>{t("videoAd.platform")}</Label>
               <Select value={platform} onValueChange={(v) => {
                 setPlatform(v);
                 setAspectRatio(PLATFORM_ASPECT_RATIO[v] || "16x9");
-              }} disabled={creating || job.isLoading}>
+              }} disabled={isDisabled}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="tiktok">TikTok</SelectItem>
@@ -117,30 +140,120 @@ export const VideoGenerationForm = ({
 
             <div className="space-y-2">
               <Label>{t("videoAd.scriptStyle")}</Label>
-              <Select value={scriptStyle} onValueChange={setScriptStyle} disabled={creating || job.isLoading}>
+              <Select value={scriptStyle} onValueChange={setScriptStyle} disabled={isDisabled}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="BrandStoryV2">{t("scriptStyles.brandStory")}</SelectItem>
-                  <SelectItem value="CallToActionV2">{t("scriptStyles.callToAction")}</SelectItem>
-                  <SelectItem value="SpecialOffersV2">{t("scriptStyles.specialOffers")}</SelectItem>
-                  <SelectItem value="DiscoveryWriter">{t("scriptStyles.discovery")}</SelectItem>
-                  <SelectItem value="HowToV2">{t("scriptStyles.howTo")}</SelectItem>
+                  {SCRIPT_STYLES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {t(s.labelKey)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>{t("videoAd.aspectRatio")}</Label>
-              <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={creating || job.isLoading}>
+              <Label>{t("videoAd.visualStyle")}</Label>
+              <Select value={visualStyle} onValueChange={setVisualStyle} disabled={isDisabled}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="9x16">9:16 (Vertical)</SelectItem>
-                  <SelectItem value="16x9">16:9 (Horizontal)</SelectItem>
-                  <SelectItem value="1x1">1:1 (Cuadrado)</SelectItem>
+                  {VISUAL_STYLES.map((v) => (
+                    <SelectItem key={v.value} value={v.value}>
+                      {t(v.labelKey)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("videoAd.videoLength")}</Label>
+              <Select value={String(videoLength)} onValueChange={(v) => setVideoLength(Number(v))} disabled={isDisabled}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {VIDEO_LENGTHS.map((l) => (
+                    <SelectItem key={l} value={String(l)}>{l}s</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
+
+          <div className="space-y-2">
+            <Label>{t("videoAd.targetAudience")}</Label>
+            <Input
+              value={targetAudience}
+              onChange={(e) => setTargetAudience(e.target.value)}
+              placeholder={t("videoAd.targetAudiencePlaceholder")}
+              disabled={isDisabled}
+            />
+          </div>
+
+          {/* Advanced Options */}
+          <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                <Settings2 className="h-4 w-4" />
+                {t("videoAd.advancedOptions")}
+                <ChevronDown className={`h-4 w-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-3">
+              <div className="space-y-2">
+                <Label>{t("videoAd.overrideScript")}</Label>
+                <Textarea
+                  value={overrideScript}
+                  onChange={(e) => setOverrideScript(e.target.value)}
+                  placeholder={t("videoAd.overrideScriptPlaceholder")}
+                  disabled={isDisabled}
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>{t("videoAd.aspectRatio")}</Label>
+                  <Select value={aspectRatio} onValueChange={setAspectRatio} disabled={isDisabled}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="9x16">9:16 (Vertical)</SelectItem>
+                      <SelectItem value="16x9">16:9 (Horizontal)</SelectItem>
+                      <SelectItem value="1x1">1:1 (Square)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>{t("videoAd.modelVersion")}</Label>
+                  <Select value={modelVersion} onValueChange={setModelVersion} disabled={isDisabled}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {MODEL_VERSIONS.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {t(m.labelKey)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-6">
+                <div className="flex items-center gap-2">
+                  <Switch checked={noBackgroundMusic} onCheckedChange={setNoBackgroundMusic} disabled={isDisabled} />
+                  <Label className="text-sm">{t("videoAd.noBackgroundMusic")}</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={noCaption} onCheckedChange={setNoCaption} disabled={isDisabled} />
+                  <Label className="text-sm">{t("videoAd.noCaption")}</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={noCta} onCheckedChange={setNoCta} disabled={isDisabled} />
+                  <Label className="text-sm">{t("videoAd.noCta")}</Label>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           {!jobId && (
             <Button onClick={handleGenerate} disabled={creating || !url.trim()} className="w-full">
@@ -160,24 +273,38 @@ export const VideoGenerationForm = ({
           progress={job.progress}
           error={job.error}
           onRetry={() => { setJobId(null); }}
+          creditsUsed={job.creditsUsed}
+          duration={job.duration}
+          thumbnailUrl={job.thumbnailUrl}
         >
           {job.output && (
             <div className="space-y-3">
-              {job.output.output && (
+              {job.videoUrl && (
                 <video
-                  src={job.output.output}
+                  src={job.videoUrl}
                   controls
+                  poster={job.thumbnailUrl || undefined}
                   className="w-full rounded-lg max-h-[400px]"
                 />
               )}
-              {job.output.output && (
-                <Button variant="outline" size="sm" asChild>
-                  <a href={job.output.output} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    {t("actions.download")}
-                  </a>
-                </Button>
-              )}
+              <div className="flex flex-wrap gap-2">
+                {job.videoUrl && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={job.videoUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {t("actions.download")}
+                    </a>
+                  </Button>
+                )}
+                {job.editorUrl && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={job.editorUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {t("actions.openEditor")}
+                    </a>
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </GenerationStatusTracker>

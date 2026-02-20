@@ -8,6 +8,11 @@ interface CreatifyJobState {
   output: any;
   error: string | null;
   isLoading: boolean;
+  videoUrl: string | null;
+  thumbnailUrl: string | null;
+  editorUrl: string | null;
+  creditsUsed: number | null;
+  duration: number | null;
 }
 
 export const useCreatifyJob = (
@@ -22,6 +27,11 @@ export const useCreatifyJob = (
     output: null,
     error: null,
     isLoading: false,
+    videoUrl: null,
+    thumbnailUrl: null,
+    editorUrl: null,
+    creditsUsed: null,
+    duration: null,
   });
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -56,12 +66,24 @@ export const useCreatifyJob = (
         failed: 0,
       };
 
+      // Extract video URL from multiple possible response fields
+      const videoUrl = data.video_output || data.output || null;
+      const thumbnailUrl = data.video_thumbnail || data.thumbnail || null;
+      const editorUrl = data.editor_url || null;
+      const creditsUsed = data.credits_used ?? null;
+      const duration = data.duration ?? null;
+
       setState({
         status,
         progress: progressMap[status] ?? 50,
         output: status === "done" ? data : null,
         error: status === "failed" ? data.error || "Generation failed" : null,
         isLoading: status !== "done" && status !== "failed",
+        videoUrl: status === "done" ? videoUrl : null,
+        thumbnailUrl,
+        editorUrl,
+        creditsUsed,
+        duration,
       });
 
       if (status === "done" || status === "failed") {
@@ -76,7 +98,10 @@ export const useCreatifyJob = (
   useEffect(() => {
     if (!jobId) return;
 
-    setState({ status: "pending", progress: 5, output: null, error: null, isLoading: true });
+    setState({
+      status: "pending", progress: 5, output: null, error: null, isLoading: true,
+      videoUrl: null, thumbnailUrl: null, editorUrl: null, creditsUsed: null, duration: null,
+    });
     startRef.current = Date.now();
 
     // Initial check

@@ -11,14 +11,51 @@
     "productUrl": "URL do produto ou site",
     "platform": "Plataforma destino",
     "scriptStyle": "Estilo do roteiro",
-    "aspectRatio": "Formato"
+    "visualStyle": "Estilo visual",
+    "aspectRatio": "Formato",
+    "videoLength": "Duração",
+    "targetAudience": "Público-alvo",
+    "targetAudiencePlaceholder": "Ex: Mulheres 25-45, interessadas em fitness...",
+    "advancedOptions": "Opções avançadas",
+    "overrideScript": "Roteiro personalizado",
+    "overrideScriptPlaceholder": "Escreva seu próprio roteiro para substituir o gerado por IA...",
+    "modelVersion": "Versão do modelo",
+    "noBackgroundMusic": "Sem música de fundo",
+    "noCaption": "Sem legendas",
+    "noCta": "Sem call-to-action"
   },
   "scriptStyles": {
     "brandStory": "História da marca",
     "callToAction": "Chamada para ação",
     "specialOffers": "Ofertas especiais",
     "discovery": "Descoberta",
-    "howTo": "Tutorial"
+    "howTo": "Tutorial",
+    "benefits": "Benefícios",
+    "problemSolution": "Problema e Solução",
+    "productHighlights": "Destaques do produto",
+    "emotional": "Emocional",
+    "motivational": "Motivacional",
+    "threeReasons": "3 Razões",
+    "negativeHook": "Gancho Negativo",
+    "secretHook": "Gancho Secreto",
+    "numberOneHook": "Gancho #1",
+    "genZ": "Gen Z",
+    "trendingTopics": "Temas em Alta"
+  },
+  "visualStyles": {
+    "avatarBubble": "Avatar Bolha",
+    "dynamicProduct": "Produto Dinâmico",
+    "fullScreen": "Tela Cheia",
+    "vanilla": "Clássico",
+    "motionCards": "Cartões Animados",
+    "splitScreen": "Tela Dividida",
+    "productShowcase": "Showcase de Produto",
+    "minimalist": "Minimalista"
+  },
+  "modelVersions": {
+    "standard": "Padrão",
+    "auroraV1": "Aurora v1",
+    "auroraV1Fast": "Aurora v1 Rápido"
   },
   "avatar": {
     "title": "Vídeo com Avatar IA",
@@ -56,7 +93,8 @@
     "generating": "Gerando conteúdo...",
     "preparing": "Preparando...",
     "jobCreated": "Trabalho iniciado com sucesso",
-    "loadingResources": "Carregando recursos..."
+    "loadingResources": "Carregando recursos...",
+    "credits": "créditos"
   },
   "actions": {
     "generateVideo": "Gerar Vídeo",
@@ -67,7 +105,8 @@
     "retry": "Tentar novamente",
     "download": "Baixar",
     "view": "Ver",
-    "delete": "Excluir"
+    "delete": "Excluir",
+    "openEditor": "Abrir Editor"
   },
   "errors": {
     "urlRequired": "A URL é obrigatória",

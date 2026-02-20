@@ -132,8 +132,8 @@ serve(async (req) => {
     };
 
     if (method === "POST" && params) {
-      // Remove internal fields not needed by Creatify
-      const { id, ...creatifyParams } = params;
+      // Remove internal fields not needed by Creatify API
+      const { id, company_id, campaign_id, calendar_item_id, ...creatifyParams } = params;
       fetchOptions.body = JSON.stringify(creatifyParams);
     }
 

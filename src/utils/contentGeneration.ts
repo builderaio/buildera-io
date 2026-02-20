@@ -49,7 +49,7 @@ export async function generateAIVideo(
   });
 
   if (error) throw error;
-  return data?.videoUrl || '';
+  return data?.videoUrl || data?.video_url || '';
 }
 
 /**

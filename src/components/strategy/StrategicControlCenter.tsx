@@ -1,12 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
   Dna, TrendingUp, Target, Zap, Brain,
   ArrowRight, CheckCircle2, Clock, AlertTriangle,
   BarChart3, Crosshair, Shield, Cpu, Eye, Lock,
-  Activity, FileWarning, Lightbulb, Flame, Sparkles
+  Activity, FileWarning, Lightbulb, Flame, Sparkles,
+  ChevronDown, Calendar, User, Layers,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,12 +16,13 @@ import { usePlayToWin } from '@/hooks/usePlayToWin';
 import {
   useStrategicControlData,
   generateIntegratedPriorities,
-  generateIntegratedDecisions,
   calculateIntegratedScore,
   StrategicPriority,
   WeeklyDecision,
 } from '@/hooks/useStrategicControlData';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { BusinessModelType } from '@/types/playToWin';
 
 interface StrategicControlCenterProps {
   profile: any;
@@ -61,14 +63,59 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
   const companyName = profile?.company_name;
 
   const { strategy } = usePlayToWin(companyId);
-  const { diagnostic, operational } = useStrategicControlData(companyId);
+  const {
+    diagnostic, operational, strategicProfile,
+    strategicGaps, weeklyDecisions, weekStart, daysRemaining,
+    syncStrategicGaps, completeDecision, createWeeklyDecisions,
+    updateBusinessModel,
+  } = useStrategicControlData(companyId);
 
-  const priorities = useMemo(() => generateIntegratedPriorities(strategy, diagnostic, t), [strategy, diagnostic, t]);
-  const decisions = useMemo(() => generateIntegratedDecisions(strategy, diagnostic, t), [strategy, diagnostic, t]);
-  const scores = useMemo(() => calculateIntegratedScore(strategy, diagnostic, operational), [strategy, diagnostic, operational]);
+  // Update business model from strategy
+  useEffect(() => {
+    if (strategy?.businessModel) {
+      updateBusinessModel(strategy.businessModel as BusinessModelType);
+    }
+  }, [strategy?.businessModel, updateBusinessModel]);
+
+  // Compute resolved gap keys for filtering
+  const resolvedGapKeys = useMemo(() => {
+    return new Set(strategicGaps.filter(g => g.resolved_at).map(g => g.gap_key));
+  }, [strategicGaps]);
+
+  const priorities = useMemo(
+    () => generateIntegratedPriorities(strategy, diagnostic, t, strategy?.businessModel as BusinessModelType | null, resolvedGapKeys),
+    [strategy, diagnostic, t, resolvedGapKeys]
+  );
+
+  const scores = useMemo(
+    () => calculateIntegratedScore(strategy, diagnostic, operational, strategicGaps),
+    [strategy, diagnostic, operational, strategicGaps]
+  );
+
+  // Sync gaps and create weekly decisions on load
+  useEffect(() => {
+    if (priorities.length > 0 && companyId) {
+      syncStrategicGaps(priorities);
+    }
+  }, [priorities.length, companyId]); // intentionally sparse deps
+
+  useEffect(() => {
+    if (diagnostic && companyId) {
+      createWeeklyDecisions(strategy, diagnostic, strategy?.businessModel as BusinessModelType | null, t);
+    }
+  }, [diagnostic, companyId]); // intentionally sparse deps
 
   const handleNavigate = (view: string) => {
     navigate(`/company-dashboard?view=${view}`);
+  };
+
+  const handleCompleteDecision = async (decision: WeeklyDecision) => {
+    if (!decision.id) return;
+    const prevScore = scores.current;
+    await completeDecision(decision.id, decision.gapKey);
+    toast.success(t('journey.scc.decisionCompleted', '¡Decisión completada!'), {
+      description: t('journey.scc.decisionCompletedDesc', 'El sistema está recalculando tu índice estratégico.'),
+    });
   };
 
   const urgencyConfig = {
@@ -78,7 +125,19 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
     low: { label: t('journey.scc.urgencyLow', 'Recomendado'), color: 'bg-primary/10 text-primary border-primary/30' },
   };
 
-  const diagScores = diagnostic?.executiveDiagnosis?.scores;
+  const sdiLevelConfig: Record<string, { label: string; color: string }> = {
+    Emerging: { label: t('journey.scc.sdiEmerging', 'Emergente'), color: 'bg-destructive/10 text-destructive border-destructive/30' },
+    Building: { label: t('journey.scc.sdiBuilding', 'En construcción'), color: 'bg-amber-500/10 text-amber-600 border-amber-500/30' },
+    Competitive: { label: t('journey.scc.sdiCompetitive', 'Competitivo'), color: 'bg-primary/10 text-primary border-primary/30' },
+    Reference: { label: t('journey.scc.sdiReference', 'Referente'), color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' },
+  };
+
+  const bmLabels: Record<string, string> = {
+    b2b: 'B2B',
+    b2c: 'B2C',
+    b2b2c: 'B2B2C',
+    mixed: t('journey.scc.bmMixed', 'Mixto'),
+  };
 
   return (
     <div className="space-y-6 p-4 sm:p-6 max-w-6xl mx-auto">
@@ -99,6 +158,41 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
             </p>
           </div>
         </div>
+      </motion.div>
+
+      {/* ═══ STRATEGIC PROFILE BLOCK ═══ */}
+      <motion.div {...fadeUp(0.03)}>
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 via-transparent to-primary/3">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <User className="h-4 w-4 text-primary" />
+              {t('journey.scc.profileTitle', 'Tu Perfil Estratégico Actual')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {/* Archetype */}
+              <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-xs bg-primary/5 border-primary/20">
+                <Brain className="h-3.5 w-3.5" />
+                {strategicProfile.archetype
+                  ? strategicProfile.archetype
+                  : t('journey.scc.profileNoArchetype', 'Sin arquetipo detectado')}
+              </Badge>
+              {/* SDI Level */}
+              <Badge variant="outline" className={cn('gap-1.5 px-3 py-1.5 text-xs', sdiLevelConfig[strategicProfile.sdiLevel]?.color)}>
+                <Layers className="h-3.5 w-3.5" />
+                SDI: {sdiLevelConfig[strategicProfile.sdiLevel]?.label || strategicProfile.sdiLevel}
+              </Badge>
+              {/* Business Model */}
+              <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-xs bg-secondary/50 border-secondary/30">
+                <BarChart3 className="h-3.5 w-3.5" />
+                {strategy?.businessModel
+                  ? bmLabels[strategy.businessModel] || strategy.businessModel
+                  : t('journey.scc.profileNoBM', 'Modelo no definido')}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
       {/* Insight Estratégico Actual */}
@@ -200,7 +294,7 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
 
         {/* Right Column: Decisions + Agent + DNA */}
         <div className="space-y-4">
-          {/* Weekly Decisions */}
+          {/* Weekly Decisions with Persistence */}
           <motion.div {...fadeUp(0.2)}>
             <Card>
               <CardHeader className="pb-3">
@@ -208,23 +302,69 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
                   <Clock className="h-4 w-4 text-primary" />
                   {t('journey.scc.weeklyDecisions', '3 Decisiones Esta Semana')}
                 </CardTitle>
-                <CardDescription className="text-xs">
-                  {t('journey.scc.weeklyDecisionsDesc', 'Recomendaciones basadas en DNA + Diagnóstico.')}
+                <CardDescription className="text-xs flex items-center gap-1.5">
+                  <Calendar className="h-3 w-3" />
+                  {t('journey.scc.weekInfo', 'Semana del {{date}} — {{days}} días restantes', {
+                    date: weekStart,
+                    days: daysRemaining,
+                  })}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {decisions.map((decision, i) => (
-                  <DecisionItem
-                    key={i}
-                    decision={decision}
-                    index={i}
-                    onNavigate={handleNavigate}
-                    t={t}
-                  />
-                ))}
+                {weeklyDecisions.length > 0 ? (
+                  weeklyDecisions.map((decision, i) => (
+                    <PersistentDecisionItem
+                      key={decision.id || i}
+                      decision={decision}
+                      index={i}
+                      onNavigate={handleNavigate}
+                      onComplete={handleCompleteDecision}
+                      t={t}
+                    />
+                  ))
+                ) : (
+                  // Fallback: show static decisions if no persistent ones
+                  <p className="text-xs text-muted-foreground text-center py-3">
+                    {t('journey.scc.noDecisions', 'Las decisiones semanales se generarán automáticamente.')}
+                  </p>
+                )}
               </CardContent>
             </Card>
           </motion.div>
+
+          {/* Gap Resolution Progress */}
+          {strategicGaps.length > 0 && (
+            <motion.div {...fadeUp(0.23)}>
+              <Card className="border-emerald-500/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    {t('journey.scc.gapProgress', 'Progreso de Brechas')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {strategicGaps.filter(g => g.resolved_at).length}/{strategicGaps.length} {t('journey.scc.resolved', 'resueltas')}
+                      </span>
+                      <span className="font-mono font-bold text-emerald-600">
+                        {Math.round((strategicGaps.filter(g => g.resolved_at).length / strategicGaps.length) * 100)}%
+                      </span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-emerald-500 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(strategicGaps.filter(g => g.resolved_at).length / strategicGaps.length) * 100}%` }}
+                        transition={{ duration: 0.8 }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {/* Detected Risks from Diagnostic */}
           {diagnostic?.keyRisks && diagnostic.keyRisks.length > 0 && (
@@ -268,7 +408,7 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
                     { done: !!strategy?.winningAspiration, label: t('journey.scc.agentDNA', 'Strategic DNA cargado') },
                     { done: !!strategy?.targetSegments?.length, label: t('journey.scc.agentICP', 'ICP primario definido') },
                     { done: !!strategy?.competitiveAdvantage, label: t('journey.scc.agentPositioning', 'Positioning Engine activo') },
-                    { done: !!diagScores, label: t('journey.scc.agentDiag', 'Diagnóstico ejecutivo integrado') },
+                    { done: !!diagnostic?.executiveDiagnosis?.scores, label: t('journey.scc.agentDiag', 'Diagnóstico ejecutivo integrado') },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-2">
                       {item.done ? (
@@ -280,12 +420,7 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
                     </div>
                   ))}
                 </div>
-
-                <Button
-                  className="w-full gap-2"
-                  size="sm"
-                  onClick={() => handleNavigate('agentes')}
-                >
+                <Button className="w-full gap-2" size="sm" onClick={() => handleNavigate('agentes')}>
                   <Zap className="h-3.5 w-3.5" />
                   {t('journey.scc.useAgent', 'Usar Agente Estratégico')}
                 </Button>
@@ -345,6 +480,7 @@ function PriorityCard({
   t: any;
   delay: number;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const Icon = variableIcons[priority.variable] || Target;
   const urgency = urgencyConfig[priority.urgency];
   const sourceLabel = priority.source === 'diagnostic'
@@ -353,6 +489,8 @@ function PriorityCard({
   const sourceColor = priority.source === 'diagnostic'
     ? 'bg-amber-500/10 text-amber-700 border-amber-500/20'
     : 'bg-primary/10 text-primary border-primary/20';
+
+  const hasNarrative = priority.gapKey || priority.riskMitigated || priority.strategicImpact;
 
   return (
     <motion.div {...fadeUp(delay)}>
@@ -372,6 +510,53 @@ function PriorityCard({
                   {urgency.label}
                 </Badge>
               </div>
+
+              {/* Strategic Narrative (expandable) */}
+              {hasNarrative && (
+                <div>
+                  <button
+                    onClick={() => setExpanded(!expanded)}
+                    className="flex items-center gap-1 text-[11px] text-primary/80 hover:text-primary transition-colors"
+                  >
+                    <Lightbulb className="h-3 w-3" />
+                    {t('journey.scc.whyImportant', 'Por qué es importante')}
+                    <ChevronDown className={cn('h-3 w-3 transition-transform', expanded && 'rotate-180')} />
+                  </button>
+                  <AnimatePresence>
+                    {expanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-2 p-2.5 rounded-md bg-muted/50 space-y-1.5 text-[11px]">
+                          {priority.gapKey && (
+                            <div className="flex items-start gap-1.5">
+                              <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />
+                              <span><span className="font-medium">{t('journey.scc.narrative.gapLabel', 'Brecha:')}</span> {priority.gapKey}</span>
+                            </div>
+                          )}
+                          {priority.riskMitigated && (
+                            <div className="flex items-start gap-1.5">
+                              <Shield className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
+                              <span><span className="font-medium">{t('journey.scc.narrative.riskLabel', 'Riesgo:')}</span> {priority.riskMitigated}</span>
+                            </div>
+                          )}
+                          {priority.strategicImpact && (
+                            <div className="flex items-start gap-1.5">
+                              <TrendingUp className="h-3 w-3 text-primary shrink-0 mt-0.5" />
+                              <span><span className="font-medium">{t('journey.scc.narrative.impactLabel', 'Impacto:')}</span> {priority.strategicImpact}</span>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className={cn('text-[10px]', sourceColor)}>
@@ -403,17 +588,20 @@ function PriorityCard({
   );
 }
 
-function DecisionItem({
+function PersistentDecisionItem({
   decision,
   index,
   onNavigate,
+  onComplete,
   t,
 }: {
   decision: WeeklyDecision;
   index: number;
   onNavigate: (view: string) => void;
+  onComplete: (decision: WeeklyDecision) => void;
   t: any;
 }) {
+  const isCompleted = !!decision.completedAt;
   const sourceLabel = decision.source === 'diagnostic'
     ? t('journey.scc.sourceDiagnostic', 'Diagnóstico')
     : t('journey.scc.sourceDNA', 'DNA');
@@ -422,14 +610,35 @@ function DecisionItem({
     : 'bg-primary/10 text-primary border-primary/20';
 
   return (
-    <div className="space-y-2 pb-3 last:pb-0 border-b last:border-0">
+    <div className={cn('space-y-2 pb-3 last:pb-0 border-b last:border-0', isCompleted && 'opacity-60')}>
       <div className="flex items-start gap-2">
-        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-          <span className="text-[10px] font-bold text-primary">{index + 1}</span>
-        </div>
+        <button
+          onClick={() => !isCompleted && onComplete(decision)}
+          disabled={isCompleted}
+          className={cn(
+            'w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 transition-colors',
+            isCompleted
+              ? 'bg-emerald-500/20'
+              : 'bg-primary/10 hover:bg-primary/20 cursor-pointer'
+          )}
+        >
+          {isCompleted ? (
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+          ) : (
+            <span className="text-[10px] font-bold text-primary">{index + 1}</span>
+          )}
+        </button>
         <div className="min-w-0">
-          <p className="font-medium text-sm">{decision.title}</p>
+          <p className={cn('font-medium text-sm', isCompleted && 'line-through text-muted-foreground')}>
+            {decision.title}
+          </p>
           <p className="text-[11px] text-muted-foreground mt-0.5">{decision.reason}</p>
+          {isCompleted && decision.completedAt && (
+            <p className="text-[10px] text-emerald-600 mt-1 flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              {t('journey.scc.completedOn', 'Completada')}
+            </p>
+          )}
           <div className="flex items-center gap-1.5 mt-1.5">
             <Badge variant="outline" className={cn('text-[9px]', sourceColor)}>{sourceLabel}</Badge>
             <Badge variant="secondary" className="text-[9px] bg-muted">
@@ -438,14 +647,27 @@ function DecisionItem({
           </div>
         </div>
       </div>
-      <Button
-        size="sm"
-        variant="outline"
-        className="w-full h-7 text-xs"
-        onClick={() => onNavigate(decision.actionView)}
-      >
-        {decision.action}
-      </Button>
+      {!isCompleted && (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 h-7 text-xs"
+            onClick={() => onNavigate(decision.actionView)}
+          >
+            {t('journey.scc.d.takeAction', 'Tomar acción')}
+          </Button>
+          <Button
+            size="sm"
+            variant="default"
+            className="h-7 text-xs gap-1"
+            onClick={() => onComplete(decision)}
+          >
+            <CheckCircle2 className="h-3 w-3" />
+            {t('journey.scc.d.complete', 'Completar')}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -470,7 +692,6 @@ function StrategicInsightBlock({
   const topPriority = priorities[0];
   const scores = diagnostic?.executiveDiagnosis?.scores;
 
-  // Derive the main gap from diagnostic scores
   const mainGap = useMemo(() => {
     if (!scores) return null;
     const areas = [
@@ -481,17 +702,14 @@ function StrategicInsightBlock({
     return areas.sort((a, b) => a.score - b.score)[0];
   }, [scores, t]);
 
-  // Derive risk from diagnostic
   const primaryRisk = diagnostic?.keyRisks?.[0] || null;
 
-  // Derive opportunity from what's working + top priority
   const opportunity = useMemo(() => {
     if (diagnostic?.actionPlan?.[0]) return diagnostic.actionPlan[0];
     if (topPriority) return topPriority.description;
     return null;
   }, [diagnostic, topPriority]);
 
-  // Urgency level
   const urgencyLevel = useMemo(() => {
     if (!scores) return 'medium';
     const overall = scores.overall ?? Math.round((scores.visibility + scores.trust + scores.positioning) / 3);
@@ -525,7 +743,6 @@ function StrategicInsightBlock({
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Main Gap */}
             {mainGap && (
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
                 <div className="p-1.5 bg-destructive/10 rounded-md shrink-0">
@@ -542,7 +759,6 @@ function StrategicInsightBlock({
               </div>
             )}
 
-            {/* Associated Risk */}
             {primaryRisk && (
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
                 <div className="p-1.5 bg-destructive/10 rounded-md shrink-0">
@@ -557,7 +773,6 @@ function StrategicInsightBlock({
               </div>
             )}
 
-            {/* Priority Opportunity */}
             {opportunity && (
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
                 <div className="p-1.5 bg-primary/10 rounded-md shrink-0">
@@ -572,7 +787,6 @@ function StrategicInsightBlock({
               </div>
             )}
 
-            {/* Urgency Level */}
             <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
               <div className={cn('p-1.5 rounded-md shrink-0', urgencyLevel === 'critical' || urgencyLevel === 'high' ? 'bg-destructive/10' : 'bg-amber-500/10')}>
                 <AlertTriangle className={cn('h-4 w-4', urgencyLevel === 'critical' || urgencyLevel === 'high' ? 'text-destructive' : 'text-amber-600')} />
@@ -598,7 +812,6 @@ function StrategicInsightBlock({
             </div>
           </div>
 
-          {/* CTA */}
           {topPriority && (
             <Button
               size="sm"

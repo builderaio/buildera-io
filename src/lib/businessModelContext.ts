@@ -1,4 +1,22 @@
 import { BusinessModel } from '@/components/strategy/founder/steps/BusinessModelStep';
+import { BusinessModelType } from '@/types/playToWin';
+
+/**
+ * Returns priority weights for the SCC based on business model.
+ * Higher weight = higher sorting priority for that variable.
+ */
+export function getBusinessModelPriorityWeights(model: BusinessModelType | null): Record<string, number> {
+  switch (model) {
+    case 'b2b':
+      return { authority: 2, positioning: 1.5, channel: 1, trust: 1.3, brand: 1, visibility: 1, offer: 1, audience: 1.2 };
+    case 'b2c':
+      return { brand: 2, visibility: 1.5, trust: 1.5, audience: 1.3, channel: 1.2, positioning: 1, offer: 1, authority: 1 };
+    case 'b2b2c':
+      return { channel: 2, offer: 1.5, positioning: 1, brand: 1.3, trust: 1.2, visibility: 1.2, authority: 1, audience: 1.3 };
+    default:
+      return { positioning: 1.2, channel: 1.2, brand: 1.2, trust: 1.2, visibility: 1.2, authority: 1, offer: 1, audience: 1 };
+  }
+}
 
 /**
  * Returns i18n key suffixes and contextual hints based on business model.

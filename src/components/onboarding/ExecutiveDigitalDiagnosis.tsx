@@ -360,32 +360,71 @@ export const ExecutiveDigitalDiagnosis = ({
       const html2canvas = (await import('html2canvas')).default;
       const jsPDF = (await import('jspdf')).default;
 
-      const element = reportRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#0f172a', // slate-950
-        logging: false,
-        windowWidth: 1200,
-      });
+      const A4_WIDTH_MM = 210;
+      const A4_HEIGHT_MM = 297;
+      const MARGIN_MM = 10;
+      const CONTENT_WIDTH_MM = A4_WIDTH_MM - (MARGIN_MM * 2);
+      const SECTION_GAP_MM = 4;
 
-      const imgData = canvas.toDataURL('image/png');
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Get all sections marked with data-pdf-section
+      const sections = Array.from(
+        reportRef.current.querySelectorAll('[data-pdf-section]')
+      ) as HTMLElement[];
+
+      // Fallback: if no sections found, use direct children
+      const elements = sections.length > 0 
+        ? sections 
+        : Array.from(reportRef.current.children) as HTMLElement[];
 
       const pdf = new jsPDF('p', 'mm', 'a4');
-      let heightLeft = imgHeight;
-      let position = 0;
+      let currentY = MARGIN_MM;
+      let isFirstSection = true;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      for (const section of elements) {
+        const canvas = await html2canvas(section, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#0f172a', // slate-950
+          logging: false,
+          windowWidth: 1200,
+        });
 
-      while (heightLeft > 0) {
-        position = -(imgHeight - heightLeft);
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        const scaleFactor = CONTENT_WIDTH_MM / (canvas.width / 2);
+        const heightMM = (canvas.height / 2) * scaleFactor;
+        const remainingSpace = A4_HEIGHT_MM - MARGIN_MM - currentY;
+
+        // If section won't fit on current page, start a new one
+        if (heightMM > remainingSpace && !isFirstSection) {
+          pdf.addPage();
+          currentY = MARGIN_MM;
+        }
+
+        // If section is taller than a full page, scale it down to fit
+        const imgData = canvas.toDataURL('image/png');
+        if (heightMM > A4_HEIGHT_MM - (MARGIN_MM * 2)) {
+          // Section is too tall for one page — render at full width, let it span
+          const maxH = A4_HEIGHT_MM - (MARGIN_MM * 2);
+          const adjustedScale = maxH / heightMM;
+          const adjustedWidth = CONTENT_WIDTH_MM * adjustedScale;
+          const offsetX = MARGIN_MM + (CONTENT_WIDTH_MM - adjustedWidth) / 2;
+          pdf.addImage(imgData, 'PNG', offsetX, currentY, adjustedWidth, maxH);
+          currentY = A4_HEIGHT_MM - MARGIN_MM;
+        } else {
+          pdf.addImage(imgData, 'PNG', MARGIN_MM, currentY, CONTENT_WIDTH_MM, heightMM);
+          currentY += heightMM + SECTION_GAP_MM;
+        }
+
+        isFirstSection = false;
+      }
+
+      // Add page numbers
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(7);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`${i} / ${totalPages}`, A4_WIDTH_MM / 2, A4_HEIGHT_MM - 5, { align: 'center' });
+        pdf.text(`© ${new Date().getFullYear()} Buildera.io`, A4_WIDTH_MM - MARGIN_MM, A4_HEIGHT_MM - 5, { align: 'right' });
       }
 
       const companyName = (identity.company_name || 'empresa').replace(/[^a-zA-Z0-9]/g, '_');
@@ -449,7 +488,7 @@ export const ExecutiveDigitalDiagnosis = ({
         {/* ══════════════════════════════════════════════════════ */}
         {/* SECTION 1: SNAPSHOT OVERVIEW */}
         {/* ══════════════════════════════════════════════════════ */}
-        <motion.section {...fadeUp(0.1)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+        <motion.section data-pdf-section {...fadeUp(0.1)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
           <SectionHeader icon={Building2} title={t('common:execDiagnosis.snapshotOverview', 'Snapshot Overview')} />
 
           {/* Identity Row */}
@@ -625,7 +664,7 @@ export const ExecutiveDigitalDiagnosis = ({
         {/* ══════════════════════════════════════════════════════ */}
         {/* SECTION 2: PERFORMANCE SIGNALS */}
         {/* ══════════════════════════════════════════════════════ */}
-        <motion.section {...fadeUp(0.2)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+        <motion.section data-pdf-section {...fadeUp(0.2)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
           <SectionHeader icon={Activity} title={t('common:execDiagnosis.performanceSignals', 'Performance Signals')} />
 
           {/* Executive Diagnosis Banner */}
@@ -734,7 +773,7 @@ export const ExecutiveDigitalDiagnosis = ({
         {/* ══════════════════════════════════════════════════════ */}
         {/* SECTION 3: COMPETITIVE POSITIONING */}
         {/* ══════════════════════════════════════════════════════ */}
-        <motion.section {...fadeUp(0.3)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+        <motion.section data-pdf-section {...fadeUp(0.3)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
           <SectionHeader icon={TrendingUp} title={t('common:execDiagnosis.competitivePositioning', 'Competitive Positioning Assessment')} />
           <CompetitivePositioningAssessment digital={digital} scores={scores} t={t} />
         </motion.section>
@@ -743,7 +782,7 @@ export const ExecutiveDigitalDiagnosis = ({
         {/* SECTION 4: ACTION PLAN */}
         {/* ══════════════════════════════════════════════════════ */}
         {(actionPlan.short_term?.length > 0 || actionPlan.mid_term?.length > 0 || actionPlan.long_term?.length > 0) && (
-          <motion.section {...fadeUp(0.4)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+          <motion.section data-pdf-section {...fadeUp(0.4)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
             <SectionHeader icon={Zap} title={t('common:execDiagnosis.actionPlan', 'Recommended Action Plan')} color="text-orange-400" />
             <InteractiveActionRoadmap actionPlan={actionPlan} currentScore={overallScore} />
           </motion.section>
@@ -752,7 +791,7 @@ export const ExecutiveDigitalDiagnosis = ({
         {/* ══════════════════════════════════════════════════════ */}
         {/* SECTION 5: MATURITY SCORES */}
         {/* ══════════════════════════════════════════════════════ */}
-        <motion.section {...fadeUp(0.5)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
+        <motion.section data-pdf-section {...fadeUp(0.5)} className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 sm:p-6">
           {/* Strategic Digital Index Header */}
           <StrategicDigitalIndex overallScore={overallScore} t={t} />
 
@@ -784,7 +823,7 @@ export const ExecutiveDigitalDiagnosis = ({
         {/* ══════════════════════════════════════════════════════ */}
         {/* CTA: PROCEED TO STRATEGIC DNA */}
         {/* ══════════════════════════════════════════════════════ */}
-        <motion.div {...fadeUp(0.6)} className="bg-slate-900/80 border border-primary/30 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <motion.div data-pdf-section {...fadeUp(0.6)} className="bg-slate-900/80 border border-primary/30 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <motion.div
               animate={{ rotate: [0, 360] }}

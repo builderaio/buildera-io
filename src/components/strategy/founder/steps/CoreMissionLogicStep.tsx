@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cpu, HelpCircle, Target, TrendingUp, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,11 @@ const timelineOptions = [
   { value: '3_years', labelKey: 'journey.sdna.timeline3y', fallback: '3 Años', descKey: 'journey.sdna.timeline3yDesc', descFallback: 'Escalar operación y consolidar posición' },
 ];
 
-export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, diagnosticData, businessModel }: CoreMissionLogicStepProps) {
+export interface StepFlushHandle {
+  flush: () => Promise<void>;
+}
+
+const CoreMissionLogicStep = forwardRef<StepFlushHandle, CoreMissionLogicStepProps>(function CoreMissionLogicStep({ strategy, onUpdate, isSaving, diagnosticData, businessModel }, ref) {
   const { t } = useTranslation();
   const bmCtx = getBusinessModelContext(businessModel || null);
   const [aspiration, setAspiration] = useState(strategy.winningAspiration || '');
@@ -63,6 +67,13 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
       }
     };
   }, []);
+
+  // Expose flush method to parent via ref
+  useImperativeHandle(ref, () => ({
+    flush: async () => {
+      if (hasChangesRef.current) await saveRef.current();
+    }
+  }), []);
 
   useEffect(() => {
     const timer = setTimeout(() => { if (hasChanges) saveChanges(); }, 1500);
@@ -289,4 +300,6 @@ export default function CoreMissionLogicStep({ strategy, onUpdate, isSaving, dia
       </Card>
     </div>
   );
-}
+});
+
+export default CoreMissionLogicStep;

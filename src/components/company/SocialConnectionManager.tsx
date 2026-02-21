@@ -698,11 +698,11 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
 
       {/* Auto-sync info banner - only show if connected accounts missing username */}
       {connectedWithoutUsername.length > 0 && (
-        <Alert className="border-amber-300/50 bg-amber-50/50">
-          <Info className="w-4 h-4 text-amber-600" />
-          <AlertDescription className="flex items-center justify-between">
+        <Alert className="border-amber-500/30 bg-amber-500/10">
+          <Info className="w-4 h-4 text-amber-500" />
+          <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <p className="font-medium text-amber-700">
+              <p className="font-medium text-amber-500">
                 🔄 Sincronizando nombres de usuario...
               </p>
               <p className="text-sm text-muted-foreground mt-1">
@@ -727,7 +727,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       )}
 
       {/* Connection Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {Object.entries(platformConfig).map(([platform, config]) => {
           const isConnected = getConnectionStatus(platform);
           const accountInfo = getAccountInfo(platform);
@@ -736,64 +736,64 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
           const hasPlatformUsername = !!accountInfo?.platform_username;
           const needsAttention = isConnected && !hasPlatformUsername;
           const cardBorderClass = isConnected 
-            ? (hasPlatformUsername ? 'border-green-500 bg-green-50/50' : 'border-amber-400/50 bg-amber-50/30')
-            : 'border-muted bg-muted/30';
+            ? (hasPlatformUsername ? 'border-green-500/40' : 'border-amber-500/40')
+            : 'border-border';
           
           return (
             <Card key={platform} className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${cardBorderClass}`}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg ${config.color} flex items-center justify-center text-white text-xl`}>
-                      <config.Icon />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm">{config.name}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {platform === 'facebook' && accountInfo?.facebook_page_id ? 
-                          `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.facebook_page_id}` :
-                         platform === 'linkedin' && accountInfo?.linkedin_page_id ?
-                          `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.linkedin_page_id}` :
-                         accountInfo?.platform_display_name || accountInfo?.platform_username || 'No conectado'}
-                      </p>
-                    </div>
+              <CardContent className="p-5">
+                {/* Platform header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-11 h-11 rounded-xl ${config.color} flex items-center justify-center text-white text-lg shrink-0`}>
+                    <config.Icon />
                   </div>
-                  
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm">{config.name}</h4>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {platform === 'facebook' && accountInfo?.facebook_page_id ? 
+                        `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.facebook_page_id}` :
+                       platform === 'linkedin' && accountInfo?.linkedin_page_id ?
+                        `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.linkedin_page_id}` :
+                       accountInfo?.platform_display_name || accountInfo?.platform_username || 'No conectado'}
+                    </p>
+                  </div>
                   {isConnected ? (
                     hasPlatformUsername ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
                     ) : (
-                      <Info className="w-5 h-5 text-amber-500" />
+                      <Info className="w-5 h-5 text-amber-500 shrink-0" />
                     )
                   ) : (
-                    <XCircle className="w-5 h-5 text-muted-foreground" />
+                    <XCircle className="w-5 h-5 text-muted-foreground shrink-0" />
                   )}
                 </div>
                 
+                {/* Status badge */}
                 <Badge 
                   variant={isConnected ? "default" : "secondary"}
-                  className={`w-full justify-center ${
+                  className={`w-full justify-center text-xs py-1 ${
                     isConnected 
                       ? (hasPlatformUsername 
-                          ? 'bg-green-100 text-green-700 border-green-200' 
-                          : 'bg-amber-100 text-amber-700 border-amber-200')
+                          ? 'bg-green-500/15 text-green-500 border-green-500/30 hover:bg-green-500/20' 
+                          : 'bg-amber-500/15 text-amber-500 border-amber-500/30 hover:bg-amber-500/20')
                       : ''
                   }`}
                 >
                   {isConnected 
                     ? (hasPlatformUsername 
                         ? `✓ @${accountInfo?.platform_username}` 
-                        : '🔄 Sincronizando usuario...')
+                        : '🔄 Sincronizando...')
                     : 'No conectado'
                   }
                 </Badge>
 
+                {/* Page selection buttons */}
                 {platform === 'facebook' && isConnected && (
                   <Button
                     onClick={handleFacebookPageSelection}
                     variant="outline"
                     size="sm"
-                    className="w-full mt-2"
+                    className="w-full mt-3 text-xs"
                   >
                     <Settings className="w-3 h-3 mr-1" />
                     Seleccionar Página
@@ -805,7 +805,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                     onClick={handleLinkedInPageSelection}
                     variant="outline"
                     size="sm"
-                    className="w-full mt-2"
+                    className="w-full mt-3 text-xs"
                   >
                     <Settings className="w-3 h-3 mr-1" />
                     Seleccionar Página
@@ -814,15 +814,14 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
 
                 {/* URL Configuration */}
                 {config.urlField && (
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm font-semibold flex items-center gap-1">
-                        URL del perfil <span className="text-muted-foreground font-normal">(opcional)</span>
+                      <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                        URL del perfil
                       </Label>
                       <SocialURLHelpDialog>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
-                          <HelpCircle className="w-3 h-3 mr-1" />
-                          Ayuda
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                          <HelpCircle className="w-3 h-3" />
                         </Button>
                       </SocialURLHelpDialog>
                     </div>
@@ -832,64 +831,64 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                           value={urlValues[platform] || ''}
                           onChange={(e) => setUrlValues(prev => ({ ...prev, [platform]: e.target.value }))}
                           placeholder={
-                            platform === 'linkedin' ? 'https://linkedin.com/company/mi-empresa' :
-                            platform === 'instagram' ? 'https://instagram.com/mi_usuario' :
-                            platform === 'facebook' ? 'https://facebook.com/mi-pagina' :
-                            platform === 'tiktok' ? 'https://tiktok.com/@mi_usuario' :
+                            platform === 'linkedin' ? 'linkedin.com/company/...' :
+                            platform === 'instagram' ? 'instagram.com/...' :
+                            platform === 'facebook' ? 'facebook.com/...' :
+                            platform === 'tiktok' ? 'tiktok.com/@...' :
                             `URL de ${config.name}`
                           }
-                          className="text-sm"
+                          className="text-xs h-8"
                           autoFocus
                         />
                         <Button
                           onClick={() => saveUrl(platform)}
                           variant="ghost"
                           size="sm"
-                          className="h-9 w-9 p-0"
+                          className="h-8 w-8 p-0 shrink-0"
                           title="Guardar"
                         >
-                          <Save className="w-4 h-4 text-green-600" />
+                          <Save className="w-3.5 h-3.5 text-green-500" />
                         </Button>
                         <Button
                           onClick={() => setEditingUrl(null)}
                           variant="ghost"
                           size="sm"
-                          className="h-9 w-9 p-0"
+                          className="h-8 w-8 p-0 shrink-0"
                           title="Cancelar"
                         >
-                          <XCircle className="w-4 h-4 text-gray-600" />
+                          <XCircle className="w-3.5 h-3.5 text-muted-foreground" />
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 group">
-                        <div className={`text-sm flex-1 truncate px-2 py-1.5 rounded ${
+                      <div className="flex items-center gap-1">
+                        <div className={`text-xs flex-1 truncate px-2 py-1.5 rounded-md ${
                           hasUrl 
                             ? 'text-foreground bg-muted/50' 
                             : 'text-muted-foreground italic bg-muted/30'
                         }`}>
                           {hasUrl 
                             ? urlValues[platform]
-                            : 'Sin URL configurada'
+                            : 'Sin URL'
                           }
                         </div>
                         <Button
                           onClick={() => setEditingUrl(platform)}
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
+                          className="h-7 w-7 p-0 shrink-0"
                           title="Editar URL"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-3 h-3" />
                         </Button>
                         {urlValues[platform] && (
                           <Button
                             onClick={() => window.open(urlValues[platform], '_blank')}
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="h-7 w-7 p-0 shrink-0"
                             title="Abrir URL"
                           >
-                            <ExternalLink className="w-4 h-4" />
+                            <ExternalLink className="w-3 h-3" />
                           </Button>
                         )}
                       </div>
@@ -905,7 +904,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
 
       {/* Progress and Next Steps */}
       {connectedCount > 0 && (
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+        <Card className="border-primary/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -915,7 +914,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 </p>
               </div>
               {hasCompleteSetup && (
-                <Badge className="bg-green-100 text-green-700 border-green-200">
+                <Badge className="bg-green-500/15 text-green-500 border-green-500/30">
                   ✅ Listo para continuar
                 </Badge>
               )}
@@ -936,7 +935,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button 
                   onClick={() => window.location.href = '/company-dashboard?view=marketing-hub'}
-                  className="bg-primary hover:bg-primary/90"
                 >
                   Ir al Marketing Hub
                 </Button>
@@ -962,9 +960,9 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
 
       {/* Empty State */}
       {connectedCount === 0 && !loading && (
-        <Card className="border-dashed border-2 border-gray-300">
+        <Card className="border-dashed border-2 border-muted-foreground/20">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Network className="w-12 h-12 text-gray-400 mb-4" />
+            <Network className="w-12 h-12 text-muted-foreground/40 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Aún no hay redes conectadas</h3>
             <p className="text-muted-foreground mb-6 max-w-md">
               Conecte sus redes sociales para comenzar a publicar contenido automáticamente desde el Marketing Hub.
@@ -972,7 +970,6 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
             <Button
               onClick={startConnectionFlow}
               disabled={connecting}
-              className="bg-primary hover:bg-primary/90"
             >
               {connecting ? (
                 <>

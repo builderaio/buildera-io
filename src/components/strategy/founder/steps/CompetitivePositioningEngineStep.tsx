@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shield, HelpCircle, DollarSign, Award, Heart, Layers, AlertTriangle, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,11 @@ const moatOptions: { value: MoatType; labelKey: string; fallback: string; descKe
   { value: 'network_effects', labelKey: 'journey.sdna.moatNetwork', fallback: 'Efectos de red', descKey: 'journey.sdna.moatNetworkDesc', descFallback: 'Más usuarios = más valor', icon: Heart },
 ];
 
-export default function CompetitivePositioningEngineStep({ strategy, onUpdate, isSaving, diagnosticData, businessModel }: CompetitivePositioningEngineStepProps) {
+export interface StepFlushHandle {
+  flush: () => Promise<void>;
+}
+
+const CompetitivePositioningEngineStep = forwardRef<StepFlushHandle, CompetitivePositioningEngineStepProps>(function CompetitivePositioningEngineStep({ strategy, onUpdate, isSaving, diagnosticData, businessModel }, ref) {
   const { t } = useTranslation();
   const bmCtx = getBusinessModelContext(businessModel || null);
   const [competitiveAdvantage, setCompetitiveAdvantage] = useState(strategy.competitiveAdvantage || '');
@@ -61,6 +65,13 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
       }
     };
   }, []);
+
+  // Expose flush method to parent via ref
+  useImperativeHandle(ref, () => ({
+    flush: async () => {
+      if (hasChangesRef.current) await saveRef.current();
+    }
+  }), []);
 
   useEffect(() => {
     const timer = setTimeout(() => { if (hasChanges) saveChanges(); }, 1500);
@@ -318,4 +329,6 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
       </Card>
     </div>
   );
-}
+});
+
+export default CompetitivePositioningEngineStep;

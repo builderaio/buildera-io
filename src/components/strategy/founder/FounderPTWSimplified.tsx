@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PlayToWinStrategy } from '@/types/playToWin';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +17,7 @@ import { useDiagnosticInference } from '@/hooks/useDiagnosticInference';
 import { useNavigate } from 'react-router-dom';
 
 import BusinessModelStep, { BusinessModel } from './steps/BusinessModelStep';
-import CoreMissionLogicStep from './steps/CoreMissionLogicStep';
+import CoreMissionLogicStep, { StepFlushHandle } from './steps/CoreMissionLogicStep';
 import TargetMarketDefinitionStep from './steps/TargetMarketDefinitionStep';
 import CompetitivePositioningEngineStep from './steps/CompetitivePositioningEngineStep';
 import StrategicProfileGenerated from './StrategicProfileGenerated';
@@ -47,6 +47,7 @@ export default function FounderPTWSimplified({
   const [currentStep, setCurrentStep] = useState<FlowStep>('intro');
   const [businessModel, setBusinessModel] = useState<BusinessModel | null>(null);
   const [isComplete, setIsComplete] = useState(false);
+  const stepRef = useRef<StepFlushHandle>(null);
   
   const {
     strategy,
@@ -80,23 +81,23 @@ export default function FounderPTWSimplified({
       }
       setCurrentStep(1);
     } else if (typeof currentStep === 'number' && currentStep < 3) {
-      // Allow flush-on-unmount to execute before navigating
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Explicitly flush step data before navigating
+      if (stepRef.current) await stepRef.current.flush();
       setCurrentStep((currentStep + 1) as 1 | 2 | 3);
     } else {
-      // Update status first (doesn't touch step data fields)
+      // Explicitly flush step 3 data before finalizing
+      if (stepRef.current) await stepRef.current.flush();
       await updateStrategy({ 
         status: 'in_progress',
         generatedWithAI: false 
       });
-      // Set isComplete - this unmounts step 3 which triggers flush-on-unmount
-      // The flush will update strategy state via setStrategy, causing a re-render
-      // Do NOT refetch from DB here - it overwrites in-memory data with stale DB data
       setIsComplete(true);
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = async () => {
+    // Explicitly flush current step data before navigating back
+    if (stepRef.current) await stepRef.current.flush();
     if (currentStep === 'business_model') {
       setCurrentStep('intro');
     } else if (currentStep === 1) {
@@ -165,11 +166,11 @@ export default function FounderPTWSimplified({
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <CoreMissionLogicStep strategy={activeStrategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} businessModel={businessModel} />;
+        return <CoreMissionLogicStep ref={stepRef} strategy={activeStrategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} businessModel={businessModel} />;
       case 2:
-        return <TargetMarketDefinitionStep strategy={activeStrategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} businessModel={businessModel} />;
+        return <TargetMarketDefinitionStep ref={stepRef} strategy={activeStrategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} businessModel={businessModel} />;
       case 3:
-        return <CompetitivePositioningEngineStep strategy={activeStrategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} businessModel={businessModel} />;
+        return <CompetitivePositioningEngineStep ref={stepRef} strategy={activeStrategy} onUpdate={updateStrategy} isSaving={isSaving} diagnosticData={inferredData} businessModel={businessModel} />;
       default:
         return null;
     }

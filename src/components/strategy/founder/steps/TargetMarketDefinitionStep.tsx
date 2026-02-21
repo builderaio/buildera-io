@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Crosshair, Plus, Trash2, UserCheck, Bot, Check, Users, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,11 @@ interface TargetMarketDefinitionStepProps {
   businessModel?: BusinessModel | null;
 }
 
-export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSaving, diagnosticData, businessModel }: TargetMarketDefinitionStepProps) {
+export interface StepFlushHandle {
+  flush: () => Promise<void>;
+}
+
+const TargetMarketDefinitionStep = forwardRef<StepFlushHandle, TargetMarketDefinitionStepProps>(function TargetMarketDefinitionStep({ strategy, onUpdate, isSaving, diagnosticData, businessModel }, ref) {
   const { t } = useTranslation();
   const bmCtx = getBusinessModelContext(businessModel || null);
 
@@ -108,6 +112,13 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
       }
     };
   }, []);
+
+  // Expose flush method to parent via ref
+  useImperativeHandle(ref, () => ({
+    flush: async () => {
+      if (hasChangesRef.current) await saveRef.current();
+    }
+  }), []);
 
   useEffect(() => {
     const timer = setTimeout(() => { if (hasChanges) saveChanges(); }, 1500);
@@ -415,4 +426,6 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
       )}
     </div>
   );
-}
+});
+
+export default TargetMarketDefinitionStep;

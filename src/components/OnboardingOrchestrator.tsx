@@ -97,10 +97,17 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         }
 
         // If company has data and journey type, proceed based on journey
-        if (company?.name && company?.website_url) {
+        if (company?.name) {
           console.log('✅ Company data found, journey:', company.journey_type);
           setCompanyData(company as CompanyBasicData);
           setSelectedJourney((company.journey_type as JourneyType) || 'existing_business');
+          
+          // If no website, skip diagnostic entirely
+          if (!company.website_url) {
+            console.log('📋 No website, skipping diagnostic');
+            await completeOnboardingAndRedirectToPTW(company.id);
+            return;
+          }
           
           // Check if extraction was already completed to avoid re-running
           const { data: existingResults } = await supabase
@@ -110,13 +117,30 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
             .limit(1);
           
           if (existingResults && existingResults.length > 0) {
-            console.log('📊 Extraction already completed, showing results');
+            console.log('📊 Extraction already completed, loading saved results');
+            // Load saved digital presence from DB to populate state
+            try {
+              const { data: digitalPresence } = await supabase
+                .from('company_digital_presence')
+                .select('*')
+                .eq('company_id', company.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+              
+              if (digitalPresence) {
+                const savedResults = transformSavedResults(digitalPresence, company.name);
+                setResults(savedResults);
+              }
+            } catch (loadErr) {
+              console.warn('⚠️ Could not load saved results:', loadErr);
+            }
             setPhase('results');
           } else {
             startExtraction(company.id);
           }
         } else {
-          console.log('📋 Company missing data, showing form');
+          console.log('📋 Company missing name, showing form');
           if (company) {
             setCompanyData(company as CompanyBasicData);
             setFormData({
@@ -156,8 +180,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     setPhase('form');
   };
 
-  // Check if website is required based on journey type
-  const isWebsiteRequired = selectedJourney === 'existing_business';
+  // Website is recommended for existing businesses but never strictly required
+  // This allows existing businesses without a website to still proceed
+  const isWebsiteRequired = false;
 
   // Save basic company data and start extraction or go to PTW
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -263,13 +288,15 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
   // Complete onboarding without diagnostic and redirect to PTW
   const completeOnboardingAndRedirectToPTW = async (companyId: string) => {
     try {
-      // Mark first login completed but NOT onboarding - ADN de empresa is still pending
+      // Mark onboarding as fully completed so user is not redirected back
       await supabase
         .from('user_onboarding_status')
         .upsert({
           user_id: user.id,
           first_login_completed: true,
-          current_step: 3
+          dna_empresarial_completed: true,
+          onboarding_completed_at: new Date().toISOString(),
+          current_step: 5
         }, {
           onConflict: 'user_id'
         });
@@ -279,6 +306,9 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         .from('companies')
         .update({ journey_current_step: 2 })
         .eq('id', companyId);
+
+      // Dispatch completion event
+      window.dispatchEvent(new CustomEvent('onboarding-completed'));
 
       toast({
         title: t('common:onboarding.completed'),
@@ -382,6 +412,46 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
       }
       setPhase('form');
     }
+  };
+
+  // Transform saved DB results (from company_digital_presence) to display format
+  const transformSavedResults = (digitalPresence: any, companyName: string) => {
+    const dp = digitalPresence || {};
+    const raw = dp.raw_data || {};
+    const execDiag = dp.executive_diagnosis || {};
+    const basicInfo = raw.basic_info || {};
+    const identity = basicInfo.identity || {};
+    const seo = basicInfo.seo || {};
+    const products = basicInfo.products || {};
+    const contact = basicInfo.contact || {};
+    const market = basicInfo.market || {};
+    const audience = basicInfo.audience || {};
+
+    return {
+      success: true,
+      basic_info: {
+        identity: { company_name: identity.company_name || companyName, ...identity },
+        seo: { title: seo.title, description: seo.description, keywords: seo.keyword || seo.keywords || [] },
+        products: { services: products.service || products.services || [], offers: products.offer || products.offers || [] },
+        contact: { emails: contact.email || [], phones: contact.phone || [], addresses: contact.address || [], social_links: contact.social_links || [] },
+        market: { countries: market.country || [], cities: market.city || [] },
+        audience: { segments: audience.segment || audience.segments || [], professions: audience.profession || [], target_users: audience.target_user || [] }
+      },
+      digital_presence: {
+        digital_footprint_summary: dp.digital_footprint_summary || raw.digital_footprint_summary,
+        what_is_working: dp.what_is_working || raw.what_is_working || [],
+        what_is_missing: dp.what_is_missing || raw.what_is_missing || [],
+        key_risks: dp.key_risks || raw.key_risks || [],
+        competitive_positioning: dp.competitive_positioning || raw.competitive_positioning,
+        action_plan: dp.action_plan || raw.action_plan || {},
+        executive_diagnosis: execDiag
+      },
+      summary: {
+        title: identity.company_name || companyName,
+        description: execDiag.current_state || seo.description || 'Análisis completo de tu presencia digital',
+        highlights: []
+      }
+    };
   };
 
   // Transform NEW API structure to display format
@@ -607,14 +677,27 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
 
   // DigitalSnapshotDashboard removed - unified into ExecutiveDigitalDiagnosis
 
-  if (phase === 'results' && results) {
+  if (phase === 'results') {
+    if (results) {
+      return (
+        <ExecutiveDigitalDiagnosis
+          results={results}
+          summary={results.summary}
+          totalTime={totalTime}
+          onContinue={handleContinue}
+        />
+      );
+    }
+    // Results phase but no data loaded - complete onboarding and proceed
+    console.warn('⚠️ Results phase but no data, completing onboarding');
+    handleContinue();
     return (
-      <ExecutiveDigitalDiagnosis
-        results={results}
-        summary={results.summary}
-        totalTime={totalTime}
-        onContinue={handleContinue}
-      />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">{t('common:onboarding.redirecting', 'Redirigiendo...')}</p>
+        </div>
+      </div>
     );
   }
 

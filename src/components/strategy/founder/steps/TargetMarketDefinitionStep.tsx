@@ -27,22 +27,36 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
   const { t } = useTranslation();
   const bmCtx = getBusinessModelContext(businessModel || null);
 
-  // Pre-fill from diagnostic if available and no existing data
-  const inferredSegment: TargetSegment | null = diagnosticData?.icpName ? {
-    id: 'inferred-icp',
-    name: diagnosticData.icpName,
-    description: diagnosticData.icpDescription || '',
-    size: diagnosticData.marketSize || '',
-    growthPotential: 'medium',
-  } : null;
+  // Pre-fill from ALL diagnostic audiences if available and no existing data
+  const allAudiencesRaw = diagnosticData?.allAudiences || [];
+  
+  const inferredSegments: TargetSegment[] = allAudiencesRaw.length > 0
+    ? allAudiencesRaw.map((audience, i) => ({
+        id: `inferred-icp-${i}`,
+        name: audience.name,
+        description: [
+          audience.description || '',
+          audience.painPoints.length > 0 ? `${t('journey.sdna.bm.painPointsLabel', 'Dolores')}: ${audience.painPoints.join(', ')}` : '',
+          audience.goals.length > 0 ? `${t('journey.sdna.bm.goalsLabel', 'Objetivos')}: ${audience.goals.join(', ')}` : '',
+        ].filter(Boolean).join('\n'),
+        size: i === 0 ? (diagnosticData?.marketSize || '') : '',
+        growthPotential: 'medium' as const,
+      }))
+    : diagnosticData?.icpName ? [{
+        id: 'inferred-icp',
+        name: diagnosticData.icpName,
+        description: diagnosticData.icpDescription || '',
+        size: diagnosticData.marketSize || '',
+        growthPotential: 'medium' as const,
+      }] : [];
 
   const initialSegments = strategy.targetSegments?.length 
     ? strategy.targetSegments 
-    : inferredSegment ? [inferredSegment] : [];
+    : inferredSegments.length > 0 ? inferredSegments : [];
 
   const [segments, setSegments] = useState<TargetSegment[]>(initialSegments);
   const [icpInferred, setIcpInferred] = useState(
-    !strategy.targetSegments?.length && !!inferredSegment
+    !strategy.targetSegments?.length && inferredSegments.length > 0
   );
   const [maturity, setMaturity] = useState(
     diagnosticData?.clientMaturity || (strategy.aspirationTimeline === '1_year' ? 'early' : 'growing')

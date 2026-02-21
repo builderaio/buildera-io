@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shield, HelpCircle, DollarSign, Award, Heart, Layers, AlertTriangle, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,6 +46,21 @@ export default function CompetitivePositioningEngineStep({ strategy, onUpdate, i
     await onUpdate({ competitiveAdvantage, moatType, competitiveCategory: category, keyAssets });
     setHasChanges(false);
   }, [competitiveAdvantage, moatType, category, keyAssets, hasChanges, onUpdate]);
+
+  // Keep refs in sync for flush-on-unmount
+  const saveRef = useRef(saveChanges);
+  saveRef.current = saveChanges;
+  const hasChangesRef = useRef(hasChanges);
+  hasChangesRef.current = hasChanges;
+
+  // Flush pending changes on unmount
+  useEffect(() => {
+    return () => {
+      if (hasChangesRef.current) {
+        saveRef.current();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => { if (hasChanges) saveChanges(); }, 1500);

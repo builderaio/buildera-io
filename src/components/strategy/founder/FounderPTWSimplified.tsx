@@ -84,15 +84,14 @@ export default function FounderPTWSimplified({
       await new Promise(resolve => setTimeout(resolve, 100));
       setCurrentStep((currentStep + 1) as 1 | 2 | 3);
     } else {
-      // Allow flush-on-unmount to execute before finalizing
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // Update status first (doesn't touch step data fields)
       await updateStrategy({ 
         status: 'in_progress',
         generatedWithAI: false 
       });
-      // Re-fetch from DB to ensure we have the latest persisted data
-      await new Promise(resolve => setTimeout(resolve, 200));
-      await refetch();
+      // Set isComplete - this unmounts step 3 which triggers flush-on-unmount
+      // The flush will update strategy state via setStrategy, causing a re-render
+      // Do NOT refetch from DB here - it overwrites in-memory data with stale DB data
       setIsComplete(true);
     }
   };

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { 
   Cpu, Crosshair, Shield, 
-  ArrowRight, CheckCircle2, Dna
+  ArrowRight, CheckCircle2, Dna, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,34 +22,57 @@ export default function StrategicProfileGenerated({
   onGoToADN
 }: StrategicProfileGeneratedProps) {
   const { t } = useTranslation();
+  const [hasConfetti, setHasConfetti] = React.useState(false);
+
+  // Check if core data is present (flush-on-unmount may still be updating state)
+  const hasCoreData = !!(
+    strategy?.winningAspiration || 
+    strategy?.targetSegments?.length || 
+    strategy?.competitiveAdvantage
+  );
 
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
+    if (hasCoreData && !hasConfetti) {
+      const timer = setTimeout(() => {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        setHasConfetti(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [hasCoreData, hasConfetti]);
 
   const summaryItems = [
     {
       icon: Cpu,
       title: t('journey.sdna.summaryMission', 'Core Mission Logic'),
-      content: strategy?.winningAspiration || t('journey.sdna.notDefined', 'No definido'),
+      content: strategy?.winningAspiration || null,
       color: 'text-blue-600'
     },
     {
       icon: Crosshair,
       title: t('journey.sdna.summaryTarget', 'Target Market'),
-      content: strategy?.targetSegments?.[0]?.name || t('journey.sdna.notDefined', 'No definido'),
+      content: strategy?.targetSegments?.[0]?.name || null,
       color: 'text-emerald-600'
     },
     {
       icon: Shield,
       title: t('journey.sdna.summaryPositioning', 'Competitive Positioning'),
-      content: strategy?.competitiveAdvantage || t('journey.sdna.notDefined', 'No definido'),
+      content: strategy?.competitiveAdvantage || null,
       color: 'text-purple-600'
     }
   ];
+
+  // Show brief loading while flush-on-unmount is updating in-memory state
+  if (!hasCoreData) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">{t('journey.sdna.generatingProfile', 'Generando perfil estratégico...')}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -105,7 +128,9 @@ export default function StrategicProfileGenerated({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm">{item.title}</div>
-                      <div className="text-sm text-muted-foreground line-clamp-2">{item.content}</div>
+                      <div className="text-sm text-muted-foreground line-clamp-2">
+                        {item.content || t('journey.sdna.notDefined', 'No definido')}
+                      </div>
                     </div>
                     <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                   </div>

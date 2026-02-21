@@ -136,12 +136,13 @@ export const OnboardingWowResults = ({
         yPos = margin;
       };
 
-      const checkPageBreak = (neededHeight: number) => {
-        if (yPos + neededHeight > pageHeight - margin) {
+      const checkPageBreak = (neededHeight: number, currentYOverride?: number): { broke: boolean; newY: number } => {
+        const effectiveY = currentYOverride ?? yPos;
+        if (effectiveY + neededHeight > pageHeight - margin) {
           addPage();
-          return true;
+          return { broke: true, newY: margin };
         }
-        return false;
+        return { broke: false, newY: effectiveY };
       };
 
       const getTextHeight = (text: string, fontSize: number, maxWidth?: number): number => {
@@ -197,7 +198,7 @@ export const OnboardingWowResults = ({
 
       // === EXECUTIVE DIAGNOSIS ===
       if (execDiag.current_state || execDiag.primary_constraint || execDiag.highest_leverage_focus) {
-        checkPageBreak(50);
+        { const r = checkPageBreak(50); if (r.broke) yPos = r.newY; }
         
         drawText(t('common:onboarding.report.executiveDiagnosis').toUpperCase(), margin, yPos, { fontSize: 12, color: primaryColor, fontStyle: 'bold' });
         yPos += 8;
@@ -215,7 +216,7 @@ export const OnboardingWowResults = ({
         }
 
         if (execDiag.primary_constraint) {
-          checkPageBreak(20);
+          { const r = checkPageBreak(20); if (r.broke) yPos = r.newY; }
           drawText(`${t('common:onboarding.report.primaryConstraint')}:`, margin, yPos, { fontSize: 9, color: accentColor, fontStyle: 'bold' });
           yPos += 5;
           const h = drawText(execDiag.primary_constraint, margin, yPos, { fontSize: 9, maxWidth: contentWidth });
@@ -223,7 +224,7 @@ export const OnboardingWowResults = ({
         }
 
         if (execDiag.highest_leverage_focus) {
-          checkPageBreak(20);
+          { const r = checkPageBreak(20); if (r.broke) yPos = r.newY; }
           drawText(`${t('common:onboarding.report.highestLeverageFocus')}:`, margin, yPos, { fontSize: 9, color: [22, 163, 74], fontStyle: 'bold' });
           yPos += 5;
           const h = drawText(execDiag.highest_leverage_focus, margin, yPos, { fontSize: 9, maxWidth: contentWidth });
@@ -277,7 +278,8 @@ export const OnboardingWowResults = ({
         drawText(t('common:onboarding.report.services'), leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
         leftY += 5;
         products.service.forEach((s: string) => {
-          checkPageBreak(6);
+          const r = checkPageBreak(6, leftY);
+          if (r.broke) leftY = r.newY;
           drawText(`• ${s}`, leftCol, leftY, { fontSize: 8, maxWidth: colWidth - 5 });
           leftY += 4;
         });
@@ -288,7 +290,8 @@ export const OnboardingWowResults = ({
         drawText(t('common:onboarding.report.offers'), leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
         leftY += 5;
         products.offer.forEach((o: string) => {
-          checkPageBreak(6);
+          const r = checkPageBreak(6, leftY);
+          if (r.broke) leftY = r.newY;
           drawText(`• ${o}`, leftCol, leftY, { fontSize: 8, maxWidth: colWidth - 5 });
           leftY += 4;
         });
@@ -331,7 +334,8 @@ export const OnboardingWowResults = ({
         drawText(t('common:onboarding.report.seoKeywords'), leftCol, leftY, { fontSize: 9, fontStyle: 'bold' });
         leftY += 5;
         seo.keyword.forEach((kw: string) => {
-          checkPageBreak(6);
+          const r = checkPageBreak(6, leftY);
+          if (r.broke) leftY = r.newY;
           drawText(`• ${kw}`, leftCol, leftY, { fontSize: 7, color: lightGray, maxWidth: colWidth - 5 });
           leftY += 4;
         });
@@ -350,7 +354,8 @@ export const OnboardingWowResults = ({
         drawText(`✓ ${t('common:onboarding.report.whatWorksWell')}`, rightCol, rightY, { fontSize: 9, color: [22, 163, 74], fontStyle: 'bold' });
         rightY += 5;
         digitalPresence.what_is_working.forEach((item: string) => {
-          checkPageBreak(10);
+          const r = checkPageBreak(10, rightY);
+          if (r.broke) rightY = r.newY;
           const h = drawText(`• ${item}`, rightCol, rightY, { fontSize: 8, maxWidth: colWidth - 5 });
           rightY += h + 2;
         });
@@ -361,7 +366,8 @@ export const OnboardingWowResults = ({
         drawText(`⚠ ${t('common:onboarding.report.whatIsMissing')}`, rightCol, rightY, { fontSize: 9, color: [202, 138, 4], fontStyle: 'bold' });
         rightY += 5;
         digitalPresence.what_is_missing.forEach((item: string) => {
-          checkPageBreak(10);
+          const r = checkPageBreak(10, rightY);
+          if (r.broke) rightY = r.newY;
           const h = drawText(`• ${item}`, rightCol, rightY, { fontSize: 8, maxWidth: colWidth - 5 });
           rightY += h + 2;
         });
@@ -372,7 +378,8 @@ export const OnboardingWowResults = ({
         drawText(`✗ ${t('common:onboarding.report.keyRisks')}`, rightCol, rightY, { fontSize: 9, color: accentColor, fontStyle: 'bold' });
         rightY += 5;
         digitalPresence.key_risks.forEach((risk: string) => {
-          checkPageBreak(10);
+          const r = checkPageBreak(10, rightY);
+          if (r.broke) rightY = r.newY;
           const h = drawText(`• ${risk}`, rightCol, rightY, { fontSize: 8, maxWidth: colWidth - 5 });
           rightY += h + 2;
         });
@@ -390,8 +397,9 @@ export const OnboardingWowResults = ({
       yPos = Math.max(leftY, rightY) + 15;
       
       if (actionPlan.short_term?.length || actionPlan.mid_term?.length || actionPlan.long_term?.length) {
-        addPage();
-        
+        // Only add page if less than 80mm remaining
+        const r = checkPageBreak(80, yPos);
+        if (r.broke) yPos = r.newY;
         drawText(t('common:onboarding.report.actionPlan').toUpperCase(), margin, yPos, { fontSize: 14, color: accentColor, fontStyle: 'bold' });
         yPos += 10;
         

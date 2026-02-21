@@ -275,7 +275,37 @@ export function usePlayToWin(companyId: string | undefined) {
 
   // Update strategy
   const updateStrategy = useCallback(async (updates: Partial<PlayToWinStrategy>) => {
-    if (!strategy?.id) return false;
+    if (!strategy?.id) {
+      console.warn('usePlayToWin: No strategy ID, attempting to initialize first');
+      const created = await initializeStrategy();
+      if (!created?.id) {
+        console.error('usePlayToWin: Cannot update - no strategy and initialization failed');
+        return false;
+      }
+      // Now update the newly created strategy
+      try {
+        setIsSaving(true);
+        const updatedStrategy = { ...created, ...updates };
+        const completion = calculateCompletion(updatedStrategy);
+        let status: PTWStatus = updatedStrategy.status;
+        if (completion === 100 && status !== 'complete') status = 'complete';
+        else if (completion > 0 && status === 'draft') status = 'in_progress';
+
+        const dbUpdates = { ...strategyToDb(updates), completion_percentage: completion, status };
+        const { error: updateError } = await supabase
+          .from('company_play_to_win')
+          .update(dbUpdates)
+          .eq('id', created.id);
+        if (updateError) throw updateError;
+        setStrategy({ ...updatedStrategy, completionPercentage: completion, status, updatedAt: new Date().toISOString() });
+        return true;
+      } catch (err: any) {
+        console.error('Error updating PTW strategy after init:', err);
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    }
 
     try {
       setIsSaving(true);
@@ -324,7 +354,7 @@ export function usePlayToWin(companyId: string | undefined) {
     } finally {
       setIsSaving(false);
     }
-  }, [strategy, toast]);
+  }, [strategy, toast, initializeStrategy]);
 
   // Update current step
   const setCurrentStep = useCallback(async (step: number) => {

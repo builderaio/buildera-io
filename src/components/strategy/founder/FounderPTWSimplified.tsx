@@ -53,15 +53,22 @@ export default function FounderPTWSimplified({
     isLoading,
     isSaving,
     initializeStrategy,
-    updateStrategy
+    updateStrategy,
+    refetch
   } = usePlayToWin(companyId);
 
   const { inferredData, isLoading: isDiagnosticLoading } = useDiagnosticInference(companyId);
 
   useEffect(() => {
-    if (!isLoading && !strategy && companyId) {
-      initializeStrategy();
-    }
+    const init = async () => {
+      if (!isLoading && !strategy && companyId) {
+        const created = await initializeStrategy();
+        if (!created) {
+          console.error('Failed to initialize PTW strategy for company:', companyId);
+        }
+      }
+    };
+    init();
   }, [isLoading, strategy, companyId, initializeStrategy]);
 
   const handleNext = async () => {
@@ -79,6 +86,8 @@ export default function FounderPTWSimplified({
         status: 'in_progress',
         generatedWithAI: false 
       });
+      // Re-fetch from DB to ensure we have the latest persisted data
+      await refetch();
       setIsComplete(true);
     }
   };
@@ -177,7 +186,7 @@ export default function FounderPTWSimplified({
     return (
       <StrategicProfileGenerated
         companyName={companyName}
-        strategy={strategy}
+        strategy={activeStrategy}
         onGoToADN={handleGoToADN}
       />
     );

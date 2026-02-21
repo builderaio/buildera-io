@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { OnboardingWowLoader } from '@/components/onboarding/OnboardingWowLoader';
 import { ExecutiveDigitalDiagnosis } from '@/components/onboarding/ExecutiveDigitalDiagnosis';
-import { DigitalSnapshotDashboard } from '@/components/onboarding/DigitalSnapshotDashboard';
+// DigitalSnapshotDashboard removed - unified into ExecutiveDigitalDiagnosis
 import { computeDigitalMaturityScores } from '@/components/onboarding/scoring/digitalMaturityScoring';
 import JourneySelector, { JourneyType } from '@/components/onboarding/JourneySelector';
 
@@ -23,7 +23,6 @@ type OnboardingPhase =
   | 'journey-selection'
   | 'form' 
   | 'loading' 
-  | 'snapshot-dashboard'
   | 'results';
 
 interface CompanyBasicData {
@@ -357,8 +356,8 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
         // Transform data for OnboardingWowResults with NEW structure
         const transformedResults = transformExtractorResults(data);
         setResults(transformedResults);
-        // Show Digital Snapshot Dashboard first
-        setPhase('snapshot-dashboard');
+        // Go directly to Executive Digital Diagnosis
+        setPhase('results');
       } else {
         throw new Error(data?.error || 'Extraction failed');
       }
@@ -606,16 +605,7 @@ const OnboardingOrchestrator = ({ user }: OnboardingOrchestratorProps) => {
     );
   }
 
-  if (phase === 'snapshot-dashboard' && results) {
-    return (
-      <DigitalSnapshotDashboard
-        results={results}
-        companyName={results.summary?.title || companyData?.name || 'Tu Empresa'}
-        onContinue={handleContinue}
-        onViewFullReport={() => setPhase('results')}
-      />
-    );
-  }
+  // DigitalSnapshotDashboard removed - unified into ExecutiveDigitalDiagnosis
 
   if (phase === 'results' && results) {
     return (

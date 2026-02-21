@@ -532,13 +532,13 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
       },
       // Digital presence from second API
       digital_presence: digitalPresence ? {
-        digital_footprint_summary: digitalPresence.digital_footprint_summary,
-        what_is_working: digitalPresence.what_is_working || [],
-        what_is_missing: digitalPresence.what_is_missing || [],
-        key_risks: digitalPresence.key_risks || [],
-        competitive_positioning: digitalPresence.competitive_positioning,
+        digital_footprint_summary: sanitizeDiagnosticText(digitalPresence.digital_footprint_summary),
+        what_is_working: sanitizeDiagnosticArray(digitalPresence.what_is_working),
+        what_is_missing: sanitizeDiagnosticArray(digitalPresence.what_is_missing),
+        key_risks: sanitizeDiagnosticArray(digitalPresence.key_risks),
+        competitive_positioning: sanitizeDiagnosticText(digitalPresence.competitive_positioning),
         action_plan: digitalPresence.action_plan || {},
-        executive_diagnosis: digitalPresence.executive_diagnosis || {}
+        executive_diagnosis: sanitizeExecutiveDiagnosis(digitalPresence.executive_diagnosis || {})
       } : null,
       message: 'Información de empresa procesada exitosamente'
     };
@@ -547,6 +547,76 @@ async function extractCompanyData(url: string, userId: string, token: string, ex
     console.error('💥 Error in extraction:', error);
     throw error;
   }
+}
+
+// Sanitize technical jargon from AI-generated diagnostic text
+// Replaces implementation-level terms with business-friendly language
+function sanitizeDiagnosticText(text: string): string {
+  if (!text || typeof text !== 'string') return text;
+  
+  const replacements: [RegExp, string][] = [
+    // HTML/Web technical terms
+    [/\ben el HTML estático\b/gi, 'en el sitio web'],
+    [/\bdel HTML estático\b/gi, 'del sitio web'],
+    [/\bHTML estático\b/gi, 'sitio web'],
+    [/\bHTML dinámico\b/gi, 'sitio web'],
+    [/\ben el DOM\b/gi, 'en la página'],
+    [/\bmeta tags?\b/gi, 'configuración SEO'],
+    [/\bmeta descriptions?\b/gi, 'descripción para buscadores'],
+    [/\balt attributes?\b/gi, 'descripciones de imágenes'],
+    [/\balt tags?\b/gi, 'descripciones de imágenes'],
+    [/\bschema markup\b/gi, 'datos estructurados para buscadores'],
+    [/\bschema\.org\b/gi, 'datos estructurados'],
+    [/\bJSON-LD\b/gi, 'datos estructurados'],
+    [/\bcanonical URL\b/gi, 'URL principal'],
+    [/\bcanonical tag\b/gi, 'etiqueta de URL principal'],
+    [/\breadability score\b/gi, 'índice de legibilidad'],
+    [/\bheader tags?\b/gi, 'títulos y subtítulos'],
+    [/\bH[1-6] tags?\b/gi, 'títulos de la página'],
+    [/\bCSS\b/g, 'estilos visuales'],
+    [/\bJavaScript\b/gi, 'funcionalidad interactiva'],
+    [/\bbacklinks?\b/gi, 'enlaces externos'],
+    [/\bopen graph\b/gi, 'vista previa en redes sociales'],
+    [/\bog:image\b/gi, 'imagen para redes sociales'],
+    [/\brobots\.txt\b/gi, 'configuración de indexación'],
+    [/\bsitemap\.xml\b/gi, 'mapa del sitio'],
+    [/\bSSL\b/g, 'certificado de seguridad'],
+    [/\bHTTPS\b/g, 'conexión segura'],
+    [/\bCTA\b/g, 'llamada a la acción'],
+    [/\bCTAs\b/g, 'llamadas a la acción'],
+    [/\bUI\/UX\b/gi, 'experiencia de usuario'],
+    [/\bresponsive design\b/gi, 'diseño adaptable a móviles'],
+    [/\bviewport\b/gi, 'vista en dispositivos'],
+    [/\brender(?:izado|iza|ing)\b/gi, 'visualización'],
+    [/\bfavicon\b/gi, 'icono del sitio'],
+    // Common negative phrasings about static HTML
+    [/No se encontr[óo] evidencia/gi, 'No se detectó presencia'],
+    [/Ausencia de pruebas sociales visibles/gi, 'No se encontraron testimonios o reseñas visibles'],
+  ];
+
+  let result = text;
+  for (const [pattern, replacement] of replacements) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
+}
+
+// Apply sanitization to arrays of diagnostic strings
+function sanitizeDiagnosticArray(arr: any): string[] {
+  if (!Array.isArray(arr)) return [];
+  return arr.map((item: any) => typeof item === 'string' ? sanitizeDiagnosticText(item) : item);
+}
+
+// Sanitize executive diagnosis object
+function sanitizeExecutiveDiagnosis(diag: any): any {
+  if (!diag || typeof diag !== 'object') return diag;
+  const sanitized = { ...diag };
+  for (const key of ['current_state', 'primary_constraint', 'highest_leverage_focus']) {
+    if (typeof sanitized[key] === 'string') {
+      sanitized[key] = sanitizeDiagnosticText(sanitized[key]);
+    }
+  }
+  return sanitized;
 }
 
 // Save digital presence to dedicated table
@@ -561,13 +631,13 @@ async function saveDigitalPresence(companyId: string, data: any, sourceUrl: stri
 
     const presenceData = {
       company_id: companyId,
-      digital_footprint_summary: data.digital_footprint_summary || null,
-      what_is_working: data.what_is_working || [],
-      what_is_missing: data.what_is_missing || [],
-      key_risks: data.key_risks || [],
-      competitive_positioning: data.competitive_positioning || null,
+      digital_footprint_summary: sanitizeDiagnosticText(data.digital_footprint_summary) || null,
+      what_is_working: sanitizeDiagnosticArray(data.what_is_working),
+      what_is_missing: sanitizeDiagnosticArray(data.what_is_missing),
+      key_risks: sanitizeDiagnosticArray(data.key_risks),
+      competitive_positioning: sanitizeDiagnosticText(data.competitive_positioning) || null,
       action_plan: data.action_plan || {},
-      executive_diagnosis: data.executive_diagnosis || {},
+      executive_diagnosis: sanitizeExecutiveDiagnosis(data.executive_diagnosis || {}),
       source_url: sourceUrl,
       analyzed_social_links: socialLinks || [],
       updated_at: new Date().toISOString()

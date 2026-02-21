@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Crosshair, Plus, Trash2, UserCheck, Bot, Check, Users, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,34 +27,42 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
   const { t } = useTranslation();
   const bmCtx = getBusinessModelContext(businessModel || null);
 
-  // Pre-fill from ALL diagnostic audiences if available and no existing data
-  const allAudiencesRaw = diagnosticData?.allAudiences || [];
-  
-  const inferredSegments: TargetSegment[] = allAudiencesRaw.length > 0
-    ? allAudiencesRaw.map((audience, i) => ({
+  // Track if user has manually edited segments
+  const userHasEdited = useRef(false);
+
+  // Build inferred segments from diagnostic data (memoized)
+  const inferredSegments = useMemo((): TargetSegment[] => {
+    const allAudiencesRaw = diagnosticData?.allAudiences || [];
+    if (allAudiencesRaw.length > 0) {
+      return allAudiencesRaw.map((audience, i) => ({
         id: `inferred-icp-${i}`,
         name: audience.name,
         description: [
           audience.description || '',
-          audience.painPoints.length > 0 ? `${t('journey.sdna.bm.painPointsLabel', 'Dolores')}: ${audience.painPoints.join(', ')}` : '',
-          audience.goals.length > 0 ? `${t('journey.sdna.bm.goalsLabel', 'Objetivos')}: ${audience.goals.join(', ')}` : '',
+          (audience.painPoints?.length ?? 0) > 0 ? `${t('journey.sdna.bm.painPointsLabel', 'Dolores')}: ${audience.painPoints.join(', ')}` : '',
+          (audience.goals?.length ?? 0) > 0 ? `${t('journey.sdna.bm.goalsLabel', 'Objetivos')}: ${audience.goals.join(', ')}` : '',
         ].filter(Boolean).join('\n'),
         size: i === 0 ? (diagnosticData?.marketSize || '') : '',
         growthPotential: 'medium' as const,
-      }))
-    : diagnosticData?.icpName ? [{
+      }));
+    }
+    if (diagnosticData?.icpName) {
+      return [{
         id: 'inferred-icp',
         name: diagnosticData.icpName,
         description: diagnosticData.icpDescription || '',
         size: diagnosticData.marketSize || '',
         growthPotential: 'medium' as const,
-      }] : [];
+      }];
+    }
+    return [];
+  }, [diagnosticData, t]);
 
-  const initialSegments = strategy.targetSegments?.length 
-    ? strategy.targetSegments 
-    : inferredSegments.length > 0 ? inferredSegments : [];
-
-  const [segments, setSegments] = useState<TargetSegment[]>(initialSegments);
+  const [segments, setSegments] = useState<TargetSegment[]>(() => {
+    if (strategy.targetSegments?.length) return strategy.targetSegments;
+    if (inferredSegments.length > 0) return inferredSegments;
+    return [];
+  });
   const [icpInferred, setIcpInferred] = useState(
     !strategy.targetSegments?.length && inferredSegments.length > 0
   );
@@ -67,6 +75,19 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
   const [hasChanges, setHasChanges] = useState(false);
   const [desiredPositioning, setDesiredPositioning] = useState(strategy.desiredAudiencePositioning || '');
 
+  // Sync inferred segments when diagnosticData arrives late (race condition fix)
+  useEffect(() => {
+    if (userHasEdited.current) return;
+    if (strategy.targetSegments?.length) return;
+    if (segments.length > 0) return;
+    if (inferredSegments.length === 0) return;
+
+    setSegments(inferredSegments);
+    setIcpInferred(true);
+    if (diagnosticData?.clientMaturity) setMaturity(diagnosticData.clientMaturity as any);
+    if (diagnosticData?.decisionMaker) setDecisionMaker(diagnosticData.decisionMaker);
+  }, [inferredSegments, diagnosticData, strategy.targetSegments, segments.length]);
+
   const saveChanges = useCallback(async () => {
     if (!hasChanges) return;
     await onUpdate({ targetSegments: segments, desiredAudiencePositioning: desiredPositioning });
@@ -78,8 +99,8 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
     return () => clearTimeout(timer);
   }, [hasChanges, saveChanges]);
 
-  const handleConfirmICP = () => { setIcpInferred(false); setHasChanges(true); };
-  const handleEditICP = () => { setIcpInferred(false); setHasChanges(true); };
+  const handleConfirmICP = () => { setIcpInferred(false); setHasChanges(true); userHasEdited.current = true; };
+  const handleEditICP = () => { setIcpInferred(false); setHasChanges(true); userHasEdited.current = true; };
 
   const addSegment = () => {
     const newSegment: TargetSegment = {
@@ -91,22 +112,24 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
     };
     setSegments([...segments, newSegment]);
     setHasChanges(true);
+    userHasEdited.current = true;
   };
 
   const updateSegment = (id: string, field: keyof TargetSegment, value: string) => {
     setSegments(segments.map(s => s.id === id ? { ...s, [field]: value } : s));
     setHasChanges(true);
-    if (icpInferred) setIcpInferred(false);
+    userHasEdited.current = true;
   };
 
   const removeSegment = (id: string) => {
     setSegments(segments.filter(s => s.id !== id));
     setHasChanges(true);
+    userHasEdited.current = true;
   };
 
   const hasValidSegment = segments.some(s => s.name.length > 0 && s.description.length > 0);
-  const hasPainPoints = diagnosticData?.icpPainPoints && diagnosticData.icpPainPoints.length > 0;
-  const hasGoals = diagnosticData?.icpGoals && diagnosticData.icpGoals.length > 0;
+  const hasPainPoints = (diagnosticData?.icpPainPoints?.length ?? 0) > 0;
+  const hasGoals = (diagnosticData?.icpGoals?.length ?? 0) > 0;
   const allAudiences = diagnosticData?.allAudiences || [];
   const hasMultipleAudiences = allAudiences.length > 1;
 

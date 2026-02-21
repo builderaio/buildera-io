@@ -80,13 +80,18 @@ export default function FounderPTWSimplified({
       }
       setCurrentStep(1);
     } else if (typeof currentStep === 'number' && currentStep < 3) {
+      // Allow flush-on-unmount to execute before navigating
+      await new Promise(resolve => setTimeout(resolve, 100));
       setCurrentStep((currentStep + 1) as 1 | 2 | 3);
     } else {
+      // Allow flush-on-unmount to execute before finalizing
+      await new Promise(resolve => setTimeout(resolve, 150));
       await updateStrategy({ 
         status: 'in_progress',
         generatedWithAI: false 
       });
       // Re-fetch from DB to ensure we have the latest persisted data
+      await new Promise(resolve => setTimeout(resolve, 200));
       await refetch();
       setIsComplete(true);
     }

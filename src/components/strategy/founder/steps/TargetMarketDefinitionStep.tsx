@@ -94,6 +94,21 @@ export default function TargetMarketDefinitionStep({ strategy, onUpdate, isSavin
     setHasChanges(false);
   }, [segments, desiredPositioning, hasChanges, onUpdate]);
 
+  // Keep refs in sync for flush-on-unmount
+  const saveRef = useRef(saveChanges);
+  saveRef.current = saveChanges;
+  const hasChangesRef = useRef(hasChanges);
+  hasChangesRef.current = hasChanges;
+
+  // Flush pending changes on unmount
+  useEffect(() => {
+    return () => {
+      if (hasChangesRef.current) {
+        saveRef.current();
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => { if (hasChanges) saveChanges(); }, 1500);
     return () => clearTimeout(timer);

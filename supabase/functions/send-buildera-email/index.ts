@@ -104,17 +104,18 @@ async function sendSMTPEmail(
     const ccList = emailData.cc?.map(email => email) || [];
     const bccList = emailData.bcc?.map(email => email) || [];
 
-    // Clean and properly format content for SMTP compliance
-    const cleanCRLF = (content: string) => {
+    // Clean content: remove trailing spaces per line (prevents =20 in Quoted-Printable)
+    // and normalize line endings for SMTP compliance
+    const cleanForSMTP = (content: string) => {
       return content
-        .replace(/\r?\n/g, '\r\n') // Ensure CRLF
-        .replace(/(?<!\r)\n/g, '\r\n') // Guard against any lone LFs
-        .replace(/\r\n/g, '\r\n') // Normalize
+        .split(/\r?\n/)
+        .map(line => line.trimEnd()) // Remove trailing spaces that cause =20
+        .join('\r\n')
         .trim();
     };
 
-    const htmlBody = cleanCRLF(emailData.htmlContent);
-    const textBody = cleanCRLF(
+    const htmlBody = cleanForSMTP(emailData.htmlContent);
+    const textBody = cleanForSMTP(
       emailData.textContent || emailData.htmlContent.replace(/<[^>]*>/g, ' ')
     );
 

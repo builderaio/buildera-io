@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -6,7 +6,7 @@ import {
   CheckCircle2, AlertTriangle, XCircle, Shield, TrendingUp,
   Zap, Star, ArrowRight, Cpu, Activity, Brain, Sparkles,
   Calendar, Eye, ShieldCheck, Download, FileSearch, BarChart3,
-  DollarSign, TrendingDown, Scale
+  DollarSign, TrendingDown, Scale, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { computeDigitalMaturityScores } from './scoring/digitalMaturityScoring';
@@ -328,6 +328,8 @@ export const ExecutiveDigitalDiagnosis = ({
   results, summary, totalTime, onContinue
 }: ExecutiveDigitalDiagnosisProps) => {
   const { t } = useTranslation(['common']);
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
   const scores = useMemo(() => computeDigitalMaturityScores(results), [results]);
 
   const basic = results?.basic_info || {};
@@ -350,6 +352,50 @@ export const ExecutiveDigitalDiagnosis = ({
     animate: { opacity: 1, y: 0 },
     transition: { delay, duration: 0.5 },
   });
+
+  const handleDownloadPDF = useCallback(async () => {
+    if (!reportRef.current || downloading) return;
+    setDownloading(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
+
+      const element = reportRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#0f172a', // slate-950
+        logging: false,
+        windowWidth: 1200,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = -(imgHeight - heightLeft);
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const companyName = (identity.company_name || 'empresa').replace(/[^a-zA-Z0-9]/g, '_');
+      pdf.save(`Diagnostico_Digital_${companyName}_${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setDownloading(false);
+    }
+  }, [downloading, identity.company_name]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -377,6 +423,16 @@ export const ExecutiveDigitalDiagnosis = ({
               </span>
             )}
             <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDownloadPDF}
+              disabled={downloading}
+              className="text-slate-400 hover:text-white hover:bg-slate-800 text-xs gap-1.5"
+            >
+              {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
+            <Button
               onClick={onContinue}
               size="sm"
               className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-xs"
@@ -388,7 +444,7 @@ export const ExecutiveDigitalDiagnosis = ({
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div ref={reportRef} className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
         {/* ══════════════════════════════════════════════════════ */}
         {/* SECTION 1: SNAPSHOT OVERVIEW */}
@@ -750,10 +806,14 @@ export const ExecutiveDigitalDiagnosis = ({
             <Button
               variant="outline"
               size="sm"
+              onClick={handleDownloadPDF}
+              disabled={downloading}
               className="border-slate-600 text-slate-300 hover:bg-slate-800 gap-2"
             >
-              <BarChart3 className="w-4 h-4" />
-              {t('common:execDiagnosis.fullReport', 'Full Report')}
+              {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {downloading 
+                ? t('common:execDiagnosis.generatingPDF', 'Generating...') 
+                : t('common:execDiagnosis.downloadPDF', 'Download PDF')}
             </Button>
             <Button
               onClick={onContinue}

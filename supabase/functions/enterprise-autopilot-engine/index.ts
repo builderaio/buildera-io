@@ -282,7 +282,34 @@ async function gatherExternalIntelligence(companyId: string, maturityLevel: stri
 // MEMORY-AUGMENTED REASONING
 // ═══════════════════════════════════════════════════════════════
 
-async function retrieveMemory(companyId: string, department: string) {
+function generateContextHash(department: string, decisionType: string, actionParams: any): string {
+  const raw = `${department}:${decisionType}:${JSON.stringify(actionParams || {})}`;
+  // Simple hash: base64 of first 64 chars for Deno compatibility
+  const encoder = new TextEncoder();
+  const encoded = encoder.encode(raw);
+  let hash = 0;
+  for (let i = 0; i < encoded.length; i++) {
+    hash = ((hash << 5) - hash + encoded[i]) | 0;
+  }
+  return btoa(String(Math.abs(hash))).substring(0, 16);
+}
+
+async function retrieveMemory(companyId: string, department: string, currentContextHash?: string) {
+  // ═══ GAP 2: CONTEXT-HASH BASED RETRIEVAL ═══
+  // First try to find memories with matching context_hash for similarity
+  let contextMatches: any[] = [];
+  if (currentContextHash) {
+    const { data: hashMatches } = await supabase.from('autopilot_memory')
+      .select('decision_type, outcome_score, outcome_evaluation, lesson_learned, applies_to_future')
+      .eq('company_id', companyId)
+      .eq('department', department)
+      .eq('context_hash', currentContextHash)
+      .in('outcome_evaluation', ['positive', 'negative'])
+      .order('evaluated_at', { ascending: false })
+      .limit(5);
+    contextMatches = hashMatches || [];
+  }
+
   const { data } = await supabase.from('autopilot_memory')
     .select('decision_type, outcome_score, outcome_evaluation, lesson_learned, applies_to_future')
     .eq('company_id', companyId)
@@ -291,15 +318,25 @@ async function retrieveMemory(companyId: string, department: string) {
     .order('evaluated_at', { ascending: false })
     .limit(10);
 
-  if (!data?.length) return null;
+  const allMemory = [...contextMatches, ...(data || [])];
+  // Deduplicate
+  const seen = new Set<string>();
+  const unique = allMemory.filter(m => {
+    const key = `${m.decision_type}:${m.lesson_learned}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
-  const lessons = data.filter(m => m.lesson_learned).map(m =>
+  if (!unique.length) return null;
+
+  const lessons = unique.filter(m => m.lesson_learned).map(m =>
     `- [${m.outcome_evaluation}] ${m.decision_type}: ${m.lesson_learned}`
   ).join('\n');
 
-  const rules = data.flatMap(m => (m.applies_to_future as any[]) || []);
+  const rules = unique.flatMap(m => (m.applies_to_future as any[]) || []);
 
-  return { lessons, rules, count: data.length };
+  return { lessons, rules, count: unique.length };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -467,7 +504,35 @@ async function sensePhase(companyId: string, department: string) {
     sevenDaysAgo: new Date(now.getTime() - 7 * 86400000).toISOString(),
   };
 
-  return await reg.senseQuery(companyId, range);
+  const senseData = await reg.senseQuery(companyId, range);
+
+  // ═══ GAP 4: COMPETITOR DATA IN SENSE ═══
+  // For marketing and sales, incorporate company_competitors into the snapshot
+  if (department === 'marketing' || department === 'sales') {
+    try {
+      const { data: competitors } = await supabase.from('company_competitors')
+        .select('competitor_name, website_url, strengths, weaknesses, is_direct_competitor, priority_level')
+        .eq('company_id', companyId)
+        .order('priority_level', { ascending: true })
+        .limit(10);
+
+      if (competitors?.length) {
+        senseData.competitors = competitors.map((c: any) => ({
+          name: c.competitor_name,
+          website: c.website_url,
+          strengths: c.strengths || [],
+          weaknesses: c.weaknesses || [],
+          is_direct: c.is_direct_competitor,
+          priority: c.priority_level,
+        }));
+        console.log(`🏢 [${department}] Loaded ${competitors.length} competitors into sense data`);
+      }
+    } catch (compErr) {
+      console.warn(`⚠️ [${department}] Failed to load competitors (non-blocking):`, compErr);
+    }
+  }
+
+  return senseData;
 }
 
 async function thinkPhase(companyId: string, department: string, senseData: any, deptConfig: any, externalIntel: any[], memory: any) {
@@ -831,7 +896,22 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
     serialResults.push(result);
   }
 
-  return [...nonExecutable, ...parallelResults, ...serialResults];
+  const allResults = [...nonExecutable, ...parallelResults, ...serialResults];
+
+  // ═══ GAP 6: CREDIT AGGREGATION PER CYCLE ═══
+  // Sum credits_per_use for all successfully executed decisions
+  let totalCreditsConsumed = 0;
+  for (const result of allResults) {
+    if (result.action_taken && result.execution_result === 'success') {
+      const agentCode = result.agent_to_execute;
+      if (agentCode) {
+        const agent = agentMap.get(agentCode);
+        totalCreditsConsumed += agent?.credits_per_use || 1;
+      }
+    }
+  }
+
+  return { results: allResults, credits_consumed: totalCreditsConsumed };
 }
 
 async function learnPhase(companyId: string, department: string, cycleId: string, decisions: any[], executionTimeMs: number) {
@@ -859,13 +939,14 @@ async function learnPhase(companyId: string, department: string, cycleId: string
     await supabase.from('autopilot_decisions').insert(rows);
   }
 
-  // Store in memory for future reasoning
+  // Store in memory for future reasoning with context_hash (GAP 2)
   const memoryRows = decisions.filter(d => d.action_taken).map(d => ({
     company_id: companyId,
     department,
     cycle_id: cycleId,
     decision_type: d.decision_type,
     context_summary: d.reasoning,
+    context_hash: generateContextHash(department, d.decision_type, d.action_parameters),
     external_signal_used: d.external_signal_influence || false,
     outcome_evaluation: 'pending',
   }));
@@ -925,6 +1006,65 @@ async function learnPhase(companyId: string, department: string, cycleId: string
             evaluation = 'positive';
             lesson = `Analysis decision resulted in ${count} new insights generated.`;
           }
+        // ═══ GAP 3: FULL IMPACT EVALUATION BY DEPARTMENT ═══
+        } else if (['create_proposal', 'forecast_pipeline', 'enrich_contact'].includes(pe.decision_type)) {
+          // Sales: check deal movement and contact enrichment
+          const { data: dealUpdates } = await supabase.from('crm_deals')
+            .select('id, value').eq('company_id', companyId).gte('updated_at', pe.created_at).limit(10);
+          const { data: contactUpdates } = await supabase.from('crm_contacts')
+            .select('id').eq('company_id', companyId).gte('updated_at', pe.created_at).limit(10);
+          const totalActivity = (dealUpdates?.length || 0) + (contactUpdates?.length || 0);
+          score = Math.min(10, totalActivity);
+          evaluation = totalActivity >= 3 ? 'positive' : totalActivity >= 1 ? 'neutral' : 'negative';
+          lesson = `Sales decision correlated with ${dealUpdates?.length || 0} deal updates and ${contactUpdates?.length || 0} contact updates.`;
+        } else if (['budget_alert', 'credit_alert', 'cashflow_warning'].includes(pe.decision_type)) {
+          // Finance: compare credit consumption before/after
+          const { data: usageBefore } = await supabase.from('agent_usage_log')
+            .select('credits_consumed').eq('company_id', companyId)
+            .lt('created_at', pe.created_at).gte('created_at', new Date(new Date(pe.created_at).getTime() - 7 * 86400000).toISOString());
+          const { data: usageAfter } = await supabase.from('agent_usage_log')
+            .select('credits_consumed').eq('company_id', companyId)
+            .gte('created_at', pe.created_at).limit(50);
+          const before = (usageBefore || []).reduce((s, r) => s + (r.credits_consumed || 0), 0);
+          const after = (usageAfter || []).reduce((s, r) => s + (r.credits_consumed || 0), 0);
+          score = after < before ? 8 : after === before ? 5 : 3;
+          evaluation = after < before ? 'positive' : after <= before * 1.1 ? 'neutral' : 'negative';
+          lesson = `Finance alert: credits before=${before}, after=${after}. ${after < before ? 'Consumption reduced' : 'No improvement'}.`;
+        } else if (['compliance_alert', 'review_contract'].includes(pe.decision_type)) {
+          // Legal: check if legal parameters were updated post-decision
+          const { data: legalUpdates } = await supabase.from('company_parameters')
+            .select('parameter_key, updated_at').eq('company_id', companyId)
+            .like('parameter_key', 'legal_%').gte('updated_at', pe.created_at);
+          score = (legalUpdates?.length || 0) > 0 ? 7 : 3;
+          evaluation = (legalUpdates?.length || 0) > 0 ? 'positive' : 'neutral';
+          lesson = `Legal decision: ${legalUpdates?.length || 0} legal parameters updated post-action.`;
+        } else if (['create_job_profile', 'climate_survey', 'talent_match'].includes(pe.decision_type)) {
+          // HR: check if new members were added or HR params updated
+          const { data: newMembers } = await supabase.from('company_members')
+            .select('id').eq('company_id', companyId).gte('joined_at', pe.created_at);
+          const { data: hrUpdates } = await supabase.from('company_parameters')
+            .select('id').eq('company_id', companyId).like('parameter_key', 'hr_%').gte('updated_at', pe.created_at);
+          const total = (newMembers?.length || 0) + (hrUpdates?.length || 0);
+          score = Math.min(10, total * 2 + 3);
+          evaluation = total > 0 ? 'positive' : 'neutral';
+          lesson = `HR decision: ${newMembers?.length || 0} new members, ${hrUpdates?.length || 0} HR parameter updates.`;
+        } else if (['optimize_process', 'automate_task', 'sla_alert'].includes(pe.decision_type)) {
+          // Operations: evaluate task completion rate and agent failure rate
+          const { data: recentTasks } = await supabase.from('ai_workforce_team_tasks')
+            .select('status').in('team_id', 
+              (await supabase.from('ai_workforce_teams').select('id').eq('company_id', companyId)).data?.map(t => t.id) || []
+            ).gte('created_at', pe.created_at);
+          const completed = (recentTasks || []).filter(t => t.status === 'completed').length;
+          const total = recentTasks?.length || 0;
+          const completionRate = total > 0 ? completed / total : 0;
+          const { data: recentExecs } = await supabase.from('agent_usage_log')
+            .select('status').eq('company_id', companyId).gte('created_at', pe.created_at).limit(50);
+          const failureRate = (recentExecs || []).length > 0 
+            ? (recentExecs || []).filter(e => e.status === 'failed').length / (recentExecs || []).length 
+            : 0;
+          score = Math.round(completionRate * 7 + (1 - failureRate) * 3);
+          evaluation = score >= 6 ? 'positive' : score >= 3 ? 'neutral' : 'negative';
+          lesson = `Operations: ${completed}/${total} tasks completed (${(completionRate * 100).toFixed(0)}%), agent failure rate: ${(failureRate * 100).toFixed(1)}%.`;
         }
       } catch (evalErr) {
         console.warn(`⚠️ Impact evaluation failed for ${pe.id}:`, evalErr);
@@ -1100,6 +1240,7 @@ interface GapReport {
   recurring_blocks: { decision_type: string; block_reason: string; count: number }[];
   unhandled_signals: { source: string; signal_count: number }[];
   repeated_patterns: { decision_type: string; success_count: number }[];
+  low_performing_decisions: { decision_type: string; negative_count: number; avg_score: number }[];
 }
 
 async function detectCapabilityGaps(companyId: string, department: string): Promise<GapReport> {
@@ -1180,16 +1321,37 @@ async function detectCapabilityGaps(companyId: string, department: string): Prom
     .map(([decision_type, success_count]) => ({ decision_type, success_count }))
     .filter(p => p.success_count >= 3);
 
-  const report: GapReport = { unmapped_agents, recurring_blocks, unhandled_signals, repeated_patterns };
-  const totalGaps = unmapped_agents.length + recurring_blocks.length + unhandled_signals.length + repeated_patterns.length;
-  console.log(`🔍 [${department}] Found ${totalGaps} capability gaps`);
+  // ═══ GAP 5: LOW PERFORMING DECISIONS (outcome_score < threshold) ═══
+  const { data: lowPerformers } = await supabase.from('autopilot_memory')
+    .select('decision_type, outcome_score')
+    .eq('company_id', companyId)
+    .eq('department', department)
+    .eq('outcome_evaluation', 'negative')
+    .lt('outcome_score', 3)
+    .limit(50);
+
+  const lowPerfMap = new Map<string, { count: number; totalScore: number }>();
+  for (const lp of (lowPerformers || [])) {
+    const existing = lowPerfMap.get(lp.decision_type) || { count: 0, totalScore: 0 };
+    existing.count++;
+    existing.totalScore += lp.outcome_score || 0;
+    lowPerfMap.set(lp.decision_type, existing);
+  }
+  const low_performing_decisions = Array.from(lowPerfMap.entries())
+    .map(([decision_type, v]) => ({ decision_type, negative_count: v.count, avg_score: v.count > 0 ? v.totalScore / v.count : 0 }))
+    .filter(d => d.negative_count >= 3);
+
+  const report: GapReport = { unmapped_agents, recurring_blocks, unhandled_signals, repeated_patterns, low_performing_decisions };
+  const totalGaps = unmapped_agents.length + recurring_blocks.length + unhandled_signals.length + repeated_patterns.length + low_performing_decisions.length;
+  console.log(`🔍 [${department}] Found ${totalGaps} capability gaps (including ${low_performing_decisions.length} low-performing decision types)`);
 
   return report;
 }
 
 async function proposeNewCapabilities(companyId: string, department: string, gapReport: GapReport) {
   const totalGaps = gapReport.unmapped_agents.length + gapReport.recurring_blocks.length +
-    gapReport.unhandled_signals.length + gapReport.repeated_patterns.length;
+    gapReport.unhandled_signals.length + gapReport.repeated_patterns.length +
+    (gapReport.low_performing_decisions?.length || 0);
 
   if (totalGaps < 2) {
     console.log(`💡 [${department}] Not enough gaps (${totalGaps}) to propose new capabilities`);
@@ -1553,9 +1715,12 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
     // ACT
     console.log(`⚡ [${department}] ACT`);
     const actStart = Date.now();
-    const actions = await actPhase(companyId, department, guarded, cycleId);
+    const actResult = await actPhase(companyId, department, guarded, cycleId);
+    const actions = actResult.results;
+    const cycleCreditsConsumed = actResult.credits_consumed;
     await logExecution(companyId, cycleId, department, 'act', 'completed', {
-      actions, content_generated: actions.filter(a => a.action_taken).length,
+      actions, content_generated: actions.filter((a: any) => a.action_taken).length,
+      credits_consumed: cycleCreditsConsumed,
       execution_time_ms: Date.now() - actStart,
     });
 
@@ -1571,13 +1736,57 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
       console.log(`✨ [${department}] Proposed ${proposedCaps.length} new capabilities: ${proposedCaps.join(', ')}`);
     }
 
-    console.log(`✅ [${department}] Cycle ${cycleId} done in ${Date.now() - startTime}ms`);
-    return { department, cycle_id: cycleId, total_decisions: decisions.length, passed, blocked, pending_review: pending, execution_time_ms: Date.now() - startTime };
+    // ═══ GAP 1: UNIFIED CYCLE LOG IN autopilot_execution_log ═══
+    const totalExecutionTime = Date.now() - startTime;
+    const contentGenerated = actions.filter((a: any) => a.action_taken).length;
+    const contentApproved = passed;
+    const contentRejected = blocked;
+    const contentPendingReview = pending;
+
+    try {
+      await supabase.from('autopilot_execution_log').insert({
+        company_id: companyId,
+        cycle_id: cycleId,
+        phase: 'complete_cycle',
+        status: 'completed',
+        context_snapshot: senseData,
+        decisions_made: decisions,
+        actions_taken: actions.filter((a: any) => a.action_taken),
+        credits_consumed: cycleCreditsConsumed,
+        execution_time_ms: totalExecutionTime,
+        content_generated: contentGenerated,
+        content_approved: contentApproved,
+        content_rejected: contentRejected,
+        content_pending_review: contentPendingReview,
+      });
+      console.log(`📋 [${department}] Cycle summary logged to autopilot_execution_log (credits: ${cycleCreditsConsumed})`);
+    } catch (logErr) {
+      console.error(`⚠️ [${department}] Failed to write autopilot_execution_log:`, logErr);
+    }
+
+    console.log(`✅ [${department}] Cycle ${cycleId} done in ${totalExecutionTime}ms`);
+    return { department, cycle_id: cycleId, total_decisions: decisions.length, passed, blocked, pending_review: pending, credits_consumed: cycleCreditsConsumed, execution_time_ms: totalExecutionTime };
   } catch (error) {
     console.error(`❌ [${department}] Cycle failed:`, error);
     await logExecution(companyId, cycleId, department, 'error', 'failed', {
       error_message: (error as Error).message, execution_time_ms: Date.now() - startTime,
     });
+    // Also log failure to autopilot_execution_log
+    try {
+      await supabase.from('autopilot_execution_log').insert({
+        company_id: companyId,
+        cycle_id: cycleId,
+        phase: 'complete_cycle',
+        status: 'failed',
+        error_message: (error as Error).message,
+        execution_time_ms: Date.now() - startTime,
+        credits_consumed: 0,
+        content_generated: 0,
+        content_approved: 0,
+        content_rejected: 0,
+        content_pending_review: 0,
+      });
+    } catch {}
     return { department, cycle_id: cycleId, success: false, error: (error as Error).message };
   }
 }

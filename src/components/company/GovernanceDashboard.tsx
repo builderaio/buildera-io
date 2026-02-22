@@ -1,51 +1,60 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/contexts/CompanyContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Shield, CheckCircle, Clock, XCircle, FileEdit, Send,
-  AlertTriangle, Eye, Brain, RefreshCw, Loader2
-} from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { getDateLocale } from "@/utils/dateLocale";
+import { Shield, RefreshCw, Loader2 } from "lucide-react";
+import EnterpriseIQPanel from "./governance/EnterpriseIQPanel";
+import DepartmentsPanel from "./governance/DepartmentsPanel";
+import ExecutionLogPanel from "./governance/ExecutionLogPanel";
+import GuardrailsPanel from "./governance/GuardrailsPanel";
+import ApprovalsPanel from "./governance/ApprovalsPanel";
+import CapabilitiesPanel from "./governance/CapabilitiesPanel";
+import StatusBar from "./governance/StatusBar";
 
 interface GovernanceDashboardProps {
   profile?: any;
 }
 
-const statusIcons: Record<string, any> = {
-  draft: FileEdit,
-  pending_review: Clock,
-  approved: CheckCircle,
-  rejected: XCircle,
-  published: Send,
-};
-
-const statusColors: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
-  pending_review: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-  approved: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-  rejected: "bg-destructive/10 text-destructive border-destructive/20",
-  published: "bg-primary/10 text-primary border-primary/20",
-};
-
 const GovernanceDashboard = ({ profile }: GovernanceDashboardProps) => {
   const { t } = useTranslation(["company", "common"]);
   const { company } = useCompany();
   const companyId = company?.id || profile?.primary_company_id;
-  const [approvals, setApprovals] = useState<any[]>([]);
-  const [decisions, setDecisions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
+  const [loading, setLoading] = useState(true);
+  const [decisions, setDecisions] = useState<any[]>([]);
+  const [approvals, setApprovals] = useState<any[]>([]);
+  const [capabilities, setCapabilities] = useState<any[]>([]);
+  const [interventions, setInterventions] = useState<any[]>([]);
+  const [lessonsCount, setLessonsCount] = useState(0);
+  const [cyclesCount, setCyclesCount] = useState(0);
+  const [creditsToday, setCreditsToday] = useState(0);
+  const [departments, setDepartments] = useState<any[]>([]);
+
+  const fetchData = useCallback(async () => {
     if (!companyId) return;
     setLoading(true);
 
-    const [approvalsRes, decisionsRes] = await Promise.all([
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [
+      decisionsRes,
+      approvalsRes,
+      capsRes,
+      interventionsRes,
+      lessonsRes,
+      cyclesRes,
+      creditsRes,
+      deptsRes,
+    ] = await Promise.all([
+      supabase
+        .from("autopilot_decisions")
+        .select("*")
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false })
+        .limit(50),
       supabase
         .from("content_approvals")
         .select("*")
@@ -53,181 +62,152 @@ const GovernanceDashboard = ({ profile }: GovernanceDashboardProps) => {
         .order("created_at", { ascending: false })
         .limit(50),
       supabase
-        .from("autopilot_decisions")
+        .from("autopilot_capabilities")
         .select("*")
         .eq("company_id", companyId)
+        .or("is_active.eq.true,status.eq.trial"),
+      supabase
+        .from("autopilot_execution_log")
+        .select("*")
+        .eq("company_id", companyId)
+        .eq("phase", "guardrail_intervention")
         .order("created_at", { ascending: false })
-        .limit(50),
+        .limit(30),
+      supabase
+        .from("autopilot_memory")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId),
+      supabase
+        .from("autopilot_execution_log")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId)
+        .in("phase", ["SENSE", "THINK", "GUARD", "ACT", "LEARN"]),
+      supabase
+        .from("agent_usage_log")
+        .select("credits_consumed")
+        .eq("company_id", companyId)
+        .gte("created_at", todayStart.toISOString()),
+      supabase
+        .from("company_department_config")
+        .select("*")
+        .eq("company_id", companyId),
     ]);
 
-    setApprovals(approvalsRes.data || []);
     setDecisions(decisionsRes.data || []);
+    setApprovals(approvalsRes.data || []);
+    setCapabilities(capsRes.data || []);
+    setInterventions(interventionsRes.data || []);
+    setLessonsCount(lessonsRes.count || 0);
+    setCyclesCount(cyclesRes.count || 0);
+
+    const totalCredits = (creditsRes.data || []).reduce(
+      (sum: number, row: any) => sum + (row.credits_consumed || 0), 0
+    );
+    setCreditsToday(totalCredits);
+
+    // Map departments
+    const deptConfigs = deptsRes.data || [];
+    const deptKeys = ["marketing", "sales", "legal", "hr", "customer_service", "finance"];
+    const todayDecisions = (decisionsRes.data || []).filter((d: any) => {
+      const created = new Date(d.created_at);
+      return created.toDateString() === new Date().toDateString();
+    });
+
+    const mappedDepts = deptKeys.map(key => {
+      const config = deptConfigs.find((c: any) => c.department === key);
+      const tasksToday = todayDecisions.filter(
+        (d: any) => (d.decision_type || "").toLowerCase().includes(key) ||
+          (d.agent_to_execute || "").toLowerCase().includes(key)
+      ).length;
+      return {
+        key,
+        enabled: config?.autopilot_enabled ?? false,
+        tasksToday,
+      };
+    });
+    setDepartments(mappedDepts);
     setLoading(false);
-  };
+  }, [companyId]);
 
   useEffect(() => {
     fetchData();
-  }, [companyId]);
+  }, [fetchData]);
 
+  // Derived metrics
+  const activeCapsCount = capabilities.filter(c => c.is_active).length;
   const pendingCount = approvals.filter(a => a.status === "pending_review").length;
-  const approvedCount = approvals.filter(a => a.status === "approved").length;
-  const blockedDecisions = decisions.filter(d => d.guardrail_result === "blocked").length;
-  const passedGuardrails = decisions.filter(d => d.guardrail_result === "passed").length;
-  const locale = getDateLocale();
+
+  // Budget usage estimate (simplified: credits today vs daily limit of 100)
+  const budgetUsedPct = Math.min(Math.round((creditsToday / Math.max(100, creditsToday + 20)) * 100), 100);
+
+  // Active agents count
+  const uniqueAgents = new Set(decisions.filter(d => d.agent_to_execute).map(d => d.agent_to_execute));
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-4 p-4 md:p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-heading font-bold flex items-center gap-3">
-            <Shield className="w-7 h-7 text-primary" />
-            {t("company:governance.title", "Gobernanza y Control")}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {t("company:governance.subtitle", "Aprobaciones, guardrails y trazabilidad de decisiones autónomas")}
-          </p>
+        <div className="flex items-center gap-3">
+          <Shield className="w-6 h-6 text-primary" />
+          <div>
+            <h1 className="text-xl md:text-2xl font-heading font-bold text-foreground flex items-center gap-2">
+              {t("company:governance.title", "Autonomy Control Center")}
+              {pendingCount > 0 && (
+                <Badge variant="destructive" className="text-[10px] px-1.5 h-5">{pendingCount}</Badge>
+              )}
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {t("company:governance.subtitle", "Control total de la autonomía empresarial en tiempo real")}
+            </p>
+          </div>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+        <Button variant="outline" size="sm" onClick={fetchData}>
+          <RefreshCw className="w-4 h-4 mr-1.5" />
           {t("common:actions.refresh", "Actualizar")}
         </Button>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4 pb-4 text-center">
-            <Clock className="w-6 h-6 text-amber-500 mx-auto mb-2" />
-            <p className="text-2xl font-heading font-bold">{pendingCount}</p>
-            <p className="text-xs text-muted-foreground">{t("company:governance.pendingReview", "Pendientes de revisión")}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 text-center">
-            <CheckCircle className="w-6 h-6 text-emerald-500 mx-auto mb-2" />
-            <p className="text-2xl font-heading font-bold">{approvedCount}</p>
-            <p className="text-xs text-muted-foreground">{t("company:governance.approved", "Aprobados")}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 text-center">
-            <Shield className="w-6 h-6 text-primary mx-auto mb-2" />
-            <p className="text-2xl font-heading font-bold">{passedGuardrails}</p>
-            <p className="text-xs text-muted-foreground">{t("company:governance.guardrailsPassed", "Guardrails OK")}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4 pb-4 text-center">
-            <AlertTriangle className="w-6 h-6 text-destructive mx-auto mb-2" />
-            <p className="text-2xl font-heading font-bold">{blockedDecisions}</p>
-            <p className="text-xs text-muted-foreground">{t("company:governance.guardrailsBlocked", "Bloqueados")}</p>
-          </CardContent>
-        </Card>
+      {/* 6-Panel Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 auto-rows-min">
+        {/* Left Column: IQ + Departments */}
+        <div className="md:col-span-3 space-y-4">
+          <EnterpriseIQPanel
+            cyclesCompleted={cyclesCount}
+            lessonsLearned={lessonsCount}
+            activatedCaps={activeCapsCount}
+            previousIQ={0}
+          />
+          <DepartmentsPanel departments={departments} />
+        </div>
+
+        {/* Center Column: Execution Log + Guardrails */}
+        <div className="md:col-span-5 space-y-4">
+          <ExecutionLogPanel decisions={decisions} />
+          <GuardrailsPanel interventions={interventions} budgetUsedPct={budgetUsedPct} />
+        </div>
+
+        {/* Right Column: Approvals + Capabilities */}
+        <div className="md:col-span-4 space-y-4">
+          <ApprovalsPanel approvals={approvals} onRefresh={fetchData} />
+          <CapabilitiesPanel capabilities={capabilities} />
+        </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="approvals" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="approvals" className="flex items-center gap-2">
-            <Eye className="w-4 h-4" />
-            {t("company:governance.contentApprovals", "Aprobaciones de contenido")}
-            {pendingCount > 0 && <Badge variant="destructive" className="text-[10px] px-1.5 h-4">{pendingCount}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="decisions" className="flex items-center gap-2">
-            <Brain className="w-4 h-4" />
-            {t("company:governance.autopilotDecisions", "Decisiones del Autopilot")}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="approvals" className="mt-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : approvals.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Eye className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-muted-foreground">{t("company:governance.noApprovals", "No hay aprobaciones aún. El contenido generado por agentes aparecerá aquí.")}</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {approvals.map((item) => {
-                const StatusIcon = statusIcons[item.status] || FileEdit;
-                return (
-                  <Card key={item.id} className="hover:border-primary/20 transition-colors">
-                    <CardContent className="flex items-center gap-4 py-4">
-                      <StatusIcon className="w-5 h-5 shrink-0 text-muted-foreground" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">
-                          {item.content_type} — {item.content_id?.substring(0, 8)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale })}
-                        </p>
-                      </div>
-                      <Badge className={statusColors[item.status] || ""} variant="outline">
-                        {item.status?.replace("_", " ")}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="decisions" className="mt-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : decisions.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Brain className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-muted-foreground">{t("company:governance.noDecisions", "No hay decisiones del autopilot aún. Activa el Cerebro Empresarial para ver decisiones aquí.")}</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {decisions.map((dec) => (
-                <Card key={dec.id} className="hover:border-primary/20 transition-colors">
-                  <CardContent className="py-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{dec.description}</p>
-                        <div className="flex items-center gap-3 mt-2 flex-wrap">
-                          <Badge variant="outline" className="text-[10px]">{dec.decision_type}</Badge>
-                          <Badge variant="outline" className="text-[10px]">{dec.priority}</Badge>
-                          {dec.guardrail_result && (
-                            <Badge
-                              variant="outline"
-                              className={dec.guardrail_result === "passed"
-                                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px]"
-                                : "bg-destructive/10 text-destructive border-destructive/20 text-[10px]"}
-                            >
-                              {dec.guardrail_result}
-                            </Badge>
-                          )}
-                        </div>
-                        {dec.reasoning && (
-                          <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{dec.reasoning}</p>
-                        )}
-                      </div>
-                      <span className="text-xs text-muted-foreground shrink-0">
-                        {formatDistanceToNow(new Date(dec.created_at), { addSuffix: true, locale })}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      {/* Status Bar */}
+      <StatusBar
+        currentCycle={cyclesCount}
+        activeAgents={uniqueAgents.size}
+        creditsToday={creditsToday}
+        nextCycleMinutes={Math.max(0, 60 - new Date().getMinutes())}
+      />
     </div>
   );
 };

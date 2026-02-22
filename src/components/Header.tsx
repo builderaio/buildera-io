@@ -11,11 +11,11 @@ const Header = () => {
   const isMobile = useIsMobile();
 
   const navLinks = [
-    { href: "#valores", label: t('header.whyBuildera') },
-    { href: "#ecosistema", label: t('header.ecosystem') },
+    { href: "/#valores", label: t('header.whyBuildera') },
+    { href: "/#ecosistema", label: t('header.ecosystem') },
     { href: "/governance", label: t('header.governance') },
     { href: "/pricing", label: t('header.pricing', 'Pricing') },
-    { href: "#contacto", label: t('header.contact') },
+    { href: "/#contacto", label: t('header.contact') },
   ];
 
   return (

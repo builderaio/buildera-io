@@ -2334,12 +2334,14 @@ export type Database = {
           autopilot_enabled: boolean
           company_id: string
           created_at: string
+          daily_credit_limit: number
           department: string
           execution_frequency: string
           guardrails: Json | null
           id: string
           last_execution_at: string | null
           maturity_level_required: string
+          max_actions_per_day: number
           max_credits_per_cycle: number
           next_execution_at: string | null
           require_human_approval: boolean
@@ -2354,12 +2356,14 @@ export type Database = {
           autopilot_enabled?: boolean
           company_id: string
           created_at?: string
+          daily_credit_limit?: number
           department: string
           execution_frequency?: string
           guardrails?: Json | null
           id?: string
           last_execution_at?: string | null
           maturity_level_required?: string
+          max_actions_per_day?: number
           max_credits_per_cycle?: number
           next_execution_at?: string | null
           require_human_approval?: boolean
@@ -2374,12 +2378,14 @@ export type Database = {
           autopilot_enabled?: boolean
           company_id?: string
           created_at?: string
+          daily_credit_limit?: number
           department?: string
           execution_frequency?: string
           guardrails?: Json | null
           id?: string
           last_execution_at?: string | null
           maturity_level_required?: string
+          max_actions_per_day?: number
           max_credits_per_cycle?: number
           next_execution_at?: string | null
           require_human_approval?: boolean

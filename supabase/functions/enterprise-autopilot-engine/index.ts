@@ -552,9 +552,36 @@ Respond ONLY with a valid JSON array of decisions. Each decision:
     if (jsonMatch) decisions = JSON.parse(jsonMatch[0]);
   } catch {
     console.warn(`⚠️ [${department}] AI response could not be parsed. Skipping decision generation.`);
-    // Do NOT create fallback decisions with non-existent agents
     decisions = [];
   }
+
+  // ═══ L1: MULTI-CRITERIA SCORER & PRIORITY QUEUE ═══
+  // Assign auditable priority_score (0-100) based on weighted criteria
+  const priorityWeights: Record<string, number> = { critical: 1.0, high: 0.75, medium: 0.5, low: 0.25 };
+  
+  decisions = decisions.map(d => {
+    const urgencyScore = (priorityWeights[d.priority] || 0.5) * 100; // 0-100
+    const impactScore = d.expected_impact?.estimated_change 
+      ? Math.min(100, Math.abs(parseFloat(String(d.expected_impact.estimated_change).replace(/[^0-9.-]/g, '')) || 0) * 5)
+      : 30;
+    const strategicScore = d.reasoning?.length > 100 ? 70 : d.reasoning?.length > 50 ? 50 : 30;
+    const evidenceScore = d.external_signal_influence ? 80 : (d.action_parameters && Object.keys(d.action_parameters).length > 0 ? 60 : 30);
+
+    const priority_score = Math.round(
+      urgencyScore * 0.3 + impactScore * 0.3 + strategicScore * 0.2 + evidenceScore * 0.2
+    );
+
+    return {
+      ...d,
+      priority_score,
+      scoring_breakdown: { urgency: urgencyScore, impact: impactScore, strategic: strategicScore, evidence: evidenceScore },
+    };
+  });
+
+  // Sort by priority_score descending (Priority Queue)
+  decisions.sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0));
+
+  console.log(`🎯 [${department}] Scored & sorted ${decisions.length} decisions. Top score: ${decisions[0]?.priority_score || 'N/A'}`);
 
   return decisions;
 }
@@ -571,10 +598,11 @@ async function guardPhase(companyId: string, department: string, decisions: any[
   const forbiddenWords: string[] = guardrails.forbidden_words || [];
   const topicRestrictions: string[] = guardrails.topic_restrictions || [];
 
-  // Cross-departmental checks
+  // ═══ L3: CROSS-DEPARTMENTAL CHECKS ═══
   let crossBlockReason: string | null = null;
+
+  // Finance → Marketing/Sales budget block
   if (department === 'marketing' || department === 'sales') {
-    // Check if finance has flagged budget concerns
     const { data: financeParams } = await supabase.from('company_parameters')
       .select('parameter_value').eq('company_id', companyId).eq('parameter_key', 'finance_budget_status').maybeSingle();
     if (financeParams?.parameter_value === 'exceeded') {
@@ -582,11 +610,59 @@ async function guardPhase(companyId: string, department: string, decisions: any[
     }
   }
 
+  // ═══ L3: LEGAL → SALES COMPLIANCE CHECK ═══
+  let legalBlockReason: string | null = null;
+  if (department === 'sales') {
+    const { data: legalStatus } = await supabase.from('company_parameters')
+      .select('parameter_value').eq('company_id', companyId).eq('parameter_key', 'legal_compliance_status').maybeSingle();
+    if (legalStatus?.parameter_value === 'review_required') {
+      legalBlockReason = 'Legal department requires compliance review before sales actions can proceed';
+    }
+  }
+
+  // ═══ L3: RATE LIMITER PER ACTION TYPE (last 24h) ═══
+  const maxActionsPerDay = deptConfig.max_actions_per_day || 10;
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 3600000).toISOString();
+  const { data: recentActions } = await supabase.from('autopilot_decisions')
+    .select('decision_type')
+    .eq('company_id', companyId)
+    .eq('action_taken', true)
+    .gte('created_at', twentyFourHoursAgo);
+
+  const actionCounts = (recentActions || []).reduce((acc: Record<string, number>, d) => {
+    acc[d.decision_type] = (acc[d.decision_type] || 0) + 1;
+    return acc;
+  }, {});
+
+  // ═══ L3: DAILY CREDIT BUDGET CHECK ═══
+  const dailyCreditLimit = deptConfig.daily_credit_limit || 50;
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const { data: todayUsage } = await supabase.from('agent_usage_log')
+    .select('credits_consumed')
+    .eq('company_id', companyId)
+    .gte('created_at', todayStart.toISOString());
+  const creditsUsedToday = (todayUsage || []).reduce((s, r) => s + (r.credits_consumed || 0), 0);
+  const budgetExceeded = creditsUsedToday >= dailyCreditLimit;
+
   return decisions.map(decision => {
     const desc = (decision.description || '').toLowerCase();
 
+    // Budget block (Finance cross-dept)
     if (crossBlockReason && ['create_content', 'publish', 'create_proposal', 'adjust_campaigns'].includes(decision.decision_type)) {
       return { ...decision, guardrail_result: 'blocked', guardrail_details: crossBlockReason };
+    }
+    // Legal → Sales block
+    if (legalBlockReason && ['create_proposal', 'advance_deal'].includes(decision.decision_type)) {
+      return { ...decision, guardrail_result: 'blocked', guardrail_details: legalBlockReason };
+    }
+    // Daily credit budget exceeded
+    if (budgetExceeded) {
+      return { ...decision, guardrail_result: 'blocked', guardrail_details: `Daily credit limit exceeded (${creditsUsedToday}/${dailyCreditLimit})` };
+    }
+    // Rate limiter per action type
+    if ((actionCounts[decision.decision_type] || 0) >= maxActionsPerDay) {
+      return { ...decision, guardrail_result: 'blocked', guardrail_details: `Rate limit exceeded for ${decision.decision_type} (${actionCounts[decision.decision_type]}/${maxActionsPerDay} in 24h)` };
     }
     if (forbiddenWords.some(w => desc.includes(w.toLowerCase()))) {
       return { ...decision, guardrail_result: 'blocked', guardrail_details: 'Contains forbidden word' };
@@ -604,23 +680,113 @@ async function guardPhase(companyId: string, department: string, decisions: any[
   });
 }
 
-async function actPhase(companyId: string, department: string, guardedDecisions: any[], cycleId: string) {
-  const results: any[] = [];
+async function executeAgentForDecision(
+  companyId: string, department: string, decision: any, cycleId: string,
+  agentMap: Map<string, any>
+): Promise<any> {
+  const agentCode = decision.agent_to_execute;
 
-  // Resolve agent mappings using category (NOT department column which doesn't exist)
+  if (!agentCode) {
+    console.log(`ℹ️ [${department}] Decision has no agent assigned (null). Logging as recommendation only.`);
+    return { ...decision, action_taken: false, execution_result: 'recommendation_only' };
+  }
+
+  const agent = agentMap.get(agentCode);
+  if (!agent) {
+    console.log(`⚠️ [${department}] No agent found for code: ${agentCode}. Not a real agent.`);
+    return { ...decision, action_taken: false, execution_result: 'no_agent_mapped' };
+  }
+
+  if (!agent.edge_function_name || agent.execution_type === 'pending') {
+    console.log(`⚠️ [${department}] Agent ${agentCode} exists but is pending implementation.`);
+    return { ...decision, action_taken: false, execution_result: 'agent_not_implemented' };
+  }
+
+  if (agent.edge_function_name === 'enterprise-autopilot-engine') {
+    console.warn(`🔄 [${department}] Agent ${agentCode} points to enterprise-autopilot-engine itself! Skipping to prevent recursion.`);
+    return { ...decision, action_taken: false, execution_result: 'recursive_agent_blocked' };
+  }
+
+  try {
+    console.log(`⚡ [${department}] Invoking agent: ${agent.name} (${agent.edge_function_name})`);
+    const execStart = Date.now();
+
+    // Load agent context requirements for rich payload
+    const { data: agentFull } = await supabase.from('platform_agents')
+      .select('context_requirements').eq('id', agent.id).single();
+
+    let companyContext: any = {};
+    const contextReqs = agentFull?.context_requirements as string[] || [];
+    if (contextReqs.length > 0) {
+      const contextLoaders: Record<string, () => Promise<any>> = {
+        strategy: () => supabase.from('company_strategy').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
+        branding: () => supabase.from('company_branding').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
+        audiences: () => supabase.from('company_audiences').select('*').eq('company_id', companyId).then(r => r.data),
+        communication: () => supabase.from('company_communication_settings').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
+        objectives: () => supabase.from('company_objectives').select('*').eq('company_id', companyId).then(r => r.data),
+        products: () => supabase.from('company_products').select('*').eq('company_id', companyId).then(r => r.data),
+        competitors: () => supabase.from('company_competitors').select('*').eq('company_id', companyId).then(r => r.data),
+      };
+      const contextPromises = contextReqs
+        .filter(req => contextLoaders[req])
+        .map(async req => ({ [req]: await contextLoaders[req]() }));
+      const contextResults = await Promise.all(contextPromises);
+      companyContext = Object.assign({}, ...contextResults);
+    }
+
+    const agentRes = await fetch(`${supabaseUrl}/functions/v1/${agent.edge_function_name}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        company_id: companyId,
+        department,
+        decision_type: decision.decision_type,
+        parameters: decision.action_parameters || {},
+        cycle_id: cycleId,
+        autopilot: true,
+        company_context: companyContext,
+      }),
+    });
+
+    const agentResult = await agentRes.json();
+    const execTime = Date.now() - execStart;
+
+    await supabase.from('agent_usage_log').insert({
+      agent_id: agent.id,
+      company_id: companyId,
+      status: agentResult.success !== false ? 'completed' : 'failed',
+      credits_consumed: agent.credits_per_use || 1,
+      execution_time_ms: execTime,
+      input_data: decision.action_parameters,
+      output_data: agentResult,
+      output_summary: agentResult.summary || decision.description,
+      error_message: agentResult.error || null,
+    });
+
+    return { ...decision, action_taken: true, execution_result: agentResult.success !== false ? 'success' : 'failed' };
+  } catch (err) {
+    console.error(`❌ Agent execution failed for ${agentCode}:`, err);
+    return { ...decision, action_taken: false, execution_result: 'error', execution_error: (err as Error).message };
+  }
+}
+
+async function actPhase(companyId: string, department: string, guardedDecisions: any[], cycleId: string) {
+  // Resolve agent mappings using category
   const categories = DEPT_CATEGORY_MAP[department] || [];
   const { data: agents } = await supabase.from('platform_agents')
     .select('id, internal_code, name, edge_function_name, execution_type, credits_per_use')
     .in('category', categories).eq('is_active', true);
-  
+
   const agentMap = new Map((agents || []).map(a => [a.internal_code, a]));
+
+  // Separate blocked/approval from passed
+  const nonExecutable: any[] = [];
+  const executable: any[] = [];
 
   for (const decision of guardedDecisions) {
     if (decision.guardrail_result === 'blocked') {
-      results.push({ ...decision, action_taken: false });
-      continue;
-    }
-    if (decision.guardrail_result === 'sent_to_approval') {
+      nonExecutable.push({ ...decision, action_taken: false });
+    } else if (decision.guardrail_result === 'sent_to_approval') {
       await supabase.from('content_approvals').insert({
         company_id: companyId,
         content_type: `autopilot_${department}_decision`,
@@ -629,107 +795,43 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
         submitted_by: 'enterprise_autopilot_engine',
         notes: `[Enterprise Autopilot ${department}] [Cycle ${cycleId}] ${decision.description}`,
       });
-      results.push({ ...decision, action_taken: false, sent_to_approval: true });
-      continue;
-    }
-
-    // Real agent execution
-    const agentCode = decision.agent_to_execute;
-    
-    // If AI set agent_to_execute to null, record as no action needed
-    if (!agentCode) {
-      console.log(`ℹ️ [${department}] Decision has no agent assigned (null). Logging as recommendation only.`);
-      results.push({ ...decision, action_taken: false, execution_result: 'recommendation_only' });
-      continue;
-    }
-
-    const agent = agentMap.get(agentCode);
-    
-    if (!agent) {
-      // Agent code doesn't exist in platform_agents
-      console.log(`⚠️ [${department}] No agent found for code: ${agentCode}. Not a real agent.`);
-      results.push({ ...decision, action_taken: false, execution_result: 'no_agent_mapped' });
-      continue;
-    }
-
-    if (!agent.edge_function_name || agent.execution_type === 'pending') {
-      // Agent exists but is not implemented yet
-      console.log(`⚠️ [${department}] Agent ${agentCode} exists but is pending implementation.`);
-      results.push({ ...decision, action_taken: false, execution_result: 'agent_not_implemented' });
-      continue;
-    }
-
-    // Prevent recursive calls to the autopilot engine itself
-    if (agent.edge_function_name === 'enterprise-autopilot-engine') {
-      console.warn(`🔄 [${department}] Agent ${agentCode} points to enterprise-autopilot-engine itself! Skipping to prevent recursion.`);
-      results.push({ ...decision, action_taken: false, execution_result: 'recursive_agent_blocked' });
-      continue;
-    }
-
-    try {
-      console.log(`⚡ [${department}] Invoking agent: ${agent.name} (${agent.edge_function_name})`);
-      const execStart = Date.now();
-      
-      // Load agent context requirements for rich payload
-      const { data: agentFull } = await supabase.from('platform_agents')
-        .select('context_requirements').eq('id', agent.id).single();
-      
-      let companyContext: any = {};
-      const contextReqs = agentFull?.context_requirements as string[] || [];
-      if (contextReqs.length > 0) {
-        const contextLoaders: Record<string, () => Promise<any>> = {
-          strategy: () => supabase.from('company_strategy').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
-          branding: () => supabase.from('company_branding').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
-          audiences: () => supabase.from('company_audiences').select('*').eq('company_id', companyId).then(r => r.data),
-          communication: () => supabase.from('company_communication_settings').select('*').eq('company_id', companyId).maybeSingle().then(r => r.data),
-          objectives: () => supabase.from('company_objectives').select('*').eq('company_id', companyId).then(r => r.data),
-          products: () => supabase.from('company_products').select('*').eq('company_id', companyId).then(r => r.data),
-          competitors: () => supabase.from('company_competitors').select('*').eq('company_id', companyId).then(r => r.data),
-        };
-        const contextPromises = contextReqs
-          .filter(req => contextLoaders[req])
-          .map(async req => ({ [req]: await contextLoaders[req]() }));
-        const contextResults = await Promise.all(contextPromises);
-        companyContext = Object.assign({}, ...contextResults);
-      }
-
-      const agentRes = await fetch(`${supabaseUrl}/functions/v1/${agent.edge_function_name}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          company_id: companyId,
-          department,
-          decision_type: decision.decision_type,
-          parameters: decision.action_parameters || {},
-          cycle_id: cycleId,
-          autopilot: true,
-          company_context: companyContext,
-        }),
-      });
-      
-      const agentResult = await agentRes.json();
-      const execTime = Date.now() - execStart;
-      
-      await supabase.from('agent_usage_log').insert({
-        agent_id: agent.id,
-        company_id: companyId,
-        status: agentResult.success !== false ? 'completed' : 'failed',
-        credits_consumed: agent.credits_per_use || 1,
-        execution_time_ms: execTime,
-        input_data: decision.action_parameters,
-        output_data: agentResult,
-        output_summary: agentResult.summary || decision.description,
-        error_message: agentResult.error || null,
-      });
-      
-      results.push({ ...decision, action_taken: true, execution_result: agentResult.success !== false ? 'success' : 'failed' });
-    } catch (err) {
-      console.error(`❌ Agent execution failed for ${agentCode}:`, err);
-      results.push({ ...decision, action_taken: false, execution_result: 'error', execution_error: (err as Error).message });
+      nonExecutable.push({ ...decision, action_taken: false, sent_to_approval: true });
+    } else {
+      executable.push(decision);
     }
   }
 
-  return results;
+  // ═══ L2: PARALLEL EXECUTION MANAGER ═══
+  // Group independent decisions (no depends_on) vs dependent ones
+  const independent: any[] = [];
+  const dependent: any[] = [];
+
+  for (const d of executable) {
+    if (d.action_parameters?.depends_on) {
+      dependent.push(d);
+    } else {
+      independent.push(d);
+    }
+  }
+
+  // Execute independent decisions in parallel
+  let parallelResults: any[] = [];
+  if (independent.length > 0) {
+    console.log(`⚡ [${department}] Executing ${independent.length} independent decisions in parallel`);
+    const settled = await Promise.allSettled(
+      independent.map(d => executeAgentForDecision(companyId, department, d, cycleId, agentMap))
+    );
+    parallelResults = settled.map(r => r.status === 'fulfilled' ? r.value : { action_taken: false, execution_result: 'error', execution_error: (r as PromiseRejectedResult).reason?.message });
+  }
+
+  // Execute dependent decisions serially
+  const serialResults: any[] = [];
+  for (const d of dependent) {
+    const result = await executeAgentForDecision(companyId, department, d, cycleId, agentMap);
+    serialResults.push(result);
+  }
+
+  return [...nonExecutable, ...parallelResults, ...serialResults];
 }
 
 async function learnPhase(companyId: string, department: string, cycleId: string, decisions: any[], executionTimeMs: number) {
@@ -746,7 +848,11 @@ async function learnPhase(companyId: string, department: string, cycleId: string
     action_taken: d.action_taken || false,
     guardrail_result: d.guardrail_result,
     guardrail_details: d.guardrail_details,
-    expected_impact: d.expected_impact,
+    expected_impact: {
+      ...(d.expected_impact || {}),
+      priority_score: d.priority_score,
+      scoring_breakdown: d.scoring_breakdown,
+    },
   }));
 
   if (rows.length) {
@@ -848,6 +954,64 @@ async function learnPhase(companyId: string, department: string, cycleId: string
     } catch (diagErr) {
       console.warn('⚠️ Marketing diagnostic loop failed (non-blocking):', diagErr);
     }
+  }
+
+  // ═══ L4: PATTERN EXTRACTOR ═══
+  // Group positive evaluations by decision_type, extract patterns with 3+ occurrences
+  try {
+    const { data: positiveMemory } = await supabase.from('autopilot_memory')
+      .select('id, decision_type, context_summary, outcome_score, lesson_learned')
+      .eq('company_id', companyId)
+      .eq('department', department)
+      .eq('outcome_evaluation', 'positive')
+      .is('applies_to_future', null)
+      .order('evaluated_at', { ascending: false })
+      .limit(50);
+
+    if (positiveMemory?.length) {
+      // Group by decision_type
+      const grouped = new Map<string, typeof positiveMemory>();
+      for (const m of positiveMemory) {
+        const arr = grouped.get(m.decision_type) || [];
+        arr.push(m);
+        grouped.set(m.decision_type, arr);
+      }
+
+      for (const [decType, entries] of grouped) {
+        if (entries.length < 3) continue; // Need 3+ positive occurrences
+
+        console.log(`🔮 [${department}] Extracting pattern for "${decType}" (${entries.length} positive outcomes)`);
+
+        const lessons = entries.map(e => e.lesson_learned || e.context_summary || '').filter(Boolean).join('\n');
+
+        const patternRes = await fetch(`${supabaseUrl}/functions/v1/universal-ai-handler`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            functionName: 'pattern_extractor',
+            messages: [
+              { role: 'system', content: `You extract reusable decision patterns from successful outcomes. Respond ONLY with a JSON array of 1-3 rule objects: [{"rule": "When [context], execute [action] because [reason]", "confidence": 0.0-1.0, "applies_to": "${decType}"}]` },
+              { role: 'user', content: `These ${entries.length} executions of "${decType}" in the ${department} department all had positive outcomes:\n${lessons}\n\nExtract reusable patterns/rules for future decisions.` },
+            ],
+          }),
+        });
+
+        const patternResult = await patternRes.json();
+        if (patternResult.success) {
+          const rules = tryParseJson(patternResult.response);
+          if (rules?.length) {
+            // Apply rules to the most recent entry for this decision_type
+            const targetId = entries[0].id;
+            await supabase.from('autopilot_memory').update({
+              applies_to_future: rules,
+            }).eq('id', targetId);
+            console.log(`✅ [${department}] Stored ${rules.length} pattern rules for "${decType}"`);
+          }
+        }
+      }
+    }
+  } catch (patternErr) {
+    console.warn(`⚠️ [${department}] Pattern extraction failed (non-blocking):`, patternErr);
   }
 
   // Update config
@@ -1112,12 +1276,14 @@ IMPORTANT:
       inserted.push(cap.code);
       console.log(`✨ [${department}] Proposed new capability: ${cap.code}`);
 
-      // Auto-activate low-risk capabilities
+      // ═══ L5: Auto-activate with trial_expires_at (7-day lifecycle) ═══
       if (cap.auto_activate) {
+        const trialExpiry = new Date(Date.now() + 7 * 24 * 3600000).toISOString();
         await supabase.from('autopilot_capabilities').update({
           status: 'trial',
+          trial_expires_at: trialExpiry,
         } as any).eq('company_id', companyId).eq('capability_code', cap.code);
-        console.log(`🚀 [${department}] Auto-activated (trial): ${cap.code}`);
+        console.log(`🚀 [${department}] Auto-activated (trial until ${trialExpiry}): ${cap.code}`);
       }
     }
   }
@@ -1126,11 +1292,63 @@ IMPORTANT:
 }
 
 async function manageCapabilityLifecycle(companyId: string) {
-  // 1. Promote trial -> active (expired trials)
-  await supabase.rpc('promote_trial_capabilities' as any);
+  // ═══ L5: TRIAL MANAGER WITH 7-DAY EVALUATION ═══
+  const { data: trialCaps } = await supabase.from('autopilot_capabilities')
+    .select('id, capability_code, department, trial_expires_at, created_at')
+    .eq('company_id', companyId)
+    .eq('status', 'trial');
 
-  // 2. Deprecate unused ai_generated capabilities (30 days no execution)
-  await supabase.rpc('deprecate_unused_capabilities' as any);
+  if (trialCaps?.length) {
+    const now = new Date();
+    for (const cap of trialCaps) {
+      const expiresAt = cap.trial_expires_at ? new Date(cap.trial_expires_at) : new Date(new Date(cap.created_at).getTime() + 7 * 24 * 3600000);
+
+      if (now < expiresAt) continue; // Trial not expired yet
+
+      // Evaluate: check if there were related successful executions during trial period
+      const { data: relatedDecisions } = await supabase.from('autopilot_decisions')
+        .select('action_taken, guardrail_result')
+        .eq('company_id', companyId)
+        .gte('created_at', cap.created_at)
+        .limit(20);
+
+      const executed = (relatedDecisions || []).filter(d => d.action_taken);
+      const { data: relatedMemory } = await supabase.from('autopilot_memory')
+        .select('outcome_evaluation')
+        .eq('company_id', companyId)
+        .eq('department', cap.department)
+        .gte('created_at', cap.created_at)
+        .in('outcome_evaluation', ['positive', 'negative']);
+
+      const positives = (relatedMemory || []).filter(m => m.outcome_evaluation === 'positive').length;
+      const negatives = (relatedMemory || []).filter(m => m.outcome_evaluation === 'negative').length;
+
+      if (executed.length > 0 && positives > negatives) {
+        // Promote to active
+        await supabase.from('autopilot_capabilities').update({
+          status: 'active',
+          is_active: true,
+          activated_at: now.toISOString(),
+          activation_reason: `Trial evaluation: ${positives} positive, ${negatives} negative outcomes in ${executed.length} executions`,
+          last_evaluated_at: now.toISOString(),
+        } as any).eq('id', cap.id);
+        console.log(`✅ Promoted capability ${cap.capability_code} to active (${positives} positive outcomes)`);
+      } else {
+        // Deprecate
+        await supabase.from('autopilot_capabilities').update({
+          status: 'deprecated',
+          is_active: false,
+          deactivated_at: now.toISOString(),
+          last_evaluated_at: now.toISOString(),
+        } as any).eq('id', cap.id);
+        console.log(`🗑️ Deprecated capability ${cap.capability_code} (insufficient results during trial)`);
+      }
+    }
+  }
+
+  // Fallback RPCs for any remaining lifecycle management
+  try { await supabase.rpc('promote_trial_capabilities' as any); } catch {}
+  try { await supabase.rpc('deprecate_unused_capabilities' as any); } catch {}
 
   console.log(`♻️ Lifecycle management completed for company ${companyId}`);
 }

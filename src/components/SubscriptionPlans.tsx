@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -84,6 +85,7 @@ const tierConfig = {
 
 const SubscriptionPlans = () => {
   const { t } = useTranslation("pricing");
+  const navigate = useNavigate();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [userSubscription, setUserSubscription] = useState<UserSubscription | null>(null);
   const [isYearly, setIsYearly] = useState(false);
@@ -125,16 +127,16 @@ const SubscriptionPlans = () => {
   };
 
   const handleSubscribe = async (planSlug: string) => {
+    if (planSlug === "custom") {
+      navigate("/contacto");
+      return;
+    }
     if (!isAuthenticated) {
-      toast.error(t("errors.loginRequired"));
+      navigate(`/auth?mode=register&plan=${planSlug}`);
       return;
     }
     if (planSlug === "assisted") {
       toast.info(t("errors.alreadyFree"));
-      return;
-    }
-    if (planSlug === "custom") {
-      window.location.href = "#contacto";
       return;
     }
 

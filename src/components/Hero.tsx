@@ -52,7 +52,7 @@ const Hero = () => {
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Brain className="w-5 h-5 text-primary" />
-                <span className="text-3xl md:text-4xl font-bold text-primary">27+</span>
+                <span className="text-3xl md:text-4xl font-bold text-primary">30+</span>
               </div>
               <p className="text-sm text-muted-foreground">{t('hero.stats.agents')}</p>
             </div>

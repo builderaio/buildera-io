@@ -23,6 +23,7 @@ import { CRMDashboard } from "@/components/crm/CRMDashboard";
 // Governance & Department Config
 import GovernanceDashboard from "@/components/company/GovernanceDashboard";
 import DepartmentConfigPanel from "@/components/company/departments/DepartmentConfigPanel";
+import DepartmentActivationGuide from "@/components/company/departments/DepartmentActivationGuide";
 
 // Legacy components (for backwards compatibility during transition)
 import MisArchivos from "@/components/company/BaseConocimiento";
@@ -424,6 +425,11 @@ const CompanyDashboard = () => {
       case "departamentos":
       case "department-config":
         return <DepartmentConfigPanel profile={profile} />;
+
+      // === DEPARTMENT ACTIVATION GUIDE ===
+      case "activacion":
+      case "department-activation":
+        return <DepartmentActivationGuide profile={profile} onNavigate={handleNavigate} />;
 
       // === LEGACY VIEWS (backwards compatibility) ===
       case "base-conocimiento":

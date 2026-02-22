@@ -364,7 +364,7 @@ const AutonomyDashboardPreview = () => {
               </span>
               <span className="text-zinc-600 text-[10px]">|</span>
               <span className="text-zinc-500 text-[10px] font-mono">
-                29 {t("dashboardPreview.footer.agents")}
+                31 {t("dashboardPreview.footer.agents")}
               </span>
               <span className="text-zinc-600 text-[10px]">|</span>
               <span className="text-zinc-500 text-[10px] font-mono">

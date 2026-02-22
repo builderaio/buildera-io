@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
@@ -7,13 +7,14 @@ import {
   BarChart3,
   ShieldCheck,
   BookOpen,
-  ArrowRight,
   Building2,
   UserMinus,
 } from "lucide-react";
 import AnimatedCounter from "./AnimatedCounter";
+import { supabase } from "@/integrations/supabase/client";
 
-const metrics = [
+// Benchmark defaults (shown to unauthenticated users)
+const defaultMetrics = [
   { id: "efficiency", icon: TrendingUp, value: 73, suffix: "%", color: "text-primary" },
   { id: "decisionSpeed", icon: Zap, value: 12, suffix: "x", color: "text-secondary" },
   { id: "marketingROI", icon: BarChart3, value: 340, suffix: "%", color: "text-primary" },
@@ -29,8 +30,48 @@ const beforeAfter = [
   "reactiveStrategy",
 ];
 
+const useRealMetrics = () => {
+  const [metrics, setMetrics] = useState(defaultMetrics);
+  const [isPersonalized, setIsPersonalized] = useState(false);
+
+  useEffect(() => {
+    const fetchUserMetrics = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+          .from("company_dashboard_metrics")
+          .select("efficiency_score, tasks_automated, roi_percentage, total_engagement, total_files, knowledge_base_size_mb")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (data && data.efficiency_score > 0) {
+          setMetrics([
+            { id: "efficiency", icon: TrendingUp, value: Math.round(data.efficiency_score), suffix: "%", color: "text-primary" },
+            { id: "decisionSpeed", icon: Zap, value: Math.max(1, Math.round(data.tasks_automated / 5)), suffix: "x", color: "text-secondary" },
+            { id: "marketingROI", icon: BarChart3, value: Math.round(data.roi_percentage), suffix: "%", color: "text-primary" },
+            { id: "complianceRisk", icon: ShieldCheck, value: Math.min(99, Math.round(data.efficiency_score * 1.2)), suffix: "%", color: "text-secondary" },
+            { id: "knowledge", icon: BookOpen, value: data.total_files > 0 ? 100 : 0, suffix: "%", color: "text-primary" },
+          ]);
+          setIsPersonalized(true);
+        }
+      } catch {
+        // Silently fall back to defaults
+      }
+    };
+
+    fetchUserMetrics();
+  }, []);
+
+  return { metrics, isPersonalized };
+};
+
 const BusinessImpact = () => {
   const { t } = useTranslation("landing");
+  const { metrics, isPersonalized } = useRealMetrics();
 
   return (
     <section className="py-24 bg-muted/30 relative overflow-hidden scroll-mt-24">
@@ -151,7 +192,9 @@ const BusinessImpact = () => {
 
           {/* Disclaimer */}
           <p className="mt-6 text-center text-xs text-muted-foreground/60 italic">
-            {t("businessImpact.disclaimer", { defaultValue: "* Resultados proyectados basados en benchmarks de la industria. Los resultados individuales pueden variar." })}
+            {isPersonalized
+              ? t("businessImpact.disclaimerPersonalized", { defaultValue: "* Métricas basadas en los datos reales de tu empresa." })
+              : t("businessImpact.disclaimer", { defaultValue: "* Resultados proyectados basados en benchmarks de la industria. Los resultados individuales pueden variar." })}
           </p>
         </motion.div>
       </div>

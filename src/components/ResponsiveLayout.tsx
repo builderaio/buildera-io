@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User, Brain, Handshake, Shield } from 'lucide-react';
+import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User, Brain, Handshake, Shield, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -360,6 +360,11 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       'adn-empresa': '/company-dashboard?view=negocio',
       'configuracion': '/company-dashboard?view=negocio',
       'inteligencia': '/company-dashboard?view=negocio',
+      'ventas': '/company-dashboard?view=ventas',
+      'crm': '/company-dashboard?view=ventas',
+      'gobernanza': '/company-dashboard?view=gobernanza',
+      'departamentos': '/company-dashboard?view=departamentos',
+      'activacion': '/company-dashboard?view=activacion',
       'profile': '/profile'
     };
     
@@ -382,6 +387,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
     { id: 'autopilot', label: t('common:sidebar.enterpriseBrain', 'Cerebro Empresarial'), icon: Brain, badge: activeDeptCount > 0 ? `${activeDeptCount}` : null },
     { id: 'gobernanza', label: t('common:sidebar.governance', 'Gobernanza'), icon: Shield, badge: null },
     { id: 'departamentos', label: t('common:sidebar.departments', 'Departamentos'), icon: Settings, badge: null },
+    { id: 'activacion', label: t('common:sidebar.activation', 'Activación'), icon: Sparkles, badge: null },
     { id: 'agentes', label: t('common:sidebar.aiAgents', 'Agentes IA'), icon: Bot, badge: null },
     { id: 'negocio', label: t('common:sidebar.myCompany', 'Mi Negocio'), icon: Building, badge: null },
   ];

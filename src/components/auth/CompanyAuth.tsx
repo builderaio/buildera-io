@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const verificationRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { authMethods, loading: authMethodsLoading } = useAuthMethods();
   const { sendWelcomeEmail } = useWelcomeEmail();
@@ -136,10 +138,15 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             // Mostrar información de verificación
             setRegisteredEmail(email);
             setShowEmailVerification(true);
+            setRegistrationSuccess(true);
             toast({
               title: t('messages.signupSuccess'),
               description: t('messages.signupSuccessDesc'),
             });
+            // Scroll to verification message after render
+            setTimeout(() => {
+              verificationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
           } else {
             // Si el email ya está verificado (caso raro), enviar bienvenida y ir a login
             try {
@@ -366,6 +373,15 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
 
   return (
     <div className="space-y-6">
+      {showEmailVerification && registeredEmail && (
+        <div ref={verificationRef}>
+          <EmailVerificationInfo 
+            email={registeredEmail}
+            onResendVerification={handleResendVerification}
+            loading={loading}
+          />
+        </div>
+      )}
       {showSocialAuth && (
         <>
           <div className="grid grid-cols-2 gap-4">
@@ -532,8 +548,14 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             </div>
           )}
 
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? t('buttons.processing') : mode === "signin" ? t('buttons.signin') : t('buttons.signup')}
+        <Button type="submit" className="w-full" disabled={loading || registrationSuccess}>
+          {loading 
+            ? t('buttons.processing') 
+            : registrationSuccess 
+            ? `${t('buttons.sent')} ✓`
+            : mode === "signin" 
+            ? t('buttons.signin') 
+            : t('buttons.signup')}
         </Button>
 
           {mode === "signin" && (
@@ -559,13 +581,6 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         </div>
       )}
 
-      {showEmailVerification && registeredEmail && (
-        <EmailVerificationInfo 
-          email={registeredEmail}
-          onResendVerification={handleResendVerification}
-          loading={loading}
-        />
-      )}
     </div>
   );
 };

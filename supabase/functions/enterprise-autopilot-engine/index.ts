@@ -604,13 +604,20 @@ Respond ONLY with a valid JSON array of decisions. Each decision:
 {
   "decision_type": "one of the allowed types",
   "priority": "critical|high|medium|low",
+  "risk_level": "low|medium|high|critical",
   "description": "What to do and why",
   "reasoning": "Data-driven justification including any external signals considered",
   "agent_to_execute": "AGENT_CODE from the AVAILABLE AGENTS list above, or null if none fits",
   "action_parameters": {},
   "expected_impact": {"metric": "relevant_metric", "estimated_change": "+X%"},
   "external_signal_influence": true/false
-}`;
+}
+
+RISK_LEVEL GUIDE (mandatory for each decision):
+- "low": Internal operational tasks with no spend or external impact (insights, metrics, dashboards)
+- "medium": Actions generating internal content or reversible adjustments (drafts, calendar changes)
+- "high": Actions affecting budget, clients, or brand (publishing, proposals, deal advancement)
+- "critical": Strategic decisions compromising legal obligations or pricing`;
 
   const userPrompt = `Current ${department} performance data:\n${JSON.stringify(senseData, null, 2)}\n\nBased on this data, what actions should we take? Generate 1-5 prioritized decisions.`;
 
@@ -637,6 +644,32 @@ Respond ONLY with a valid JSON array of decisions. Each decision:
     console.warn(`⚠️ [${department}] AI response could not be parsed. Skipping decision generation.`);
     decisions = [];
   }
+
+  // ═══ POST-AI RISK LEVEL VALIDATION ═══
+  // Assign risk_level by default based on decision_type if AI didn't provide it
+  const RISK_DEFAULTS: Record<string, string> = {
+    analyze: 'low', forecast_pipeline: 'low', climate_survey: 'low', efficiency_report: 'low',
+    bottleneck_detection: 'low', performance_review: 'low', sla_alert: 'low',
+    create_content: 'medium', adjust_campaigns: 'medium', create_job_profile: 'medium',
+    ab_test: 'medium', training_recommendation: 'medium', optimize_process: 'medium', automate_task: 'medium',
+    publish: 'high', create_proposal: 'high', advance_deal: 'high', reply_comments: 'high',
+    qualify_lead: 'medium', enrich_contact: 'medium', alert_stalled: 'medium',
+    budget_alert: 'medium', forecast_revenue: 'medium', optimize_expenses: 'medium',
+    invoice_reminder: 'medium', cashflow_warning: 'high', credit_alert: 'medium',
+    review_contract: 'critical', compliance_alert: 'high', deadline_reminder: 'medium',
+    regulatory_update: 'high', risk_assessment: 'high', talent_match: 'medium',
+  };
+
+  decisions = decisions.map(d => {
+    if (!d.risk_level || !['low', 'medium', 'high', 'critical'].includes(d.risk_level)) {
+      d.risk_level = RISK_DEFAULTS[d.decision_type] || 'medium';
+    }
+    // Special case: compliance_alert with financial impact → critical
+    if (d.decision_type === 'compliance_alert' && d.action_parameters?.financial_impact) {
+      d.risk_level = 'critical';
+    }
+    return d;
+  });
 
   // ═══ L1: MULTI-CRITERIA SCORER & PRIORITY QUEUE ═══
   // Assign auditable priority_score (0-100) based on weighted criteria
@@ -668,6 +701,41 @@ Respond ONLY with a valid JSON array of decisions. Each decision:
 
   return decisions;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// SECTOR COMPLIANCE RULES
+// ═══════════════════════════════════════════════════════════════
+
+const SECTOR_COMPLIANCE_RULES: Record<string, (decision: any) => { escalate?: string; block?: string } | null> = {
+  fintech: (decision) => {
+    if (decision.decision_type === 'create_proposal' && !decision.action_parameters?.compliance_alert_cleared) {
+      return { block: 'Fintech: create_proposal requires prior compliance_alert clearance' };
+    }
+    if (decision.action_parameters?.monetary_value || decision.action_parameters?.financial_impact) {
+      return { escalate: 'requires_approval' };
+    }
+    return null;
+  },
+  healthcare: (decision) => {
+    if (['publish', 'create_proposal', 'create_content'].includes(decision.decision_type) && !decision.action_parameters?.legal_review_cleared) {
+      return { escalate: 'escalated' };
+    }
+    return null;
+  },
+  salud: (decision) => {
+    if (['publish', 'create_proposal', 'create_content'].includes(decision.decision_type) && !decision.action_parameters?.legal_review_cleared) {
+      return { escalate: 'escalated' };
+    }
+    return null;
+  },
+  retail: (decision) => {
+    if (decision.action_parameters?.discount || decision.action_parameters?.pricing_change) {
+      return { escalate: 'requires_approval' };
+    }
+    return null;
+  },
+  services: () => null,
+};
 
 async function guardPhase(companyId: string, department: string, decisions: any[], deptConfig: any) {
   const now = new Date();
@@ -728,39 +796,309 @@ async function guardPhase(companyId: string, department: string, decisions: any[
   const creditsUsedToday = (todayUsage || []).reduce((s, r) => s + (r.credits_consumed || 0), 0);
   const budgetExceeded = creditsUsedToday >= dailyCreditLimit;
 
-  return decisions.map(decision => {
+  // ═══ CAMPAIGN BUDGET CAPS ═══
+  const campaignBudgetCache = new Map<string, { budget: number; consumed: number }>();
+
+  // ═══ DEPARTMENT BUDGET ALLOCATION ═══
+  let deptBudgetStatus: { limit: number; consumed: number } | null = null;
+  try {
+    const deptBudgetKey = `department_budget_${department}`;
+    const { data: deptBudgetParam } = await supabase.from('company_parameters')
+      .select('parameter_value').eq('company_id', companyId).eq('parameter_key', deptBudgetKey).eq('is_current', true).maybeSingle();
+
+    if (deptBudgetParam?.parameter_value) {
+      const budgetLimit = typeof deptBudgetParam.parameter_value === 'number'
+        ? deptBudgetParam.parameter_value
+        : parseFloat(String(deptBudgetParam.parameter_value)) || 0;
+
+      if (budgetLimit > 0) {
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+
+        const categories = DEPT_CATEGORY_MAP[department] || [];
+        let deptCreditsConsumed = 0;
+
+        if (categories.length > 0) {
+          const { data: deptAgents } = await supabase.from('platform_agents')
+            .select('id').in('category', categories).eq('is_active', true);
+          const agentIds = (deptAgents || []).map(a => a.id);
+
+          if (agentIds.length > 0) {
+            const { data: monthUsage } = await supabase.from('agent_usage_log')
+              .select('credits_consumed')
+              .eq('company_id', companyId)
+              .in('agent_id', agentIds)
+              .gte('created_at', monthStart.toISOString());
+            deptCreditsConsumed = (monthUsage || []).reduce((s, r) => s + (r.credits_consumed || 0), 0);
+          }
+        }
+
+        deptBudgetStatus = { limit: budgetLimit, consumed: deptCreditsConsumed };
+      }
+    }
+  } catch (deptBudgetErr) {
+    console.warn(`⚠️ [${department}] Department budget check failed (non-blocking):`, deptBudgetErr);
+  }
+
+  // ═══ SECTOR COMPLIANCE ═══
+  let industrySector: string | null = null;
+  try {
+    const { data: companyData } = await supabase.from('companies')
+      .select('industry_sector').eq('id', companyId).single();
+    industrySector = companyData?.industry_sector?.toLowerCase() || null;
+  } catch {}
+
+  // ═══ PROCESS EACH DECISION ═══
+  const guardedDecisions = [];
+
+  for (const decision of decisions) {
     const desc = (decision.description || '').toLowerCase();
+    let guardrail_result = 'auto_approved';
+    let guardrail_details = 'All guardrails passed';
+    let wasIntervened = false;
+    const interventionReasons: string[] = [];
+
+    // ─── HARD GUARDRAILS (block regardless of risk) ───
 
     // Budget block (Finance cross-dept)
     if (crossBlockReason && ['create_content', 'publish', 'create_proposal', 'adjust_campaigns'].includes(decision.decision_type)) {
-      return { ...decision, guardrail_result: 'blocked', guardrail_details: crossBlockReason };
+      guardrail_result = 'blocked';
+      guardrail_details = crossBlockReason;
+      wasIntervened = true;
+      interventionReasons.push(`finance_cross_dept: ${crossBlockReason}`);
+      guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+      continue;
     }
+
     // Legal → Sales block
     if (legalBlockReason && ['create_proposal', 'advance_deal'].includes(decision.decision_type)) {
-      return { ...decision, guardrail_result: 'blocked', guardrail_details: legalBlockReason };
+      guardrail_result = 'blocked';
+      guardrail_details = legalBlockReason;
+      wasIntervened = true;
+      interventionReasons.push(`legal_cross_dept: ${legalBlockReason}`);
+      guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+      continue;
     }
+
     // Daily credit budget exceeded
     if (budgetExceeded) {
-      return { ...decision, guardrail_result: 'blocked', guardrail_details: `Daily credit limit exceeded (${creditsUsedToday}/${dailyCreditLimit})` };
+      guardrail_result = 'blocked';
+      guardrail_details = `Daily credit limit exceeded (${creditsUsedToday}/${dailyCreditLimit})`;
+      wasIntervened = true;
+      interventionReasons.push(`daily_budget: ${guardrail_details}`);
+      guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+      continue;
     }
+
     // Rate limiter per action type
     if ((actionCounts[decision.decision_type] || 0) >= maxActionsPerDay) {
-      return { ...decision, guardrail_result: 'blocked', guardrail_details: `Rate limit exceeded for ${decision.decision_type} (${actionCounts[decision.decision_type]}/${maxActionsPerDay} in 24h)` };
+      guardrail_result = 'blocked';
+      guardrail_details = `Rate limit exceeded for ${decision.decision_type} (${actionCounts[decision.decision_type]}/${maxActionsPerDay} in 24h)`;
+      wasIntervened = true;
+      interventionReasons.push(`rate_limit: ${guardrail_details}`);
+      guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+      continue;
     }
+
+    // Forbidden words
     if (forbiddenWords.some(w => desc.includes(w.toLowerCase()))) {
-      return { ...decision, guardrail_result: 'blocked', guardrail_details: 'Contains forbidden word' };
+      guardrail_result = 'blocked';
+      guardrail_details = 'Contains forbidden word';
+      wasIntervened = true;
+      interventionReasons.push('forbidden_words');
+      guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+      continue;
     }
+
+    // Topic restrictions
     if (topicRestrictions.some(t => desc.includes(t.toLowerCase()))) {
-      return { ...decision, guardrail_result: 'blocked', guardrail_details: 'Contains restricted topic' };
+      guardrail_result = 'blocked';
+      guardrail_details = 'Contains restricted topic';
+      wasIntervened = true;
+      interventionReasons.push('topic_restriction');
+      guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+      continue;
     }
+
+    // Active hours block for publishing
     if (['publish', 'create_content'].includes(decision.decision_type) && !withinActive) {
-      return { ...decision, guardrail_result: 'blocked', guardrail_details: 'Outside active hours' };
+      guardrail_result = 'blocked';
+      guardrail_details = 'Outside active hours';
+      wasIntervened = true;
+      interventionReasons.push('active_hours');
+      guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+      continue;
     }
+
+    // ─── CAMPAIGN BUDGET CAP ───
+    const campaignId = decision.action_parameters?.campaign_id;
+    if (campaignId && ['create_content', 'publish', 'adjust_campaigns'].includes(decision.decision_type)) {
+      try {
+        if (!campaignBudgetCache.has(campaignId)) {
+          const { data: campaign } = await supabase.from('marketing_campaigns')
+            .select('budget').eq('id', campaignId).maybeSingle();
+          const campaignBudget = campaign?.budget || 0;
+
+          if (campaignBudget > 0) {
+            const { data: campaignUsage } = await supabase.from('agent_usage_log')
+              .select('credits_consumed')
+              .eq('company_id', companyId)
+              .not('input_data', 'is', null);
+            // Filter by campaign_id in input_data
+            const campaignCredits = (campaignUsage || []).reduce((s, r) => {
+              const inputData = r.input_data as any;
+              if (inputData?.campaign_id === campaignId) return s + (r.credits_consumed || 0);
+              return s;
+            }, 0);
+            campaignBudgetCache.set(campaignId, { budget: campaignBudget, consumed: campaignCredits });
+          }
+        }
+
+        const campBudget = campaignBudgetCache.get(campaignId);
+        if (campBudget && campBudget.budget > 0) {
+          const usageRatio = campBudget.consumed / campBudget.budget;
+          if (usageRatio >= 0.9) {
+            guardrail_result = 'blocked';
+            guardrail_details = `Campaign budget cap reached (${campBudget.consumed}/${campBudget.budget} credits, ${(usageRatio * 100).toFixed(0)}%)`;
+            wasIntervened = true;
+            interventionReasons.push(`campaign_budget_cap: ${guardrail_details}`);
+            guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+            continue;
+          }
+          if (usageRatio >= 0.75) {
+            interventionReasons.push(`campaign_budget_warning: ${campBudget.consumed}/${campBudget.budget} credits (${(usageRatio * 100).toFixed(0)}%)`);
+          }
+        }
+      } catch (campErr) {
+        console.warn(`⚠️ Campaign budget check failed for ${campaignId}:`, campErr);
+      }
+    }
+
+    // ─── DEPARTMENT BUDGET ALLOCATION ───
+    if (deptBudgetStatus) {
+      const deptUsageRatio = deptBudgetStatus.consumed / deptBudgetStatus.limit;
+      if (deptUsageRatio >= 1.0) {
+        guardrail_result = 'blocked';
+        guardrail_details = `Department monthly budget exhausted (${deptBudgetStatus.consumed}/${deptBudgetStatus.limit} credits)`;
+        wasIntervened = true;
+        interventionReasons.push(`department_budget: ${guardrail_details}`);
+        guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+        continue;
+      }
+      if (deptUsageRatio >= 0.8) {
+        // Escalate to requires_approval regardless of risk_level
+        interventionReasons.push(`department_budget_warning: ${(deptUsageRatio * 100).toFixed(0)}% consumed — escalating to requires_approval`);
+        decision.risk_level = decision.risk_level === 'critical' ? 'critical' : 'high'; // force at least high
+      }
+    }
+
+    // ─── SECTOR COMPLIANCE ───
+    if (industrySector) {
+      const sectorRules = SECTOR_COMPLIANCE_RULES[industrySector];
+      if (sectorRules) {
+        const sectorResult = sectorRules(decision);
+        if (sectorResult?.block) {
+          guardrail_result = 'blocked';
+          guardrail_details = sectorResult.block;
+          wasIntervened = true;
+          interventionReasons.push(`sector_compliance: ${sectorResult.block}`);
+          guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+          continue;
+        }
+        if (sectorResult?.escalate) {
+          const RISK_ORDER = ['low', 'medium', 'high', 'critical'];
+          const escalateLevel = sectorResult.escalate === 'escalated' ? 'critical' : 'high';
+          const currentIdx = RISK_ORDER.indexOf(decision.risk_level || 'medium');
+          const escalateIdx = RISK_ORDER.indexOf(escalateLevel);
+          if (escalateIdx > currentIdx) {
+            decision.risk_level = escalateLevel;
+            interventionReasons.push(`sector_compliance_escalation: ${industrySector} rules escalated to ${escalateLevel}`);
+          }
+        }
+      }
+    }
+
+    // ─── EXPLICIT HUMAN APPROVAL CONFIG (legacy support) ───
     if (deptConfig.require_human_approval && ['create_content', 'publish', 'create_proposal', 'review_contract'].includes(decision.decision_type)) {
-      return { ...decision, guardrail_result: 'sent_to_approval', guardrail_details: 'Human approval required' };
+      if (decision.risk_level === 'low') decision.risk_level = 'high';
+      interventionReasons.push('require_human_approval_config');
     }
-    return { ...decision, guardrail_result: 'passed', guardrail_details: 'All guardrails passed' };
-  });
+
+    // ─── RISK-BASED 4-LEVEL CLASSIFICATION ───
+    const riskLevel = decision.risk_level || 'medium';
+
+    switch (riskLevel) {
+      case 'low':
+        guardrail_result = 'auto_approved';
+        guardrail_details = 'Low risk — auto-approved for immediate execution';
+        break;
+      case 'medium':
+        guardrail_result = 'post_review';
+        guardrail_details = 'Medium risk — will execute and mark for post-execution human review';
+        wasIntervened = true;
+        interventionReasons.push('risk_classification: medium → post_review');
+        break;
+      case 'high':
+        guardrail_result = 'requires_approval';
+        guardrail_details = 'High risk — requires human approval before execution';
+        wasIntervened = true;
+        interventionReasons.push('risk_classification: high → requires_approval');
+        break;
+      case 'critical':
+        guardrail_result = 'escalated';
+        guardrail_details = 'Critical risk — executive escalation required, multiple stakeholders';
+        wasIntervened = true;
+        interventionReasons.push('risk_classification: critical → escalated');
+        break;
+    }
+
+    // Append any warnings to details
+    const warnings = interventionReasons.filter(r => r.includes('warning'));
+    if (warnings.length > 0) {
+      guardrail_details += ` | Warnings: ${warnings.join('; ')}`;
+    }
+
+    guardedDecisions.push({ ...decision, guardrail_result, guardrail_details });
+
+    // ─── GUARDRAIL INTERVENTION LOG ───
+    if (wasIntervened && guardrail_result !== 'auto_approved') {
+      try {
+        await supabase.from('autopilot_execution_log').insert({
+          company_id: companyId,
+          cycle_id: crypto.randomUUID(),
+          phase: 'guardrail_intervention',
+          status: guardrail_result,
+          context_snapshot: {
+            original_decision: {
+              decision_type: decision.decision_type,
+              risk_level: riskLevel,
+              priority: decision.priority,
+              description: decision.description,
+              agent_to_execute: decision.agent_to_execute,
+              action_parameters: decision.action_parameters,
+            },
+            guardrails_applied: interventionReasons,
+            guardrail_result,
+            guardrail_details,
+            counterfactual: `Without guardrail intervention, the action "${decision.description}" would have been executed immediately with expected impact: ${JSON.stringify(decision.expected_impact || {})}`,
+          },
+          decisions_made: [decision],
+          actions_taken: [],
+          credits_consumed: 0,
+          content_generated: 0,
+          content_approved: 0,
+          content_rejected: guardrail_result === 'blocked' ? 1 : 0,
+          content_pending_review: ['requires_approval', 'escalated', 'post_review'].includes(guardrail_result) ? 1 : 0,
+          execution_time_ms: 0,
+        });
+      } catch (logErr) {
+        console.warn(`⚠️ Guardrail intervention log failed:`, logErr);
+      }
+    }
+  }
+
+  return guardedDecisions;
 }
 
 async function executeAgentForDecision(
@@ -883,14 +1221,33 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
 
   const agentMap = new Map((agents || []).map(a => [a.internal_code, a]));
 
-  // Separate blocked/approval from passed
+  // Separate decisions by guardrail result
   const nonExecutable: any[] = [];
   const executable: any[] = [];
+  const postReviewQueue: any[] = []; // Execute but flag for review
 
   for (const decision of guardedDecisions) {
     if (decision.guardrail_result === 'blocked') {
       nonExecutable.push({ ...decision, action_taken: false });
-    } else if (decision.guardrail_result === 'sent_to_approval') {
+
+    } else if (decision.guardrail_result === 'escalated') {
+      // Critical risk — executive escalation, do NOT execute
+      await supabase.from('content_approvals').insert({
+        company_id: companyId,
+        content_type: `autopilot_${department}_decision`,
+        content_data: {
+          ...decision,
+          approval_type: 'executive_escalation',
+          requires_multiple_stakeholders: true,
+        },
+        status: 'draft',
+        submitted_by: 'enterprise_autopilot_engine',
+        notes: `[⚠️ EXECUTIVE ESCALATION] [${department}] [Cycle ${cycleId}] Critical risk: ${decision.description}`,
+      });
+      nonExecutable.push({ ...decision, action_taken: false, escalated: true });
+
+    } else if (decision.guardrail_result === 'requires_approval' || decision.guardrail_result === 'sent_to_approval') {
+      // High risk — requires human approval before execution
       await supabase.from('content_approvals').insert({
         company_id: companyId,
         content_type: `autopilot_${department}_decision`,
@@ -900,7 +1257,14 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
         notes: `[Enterprise Autopilot ${department}] [Cycle ${cycleId}] ${decision.description}`,
       });
       nonExecutable.push({ ...decision, action_taken: false, sent_to_approval: true });
+
+    } else if (decision.guardrail_result === 'post_review') {
+      // Medium risk — execute but mark for post-review
+      executable.push(decision);
+      postReviewQueue.push(decision);
+
     } else {
+      // auto_approved / passed — execute normally
       executable.push(decision);
     }
   }
@@ -936,6 +1300,31 @@ async function actPhase(companyId: string, department: string, guardedDecisions:
   }
 
   const allResults = [...nonExecutable, ...parallelResults, ...serialResults];
+
+  // ═══ POST-REVIEW: Insert content_approvals for executed post_review decisions ═══
+  for (const decision of postReviewQueue) {
+    const executedResult = allResults.find(r =>
+      r.decision_type === decision.decision_type && r.description === decision.description && r.action_taken
+    );
+    if (executedResult) {
+      try {
+        await supabase.from('content_approvals').insert({
+          company_id: companyId,
+          content_type: `autopilot_${department}_post_review`,
+          content_data: {
+            ...decision,
+            execution_result: executedResult.execution_result,
+            requires_post_review: true,
+          },
+          status: 'approved', // Already executed, marked for human review
+          submitted_by: 'enterprise_autopilot_engine',
+          notes: `[POST-REVIEW] [${department}] [Cycle ${cycleId}] Executed (medium risk) — pending human review: ${decision.description}`,
+        });
+      } catch (prErr) {
+        console.warn(`⚠️ Post-review approval insert failed:`, prErr);
+      }
+    }
+  }
 
   // ═══ GAP 6: CREDIT AGGREGATION PER CYCLE ═══
   // Sum credits_per_use for all successfully executed decisions
@@ -1939,8 +2328,8 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
     const guardStart = Date.now();
     const guarded = await guardPhase(companyId, department, decisions, deptConfig);
     const blocked = guarded.filter(d => d.guardrail_result === 'blocked').length;
-    const pending = guarded.filter(d => d.guardrail_result === 'sent_to_approval').length;
-    const passed = guarded.filter(d => d.guardrail_result === 'passed').length;
+    const pending = guarded.filter(d => ['sent_to_approval', 'requires_approval', 'escalated'].includes(d.guardrail_result)).length;
+    const passed = guarded.filter(d => ['passed', 'auto_approved', 'post_review'].includes(d.guardrail_result)).length;
     await logExecution(companyId, cycleId, department, 'guard', 'completed', {
       decisions: guarded, content_approved: passed, content_rejected: blocked,
       content_pending_review: pending, execution_time_ms: Date.now() - guardStart,

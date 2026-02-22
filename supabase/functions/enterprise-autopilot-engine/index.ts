@@ -548,6 +548,13 @@ async function thinkPhase(companyId: string, department: string, senseData: any,
     .select('internal_code, name, edge_function_name, execution_type')
     .in('category', categories).eq('is_active', true);
 
+  // ═══ GAP 5: INTEGRATE ACTIVE CAPABILITIES INTO THINK ═══
+  const { data: activeCapabilities } = await supabase.from('autopilot_capabilities')
+    .select('capability_code, capability_name, trigger_condition, required_data, description')
+    .eq('company_id', companyId)
+    .eq('department', department)
+    .eq('is_active', true);
+
   const agentListBlock = (availableAgents || []).length > 0
     ? `\n\nAVAILABLE AGENTS (use ONLY these internal_code values for agent_to_execute):\n${
         (availableAgents || []).map(a => {
@@ -556,6 +563,16 @@ async function thinkPhase(companyId: string, department: string, senseData: any,
         }).join('\n')
       }\nIf no agent fits the action, set agent_to_execute to null.`
     : '\n\nNO AGENTS AVAILABLE for this department yet. Set agent_to_execute to null for all decisions.';
+
+  let capabilitiesBlock = '';
+  if (activeCapabilities?.length) {
+    capabilitiesBlock = `\n\nACTIVE_CAPABILITIES (autonomous capabilities you can also leverage for decisions - use capability_code as agent_to_execute if appropriate):\n${
+      activeCapabilities.map(c => {
+        const reqData = c.required_data ? ` | Data: ${JSON.stringify(c.required_data)}` : '';
+        return `- ${c.capability_code}: ${c.capability_name} — ${c.description || 'No description'}${reqData} | Trigger: ${JSON.stringify(c.trigger_condition)}`;
+      }).join('\n')
+    }\nYou may generate decisions that leverage these capabilities when their trigger conditions match the current data.`;
+  }
 
   let memoryBlock = '';
   if (memory?.lessons) {
@@ -579,6 +596,7 @@ RULES:
 - Allowed actions: ${(deptConfig.allowed_actions || reg!.decisionTypes).join(', ')}
 - Brand tone: ${branding?.brand_voice ? JSON.stringify(branding.brand_voice) : 'professional'}
 ${agentListBlock}
+${capabilitiesBlock}
 ${memoryBlock}
 ${externalBlock}
 
@@ -758,6 +776,27 @@ async function executeAgentForDecision(
 
   const agent = agentMap.get(agentCode);
   if (!agent) {
+    // ═══ GAP 6: CHECK IF agent_to_execute IS A CAPABILITY ═══
+    try {
+      const { data: capability } = await supabase.from('autopilot_capabilities')
+        .select('id, capability_code, capability_name, status, is_active')
+        .eq('company_id', companyId)
+        .eq('capability_code', agentCode)
+        .maybeSingle();
+
+      if (capability) {
+        // This is a capability, not a platform agent — track usage
+        const newCount = (capability as any).execution_count ? (capability as any).execution_count + 1 : 1;
+        await supabase.from('autopilot_capabilities').update({
+          execution_count: newCount,
+          last_evaluated_at: new Date().toISOString(),
+        } as any).eq('id', capability.id);
+        console.log(`🧬 [${department}] Capability execution tracked: ${agentCode} (count: ${newCount})`);
+        return { ...decision, action_taken: true, execution_result: 'capability_tracked', capability_code: agentCode };
+      }
+    } catch (capErr) {
+      console.warn(`⚠️ [${department}] Capability lookup failed for ${agentCode}:`, capErr);
+    }
     console.log(`⚠️ [${department}] No agent found for code: ${agentCode}. Not a real agent.`);
     return { ...decision, action_taken: false, execution_result: 'no_agent_mapped' };
   }
@@ -1236,8 +1275,8 @@ async function evaluateCapabilities(companyId: string) {
 // ═══════════════════════════════════════════════════════════════
 
 interface GapReport {
-  unmapped_agents: { decision_type: string; count: number }[];
-  recurring_blocks: { decision_type: string; block_reason: string; count: number }[];
+  unmapped_agents: { decision_type: string; count: number; department: string; period_days: number; first_seen: string; last_seen: string }[];
+  recurring_blocks: { decision_type: string; block_reason: string; count: number; department: string; period_days: number; first_seen: string; last_seen: string }[];
   unhandled_signals: { source: string; signal_count: number }[];
   repeated_patterns: { decision_type: string; success_count: number }[];
   low_performing_decisions: { decision_type: string; negative_count: number; avg_score: number }[];
@@ -1246,41 +1285,61 @@ interface GapReport {
 async function detectCapabilityGaps(companyId: string, department: string): Promise<GapReport> {
   console.log(`🔍 [${department}] Detecting capability gaps...`);
 
-  // Get last 50 decisions for this department
+  // ═══ GAP 1 FIX: Filter decisions by department using decision_type registry ═══
+  const reg = DEPARTMENT_REGISTRY[department];
+  const deptDecisionTypes = reg?.decisionTypes || [];
+
   const { data: recentDecisions } = await supabase.from('autopilot_decisions')
     .select('decision_type, agent_to_execute, guardrail_result, guardrail_details, action_taken, created_at')
     .eq('company_id', companyId)
+    .in('decision_type', deptDecisionTypes.length > 0 ? deptDecisionTypes : ['__none__'])
     .order('created_at', { ascending: false })
     .limit(50);
 
   const decisions = recentDecisions || [];
 
-  // 1. Decisions without mapped agent
-  const unmappedMap = new Map<string, number>();
+  // 1. Decisions without mapped agent — with temporal correlation
+  const unmappedMap = new Map<string, { count: number; dates: string[] }>();
   for (const d of decisions) {
     if (d.guardrail_result === 'passed' && !d.action_taken) {
-      unmappedMap.set(d.decision_type, (unmappedMap.get(d.decision_type) || 0) + 1);
+      const existing = unmappedMap.get(d.decision_type) || { count: 0, dates: [] };
+      existing.count++;
+      existing.dates.push(d.created_at);
+      unmappedMap.set(d.decision_type, existing);
     }
   }
   const unmapped_agents = Array.from(unmappedMap.entries())
-    .map(([decision_type, count]) => ({ decision_type, count }))
+    .map(([decision_type, v]) => {
+      const sorted = v.dates.sort();
+      const firstSeen = sorted[0];
+      const lastSeen = sorted[sorted.length - 1];
+      const periodDays = Math.ceil((new Date(lastSeen).getTime() - new Date(firstSeen).getTime()) / 86400000) || 1;
+      return { decision_type, count: v.count, department, period_days: periodDays, first_seen: firstSeen, last_seen: lastSeen };
+    })
     .filter(g => g.count >= 2);
 
-  // 2. Recurring guardrail blocks
-  const blockMap = new Map<string, { reason: string; count: number }>();
+  // 2. Recurring guardrail blocks — with temporal correlation
+  const blockMap = new Map<string, { reason: string; count: number; dates: string[] }>();
   for (const d of decisions) {
     if (d.guardrail_result === 'blocked') {
       const key = d.decision_type;
       const existing = blockMap.get(key);
       if (existing) {
         existing.count++;
+        existing.dates.push(d.created_at);
       } else {
-        blockMap.set(key, { reason: d.guardrail_details || 'unknown', count: 1 });
+        blockMap.set(key, { reason: d.guardrail_details || 'unknown', count: 1, dates: [d.created_at] });
       }
     }
   }
   const recurring_blocks = Array.from(blockMap.entries())
-    .map(([decision_type, v]) => ({ decision_type, block_reason: v.reason, count: v.count }))
+    .map(([decision_type, v]) => {
+      const sorted = v.dates.sort();
+      const firstSeen = sorted[0];
+      const lastSeen = sorted[sorted.length - 1];
+      const periodDays = Math.ceil((new Date(lastSeen).getTime() - new Date(firstSeen).getTime()) / 86400000) || 1;
+      return { decision_type, block_reason: v.reason, count: v.count, department, period_days: periodDays, first_seen: firstSeen, last_seen: lastSeen };
+    })
     .filter(b => b.count >= 3);
 
   // 3. External signals without corresponding capabilities
@@ -1395,6 +1454,14 @@ Each capability must be a JSON object with:
 - required_maturity: "starter" | "growing" | "established" | "scaling"
 - auto_activate: true for low-risk analytics/monitoring, false for action-heavy capabilities
 - proposed_reason: Why this capability is needed based on the gaps (in Spanish)
+- required_data: array of data sources this capability needs (e.g. ["crm_deals", "company_parameters", "agent_usage_log"])
+- success_metrics: array of measurable success metrics (e.g. [{"metric": "conversion_rate", "target": "+10%", "measurement_period": "30d"}])
+- risk_level: "low" for monitoring/analytics only, "medium" for recommendations that modify data, "high" for capabilities that execute financial transactions or external communications
+
+RISK LEVEL GUIDE:
+- low: read-only analytics, monitoring, alerts, reporting → auto-activates with trial
+- medium: creates/modifies internal records, generates recommendations → requires user review
+- high: sends external communications, makes financial decisions, modifies contracts → requires explicit human approval
 
 IMPORTANT: 
 - Do NOT duplicate existing capabilities: ${existingCodes.join(', ')}
@@ -1418,6 +1485,9 @@ IMPORTANT:
   for (const cap of proposed.slice(0, 3)) {
     if (existingCodes.includes(cap.code)) continue;
 
+    const riskLevel = cap.risk_level || (cap.auto_activate ? 'low' : 'medium');
+    const initialStatus = riskLevel === 'low' && cap.auto_activate ? 'proposed' : 'proposed';
+
     const { error } = await supabase.from('autopilot_capabilities').insert({
       company_id: companyId,
       capability_code: cap.code,
@@ -1427,25 +1497,74 @@ IMPORTANT:
       trigger_condition: cap.trigger_condition || {},
       required_maturity: cap.required_maturity || 'growing',
       is_active: false,
-      status: 'proposed',
+      status: initialStatus,
       source: 'ai_generated',
       auto_activate: cap.auto_activate || false,
       proposed_reason: cap.proposed_reason || 'AI-generated based on gap analysis',
-      gap_evidence: gapReport,
+      gap_evidence: {
+        ...gapReport,
+        risk_level: riskLevel,
+        success_metrics: cap.success_metrics || [],
+      },
+      required_data: cap.required_data || [],
     } as any);
 
     if (!error) {
       inserted.push(cap.code);
-      console.log(`✨ [${department}] Proposed new capability: ${cap.code}`);
+      console.log(`✨ [${department}] Proposed new capability: ${cap.code} (risk: ${riskLevel})`);
 
-      // ═══ L5: Auto-activate with trial_expires_at (7-day lifecycle) ═══
-      if (cap.auto_activate) {
+      // ═══ GAP 3: GOVERNANCE BASED ON RISK LEVEL ═══
+      if (riskLevel === 'low' && cap.auto_activate) {
+        // Low risk: auto-activate with 7-day trial
         const trialExpiry = new Date(Date.now() + 7 * 24 * 3600000).toISOString();
         await supabase.from('autopilot_capabilities').update({
           status: 'trial',
           trial_expires_at: trialExpiry,
         } as any).eq('company_id', companyId).eq('capability_code', cap.code);
-        console.log(`🚀 [${department}] Auto-activated (trial until ${trialExpiry}): ${cap.code}`);
+        console.log(`🚀 [${department}] Auto-activated trial (low risk, until ${trialExpiry}): ${cap.code}`);
+      } else if (riskLevel === 'medium') {
+        // Medium risk: submit for user review via content_approvals
+        await supabase.from('content_approvals').insert({
+          company_id: companyId,
+          content_type: 'capability_approval',
+          content_id: cap.code,
+          content_data: {
+            capability_code: cap.code,
+            capability_name: cap.name,
+            description: cap.description,
+            department: cap.department || department,
+            risk_level: riskLevel,
+            required_data: cap.required_data || [],
+            success_metrics: cap.success_metrics || [],
+            proposed_reason: cap.proposed_reason,
+          },
+          status: 'pending_review',
+          submitted_by: 'capability_genesis_engine',
+          notes: `[Capability Genesis] New ${riskLevel}-risk capability proposed: ${cap.name}. Requires user review before activation.`,
+        });
+        console.log(`📋 [${department}] Medium-risk capability sent for review: ${cap.code}`);
+      } else if (riskLevel === 'high') {
+        // High risk: explicit human approval required
+        await supabase.from('content_approvals').insert({
+          company_id: companyId,
+          content_type: 'capability_approval',
+          content_id: cap.code,
+          content_data: {
+            capability_code: cap.code,
+            capability_name: cap.name,
+            description: cap.description,
+            department: cap.department || department,
+            risk_level: riskLevel,
+            required_data: cap.required_data || [],
+            success_metrics: cap.success_metrics || [],
+            proposed_reason: cap.proposed_reason,
+            requires_human_approval: true,
+          },
+          status: 'draft',
+          submitted_by: 'capability_genesis_engine',
+          notes: `[⚠️ HIGH RISK] [Capability Genesis] New high-risk capability: ${cap.name}. REQUIRES EXPLICIT HUMAN APPROVAL before any activation.`,
+        });
+        console.log(`🔒 [${department}] High-risk capability requires human approval: ${cap.code}`);
       }
     }
   }
@@ -1467,14 +1586,37 @@ async function manageCapabilityLifecycle(companyId: string) {
 
       if (now < expiresAt) continue; // Trial not expired yet
 
-      // Evaluate: check if there were related successful executions during trial period
-      const { data: relatedDecisions } = await supabase.from('autopilot_decisions')
-        .select('action_taken, guardrail_result')
+      // ═══ GAP 4 FIX: Evaluate ONLY decisions related to this capability ═══
+      // Filter by decision_type matching capability_code, or by department if no specific match
+      const capCode = cap.capability_code;
+      const deptTypes = DEPARTMENT_REGISTRY[cap.department]?.decisionTypes || [];
+
+      // First try: decisions where agent_to_execute matches capability_code
+      let { data: relatedDecisions } = await supabase.from('autopilot_decisions')
+        .select('action_taken, guardrail_result, decision_type')
         .eq('company_id', companyId)
+        .eq('agent_to_execute', capCode)
         .gte('created_at', cap.created_at)
         .limit(20);
 
+      // Fallback: filter by department's decision types if no direct matches
+      if (!relatedDecisions?.length && deptTypes.length > 0) {
+        const { data: deptDecisions } = await supabase.from('autopilot_decisions')
+          .select('action_taken, guardrail_result, decision_type')
+          .eq('company_id', companyId)
+          .in('decision_type', deptTypes)
+          .gte('created_at', cap.created_at)
+          .limit(20);
+        relatedDecisions = deptDecisions || [];
+      }
+
       const executed = (relatedDecisions || []).filter(d => d.action_taken);
+
+      // Also check execution_count on the capability itself (GAP 6 tracking)
+      const { data: capData } = await supabase.from('autopilot_capabilities')
+        .select('execution_count').eq('id', cap.id).single();
+      const capExecutions = capData?.execution_count || 0;
+
       const { data: relatedMemory } = await supabase.from('autopilot_memory')
         .select('outcome_evaluation')
         .eq('company_id', companyId)
@@ -1484,26 +1626,31 @@ async function manageCapabilityLifecycle(companyId: string) {
 
       const positives = (relatedMemory || []).filter(m => m.outcome_evaluation === 'positive').length;
       const negatives = (relatedMemory || []).filter(m => m.outcome_evaluation === 'negative').length;
+      const totalEvidence = executed.length + capExecutions;
 
-      if (executed.length > 0 && positives > negatives) {
+      if (totalEvidence > 0 && positives > negatives) {
         // Promote to active
         await supabase.from('autopilot_capabilities').update({
           status: 'active',
           is_active: true,
           activated_at: now.toISOString(),
-          activation_reason: `Trial evaluation: ${positives} positive, ${negatives} negative outcomes in ${executed.length} executions`,
+          activation_reason: `Trial evaluation: ${positives} positive, ${negatives} negative outcomes in ${totalEvidence} executions (${capExecutions} direct capability uses)`,
           last_evaluated_at: now.toISOString(),
         } as any).eq('id', cap.id);
-        console.log(`✅ Promoted capability ${cap.capability_code} to active (${positives} positive outcomes)`);
+        console.log(`✅ Promoted capability ${cap.capability_code} to active (${positives} positive, ${totalEvidence} total evidence)`);
       } else {
-        // Deprecate
+        // Deprecate with descriptive reason
+        const deprecationReason = totalEvidence === 0
+          ? `No related executions found during 7-day trial period (${cap.created_at} to ${now.toISOString()})`
+          : `Insufficient positive outcomes: ${positives} positive vs ${negatives} negative in ${totalEvidence} executions`;
         await supabase.from('autopilot_capabilities').update({
           status: 'deprecated',
           is_active: false,
           deactivated_at: now.toISOString(),
           last_evaluated_at: now.toISOString(),
+          activation_reason: deprecationReason,
         } as any).eq('id', cap.id);
-        console.log(`🗑️ Deprecated capability ${cap.capability_code} (insufficient results during trial)`);
+        console.log(`🗑️ Deprecated capability ${cap.capability_code}: ${deprecationReason}`);
       }
     }
   }

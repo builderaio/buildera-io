@@ -20,6 +20,10 @@ import StrategicControlCenter from "@/components/strategy/StrategicControlCenter
 // CRM
 import { CRMDashboard } from "@/components/crm/CRMDashboard";
 
+// Governance & Department Config
+import GovernanceDashboard from "@/components/company/GovernanceDashboard";
+import DepartmentConfigPanel from "@/components/company/departments/DepartmentConfigPanel";
+
 // Legacy components (for backwards compatibility during transition)
 import MisArchivos from "@/components/company/BaseConocimiento";
 import { ContentAnalysisDashboard } from "@/components/company/ContentAnalysisDashboard";
@@ -410,6 +414,16 @@ const CompanyDashboard = () => {
       case "ventas":
       case "crm":
         return <CRMDashboard />;
+
+      // === GOVERNANCE ===
+      case "gobernanza":
+      case "governance":
+        return <GovernanceDashboard profile={profile} />;
+
+      // === DEPARTMENT CONFIG ===
+      case "departamentos":
+      case "department-config":
+        return <DepartmentConfigPanel profile={profile} />;
 
       // === LEGACY VIEWS (backwards compatibility) ===
       case "base-conocimiento":

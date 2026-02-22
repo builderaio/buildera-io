@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User, Brain } from 'lucide-react';
+import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User, Brain, Handshake, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -378,7 +378,10 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   const sidebarItems = [
     { id: 'panel', label: t('common:sidebar.commandCenter', 'Centro de Comando'), icon: Activity, badge: null },
     { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Megaphone, badge: null },
+    { id: 'ventas', label: t('common:sidebar.salesCRM', 'Ventas / CRM'), icon: Handshake, badge: null },
     { id: 'autopilot', label: t('common:sidebar.enterpriseBrain', 'Cerebro Empresarial'), icon: Brain, badge: activeDeptCount > 0 ? `${activeDeptCount}` : null },
+    { id: 'gobernanza', label: t('common:sidebar.governance', 'Gobernanza'), icon: Shield, badge: null },
+    { id: 'departamentos', label: t('common:sidebar.departments', 'Departamentos'), icon: Settings, badge: null },
     { id: 'agentes', label: t('common:sidebar.aiAgents', 'Agentes IA'), icon: Bot, badge: null },
     { id: 'negocio', label: t('common:sidebar.myCompany', 'Mi Negocio'), icon: Building, badge: null },
   ];

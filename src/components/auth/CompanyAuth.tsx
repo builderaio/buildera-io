@@ -247,15 +247,15 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       console.error("Error en autenticación:", error);
       
       // Mostrar mensajes de error más específicos
-      let errorMessage = error.message;
+      let errorMessage = t('messages.genericLoginError');
       let errorTitle = "Error";
       
       if (error.code === 'weak_password' || error.message?.includes('Password should contain')) {
         errorTitle = t('messages.weakPassword');
         errorMessage = t('messages.weakPasswordComplex');
-      } else if (error.message?.includes('Invalid login credentials')) {
+      } else if (error.code === 'invalid_credentials' || error.message?.includes('Invalid login credentials')) {
         errorMessage = t('messages.invalidCredentials');
-      } else if (error.message?.includes('Email not confirmed')) {
+      } else if (error.code === 'email_not_confirmed' || error.message?.includes('Email not confirmed')) {
         errorMessage = t('messages.emailNotConfirmed');
       } else if (error.message?.includes('User already registered')) {
         errorMessage = t('messages.userAlreadyRegistered');

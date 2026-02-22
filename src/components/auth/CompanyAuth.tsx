@@ -35,6 +35,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const { toast } = useToast();
   const { authMethods, loading: authMethodsLoading } = useAuthMethods();
   const { sendWelcomeEmail } = useWelcomeEmail();
@@ -82,32 +84,21 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         const hasUpperCase = /[A-Z]/.test(password);
         const hasNumber = /[0-9]/.test(password);
         
-        if (password.length < 8) {
-          toast({
-            title: t('messages.weakPassword'),
-            description: t('messages.weakPasswordDesc'),
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
+        let hasErrors = false;
+        setPasswordError("");
+        setConfirmPasswordError("");
 
-        if (!hasLowerCase || !hasUpperCase || !hasNumber) {
-          toast({
-            title: t('messages.weakPassword'),
-            description: t('messages.weakPasswordComplex'),
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
+        if (password.length < 8 || !hasLowerCase || !hasUpperCase || !hasNumber) {
+          setPasswordError(t('messages.weakPasswordInline'));
+          hasErrors = true;
         }
 
         if (password !== confirmPassword) {
-          toast({
-            title: t('messages.passwordMismatch'),
-            description: t('messages.passwordMismatch'),
-            variant: "destructive",
-          });
+          setConfirmPasswordError(t('messages.passwordMismatchInline'));
+          hasErrors = true;
+        }
+
+        if (hasErrors) {
           setLoading(false);
           return;
         }
@@ -515,9 +506,12 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
               id="password"
               placeholder={t('form.passwordPlaceholder')}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); setPasswordError(""); }}
               required
             />
+            {passwordError && (
+              <p className="text-sm text-destructive">{passwordError}</p>
+            )}
           </div>
           
           {mode === "signup" && (
@@ -529,9 +523,12 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
                 id="confirmPassword"
                 placeholder={t('form.confirmPasswordPlaceholder')}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => { setConfirmPassword(e.target.value); setConfirmPasswordError(""); }}
                 required
               />
+              {confirmPasswordError && (
+                <p className="text-sm text-destructive">{confirmPasswordError}</p>
+              )}
             </div>
           )}
 

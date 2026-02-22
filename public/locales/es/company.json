@@ -338,5 +338,59 @@
     "require_approval": "Requiere aprobación",
     "scheduling": "Programación",
     "analytics": "Analytics"
+  },
+  "governance": {
+    "title": "Autonomy Control Center",
+    "subtitle": "Control total de la autonomía empresarial en tiempo real",
+    "iq": {
+      "title": "Enterprise IQ",
+      "monthly": "mensual",
+      "cycles": "Ciclos",
+      "lessons": "Lecciones",
+      "capabilities": "Capacidades",
+      "levels": {
+        "beginner": "Principiante",
+        "apprentice": "Aprendiz",
+        "competent": "Competente",
+        "expert": "Experto",
+        "master": "Maestro"
+      }
+    },
+    "departments": {
+      "title": "Departamentos activos",
+      "tasks": "tareas",
+      "marketing": "Marketing",
+      "sales": "Ventas",
+      "legal": "Legal",
+      "hr": "Recursos Humanos",
+      "customer_service": "Atención al Cliente",
+      "finance": "Finanzas"
+    },
+    "log": {
+      "title": "Log de ejecución",
+      "today": "hoy",
+      "empty": "Sin decisiones ejecutadas aún"
+    },
+    "guardrails": {
+      "title": "Guardrails presupuestarios",
+      "used": "usado",
+      "allClear": "Todos los guardrails operando normalmente"
+    },
+    "approvals": {
+      "title": "Aprobaciones pendientes",
+      "allClear": "No hay aprobaciones pendientes",
+      "approvedSuccess": "Contenido aprobado",
+      "rejectedSuccess": "Contenido rechazado"
+    },
+    "capabilities": {
+      "title": "Capacidades activas",
+      "empty": "Sin capacidades activas"
+    },
+    "status": {
+      "cycle": "Ciclo actual",
+      "agents": "Agentes activos",
+      "credits": "Créditos hoy",
+      "nextCycle": "Próximo ciclo"
+    }
   }
 }

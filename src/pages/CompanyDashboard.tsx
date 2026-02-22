@@ -17,6 +17,9 @@ import PlayToWinModule from "@/components/strategy/PlayToWinModule";
 import FounderPTWSimplified from "@/components/strategy/founder/FounderPTWSimplified";
 import StrategicControlCenter from "@/components/strategy/StrategicControlCenter";
 
+// CRM
+import { CRMDashboard } from "@/components/crm/CRMDashboard";
+
 // Legacy components (for backwards compatibility during transition)
 import MisArchivos from "@/components/company/BaseConocimiento";
 import { ContentAnalysisDashboard } from "@/components/company/ContentAnalysisDashboard";
@@ -402,6 +405,11 @@ const CompanyDashboard = () => {
       // === CREATIFY STUDIO ===
       case "creatify-studio":
         return <CreatifyStudio />;
+
+      // === CRM / VENTAS ===
+      case "ventas":
+      case "crm":
+        return <CRMDashboard />;
 
       // === LEGACY VIEWS (backwards compatibility) ===
       case "base-conocimiento":

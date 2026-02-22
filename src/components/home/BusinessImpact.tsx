@@ -148,6 +148,11 @@ const BusinessImpact = () => {
               </div>
             </div>
           </motion.div>
+
+          {/* Disclaimer */}
+          <p className="mt-6 text-center text-xs text-muted-foreground/60 italic">
+            {t("businessImpact.disclaimer", { defaultValue: "* Resultados proyectados basados en benchmarks de la industria. Los resultados individuales pueden variar." })}
+          </p>
         </motion.div>
       </div>
     </section>

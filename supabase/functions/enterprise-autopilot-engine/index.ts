@@ -1256,14 +1256,25 @@ async function evaluateCapabilities(companyId: string) {
     }
 
     if (shouldActivate) {
+      // ═══ GAP 2 FIX: Route to trial instead of direct activation ═══
+      const previousStatus = cap.status;
+      const trialExpiry = new Date(Date.now() + 7 * 24 * 3600000).toISOString();
       await supabase.from('autopilot_capabilities').update({
-        is_active: true,
-        status: 'active',
-        activated_at: new Date().toISOString(),
-        activation_reason: `Trigger conditions met: ${JSON.stringify(cond)}`,
+        is_active: false,
+        status: 'trial',
+        trial_expires_at: trialExpiry,
+        activation_reason: `Trigger conditions met: ${JSON.stringify(cond)}. Entering 7-day trial.`,
         last_evaluated_at: new Date().toISOString(),
       } as any).eq('id', cap.id);
       activated.push(cap.capability_code);
+
+      await logCapabilityTransition(
+        companyId,
+        cap.capability_code,
+        previousStatus,
+        'trial',
+        `Trigger conditions met: ${JSON.stringify(cond)}. Entering mandatory 7-day trial period until ${trialExpiry}.`
+      );
     }
   }
 
@@ -1424,12 +1435,27 @@ async function proposeNewCapabilities(companyId: string, department: string, gap
     .select('name, industry_sector, country, description')
     .eq('id', companyId).single();
 
-  // Get existing capabilities to avoid duplicates
+  // ═══ GAP 3 FIX: Include ALL capabilities (including deprecated <30d) to avoid re-proposals ═══
   const { data: existingCaps } = await supabase.from('autopilot_capabilities')
-    .select('capability_code, capability_name')
+    .select('capability_code, capability_name, status, deactivated_at')
     .eq('company_id', companyId);
 
-  const existingCodes = (existingCaps || []).map(c => c.capability_code);
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+  // Exclude deprecated caps only if they were deprecated more than 30 days ago
+  const existingCodes = (existingCaps || [])
+    .filter(c => {
+      if (c.status === 'deprecated') {
+        // Allow re-proposal if deprecated more than 30 days ago
+        return c.deactivated_at && c.deactivated_at > thirtyDaysAgo;
+      }
+      return true; // all non-deprecated are always excluded
+    })
+    .map(c => c.capability_code);
+
+  // Build list of recently deprecated codes for the AI prompt
+  const recentlyDeprecated = (existingCaps || [])
+    .filter(c => c.status === 'deprecated' && c.deactivated_at && c.deactivated_at > thirtyDaysAgo)
+    .map(c => c.capability_code);
 
   const aiRes = await fetch(`${supabaseUrl}/functions/v1/openai-responses-handler`, {
     method: 'POST',
@@ -1465,6 +1491,7 @@ RISK LEVEL GUIDE:
 
 IMPORTANT: 
 - Do NOT duplicate existing capabilities: ${existingCodes.join(', ')}
+- Do NOT re-propose recently deprecated capabilities: ${recentlyDeprecated.join(', ') || 'none'}
 - Focus on gaps that have the highest business impact
 - Respond ONLY with a valid JSON array of capability objects`,
       },
@@ -1512,6 +1539,10 @@ IMPORTANT:
     if (!error) {
       inserted.push(cap.code);
       console.log(`✨ [${department}] Proposed new capability: ${cap.code} (risk: ${riskLevel})`);
+
+      // ═══ GAP 5: Log the creation transition ═══
+      const createdStatus = riskLevel === 'low' && cap.auto_activate ? 'trial' : 'proposed';
+      await logCapabilityTransition(companyId, cap.code, 'none', createdStatus, `Capability proposed by Genesis AI. Risk: ${riskLevel}. Reason: ${cap.proposed_reason || 'gap analysis'}`);
 
       // ═══ GAP 3: GOVERNANCE BASED ON RISK LEVEL ═══
       if (riskLevel === 'low' && cap.auto_activate) {
@@ -1638,6 +1669,10 @@ async function manageCapabilityLifecycle(companyId: string) {
           last_evaluated_at: now.toISOString(),
         } as any).eq('id', cap.id);
         console.log(`✅ Promoted capability ${cap.capability_code} to active (${positives} positive, ${totalEvidence} total evidence)`);
+
+        // ═══ GAP 5: Log trial→active transition ═══
+        await logCapabilityTransition(companyId, cap.capability_code, 'trial', 'active',
+          `Trial passed: ${positives} positive vs ${negatives} negative in ${totalEvidence} executions`);
       } else {
         // Deprecate with descriptive reason
         const deprecationReason = totalEvidence === 0
@@ -1651,6 +1686,58 @@ async function manageCapabilityLifecycle(companyId: string) {
           activation_reason: deprecationReason,
         } as any).eq('id', cap.id);
         console.log(`🗑️ Deprecated capability ${cap.capability_code}: ${deprecationReason}`);
+
+        // ═══ GAP 5: Log trial→deprecated transition ═══
+        await logCapabilityTransition(companyId, cap.capability_code, 'trial', 'deprecated', deprecationReason);
+      }
+    }
+  }
+
+  // ═══ GAP 4: POST-ACTIVATION REVERSIBILITY ═══
+  // Check active capabilities older than 14 days for performance degradation
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
+  const { data: activeCaps } = await supabase.from('autopilot_capabilities')
+    .select('id, capability_code, department, last_evaluated_at, activated_at')
+    .eq('company_id', companyId)
+    .eq('status', 'active')
+    .eq('is_active', true);
+
+  if (activeCaps?.length) {
+    for (const cap of activeCaps) {
+      // Only re-evaluate if last evaluation was >14 days ago
+      const lastEval = cap.last_evaluated_at || cap.activated_at;
+      if (lastEval && lastEval > fourteenDaysAgo) continue;
+
+      // Evaluate recent performance (last 2 weeks)
+      const { data: recentMemory } = await supabase.from('autopilot_memory')
+        .select('outcome_evaluation')
+        .eq('company_id', companyId)
+        .eq('department', cap.department)
+        .gte('created_at', fourteenDaysAgo)
+        .in('outcome_evaluation', ['positive', 'negative']);
+
+      const positives = (recentMemory || []).filter(m => m.outcome_evaluation === 'positive').length;
+      const negatives = (recentMemory || []).filter(m => m.outcome_evaluation === 'negative').length;
+      const totalEvals = positives + negatives;
+
+      if (totalEvals >= 3 && negatives > positives * 2) {
+        // Performance degraded — reverse to deprecated
+        const degradeReason = `Post-activation performance degraded: ${negatives} negative vs ${positives} positive outcomes in last 14 days (${totalEvals} total evaluations)`;
+        await supabase.from('autopilot_capabilities').update({
+          status: 'deprecated',
+          is_active: false,
+          deactivated_at: new Date().toISOString(),
+          last_evaluated_at: new Date().toISOString(),
+          activation_reason: degradeReason,
+        } as any).eq('id', cap.id);
+        console.log(`⬇️ Reversed capability ${cap.capability_code} to deprecated: ${degradeReason}`);
+
+        await logCapabilityTransition(companyId, cap.capability_code, 'active', 'deprecated', degradeReason);
+      } else {
+        // Performance OK — just update last_evaluated_at
+        await supabase.from('autopilot_capabilities').update({
+          last_evaluated_at: new Date().toISOString(),
+        } as any).eq('id', cap.id);
       }
     }
   }
@@ -1883,6 +1970,13 @@ async function runDepartmentCycle(companyId: string, department: string, deptCon
       console.log(`✨ [${department}] Proposed ${proposedCaps.length} new capabilities: ${proposedCaps.join(', ')}`);
     }
 
+    // ═══ GAP 1: PROCESS APPROVED CAPABILITIES (Approval → Trial Bridge) ═══
+    console.log(`🔗 [${department}] GOVERNANCE BRIDGE`);
+    const approvedCaps = await processApprovedCapabilities(companyId);
+    if (approvedCaps.length > 0) {
+      console.log(`🔗 [${department}] Bridged ${approvedCaps.length} approved capabilities to trial: ${approvedCaps.join(', ')}`);
+    }
+
     // ═══ GAP 1: UNIFIED CYCLE LOG IN autopilot_execution_log ═══
     const totalExecutionTime = Date.now() - startTime;
     const contentGenerated = actions.filter((a: any) => a.action_taken).length;
@@ -1947,6 +2041,104 @@ function tryParseJson(text: string): any[] | null {
     const match = text.match(/\[[\s\S]*\]/);
     return match ? JSON.parse(match[0]) : null;
   } catch { return null; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GAP 5: AUDITABLE CAPABILITY TRANSITION LOG
+// ═══════════════════════════════════════════════════════════════
+
+async function logCapabilityTransition(
+  companyId: string,
+  capabilityCode: string,
+  fromStatus: string,
+  toStatus: string,
+  reason: string,
+  cycleId?: string
+) {
+  try {
+    await supabase.from('autopilot_execution_log').insert({
+      company_id: companyId,
+      cycle_id: cycleId || crypto.randomUUID(),
+      phase: 'capability_lifecycle',
+      status: `${fromStatus}_to_${toStatus}`,
+      context_snapshot: {
+        capability_code: capabilityCode,
+        from_status: fromStatus,
+        to_status: toStatus,
+        reason,
+        timestamp: new Date().toISOString(),
+      },
+      decisions_made: [],
+      actions_taken: [],
+      credits_consumed: 0,
+      content_generated: 0,
+      content_approved: 0,
+      content_rejected: 0,
+      content_pending_review: 0,
+      execution_time_ms: 0,
+    });
+    console.log(`📝 [lifecycle] Transition logged: ${capabilityCode} ${fromStatus} → ${toStatus}`);
+  } catch (err) {
+    console.error(`⚠️ Failed to log capability transition for ${capabilityCode}:`, err);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GAP 1: BRIDGE APPROVAL → TRIAL (processApprovedCapabilities)
+// ═══════════════════════════════════════════════════════════════
+
+async function processApprovedCapabilities(companyId: string) {
+  const { data: approvedItems } = await supabase.from('content_approvals')
+    .select('id, content_id, content_data')
+    .eq('company_id', companyId)
+    .eq('content_type', 'capability_approval')
+    .eq('status', 'approved');
+
+  if (!approvedItems?.length) return [];
+
+  const processed: string[] = [];
+  for (const approval of approvedItems) {
+    const capCode = approval.content_id || (approval.content_data as any)?.capability_code;
+    if (!capCode) continue;
+
+    // Get current capability status
+    const { data: cap } = await supabase.from('autopilot_capabilities')
+      .select('id, status')
+      .eq('company_id', companyId)
+      .eq('capability_code', capCode)
+      .maybeSingle();
+
+    if (!cap || cap.status === 'trial' || cap.status === 'active') continue;
+
+    const previousStatus = cap.status;
+    const trialExpiry = new Date(Date.now() + 7 * 24 * 3600000).toISOString();
+
+    // Transition capability to trial
+    await supabase.from('autopilot_capabilities').update({
+      status: 'trial',
+      trial_expires_at: trialExpiry,
+      last_evaluated_at: new Date().toISOString(),
+    } as any).eq('id', cap.id);
+
+    // Mark content_approval as published (final governance state)
+    await supabase.from('content_approvals').update({
+      status: 'published',
+    }).eq('id', approval.id);
+
+    // Log the transition
+    await logCapabilityTransition(
+      companyId,
+      capCode,
+      previousStatus,
+      'trial',
+      `Human approval received. Trial period until ${trialExpiry}`
+    );
+
+    processed.push(capCode);
+    console.log(`🔗 [governance] Approval→Trial bridge: ${capCode} (${previousStatus} → trial, expires ${trialExpiry})`);
+  }
+
+  return processed;
 }
 
 // ═══════════════════════════════════════════════════════════════

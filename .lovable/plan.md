@@ -1,112 +1,111 @@
 
 
-## Plan: Analisis de Gaps entre Propuesta de Valor del Homepage y Funcionalidad Real
+## Plan: Asegurar la Implementacion Detallada del Enterprise Autopilot Brain
 
-### Resumen Ejecutivo
+### Diagnostico
 
-El homepage promete una plataforma de automatizacion empresarial con IA que opera 6 departamentos (Marketing, Ventas, Finanzas, Legal, RRHH y Operaciones) con 27+ agentes, gobernanza, guardrails y un ciclo autonomo. Tras revisar todo el codebase, la infraestructura del backend y los componentes del frontend, he identificado **3 niveles de gaps**: funcionalidades completamente ausentes, parcialmente implementadas y cosmeticas.
-
----
-
-### Estado Actual vs Promesas del Homepage
-
-| Promesa del Homepage | Estado Real | Gap |
-|---|---|---|
-| 6 departamentos automatizados | Backend soporta los 6, pero solo Marketing tiene data sources reales | ALTO |
-| 27+ agentes especializados | Existen en DB pero muchos son placeholders sin edge function real | MEDIO |
-| Diagnostico Digital en 60s | Funcional (onboarding + scraping) | OK |
-| ADN Estrategico | Funcional (Strategic DNA wizard) | OK |
-| Autopilot Empresarial | Funcional para Marketing; otros deptos sin datos para operar | MEDIO |
-| Gobernanza y Guardrails | Backend implementado; Governance.tsx es pagina estatica/informativa, no funcional | ALTO |
-| CRM / Ventas | CRM existe (deals, contacts, pipeline) pero no integrado en flujo principal | MEDIO |
-| Finanzas (presupuesto, alertas) | Solo monitorea uso de creditos de la plataforma, no finanzas reales | ALTO |
-| Legal (compliance, contratos) | Solo lee company_parameters con prefijo "legal_", sin funcionalidad real | ALTO |
-| RRHH (talento, clima) | Solo lee miembros del equipo, sin herramientas de HR reales | ALTO |
-| Operaciones (SLA, bottlenecks) | Solo lee ejecuciones de agentes, sin monitoreo operativo real | ALTO |
-| Casos de Uso por departamento | Componente UseCases.tsx esta VACIO (render nulo) | CRITICO |
-| Aprendizaje documentado | autopilot_memory existe y funciona | OK |
-| Capability Genesis | Implementado en edge function | OK |
+Tras revisar las ~1,440 lineas del `enterprise-autopilot-engine/index.ts`, el dashboard de ~830 lineas, y la infraestructura de soporte (RPCs, tablas, migraciones), la arquitectura de 5 capas ya esta implementada en su estructura fundamental. Sin embargo, existen gaps especificos dentro de cada capa que impiden que opere al 100% segun la especificacion.
 
 ---
 
-### Gaps Ordenados por Prioridad
+### Estado por Capa
 
-#### PRIORIDAD 1 - Criticos (rompen la confianza inmediatamente)
-
-**Gap 1: Seccion "Casos de Uso" completamente vacia**
-- `UseCases.tsx` renderiza un `<section>` vacio sin contenido
-- El homepage tiene i18n completo con 6 casos de uso detallados pero el componente no los muestra
-- **Accion**: Implementar el componente para renderizar las 6 cards con titulo, descripcion y features desde i18n
-
-**Gap 2: Pagina de Gobernanza es solo informativa**
-- `Governance.tsx` es una landing page estatica que describe las features de gobernanza
-- No conecta con datos reales de `content_approvals`, `autopilot_decisions`, ni guardrail logs
-- **Accion**: Convertir en dashboard funcional que muestre aprobaciones pendientes reales, logs de guardrails y configuracion de reglas
-
-#### PRIORIDAD 2 - Altos (el usuario descubre el gap al usar la plataforma)
-
-**Gap 3: Departamentos no-Marketing sin fuentes de datos reales**
-- Sales: tiene CRM pero pocas empresas lo llenan; autopilot no puede operar sin datos
-- Finance: solo monitorea creditos internos, no tiene integracion contable
-- Legal: lee parametros con prefijo "legal_" pero no hay UI para ingresarlos
-- HR: lee miembros del equipo, sin herramientas de gestion de talento
-- Operations: lee ejecuciones de agentes, sin monitoreo de procesos reales
-- **Accion**: Para cada departamento, crear una pantalla minima de configuracion y entrada de datos que alimente el autopilot. El CRM de ventas ya existe pero necesita ser mas visible en la navegacion.
-
-**Gap 4: CRM desconectado del flujo principal**
-- Los componentes `CRMDashboard`, `ContactsList` y `PipelineKanban` existen pero no aparecen en la navegacion del dashboard
-- El autopilot de Sales depende de estos datos
-- **Accion**: Agregar "Ventas/CRM" como vista accesible desde el menu lateral del dashboard
-
-#### PRIORIDAD 3 - Medios (mejoran la experiencia pero no bloquean)
-
-**Gap 5: Metricas del homepage sin sustento verificable**
-- "73% eficiencia operativa", "12x velocidad de decision", "340% ROI en marketing" — son numeros aspiracionales sin conexion a datos reales de usuarios
-- **Accion**: Agregar disclaimer "Resultados proyectados basados en benchmarks de la industria" o reemplazar con metricas mas conservadoras y verificables
-
-**Gap 6: Contador de "27+ agentes" vs realidad**
-- Necesita verificacion de cuantos agentes estan realmente operativos con edge functions funcionales vs cuantos son registros en DB sin backend
-- **Accion**: Auditar `platform_agents` y alinear el numero con la realidad
+| Capa | Componente | Estado | Gap |
+|------|-----------|--------|-----|
+| L1 Decision Engine | Context Builder | Parcial | Construye contexto en THINK pero no como modulo discreto reutilizable |
+| L1 Decision Engine | Multi-criteria Scorer | Parcial | El AI score es implicito en el prompt, no auditable como paso separado |
+| L1 Decision Engine | Priority Queue | Basico | Las decisiones tienen priority pero se procesan en orden de array, sin cola priorizada |
+| L2 Agent Orchestration | Agent Router | Completo | Mapeo por DEPT_CATEGORY_MAP funcional |
+| L2 Agent Orchestration | Context Injector | Completo | Inyeccion via context_requirements funcional |
+| L2 Agent Orchestration | Execution Manager | Parcial | Ejecucion serial solamente, sin soporte paralelo |
+| L3 Guardrail & Compliance | Budget Validator | Parcial | Solo verifica finance_budget_status, sin topes por capa (diario/campana/departamento) |
+| L3 Guardrail & Compliance | Compliance Checker | Parcial | Solo forbidden_words y topic_restrictions, falta validacion Legal->Ventas |
+| L3 Guardrail & Compliance | Rate Limiter | Basico | Solo active_hours, sin limites por agente o por accion |
+| L4 Learning & Memory | Impact Evaluator | Funcional | Evalua metricas reales despues de 7 dias |
+| L4 Learning & Memory | Memory Store | Funcional | autopilot_memory opera correctamente |
+| L4 Learning & Memory | Pattern Extractor | Ausente | No extrae patrones ni genera `applies_to_future` rules |
+| L5 Capability Genesis | Gap Detector | Funcional | Detecta unmapped agents, recurring blocks, unhandled signals |
+| L5 Capability Genesis | Capability Proposer | Funcional | Propone via AI con gap evidence |
+| L5 Capability Genesis | Trial Manager | Incompleto | `trial_expires_at` no se establece al crear, promocion es RPC sin logica de evaluacion |
 
 ---
 
-### Plan de Implementacion Sugerido
+### Cambios Requeridos
 
-**Fase 1 - Quick Wins (1-2 dias)**
-1. Implementar UseCases.tsx con el contenido i18n existente
-2. Agregar CRM como vista en la navegacion del dashboard
-3. Agregar disclaimer a las metricas del homepage
+#### 1. L1 - Priority Queue con scoring auditable
 
-**Fase 2 - Funcionalidad Core (3-5 dias)**
-4. Convertir Governance.tsx en dashboard funcional conectado a datos reales
-5. Crear pantallas de configuracion basica para cada departamento no-Marketing (Legal, Finance, HR, Operations)
-6. Integrar datos de entrada por departamento para que el autopilot tenga contexto
+**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts`
 
-**Fase 3 - Consolidacion (1-2 semanas)**
-7. Auditar y limpiar el catalogo de agentes
-8. Crear flujos guiados de activacion por departamento
-9. Implementar metricas reales basadas en datos del usuario para reemplazar los KPIs estaticos del homepage
+En la fase THINK, despues de recibir las decisiones del AI, implementar un scoring discreto que:
+- Asigne un `priority_score` numerico (0-100) basado en: urgencia (peso 0.3), impacto esperado (0.3), alineacion estrategica (0.2), evidencia de datos (0.2)
+- Ordene las decisiones por score antes de pasarlas a GUARD
+- Registre el score en `autopilot_decisions` para auditoria
+
+Esto convierte la priorizacion implicita del AI en un paso auditable y trazable.
+
+#### 2. L3 - Guardrails multi-departamentales completos
+
+**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts` (funcion `guardPhase`)
+
+Agregar validaciones cruzadas faltantes:
+- **Legal -> Ventas**: Si existen parametros `legal_compliance_status = 'review_required'`, bloquear decisiones de tipo `create_proposal` y `advance_deal` en Sales
+- **Rate Limiter por accion**: Consultar `autopilot_decisions` para contar ejecuciones del mismo `decision_type` en las ultimas 24h. Si supera un umbral configurable (`max_actions_per_day` en `company_department_config`), bloquear con razon `rate_limit_exceeded`
+- **Budget por capas**: Verificar creditos consumidos en el dia actual vs `daily_credit_limit` (nuevo campo en `company_department_config`)
+
+#### 3. L4 - Pattern Extractor
+
+**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts` (funcion `learnPhase`)
+
+Despues de evaluar decisiones pendientes, agregar un paso que:
+- Agrupe decisiones evaluadas del mismo `decision_type` con `outcome_evaluation = 'positive'` (3+ ocurrencias)
+- Genere reglas de patron usando AI: "Cuando [contexto similar], ejecutar [decision_type] produce resultados positivos"
+- Guarde las reglas en el campo `applies_to_future` de `autopilot_memory`
+- Estas reglas ya se consumen en `retrieveMemory` pero nunca se generan
+
+#### 4. L5 - Trial Manager con ciclo de vida de 7 dias
+
+**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts` (funciones `proposeNewCapabilities` y `manageCapabilityLifecycle`)
+
+- Al insertar una capability con status `trial`, establecer `trial_expires_at = now() + 7 dias`
+- En `manageCapabilityLifecycle`, antes de llamar a los RPCs, evaluar capabilities en trial:
+  - Consultar si hubo ejecuciones relacionadas durante el periodo de trial
+  - Si la capability produjo resultados positivos: promover a `active`
+  - Si no hubo uso o resultados negativos: deprecar con `deprecation_reason`
+
+#### 5. L2 - Ejecucion paralela en ACT
+
+**Archivo**: `supabase/functions/enterprise-autopilot-engine/index.ts` (funcion `actPhase`)
+
+- Agrupar decisiones `passed` que no tienen dependencias entre si
+- Ejecutar agentes independientes en paralelo usando `Promise.allSettled`
+- Mantener ejecucion serial para agentes con dependencias explicitas (si `action_parameters.depends_on` esta definido)
+
+#### 6. Migracion de base de datos
+
+Agregar campos faltantes para soportar los guardrails completos:
+- `company_department_config.daily_credit_limit` (integer, default 50)
+- `company_department_config.max_actions_per_day` (integer, default 10)
+
+#### 7. Homepage - Alinear ArchitectureOverview con las 5 capas
+
+**Archivo**: `src/components/home/ArchitectureOverview.tsx`
+
+Actualizar el contenido para reflejar las 5 capas reales del Brain (L1-L5) con sus componentes internos, en lugar de la descripcion generica actual. Mantener el tono accesible pero alinear con la arquitectura real.
 
 ---
 
-### Detalle Tecnico
+### Secuencia de Implementacion
 
-**Archivos a crear/modificar en Fase 1:**
-- `src/components/UseCases.tsx` — renderizar grid de 6 cards con datos de i18n `landing.useCases.cases.*`
-- `src/pages/CompanyDashboard.tsx` — agregar case "crm" o "ventas" que renderice `CRMDashboard`
-- `src/components/home/BusinessImpact.tsx` — agregar nota de disclaimer bajo las metricas
+1. Migracion DB (nuevos campos en `company_department_config`)
+2. L3 Guardrails mejorados (validaciones cruzadas + rate limiter + budget por capas)
+3. L1 Priority Queue con scoring auditable
+4. L4 Pattern Extractor
+5. L5 Trial Manager con evaluacion de 7 dias
+6. L2 Ejecucion paralela en ACT
+7. ArchitectureOverview actualizado
 
-**Archivos a crear/modificar en Fase 2:**
-- `src/pages/Governance.tsx` — refactor completo a dashboard funcional con queries a `content_approvals`, `autopilot_decisions`
-- Nuevos componentes por departamento en `src/components/company/departments/` para configuracion de Finance, Legal, HR, Operations
-- Actualizacion del sidebar/navegacion para exponer las nuevas vistas
-
-**Tablas de Supabase involucradas:**
-- `content_approvals` — aprobaciones pendientes (ya existe)
-- `autopilot_decisions` — log de decisiones (ya existe)
-- `autopilot_capabilities` — capacidades genesis (ya existe)
-- `autopilot_memory` — aprendizaje documentado (ya existe)
-- `crm_deals`, `crm_contacts`, `crm_activities` — CRM de ventas (ya existe)
-- `company_parameters` — parametros por departamento (ya existe)
-- `department_configs` — configuracion de autopilot por depto (ya existe)
+### Archivos a Modificar
+- `supabase/functions/enterprise-autopilot-engine/index.ts` (cambios 1-5)
+- `src/components/home/ArchitectureOverview.tsx` (cambio 7)
+- Nueva migracion SQL (cambio 6)
 

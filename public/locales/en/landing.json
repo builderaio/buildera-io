@@ -603,7 +603,8 @@
     "valuation": {
       "title": "Buildera as valuation infrastructure",
       "description": "Companies with systematized operations and low founder dependency receive significantly higher valuation multiples. Buildera transforms your business from a people-dependent operation to a replicable autonomous system — increasing its value to investors and acquirers."
-    }
+    },
+    "disclaimer": "* Projected results based on industry benchmarks. Individual results may vary."
   },
   "dashboardPreview": {
     "badge": "Control center preview",

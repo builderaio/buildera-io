@@ -23,6 +23,7 @@ export default function StrategicProfileGenerated({
 }: StrategicProfileGeneratedProps) {
   const { t } = useTranslation();
   const [hasConfetti, setHasConfetti] = React.useState(false);
+  const [forceShow, setForceShow] = React.useState(false);
 
   // Check if core data is present (flush-on-unmount may still be updating state)
   const hasCoreData = !!(
@@ -31,15 +32,24 @@ export default function StrategicProfileGenerated({
     strategy?.competitiveAdvantage
   );
 
+  // Timeout: if data never arrives, force-show after 5 seconds
   React.useEffect(() => {
-    if (hasCoreData && !hasConfetti) {
+    if (hasCoreData) return;
+    const timeout = setTimeout(() => setForceShow(true), 5000);
+    return () => clearTimeout(timeout);
+  }, [hasCoreData]);
+
+  const shouldRender = hasCoreData || forceShow;
+
+  React.useEffect(() => {
+    if (shouldRender && !hasConfetti) {
       const timer = setTimeout(() => {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         setHasConfetti(true);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [hasCoreData, hasConfetti]);
+  }, [shouldRender, hasConfetti]);
 
   const summaryItems = [
     {
@@ -63,12 +73,15 @@ export default function StrategicProfileGenerated({
   ];
 
   // Show brief loading while flush-on-unmount is updating in-memory state
-  if (!hasCoreData) {
+  if (!shouldRender) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
           <p className="text-muted-foreground">{t('journey.sdna.generatingProfile', 'Generando perfil estratégico...')}</p>
+          <Button variant="outline" size="sm" onClick={onGoToADN} className="mt-4">
+            {t('common.skip', 'Omitir y continuar')}
+          </Button>
         </div>
       </div>
     );

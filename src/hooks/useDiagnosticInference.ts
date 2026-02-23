@@ -124,34 +124,27 @@ export function useDiagnosticInference(companyId: string) {
         // MODULE 1: Core Mission Logic
         // ══════════════════════════════════════════
         
-        // Structural problem: combine digital gaps + primary constraint
+        // Structural problem: concise statement from primary constraint or top gap
         let structuralProblem: string | null = null;
         const primaryConstraint: string | null = exec?.primary_constraint || null;
         
         if (primaryConstraint) {
+          // Use primary constraint directly — it's already a concise statement
           structuralProblem = primaryConstraint;
-        }
-        
-        if (presence?.what_is_missing && Array.isArray(presence.what_is_missing) && presence.what_is_missing.length > 0) {
-          const missing = (presence.what_is_missing as string[]).slice(0, 4).join('. ');
-          const summary = presence.digital_footprint_summary || '';
-          const gapText = summary 
-            ? `${summary}\n\nBrechas identificadas: ${missing}`
-            : `Brechas identificadas en el mercado: ${missing}`;
-          structuralProblem = structuralProblem 
-            ? `${structuralProblem}\n\n${gapText}` 
-            : gapText;
-        } else if (!structuralProblem && webhook?.analysis?.gaps) {
-          structuralProblem = Array.isArray(webhook.analysis.gaps) 
-            ? webhook.analysis.gaps.join('. ') 
-            : String(webhook.analysis.gaps);
+        } else if (presence?.what_is_missing && Array.isArray(presence.what_is_missing) && (presence.what_is_missing as string[]).length > 0) {
+          // Synthesize from top 2 gaps only, without the raw diagnostic summary
+          const topGaps = (presence.what_is_missing as string[]).slice(0, 2);
+          structuralProblem = topGaps.join('. ');
+        } else if (webhook?.analysis?.gaps) {
+          const gaps = Array.isArray(webhook.analysis.gaps) ? webhook.analysis.gaps : [String(webhook.analysis.gaps)];
+          structuralProblem = gaps.slice(0, 2).join('. ');
         }
 
-        // Current state: executive diagnosis current_state + what_is_working
+        // Current state: concise summary, not a wall of text
         let currentState: string | null = exec?.current_state || null;
-        if (presence?.what_is_working && Array.isArray(presence.what_is_working) && presence.what_is_working.length > 0) {
-          const working = (presence.what_is_working as string[]).join('. ');
-          currentState = currentState ? `${currentState}\n\n${working}` : working;
+        if (!currentState && presence?.what_is_working && Array.isArray(presence.what_is_working) && (presence.what_is_working as string[]).length > 0) {
+          // Use only top 2 working items as current state, not everything
+          currentState = (presence.what_is_working as string[]).slice(0, 2).join('. ');
         }
 
         // Transformation / highest leverage focus
@@ -161,15 +154,13 @@ export function useDiagnosticInference(companyId: string) {
           transformation = company.description;
         }
 
-        // Desired state from structured action plan
+        // Desired state: strategic objectives, NOT raw tactical action items
         let desiredState: string | null = null;
         const actionPlan: InferredActionItem[] = [];
         
+        // Still parse action plan for the actionPlan array (used elsewhere)
         if (presence?.action_plan && typeof presence.action_plan === 'object' && !Array.isArray(presence.action_plan)) {
-          // Structured action plan with short/mid/long term
           const plan = presence.action_plan as any;
-          const desiredParts: string[] = [];
-          
           for (const [horizon, items] of Object.entries(plan)) {
             if (Array.isArray(items)) {
               for (const item of items as any[]) {
@@ -183,24 +174,29 @@ export function useDiagnosticInference(companyId: string) {
               }
             }
           }
-          
-          // Build desired state from short-term actions
-          const shortTerm = actionPlan.filter(a => a.horizon === 'short_term').slice(0, 3);
-          if (shortTerm.length > 0) {
-            desiredParts.push(...shortTerm.map(a => a.action));
-          }
-          if (desiredParts.length > 0) desiredState = desiredParts.join('. ');
-        } else if (presence?.action_plan && Array.isArray(presence.action_plan) && presence.action_plan.length > 0) {
-          // Legacy flat array format
-          desiredState = (presence.action_plan as string[]).slice(0, 3).join('. ');
         }
         
-        if (!desiredState && exec?.scores) {
+        // Desired state: derive strategic objectives from scores, NOT from raw action items
+        if (exec?.scores) {
           const areas: string[] = [];
           if (exec.scores.visibility < 50) areas.push('Mejorar visibilidad digital y SEO');
           if (exec.scores.trust < 50) areas.push('Fortalecer confianza y credibilidad online');
           if (exec.scores.positioning < 50) areas.push('Definir posicionamiento competitivo claro');
           if (areas.length > 0) desiredState = areas.join('. ');
+        }
+        
+        // Fallback: use mid/long-term action themes (not verbatim tactical items)
+        if (!desiredState && actionPlan.length > 0) {
+          const strategic = actionPlan
+            .filter(a => a.horizon === 'mid_term' || a.horizon === 'long_term')
+            .slice(0, 2)
+            .map(a => a.action);
+          if (strategic.length > 0) {
+            desiredState = strategic.join('. ');
+          } else {
+            // If only short-term, take top 2 only
+            desiredState = actionPlan.slice(0, 2).map(a => a.action).join('. ');
+          }
         }
 
         // Digital gaps for supplementing audience pain points
@@ -318,11 +314,9 @@ export function useDiagnosticInference(companyId: string) {
           competitiveCategory += ` — ${serviceNames}`;
         }
 
-        // Competitive advantage: from presence + enriched with products
+        // Competitive advantage: DO NOT use competitive_positioning raw text
+        // That field contains diagnostic observations, not a strategic advantage statement
         let competitiveAdvantage: string | null = null;
-        if (presence?.competitive_positioning) {
-          competitiveAdvantage = presence.competitive_positioning;
-        }
         
         // Product-based advantage synthesis
         let productBasedAdvantage: string | null = null;
@@ -333,23 +327,24 @@ export function useDiagnosticInference(companyId: string) {
           if (serviceCount > 0) parts.push(`${serviceCount} servicios`);
           if (productCount > 0) parts.push(`${productCount} productos`);
           productBasedAdvantage = `Portafolio diversificado con ${parts.join(' y ')}: ${products.slice(0, 4).map(p => p.name).join(', ')}`;
-          
-          // Enhance competitive advantage if not already set
-          if (!competitiveAdvantage) {
-            competitiveAdvantage = productBasedAdvantage;
-          }
+          competitiveAdvantage = productBasedAdvantage;
+        }
+        
+        // Fallback: use what_is_working (strengths) as advantage base, concisely
+        if (!competitiveAdvantage && presence?.what_is_working && Array.isArray(presence.what_is_working) && (presence.what_is_working as string[]).length > 0) {
+          competitiveAdvantage = (presence.what_is_working as string[]).slice(0, 2).join('. ');
         }
 
-        // Key assets from what_is_working + products
+        // Key assets: concise list of strengths, not a wall of text
         let keyAssets: string | null = null;
-        if (currentState) {
-          keyAssets = currentState;
+        if (presence?.what_is_working && Array.isArray(presence.what_is_working) && (presence.what_is_working as string[]).length > 0) {
+          keyAssets = (presence.what_is_working as string[]).slice(0, 3).join('. ');
         }
         if (hasProducts && products.length > 0) {
-          const productList = products.slice(0, 5).map(p => p.name).join(', ');
+          const productList = products.slice(0, 4).map(p => p.name).join(', ');
           keyAssets = keyAssets 
-            ? `${keyAssets}\n\nProductos/Servicios clave: ${productList}` 
-            : `Productos/Servicios clave: ${productList}`;
+            ? `${keyAssets}. Productos/Servicios: ${productList}` 
+            : `Productos/Servicios: ${productList}`;
         }
 
         // Suggest moat type based on richer signals

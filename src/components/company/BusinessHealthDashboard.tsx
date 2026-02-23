@@ -348,6 +348,110 @@ const BusinessHealthDashboard = ({ profile, onNavigate }: BusinessHealthDashboar
   const featuredAction = nextBestActions[0];
   const topAgents = enabledAgentsList.slice(0, 4);
 
+  // Detect new user with no activity
+  const isNewUser = recentActivity.length === 0 
+    && enabledAgentIds.length === 0 
+    && !deptConfigs.some(d => d.autopilot_enabled);
+
+  if (isNewUser) {
+    return (
+      <div className="space-y-4 sm:space-y-6 pb-8">
+        {/* Header */}
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold">
+            {t('common:mando.hello', { name: userName })} 👋
+          </h1>
+          <p className="text-sm text-muted-foreground capitalize">
+            {formatLocalizedDate(i18n.language)}
+          </p>
+        </div>
+
+        {/* Hero activation card */}
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/10 via-secondary/5 to-transparent overflow-hidden">
+          <CardContent className="p-6 sm:p-8">
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Sparkles className="w-7 h-7 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg sm:text-xl font-bold mb-1">
+                  {t('common:activationWizard.heroTitle', '¡Tu negocio está listo para crecer!')}
+                </h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {t('common:activationWizard.heroDesc', 'Completa estos pasos para activar la automatización y que Buildera trabaje por ti.')}
+                </p>
+                <Button onClick={() => handleNavigate('activation-wizard')}>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  {t('common:activationWizard.startActivation', 'Comenzar Activación')}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Activation Checklist */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold">
+              {t('common:activationWizard.checklist', 'Pasos para activar tu negocio')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[
+              { step: 1, label: t('common:activationWizard.step1Title', 'Conecta tus redes sociales'), done: false },
+              { step: 2, label: t('common:activationWizard.step2Title', 'Configura tu marca'), done: false },
+              { step: 3, label: t('common:activationWizard.step3Title', 'Activa tu primer departamento'), done: false },
+            ].map(item => (
+              <div key={item.step} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/30 transition-colors cursor-pointer"
+                onClick={() => handleNavigate('activation-wizard')}
+              >
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                  item.done ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
+                )}>
+                  {item.done ? <CheckCircle2 className="w-4 h-4" /> : item.step}
+                </div>
+                <span className="text-sm font-medium flex-1">{item.label}</span>
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Featured Recommendation if available */}
+        {featuredAction && (
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Badge variant="secondary" className="mb-2 text-xs">
+                    {t('common:dashboard.featuredRecommendation', 'Featured Recommendation')}
+                  </Badge>
+                  <h3 className="font-semibold text-sm sm:text-base">{featuredAction.title}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">
+                    {featuredAction.description}
+                  </p>
+                  <Button 
+                    size="sm" 
+                    className="mt-3"
+                    onClick={() => handleNavigate(featuredAction.action.view, featuredAction.action.agentId)}
+                  >
+                    {featuredAction.action.label}
+                    <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6 pb-8">
       {/* Header with context */}

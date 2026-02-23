@@ -1680,5 +1680,30 @@
     "projectedIndex": "Índice Digital Estratégico Proyectado",
     "projectionMessage": "Si ejecutas estas {{count}} acciones en {{days}} días, tu índice podría subir de {{from}} a {{to}}.",
     "indexPoints": "puntos de índice"
+  },
+  "activationWizard": {
+    "title": "¡Tu negocio está listo!",
+    "subtitle": "Sigue estos 3 pasos para activar la automatización",
+    "progress": "Progreso",
+    "skipForNow": "Omitir por ahora",
+    "skipAll": "Ir al dashboard directamente",
+    "step1Title": "Conecta tus redes sociales",
+    "step1Desc": "Para que Buildera pueda gestionar tu contenido automáticamente",
+    "step2Title": "Configura tu marca",
+    "step2Desc": "Define los colores y tono de voz de tu negocio",
+    "step3Title": "Activa tu primer departamento",
+    "step3Desc": "Buildera creará y publicará contenido por ti",
+    "aiGenerate": "Generación automática con IA",
+    "aiGenerateDesc": "Usaremos los datos de tu diagnóstico para configurar tu marca automáticamente",
+    "configureBrand": "Configurar Marca",
+    "marketingDept": "Marketing",
+    "recommended": "Recomendado",
+    "marketingDesc": "Genera contenido, programa publicaciones y analiza resultados automáticamente.",
+    "activateAutopilot": "Activar Marketing Autopilot",
+    "activating": "Activando...",
+    "heroTitle": "¡Tu negocio está listo para crecer!",
+    "heroDesc": "Completa estos pasos para activar la automatización y que Buildera trabaje por ti.",
+    "startActivation": "Comenzar Activación",
+    "checklist": "Pasos para activar tu negocio"
   }
 }

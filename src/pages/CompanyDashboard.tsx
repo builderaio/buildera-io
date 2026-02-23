@@ -32,6 +32,7 @@ import { CreatifyStudio } from "@/components/company/creatify/CreatifyStudio";
 
 import UserProfile from "./UserProfile";
 import OnboardingOrchestrator from "@/components/OnboardingOrchestrator";
+import PostOnboardingActivationWizard from "@/components/onboarding/PostOnboardingActivationWizard";
 import { User } from "@supabase/supabase-js";
 import { useCompany } from "@/contexts/CompanyContext";
 
@@ -109,6 +110,15 @@ const CompanyDashboard = () => {
       if (onboardingStatus?.onboarding_completed_at) {
         console.log('✅ Usuario ya completó onboarding, cargando perfil y continuando');
         
+        // Check if user should see activation wizard (journey_current_step <= 2)
+        const { data: companyData } = await supabase
+          .from('companies')
+          .select('journey_current_step')
+          .eq('created_by', session.user.id)
+          .maybeSingle();
+        
+        const journeyStep = companyData?.journey_current_step || 1;
+        
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -134,6 +144,12 @@ const CompanyDashboard = () => {
             full_name: session.user.user_metadata?.full_name || 'Usuario',
             user_type: 'company'
           });
+        }
+        
+        // Auto-redirect to activation wizard for new users (no view param specified)
+        if (!viewParam && journeyStep <= 2) {
+          console.log('🚀 Nuevo usuario post-onboarding, mostrando activation wizard');
+          setActiveView('activation-wizard');
         }
         
         setLoading(false);
@@ -341,6 +357,15 @@ const CompanyDashboard = () => {
       // Onboarding
       case "onboarding":
         return <OnboardingOrchestrator user={user!} />;
+      
+      // Post-Onboarding Activation Wizard
+      case "activation-wizard":
+        return (
+          <PostOnboardingActivationWizard 
+            profile={profile}
+            onComplete={() => handleNavigate('panel')}
+          />
+        );
       
       // === STRATEGY VIEWS ===
       // Play to Win Full (5 steps)

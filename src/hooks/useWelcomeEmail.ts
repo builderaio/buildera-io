@@ -1,14 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const useWelcomeEmail = () => {
-  const sendWelcomeEmail = async (email: string, name: string, userType: 'developer' | 'expert' | 'company') => {
+  const sendWelcomeEmail = async (email: string, name: string, userType: 'company' = 'company') => {
     try {
       const { data, error } = await supabase.functions.invoke('send-buildera-email', {
         body: {
-          templateId: '1fe990fb-c92b-4301-a752-4c2028ddc0ae', // ID del template "Bienvenida - Registro de Usuario"
+          templateId: '1fe990fb-c92b-4301-a752-4c2028ddc0ae',
           to: email,
           toName: name,
-          subject: `¡Bienvenido a Buildera${userType === 'company' ? ', Empresa' : userType === 'developer' ? ', Desarrollador' : ', Experto'}!`,
+          subject: '¡Bienvenido a Buildera!',
           htmlContent: getWelcomeEmailContent(name, userType),
           variables: {
             user_name: name,
@@ -52,9 +52,7 @@ const getWelcomeEmailContent = (name: string, userType: string) => {
         <p>Te damos la bienvenida a Buildera, tu socio en la transformación digital.</p>
   `;
 
-  let specificContent = '';
-  if (userType === 'company') {
-    specificContent = `
+  let specificContent = `
         <p>Como empresa, tendrás acceso a:</p>
         <ul style="margin: 15px 0; padding-left: 20px;">
           <li>Dashboard completo para gestionar tu automatización</li>
@@ -65,29 +63,6 @@ const getWelcomeEmailContent = (name: string, userType: string) => {
         </ul>
         <p><strong>¡Comienza tu transformación digital hoy!</strong></p>
     `;
-  } else if (userType === 'developer') {
-    specificContent = `
-        <p>Como desarrollador, podrás:</p>
-        <ul style="margin: 15px 0; padding-left: 20px;">
-          <li>Crear agentes de IA innovadores</li>
-          <li>Monetizar tus habilidades en nuestro marketplace</li>
-          <li>Acceder a herramientas avanzadas de desarrollo</li>
-          <li>Colaborar con empresas de todo el mundo</li>
-        </ul>
-        <p><strong>¡Empezemos a construir el futuro juntos!</strong></p>
-    `;
-  } else if (userType === 'expert') {
-    specificContent = `
-        <p>Como experto, podrás:</p>
-        <ul style="margin: 15px 0; padding-left: 20px;">
-          <li>Compartir tu conocimiento y experiencia</li>
-          <li>Ofrecer consultoría especializada</li>
-          <li>Conectar con empresas que necesitan tu expertise</li>
-          <li>Impulsar la innovación en tu industria</li>
-        </ul>
-        <p><strong>¡Tu conocimiento es el motor del cambio!</strong></p>
-    `;
-  }
 
   return baseContent + specificContent + `
       </div>

@@ -87,10 +87,13 @@ export default function FounderPTWSimplified({
     } else {
       // Explicitly flush step 3 data before finalizing
       if (stepRef.current) await stepRef.current.flush();
+      // Update status — updateStrategy now uses ref, so it sees flushed data
       await updateStrategy({ 
         status: 'in_progress',
         generatedWithAI: false 
       });
+      // Re-fetch from DB to ensure activeStrategy has ALL persisted fields
+      await refetch();
       setIsComplete(true);
     }
   };

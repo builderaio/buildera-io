@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -143,6 +143,10 @@ export function usePlayToWin(companyId: string | undefined) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Keep a ref to always have the latest strategy (avoids stale closure in updateStrategy)
+  const strategyRef = useRef<PlayToWinStrategy | null>(null);
+  strategyRef.current = strategy;
 
   // Fetch strategy
   const fetchStrategy = useCallback(async () => {
@@ -275,7 +279,8 @@ export function usePlayToWin(companyId: string | undefined) {
 
   // Update strategy
   const updateStrategy = useCallback(async (updates: Partial<PlayToWinStrategy>) => {
-    if (!strategy?.id) {
+    const currentStrategy = strategyRef.current;
+    if (!currentStrategy?.id) {
       console.warn('usePlayToWin: No strategy ID, attempting to initialize first');
       const created = await initializeStrategy();
       if (!created?.id) {
@@ -310,11 +315,10 @@ export function usePlayToWin(companyId: string | undefined) {
     try {
       setIsSaving(true);
 
-      // Calculate new completion percentage
-      const updatedStrategy = { ...strategy, ...updates };
+      // Use currentStrategy from ref to avoid stale closure
+      const updatedStrategy = { ...currentStrategy, ...updates };
       const completion = calculateCompletion(updatedStrategy);
       
-      // Determine status based on completion
       let status: PTWStatus = updatedStrategy.status;
       if (completion === 100 && status !== 'complete') {
         status = 'complete';
@@ -331,7 +335,7 @@ export function usePlayToWin(companyId: string | undefined) {
       const { error: updateError } = await supabase
         .from('company_play_to_win')
         .update(dbUpdates)
-        .eq('id', strategy.id);
+        .eq('id', currentStrategy.id);
 
       if (updateError) throw updateError;
 
@@ -354,7 +358,7 @@ export function usePlayToWin(companyId: string | undefined) {
     } finally {
       setIsSaving(false);
     }
-  }, [strategy, toast, initializeStrategy]);
+  }, [toast, initializeStrategy]);
 
   // Update current step
   const setCurrentStep = useCallback(async (step: number) => {

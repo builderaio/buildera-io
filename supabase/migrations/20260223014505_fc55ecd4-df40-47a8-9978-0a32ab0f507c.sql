@@ -1,0 +1,33 @@
+INSERT INTO public.platform_agents (
+  internal_code,
+  name,
+  description,
+  category,
+  icon,
+  execution_type,
+  edge_function_name,
+  credits_per_use,
+  is_premium,
+  min_plan_required,
+  is_onboarding_agent,
+  sort_order,
+  is_active,
+  input_schema,
+  context_requirements
+) VALUES (
+  'POST_PUBLISHER',
+  'Publicador Automático',
+  'Publica o programa contenido en redes sociales conectadas vía Upload-Post. Recibe contenido generado por otros agentes y lo distribuye automáticamente.',
+  'content',
+  'Send',
+  'static',
+  'autopilot-post-publisher',
+  1,
+  false,
+  'starter',
+  false,
+  50,
+  true,
+  '{"type":"object","properties":{"platforms":{"type":"array","items":{"type":"string"},"description":"Plataformas destino"},"title":{"type":"string"},"content":{"type":"string"},"mediaUrls":{"type":"array","items":{"type":"string"}},"postType":{"type":"string","enum":["text","photo","video"]},"scheduledDate":{"type":"string"},"add_to_queue":{"type":"boolean"}},"required":["platforms","title","postType"]}'::jsonb,
+  '["strategy"]'::jsonb
+);

@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.social-listening-engine]
 verify_jwt = false
+
+[functions.autopilot-post-publisher]
+verify_jwt = false

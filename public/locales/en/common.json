@@ -1626,5 +1626,30 @@
     "projectedIndex": "Projected Strategic Digital Index",
     "projectionMessage": "If you execute these {{count}} actions in {{days}} days, your index could rise from {{from}} to {{to}}.",
     "indexPoints": "index points"
+  },
+  "activationWizard": {
+    "title": "Your business is ready!",
+    "subtitle": "Follow these 3 steps to activate automation",
+    "progress": "Progress",
+    "skipForNow": "Skip for now",
+    "skipAll": "Go to dashboard directly",
+    "step1Title": "Connect your social networks",
+    "step1Desc": "So Buildera can manage your content automatically",
+    "step2Title": "Configure your brand",
+    "step2Desc": "Define your business colors and tone of voice",
+    "step3Title": "Activate your first department",
+    "step3Desc": "Buildera will create and publish content for you",
+    "aiGenerate": "Automatic AI generation",
+    "aiGenerateDesc": "We'll use your diagnostic data to configure your brand automatically",
+    "configureBrand": "Configure Brand",
+    "marketingDept": "Marketing",
+    "recommended": "Recommended",
+    "marketingDesc": "Generate content, schedule posts and analyze results automatically.",
+    "activateAutopilot": "Activate Marketing Autopilot",
+    "activating": "Activating...",
+    "heroTitle": "Your business is ready to grow!",
+    "heroDesc": "Complete these steps to activate automation and let Buildera work for you.",
+    "startActivation": "Start Activation",
+    "checklist": "Steps to activate your business"
   }
 }

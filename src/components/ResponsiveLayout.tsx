@@ -379,18 +379,35 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
 
   // Sidebar navigation with Lucide icons (no emojis)
   const activeDeptCount = departments.filter(d => d.autopilot_enabled).length;
+  const [journeyStep, setJourneyStep] = useState<number>(1);
 
-  const sidebarItems = [
-    { id: 'panel', label: t('common:sidebar.commandCenter', 'Centro de Comando'), icon: Activity, badge: null },
-    { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Megaphone, badge: null },
-    { id: 'ventas', label: t('common:sidebar.salesCRM', 'Ventas / CRM'), icon: Handshake, badge: null },
-    { id: 'autopilot', label: t('common:sidebar.enterpriseBrain', 'Cerebro Empresarial'), icon: Brain, badge: activeDeptCount > 0 ? `${activeDeptCount}` : null },
-    { id: 'gobernanza', label: t('common:sidebar.governance', 'Gobernanza'), icon: Shield, badge: null },
-    { id: 'departamentos', label: t('common:sidebar.departments', 'Departamentos'), icon: Settings, badge: null },
-    { id: 'activacion', label: t('common:sidebar.activation', 'Activación'), icon: Sparkles, badge: null },
-    { id: 'agentes', label: t('common:sidebar.aiAgents', 'Agentes IA'), icon: Bot, badge: null },
-    { id: 'negocio', label: t('common:sidebar.myCompany', 'Mi Negocio'), icon: Building, badge: null },
+  // Fetch journey step for progressive sidebar
+  useEffect(() => {
+    if (!companyId) return;
+    const fetchJourneyStep = async () => {
+      const { data } = await supabase
+        .from('companies')
+        .select('journey_current_step')
+        .eq('id', companyId)
+        .single();
+      if (data?.journey_current_step) setJourneyStep(data.journey_current_step);
+    };
+    fetchJourneyStep();
+  }, [companyId]);
+
+  const allSidebarItems = [
+    { id: 'panel', label: t('common:sidebar.commandCenter', 'Centro de Comando'), icon: Activity, badge: null, minStep: 1 },
+    { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Megaphone, badge: null, minStep: 1 },
+    { id: 'negocio', label: t('common:sidebar.myCompany', 'Mi Negocio'), icon: Building, badge: null, minStep: 1 },
+    { id: 'agentes', label: t('common:sidebar.aiAgents', 'Agentes IA'), icon: Bot, badge: null, minStep: 3 },
+    { id: 'autopilot', label: t('common:sidebar.enterpriseBrain', 'Cerebro Empresarial'), icon: Brain, badge: activeDeptCount > 0 ? `${activeDeptCount}` : null, minStep: 4 },
+    { id: 'gobernanza', label: t('common:sidebar.governance', 'Gobernanza'), icon: Shield, badge: null, minStep: 4 },
+    { id: 'ventas', label: t('common:sidebar.salesCRM', 'Ventas / CRM'), icon: Handshake, badge: null, minStep: 5 },
+    { id: 'departamentos', label: t('common:sidebar.departments', 'Departamentos'), icon: Settings, badge: null, minStep: 5 },
+    { id: 'activacion', label: t('common:sidebar.activation', 'Activación'), icon: Sparkles, badge: null, minStep: 5 },
   ];
+
+  const sidebarItems = allSidebarItems.filter(item => journeyStep >= item.minStep);
 
   return (
     <div className="min-h-screen flex w-full bg-background">

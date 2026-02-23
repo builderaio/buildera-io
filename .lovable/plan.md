@@ -1,102 +1,123 @@
 
 
-## Plan: Autonomy Control Center — Dashboard Enterprise-Grade de Gobernanza en Tiempo Real
+# Simplificacion Estructural Post-Onboarding: De Dashboard Complejo a Flujo Guiado
 
-### Contexto
+## Problema Diagnosticado
 
-La imagen de referencia muestra un **Autonomy Control Center** con layout tipo "command center" oscuro y 6 paneles en grid: Enterprise IQ, Departamentos, Log de Ejecucion, Guardrails Presupuestarios, Aprobaciones Pendientes y Capacidades Activas — todo en una sola vista sin tabs.
+Despues del onboarding (que funciona bien), el usuario aterriza en un dashboard empresarial completo con:
+- 9 items en el sidebar (Panel, Marketing Hub, Ventas/CRM, Cerebro Empresarial, Gobernanza, Departamentos, Activacion, Agentes IA, Mi Negocio)
+- KPIs vacios (todo en cero)
+- Tarjetas de "Cerebro Empresarial" sin contexto
+- Sin guia clara de que hacer primero
+- Los prerequisitos nunca se solicitan proactivamente
 
-El dashboard actual (`GovernanceDashboard.tsx`) es basico: 4 KPI cards + 2 tabs (Aprobaciones / Decisiones) con datos planos. No tiene el layout de command center, ni el IQ score, ni los guardrails presupuestarios, ni las capacidades activas, ni la barra de estado inferior.
+El usuario ve una plataforma "enterprise-grade" vacia y no sabe como empezar. La promesa del homepage ("Diagnostico -> ADN -> Autopilot") se rompe en el dashboard.
 
-### Estrategia
+## Solucion: Guided Activation Flow
 
-Reescribir `GovernanceDashboard.tsx` como un **Autonomy Control Center** enterprise-grade que replica la estructura de la imagen de referencia, conectado a datos reales de Supabase (`autopilot_decisions`, `autopilot_execution_log`, `content_approvals`, `autopilot_capabilities`, `autopilot_memory`, `company_department_config`).
-
----
-
-### Componentes del nuevo dashboard (6 paneles + barra de estado)
-
-#### 1. Enterprise IQ (izquierda superior)
-- IQ Score calculado: `(cyclesCompleted * 2) + (lessonsLearned * 5) + (activatedCaps * 10)`, max 999
-- Crecimiento mensual (comparar con hace 30 dias)
-- Barra de progreso hacia siguiente nivel (Principiante < 50, Aprendiz < 150, Competente < 300, Experto < 500, Maestro)
-- **Datos**: `autopilot_execution_log` (ciclos), `autopilot_memory` (lecciones), `autopilot_capabilities` (activas)
-
-#### 2. Departamentos activos (izquierda inferior)
-- Lista de 6 departamentos con icono, nombre, count de agentes activos y tareas del dia
-- Status dot (active/monitoring/inactive) basado en `company_department_config.autopilot_enabled`
-- **Datos**: `company_department_config`, `autopilot_decisions` (count por dept hoy)
-
-#### 3. Log de Ejecucion (centro superior)
-- Feed cronologico de las ultimas decisiones ejecutadas hoy
-- Cada entrada: agente ejecutado, descripcion breve, hora
-- Badge con count total de decisiones hoy
-- **Datos**: `autopilot_decisions` filtrado por hoy con `action_taken = true`
-
-#### 4. Guardrails Presupuestarios (centro inferior)
-- Lista de alertas de guardrails activos por departamento
-- Cada alerta: icono de nivel (warning/success/info), mensaje, departamento, valor
-- **Datos**: `autopilot_execution_log` con `phase = 'guardrail_intervention'`, `company_credits` para % usado
-
-#### 5. Aprobaciones Pendientes (derecha superior)
-- Lista de items en `content_approvals` con `status = 'pending_review'`
-- Cada item: departamento, risk badge (basado en `content_data`), monto/descripcion, tiempo relativo
-- Botones de aprobar (checkmark verde) y rechazar (X)
-- Badge con count de pendientes
-- **Datos**: `content_approvals` con status `pending_review`, acciones de approve/reject
-
-#### 6. Capacidades Activas (derecha inferior)
-- Lista de `autopilot_capabilities` activas/trial
-- Cada una: badge LIVE/TRIAL, nombre, score (basado en `execution_count` o outcome metrics), barra de progreso
-- Badge con count de activas
-- **Datos**: `autopilot_capabilities` con `is_active = true` o `status = 'trial'`
-
-#### 7. Barra de estado inferior
-- Ciclo actual (#), agentes activos, creditos usados hoy, proximo ciclo (countdown)
-- **Datos**: `autopilot_execution_log` (count ciclos), `agent_usage_log` (creditos hoy)
-
----
-
-### Acciones funcionales en el dashboard
-
-| Accion | Panel | Implementacion |
-|--------|-------|---------------|
-| Aprobar contenido | Aprobaciones | Update `content_approvals.status` a `approved` + `reviewed_at`, `reviewer_id` |
-| Rechazar contenido | Aprobaciones | Update `content_approvals.status` a `rejected` + `reviewer_comments` |
-| Refresh datos | Header | Re-fetch de todos los queries |
-| Ver detalle de decision | Log | Expandir con reasoning y guardrail_details |
-
----
-
-### i18n
-
-Agregar claves en `public/locales/{es,en,pt}/company.json` bajo namespace `governance` para todos los labels del panel (Enterprise IQ, departamentos, logs, guardrails, aprobaciones, capacidades, barra de estado).
-
----
-
-### Seccion Tecnica
+### Cambio 1: Post-Onboarding Wizard (nuevo componente)
+Crear `PostOnboardingActivationWizard` - un flujo guiado de 3 pasos que aparece como vista principal cuando el usuario llega al dashboard por primera vez despues del onboarding:
 
 ```text
-Layout Grid (12 columnas):
-  Col 1-3:  [IQ Score] + [Departamentos]
-  Col 4-8:  [Log de Ejecucion] + [Guardrails Presupuestarios]
-  Col 9-12: [Aprobaciones Pendientes] + [Capacidades Activas]
-  Full:     [Status Bar]
+Paso 1: "Conecta tus redes sociales"
+  - Mostrar botones de LinkedIn, Instagram, Facebook, TikTok
+  - Boton "Omitir por ahora"
 
-Queries Supabase:
-  1. autopilot_decisions → filtro company_id, order by created_at desc, limit 50
-  2. content_approvals → filtro company_id, status pending_review
-  3. autopilot_capabilities → filtro company_id, is_active=true OR status=trial
-  4. autopilot_execution_log → filtro company_id, phase=guardrail_intervention
-  5. autopilot_memory → count lecciones para IQ
-  6. company_department_config → estado de departamentos
-  7. agent_usage_log → creditos consumidos hoy
+Paso 2: "Configura tu marca"  
+  - Colores, tono de voz (simplificado)
+  - Boton "Generar con IA" usando datos del diagnostico
+  - Boton "Omitir por ahora"
+
+Paso 3: "Activa tu primer departamento"
+  - Tarjeta de Marketing con toggle ON/OFF
+  - Explicacion simple: "Buildera creara y publicara contenido por ti"
+  - CTA: "Activar Marketing Autopilot"
 ```
 
-### Archivos a Modificar
+### Cambio 2: Sidebar Progresivo
+Modificar `ResponsiveLayout.tsx` para mostrar el sidebar de forma progresiva segun el journey_current_step:
 
-- `src/components/company/GovernanceDashboard.tsx` — reescritura completa del componente
-- `public/locales/es/company.json` — claves i18n para gobernanza
-- `public/locales/en/company.json` — claves i18n para gobernanza
-- `public/locales/pt/company.json` — claves i18n para gobernanza
+- **Step 1-2 (nuevo usuario)**: Solo mostrar 3 items: Centro de Comando, Mi Negocio, Marketing Hub
+- **Step 3 (redes conectadas)**: Agregar Agentes IA
+- **Step 4+ (contenido creado)**: Agregar Cerebro Empresarial, Gobernanza
+- **Step 5 (autopilot activo)**: Mostrar todo (Ventas/CRM, Departamentos, Activacion)
+
+### Cambio 3: Dashboard Simplificado para Nuevos Usuarios
+Modificar `BusinessHealthDashboard.tsx` para detectar usuarios nuevos (sin actividad) y mostrar una vista simplificada:
+
+- Reemplazar KPIs vacios con una tarjeta hero: "Tu negocio esta listo. Sigue estos 3 pasos para activar la automatizacion."
+- Mostrar el checklist de activacion como elemento principal (no como widget secundario)
+- Ocultar secciones de "Actividad Reciente" y "Quick Agents" si estan vacias
+
+### Cambio 4: Prerequisitos Proactivos
+Modificar el flujo para que cuando el usuario intente navegar a "Cerebro Empresarial" o "Autopilot" sin prerequisitos, se muestre un modal/banner claro indicando que falta y con CTAs directos para completar cada item.
+
+## Detalle Tecnico
+
+### Archivos a crear:
+1. `src/components/onboarding/PostOnboardingActivationWizard.tsx` - Wizard de 3 pasos post-onboarding
+
+### Archivos a modificar:
+1. `src/components/ResponsiveLayout.tsx` - Sidebar progresivo basado en journey_current_step
+2. `src/components/company/BusinessHealthDashboard.tsx` - Vista simplificada para nuevos usuarios
+3. `src/pages/CompanyDashboard.tsx` - Integrar el wizard post-onboarding como vista
+4. `public/locales/es/common.json` - Traducciones ES
+5. `public/locales/en/common.json` - Traducciones EN
+6. `public/locales/pt/common.json` - Traducciones PT
+
+### Logica del Sidebar Progresivo:
+
+```text
+sidebarItems filtrados por:
+
+if (journeyStep <= 2) {
+  Mostrar: panel, marketing-hub, negocio
+}
+else if (journeyStep === 3) {
+  Agregar: agentes
+}
+else if (journeyStep === 4) {
+  Agregar: autopilot, gobernanza
+}
+else {
+  Mostrar todo (9 items)
+}
+```
+
+### Logica del Dashboard para Nuevos Usuarios:
+
+```text
+const isNewUser = recentActivity.length === 0 
+  && enabledAgentIds.length === 0 
+  && !deptConfigs.some(d => d.autopilot_enabled);
+
+if (isNewUser) {
+  Renderizar vista de activacion guiada
+} else {
+  Renderizar dashboard completo actual
+}
+```
+
+### Flujo del PostOnboardingActivationWizard:
+
+El wizard se mostrara como vista `activation-wizard` en el CompanyDashboard. Se activara automaticamente cuando:
+- `onboarding_completed_at` existe
+- `journey_current_step <= 2`
+- No hay redes sociales conectadas NI autopilot activo
+
+Cada paso completado avanza el `journey_current_step` via `useJourneyProgression`.
+
+Al completar o saltar todos los pasos, redirige al dashboard normal con la vista simplificada que muestra el progreso restante.
+
+### Impacto en la Experiencia:
+
+```text
+ANTES:
+Onboarding OK -> Dashboard vacio con 9 menus -> Usuario perdido -> Abandono
+
+DESPUES:
+Onboarding OK -> Wizard 3 pasos (conectar, marca, activar) -> Dashboard con 3 menus
+  -> A medida que avanza, se desbloquean mas secciones
+  -> Siempre hay un "siguiente paso" claro
+```
 

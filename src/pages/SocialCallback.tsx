@@ -106,7 +106,7 @@ const SocialCallback = () => {
             const emailResult = await sendWelcomeEmail(
               session.user.email,
               profile.full_name,
-              userType === 'company' ? 'company' : userType === 'developer' ? 'developer' : 'expert'
+              'company'
             );
             
             if (emailResult.success) {
@@ -175,20 +175,9 @@ const SocialCallback = () => {
         // 4) Si ya está completamente configurado, redirigir al dashboard correspondiente
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        switch (profile.user_type) {
-          case 'company':
-            navigate('/company-dashboard', { replace: true });
-            return;
-          case 'developer':
-            navigate('/developer-dashboard', { replace: true });
-            return;
-          case 'expert':
-            navigate('/expert-dashboard', { replace: true });
-            return;
-          default:
-            navigate('/complete-profile', { replace: true });
-            return;
-        }
+        // All users go to company dashboard
+        navigate('/company-dashboard', { replace: true });
+        return;
 
       } catch (error: any) {
         if (cancelled) return;

@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import Index from "./pages/Index";
-import Waitlist from "./pages/Waitlist";
+
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import EmailVerificationHandler from "./pages/EmailVerificationHandler";
@@ -87,7 +87,7 @@ const App = () => {
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<Index />} />
-                <Route path="/waitlist" element={<Waitlist />} />
+                
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/reset-password" element={<ResetPassword />} />
                 <Route path="/auth/verify-email/:token" element={<EmailVerificationHandler />} />

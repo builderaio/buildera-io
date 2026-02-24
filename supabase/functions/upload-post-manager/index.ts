@@ -244,6 +244,15 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
 
       if (!createResponse.ok) {
         const errorText = await createResponse.text();
+        // Return a structured error instead of throwing, so the client gets a proper status
+        if (createResponse.status === 403) {
+          return { 
+            success: false, 
+            error: 'profile_limit_reached',
+            message: 'Has alcanzado el límite de perfiles en tu plan actual. Actualiza tu plan para continuar.',
+            details: errorText
+          };
+        }
         throw new Error(`Error creando perfil: ${createResponse.status} - ${errorText}`);
       }
 

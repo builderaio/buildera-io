@@ -1,31 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Linkedin, Instagram, Facebook, Video, 
-  Palette, Sparkles, Rocket, Check, ChevronRight, 
-  SkipForward, Loader2
+  Building2, Share2, Palette, Rocket, Check, ChevronRight, 
+  ChevronLeft, SkipForward, Loader2, Sparkles
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useJourneyProgression } from '@/hooks/useJourneyProgression';
 import { useCompany } from '@/contexts/CompanyContext';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { ADNInfoTab } from '@/components/company/adn-tabs/ADNInfoTab';
+import { ADNBrandTab } from '@/components/company/adn-tabs/ADNBrandTab';
+import { SocialConnectionManager } from '@/components/company/SocialConnectionManager';
 
 interface PostOnboardingActivationWizardProps {
   profile: any;
   onComplete: () => void;
 }
 
-const STEPS = ['connect-social', 'configure-brand', 'activate-department'] as const;
+const STEPS = ['company-info', 'connect-social', 'configure-brand', 'activate-autopilot'] as const;
 
 const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingActivationWizardProps) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'company']);
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { company } = useCompany();
   const companyId = company?.id || profile?.primary_company_id;
   const { advanceToStep } = useJourneyProgression(companyId);
@@ -33,35 +36,137 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [activatingAutopilot, setActivatingAutopilot] = useState(false);
-  const [connectedNetworks, setConnectedNetworks] = useState<string[]>([]);
 
-  // Check what's already done
+  // Data states for company info & brand tabs
+  const [companyData, setCompanyData] = useState<any>(null);
+  const [brandingData, setBrandingData] = useState<any>(null);
+  const [isEnrichingData, setIsEnrichingData] = useState(false);
+  const [isGeneratingBrand, setIsGeneratingBrand] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
+
+  // Load company & branding data
+  useEffect(() => {
+    const loadData = async () => {
+      if (!companyId) { setDataLoading(false); return; }
+      try {
+        const [companyRes, brandingRes] = await Promise.all([
+          supabase.from('companies').select('*').eq('id', companyId).maybeSingle(),
+          supabase.from('company_branding').select('*').eq('company_id', companyId).maybeSingle(),
+        ]);
+        setCompanyData(companyRes.data || null);
+        if (!brandingRes.data && companyId) {
+          const { data: newBranding } = await supabase
+            .from('company_branding')
+            .insert({ company_id: companyId })
+            .select()
+            .single();
+          setBrandingData(newBranding);
+        } else {
+          setBrandingData(brandingRes.data);
+        }
+      } catch (err) {
+        console.error('Error loading wizard data:', err);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+    loadData();
+  }, [companyId]);
+
+  // Check existing state for step completion
   useEffect(() => {
     const checkExistingState = async () => {
       if (!companyId) return;
       
       const [socialRes, brandRes, autopilotRes] = await Promise.all([
         supabase.from('social_accounts').select('platform').eq('is_connected', true),
-        supabase.from('company_branding').select('id').eq('company_id', companyId).maybeSingle(),
+        supabase.from('company_branding').select('id, primary_color, brand_voice').eq('company_id', companyId).maybeSingle(),
         supabase.from('company_autopilot_config').select('autopilot_enabled').eq('company_id', companyId).eq('autopilot_enabled', true).maybeSingle(),
       ]);
 
-      const connected = (socialRes.data || []).map(s => s.platform);
-      setConnectedNetworks(connected);
-      
       const done = new Set<number>();
-      if (connected.length > 0) done.add(0);
-      if (brandRes.data) done.add(1);
-      if (autopilotRes.data) done.add(2);
+      
+      // Step 0: company info - check if basic fields are filled
+      if (companyData?.name && companyData?.description) done.add(0);
+      // Step 1: social networks
+      if ((socialRes.data || []).length > 0) done.add(1);
+      // Step 2: brand
+      if (brandRes.data?.primary_color || brandRes.data?.brand_voice) done.add(2);
+      // Step 3: autopilot
+      if (autopilotRes.data) done.add(3);
+      
       setCompletedSteps(done);
       
-      // Skip to first incomplete step
-      if (done.has(0) && !done.has(1)) setCurrentStep(1);
-      else if (done.has(0) && done.has(1) && !done.has(2)) setCurrentStep(2);
-      else if (done.size === 3) onComplete();
+      // Navigate to first incomplete step
+      for (let i = 0; i < STEPS.length; i++) {
+        if (!done.has(i)) { setCurrentStep(i); break; }
+      }
+      if (done.size === STEPS.length) onComplete();
     };
-    checkExistingState();
-  }, [companyId]);
+    if (!dataLoading) checkExistingState();
+  }, [companyId, dataLoading, companyData]);
+
+  const saveField = useCallback(async (field: string, value: any, table: string = 'companies') => {
+    try {
+      const updateData: any = { [field]: value };
+      
+      if (table === 'companies' && companyData?.id) {
+        const { error } = await supabase.from('companies').update(updateData).eq('id', companyData.id);
+        if (error) throw error;
+        setCompanyData((prev: any) => ({ ...prev, [field]: value }));
+      } else if (table === 'company_branding' && brandingData?.id) {
+        const { error } = await supabase.from('company_branding').update(updateData).eq('id', brandingData.id);
+        if (error) throw error;
+        setBrandingData((prev: any) => ({ ...prev, [field]: value }));
+      }
+    } catch (error) {
+      console.error('Error saving field:', error);
+      toast({ title: t('common:error'), variant: "destructive" });
+    }
+  }, [companyData?.id, brandingData?.id, toast, t]);
+
+  const enrichCompanyData = useCallback(async () => {
+    if (!companyData?.website_url || !companyId) return;
+    setIsEnrichingData(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enrich-company-data', {
+        body: { companyId, websiteUrl: companyData.website_url }
+      });
+      if (error) throw error;
+      if (data?.enrichedData) {
+        setCompanyData((prev: any) => ({ ...prev, ...data.enrichedData }));
+        toast({ title: "✓", description: t('company:enrich.success', 'Datos enriquecidos') });
+      }
+    } catch (err) {
+      console.error('Error enriching:', err);
+    } finally {
+      setIsEnrichingData(false);
+    }
+  }, [companyData?.website_url, companyId, toast, t]);
+
+  const generateBrandIdentity = useCallback(async () => {
+    if (!companyId) return;
+    setIsGeneratingBrand(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-brand-identity', {
+        body: { companyId }
+      });
+      if (error) throw error;
+      if (data) {
+        const { data: updated } = await supabase
+          .from('company_branding')
+          .select('*')
+          .eq('company_id', companyId)
+          .maybeSingle();
+        if (updated) setBrandingData(updated);
+        toast({ title: "✓", description: t('company:brand.generated', 'Marca generada con IA') });
+      }
+    } catch (err) {
+      console.error('Error generating brand:', err);
+    } finally {
+      setIsGeneratingBrand(false);
+    }
+  }, [companyId, toast, t]);
 
   const handleSkipStep = () => {
     if (currentStep < STEPS.length - 1) {
@@ -71,13 +176,13 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
     }
   };
 
-  const handleConnectNetwork = (platform: string) => {
-    // Navigate to the social connection flow
-    navigate(`/company-dashboard?view=negocio`);
-  };
-
-  const handleConfigureBrand = () => {
-    navigate(`/company-dashboard?view=negocio`);
+  const handleNextStep = () => {
+    setCompletedSteps(prev => new Set([...prev, currentStep]));
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      onComplete();
+    }
   };
 
   const handleActivateAutopilot = async () => {
@@ -85,7 +190,6 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
     setActivatingAutopilot(true);
     
     try {
-      // Enable marketing autopilot
       const { error } = await supabase
         .from('company_autopilot_config')
         .upsert({
@@ -97,7 +201,8 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
 
       if (!error) {
         await advanceToStep(5);
-        setCompletedSteps(prev => new Set([...prev, 2]));
+        setCompletedSteps(prev => new Set([...prev, 3]));
+        toast({ title: "🚀", description: t('common:activationWizard.autopilotActivated', 'Autopilot activado') });
         setTimeout(() => onComplete(), 1500);
       }
     } catch (err) {
@@ -109,12 +214,14 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
 
   const progressPercent = ((completedSteps.size) / STEPS.length) * 100;
 
-  const socialNetworks = [
-    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'bg-[#0A66C2]' },
-    { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF]' },
-    { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'bg-[#1877F2]' },
-    { id: 'tiktok', name: 'TikTok', icon: Video, color: 'bg-[#000000]' },
+  const stepLabels = [
+    t('common:activationWizard.step1Label', 'Mi Empresa'),
+    t('common:activationWizard.step2Label', 'Redes Sociales'),
+    t('common:activationWizard.step3Label', 'Marca'),
+    t('common:activationWizard.step4Label', 'Autopilot'),
   ];
+
+  const stepIcons = [Building2, Share2, Palette, Rocket];
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
@@ -131,12 +238,12 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
           {t('common:activationWizard.title', '¡Tu negocio está listo!')}
         </h1>
         <p className="text-muted-foreground">
-          {t('common:activationWizard.subtitle', 'Sigue estos 3 pasos para activar la automatización')}
+          {t('common:activationWizard.subtitle4Steps', 'Sigue estos 4 pasos para activar la automatización')}
         </p>
       </div>
 
       {/* Progress */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex justify-between text-xs text-muted-foreground mb-2">
           <span>{t('common:activationWizard.progress', 'Progreso')}</span>
           <span>{completedSteps.size}/{STEPS.length}</span>
@@ -146,26 +253,29 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
 
       {/* Step indicators */}
       <div className="flex gap-2 mb-6">
-        {STEPS.map((step, idx) => {
-          const stepLabels = [
-            t('common:activationWizard.step1Label', 'Redes sociales'),
-            t('common:activationWizard.step2Label', 'Marca'),
-            t('common:activationWizard.step3Label', 'Departamento'),
-          ];
+        {STEPS.map((_, idx) => {
+          const Icon = stepIcons[idx];
+          const isActive = idx === currentStep;
+          const isDone = completedSteps.has(idx);
           return (
             <button
               key={idx}
               onClick={() => setCurrentStep(idx)}
               className={cn(
-                "flex-1 py-2 px-3 rounded-full text-xs font-medium transition-all",
-                idx === currentStep 
+                "flex-1 py-2 px-2 rounded-full text-xs font-medium transition-all flex items-center justify-center gap-1",
+                isActive 
                   ? "bg-primary text-primary-foreground" 
-                  : completedSteps.has(idx) 
-                    ? "bg-emerald-500 text-white" 
+                  : isDone 
+                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30" 
                     : "bg-muted text-muted-foreground"
               )}
             >
-              {completedSteps.has(idx) && idx !== currentStep ? `✓ ${stepLabels[idx]}` : stepLabels[idx]}
+              {isDone && !isActive ? (
+                <Check className="w-3 h-3 shrink-0" />
+              ) : (
+                <Icon className="w-3 h-3 shrink-0" />
+              )}
+              <span className="truncate">{stepLabels[idx]}</span>
             </button>
           );
         })}
@@ -180,170 +290,146 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
         >
+          {/* Step 0: Company Info */}
           {currentStep === 0 && (
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <span className="text-xl">📱</span>
-                  </div>
-                  <div>
-                    <h2 className="font-semibold text-lg">
-                      {t('common:activationWizard.step1Title', 'Conecta tus redes sociales')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {t('common:activationWizard.step1Desc', 'Para que Buildera pueda gestionar tu contenido automáticamente')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {socialNetworks.map(network => {
-                    const isConnected = connectedNetworks.includes(network.id);
-                    const Icon = network.icon;
-                    return (
-                      <Button
-                        key={network.id}
-                        variant={isConnected ? "default" : "outline"}
-                        className={cn(
-                          "h-auto py-4 flex-col gap-2",
-                          isConnected && "bg-emerald-500 hover:bg-emerald-600 border-emerald-500"
-                        )}
-                        onClick={() => !isConnected && handleConnectNetwork(network.id)}
-                        disabled={isConnected}
-                      >
-                        {isConnected ? (
-                          <Check className="w-5 h-5" />
-                        ) : (
-                          <Icon className="w-5 h-5" />
-                        )}
-                        <span className="text-xs">{network.name}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
-
-                <div className="flex justify-between">
-                  <Button variant="ghost" size="sm" onClick={handleSkipStep}>
-                    <SkipForward className="w-4 h-4 mr-1" />
-                    {t('common:activationWizard.skipForNow', 'Omitir por ahora')}
-                  </Button>
-                  {connectedNetworks.length > 0 && (
-                    <Button size="sm" onClick={() => { 
-                      setCompletedSteps(prev => new Set([...prev, 0]));
-                      advanceToStep(3);
-                      setCurrentStep(1);
-                    }}>
-                      {t('common:actions.next')}
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              {dataLoading ? (
+                <Card><CardContent className="p-8 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
+                </CardContent></Card>
+              ) : (
+                <ADNInfoTab
+                  companyData={companyData}
+                  setCompanyData={setCompanyData}
+                  saveField={saveField}
+                  isEnrichingData={isEnrichingData}
+                  enrichCompanyData={enrichCompanyData}
+                />
+              )}
+              <StepFooter
+                onSkip={handleSkipStep}
+                onNext={handleNextStep}
+                nextLabel={t('common:actions.next', 'Siguiente')}
+                skipLabel={t('common:activationWizard.skipForNow', 'Omitir por ahora')}
+              />
+            </div>
           )}
 
+          {/* Step 1: Social Networks */}
           {currentStep === 1 && (
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center">
-                    <Palette className="w-5 h-5 text-secondary" />
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Share2 className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="font-semibold text-lg">
+                        {t('common:activationWizard.step2Title', 'Conecta tus redes sociales')}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {t('common:activationWizard.step2Desc', 'Para que Buildera pueda gestionar tu contenido automáticamente')}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="font-semibold text-lg">
-                      {t('common:activationWizard.step2Title', 'Configura tu marca')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {t('common:activationWizard.step2Desc', 'Define los colores y tono de voz de tu negocio')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-4 mb-6">
-                  <div className="p-4 rounded-lg border bg-muted/30 text-center">
-                    <Sparkles className="w-8 h-8 mx-auto text-primary mb-2" />
-                    <p className="text-sm font-medium mb-1">
-                      {t('common:activationWizard.aiGenerate', 'Generación automática con IA')}
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      {t('common:activationWizard.aiGenerateDesc', 'Usaremos los datos de tu diagnóstico para configurar tu marca automáticamente')}
-                    </p>
-                    <Button onClick={handleConfigureBrand}>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      {t('common:activationWizard.configureBrand', 'Configurar Marca')}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex justify-between">
-                  <Button variant="ghost" size="sm" onClick={handleSkipStep}>
-                    <SkipForward className="w-4 h-4 mr-1" />
-                    {t('common:activationWizard.skipForNow', 'Omitir por ahora')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  <SocialConnectionManager 
+                    profile={profile} 
+                    onConnectionsUpdated={() => {
+                      setCompletedSteps(prev => new Set([...prev, 1]));
+                    }}
+                  />
+                </CardContent>
+              </Card>
+              <StepFooter
+                onSkip={handleSkipStep}
+                onNext={handleNextStep}
+                nextLabel={t('common:actions.next', 'Siguiente')}
+                skipLabel={t('common:activationWizard.skipForNow', 'Omitir por ahora')}
+              />
+            </div>
           )}
 
+          {/* Step 2: Brand */}
           {currentStep === 2 && (
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                    <Rocket className="w-5 h-5 text-emerald-500" />
-                  </div>
-                  <div>
-                    <h2 className="font-semibold text-lg">
-                      {t('common:activationWizard.step3Title', 'Activa tu primer departamento')}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {t('common:activationWizard.step3Desc', 'Buildera creará y publicará contenido por ti')}
-                    </p>
-                  </div>
-                </div>
+            <div className="space-y-4">
+              {dataLoading ? (
+                <Card><CardContent className="p-8 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
+                </CardContent></Card>
+              ) : (
+                <ADNBrandTab
+                  companyData={companyData}
+                  brandingData={brandingData}
+                  saveField={saveField}
+                  generateBrandIdentity={generateBrandIdentity}
+                  isGeneratingBrand={isGeneratingBrand}
+                />
+              )}
+              <StepFooter
+                onSkip={handleSkipStep}
+                onNext={handleNextStep}
+                nextLabel={t('common:actions.next', 'Siguiente')}
+                skipLabel={t('common:activationWizard.skipForNow', 'Omitir por ahora')}
+              />
+            </div>
+          )}
 
-                <div className="p-5 rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">📣</span>
-                      <span className="font-semibold">{t('common:activationWizard.marketingDept', 'Marketing')}</span>
+          {/* Step 3: Activate Autopilot */}
+          {currentStep === 3 && (
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                      <Rocket className="w-5 h-5 text-emerald-500" />
                     </div>
-                    <Badge variant="outline" className="text-emerald-600 border-emerald-500/30">
-                      {t('common:activationWizard.recommended', 'Recomendado')}
-                    </Badge>
+                    <div>
+                      <h2 className="font-semibold text-lg">
+                        {t('common:activationWizard.step4Title', 'Activa el Autopilot')}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {t('common:activationWizard.step4Desc', 'Buildera creará y publicará contenido por ti')}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {t('common:activationWizard.marketingDesc', 'Genera contenido, programa publicaciones y analiza resultados automáticamente.')}
-                  </p>
-                  <Button 
-                    className="w-full" 
-                    size="lg"
-                    onClick={handleActivateAutopilot}
-                    disabled={activatingAutopilot}
-                  >
-                    {activatingAutopilot ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {t('common:activationWizard.activating', 'Activando...')}
-                      </>
-                    ) : (
-                      <>
-                        <Rocket className="w-4 h-4 mr-2" />
-                        {t('common:activationWizard.activateAutopilot', 'Activar Marketing Autopilot')}
-                      </>
-                    )}
-                  </Button>
-                </div>
 
-                <div className="flex justify-between">
-                  <Button variant="ghost" size="sm" onClick={handleSkipStep}>
-                    <SkipForward className="w-4 h-4 mr-1" />
-                    {t('common:activationWizard.skipForNow', 'Omitir por ahora')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="p-5 rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="w-5 h-5 text-primary" />
+                      <span className="font-semibold">
+                        {t('common:activationWizard.marketingDept', 'Marketing Autopilot')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {t('common:activationWizard.marketingDesc', 'Genera contenido, programa publicaciones y analiza resultados automáticamente.')}
+                    </p>
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      onClick={handleActivateAutopilot}
+                      disabled={activatingAutopilot}
+                    >
+                      {activatingAutopilot ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {t('common:activationWizard.activating', 'Activando...')}
+                        </>
+                      ) : (
+                        <>
+                          <Rocket className="w-4 h-4 mr-2" />
+                          {t('common:activationWizard.activateAutopilot', 'Activar Marketing Autopilot')}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              <StepFooter
+                onSkip={handleSkipStep}
+                skipLabel={t('common:activationWizard.skipForNow', 'Omitir por ahora')}
+              />
+            </div>
           )}
         </motion.div>
       </AnimatePresence>
@@ -357,5 +443,31 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
     </div>
   );
 };
+
+// Reusable footer for each step
+const StepFooter = ({ 
+  onSkip, 
+  onNext, 
+  skipLabel, 
+  nextLabel 
+}: { 
+  onSkip: () => void; 
+  onNext?: () => void; 
+  skipLabel: string; 
+  nextLabel?: string;
+}) => (
+  <div className="flex justify-between items-center">
+    <Button variant="ghost" size="sm" onClick={onSkip}>
+      <SkipForward className="w-4 h-4 mr-1" />
+      {skipLabel}
+    </Button>
+    {onNext && nextLabel && (
+      <Button size="sm" onClick={onNext}>
+        {nextLabel}
+        <ChevronRight className="w-4 h-4 ml-1" />
+      </Button>
+    )}
+  </div>
+);
 
 export default PostOnboardingActivationWizard;

@@ -335,6 +335,10 @@
       "creditsUsed": "Credits used",
       "thisMonth": "This month"
     },
+    "executionError": "The agent encountered an error. Your credits were not affected.",
+    "orchestrationError": "We couldn't complete the analysis. Please try again.",
+    "premiumNotEnabled": "This premium agent is not enabled for your company.",
+    "retry": "Retry",
     "names": {
       "LINKEDIN_ANALYST": "LinkedIn Analyst",
       "INSTAGRAM_ANALYST": "Instagram Analyst",

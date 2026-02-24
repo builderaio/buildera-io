@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { saveAgentParameters } from '@/utils/companyParametersSaver';
+import { useTranslation } from 'react-i18next';
 
 interface AgentExecutionResult {
   success: boolean;
@@ -28,10 +29,42 @@ interface OnboardingWowResult {
   };
 }
 
+const MAX_RETRIES = 2;
+const INITIAL_RETRY_DELAY_MS = 1000;
+
+/**
+ * Determines if an error is retryable (5xx or network errors only).
+ * 4xx errors are NOT retried.
+ */
+function isRetryableError(error: any): boolean {
+  const message = (error?.message || '').toLowerCase();
+  // Network errors
+  if (message.includes('network') || message.includes('fetch') || message.includes('timeout')) {
+    return true;
+  }
+  // Edge function errors that indicate server issues
+  if (message.includes('500') || message.includes('502') || message.includes('503') || message.includes('504')) {
+    return true;
+  }
+  // Supabase functions.invoke returns FunctionsFetchError for network issues
+  if (error?.name === 'FunctionsHttpError') {
+    const status = error?.context?.status;
+    return status >= 500;
+  }
+  return false;
+}
+
+/**
+ * Sleep helper for retry backoff
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export const useAgentExecution = () => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const { toast } = useToast();
+  const { t } = useTranslation('common');
 
   const executeOnboardingOrchestrator = useCallback(async (
     userId: string,
@@ -44,7 +77,6 @@ export const useAgentExecution = () => {
     try {
       console.log('🚀 Iniciando orquestación de onboarding WOW...');
       
-      // Simular progreso mientras se ejecutan los agentes
       const progressInterval = setInterval(() => {
         setProgress(prev => Math.min(prev + 10, 90));
       }, 2000);
@@ -64,17 +96,13 @@ export const useAgentExecution = () => {
 
     } catch (error) {
       console.error('❌ Error en orquestación:', error);
-      toast({
-        title: "Error en análisis",
-        description: "No pudimos completar el análisis. Intenta de nuevo.",
-        variant: "destructive"
-      });
+      toast.error(t('agents.orchestrationError', 'No pudimos completar el análisis. Intenta de nuevo.'));
       return null;
     } finally {
       setIsExecuting(false);
       setProgress(0);
     }
-  }, [toast]);
+  }, [t]);
 
   const executeAgent = useCallback(async (
     agentCode: string,
@@ -85,7 +113,7 @@ export const useAgentExecution = () => {
     setIsExecuting(true);
 
     try {
-      // Obtener el agente de la base de datos
+      // 1. Fetch agent from database
       const { data: agent, error: agentError } = await supabase
         .from('platform_agents')
         .select('*')
@@ -97,7 +125,7 @@ export const useAgentExecution = () => {
         throw new Error(`Agente no encontrado: ${agentCode}`);
       }
 
-      // Verificar si el agente está habilitado para la empresa
+      // 2. Verify agent is enabled for company (premium check)
       const { data: enabledAgent } = await supabase
         .from('company_enabled_agents')
         .select('id')
@@ -106,21 +134,85 @@ export const useAgentExecution = () => {
         .single();
 
       if (!enabledAgent && agent.is_premium) {
-        throw new Error('Este agente premium no está habilitado para tu empresa');
+        toast.error(t('agents.premiumNotEnabled', 'Este agente premium no está habilitado para tu empresa.'));
+        return { success: false, error: 'Agent not enabled' };
       }
 
+      // 3. Execute with retry for transient errors
       const startTime = Date.now();
+      let lastError: Error | null = null;
+      let result: any = null;
 
-      // Ejecutar la edge function del agente
-      const { data, error } = await supabase.functions.invoke(agent.edge_function_name, {
-        body: { user_id: userId, company_id: companyId, ...inputData }
-      });
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          if (attempt > 0) {
+            const delay = INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt - 1);
+            console.log(`🔄 Reintento ${attempt}/${MAX_RETRIES} para ${agentCode} (delay: ${delay}ms)`);
+            await sleep(delay);
+          }
+
+          const { data, error } = await supabase.functions.invoke(agent.edge_function_name, {
+            body: { user_id: userId, company_id: companyId, ...inputData }
+          });
+
+          if (error) throw error;
+
+          // Check if edge function returned an error in the response body
+          if (data && data.success === false) {
+            const funcError = new Error(data.error || data.details || 'Agent execution failed');
+            // Treat 4xx-style errors as non-retryable
+            if (data.status && data.status >= 400 && data.status < 500) {
+              throw funcError;
+            }
+            throw Object.assign(funcError, { retryable: true });
+          }
+
+          result = data;
+          lastError = null;
+          break; // Success — exit retry loop
+
+        } catch (err: any) {
+          lastError = err;
+          if (attempt < MAX_RETRIES && (isRetryableError(err) || err.retryable)) {
+            continue; // Retry
+          }
+          break; // Non-retryable or max retries reached
+        }
+      }
 
       const executionTime = Date.now() - startTime;
 
-      if (error) throw error;
+      // 4. If all attempts failed, log failure and return error
+      if (lastError || !result) {
+        const errorMsg = lastError?.message || 'Unknown error';
+        
+        // Log failed execution (no credits consumed)
+        await supabase.from('agent_usage_log').insert({
+          user_id: userId,
+          company_id: companyId,
+          agent_id: agent.id,
+          credits_consumed: 0,
+          input_data: inputData,
+          output_summary: `Error: ${errorMsg}`,
+          error_message: errorMsg,
+          execution_time_ms: executionTime,
+          status: 'failed'
+        });
 
-      // Register agent usage
+        toast.error(
+          t('agents.executionError', 'El agente encontró un error. Tus créditos no fueron afectados.'),
+          {
+            action: {
+              label: t('agents.retry', 'Reintentar'),
+              onClick: () => executeAgent(agentCode, userId, companyId, inputData),
+            },
+          }
+        );
+
+        return { success: false, error: errorMsg };
+      }
+
+      // 5. SUCCESS — Log usage WITH credits
       const { data: usageLog } = await supabase.from('agent_usage_log').insert({
         user_id: userId,
         company_id: companyId,
@@ -132,14 +224,22 @@ export const useAgentExecution = () => {
         status: 'completed'
       }).select('id').single();
 
-      // Save agent outputs as reusable parameters
+      // 6. Deduct credits only on success
+      if (agent.credits_per_use > 0) {
+        await supabase.rpc('deduct_company_credits', {
+          _company_id: companyId,
+          _credits: agent.credits_per_use
+        });
+      }
+
+      // 7. Save agent outputs as reusable parameters
       let parametersSaved: string[] = [];
-      if (data && typeof data === 'object') {
+      if (result && typeof result === 'object') {
         const saveResult = await saveAgentParameters(
           companyId,
           agentCode,
           usageLog?.id || null,
-          data,
+          result,
           userId
         );
         parametersSaved = saveResult.saved;
@@ -150,13 +250,14 @@ export const useAgentExecution = () => {
 
       return {
         success: true,
-        data,
+        data: result,
         execution_time_ms: executionTime,
         parametersSaved
       };
 
     } catch (error) {
       console.error(`Error ejecutando agente ${agentCode}:`, error);
+      toast.error(t('agents.executionError', 'El agente encontró un error. Tus créditos no fueron afectados.'));
       return {
         success: false,
         error: (error as Error).message
@@ -164,7 +265,7 @@ export const useAgentExecution = () => {
     } finally {
       setIsExecuting(false);
     }
-  }, []);
+  }, [t]);
 
   const getAgentUsageStats = useCallback(async (
     companyId: string
@@ -190,7 +291,6 @@ export const useAgentExecution = () => {
       return null;
     }
 
-    // Agrupar por agente
     const statsByAgent = (data || []).reduce((acc: any, log: any) => {
       const agentCode = log.platform_agents?.internal_code || 'unknown';
       if (!acc[agentCode]) {

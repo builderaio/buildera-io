@@ -7,7 +7,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuthMethods } from "@/hooks/useAuthMethods";
 import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 import { EmailVerificationInfo } from "./EmailVerificationInfo";
@@ -39,7 +39,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const verificationRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
+  
   const { authMethods, loading: authMethodsLoading } = useAuthMethods();
   const { sendWelcomeEmail } = useWelcomeEmail();
 
@@ -51,32 +51,20 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       if (mode === "signup") {
         // Validaciones para registro
         if (!fullName.trim()) {
-          toast({
-            title: "Error",
-            description: t('messages.nameRequired'),
-            variant: "destructive",
-          });
+          toast.error(t('messages.nameRequired'));
           setLoading(false);
           return;
         }
 
         if (!companyName.trim()) {
-          toast({
-            title: "Error", 
-            description: t('messages.companyRequired'),
-            variant: "destructive",
-          });
+          toast.error(t('messages.companyRequired'));
           setLoading(false);
           return;
         }
 
 
         if (!country.trim()) {
-          toast({
-            title: "Error",
-            description: t('messages.countryRequired'),
-            variant: "destructive",
-          });
+          toast.error(t('messages.countryRequired'));
           setLoading(false);
           return;
         }
@@ -139,10 +127,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             setRegisteredEmail(email);
             setShowEmailVerification(true);
             setRegistrationSuccess(true);
-            toast({
-              title: t('messages.signupSuccess'),
-              description: t('messages.signupSuccessDesc'),
-            });
+            toast.success(t('messages.signupSuccessDesc'));
             // Scroll to verification message after render
             setTimeout(() => {
               verificationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -156,10 +141,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
               console.error("Error enviando email de bienvenida:", emailError);
             }
             
-            toast({
-              title: t('messages.signupSuccess'),
-              description: t('messages.signupVerifiedDesc'),
-            });
+            toast.success(t('messages.signupVerifiedDesc'));
 
             // Cambiar a modo login
             if (onModeChange) {
@@ -181,21 +163,13 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       } else {
         // Validaciones para login
         if (!email.trim()) {
-          toast({
-            title: "Error",
-            description: t('messages.emailRequiredField'),
-            variant: "destructive",
-          });
+          toast.error(t('messages.emailRequiredField'));
           setLoading(false);
           return;
         }
 
         if (!password.trim()) {
-          toast({
-            title: "Error",
-            description: t('messages.passwordRequired'),
-            variant: "destructive",
-          });
+          toast.error(t('messages.passwordRequired'));
           setLoading(false);
           return;
         }
@@ -246,10 +220,8 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       
       // Mostrar mensajes de error más específicos
       let errorMessage = t('messages.genericLoginError');
-      let errorTitle = "Error";
       
       if (error.code === 'weak_password' || error.message?.includes('Password should contain')) {
-        errorTitle = t('messages.weakPassword');
         errorMessage = t('messages.weakPasswordComplex');
       } else if (error.code === 'invalid_credentials' || error.message?.includes('Invalid login credentials')) {
         errorMessage = t('messages.invalidCredentials');
@@ -261,11 +233,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
         errorMessage = t('messages.signupNotAllowed');
       }
       
-      toast({
-        title: errorTitle,
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -286,16 +254,9 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
 
       if (error) throw error;
 
-      toast({
-        title: t('messages.emailResent'),
-        description: t('messages.emailResentDesc'),
-      });
+      toast.success(t('messages.emailResentDesc'));
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || t('messages.emailResendError'),
-        variant: "destructive",
-      });
+      toast.error(error.message || t('messages.emailResendError'));
     } finally {
       setLoading(false);
     }
@@ -340,11 +301,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
       console.log("✅ OAuth iniciado correctamente");
     } catch (error: any) {
       console.error(`❌ Error en autenticación ${provider}:`, error);
-      toast({
-        title: t('messages.authError'),
-        description: error.message || t('messages.authError'),
-        variant: "destructive",
-      });
+      toast.error(error.message || t('messages.authError'));
     }
   };
 

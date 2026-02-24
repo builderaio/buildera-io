@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
@@ -140,6 +140,7 @@ export const useDepartmentUnlocking = (
   const [departments, setDepartments] = useState<DepartmentConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [newlyUnlocked, setNewlyUnlocked] = useState<DepartmentType[]>([]);
+  const unlockAttempted = useRef(false);
   const { toast } = useToast();
   const { t } = useTranslation('common');
 
@@ -226,17 +227,19 @@ export const useDepartmentUnlocking = (
           version: 1,
         }))
       );
-    } catch (err) {
-      console.error('Error auto-unlocking departments:', err);
+    } catch (err: any) {
+      console.warn('[DepartmentUnlocking] Auto-unlock failed:', err?.message || err?.code || JSON.stringify(err));
     }
   }, [companyId, maturityLevel, departments, loading, toast, t]);
 
   useEffect(() => {
+    unlockAttempted.current = false;
     loadDepartments();
   }, [loadDepartments]);
 
   useEffect(() => {
-    if (!loading && companyId) {
+    if (!loading && companyId && !unlockAttempted.current) {
+      unlockAttempted.current = true;
       checkAndUnlock();
     }
   }, [maturityLevel, loading, companyId]);

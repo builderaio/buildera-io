@@ -194,11 +194,27 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    fetchPrimaryCompany();
+    // Only fetch once on mount if there's already a session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchPrimaryCompany();
+      } else {
+        setCompany(null);
+        setLoading(false);
+      }
+    });
 
-    // Subscribe to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      fetchPrimaryCompany();
+    // React to auth state changes — no polling
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session?.user) {
+        setCompany(null);
+        setLoading(false);
+        return;
+      }
+      // SIGNED_IN, TOKEN_REFRESHED, etc.
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        fetchPrimaryCompany();
+      }
     });
 
     return () => subscription.unsubscribe();

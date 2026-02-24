@@ -146,17 +146,29 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
 
       {/* Step indicators */}
       <div className="flex gap-2 mb-6">
-        {STEPS.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentStep(idx)}
-            className={cn(
-              "flex-1 h-1.5 rounded-full transition-all",
-              idx === currentStep ? "bg-primary" : 
-              completedSteps.has(idx) ? "bg-emerald-500" : "bg-muted"
-            )}
-          />
-        ))}
+        {STEPS.map((step, idx) => {
+          const stepLabels = [
+            t('common:activationWizard.step1Label', 'Redes sociales'),
+            t('common:activationWizard.step2Label', 'Marca'),
+            t('common:activationWizard.step3Label', 'Departamento'),
+          ];
+          return (
+            <button
+              key={idx}
+              onClick={() => setCurrentStep(idx)}
+              className={cn(
+                "flex-1 py-2 px-3 rounded-full text-xs font-medium transition-all",
+                idx === currentStep 
+                  ? "bg-primary text-primary-foreground" 
+                  : completedSteps.has(idx) 
+                    ? "bg-emerald-500 text-white" 
+                    : "bg-muted text-muted-foreground"
+              )}
+            >
+              {completedSteps.has(idx) && idx !== currentStep ? `✓ ${stepLabels[idx]}` : stepLabels[idx]}
+            </button>
+          );
+        })}
       </div>
 
       {/* Step Content */}

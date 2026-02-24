@@ -242,43 +242,58 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
         </p>
       </div>
 
-      {/* Progress */}
-      <div className="mb-6">
-        <div className="flex justify-between text-xs text-muted-foreground mb-2">
-          <span>{t('common:activationWizard.progress', 'Progreso')}</span>
-          <span>{completedSteps.size}/{STEPS.length}</span>
-        </div>
-        <Progress value={progressPercent} className="h-2" />
-      </div>
+      {/* Stepper */}
+      <div className="mb-8">
+        <div className="flex items-start justify-between relative">
+          {/* Connector line */}
+          <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted z-0 mx-10" />
+          <div 
+            className="absolute top-5 left-0 h-0.5 bg-primary z-0 mx-10 transition-all duration-500"
+            style={{ width: `${(Math.max(0, currentStep) / (STEPS.length - 1)) * (100 - 10)}%` }}
+          />
 
-      {/* Step indicators */}
-      <div className="flex gap-2 mb-6">
-        {STEPS.map((_, idx) => {
-          const Icon = stepIcons[idx];
-          const isActive = idx === currentStep;
-          const isDone = completedSteps.has(idx);
-          return (
-            <button
-              key={idx}
-              onClick={() => setCurrentStep(idx)}
-              className={cn(
-                "flex-1 py-2 px-2 rounded-full text-xs font-medium transition-all flex items-center justify-center gap-1",
-                isActive 
-                  ? "bg-primary text-primary-foreground" 
-                  : isDone 
-                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30" 
-                    : "bg-muted text-muted-foreground"
-              )}
-            >
-              {isDone && !isActive ? (
-                <Check className="w-3 h-3 shrink-0" />
-              ) : (
-                <Icon className="w-3 h-3 shrink-0" />
-              )}
-              <span className="truncate">{stepLabels[idx]}</span>
-            </button>
-          );
-        })}
+          {STEPS.map((_, idx) => {
+            const Icon = stepIcons[idx];
+            const isActive = idx === currentStep;
+            const isDone = completedSteps.has(idx);
+            const isPast = idx < currentStep;
+            return (
+              <button
+                key={idx}
+                onClick={() => setCurrentStep(idx)}
+                className="flex flex-col items-center gap-1.5 z-10 group"
+                style={{ flex: 1 }}
+              >
+                <div
+                  className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2",
+                    isActive
+                      ? "bg-primary border-primary text-primary-foreground scale-110 shadow-lg shadow-primary/25"
+                      : isDone
+                        ? "bg-emerald-500 border-emerald-500 text-white"
+                        : isPast
+                          ? "bg-primary/20 border-primary/40 text-primary"
+                          : "bg-background border-muted-foreground/30 text-muted-foreground group-hover:border-primary/50"
+                  )}
+                >
+                  {isDone && !isActive ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Icon className="w-4 h-4" />
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    "text-[11px] font-medium text-center leading-tight max-w-[72px]",
+                    isActive ? "text-primary" : isDone ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"
+                  )}
+                >
+                  {stepLabels[idx]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Step Content */}

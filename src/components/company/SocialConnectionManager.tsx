@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -752,65 +753,80 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       )}
 
       {/* Connection Status Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {Object.entries(platformConfig).map(([platform, config]) => {
           const isConnected = getConnectionStatus(platform);
           const accountInfo = getAccountInfo(platform);
           
           const hasUrl = urlValues[platform] && urlValues[platform].trim() !== '';
           const hasPlatformUsername = !!accountInfo?.platform_username;
-          const needsAttention = isConnected && !hasPlatformUsername;
-          const cardBorderClass = isConnected 
-            ? (hasPlatformUsername ? 'border-green-500/40' : 'border-amber-500/40')
-            : 'border-border';
           
           return (
-            <Card key={platform} className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${cardBorderClass}`}>
-              <CardContent className="p-5">
+            <Card key={platform} className={cn(
+              "relative overflow-hidden transition-all duration-300 group",
+              isConnected 
+                ? hasPlatformUsername 
+                  ? "border-emerald-500/30 shadow-sm shadow-emerald-500/5 hover:shadow-md hover:shadow-emerald-500/10" 
+                  : "border-amber-500/30 shadow-sm shadow-amber-500/5 hover:shadow-md hover:shadow-amber-500/10"
+                : "border-border/60 hover:border-primary/30 hover:shadow-md"
+            )}>
+              {/* Subtle gradient accent at top */}
+              <div className={cn(
+                "absolute top-0 left-0 right-0 h-1 transition-all duration-300",
+                isConnected 
+                  ? hasPlatformUsername ? "bg-emerald-500" : "bg-amber-500"
+                  : "bg-muted-foreground/20 group-hover:bg-primary/50"
+              )} />
+
+              <CardContent className="p-5 pt-6">
                 {/* Platform header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-11 h-11 rounded-xl ${config.color} flex items-center justify-center text-white text-lg shrink-0`}>
+                <div className="flex items-center gap-3.5 mb-4">
+                  <div className={cn(
+                    "w-12 h-12 rounded-2xl flex items-center justify-center text-white text-xl shrink-0 shadow-lg transition-transform duration-300 group-hover:scale-105",
+                    config.color
+                  )}>
                     <config.Icon />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-sm">{config.name}</h4>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <h4 className="font-semibold text-foreground">{config.name}</h4>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
                       {platform === 'facebook' && accountInfo?.facebook_page_id ? 
                         `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.facebook_page_id}` :
                        platform === 'linkedin' && accountInfo?.linkedin_page_id ?
                         `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.linkedin_page_id}` :
-                       accountInfo?.platform_display_name || accountInfo?.platform_username || 'No conectado'}
+                       accountInfo?.platform_display_name || accountInfo?.platform_username || 'Sin conexión'}
                     </p>
                   </div>
-                  {isConnected ? (
-                    hasPlatformUsername ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
-                    ) : (
-                      <Info className="w-5 h-5 text-amber-500 shrink-0" />
-                    )
-                  ) : (
-                    <XCircle className="w-5 h-5 text-muted-foreground shrink-0" />
-                  )}
                 </div>
                 
-                {/* Status badge */}
-                <Badge 
-                  variant={isConnected ? "default" : "secondary"}
-                  className={`w-full justify-center text-xs py-1 ${
-                    isConnected 
-                      ? (hasPlatformUsername 
-                          ? 'bg-green-500/15 text-green-500 border-green-500/30 hover:bg-green-500/20' 
-                          : 'bg-amber-500/15 text-amber-500 border-amber-500/30 hover:bg-amber-500/20')
-                      : ''
-                  }`}
-                >
-                  {isConnected 
-                    ? (hasPlatformUsername 
-                        ? `✓ @${accountInfo?.platform_username}` 
-                        : '🔄 Sincronizando...')
-                    : 'No conectado'
-                  }
-                </Badge>
+                {/* Status indicator */}
+                <div className={cn(
+                  "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium mb-3",
+                  isConnected 
+                    ? hasPlatformUsername 
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
+                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                    : "bg-muted/60 text-muted-foreground"
+                )}>
+                  {isConnected ? (
+                    hasPlatformUsername ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span className="truncate">@{accountInfo?.platform_username}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Sincronizando...</span>
+                      </>
+                    )
+                  ) : (
+                    <>
+                      <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />
+                      <span>No conectado</span>
+                    </>
+                  )}
+                </div>
 
                 {/* Page selection buttons */}
                 {platform === 'facebook' && isConnected && (
@@ -818,9 +834,9 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                     onClick={handleFacebookPageSelection}
                     variant="outline"
                     size="sm"
-                    className="w-full mt-3 text-xs"
+                    className="w-full mt-2 text-xs h-8 border-dashed"
                   >
-                    <Settings className="w-3 h-3 mr-1" />
+                    <Settings className="w-3 h-3 mr-1.5" />
                     Seleccionar Página
                   </Button>
                 )}
@@ -830,9 +846,9 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                     onClick={handleLinkedInPageSelection}
                     variant="outline"
                     size="sm"
-                    className="w-full mt-3 text-xs"
+                    className="w-full mt-2 text-xs h-8 border-dashed"
                   >
-                    <Settings className="w-3 h-3 mr-1" />
+                    <Settings className="w-3 h-3 mr-1.5" />
                     Seleccionar Página
                   </Button>
                 )}

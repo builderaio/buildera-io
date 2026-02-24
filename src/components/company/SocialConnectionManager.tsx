@@ -170,6 +170,16 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
 
       if (error) throw error as any;
 
+      // Handle structured error responses (e.g., profile limit)
+      if (data && !data.success && data.error === 'profile_limit_reached') {
+        toast({
+          title: "⚠️ Límite de perfiles alcanzado",
+          description: data.message || "Actualiza tu plan de Upload-Post para continuar.",
+          variant: "destructive"
+        });
+        return null;
+      }
+
       if (data?.success) {
         const resolvedUsername = (data as any).companyUsername as string | undefined;
         if (resolvedUsername) {
@@ -198,7 +208,22 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       return null;
     } catch (error: any) {
       console.error('Error initializing profile:', error);
-      if (error?.message?.includes('401') || error?.message?.includes('API Key')) {
+      // Try to extract the response body for more details
+      let errorMsg = error?.message || '';
+      try {
+        if (error?.context?.body) {
+          const body = await error.context.body.json?.() ?? error.context.body;
+          errorMsg = typeof body === 'string' ? body : JSON.stringify(body);
+        }
+      } catch { /* ignore parse errors */ }
+
+      if (errorMsg.includes('limit') || errorMsg.includes('403') || errorMsg.includes('reached the limit')) {
+        toast({
+          title: "⚠️ Límite de perfiles alcanzado",
+          description: "Has alcanzado el límite de perfiles en tu plan de Upload-Post. Actualiza tu plan para continuar.",
+          variant: "destructive"
+        });
+      } else if (errorMsg.includes('401') || errorMsg.includes('API Key')) {
         toast({
           title: "⚠️ Configuración requerida",
           description: "Configure la API Key de Upload-Post para continuar",

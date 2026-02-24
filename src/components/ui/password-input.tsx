@@ -9,7 +9,7 @@ import { useRateLimit } from "@/hooks/useSecurity"
 export interface PasswordInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   showStrengthIndicator?: boolean;
-  onStrengthChange?: (strength: { score: number; isValid: boolean }) => void;
+  onStrengthChange?: (strength: { score: number; isValid: boolean; strength: string }) => void;
 }
 
 // Función para calcular la fuerza de la contraseña en el cliente
@@ -73,7 +73,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
         onStrengthChange?.(newStrength);
       } else {
         setStrength(null);
-        onStrengthChange?.({ score: 0, isValid: false });
+        onStrengthChange?.({ score: 0, isValid: false, strength: 'weak' });
       }
       
       props.onChange?.(e);
@@ -114,7 +114,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
             value={value}
             onChange={handleChange}
             data-sensitive="true" // Marca para detección de seguridad
-            autoComplete="current-password"
+            autoComplete={props.autoComplete || "current-password"}
             {...props}
           />
           <div className="absolute inset-y-0 right-0 flex items-center space-x-1 pr-3">

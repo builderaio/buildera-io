@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,63 @@ import { useWelcomeEmail } from "@/hooks/useWelcomeEmail";
 import { EmailVerificationInfo } from "./EmailVerificationInfo";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
 import { supabase } from "@/integrations/supabase/client";
-import { Linkedin, Mail } from "lucide-react";
+import { Linkedin, Mail, Check, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 
 interface CompanyAuthProps {
   mode: "signin" | "signup";
   onModeChange?: (mode: "signin" | "signup") => void;
 }
+
+/** Inline password requirements checklist for signup */
+const PasswordRequirementsChecklist = ({ password }: { password: string }) => {
+  const { t } = useTranslation('auth');
+  const checks = [
+    { met: password.length >= 8, label: t('passwordStrength.minLength', '8+ caracteres') },
+    { met: /[A-Z]/.test(password), label: t('passwordStrength.uppercase', 'Una mayúscula') },
+    { met: /[0-9]/.test(password), label: t('passwordStrength.number', 'Un número') },
+  ];
+  const metCount = checks.filter(c => c.met).length;
+  const strengthPercent = (metCount / checks.length) * 100;
+  const strengthColor = metCount === checks.length
+    ? 'bg-green-500'
+    : metCount >= 2
+    ? 'bg-yellow-500'
+    : 'bg-red-500';
+  const strengthLabel = metCount === checks.length
+    ? t('passwordStrength.strong', 'Fuerte')
+    : metCount >= 2
+    ? t('passwordStrength.medium', 'Media')
+    : t('passwordStrength.weak', 'Débil');
+
+  return (
+    <div className="space-y-2 pt-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">{t('passwordStrength.label', 'Fortaleza')}</span>
+        <span className={`font-medium ${metCount === checks.length ? 'text-green-600' : metCount >= 2 ? 'text-yellow-600' : 'text-red-600'}`}>
+          {strengthLabel}
+        </span>
+      </div>
+      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-300 ${strengthColor}`}
+          style={{ width: `${strengthPercent}%` }}
+        />
+      </div>
+      <ul className="space-y-1">
+        {checks.map((check, i) => (
+          <li key={i} className="flex items-center gap-1.5 text-xs">
+            {check.met
+              ? <Check className="h-3.5 w-3.5 text-green-500 shrink-0" />
+              : <X className="h-3.5 w-3.5 text-red-400 shrink-0" />}
+            <span className={check.met ? 'text-green-600' : 'text-muted-foreground'}>{check.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const navigate = useNavigate();
@@ -38,10 +88,20 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [passwordStrengthLevel, setPasswordStrengthLevel] = useState<string>('weak');
   const verificationRef = useRef<HTMLDivElement>(null);
   
   const { authMethods, loading: authMethodsLoading } = useAuthMethods();
   const { sendWelcomeEmail } = useWelcomeEmail();
+
+  // Compute password strength for signup button disabling
+  const isPasswordStrongEnough = useMemo(() => {
+    if (mode !== 'signup') return true;
+    const hasMin = password.length >= 8;
+    const hasUpper = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    return hasMin && hasUpper && hasNumber;
+  }, [password, mode]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -481,9 +541,15 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
               value={password}
               onChange={(e) => { setPassword(e.target.value); setPasswordError(""); }}
               required
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              showStrengthIndicator={false}
+              onStrengthChange={(s) => setPasswordStrengthLevel(s.strength)}
             />
             {passwordError && (
               <p className="text-sm text-destructive">{passwordError}</p>
+            )}
+            {mode === "signup" && password.length > 0 && (
+              <PasswordRequirementsChecklist password={password} />
             )}
           </div>
           
@@ -505,7 +571,7 @@ const CompanyAuth = ({ mode, onModeChange }: CompanyAuthProps) => {
             </div>
           )}
 
-        <Button type="submit" className="w-full" disabled={loading || registrationSuccess}>
+        <Button type="submit" className="w-full" disabled={loading || registrationSuccess || (mode === 'signup' && !isPasswordStrongEnough)}>
           {loading 
             ? t('buttons.processing') 
             : registrationSuccess 

@@ -1,25 +1,27 @@
 import { useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { logSecurityEvent } from '@/hooks/useSecurity';
 
 interface SecurityHeadersConfig {
   contentSecurityPolicy?: string;
-  enableHSTS?: boolean;
-  enableFrameProtection?: boolean;
-  enableContentTypeProtection?: boolean;
 }
 
 /**
- * Security headers configuration for the application
+ * CSP configuration for the application (via meta tag).
+ * NOTE: Only CSP and Referrer-Policy work as meta tags.
+ * All other security headers (HSTS, X-Frame-Options, Permissions-Policy, etc.)
+ * are configured via public/_headers as real HTTP headers.
+ * 
+ * unsafe-inline in style-src: REQUIRED by Tailwind CSS and shadcn/ui (inline styles).
+ * unsafe-eval REMOVED: framer-motion does not require it in production builds.
  */
 const DEFAULT_CSP = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://maps.googleapis.com;
+  script-src 'self' 'unsafe-inline' https://js.stripe.com https://maps.googleapis.com https://hcaptcha.com https://*.hcaptcha.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' https://fonts.gstatic.com;
   img-src 'self' data: https: blob:;
-  connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co;
-  frame-src 'self' https://js.stripe.com;
+  connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://hcaptcha.com https://*.hcaptcha.com;
+  frame-src 'self' https://js.stripe.com https://hcaptcha.com https://*.hcaptcha.com;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -27,17 +29,15 @@ const DEFAULT_CSP = `
 `.replace(/\s+/g, ' ').trim();
 
 /**
- * Hook para aplicar security headers mediante meta tags
+ * Hook to apply CSP and Referrer-Policy via meta tags.
+ * Other security headers are applied as real HTTP headers in public/_headers.
  */
 export const useSecurityHeaders = (config: SecurityHeadersConfig = {}) => {
-  const { toast } = useToast();
-  
   const applySecurityHeaders = useCallback(() => {
     try {
-      // Content Security Policy
+      // Content Security Policy (valid as meta tag)
       const csp = config.contentSecurityPolicy || DEFAULT_CSP;
       
-      // Aplicar CSP mediante meta tag
       let cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
       if (!cspMeta) {
         cspMeta = document.createElement('meta');
@@ -46,29 +46,7 @@ export const useSecurityHeaders = (config: SecurityHeadersConfig = {}) => {
       }
       cspMeta.setAttribute('content', csp);
       
-      // X-Frame-Options protection
-      if (config.enableFrameProtection !== false) {
-        let frameMeta = document.querySelector('meta[http-equiv="X-Frame-Options"]');
-        if (!frameMeta) {
-          frameMeta = document.createElement('meta');
-          frameMeta.setAttribute('http-equiv', 'X-Frame-Options');
-          frameMeta.setAttribute('content', 'DENY');
-          document.head.appendChild(frameMeta);
-        }
-      }
-      
-      // X-Content-Type-Options
-      if (config.enableContentTypeProtection !== false) {
-        let contentTypeMeta = document.querySelector('meta[http-equiv="X-Content-Type-Options"]');
-        if (!contentTypeMeta) {
-          contentTypeMeta = document.createElement('meta');
-          contentTypeMeta.setAttribute('http-equiv', 'X-Content-Type-Options');
-          contentTypeMeta.setAttribute('content', 'nosniff');
-          document.head.appendChild(contentTypeMeta);
-        }
-      }
-      
-      // Referrer Policy
+      // Referrer Policy (valid as meta tag)
       let referrerMeta = document.querySelector('meta[name="referrer"]');
       if (!referrerMeta) {
         referrerMeta = document.createElement('meta');
@@ -85,30 +63,21 @@ export const useSecurityHeaders = (config: SecurityHeadersConfig = {}) => {
       
     } catch (error) {
       console.error('Failed to apply security headers:', error);
-      toast({
-        title: "Security Warning",
-        description: "Failed to apply security headers. Please refresh the page.",
-        variant: "destructive"
-      });
     }
-  }, [config, toast]);
+  }, [config]);
   
   return { applySecurityHeaders };
 };
 
 /**
- * Error handler que no filtra información sensible
+ * Secure error handler that doesn't leak sensitive information
  */
 export const useSecureErrorHandler = () => {
-  const { toast } = useToast();
-  
   const handleError = useCallback((error: any, context?: string) => {
-    // Log completo para debugging (solo en desarrollo)
     if (process.env.NODE_ENV === 'development') {
       console.error('Secure Error Handler:', { error, context });
     }
     
-    // Log de seguridad
     logSecurityEvent({
       type: 'suspicious_activity',
       details: {
@@ -119,10 +88,8 @@ export const useSecureErrorHandler = () => {
       risk_level: 'medium'
     });
     
-    // Mensaje genérico al usuario (no revelar detalles internos)
     let userMessage = 'An unexpected error occurred. Please try again.';
     
-    // Solo mostrar errores específicos seguros
     if (error?.message?.includes('Network')) {
       userMessage = 'Network error. Please check your connection.';
     } else if (error?.message?.includes('Authentication')) {
@@ -131,20 +98,14 @@ export const useSecureErrorHandler = () => {
       userMessage = 'You do not have permission to perform this action.';
     }
     
-    toast({
-      title: "Error",
-      description: userMessage,
-      variant: "destructive"
-    });
-    
     return userMessage;
-  }, [toast]);
+  }, []);
   
   return { handleError };
 };
 
 /**
- * Validación de HTTPS en producción
+ * HTTPS validation in production
  */
 export const validateSecureConnection = () => {
   if (process.env.NODE_ENV === 'production' && location.protocol !== 'https:') {
@@ -158,7 +119,6 @@ export const validateSecureConnection = () => {
       risk_level: 'critical'
     });
     
-    // Redirigir a HTTPS
     location.replace(location.href.replace('http:', 'https:'));
     return false;
   }

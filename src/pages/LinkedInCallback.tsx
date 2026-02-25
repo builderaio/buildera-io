@@ -87,9 +87,11 @@ const LinkedInCallback = () => {
           description: `Página empresarial "${data.data.companyPageName}" vinculada exitosamente.`,
         });
 
-        // Redirigir después de un delay
+        // Redirigir después de un delay, respetando contexto de origen
+        const origin = searchParams.get('origin');
+        const targetView = origin === 'activation-wizard' ? 'activation-wizard' : 'marketing-hub';
         setTimeout(() => {
-          navigate('/company-dashboard?view=marketing-hub');
+          navigate(`/company-dashboard?view=${targetView}`);
         }, 2000);
 
       } catch (error: any) {

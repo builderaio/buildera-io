@@ -267,7 +267,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
             action: 'generate_jwt',
                 data: {
                   companyUsername: username,
-                  redirectUrl: `${window.location.origin}/marketing-hub/connections/callback`,
+                  redirectUrl: `${window.location.origin}/marketing-hub/connections/callback?origin=${window.location.search.includes('activation-wizard') ? 'activation-wizard' : 'marketing-hub'}`,
                   platforms: ['tiktok', 'instagram', 'linkedin', 'facebook', 'youtube', 'twitter']
                 }
           }
@@ -302,10 +302,13 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         );
         
         if (!newWindow || newWindow.closed) {
-          console.warn('⚠️ [SocialConnectionManager] Popup bloqueado, redirigiendo en misma pestaña');
-          // Popup bloqueado: fallback en la misma pestaña
+          console.warn('⚠️ [SocialConnectionManager] Popup bloqueado');
           setConnecting(false);
-          window.location.href = data.access_url;
+          toast({
+            title: "Popup bloqueado",
+            description: "Tu navegador bloqueó la ventana emergente. Permite ventanas emergentes para este sitio e intenta de nuevo.",
+            variant: "destructive"
+          });
           return;
         }
         

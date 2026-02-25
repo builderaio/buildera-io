@@ -104,12 +104,16 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
   const [logs, setLogs] = useState<ExecutionLog[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('overview');
 
   const loadData = useCallback(async () => {
-    if (!companyId) return;
+    if (!companyId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [configRes, logsRes, decisionsRes] = await Promise.all([
@@ -125,12 +129,25 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
       setDecisions((decisionsRes.data || []) as any);
     } catch (error) {
       console.error('Error loading autopilot data:', error);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
   }, [companyId]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Timeout de seguridad: si loading dura más de 10s, mostrar error
+  useEffect(() => {
+    if (!loading) return;
+    const timeout = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        setLoadError(true);
+      }
+    }, 10000);
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   const saveConfig = async (updates: Partial<AutopilotConfig>) => {
     if (!companyId) return;
@@ -429,6 +446,31 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <AlertTriangle className="w-10 h-10 text-destructive" />
+        <p className="text-muted-foreground text-sm">{t('autopilot.loadError', 'Error al cargar datos de Autopilot.')}</p>
+        <Button variant="outline" size="sm" onClick={() => { setLoadError(false); loadData(); }}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          {t('autopilot.retry', 'Reintentar')}
+        </Button>
+      </div>
+    );
+  }
+
+  if (!config && logs.length === 0 && decisions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <Brain className="w-10 h-10 text-muted-foreground" />
+        <h3 className="text-lg font-semibold">{t('autopilot.emptyTitle', 'Autopilot no configurado')}</h3>
+        <p className="text-muted-foreground text-sm text-center max-w-md">
+          {t('autopilot.emptyDescription', 'Aún no tienes configuración de Autopilot. Activa el piloto automático para que la IA gestione tus publicaciones y decisiones de marketing.')}
+        </p>
       </div>
     );
   }

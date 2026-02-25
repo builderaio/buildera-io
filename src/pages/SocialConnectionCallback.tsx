@@ -155,8 +155,10 @@ export const SocialConnectionCallback = () => {
       return;
     }
 
-    // O navegar de vuelta si no es un popup
-    navigate('/company-dashboard?view=marketing-hub', { replace: true });
+    // Respetar el contexto de origen para redirigir correctamente
+    const origin = searchParams.get('origin');
+    const targetView = origin === 'activation-wizard' ? 'activation-wizard' : 'marketing-hub';
+    navigate(`/company-dashboard?view=${targetView}`, { replace: true });
   };
 
   return (

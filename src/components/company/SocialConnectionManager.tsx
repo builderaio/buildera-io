@@ -690,7 +690,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
                 Conexiones de Redes Sociales
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                {connectedCount}/{totalPlatforms} plataformas conectadas • {configuredUrlCount}/{connectedCount} URLs configuradas
+                {connectedCount}/{totalPlatforms} plataformas conectadas • {configuredUrlCount}/{totalPlatforms} URLs configuradas
               </p>
             </div>
             <div className="flex items-center gap-2">

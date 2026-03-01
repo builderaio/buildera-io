@@ -358,10 +358,10 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
                     </div>
                     <div>
                       <h2 className="font-semibold text-lg">
-                        {t('common:activationWizard.step1Title', 'Conecta tus redes sociales')}
+                        {t('common:activationWizard.step2Title', 'Conecta tus redes sociales')}
                       </h2>
                       <p className="text-sm text-muted-foreground">
-                        {t('common:activationWizard.step1Desc', 'Para que Buildera pueda gestionar tu contenido automáticamente')}
+                        {t('common:activationWizard.step2Desc', 'Para que Buildera pueda gestionar tu contenido automáticamente')}
                       </p>
                     </div>
                   </div>

@@ -239,25 +239,31 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   const startConnectionFlow = async (): Promise<boolean> => {
     console.log('🔗 [SocialConnectionManager] startConnectionFlow iniciado');
 
-    // Abrir popup inmediatamente por gesto del usuario para evitar bloqueadores
+    // Intentar popup por gesto de usuario; si el navegador lo bloquea, usar fallback en misma pestaña
+    const popupTargetName = `upload-post-connection-${Date.now()}`;
     const popupWindow = window.open(
       'about:blank',
-      'upload-post-connection',
+      popupTargetName,
       'width=800,height=700,scrollbars=yes,resizable=yes'
     );
 
-    if (!popupWindow) {
-      toast({
-        title: "Popup bloqueado",
-        description: "Tu navegador bloqueó la ventana emergente. Permite ventanas emergentes para este sitio e intenta de nuevo.",
-        variant: "destructive"
-      });
-      return false;
-    }
+    const hasPopup = !!popupWindow;
 
-    popupWindow.document.title = 'Conectando redes...';
-    popupWindow.document.body.innerHTML = '<div style="font-family: sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">Preparando conexión segura...</div>';
-    setConnectionWindow(popupWindow);
+    if (hasPopup && popupWindow) {
+      try {
+        popupWindow.document.title = 'Conectando redes...';
+        popupWindow.document.body.innerHTML = '<div style="font-family: sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">Preparando conexión segura...</div>';
+      } catch (popupError) {
+        console.warn('No se pudo escribir estado inicial en el popup:', popupError);
+      }
+      setConnectionWindow(popupWindow);
+    } else {
+      setConnectionWindow(null);
+      toast({
+        title: 'Ventana emergente bloqueada',
+        description: 'Continuaremos en la misma pestaña para completar la conexión.',
+      });
+    }
 
     try {
       setConnecting(true);
@@ -275,11 +281,17 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         username = resolved || '';
         console.log('📝 [SocialConnectionManager] Username resuelto:', username);
         if (!username) {
-          popupWindow.close();
+          if (hasPopup && popupWindow && !popupWindow.closed) popupWindow.close();
           setConnecting(false);
           return false;
         }
       }
+
+      const callbackUrl = new URL(`${window.location.origin}/marketing-hub/connections/callback`);
+      callbackUrl.searchParams.set(
+        'origin',
+        window.location.search.includes('activation-wizard') ? 'activation-wizard' : 'marketing-hub'
+      );
 
       const attemptGenerate = async () => {
         console.log('🎯 [SocialConnectionManager] Intentando generar JWT...');
@@ -288,7 +300,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
             action: 'generate_jwt',
             data: {
               companyUsername: username,
-              redirectUrl: `${window.location.origin}/marketing-hub/connections/callback?origin=${window.location.search.includes('activation-wizard') ? 'activation-wizard' : 'marketing-hub'}`,
+              redirectUrl: callbackUrl.toString(),
               platforms: ['tiktok', 'instagram', 'linkedin', 'facebook', 'youtube', 'twitter']
             }
           }
@@ -315,21 +327,31 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       console.log('📋 [SocialConnectionManager] Datos recibidos:', data);
       
       if (data?.access_url) {
-        console.log('🌐 [SocialConnectionManager] Navegando popup con URL:', data.access_url);
-        popupWindow.location.href = data.access_url;
-        popupWindow.focus();
+        console.log('🌐 [SocialConnectionManager] URL de conexión:', data.access_url);
+
+        if (hasPopup && popupWindow && !popupWindow.closed) {
+          popupWindow.location.href = data.access_url;
+          popupWindow.focus();
+          toast({
+            title: "🔗 Conectando redes sociales",
+            description: "Complete el proceso en la ventana emergente",
+          });
+        } else {
+          window.location.href = data.access_url;
+          toast({
+            title: "🔗 Conectando redes sociales",
+            description: "Redirigiendo en esta misma pestaña para completar la conexión...",
+          });
+        }
+
         setShowConnectionDialog(false);
-
-        toast({
-          title: "🔗 Conectando redes sociales",
-          description: "Complete el proceso en la ventana emergente",
-        });
-
         return true;
       }
 
       console.error('❌ [SocialConnectionManager] No se recibió access_url en la respuesta');
-      popupWindow.document.body.innerHTML = '<div style="font-family: sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">No se pudo iniciar la conexión. Cierra esta ventana e intenta nuevamente.</div>';
+      if (hasPopup && popupWindow && !popupWindow.closed) {
+        popupWindow.document.body.innerHTML = '<div style="font-family: sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">No se pudo iniciar la conexión. Cierra esta ventana e intenta nuevamente.</div>';
+      }
       toast({
         title: "Error",
         description: "No se recibió URL de conexión del servidor",
@@ -339,7 +361,9 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       return false;
     } catch (error: any) {
       console.error('❌ [SocialConnectionManager] Error en startConnectionFlow:', error);
-      popupWindow.document.body.innerHTML = '<div style="font-family: sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">Error iniciando conexión. Cierra esta ventana e intenta nuevamente.</div>';
+      if (hasPopup && popupWindow && !popupWindow.closed) {
+        popupWindow.document.body.innerHTML = '<div style="font-family: sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">Error iniciando conexión. Cierra esta ventana e intenta nuevamente.</div>';
+      }
       toast({
         title: "Error",
         description: error?.message || "No se pudo iniciar el flujo de conexión",
@@ -1063,7 +1087,13 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       </Dialog>
 
       {/* Connection Platform Selection Dialog */}
-      <Dialog open={showConnectionDialog} onOpenChange={setShowConnectionDialog}>
+      <Dialog
+        open={showConnectionDialog}
+        onOpenChange={(open) => {
+          if (!open && connecting) return;
+          setShowConnectionDialog(open);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Conectar Redes Sociales</DialogTitle>

@@ -1081,8 +1081,8 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
               </Button>
               <Button 
                 onClick={() => {
-                  setShowConnectionDialog(false);
                   startConnectionFlow();
+                  setShowConnectionDialog(false);
                 }}
                 className="bg-primary hover:bg-primary/90"
               >

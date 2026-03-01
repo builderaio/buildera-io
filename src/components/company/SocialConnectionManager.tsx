@@ -755,190 +755,137 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         </Alert>
       )}
 
-      {/* Connection Status Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {/* Connection Status - Single Column Bars */}
+      <div className="space-y-3">
         {Object.entries(platformConfig).map(([platform, config]) => {
           const isConnected = getConnectionStatus(platform);
           const accountInfo = getAccountInfo(platform);
-          
           const hasUrl = urlValues[platform] && urlValues[platform].trim() !== '';
           const hasPlatformUsername = !!accountInfo?.platform_username;
-          
+
           return (
             <Card key={platform} className={cn(
-              "relative overflow-hidden transition-all duration-300 group",
-              isConnected 
-                ? hasPlatformUsername 
-                  ? "border-emerald-500/30 shadow-sm shadow-emerald-500/5 hover:shadow-md hover:shadow-emerald-500/10" 
-                  : "border-amber-500/30 shadow-sm shadow-amber-500/5 hover:shadow-md hover:shadow-amber-500/10"
-                : "border-border/60 hover:border-primary/30 hover:shadow-md"
+              "relative overflow-hidden transition-all duration-200",
+              isConnected
+                ? hasPlatformUsername
+                  ? "border-emerald-500/30"
+                  : "border-amber-500/30"
+                : "border-border/60 hover:border-primary/30"
             )}>
-              {/* Subtle gradient accent at top */}
+              {/* Left accent bar */}
               <div className={cn(
-                "absolute top-0 left-0 right-0 h-1 transition-all duration-300",
-                isConnected 
+                "absolute top-0 left-0 bottom-0 w-1",
+                isConnected
                   ? hasPlatformUsername ? "bg-emerald-500" : "bg-amber-500"
-                  : "bg-muted-foreground/20 group-hover:bg-primary/50"
+                  : "bg-muted-foreground/20"
               )} />
 
-              <CardContent className="p-5 pt-6">
-                {/* Platform header */}
-                <div className="flex items-center gap-3.5 mb-4">
+              <CardContent className="p-4 pl-5">
+                <div className="flex items-center gap-4">
+                  {/* Icon */}
                   <div className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center text-white text-xl shrink-0 shadow-lg transition-transform duration-300 group-hover:scale-105",
+                    "w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg shrink-0 shadow-md",
                     config.color
                   )}>
                     <config.Icon />
                   </div>
+
+                  {/* Name + Status */}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-foreground">{config.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-sm text-foreground">{config.name}</h4>
+                      {/* Status badge */}
+                      <span className={cn(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium",
+                        isConnected
+                          ? hasPlatformUsername
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          : "bg-muted/60 text-muted-foreground"
+                      )}>
+                        {isConnected ? (
+                          hasPlatformUsername ? (
+                            <><CheckCircle2 className="w-3 h-3" /> @{accountInfo?.platform_username}</>
+                          ) : (
+                            <><Loader2 className="w-3 h-3 animate-spin" /> Sincronizando</>
+                          )
+                        ) : (
+                          <><div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" /> No conectado</>
+                        )}
+                      </span>
+                    </div>
                     <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      {platform === 'facebook' && accountInfo?.facebook_page_id ? 
-                        `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.facebook_page_id}` :
-                       platform === 'linkedin' && accountInfo?.linkedin_page_id ?
-                        `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.linkedin_page_id}` :
-                       accountInfo?.platform_display_name || accountInfo?.platform_username || 'Sin conexión'}
+                      {platform === 'facebook' && accountInfo?.facebook_page_id
+                        ? `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.facebook_page_id}`
+                        : platform === 'linkedin' && accountInfo?.linkedin_page_id
+                        ? `Página: ${accountInfo.metadata?.selected_page_name || accountInfo.platform_display_name || accountInfo.linkedin_page_id}`
+                        : accountInfo?.platform_display_name || (hasUrl ? urlValues[platform] : 'Sin conexión')}
                     </p>
                   </div>
-                </div>
-                
-                {/* Status indicator */}
-                <div className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium mb-3",
-                  isConnected 
-                    ? hasPlatformUsername 
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
-                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                    : "bg-muted/60 text-muted-foreground"
-                )}>
-                  {isConnected ? (
-                    hasPlatformUsername ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span className="truncate">@{accountInfo?.platform_username}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Sincronizando...</span>
-                      </>
-                    )
-                  ) : (
-                    <>
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />
-                      <span>No conectado</span>
-                    </>
-                  )}
-                </div>
 
-                {/* Page selection buttons */}
-                {platform === 'facebook' && isConnected && (
-                  <Button
-                    onClick={handleFacebookPageSelection}
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-2 text-xs h-8 border-dashed"
-                  >
-                    <Settings className="w-3 h-3 mr-1.5" />
-                    Seleccionar Página
-                  </Button>
-                )}
-                
-                {platform === 'linkedin' && isConnected && (
-                  <Button
-                    onClick={handleLinkedInPageSelection}
-                    variant="outline"
-                    size="sm"
-                    className="w-full mt-2 text-xs h-8 border-dashed"
-                  >
-                    <Settings className="w-3 h-3 mr-1.5" />
-                    Seleccionar Página
-                  </Button>
-                )}
-
-                {/* URL Configuration */}
-                {config.urlField && (
-                  <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                        URL del perfil
-                      </Label>
+                  {/* URL Section - inline */}
+                  {config.urlField && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      {editingUrl === platform ? (
+                        <div className="flex gap-1 w-64">
+                          <Input
+                            value={urlValues[platform] || ''}
+                            onChange={(e) => setUrlValues(prev => ({ ...prev, [platform]: e.target.value }))}
+                            placeholder={
+                              platform === 'linkedin' ? 'linkedin.com/company/...' :
+                              platform === 'instagram' ? 'instagram.com/...' :
+                              platform === 'facebook' ? 'facebook.com/...' :
+                              platform === 'tiktok' ? 'tiktok.com/@...' :
+                              `URL de ${config.name}`
+                            }
+                            className="text-xs h-8"
+                            autoFocus
+                          />
+                          <Button onClick={() => saveUrl(platform)} variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                            <Save className="w-3.5 h-3.5 text-green-500" />
+                          </Button>
+                          <Button onClick={() => setEditingUrl(null)} variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0">
+                            <XCircle className="w-3.5 h-3.5 text-muted-foreground" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <span className={cn(
+                            "text-xs max-w-[180px] truncate px-2 py-1 rounded-md",
+                            hasUrl ? "text-foreground bg-muted/50" : "text-muted-foreground italic bg-muted/30"
+                          )}>
+                            {hasUrl ? urlValues[platform] : 'Sin URL'}
+                          </span>
+                          <Button onClick={() => setEditingUrl(platform)} variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          {hasUrl && (
+                            <Button onClick={() => window.open(urlValues[platform], '_blank')} variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
+                              <ExternalLink className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
                       <SocialURLHelpDialog>
-                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
                           <HelpCircle className="w-3 h-3" />
                         </Button>
                       </SocialURLHelpDialog>
                     </div>
-                    {editingUrl === platform ? (
-                      <div className="flex gap-1">
-                        <Input
-                          value={urlValues[platform] || ''}
-                          onChange={(e) => setUrlValues(prev => ({ ...prev, [platform]: e.target.value }))}
-                          placeholder={
-                            platform === 'linkedin' ? 'linkedin.com/company/...' :
-                            platform === 'instagram' ? 'instagram.com/...' :
-                            platform === 'facebook' ? 'facebook.com/...' :
-                            platform === 'tiktok' ? 'tiktok.com/@...' :
-                            `URL de ${config.name}`
-                          }
-                          className="text-xs h-8"
-                          autoFocus
-                        />
-                        <Button
-                          onClick={() => saveUrl(platform)}
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 shrink-0"
-                          title="Guardar"
-                        >
-                          <Save className="w-3.5 h-3.5 text-green-500" />
-                        </Button>
-                        <Button
-                          onClick={() => setEditingUrl(null)}
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 shrink-0"
-                          title="Cancelar"
-                        >
-                          <XCircle className="w-3.5 h-3.5 text-muted-foreground" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        <div className={`text-xs flex-1 truncate px-2 py-1.5 rounded-md ${
-                          hasUrl 
-                            ? 'text-foreground bg-muted/50' 
-                            : 'text-muted-foreground italic bg-muted/30'
-                        }`}>
-                          {hasUrl 
-                            ? urlValues[platform]
-                            : 'Sin URL'
-                          }
-                        </div>
-                        <Button
-                          onClick={() => setEditingUrl(platform)}
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 shrink-0"
-                          title="Editar URL"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                        {urlValues[platform] && (
-                          <Button
-                            onClick={() => window.open(urlValues[platform], '_blank')}
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 shrink-0"
-                            title="Abrir URL"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                  )}
+
+                  {/* Page selection buttons */}
+                  {platform === 'facebook' && isConnected && (
+                    <Button onClick={handleFacebookPageSelection} variant="outline" size="sm" className="text-xs h-8 border-dashed shrink-0">
+                      <Settings className="w-3 h-3 mr-1.5" /> Seleccionar Página
+                    </Button>
+                  )}
+                  {platform === 'linkedin' && isConnected && (
+                    <Button onClick={handleLinkedInPageSelection} variant="outline" size="sm" className="text-xs h-8 border-dashed shrink-0">
+                      <Settings className="w-3 h-3 mr-1.5" /> Seleccionar Página
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           );

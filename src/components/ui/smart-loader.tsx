@@ -201,7 +201,7 @@ export function SmartLoader({
   };
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 flex items-center justify-center p-4">
       <Card className={`${sizeClasses[size]} shadow-xl ${config.borderColor} border-2`}>
         <CardContent className="space-y-4">
           {/* Header */}

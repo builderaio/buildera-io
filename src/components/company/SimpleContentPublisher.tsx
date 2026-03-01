@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -617,7 +617,7 @@ export default function SimpleContentPublisher({
   const showPlatformParams = hasInstagram || hasTikTok || hasYouTube || hasFacebook || hasPinterest || hasReddit;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -630,6 +630,9 @@ export default function SimpleContentPublisher({
               </Badge>
             )}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {t('publisher.dialogDesc', 'Selecciona plataformas y publica tu contenido en redes sociales')}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">

@@ -156,19 +156,28 @@ serve(async (req) => {
 });
 
 async function generateCompanyUsername(supabaseClient: any, userId: string): Promise<string> {
-  const { data: companies } = await supabaseClient
+  const { data: primaryMember } = await supabaseClient
+    .from('company_members')
+    .select('companies(name)')
+    .eq('user_id', userId)
+    .eq('is_primary', true)
+    .maybeSingle();
+
+  const { data: createdCompany } = await supabaseClient
     .from('companies')
     .select('name')
     .eq('created_by', userId)
-    .limit(1);
+    .limit(1)
+    .maybeSingle();
 
-  let baseName = 'empresa';
-  if (companies?.[0]?.name) {
-    baseName = companies[0].name
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .substring(0, 20);
-  }
+  const rawName = primaryMember?.companies?.name || createdCompany?.name || 'empresa';
+  const baseName = rawName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .substring(0, 20) || 'empresa';
 
   return `${baseName}_${userId.substring(0, 8)}`;
 }

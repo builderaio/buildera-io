@@ -238,6 +238,27 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
   };
   const startConnectionFlow = async () => {
     console.log('🔗 [SocialConnectionManager] startConnectionFlow iniciado');
+
+    // Abrir popup inmediatamente por gesto del usuario para evitar bloqueadores
+    const popupWindow = window.open(
+      'about:blank',
+      'upload-post-connection',
+      'width=800,height=700,scrollbars=yes,resizable=yes'
+    );
+
+    if (!popupWindow) {
+      toast({
+        title: "Popup bloqueado",
+        description: "Tu navegador bloqueó la ventana emergente. Permite ventanas emergentes para este sitio e intenta de nuevo.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    popupWindow.document.title = 'Conectando redes...';
+    popupWindow.document.body.innerHTML = '<div style="font-family: sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">Preparando conexión segura...</div>';
+    setConnectionWindow(popupWindow);
+
     try {
       setConnecting(true);
 
@@ -254,7 +275,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
         username = resolved || '';
         console.log('📝 [SocialConnectionManager] Username resuelto:', username);
         if (!username) {
-          console.error('❌ [SocialConnectionManager] No se pudo resolver username');
+          popupWindow.close();
           setConnecting(false);
           return;
         }
@@ -294,32 +315,17 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       console.log('📋 [SocialConnectionManager] Datos recibidos:', data);
       
       if (data?.access_url) {
-        console.log('🌐 [SocialConnectionManager] Abriendo popup con URL:', data.access_url);
-        const newWindow = window.open(
-          data.access_url,
-          'upload-post-connection',
-          'width=800,height=600,scrollbars=yes,resizable=yes'
-        );
-        
-        if (!newWindow || newWindow.closed) {
-          console.warn('⚠️ [SocialConnectionManager] Popup bloqueado');
-          setConnecting(false);
-          toast({
-            title: "Popup bloqueado",
-            description: "Tu navegador bloqueó la ventana emergente. Permite ventanas emergentes para este sitio e intenta de nuevo.",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        console.log('✅ [SocialConnectionManager] Popup abierto exitosamente');
-        setConnectionWindow(newWindow);
+        console.log('🌐 [SocialConnectionManager] Navegando popup con URL:', data.access_url);
+        popupWindow.location.href = data.access_url;
+        popupWindow.focus();
+
         toast({
           title: "🔗 Conectando redes sociales",
           description: "Complete el proceso en la ventana emergente",
         });
       } else {
         console.error('❌ [SocialConnectionManager] No se recibió access_url en la respuesta');
+        popupWindow.close();
         toast({
           title: "Error",
           description: "No se recibió URL de conexión del servidor",
@@ -329,6 +335,7 @@ export const SocialConnectionManager = ({ profile, onConnectionsUpdated }: Socia
       }
     } catch (error) {
       console.error('❌ [SocialConnectionManager] Error en startConnectionFlow:', error);
+      popupWindow.close();
       toast({
         title: "Error",
         description: "No se pudo iniciar el flujo de conexión",

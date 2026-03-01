@@ -148,21 +148,38 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
     if (!companyId) return;
     setIsGeneratingBrand(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-brand-identity', {
-        body: { companyId }
-      });
-      if (error) throw error;
-      if (data) {
-        const { data: updated } = await supabase
-          .from('company_branding')
-          .select('*')
-          .eq('company_id', companyId)
-          .maybeSingle();
-        if (updated) setBrandingData(updated);
-        toast({ title: "✓", description: t('company:brand.generated', 'Marca generada con IA') });
+      let invokeError: any = null;
+
+      for (const functionName of ['generate-brand-identity', 'brand-identity']) {
+        const { error } = await supabase.functions.invoke(functionName, {
+          body: { companyId }
+        });
+
+        if (!error) {
+          invokeError = null;
+          break;
+        }
+
+        invokeError = error;
       }
-    } catch (err) {
+
+      if (invokeError) throw invokeError;
+
+      const { data: updated } = await supabase
+        .from('company_branding')
+        .select('*')
+        .eq('company_id', companyId)
+        .maybeSingle();
+
+      if (updated) setBrandingData(updated);
+      toast({ title: "✓", description: t('company:brand.generated', 'Marca generada con IA') });
+    } catch (err: any) {
       console.error('Error generating brand:', err);
+      toast({
+        title: t('common:error', 'Error'),
+        description: err?.message || t('company:brand.generateError', 'No se pudo generar la marca con IA'),
+        variant: 'destructive',
+      });
     } finally {
       setIsGeneratingBrand(false);
     }
@@ -341,10 +358,10 @@ const PostOnboardingActivationWizard = ({ profile, onComplete }: PostOnboardingA
                     </div>
                     <div>
                       <h2 className="font-semibold text-lg">
-                        {t('common:activationWizard.step2Title', 'Conecta tus redes sociales')}
+                        {t('common:activationWizard.step1Title', 'Conecta tus redes sociales')}
                       </h2>
                       <p className="text-sm text-muted-foreground">
-                        {t('common:activationWizard.step2Desc', 'Para que Buildera pueda gestionar tu contenido automáticamente')}
+                        {t('common:activationWizard.step1Desc', 'Para que Buildera pueda gestionar tu contenido automáticamente')}
                       </p>
                     </div>
                   </div>

@@ -290,6 +290,12 @@ async function generateJWT(supabaseClient: any, userId: string, apiKey: string, 
   const { companyUsername, redirectUrl, logoImage, platforms } = data;
 
   try {
+    const baseRedirectUrl = redirectUrl
+      ? redirectUrl
+      : `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app')}/marketing-hub/connections/callback`;
+    const redirectSeparator = baseRedirectUrl.includes('?') ? '&' : '?';
+    const finalRedirectUrl = `${baseRedirectUrl}${redirectSeparator}status=success&source=upload_post`;
+
     const response = await fetch('https://api.upload-post.com/api/uploadposts/users/generate-jwt', {
       method: 'POST',
       headers: {
@@ -298,7 +304,7 @@ async function generateJWT(supabaseClient: any, userId: string, apiKey: string, 
       },
       body: JSON.stringify({
         username: companyUsername,
-        redirect_url: redirectUrl ? `${redirectUrl}?status=success&source=upload_post` : `${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'lovable.app')}/marketing-hub/connections/callback?status=success&source=upload_post`,
+        redirect_url: finalRedirectUrl,
         logo_image: logoImage,
         redirect_button_text: 'Volver al Marketing Hub',
         platforms: platforms || ['tiktok', 'instagram', 'linkedin', 'facebook'],

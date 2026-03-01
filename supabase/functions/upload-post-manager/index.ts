@@ -206,7 +206,17 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
   const companyUsername = await generateCompanyUsername(supabaseClient, userId);
 
   try {
-    const checkResponse = await fetch(`https://api.upload-post.com/api/uploadposts/users/${companyUsername}`, {
+    // First check if we already have a stored username in the DB
+    const { data: existingAccount } = await supabaseClient
+      .from('social_accounts')
+      .select('company_username')
+      .eq('user_id', userId)
+      .eq('platform', 'upload_post_profile')
+      .maybeSingle();
+
+    const usernameToCheck = existingAccount?.company_username || companyUsername;
+
+    const checkResponse = await fetch(`https://api.upload-post.com/api/uploadposts/users/${usernameToCheck}`, {
       method: 'GET',
       headers: {
         'Authorization': AUTH_HEADER(apiKey),
@@ -217,7 +227,7 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
     if (checkResponse.ok) {
       const existing = await checkResponse.json();
       const socialAccounts = existing?.profile?.social_accounts || {};
-      await updateSocialAccountsFromProfile(supabaseClient, userId, companyUsername, socialAccounts);
+      await updateSocialAccountsFromProfile(supabaseClient, userId, usernameToCheck, socialAccounts);
 
       const companyId = await getPrimaryCompanyId(supabaseClient, userId);
       await supabaseClient
@@ -225,7 +235,7 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
         .upsert({
           user_id: userId,
           company_id: companyId,
-          company_username: companyUsername,
+          company_username: usernameToCheck,
           platform: 'upload_post_profile',
           upload_post_profile_exists: true,
           is_connected: true,
@@ -235,10 +245,40 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
 
       return { 
         success: true, 
-        companyUsername, 
+        companyUsername: usernameToCheck, 
         profileExists: true,
         message: 'Perfil ya existe, sincronizando conexiones...' 
       };
+    }
+
+    // If the stored username also doesn't exist, and it differs from generated, try the generated one
+    if (usernameToCheck !== companyUsername && checkResponse.status === 404) {
+      const checkGenerated = await fetch(`https://api.upload-post.com/api/uploadposts/users/${companyUsername}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': AUTH_HEADER(apiKey),
+          'Content-Type': 'application/json',
+        }
+      });
+      if (checkGenerated.ok) {
+        const existing = await checkGenerated.json();
+        const socialAccounts = existing?.profile?.social_accounts || {};
+        await updateSocialAccountsFromProfile(supabaseClient, userId, companyUsername, socialAccounts);
+        const companyId = await getPrimaryCompanyId(supabaseClient, userId);
+        await supabaseClient
+          .from('social_accounts')
+          .upsert({
+            user_id: userId,
+            company_id: companyId,
+            company_username: companyUsername,
+            platform: 'upload_post_profile',
+            upload_post_profile_exists: true,
+            is_connected: true,
+            connected_at: new Date().toISOString(),
+            last_sync_at: new Date().toISOString(),
+          }, { onConflict: 'user_id,platform' });
+        return { success: true, companyUsername, profileExists: true, message: 'Perfil encontrado y sincronizado' };
+      }
     }
 
     if (checkResponse.status === 404) {
@@ -253,8 +293,69 @@ async function initializeProfile(supabaseClient: any, userId: string, apiKey: st
 
       if (!createResponse.ok) {
         const errorText = await createResponse.text();
-        // Return a structured error instead of throwing, so the client gets a proper status
+        
+        // If profile limit reached, try to list existing profiles and reuse one
         if (createResponse.status === 403) {
+          console.log('Profile limit reached, attempting to list and reuse existing profiles...');
+          
+          // Try listing profiles from the API
+          const listResponse = await fetch('https://api.upload-post.com/api/uploadposts/users', {
+            method: 'GET',
+            headers: {
+              'Authorization': AUTH_HEADER(apiKey),
+              'Content-Type': 'application/json',
+            }
+          });
+
+          if (listResponse.ok) {
+            const listData = await listResponse.json();
+            const profiles = listData?.users || listData?.profiles || listData?.data || (Array.isArray(listData) ? listData : []);
+            
+            if (profiles.length > 0) {
+              // Reuse the first available profile
+              const reusedUsername = profiles[0]?.username || profiles[0]?.name || profiles[0];
+              if (typeof reusedUsername === 'string' && reusedUsername) {
+                console.log('Reusing existing profile:', reusedUsername);
+                
+                // Try to get the profile details
+                const reuseCheck = await fetch(`https://api.upload-post.com/api/uploadposts/users/${reusedUsername}`, {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': AUTH_HEADER(apiKey),
+                    'Content-Type': 'application/json',
+                  }
+                });
+
+                if (reuseCheck.ok) {
+                  const reuseData = await reuseCheck.json();
+                  const socialAccounts = reuseData?.profile?.social_accounts || {};
+                  await updateSocialAccountsFromProfile(supabaseClient, userId, reusedUsername, socialAccounts);
+                  
+                  const companyId = await getPrimaryCompanyId(supabaseClient, userId);
+                  await supabaseClient
+                    .from('social_accounts')
+                    .upsert({
+                      user_id: userId,
+                      company_id: companyId,
+                      company_username: reusedUsername,
+                      platform: 'upload_post_profile',
+                      upload_post_profile_exists: true,
+                      is_connected: true,
+                      connected_at: new Date().toISOString(),
+                      last_sync_at: new Date().toISOString(),
+                    }, { onConflict: 'user_id,platform' });
+                  
+                  return { 
+                    success: true, 
+                    companyUsername: reusedUsername, 
+                    profileExists: true,
+                    message: 'Perfil existente reutilizado exitosamente'
+                  };
+                }
+              }
+            }
+          }
+
           return { 
             success: false, 
             error: 'profile_limit_reached',

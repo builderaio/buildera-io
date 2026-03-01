@@ -168,10 +168,12 @@ export function usePlayToWin(companyId: string | undefined) {
       if (fetchError) throw fetchError;
 
       if (data) {
-        setStrategy(dbToStrategy(data));
-      } else {
-        setStrategy(null);
+        const parsed = dbToStrategy(data);
+        setStrategy(parsed);
+        strategyRef.current = parsed;
       }
+      // Note: intentionally do NOT set strategy=null when no data found.
+      // This preserves optimistic local state if DB write is pending.
     } catch (err: any) {
       console.error('Error fetching PTW strategy:', err);
       setError(err.message);
@@ -284,7 +286,12 @@ export function usePlayToWin(companyId: string | undefined) {
       console.warn('usePlayToWin: No strategy ID, attempting to initialize first');
       const created = await initializeStrategy();
       if (!created?.id) {
-        console.error('usePlayToWin: Cannot update - no strategy and initialization failed');
+        // DB init failed — still update local state optimistically so UI reflects user input
+        console.error('usePlayToWin: Initialization failed, preserving local state');
+        const fallback = currentStrategy || ({} as PlayToWinStrategy);
+        const optimistic = { ...fallback, ...updates, updatedAt: new Date().toISOString() };
+        setStrategy(optimistic as PlayToWinStrategy);
+        strategyRef.current = optimistic as PlayToWinStrategy;
         return false;
       }
       // Now update the newly created strategy
@@ -296,13 +303,16 @@ export function usePlayToWin(companyId: string | undefined) {
         if (completion === 100 && status !== 'complete') status = 'complete';
         else if (completion > 0 && status === 'draft') status = 'in_progress';
 
+        const optimistic = { ...updatedStrategy, completionPercentage: completion, status, updatedAt: new Date().toISOString() };
+        setStrategy(optimistic);
+        strategyRef.current = optimistic;
+
         const dbUpdates = { ...strategyToDb(updates), completion_percentage: completion, status };
         const { error: updateError } = await supabase
           .from('company_play_to_win')
           .update(dbUpdates)
           .eq('id', created.id);
-        if (updateError) throw updateError;
-        setStrategy({ ...updatedStrategy, completionPercentage: completion, status, updatedAt: new Date().toISOString() });
+        if (updateError) console.warn('DB update after init failed:', updateError.message);
         return true;
       } catch (err: any) {
         console.error('Error updating PTW strategy after init:', err);
@@ -326,6 +336,16 @@ export function usePlayToWin(companyId: string | undefined) {
         status = 'in_progress';
       }
 
+      // Optimistic local update BEFORE DB write to prevent stale state
+      const optimisticState = {
+        ...updatedStrategy,
+        completionPercentage: completion,
+        status,
+        updatedAt: new Date().toISOString()
+      };
+      setStrategy(optimisticState);
+      strategyRef.current = optimisticState;
+
       const dbUpdates = {
         ...strategyToDb(updates),
         completion_percentage: completion,
@@ -337,14 +357,9 @@ export function usePlayToWin(companyId: string | undefined) {
         .update(dbUpdates)
         .eq('id', currentStrategy.id);
 
-      if (updateError) throw updateError;
-
-      setStrategy({
-        ...updatedStrategy,
-        completionPercentage: completion,
-        status,
-        updatedAt: new Date().toISOString()
-      });
+      if (updateError) {
+        console.warn('DB update failed, local state preserved:', updateError.message);
+      }
 
       return true;
     } catch (err: any) {

@@ -55,7 +55,6 @@ export default function FounderPTWSimplified({
     isSaving,
     initializeStrategy,
     updateStrategy,
-    refetch
   } = usePlayToWin(companyId);
 
   const { inferredData, isLoading: isDiagnosticLoading } = useDiagnosticInference(companyId);
@@ -87,13 +86,10 @@ export default function FounderPTWSimplified({
     } else {
       // Explicitly flush step 3 data before finalizing
       if (stepRef.current) await stepRef.current.flush();
-      // Update status — updateStrategy now uses ref, so it sees flushed data
-      await updateStrategy({ 
-        status: 'in_progress',
-        generatedWithAI: false 
-      });
-      // Re-fetch from DB to ensure activeStrategy has ALL persisted fields
-      await refetch();
+      // Note: We intentionally do NOT call a separate updateStrategy or refetch here.
+      // The flush already persisted step data and updated local state optimistically.
+      // A separate updateStrategy would read stale strategyRef and overwrite flush data.
+      // A refetch could return null if DB write hasn't committed, clearing local state.
       setIsComplete(true);
     }
   };

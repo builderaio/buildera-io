@@ -136,7 +136,7 @@ export function useAgenticMaturityScore(companyId: string | null): AgenticMaturi
 
   const persistSnapshot = useCallback(async () => {
     if (!companyId) return;
-    await supabase.from('agentic_maturity_scores' as any).insert({
+    await supabase.from('agentic_maturity_scores').insert({
       company_id: companyId,
       business_model_score: businessModel.score,
       operating_model_score: operatingModel.score,

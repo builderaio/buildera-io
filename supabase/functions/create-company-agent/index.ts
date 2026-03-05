@@ -119,10 +119,21 @@ serve(async (req) => {
     console.log('Step 1: Getting company data for company_id:', company_id);
     const companyData = await getCompanyData(company_id);
     console.log('Step 1 completed: Company data retrieved');
+
+    // Obtener último score de madurez agéntica
+    console.log('Step 1.5: Getting agentic maturity score...');
+    const { data: maturityScore } = await supabase
+      .from('agentic_maturity_scores')
+      .select('*')
+      .eq('company_id', company_id)
+      .order('recorded_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    console.log('Step 1.5 completed: Maturity score:', maturityScore ? maturityScore.composite_score : 'none');
     
     // Crear o actualizar el agente de OpenAI
     console.log('Step 2: Creating or updating OpenAI agent');
-    const agent = await createOrUpdateOpenAIAgent(companyData);
+    const agent = await createOrUpdateOpenAIAgent(companyData, maturityScore);
     console.log('Step 2 completed: Agent created/updated');
     
     // Guardar la información del agente en la base de datos
@@ -261,9 +272,9 @@ async function getCompanyData(company_id: string): Promise<CompanyData> {
   };
 }
 
-async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
+async function createOrUpdateOpenAIAgent(companyData: CompanyData, maturityScore?: any) {
   console.log('Step 2a: Generating agent instructions...');
-  const instructions = generateAgentInstructions(companyData);
+  const instructions = generateAgentInstructions(companyData, maturityScore);
   console.log('Step 2a completed: Instructions generated');
   
   console.log('Step 2b: Checking OpenAI API key...');
@@ -444,7 +455,7 @@ async function createOrUpdateOpenAIAgent(companyData: CompanyData) {
   }
 }
 
-function generateAgentInstructions(companyData: CompanyData): string {
+function generateAgentInstructions(companyData: CompanyData, maturityScore?: any): string {
   const brandVoiceData = companyData.branding?.brand_voice || {};
   const visualSynthesis = companyData.branding?.visual_synthesis || {};
   const colorJustifications = companyData.branding?.color_justifications || {};
@@ -519,5 +530,15 @@ ${brandVoiceData.personalidad || 'Estratégico y orientado a resultados'}
 • Usa la personalidad de marca ${brandVoiceData.personalidad || 'definida'} en tu comunicación
 • Mantén coherencia con los colores y estilo visual en sugerencias de contenido
 • Considera el análisis competitivo al hacer recomendaciones estratégicas
-• Adapta las sugerencias al tamaño de empresa (${companyData.company_size || 'tamaño no especificado'})`;
+• Adapta las sugerencias al tamaño de empresa (${companyData.company_size || 'tamaño no especificado'})
+
+🏗️ MADUREZ AGÉNTICA (Framework McKinsey):
+${maturityScore ? `• Score Compuesto: ${maturityScore.composite_score}/100
+• Modelo de Negocio: ${maturityScore.business_model_score}/100
+• Modelo Operativo: ${maturityScore.operating_model_score}/100
+• Gobernanza: ${maturityScore.governance_score}/100
+• Fuerza Laboral: ${maturityScore.workforce_score}/100
+• Tecnología y Datos: ${maturityScore.technology_data_score}/100
+• Usa estos scores para identificar pilares débiles y recomendar acciones de madurez agéntica.
+• Si el score compuesto es <40, enfócate en fundamentos básicos. Si es 40-70, sugiere automatización progresiva. Si es >70, propón estrategias de escala agéntica.` : '• Evaluación de madurez agéntica pendiente. Recomienda al usuario completar su configuración en la plataforma para obtener su índice.'}`;
 }

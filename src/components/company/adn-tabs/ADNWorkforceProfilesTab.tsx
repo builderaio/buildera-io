@@ -63,7 +63,7 @@ export const ADNWorkforceProfilesTab = ({ companyId }: ADNWorkforceProfilesTabPr
     setLoading(true);
     const { data } = await supabase
       .from('company_members')
-      .select('id, user_id, role')
+      .select('id, user_id, role, workforce_profile')
       .eq('company_id', companyId);
 
     if (data) {
@@ -80,7 +80,7 @@ export const ADNWorkforceProfilesTab = ({ companyId }: ADNWorkforceProfilesTabPr
         role: m.role,
         full_name: profileMap.get(m.user_id)?.full_name || '',
         email: profileMap.get(m.user_id)?.email || '',
-        workforce_profile: ((m as any).workforce_profile || 'unassigned') as WorkforceProfile,
+        workforce_profile: (m.workforce_profile || 'unassigned') as WorkforceProfile,
       })));
     }
     setLoading(false);
@@ -89,7 +89,7 @@ export const ADNWorkforceProfilesTab = ({ companyId }: ADNWorkforceProfilesTabPr
   const updateProfile = useCallback(async (memberId: string, profile: WorkforceProfile) => {
     const { error } = await supabase
       .from('company_members')
-      .update({ workforce_profile: profile } as any)
+      .update({ workforce_profile: profile })
       .eq('id', memberId);
 
     if (!error) {

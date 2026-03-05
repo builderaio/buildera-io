@@ -27,6 +27,7 @@ import {
   ADNProductsTab,
   ADNTeamTab,
   ADNAgentPrefsSimplified,
+  ADNWorkforceProfilesTab,
 } from "./adn-tabs";
 import { cn } from "@/lib/utils";
 
@@ -550,6 +551,7 @@ const BusinessConfigurationHub = ({ profile, onProfileUpdate }: BusinessConfigur
 
         <TabsContent value="equipo" className="space-y-6 mt-0">
           <ADNTeamTab />
+          <ADNWorkforceProfilesTab companyId={companyData?.id} />
         </TabsContent>
 
         <TabsContent value="agentes" className="space-y-6 mt-0">

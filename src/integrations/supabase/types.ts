@@ -140,6 +140,56 @@ export type Database = {
           },
         ]
       }
+      agentic_maturity_scores: {
+        Row: {
+          business_model_score: number | null
+          company_id: string
+          composite_score: number | null
+          created_at: string | null
+          governance_score: number | null
+          id: string
+          operating_model_score: number | null
+          pillar_details: Json | null
+          recorded_at: string | null
+          technology_data_score: number | null
+          workforce_score: number | null
+        }
+        Insert: {
+          business_model_score?: number | null
+          company_id: string
+          composite_score?: number | null
+          created_at?: string | null
+          governance_score?: number | null
+          id?: string
+          operating_model_score?: number | null
+          pillar_details?: Json | null
+          recorded_at?: string | null
+          technology_data_score?: number | null
+          workforce_score?: number | null
+        }
+        Update: {
+          business_model_score?: number | null
+          company_id?: string
+          composite_score?: number | null
+          created_at?: string | null
+          governance_score?: number | null
+          id?: string
+          operating_model_score?: number | null
+          pillar_details?: Json | null
+          recorded_at?: string | null
+          technology_data_score?: number | null
+          workforce_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agentic_maturity_scores_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_assessments: {
         Row: {
           ai_evaluation: Json | null
@@ -2966,6 +3016,7 @@ export type Database = {
           joined_at: string
           role: string
           user_id: string
+          workforce_profile: string | null
         }
         Insert: {
           company_id: string
@@ -2974,6 +3025,7 @@ export type Database = {
           joined_at?: string
           role?: string
           user_id: string
+          workforce_profile?: string | null
         }
         Update: {
           company_id?: string
@@ -2982,6 +3034,7 @@ export type Database = {
           joined_at?: string
           role?: string
           user_id?: string
+          workforce_profile?: string | null
         }
         Relationships: [
           {

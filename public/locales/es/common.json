@@ -1709,5 +1709,66 @@
     "heroDesc": "Completa estos pasos para activar la automatización y que Buildera trabaje por ti.",
     "startActivation": "Comenzar Activación",
     "checklist": "Pasos para activar tu negocio"
+  },
+  "agenticMaturity": {
+    "title": "Índice de Madurez Agéntica",
+    "subtitle": "Framework McKinsey — 5 pilares de transformación",
+    "recommendation": "Recomendación",
+    "pillar": {
+      "businessModel": "Modelo de Negocio",
+      "operatingModel": "Modelo Operativo",
+      "governance": "Gobernanza",
+      "workforce": "Fuerza Laboral",
+      "technologyData": "Tecnología y Datos"
+    },
+    "level": {
+      "leader": "Líder Agéntico",
+      "advanced": "Avanzado",
+      "developing": "En Desarrollo",
+      "initial": "Inicial"
+    },
+    "bm": {
+      "website": "Sitio web configurado",
+      "socialChannels": "Canal social activo",
+      "multiChannel": "Multi-canal (3+)",
+      "products": "Productos registrados",
+      "strategy": "Propuesta de valor definida",
+      "branding": "Voz de marca definida"
+    },
+    "om": {
+      "agentsConfigured": "Agentes configurados",
+      "agentsActive": "3+ agentes activos",
+      "agentsDiverse": "5+ agentes diversos",
+      "autopilotRuns": "Autopilot ejecutado",
+      "recurringExecs": "Ejecuciones recurrentes"
+    },
+    "gov": {
+      "capsActive": "Capacidades activas",
+      "guardrails": "Guardrails configurados",
+      "successRate": "3+ ejecuciones exitosas",
+      "autopilotCycles": "5+ ciclos de autopilot",
+      "humanReview": "Revisión humana activa"
+    },
+    "wf": {
+      "teamConfigured": "Equipo configurado (2+)",
+      "rolesAssigned": "Roles asignados",
+      "ownerDefined": "Propietario definido",
+      "multipleRoles": "Múltiples roles (3+)",
+      "teamSize": "Equipo amplio (5+)"
+    },
+    "td": {
+      "socialIntegrations": "Integración social activa",
+      "multiPlatform": "Multi-plataforma (2+)",
+      "dataProprietary": "Datos propietarios cargados",
+      "agentProtocols": "Protocolos agente-agente",
+      "fullStack": "Stack completo (3+ canales + 3+ agentes)"
+    },
+    "rec": {
+      "businessModel": "Conecta canales digitales y registra tus productos para fortalecer tu modelo de negocio agéntico.",
+      "operatingModel": "Activa más agentes IA y configura ejecuciones recurrentes para automatizar tus operaciones.",
+      "governance": "Configura guardrails y activa capacidades del autopilot para establecer gobernanza sólida.",
+      "workforce": "Amplía tu equipo y asigna roles claros para preparar tu organización para la era agéntica.",
+      "technologyData": "Conecta más plataformas e integra datos propietarios para maximizar tu capacidad tecnológica."
+    }
   }
 }

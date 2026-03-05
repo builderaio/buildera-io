@@ -1655,5 +1655,35 @@
     "heroDesc": "Complete these steps to activate automation and let Buildera work for you.",
     "startActivation": "Start Activation",
     "checklist": "Steps to activate your business"
+  },
+  "agenticMaturity": {
+    "title": "Agentic Maturity Index",
+    "subtitle": "McKinsey Framework — 5 transformation pillars",
+    "recommendation": "Recommendation",
+    "pillar": {
+      "businessModel": "Business Model",
+      "operatingModel": "Operating Model",
+      "governance": "Governance",
+      "workforce": "Workforce",
+      "technologyData": "Technology & Data"
+    },
+    "level": {
+      "leader": "Agentic Leader",
+      "advanced": "Advanced",
+      "developing": "Developing",
+      "initial": "Initial"
+    },
+    "bm": { "website": "Website configured", "socialChannels": "Active social channel", "multiChannel": "Multi-channel (3+)", "products": "Products registered", "strategy": "Value proposition defined", "branding": "Brand voice defined" },
+    "om": { "agentsConfigured": "Agents configured", "agentsActive": "3+ active agents", "agentsDiverse": "5+ diverse agents", "autopilotRuns": "Autopilot executed", "recurringExecs": "Recurring executions" },
+    "gov": { "capsActive": "Active capabilities", "guardrails": "Guardrails configured", "successRate": "3+ successful executions", "autopilotCycles": "5+ autopilot cycles", "humanReview": "Human review active" },
+    "wf": { "teamConfigured": "Team configured (2+)", "rolesAssigned": "Roles assigned", "ownerDefined": "Owner defined", "multipleRoles": "Multiple roles (3+)", "teamSize": "Large team (5+)" },
+    "td": { "socialIntegrations": "Active social integration", "multiPlatform": "Multi-platform (2+)", "dataProprietary": "Proprietary data loaded", "agentProtocols": "Agent-to-agent protocols", "fullStack": "Full stack (3+ channels + 3+ agents)" },
+    "rec": {
+      "businessModel": "Connect digital channels and register your products to strengthen your agentic business model.",
+      "operatingModel": "Activate more AI agents and set up recurring executions to automate your operations.",
+      "governance": "Configure guardrails and activate autopilot capabilities for solid governance.",
+      "workforce": "Expand your team and assign clear roles to prepare your organization for the agentic era.",
+      "technologyData": "Connect more platforms and integrate proprietary data to maximize your tech capability."
+    }
   }
 }

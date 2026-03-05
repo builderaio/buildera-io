@@ -392,5 +392,18 @@
       "credits": "Créditos hoy",
       "nextCycle": "Próximo ciclo"
     }
+  },
+  "workforceProfiles": {
+    "title": "Perfiles de Fuerza Laboral Agéntica",
+    "subtitle": "Clasifica a tu equipo según el framework McKinsey para la era agéntica",
+    "mShaped": "M-Shaped (Orquestador)",
+    "mShapedDesc": "Generalistas que orquestan múltiples agentes IA y supervisan resultados cross-funcionales",
+    "tShaped": "T-Shaped (Especialista)",
+    "tShapedDesc": "Expertos de dominio profundo que guían agentes IA en áreas técnicas específicas",
+    "frontline": "Frontline IA",
+    "frontlineDesc": "Operativos empoderados con herramientas IA para multiplicar su productividad",
+    "unassigned": "Sin asignar",
+    "noMembers": "Agrega miembros a tu equipo primero.",
+    "info": "M-shaped: generalistas que orquestan agentes IA. T-shaped: especialistas de dominio profundo. Frontline: operativos empoderados con herramientas IA."
   }
 }

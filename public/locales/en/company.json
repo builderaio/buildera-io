@@ -392,5 +392,18 @@
       "credits": "Credits today",
       "nextCycle": "Next cycle"
     }
+  },
+  "workforceProfiles": {
+    "title": "Agentic Workforce Profiles",
+    "subtitle": "Classify your team using the McKinsey framework for the agentic era",
+    "mShaped": "M-Shaped (Orchestrator)",
+    "mShapedDesc": "Generalists who orchestrate multiple AI agents and supervise cross-functional outcomes",
+    "tShaped": "T-Shaped (Specialist)",
+    "tShapedDesc": "Deep domain experts who guide AI agents in specific technical areas",
+    "frontline": "AI Frontline",
+    "frontlineDesc": "Operational workers empowered with AI tools to multiply their productivity",
+    "unassigned": "Unassigned",
+    "noMembers": "Add team members first.",
+    "info": "M-shaped: generalists who orchestrate AI agents. T-shaped: deep domain specialists. Frontline: operational workers empowered with AI tools."
   }
 }

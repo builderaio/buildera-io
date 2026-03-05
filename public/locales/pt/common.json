@@ -1655,5 +1655,35 @@
     "heroDesc": "Complete estes passos para ativar a automação e deixar a Buildera trabalhar por você.",
     "startActivation": "Começar Ativação",
     "checklist": "Passos para ativar seu negócio"
+  },
+  "agenticMaturity": {
+    "title": "Índice de Maturidade Agêntica",
+    "subtitle": "Framework McKinsey — 5 pilares de transformação",
+    "recommendation": "Recomendação",
+    "pillar": {
+      "businessModel": "Modelo de Negócio",
+      "operatingModel": "Modelo Operacional",
+      "governance": "Governança",
+      "workforce": "Força de Trabalho",
+      "technologyData": "Tecnologia e Dados"
+    },
+    "level": {
+      "leader": "Líder Agêntico",
+      "advanced": "Avançado",
+      "developing": "Em Desenvolvimento",
+      "initial": "Inicial"
+    },
+    "bm": { "website": "Site configurado", "socialChannels": "Canal social ativo", "multiChannel": "Multi-canal (3+)", "products": "Produtos registrados", "strategy": "Proposta de valor definida", "branding": "Voz de marca definida" },
+    "om": { "agentsConfigured": "Agentes configurados", "agentsActive": "3+ agentes ativos", "agentsDiverse": "5+ agentes diversos", "autopilotRuns": "Autopilot executado", "recurringExecs": "Execuções recorrentes" },
+    "gov": { "capsActive": "Capacidades ativas", "guardrails": "Guardrails configurados", "successRate": "3+ execuções bem-sucedidas", "autopilotCycles": "5+ ciclos de autopilot", "humanReview": "Revisão humana ativa" },
+    "wf": { "teamConfigured": "Equipe configurada (2+)", "rolesAssigned": "Funções atribuídas", "ownerDefined": "Proprietário definido", "multipleRoles": "Múltiplas funções (3+)", "teamSize": "Equipe ampla (5+)" },
+    "td": { "socialIntegrations": "Integração social ativa", "multiPlatform": "Multi-plataforma (2+)", "dataProprietary": "Dados proprietários carregados", "agentProtocols": "Protocolos agente-a-agente", "fullStack": "Stack completo (3+ canais + 3+ agentes)" },
+    "rec": {
+      "businessModel": "Conecte canais digitais e registre seus produtos para fortalecer seu modelo de negócio agêntico.",
+      "operatingModel": "Ative mais agentes IA e configure execuções recorrentes para automatizar suas operações.",
+      "governance": "Configure guardrails e ative capacidades do autopilot para governança sólida.",
+      "workforce": "Amplie sua equipe e atribua funções claras para preparar sua organização para a era agêntica.",
+      "technologyData": "Conecte mais plataformas e integre dados proprietários para maximizar sua capacidade tecnológica."
+    }
   }
 }

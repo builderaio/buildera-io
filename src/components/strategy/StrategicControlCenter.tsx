@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { BusinessModelType } from '@/types/playToWin';
+import AgenticMaturityAssessment from './AgenticMaturityAssessment';
 
 interface StrategicControlCenterProps {
   profile: any;
@@ -529,6 +530,9 @@ export default function StrategicControlCenter({ profile }: StrategicControlCent
           </motion.div>
         </div>
       </div>
+
+      {/* Agentic Maturity Assessment - McKinsey Framework */}
+      <AgenticMaturityAssessment companyId={companyId} />
     </div>
   );
 }

@@ -16,6 +16,9 @@ export { ADNVoiceCommunicationTab } from './ADNVoiceCommunicationTab';
 export { ADNScheduleSimplified } from './ADNScheduleSimplified';
 export { ADNAgentPrefsSimplified } from './ADNAgentPrefsSimplified';
 
+// Workforce Profiles (McKinsey Agentic Framework)
+export { ADNWorkforceProfilesTab } from './ADNWorkforceProfilesTab';
+
 // Shared
 export { AutoSaveField } from './shared/AutoSaveField';
 

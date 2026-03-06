@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User, Brain, Handshake, Shield, Sparkles } from 'lucide-react';
+import { Building, Bot, LogOut, Activity, Zap, Menu, Megaphone, Settings, User, Brain, Handshake, Shield, Sparkles, Crosshair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,7 @@ import { useCompanyCredits } from '@/hooks/useCompanyCredits';
 import { useCompany } from '@/contexts/CompanyContext';
 import { useCompanyState } from '@/hooks/useCompanyState';
 import { useDepartmentUnlocking } from '@/hooks/useDepartmentUnlocking';
+import { useJourneyProgression } from '@/hooks/useJourneyProgression';
 
 interface Profile {
   id: string;
@@ -353,6 +354,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
       'mando-central': '/company-dashboard?view=panel',
       'marketing-hub': '/company-dashboard?view=marketing-hub',
       'autopilot': '/company-dashboard?view=autopilot',
+      'strategic-control': '/company-dashboard?view=strategic-control',
       'agentes': '/company-dashboard?view=agentes',
       'mis-agentes': '/company-dashboard?view=agentes',
       'marketplace': '/company-dashboard?view=agentes',
@@ -380,11 +382,15 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
   // Sidebar navigation with Lucide icons (no emojis)
   const activeDeptCount = departments.filter(d => d.autopilot_enabled).length;
   const [journeyStep, setJourneyStep] = useState<number>(1);
+  const { checkAndAdvance } = useJourneyProgression(companyId || undefined);
 
-  // Fetch journey step for progressive sidebar
+  // Fetch journey step and auto-advance on load
   useEffect(() => {
     if (!companyId) return;
-    const fetchJourneyStep = async () => {
+    const fetchAndAdvance = async () => {
+      // First check and advance based on actual data
+      await checkAndAdvance();
+      // Then fetch the (possibly updated) step
       const { data } = await supabase
         .from('companies')
         .select('journey_current_step')
@@ -392,18 +398,19 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
         .single();
       if (data?.journey_current_step) setJourneyStep(data.journey_current_step);
     };
-    fetchJourneyStep();
-  }, [companyId]);
+    fetchAndAdvance();
+  }, [companyId, checkAndAdvance]);
 
   const allSidebarItems = [
     { id: 'panel', label: t('common:sidebar.commandCenter', 'Centro de Comando'), icon: Activity, badge: null, minStep: 1 },
     { id: 'marketing-hub', label: t('common:sidebar.marketingHub', 'Marketing Hub'), icon: Megaphone, badge: null, minStep: 1 },
     { id: 'negocio', label: t('common:sidebar.myCompany', 'Mi Negocio'), icon: Building, badge: null, minStep: 1 },
+    { id: 'strategic-control', label: t('common:sidebar.strategicControl', 'Control Estratégico'), icon: Crosshair, badge: null, minStep: 2 },
     { id: 'agentes', label: t('common:sidebar.aiAgents', 'Agentes IA'), icon: Bot, badge: null, minStep: 3 },
-    { id: 'autopilot', label: t('common:sidebar.enterpriseBrain', 'Cerebro Empresarial'), icon: Brain, badge: activeDeptCount > 0 ? `${activeDeptCount}` : null, minStep: 4 },
-    { id: 'gobernanza', label: t('common:sidebar.governance', 'Gobernanza'), icon: Shield, badge: null, minStep: 4 },
-    { id: 'ventas', label: t('common:sidebar.salesCRM', 'Ventas / CRM'), icon: Handshake, badge: null, minStep: 5 },
-    { id: 'departamentos', label: t('common:sidebar.departments', 'Departamentos'), icon: Settings, badge: null, minStep: 5 },
+    { id: 'autopilot', label: t('common:sidebar.enterpriseBrain', 'Cerebro Empresarial'), icon: Brain, badge: activeDeptCount > 0 ? `${activeDeptCount}` : null, minStep: 3 },
+    { id: 'gobernanza', label: t('common:sidebar.governance', 'Gobernanza'), icon: Shield, badge: null, minStep: 3 },
+    { id: 'ventas', label: t('common:sidebar.salesCRM', 'Ventas / CRM'), icon: Handshake, badge: null, minStep: 4 },
+    { id: 'departamentos', label: t('common:sidebar.departments', 'Departamentos'), icon: Settings, badge: null, minStep: 4 },
     { id: 'activacion', label: t('common:sidebar.activation', 'Activación'), icon: Sparkles, badge: null, minStep: 5 },
   ];
 

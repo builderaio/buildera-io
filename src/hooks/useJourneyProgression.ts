@@ -42,13 +42,15 @@ export const useJourneyProgression = (companyId?: string) => {
     if (!companyId) return;
 
     try {
-      const [socialRes, postsRes, autopilotRes, deptRes, strategyRes] = await Promise.all([
-        supabase.from('social_accounts').select('id').eq('is_connected', true).limit(1),
+      const [socialRes, postsRes, autopilotRes, deptRes, strategyRes, agentsRes] = await Promise.all([
+        supabase.from('social_accounts').select('id').eq('company_id', companyId).eq('is_connected', true).limit(1),
         supabase.from('scheduled_posts').select('id').limit(1),
         supabase.from('company_autopilot_config').select('autopilot_enabled').eq('company_id', companyId).eq('autopilot_enabled', true).maybeSingle(),
         supabase.from('company_department_config').select('id').eq('company_id', companyId).eq('autopilot_enabled', true).limit(1),
         // Step 2: Check if onboarding/diagnostic was completed
         supabase.from('company_strategy').select('id').eq('company_id', companyId).maybeSingle(),
+        // Step 4: Check if any agent has been configured/activated
+        supabase.from('company_agent_configurations').select('id').eq('company_id', companyId).limit(1),
       ]);
 
       // Step 2: Onboarding completed (strategy or digital presence exists)
@@ -56,15 +58,20 @@ export const useJourneyProgression = (companyId?: string) => {
         await advanceToStep(2);
       }
 
+      // Step 3: First social network connected
+      if ((socialRes.data?.length || 0) > 0) {
+        await advanceToStep(3);
+      }
+
+      // Step 4: First content published or agent configured
+      if ((postsRes.data?.length || 0) > 0 || (agentsRes.data?.length || 0) > 0) {
+        await advanceToStep(4);
+      }
+
       // Step 5: ANY autopilot active (marketing OR enterprise department)
       const anyAutopilotActive = !!autopilotRes.data || (deptRes.data?.length || 0) > 0;
-
       if (anyAutopilotActive) {
         await advanceToStep(5);
-      } else if ((postsRes.data?.length || 0) > 0) {
-        await advanceToStep(4);
-      } else if ((socialRes.data?.length || 0) > 0) {
-        await advanceToStep(3);
       }
     } catch (error) {
       console.error('Error checking journey progression:', error);

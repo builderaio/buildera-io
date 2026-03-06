@@ -137,6 +137,14 @@ const BusinessConfigurationHub = ({ profile, onProfileUpdate }: BusinessConfigur
         requiredFields: 3,
         completedFields: 0,
       },
+      {
+        id: 'equipo',
+        label: t('common:adn.team', 'Equipo'),
+        icon: Users,
+        completeness: 0,
+        requiredFields: 1,
+        completedFields: 0,
+      },
     ];
 
     // Calculate empresa section
@@ -160,6 +168,11 @@ const BusinessConfigurationHub = ({ profile, onProfileUpdate }: BusinessConfigur
       sections[2].completeness = Math.round((sections[2].completedFields / sections[2].requiredFields) * 100);
     }
 
+    // Calculate equipo section - at least 1 member exists
+    if (companyData?.id) {
+      sections[3].completedFields = 1; // Owner always exists
+      sections[3].completeness = 100;
+    }
 
     setSectionStats(sections);
     

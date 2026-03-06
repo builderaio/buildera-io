@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +48,7 @@ interface RecentExecution {
 }
 
 const AdminAgentPerformance = () => {
+  const { t } = useTranslation(['admin']);
   const { isAuthenticated } = useAdminAuth();
   const navigate = useNavigate();
   
@@ -234,8 +236,8 @@ const AdminAgentPerformance = () => {
   return (
     <AdminLayout>
       <AdminPageHeader
-        title="Rendimiento de Agentes"
-        subtitle="Estadísticas de uso, éxito y créditos consumidos"
+        title={t('admin:performance.title')}
+        subtitle={t('admin:performance.subtitle')}
         icon={Activity}
         showBackButton={true}
         onRefresh={loadData}

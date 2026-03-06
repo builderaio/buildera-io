@@ -82,7 +82,7 @@ const App = () => {
               <Toaster />
               <BrowserRouter>
               <VersionUpdateNotification />
-              <SupportChatWidget user={null} />
+              <SupportChatWidget user={user} />
               <CacheManager />
               <Routes>
                 {/* Public Routes */}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,7 @@ interface Alert {
 }
 
 const AdminDashboard = () => {
+  const { t } = useTranslation(['admin', 'common']);
   const { isAuthenticated } = useAdminAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -247,8 +249,8 @@ const AdminDashboard = () => {
     } catch (error: any) {
       console.error('Error cargando estadísticas:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar las estadísticas",
+        title: t('common:status.error', 'Error'),
+        description: t('admin:dashboard.errorLoading'),
         variant: "destructive",
       });
     } finally {
@@ -275,7 +277,7 @@ const AdminDashboard = () => {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-lg text-muted-foreground">Cargando dashboard...</p>
+            <p className="mt-4 text-lg text-muted-foreground">{t('admin:dashboard.loading')}</p>
           </div>
         </div>
       </AdminLayout>
@@ -287,18 +289,18 @@ const AdminDashboard = () => {
     : 0;
 
   const quickActions = [
-    { title: "Clientes", icon: Users, path: '/admin/customers', count: stats.totalUsers },
-    { title: "Constructor Agentes", icon: Bot, path: '/admin/agent-builder' },
-    { title: "Rendimiento", icon: Activity, path: '/admin/agent-performance', count: stats.totalAgentExecutions },
-    { title: "Configuración IA", icon: Brain, path: '/admin/ai-config' },
-    { title: "Sistema", icon: Settings, path: '/admin/system' },
+    { title: t('admin:quickActions.clients'), icon: Users, path: '/admin/customers', count: stats.totalUsers },
+    { title: t('admin:quickActions.agentBuilder'), icon: Bot, path: '/admin/agent-builder' },
+    { title: t('admin:quickActions.performance'), icon: Activity, path: '/admin/agent-performance', count: stats.totalAgentExecutions },
+    { title: t('admin:quickActions.aiConfig'), icon: Brain, path: '/admin/ai-config' },
+    { title: t('admin:quickActions.system'), icon: Settings, path: '/admin/system' },
   ];
 
   return (
     <AdminLayout>
       <AdminPageHeader
-        title="Dashboard Principal"
-        subtitle="Centro de control ejecutivo de Buildera"
+        title={t('admin:dashboard.title')}
+        subtitle={t('admin:dashboard.subtitle')}
         icon={Shield}
         onRefresh={loadDashboardStats}
         refreshing={loading}
@@ -345,7 +347,7 @@ const AdminDashboard = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Usuarios Totales</p>
+                  <p className="text-sm text-muted-foreground">{t('admin:dashboard.totalUsers')}</p>
                   <p className="text-3xl font-bold">{stats.totalUsers.toLocaleString()}</p>
                 </div>
                 <div className="p-3 bg-primary/10 rounded-full">
@@ -359,7 +361,7 @@ const AdminDashboard = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Empresas Activas</p>
+                  <p className="text-sm text-muted-foreground">{t('admin:dashboard.activeCompanies')}</p>
                   <p className="text-3xl font-bold">{stats.totalCompanies.toLocaleString()}</p>
                 </div>
                 <div className="p-3 bg-green-500/10 rounded-full">
@@ -387,7 +389,7 @@ const AdminDashboard = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Suscriptores</p>
+                  <p className="text-sm text-muted-foreground">{t('admin:dashboard.subscribers')}</p>
                   <p className="text-3xl font-bold">{stats.activeSubscriptions}</p>
                 </div>
                 <div className="p-3 bg-purple-500/10 rounded-full">
@@ -404,33 +406,33 @@ const AdminDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="w-5 h-5" />
-                Salud de Agentes (últimos 7 días)
+                 {t('admin:dashboard.agentHealth')}
               </CardTitle>
-              <CardDescription>Rendimiento y uso de agentes de la plataforma</CardDescription>
+              <CardDescription>{t('admin:dashboard.agentHealthDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Ejecuciones</p>
+                  <p className="text-sm text-muted-foreground">{t('admin:dashboard.executions')}</p>
                   <p className="text-2xl font-bold">{stats.totalAgentExecutions}</p>
                 </div>
                 <div className="p-4 bg-green-500/10 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Exitosas</p>
+                  <p className="text-sm text-muted-foreground">{t('admin:dashboard.successful')}</p>
                   <p className="text-2xl font-bold text-green-600">{stats.successfulExecutions}</p>
                 </div>
                 <div className="p-4 bg-destructive/10 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Fallidas</p>
+                  <p className="text-sm text-muted-foreground">{t('admin:dashboard.failed')}</p>
                   <p className="text-2xl font-bold text-destructive">{stats.failedExecutions}</p>
                 </div>
                 <div className="p-4 bg-primary/10 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Tasa Éxito</p>
+                  <p className="text-sm text-muted-foreground">{t('admin:dashboard.successRate')}</p>
                   <p className="text-2xl font-bold text-primary">{successRate}%</p>
                 </div>
               </div>
 
               {/* Top Agents */}
               <div>
-                <h4 className="font-medium mb-3">Top Agentes</h4>
+                <h4 className="font-medium mb-3">{t('admin:dashboard.topAgents')}</h4>
                 {stats.topAgents.length > 0 ? (
                   <div className="space-y-2">
                     {stats.topAgents.map((agent, idx) => (
@@ -452,7 +454,7 @@ const AdminDashboard = () => {
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-center py-4">
-                    No hay datos de uso de agentes
+                    {t('admin:dashboard.noAgentData')}
                   </p>
                 )}
               </div>
@@ -464,7 +466,7 @@ const AdminDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5" />
-                Usuarios por Plan
+                {t('admin:dashboard.usersByPlan')}
               </CardTitle>
             </CardHeader>
             <CardContent>

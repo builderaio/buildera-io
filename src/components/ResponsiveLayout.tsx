@@ -451,7 +451,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
                   {sidebarItems.map(item => {
                     const Icon = item.icon;
                     const isActive = activeView === item.id;
-                    const isDisabled = shouldBlockNavigation && item.id !== "adn-empresa";
+                    const isDisabled = shouldBlockNavigation && item.id !== "negocio";
                     
                     return (
                       <SidebarMenuItem key={item.id}>
@@ -509,9 +509,7 @@ const CompanyLayout = ({ profile, handleSignOut }: { profile: Profile; handleSig
             <SidebarTrigger className="md:hidden" />
             <div className="flex-1" />
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="hidden sm:block">
-                <LanguageSelector />
-              </div>
+              <LanguageSelector />
               <ThemeSelector />
               <SmartNotifications />
               <DropdownMenu>

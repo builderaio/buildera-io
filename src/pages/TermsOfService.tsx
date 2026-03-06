@@ -2,9 +2,11 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useGTM } from "@/hooks/useGTM";
+import { useTranslation } from "react-i18next";
 
 const TermsOfService = () => {
   useGTM();
+  const { t } = useTranslation('common');
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-12">
@@ -24,7 +26,7 @@ const TermsOfService = () => {
             </p>
           </div>
 
-          <div className="prose prose-gray dark:prose-invert max-w-none space-y-8">
+          <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
             <section>
               <h2 className="text-2xl font-semibold text-foreground mb-4">1. Aceptación de los Términos</h2>
               <p className="text-muted-foreground leading-relaxed">

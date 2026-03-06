@@ -1,14 +1,17 @@
 import { Brain } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import UnifiedAIConfiguration from '@/components/admin/UnifiedAIConfiguration';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 const AdminAIConfig = () => {
+  const { t } = useTranslation(['admin']);
+
   return (
     <AdminLayout>
       <AdminPageHeader
-        title="Configuración IA"
-        subtitle="Proveedores, modelos y configuraciones del sistema"
+        title={t('admin:aiConfig.title')}
+        subtitle={t('admin:aiConfig.subtitle')}
         icon={Brain}
         showBackButton={true}
       />

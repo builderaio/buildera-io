@@ -40,14 +40,14 @@ const Footer = () => {
             <h4 className="font-semibold text-lg mb-4">{t('footer.company.title')}</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <a href="/#valores" className="text-muted-foreground hover:text-primary transition-smooth">
                   {t('footer.company.about')}
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-smooth">
+                <Link to="/contacto" className="text-muted-foreground hover:text-primary transition-smooth">
                   {t('footer.company.contact')}
-                </a>
+                </Link>
               </li>
               <li>
                 <Link to="/terms-of-service" className="text-muted-foreground hover:text-primary transition-smooth">
@@ -57,11 +57,6 @@ const Footer = () => {
               <li>
                 <Link to="/privacy-policy" className="text-muted-foreground hover:text-primary transition-smooth">
                   {t('footer.company.privacy')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/admin/login" className="text-muted-foreground hover:text-primary transition-smooth text-xs opacity-50 hover:opacity-100">
-                  Admin
                 </Link>
               </li>
             </ul>

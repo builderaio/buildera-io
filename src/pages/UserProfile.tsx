@@ -180,15 +180,15 @@ const UserProfile = () => {
       developer: "bg-green-100 text-green-800",
       expert: "bg-purple-100 text-purple-800"
     };
-    return colors[userType as keyof typeof colors] || "bg-gray-100 text-gray-800";
+    return colors[userType as keyof typeof colors] || "bg-muted text-muted-foreground";
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-slate-800 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">{t('common:profile.loading')}</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-lg text-muted-foreground">{t('common:profile.loading')}</p>
         </div>
       </div>
     );
@@ -196,11 +196,11 @@ const UserProfile = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
-            <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">{t('common:profile.loadFailed')}</p>
+            <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">{t('common:profile.loadFailed')}</p>
             <Button onClick={() => navigate('/')} className="mt-4">
               {t('common:profile.backToHome')}
             </Button>
@@ -316,10 +316,10 @@ const UserProfile = () => {
                 />
 
                 <div className="mt-4">
-                  <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="text-xl font-bold text-foreground">
                     {profile.full_name || t('common:profile.noName')}
                   </h2>
-                  <p className="text-gray-600">{profile.email}</p>
+                  <p className="text-muted-foreground">{profile.email}</p>
                   
                   <div className="mt-2 flex justify-center">
                     <Badge className={getUserTypeColor(profile.user_type)}>
@@ -328,14 +328,14 @@ const UserProfile = () => {
                   </div>
 
                   {profile.position && (
-                    <p className="text-sm text-gray-600 mt-2 flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground mt-2 flex items-center justify-center">
                       <Briefcase className="w-3 h-3 mr-1" />
                       {profile.position}
                     </p>
                   )}
 
                   {profile.location && (
-                    <p className="text-sm text-gray-600 mt-1 flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground mt-1 flex items-center justify-center">
                       <MapPin className="w-3 h-3 mr-1" />
                       {profile.location}
                     </p>
@@ -345,7 +345,7 @@ const UserProfile = () => {
                 {/* Conexiones */}
                 {profile.linked_providers.length > 0 && (
                   <div className="mt-4">
-                    <p className="text-xs text-gray-500 mb-2">{t('common:profile.activeConnections')}</p>
+                    <p className="text-xs text-muted-foreground mb-2">{t('common:profile.activeConnections')}</p>
                     <div className="flex flex-wrap gap-1 justify-center">
                       {profile.linked_providers.map((provider, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
@@ -393,13 +393,13 @@ const UserProfile = () => {
                             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                           />
                         ) : (
-                          <p className="mt-1 text-sm text-gray-900">{profile.full_name || t('common:profile.notSpecified')}</p>
+                          <p className="mt-1 text-sm text-foreground">{profile.full_name || t('common:profile.notSpecified')}</p>
                         )}
                       </div>
 
                       <div>
                         <Label htmlFor="email">Email</Label>
-                        <p className="mt-1 text-sm text-gray-600 flex items-center">
+                        <p className="mt-1 text-sm text-muted-foreground flex items-center">
                           <Mail className="w-3 h-3 mr-1" />
                           {profile.email}
                         </p>
@@ -415,7 +415,7 @@ const UserProfile = () => {
                             placeholder={t('common:profile.phonePlaceholder')}
                           />
                         ) : (
-                          <p className="mt-1 text-sm text-gray-900 flex items-center">
+                          <p className="mt-1 text-sm text-foreground flex items-center">
                             <Phone className="w-3 h-3 mr-1" />
                             {profile.phone || t('common:profile.notSpecified')}
                           </p>
@@ -432,7 +432,7 @@ const UserProfile = () => {
                             placeholder={t('common:profile.locationPlaceholder')}
                           />
                         ) : (
-                          <p className="mt-1 text-sm text-gray-900 flex items-center">
+                          <p className="mt-1 text-sm text-foreground flex items-center">
                             <MapPin className="w-3 h-3 mr-1" />
                             {profile.location || t('common:profile.notSpecified')}
                           </p>
@@ -453,7 +453,7 @@ const UserProfile = () => {
                           rows={3}
                         />
                       ) : (
-                        <p className="mt-1 text-sm text-gray-900">
+                        <p className="mt-1 text-sm text-foreground">
                           {profile.bio || t('common:profile.noBio')}
                         </p>
                       )}
@@ -481,7 +481,7 @@ const UserProfile = () => {
                             placeholder={t('common:profile.positionPlaceholder')}
                           />
                         ) : (
-                          <p className="mt-1 text-sm text-gray-900">{profile.position || t('common:profile.notSpecified')}</p>
+                          <p className="mt-1 text-sm text-foreground">{profile.position || t('common:profile.notSpecified')}</p>
                         )}
                       </div>
 
@@ -495,7 +495,7 @@ const UserProfile = () => {
                             placeholder={t('common:profile.functionalAreaPlaceholder')}
                           />
                         ) : (
-                          <p className="mt-1 text-sm text-gray-900">{profile.functional_area || t('common:profile.notSpecified')}</p>
+                          <p className="mt-1 text-sm text-foreground">{profile.functional_area || t('common:profile.notSpecified')}</p>
                         )}
                       </div>
                     </div>
@@ -516,13 +516,13 @@ const UserProfile = () => {
                           href={profile.linkedin_profile} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="mt-1 text-sm text-blue-600 hover:underline flex items-center"
+                          className="mt-1 text-sm text-primary hover:underline flex items-center"
                         >
                           <Linkedin className="w-3 h-3 mr-1" />
                           {t('common:profile.viewLinkedin')}
                         </a>
                       ) : (
-                        <p className="mt-1 text-sm text-gray-900">{t('common:profile.notSpecified')}</p>
+                        <p className="mt-1 text-sm text-foreground">{t('common:profile.notSpecified')}</p>
                       )}
                     </div>
                   </CardContent>

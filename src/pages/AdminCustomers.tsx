@@ -317,8 +317,8 @@ const AdminCustomers = () => {
   return (
     <AdminLayout>
       <AdminPageHeader
-        title="Gestión de Clientes"
-        subtitle="Usuarios, empresas y suscripciones en un solo lugar"
+        title={t('admin:customers.title')}
+        subtitle={t('admin:customers.subtitle')}
         icon={Users}
         showBackButton={true}
         onRefresh={loadAllData}
@@ -332,7 +332,7 @@ const AdminCustomers = () => {
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Usuarios</p>
+                  <p className="text-xs text-muted-foreground">{t('admin:customers.users')}</p>
                   <p className="text-2xl font-bold">{users.length}</p>
                 </div>
                 <Users className="w-8 h-8 text-primary/20" />
@@ -343,7 +343,7 @@ const AdminCustomers = () => {
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Empresas</p>
+                  <p className="text-xs text-muted-foreground">{t('admin:customers.companies')}</p>
                   <p className="text-2xl font-bold">{companies.length}</p>
                 </div>
                 <Building2 className="w-8 h-8 text-primary/20" />
@@ -365,7 +365,7 @@ const AdminCustomers = () => {
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted-foreground">Suscriptores</p>
+                  <p className="text-xs text-muted-foreground">{t('admin:customers.subscriptions')}</p>
                   <p className="text-2xl font-bold">{totals.activeSubscribers}</p>
                 </div>
                 <CreditCard className="w-8 h-8 text-secondary/20" />
@@ -379,19 +379,19 @@ const AdminCustomers = () => {
           <TabsList className="grid w-full max-w-lg grid-cols-4">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Usuarios</span>
+              <span className="hidden sm:inline">{t('admin:customers.users')}</span>
             </TabsTrigger>
             <TabsTrigger value="companies" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Empresas</span>
+              <span className="hidden sm:inline">{t('admin:customers.companies')}</span>
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
-              <span className="hidden sm:inline">Suscripciones</span>
+              <span className="hidden sm:inline">{t('admin:customers.subscriptions')}</span>
             </TabsTrigger>
             <TabsTrigger value="credits" className="flex items-center gap-2">
               <Coins className="w-4 h-4" />
-              <span className="hidden sm:inline">Créditos</span>
+              <span className="hidden sm:inline">{t('admin:customers.credits')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -403,7 +403,7 @@ const AdminCustomers = () => {
                   <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                      placeholder="Buscar usuarios..."
+                      placeholder={t('admin:customers.searchUsers')}
                       value={userSearch}
                       onChange={(e) => setUserSearch(e.target.value)}
                       className="pl-9"
@@ -418,7 +418,7 @@ const AdminCustomers = () => {
                         onClick={() => setUserFilter(f)}
                         className="text-xs"
                       >
-                        {f === 'all' ? 'Todos' : f === 'active' ? 'Activos' : f === 'inactive' ? 'Inactivos' : 'Empresa'}
+                        {f === 'all' ? t('admin:customers.all') : f === 'active' ? t('admin:customers.active') : f === 'inactive' ? t('admin:customers.inactive') : t('admin:customers.company')}
                       </Button>
                     ))}
                   </div>
@@ -435,13 +435,13 @@ const AdminCustomers = () => {
                             <Icon className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
-                            <p className="font-medium truncate">{user.full_name || 'Sin nombre'}</p>
+                            <p className="font-medium truncate">{user.full_name || t('admin:customers.noName')}</p>
                             <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant={user.is_active === false ? 'destructive' : 'default'} className="text-xs">
-                            {user.is_active === false ? 'Inactivo' : 'Activo'}
+                            {user.is_active === false ? t('admin:customers.inactiveBadge') : t('admin:customers.activeBadge')}
                           </Badge>
                           <Button
                             size="sm"

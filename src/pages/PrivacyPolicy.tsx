@@ -5,9 +5,11 @@ import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Shield, Lock, Eye, Database, FileCheck, UserCheck, Globe, Bell } from "lucide-react";
 import { useGTM } from "@/hooks/useGTM";
+import { useTranslation } from "react-i18next";
 
 const PrivacyPolicy = () => {
   useGTM();
+  const { t } = useTranslation('common');
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -125,8 +127,8 @@ const PrivacyPolicy = () => {
                   <li>Logs de seguridad (sin información personal identificable)</li>
                 </ul>
               </div>
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <p className="text-sm font-medium text-blue-800">
+              <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                <p className="text-sm font-medium text-primary">
                   🔒 <strong>Garantía de Privacidad:</strong> Nunca accedemos al contenido de tus proyectos o datos empresariales sin tu consentimiento explícito.
                 </p>
               </div>
@@ -201,19 +203,19 @@ const PrivacyPolicy = () => {
               <div>
                 <h4 className="font-semibold mb-3">Medidas de Seguridad Técnicas</h4>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="p-4 bg-muted rounded-lg">
                     <h5 className="font-medium mb-2">Encriptación</h5>
                     <p className="text-sm text-muted-foreground">TLS 1.3 en tránsito y AES-256 en reposo</p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="p-4 bg-muted rounded-lg">
                     <h5 className="font-medium mb-2">Infraestructura</h5>
                     <p className="text-sm text-muted-foreground">Servidores en centros de datos SOC 2 certificados</p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="p-4 bg-muted rounded-lg">
                     <h5 className="font-medium mb-2">Acceso</h5>
                     <p className="text-sm text-muted-foreground">Control de acceso basado en roles (RBAC)</p>
                   </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="p-4 bg-muted rounded-lg">
                     <h5 className="font-medium mb-2">Monitoreo</h5>
                     <p className="text-sm text-muted-foreground">Detección de amenazas 24/7</p>
                   </div>
@@ -222,7 +224,7 @@ const PrivacyPolicy = () => {
               
               <div>
                 <h4 className="font-semibold mb-3">Ubicación de Datos</h4>
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
                   <p className="text-sm">
                     <strong>Servidores principales:</strong> Unión Europea (Frankfurt, Alemania)<br/>
                     <strong>Respaldos:</strong> Múltiples regiones dentro de la UE<br/>
@@ -286,7 +288,7 @@ const PrivacyPolicy = () => {
             <CardContent className="space-y-4">
               <div>
                 <h4 className="font-semibold mb-2">Oficial de Protección de Datos</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="bg-muted p-4 rounded-lg">
                   <p className="text-sm">
                     <strong>Email:</strong> privacy@buildera.io<br/>
                     <strong>Respuesta garantizada:</strong> Dentro de 72 horas<br/>

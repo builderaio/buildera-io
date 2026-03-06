@@ -994,7 +994,6 @@ async function saveCompanyAudiences(companyId: string, audience: any, userId: st
   }
 
   try {
-    // Helper to normalize array input
     const toArray = (val: any): string[] => {
       if (!val) return [];
       if (Array.isArray(val)) return val.filter(v => v && typeof v === 'string');
@@ -1006,14 +1005,11 @@ async function saveCompanyAudiences(companyId: string, audience: any, userId: st
     const professions = toArray(audience.profession);
     const targetUsers = toArray(audience.target_user);
     
-    console.log('👥 Audience data:', { segments: segments.length, professions: professions.length, targetUsers: targetUsers.length });
-
     if (segments.length === 0 && professions.length === 0 && targetUsers.length === 0) {
       console.log('ℹ️ No audience segments found');
       return;
     }
 
-    // Get existing audiences for this company
     const { data: existingAudiences } = await supabase
       .from('company_audiences')
       .select('id, name')
@@ -1021,55 +1017,79 @@ async function saveCompanyAudiences(companyId: string, audience: any, userId: st
 
     const existingNames = new Set((existingAudiences || []).map(a => a.name.toLowerCase()));
 
-    const audiencesToInsert: any[] = [];
+    // Get company info for enrichment context
+    const { data: company } = await supabase
+      .from('companies')
+      .select('name, description, industry_sector, website_url')
+      .eq('id', companyId)
+      .maybeSingle();
 
-    // Create audience for each segment
+    // Collect all audience names for batch enrichment
+    const allSegmentNames: { name: string; type: string }[] = [];
+    
     for (const segment of segments) {
       if (!existingNames.has(segment.toLowerCase())) {
-        audiencesToInsert.push({
-          company_id: companyId,
-          user_id: userId,
-          name: segment,
-          description: `Segmento de audiencia: ${segment}`,
-          tags: ['auto-detected', 'segment'],
-          is_active: true,
-          ai_insights: { source: 'diagnostic', type: 'segment' }
-        });
+        allSegmentNames.push({ name: segment, type: 'segment' });
         existingNames.add(segment.toLowerCase());
       }
     }
-
-    // Create audience for each profession
     for (const profession of professions) {
       if (!existingNames.has(profession.toLowerCase())) {
-        audiencesToInsert.push({
-          company_id: companyId,
-          user_id: userId,
-          name: profession,
-          description: `Perfil profesional: ${profession}`,
-          job_titles: { primary: [profession] },
-          tags: ['auto-detected', 'profession'],
-          is_active: true,
-          ai_insights: { source: 'diagnostic', type: 'profession' }
-        });
+        allSegmentNames.push({ name: profession, type: 'profession' });
         existingNames.add(profession.toLowerCase());
       }
     }
-
-    // Create audience for each target user type
     for (const targetUser of targetUsers) {
       if (!existingNames.has(targetUser.toLowerCase())) {
-        audiencesToInsert.push({
-          company_id: companyId,
-          user_id: userId,
-          name: targetUser,
-          description: `Usuario objetivo: ${targetUser}`,
-          tags: ['auto-detected', 'target-user'],
-          is_active: true,
-          ai_insights: { source: 'diagnostic', type: 'target_user' }
-        });
+        allSegmentNames.push({ name: targetUser, type: 'target_user' });
         existingNames.add(targetUser.toLowerCase());
       }
+    }
+
+    if (allSegmentNames.length === 0) {
+      console.log('ℹ️ No new audiences to insert');
+      return;
+    }
+
+    // Enrich audiences with OpenAI
+    let enrichedAudiences: any[] = [];
+    try {
+      enrichedAudiences = await enrichAudiencesWithAI(allSegmentNames, company);
+      console.log(`✅ Enriched ${enrichedAudiences.length} audiences with AI`);
+    } catch (enrichErr) {
+      console.warn('⚠️ AI enrichment failed, using basic data:', enrichErr);
+    }
+
+    const audiencesToInsert: any[] = [];
+
+    for (const seg of allSegmentNames) {
+      const enriched = enrichedAudiences.find(e => e.name?.toLowerCase() === seg.name.toLowerCase()) || {};
+      
+      audiencesToInsert.push({
+        company_id: companyId,
+        user_id: userId,
+        name: seg.name,
+        description: enriched.description || `${seg.type === 'profession' ? 'Perfil profesional' : seg.type === 'target_user' ? 'Usuario objetivo' : 'Segmento de audiencia'}: ${seg.name}`,
+        pain_points: enriched.pain_points || [],
+        goals: enriched.goals || [],
+        challenges: enriched.challenges || [],
+        motivations: enriched.motivations || [],
+        interests: enriched.interests || {},
+        age_ranges: enriched.age_ranges || {},
+        content_preferences: enriched.content_preferences || {},
+        platform_preferences: enriched.platform_preferences || {},
+        tags: ['auto-detected', seg.type],
+        is_active: true,
+        estimated_size: enriched.estimated_size || 5000,
+        conversion_potential: enriched.conversion_potential || 0.5,
+        confidence_score: enriched.confidence_score || 0.6,
+        ai_insights: { 
+          source: 'diagnostic', 
+          type: seg.type,
+          enriched: enrichedAudiences.length > 0,
+          enriched_at: new Date().toISOString(),
+        },
+      });
     }
 
     if (audiencesToInsert.length > 0) {
@@ -1080,12 +1100,87 @@ async function saveCompanyAudiences(companyId: string, audience: any, userId: st
       if (insertError) {
         console.error('❌ Error inserting audiences:', insertError);
       } else {
-        console.log(`✅ Inserted ${audiencesToInsert.length} audience segments`);
+        console.log(`✅ Inserted ${audiencesToInsert.length} enriched audience segments`);
       }
-    } else {
-      console.log('ℹ️ No new audiences to insert (all already exist)');
     }
   } catch (err) {
     console.warn('⚠️ Failed to save company audiences:', err);
   }
+}
+
+/**
+ * Enrich audience segments with AI-generated pain points, goals, and descriptions
+ */
+async function enrichAudiencesWithAI(
+  segments: { name: string; type: string }[],
+  company: any
+): Promise<any[]> {
+  const openaiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiKey) {
+    console.warn('⚠️ No OpenAI key for audience enrichment');
+    return [];
+  }
+
+  const segmentList = segments.map(s => `- ${s.name} (${s.type})`).join('\n');
+
+  const prompt = `Para la empresa "${company?.name || 'Sin nombre'}" del sector "${company?.industry_sector || 'general'}" 
+(${company?.description || 'Sin descripción'}), enriquece estos segmentos de audiencia con datos accionables:
+
+${segmentList}
+
+Para CADA segmento genera un JSON con esta estructura:
+{
+  "audiences": [
+    {
+      "name": "nombre exacto del segmento",
+      "description": "Descripción detallada de 2-3 oraciones sobre quiénes son y qué buscan",
+      "pain_points": ["3-5 dolores específicos y concretos de este segmento en el contexto de la empresa"],
+      "goals": ["3-5 objetivos principales que buscan lograr"],
+      "challenges": ["3-4 obstáculos principales que enfrentan"],
+      "motivations": ["3-4 motivaciones clave para buscar soluciones"],
+      "interests": {"primary": ["3-4 temas de interés"], "secondary": ["2-3 intereses secundarios"]},
+      "age_ranges": {"primary": "rango de edad principal", "secondary": "rango secundario"},
+      "content_preferences": {"formats": ["tipos de contenido que consumen"], "tone": "tono preferido"},
+      "platform_preferences": {"primary": ["plataformas principales"], "secondary": ["secundarias"]},
+      "estimated_size": número estimado de personas en el mercado hispano,
+      "conversion_potential": número entre 0 y 1,
+      "confidence_score": número entre 0 y 1
+    }
+  ]
+}
+
+REGLAS:
+- Sé ESPECÍFICO al sector de la empresa, no genérico
+- Los pain_points deben ser dolores reales y concretos, no abstractos
+- Los goals deben ser medibles o al menos accionables
+- Responde SOLO en JSON válido`;
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${openaiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'Eres un estratega de marketing y audiencias B2B/B2C. Generas perfiles de audiencia detallados y accionables. Responde siempre en JSON válido.' },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 3000,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI error: ${response.status}`);
+  }
+
+  const result = await response.json();
+  const content = result.choices?.[0]?.message?.content;
+  if (!content) return [];
+
+  const parsed = JSON.parse(content);
+  return parsed.audiences || [];
 }

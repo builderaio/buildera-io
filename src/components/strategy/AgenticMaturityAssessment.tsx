@@ -84,10 +84,15 @@ export default function AgenticMaturityAssessment({ companyId }: AgenticMaturity
     fullMark: 100,
   }));
 
-  // Find weakest pillar for recommendation
+  // Find weakest pillar and its top unmet criteria for actionable recommendation
   const weakest = pillarConfig.reduce((min, p) => 
     maturity[p.key].score < maturity[min.key].score ? p : min
   , pillarConfig[0]);
+
+  const unmetCriteria = maturity[weakest.key].details
+    .filter(d => !d.met)
+    .sort((a, b) => b.points - a.points)
+    .slice(0, 2);
 
   return (
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
@@ -153,14 +158,26 @@ export default function AgenticMaturityAssessment({ companyId }: AgenticMaturity
             ))}
           </div>
 
-          {/* Recommendation */}
+          {/* Recommendation with specific actions */}
           <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
             <Lightbulb className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">
-                {t('agenticMaturity.recommendation', 'Recomendación')}:
-              </span>{' '}
-              {t(`agenticMaturity.rec.${weakest.key}`, `Fortalece tu pilar de ${weakest.key} para avanzar en madurez agéntica.`)}
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div>
+                <span className="font-medium text-foreground">
+                  {t('agenticMaturity.recommendation', 'Recomendación')}:
+                </span>{' '}
+                {t(`agenticMaturity.rec.${weakest.key}`, `Fortalece tu pilar de ${weakest.key} para avanzar en madurez agéntica.`)}
+              </div>
+              {unmetCriteria.length > 0 && (
+                <div className="mt-1 pl-1 border-l-2 border-amber-500/30 space-y-0.5">
+                  {unmetCriteria.map((criterion, i) => (
+                    <div key={i} className="flex items-center gap-1 text-[11px]">
+                      <TrendingUp className="h-3 w-3 text-amber-500 shrink-0" />
+                      <span>{t(criterion.label, criterion.label.split('.').pop())} (+{criterion.points} pts)</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

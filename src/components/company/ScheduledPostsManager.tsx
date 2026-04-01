@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Calendar, 
@@ -19,6 +20,7 @@ import {
   Type,
   ExternalLink
 } from "lucide-react";
+import { FaFacebook, FaInstagram, FaLinkedin, FaTiktok, FaYoutube, FaXTwitter } from 'react-icons/fa6';
 
 interface ScheduledPostsManagerProps {
   profile: any;
@@ -48,13 +50,13 @@ interface UploadPostJob {
   preview_url?: string;
 }
 
-const platformConfig = {
-  facebook: { name: 'Facebook', icon: '📘', color: 'bg-blue-600' },
-  instagram: { name: 'Instagram', icon: '📷', color: 'bg-pink-600' },
-  linkedin: { name: 'LinkedIn', icon: '💼', color: 'bg-blue-700' },
-  tiktok: { name: 'TikTok', icon: '🎵', color: 'bg-black' },
-  youtube: { name: 'YouTube', icon: '📺', color: 'bg-red-600' },
-  twitter: { name: 'X (Twitter)', icon: '🐦', color: 'bg-gray-900' },
+const platformConfig: Record<string, { name: string; icon: React.ComponentType<any>; color: string }> = {
+  facebook: { name: 'Facebook', icon: FaFacebook, color: 'text-[#1877F2]' },
+  instagram: { name: 'Instagram', icon: FaInstagram, color: 'text-[#E4405F]' },
+  linkedin: { name: 'LinkedIn', icon: FaLinkedin, color: 'text-[#0077B5]' },
+  tiktok: { name: 'TikTok', icon: FaTiktok, color: 'text-foreground' },
+  youtube: { name: 'YouTube', icon: FaYoutube, color: 'text-[#FF0000]' },
+  twitter: { name: 'X (Twitter)', icon: FaXTwitter, color: 'text-foreground' },
 };
 
 export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPostsManagerProps) => {

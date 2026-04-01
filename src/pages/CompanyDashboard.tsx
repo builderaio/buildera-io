@@ -213,7 +213,7 @@ const CompanyDashboard = () => {
           .single();
 
         if (insertError) {
-          console.error('❌ Error creando perfil:', insertError);
+          if (import.meta.env.DEV) console.error('❌ Error creando perfil:', insertError);
           toast({
             title: t('common:status.error'),
             description: t('company:errors.profileCreate'),

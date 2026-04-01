@@ -439,7 +439,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="p-5 bg-white/80 backdrop-blur-sm rounded-xl border-2 border-green-200/50 shadow-sm">
+                    <div className="p-5 bg-card/80 backdrop-blur-sm rounded-xl border-2 border-green-500/20 shadow-sm">
                       <div className="prose prose-sm max-w-none text-foreground leading-relaxed whitespace-pre-wrap">
                         {manualContent || generatedContent}
                       </div>

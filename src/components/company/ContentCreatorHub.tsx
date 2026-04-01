@@ -310,9 +310,9 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="post">Post</SelectItem>
-                      <SelectItem value="story">Historia</SelectItem>
+                      <SelectItem value="story">{t('marketing:creator.story')}</SelectItem>
                       <SelectItem value="reel">Reel/Video</SelectItem>
-                      <SelectItem value="carousel">Carrusel</SelectItem>
+                      <SelectItem value="carousel">{t('marketing:creator.carousel')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

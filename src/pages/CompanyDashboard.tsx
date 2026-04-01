@@ -340,7 +340,7 @@ const CompanyDashboard = () => {
       });
     }
     
-    console.log('🧭 [CompanyDashboard] Navegando con React Router:', `?${nextParams.toString()}`);
+    if (import.meta.env.DEV) console.log('🧭 Navegando:', `?${nextParams.toString()}`);
     navigate(`?${nextParams.toString()}`);
   };
 

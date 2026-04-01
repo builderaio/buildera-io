@@ -684,8 +684,8 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
                               const Icon = PHASE_ICONS[phase] || Eye;
                               return (
                                 <div key={phase} className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                                  phaseLog?.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                  phaseLog?.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                  phaseLog?.status === 'completed' ? 'bg-green-500/10 text-green-500' :
+                                  phaseLog?.status === 'failed' ? 'bg-red-500/10 text-red-500' :
                                   'bg-muted text-muted-foreground'
                                 }`}>
                                   <Icon className="w-3 h-3" />

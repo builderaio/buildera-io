@@ -91,5 +91,6 @@ export const resources = {
     validation: ptValidation,
     notifications: ptNotifications,
     creatify: ptCreatify,
+    legal: ptLegal,
   },
 };

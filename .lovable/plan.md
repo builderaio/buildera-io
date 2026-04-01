@@ -1,71 +1,139 @@
 
 
-# Auditoría Enterprise Brain - Fallas Funcionales
+# Funcionalidades con Código Mock/Predefinido — Análisis Detallado
 
-## Diagnóstico del Estado Actual
-
-El Enterprise Brain opera a través de **3 superficies de control** que presentan duplicación, inconsistencias de datos y problemas de UX:
-
-```text
-Enterprise Brain (3 vistas separadas)
-├── EnterpriseAutopilotDashboard.tsx (sidebar: "autopilot")
-│   ├── 6 Department cards con toggle + manual cycle
-│   ├── Tabs: Genesis / Intelligence / Lessons / Capabilities
-│   └── Execution Timeline + Prerequisite Dialogs
-├── GovernanceDashboard.tsx (sidebar: "gobernanza")  
-│   ├── 6-panel grid: IQ, Departments, Log, Guardrails, Approvals, Capabilities
-│   └── StatusBar with cycle/agents/credits metrics
-└── AutopilotDashboard.tsx (Marketing Hub tab: "autopilot")
-    ├── Marketing-specific autopilot config
-    ├── Stats cards + Decisions + Timeline + Settings
-    └── Bootstrap dialog for social data import
-```
+## Hallazgos organizados por severidad
 
 ---
 
-## FALLAS ENCONTRADAS
+### SEVERIDAD CRÍTICA — Funcionalidad que aparenta funcionar pero no hace nada real
 
-### SEVERIDAD CRÍTICA — Funcionalidad rota o confusa
+**1. Contacto.tsx — Formulario simulado, no envía emails**
+- Línea 34: `await new Promise(resolve => setTimeout(resolve, 500))` — simula envío
+- Muestra toast de éxito pero el mensaje del usuario se pierde completamente
+- No invoca ninguna edge function ni sistema de email interno
+- **Impacto**: Los leads/contactos de usuarios potenciales se pierden
 
-**1. Departamento `customer_service` fantasma en GovernanceDashboard**
-- `GovernanceDashboard.tsx` línea 110 usa `deptKeys = ["marketing", "sales", "legal", "hr", "customer_service", "finance"]`
-- `DepartmentsPanel.tsx` también mapea `customer_service` con icono y default
-- Pero `useDepartmentUnlocking.ts` define los 6 departamentos como: `marketing, sales, finance, legal, hr, operations`
-- **No existe `customer_service`** — existe `operations`. Resultado: el departamento Operations nunca aparece en GovernanceDashboard, y `customer_service` siempre muestra 0 tareas/deshabilitado
+**2. NotificationPreferences.tsx — Guardar preferencias es falso**
+- Línea 49-50: `// TODO: Save to database when notification_preferences table exists` seguido de `setTimeout(500ms)`
+- Muestra "Guardado exitosamente" pero no persiste nada — las preferencias se resetean al recargar
+- **Impacto**: El usuario cree que configuró sus notificaciones pero nada funciona
 
-**2. Duplicación confusa: 3 dashboards para la misma funcionalidad**
-- El usuario puede acceder al Autopilot desde 3 lugares distintos con datos parcialmente superpuestos:
-  - Sidebar → "Enterprise Autopilot" → `EnterpriseAutopilotDashboard` (consulta `department_execution_log`, `autopilot_capabilities`, `external_intelligence_cache`, `autopilot_memory`)
-  - Sidebar → "Gobernanza" → `GovernanceDashboard` (consulta `autopilot_decisions`, `content_approvals`, `autopilot_execution_log`, `autopilot_memory`, `agent_usage_log`)
-  - Marketing Hub → Tab Autopilot → `AutopilotDashboard` (consulta `company_autopilot_config`, `autopilot_execution_log`, `autopilot_decisions`)
-- Cada uno consulta tablas diferentes y muestra métricas calculadas de forma distinta
-- El IQ Score se calcula de forma diferente entre `EnterpriseAutopilotDashboard` (línea 264: `Math.min(100, ...)`) y `EnterpriseIQPanel` (línea 26: `Math.min(999, ...)`). Uno usa max 100, el otro max 999
+**3. MarketingCalendar.tsx — 100% datos mock, sin conexión a DB**
+- Líneas 40-66: Array hardcodeado con 3 posts ficticios (fechas de enero 2024)
+- No consulta `social_posts` ni `calendar_items` ni ninguna tabla real
+- No tiene `useTranslation` — todo hardcodeado en español
+- Dark mode roto (`bg-blue-100 text-blue-800`, etc.)
+- **Nota**: No se importa desde ningún componente activo — posible código muerto
 
-**3. `department_execution_log` vs `autopilot_execution_log` — tablas diferentes**
-- `EnterpriseAutopilotDashboard` consulta `department_execution_log` (cast as any, línea 122)
-- `GovernanceDashboard` y `AutopilotDashboard` consultan `autopilot_execution_log`
-- Son tablas diferentes con esquemas diferentes. Si `department_execution_log` no existe o no tiene datos, la vista Enterprise muestra timeline vacío silenciosamente
+**4. SocialAutomationRules.tsx — Reglas solo en memoria (useState)**
+- Líneas 52-62: Las reglas de automatización se guardan en `useState<AutomationRule[]>([])` local
+- No hay `useEffect` para cargar ni `supabase` para guardar
+- Al recargar la página, todas las reglas desaparecen
+- **Impacto**: El usuario crea reglas de automatización que nunca se ejecutan ni persisten
 
-**4. ApprovalsPanel: `toast.error(err.message || "Error")` — hardcoded**
-- Línea 51 usa `toast.error(err.message || "Error")` en vez de i18n
+**5. useCompanyCredits.ts — Límite de créditos hardcodeado**
+- Línea 70: `const totalCredits = 100; // TODO: Get from subscription plan`
+- Todo usuario ve "100 créditos" independientemente de su plan de suscripción
+- No hay tabla ni lógica para obtener créditos reales del plan
 
-### SEVERIDAD ALTA — Dark mode y UX
+**6. UnifiedContentCreator.tsx — Biblioteca y Selector de imágenes son stubs**
+- Línea 556: Tab "Biblioteca" muestra solo `"Biblioteca de contenido generado (próximamente)"`
+- Línea 567: Selector de imágenes muestra solo `"Selector de imágenes (próximamente)"` con botón "Cerrar"
+- Strings hardcodeadas en español sin i18n
 
-**5. AutopilotDashboard.tsx — Dark mode completamente roto**
-- Línea 536: `bg-blue-100` — stat card backgrounds
-- Línea 545: `bg-green-100`
-- Línea 554: `bg-red-100`
-- Línea 563: `bg-yellow-100`
-- Líneas 627-629: `bg-green-100 text-green-700`, `bg-red-100 text-red-700`, `bg-yellow-100 text-yellow-700` — guardrail result badges
-- Líneas 687-689: `bg-green-100 text-green-700`, `bg-red-100 text-red-700` — phase timeline pills
-- Total: **12 instancias** de colores light-only que se vuelven invisibles en dark mode
+---
 
-**6. AutopilotDashboard empty state bloquea configuración inicial**
-- Línea 466-476: Si `!config && logs.length === 0 && decisions.length === 0`, muestra un empty state sin CTA para activar
-- El usuario nuevo ve "Autopilot no configurado" con solo texto explicativo y ningún botón para activarlo
-- Debería mostrar un botón "Activar Autopilot" o el toggle directamente
+### SEVERIDAD ALTA — Funcionalidad parcialmente implementada
 
-**7. IQ Score inconsistente entre vistas**
-- `EnterpriseAutopilotDashboard` línea 264: `Math.min(100, Math.round(totalCycles * 2 + totalLessons * 5 + activatedCaps * 10))`
-- `EnterpriseIQPanel` línea 26: `Math.min((cyclesCompleted * 2) + (lessonsLearned * 5) + (activatedCaps * 10), 999)`
-- Mismo cálculo base pero con caps en 100
+**7. AcademiaBuildera.tsx — Tab "Leaderboard" es placeholder**
+- Líneas 202-207: Muestra "Ranking en Desarrollo" con texto "estará disponible próximamente"
+- Hardcodeado en español sin i18n
+- El resto de la Academia (módulos, badges, tutor IA) sí funciona con datos reales
+
+**8. InteligenciaHub.tsx — Tab "Mercado" es placeholder**
+- Líneas 176-189: Muestra "Próximamente" con descripción genérica
+- Las otras tabs (Diagnóstico, Competidores) sí funcionan
+
+**9. MarketingMetrics.tsx — Gráfico de rendimiento semanal es placeholder**
+- Líneas 497-504: Muestra "Gráfico de rendimiento semanal — Próximamente: Integración con Chart.js"
+- El componente ya importa datos reales de Supabase para las métricas numéricas, pero el chart visual es un stub
+- **Nota**: Parece no estar importado activamente (posible código muerto)
+
+**10. SocialMediaPreview.tsx — Usa imagen dummy de Unsplash**
+- Línea 73: `dummyImage = "https://images.unsplash.com/photo-..."` — se usa como fallback cuando no hay media
+- Línea 172: `mockUser = getUserData()` — datos de usuario simulados para la preview social
+- Esto es aceptable como fallback visual pero depende de un servicio externo (Unsplash)
+
+**11. AutonomyDashboardPreview.tsx — 100% mock (intencional)**
+- Líneas 21-56: Datos estáticos de departamentos, aprobaciones, guardrails, logs, capacidades
+- Es un componente de la landing page (`Index.tsx`) — diseñado para ser una preview visual
+- **Veredicto**: Correcto como está. Es marketing, no funcionalidad real
+
+---
+
+### SEVERIDAD MEDIA — Código muerto o no conectado
+
+**12. MarketingCalendar.tsx — Probablemente código muerto**
+- No se importa desde ningún archivo activo
+- Duplica funcionalidad de `ContentCalendar.tsx` que sí está integrado en el Marketing Hub
+
+**13. MarketingMetrics.tsx — Probablemente código muerto**
+- No se importa desde ningún componente activo
+- Duplica funcionalidad del overview del Marketing Hub
+
+**14. MarketingHubInsights.tsx — Código muerto**
+- No se importa desde ningún archivo
+- 1078 líneas de código no utilizado
+
+---
+
+## Plan de Corrección (6 pasos)
+
+### Paso 1: Conectar Contacto.tsx al sistema de email interno
+- Reemplazar el `setTimeout` mock por una invocación a una edge function de email
+- Usar el sistema de email propietario de Buildera (según las instrucciones del proyecto)
+- Guardar el contacto en una tabla `contact_submissions` para seguimiento
+
+### Paso 2: Crear tabla y conectar NotificationPreferences
+- Crear migración para tabla `notification_preferences` (user_id, settings jsonb)
+- Reemplazar el `setTimeout` por `supabase.from('notification_preferences').upsert()`
+- Cargar preferencias guardadas al montar el componente
+
+### Paso 3: Persistir SocialAutomationRules en base de datos
+- Crear tabla `social_automation_rules` (id, company_id, name, trigger, action, config, is_active)
+- Agregar `loadRules()` en `useEffect` y `saveRule()` en handlers
+- Las reglas deben persistir entre sesiones
+
+### Paso 4: Hacer dinámico el límite de créditos
+- Crear lógica para obtener créditos del plan de suscripción del usuario
+- Reemplazar `const totalCredits = 100` por consulta real a la tabla de suscripciones/planes
+
+### Paso 5: Eliminar componentes muertos
+- Eliminar `MarketingCalendar.tsx` (367 líneas — duplicado por ContentCalendar)
+- Eliminar `MarketingHubInsights.tsx` (1078 líneas — no importado)
+- Verificar `MarketingMetrics.tsx` y eliminar si confirma que no se usa
+
+### Paso 6: Resolver stubs "próximamente" en componentes activos
+- `UnifiedContentCreator.tsx`: Conectar tab Biblioteca con `UnifiedLibrary` existente; conectar selector de imágenes con `ContentImageSelector` existente
+- `AcademiaBuildera.tsx`: Implementar leaderboard con datos de `user_learning_progress` o mostrar un coming soon con i18n correcto
+- `MarketingMetrics.tsx` (si se mantiene): Integrar Recharts para el gráfico semanal (ya se usa en UTMDashboard)
+
+---
+
+## Resumen
+
+| # | Componente | Problema | Severidad |
+|---|-----------|----------|-----------|
+| 1 | Contacto.tsx | Formulario no envía nada | Crítica |
+| 2 | NotificationPreferences.tsx | No persiste preferencias | Crítica |
+| 3 | MarketingCalendar.tsx | 100% mock + código muerto | Crítica/Muerto |
+| 4 | SocialAutomationRules.tsx | Reglas solo en memoria | Crítica |
+| 5 | useCompanyCredits.ts | Créditos hardcodeados en 100 | Crítica |
+| 6 | UnifiedContentCreator.tsx | 2 tabs son stubs | Alta |
+| 7 | AcademiaBuildera.tsx | Leaderboard placeholder | Alta |
+| 8 | InteligenciaHub.tsx | Tab Mercado placeholder | Alta |
+| 9 | MarketingMetrics.tsx | Chart stub + posible muerto | Alta |
+| 10 | SocialMediaPreview.tsx | Imagen fallback externa | Media |
+| 11 | MarketingHubInsights.tsx | Código muerto (1078 líneas) | Media |
+

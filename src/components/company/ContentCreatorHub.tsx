@@ -384,9 +384,9 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
-            💡 Tus Ideas de Contenido
+            💡 {t('marketing:creator.yourContentIdeas')}
             {contentIdeas.length > 0 && (
-              <Badge variant="secondary">{contentIdeas.length} activas</Badge>
+              <Badge variant="secondary">{contentIdeas.length} {t('marketing:creator.active')}</Badge>
             )}
           </h3>
           <div className="flex items-center gap-2">

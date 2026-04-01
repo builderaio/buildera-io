@@ -327,12 +327,12 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
                 {isGenerating ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generando...
+                    {t('marketing:creator.generating')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Generar Contenido
+                    {t('marketing:creator.generateContent')}
                   </>
                 )}
               </Button>

@@ -195,6 +195,8 @@
     "tabs": {
       "dashboard": "Painel",
       "create": "Criar",
+      "createPublish": "Criar + Publicar",
+      "inicio": "Início",
       "campaigns": "Campanhas",
       "listening": "Escuta",
       "utm": "Attribution",
@@ -204,6 +206,14 @@
       "autopilot": "Autopilot",
       "calendar": "Calendário",
       "library": "Biblioteca"
+    },
+    "advancedTools": {
+      "title": "Ferramentas avançadas",
+      "library": "Biblioteca",
+      "reports": "Relatórios",
+      "listening": "Escuta Social",
+      "attribution": "Atribuição UTM",
+      "automation": "Regras de Automação"
     },
     "metrics": {
       "insights": "Insights Gerados",

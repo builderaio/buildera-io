@@ -533,7 +533,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-0 shadow-md">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-blue-100"><Activity className="w-5 h-5 text-blue-600" /></div>
+            <div className="p-2 rounded-full bg-blue-500/10"><Activity className="w-5 h-5 text-blue-500" /></div>
             <div>
               <p className="text-2xl font-bold">{config?.total_cycles_run || 0}</p>
               <p className="text-xs text-muted-foreground">{t('autopilot.totalCycles')}</p>

@@ -267,7 +267,7 @@ const CompanyDashboard = () => {
         }
         
         if (Object.keys(updateData).length > 0) {
-          console.log('Actualizando campos faltantes:', updateData);
+          if (import.meta.env.DEV) console.log('Actualizando campos faltantes:', updateData);
           const { data: updatedProfile, error: updateError } = await supabase
             .from('profiles')
             .update(updateData)

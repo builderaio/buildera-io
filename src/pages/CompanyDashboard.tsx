@@ -183,7 +183,7 @@ const CompanyDashboard = () => {
             if (import.meta.env.DEV) console.log('⚠️ Usuario completó first_login pero sin empresa');
             setActiveView('onboarding');
           }
-          console.groupEnd();
+          if (import.meta.env.DEV) console.groupEnd();
           setLoading(false);
           return;
         }

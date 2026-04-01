@@ -231,7 +231,7 @@ const CompanyDashboard = () => {
           description: t('company:toast.profileCreatedDesc'),
         });
       } else if (error) {
-        console.error('❌ Error obteniendo perfil:', error);
+        if (import.meta.env.DEV) console.error('❌ Error obteniendo perfil:', error);
         toast({
           title: t('company:errors.accessDenied'),
           description: t('company:errors.profileAccess'),

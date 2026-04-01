@@ -557,24 +557,14 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
       </Tabs>
 
       {/* Image Selector Dialog */}
-      {showImageSelector && (
-        <div className="fixed inset-0 z-50 bg-background/80 flex items-center justify-center p-4">
-          <Card className="w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-            <CardContent className="pt-6">
-              <ContentImageSelector
-                onSelectImage={(url) => {
-                  setSelectedContentImage(url);
-                  setShowImageSelector(false);
-                }}
-                companyId={profile?.user_id}
-              />
-              <Button variant="outline" onClick={() => setShowImageSelector(false)} className="mt-4 w-full">
-                {t('common:common.close', 'Cerrar')}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <ContentImageSelector
+        isOpen={showImageSelector}
+        onClose={() => setShowImageSelector(false)}
+        onSelectImage={(url) => {
+          setSelectedContentImage(url);
+          setShowImageSelector(false);
+        }}
+      />
 
       {/* Publisher Dialog */}
       <SimpleContentPublisher

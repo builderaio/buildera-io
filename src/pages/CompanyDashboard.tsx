@@ -70,7 +70,7 @@ const CompanyDashboard = () => {
       const viewParam = searchParams.get('view');
       const onboardingCompletedParam = searchParams.get('onboarding_completed');
       
-      console.log('📍 URL params:', { viewParam, onboardingCompletedParam });
+      if (import.meta.env.DEV) console.log('📍 URL params:', { viewParam, onboardingCompletedParam });
       
       if (viewParam === 'onboarding') {
         console.log('🔄 Showing onboarding orchestrator');

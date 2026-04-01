@@ -73,7 +73,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     } catch (error) {
       console.error('Error loading content ideas:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "No se pudieron cargar las ideas de contenido",
         variant: "destructive"
       });
@@ -111,7 +111,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     } catch (error) {
       console.error('Error generating ideas:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "No se pudieron generar las ideas",
         variant: "destructive"
       });
@@ -123,7 +123,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
   const handleQuickCreateWithAI = async () => {
     if (!aiPrompt.trim()) {
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "Describe tu idea de contenido",
         variant: "destructive"
       });
@@ -159,7 +159,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     } catch (error) {
       console.error('Error generating content:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "No se pudo generar el contenido",
         variant: "destructive"
       });
@@ -171,7 +171,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
   const handleCreateManual = () => {
     if (!manualContent.trim()) {
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "Escribe el contenido que deseas publicar",
         variant: "destructive"
       });
@@ -226,7 +226,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     } catch (error) {
       console.error('Error completing idea:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "No se pudo completar la idea",
         variant: "destructive"
       });
@@ -249,7 +249,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     } catch (error) {
       console.error('Error dismissing idea:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "No se pudo descartar la idea",
         variant: "destructive"
       });

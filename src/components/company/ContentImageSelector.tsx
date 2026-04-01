@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -70,7 +71,7 @@ export default function ContentImageSelector({ isOpen, onClose, onSelectImage, p
     } catch (error) {
       console.error('Error loading saved content:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudo cargar el contenido guardado",
         variant: "destructive"
       });

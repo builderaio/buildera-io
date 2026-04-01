@@ -27,14 +27,14 @@ interface Props {
     timing: string;
     strategy: string;
     schedule?: boolean;
-    id?: string; // Add ID to track the content idea
+    id?: string;
   } | null;
   onContentUsed?: () => void;
 }
 
 export default function ContentCreatorTab({ profile, topPosts, selectedPlatform, prepopulatedContent, onContentUsed }: Props) {
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t } = useTranslation(['marketing', 'errors']);
   const [generatingContent, setGeneratingContent] = useState(false);
   const [contentPrompt, setContentPrompt] = useState('');
   const [generatedContent, setGeneratedContent] = useState('');
@@ -46,7 +46,6 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
   const [publisherContent, setPublisherContent] = useState('');
   const [currentContentIdeaId, setCurrentContentIdeaId] = useState<string | undefined>(undefined);
   
-  // Era Optimizer hook
   const {
     optimizeWithEra,
     isOptimizing,
@@ -60,29 +59,23 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
     }
   });
 
-  // Pre-populate content when received from insights
   useEffect(() => {
     if (prepopulatedContent) {
-      // Only pre-fill the content prompt (description field)
-      // User must generate the actual content using the "Generar Contenido" button
       setContentPrompt(prepopulatedContent.title);
       
-      // Store content idea ID if provided
       if (prepopulatedContent.id) {
         setCurrentContentIdeaId(prepopulatedContent.id);
       }
       
-      // Show publisher if schedule mode (but don't pre-fill content)
       if (prepopulatedContent.schedule) {
         setShowPublisher(true);
       }
       
       toast({
-        title: "Idea cargada",
-        description: "Describe el contenido y usa 'Generar Contenido' para crearlo",
+        title: t('marketing:creatorTab.ideaLoaded'),
+        description: t('marketing:creatorTab.ideaLoadedDesc'),
       });
       
-      // Clear prepopulated data after use
       onContentUsed?.();
     }
   }, [prepopulatedContent]);
@@ -112,9 +105,8 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
         }
       });
       if (error) throw error;
-      setGeneratedContent(data.content || data.generatedText || 'No se pudo generar contenido');
+      setGeneratedContent(data.content || data.generatedText || t('marketing:creatorTab.noContentGenerated'));
       
-      // Save generated content to library if it includes suggestions
       if (data.content && profile.user_id) {
         try {
           await supabase
@@ -140,7 +132,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
       toast({ title: t('toast.content.generated'), description: t('toast.content.generatedDesc') });
     } catch (error) {
       console.error('Error generating content:', error);
-      toast({ title: t('toast.error'), description: t('toast.content.errorGenerate'), variant: "destructive" });
+      toast({ title: t('errors:general.title'), description: t('toast.content.errorGenerate'), variant: "destructive" });
     } finally {
       setGeneratingContent(false);
     }
@@ -149,7 +141,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
   const generateImageWithEra = async () => {
     const contentToUse = manualContent || generatedContent;
     if (!contentToUse.trim()) {
-      toast({ title: t('toast.error'), description: t('toast.content.needContent'), variant: "destructive" });
+      toast({ title: t('errors:general.title'), description: t('toast.content.needContent'), variant: "destructive" });
       return;
     }
     
@@ -166,7 +158,6 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
       
       setGeneratedImage(data.image_url);
       
-      // Save generated image to content library using helper
       if (data.image_url && profile.user_id) {
         const { saveImageToContentLibrary } = await import('@/utils/contentLibraryHelper');
         try {
@@ -187,7 +178,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
       toast({ title: t('toast.content.imageGenerated'), description: t('toast.content.imageGeneratedDesc') });
     } catch (error) {
       console.error('Error generating image:', error);
-      toast({ title: t('toast.error'), description: t('toast.content.errorImage'), variant: "destructive" });
+      toast({ title: t('errors:general.title'), description: t('toast.content.errorImage'), variant: "destructive" });
     } finally {
       setGeneratingImage(false);
     }
@@ -199,7 +190,6 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
   };
 
   const handlePublishSuccess = () => {
-    // Reset all form fields
     setContentPrompt('');
     setGeneratedContent('');
     setManualContent('');
@@ -209,12 +199,10 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
     setShowPublisher(false);
     
     toast({
-      title: "Formulario limpiado",
-      description: "Puedes crear nuevo contenido ahora",
+      title: t('marketing:creatorTab.formCleared'),
+      description: t('marketing:creatorTab.formClearedDesc'),
     });
   };
-
-  // Removed duplicate early return for showAdvancedCreator - handled in main render below
 
   return (
     <div className="space-y-6">
@@ -224,18 +212,18 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
-                <Brain className="h-6 w-6 text-purple-600" />
-                Content Studio IA - Versión Avanzada
+                <Brain className="h-6 w-6 text-purple-500" />
+                {t('marketing:creatorTab.advancedTitle')}
               </h2>
               <p className="text-muted-foreground">
-                Crea, guarda y gestiona insights personalizados con generación multimedia automática
+                {t('marketing:creatorTab.advancedSubtitle')}
               </p>
             </div>
             <Button
               variant="outline"
               onClick={() => setShowAdvancedCreator(false)}
             >
-              Volver al creador simple
+              {t('marketing:creatorTab.backToSimple')}
             </Button>
           </div>
           
@@ -250,12 +238,12 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
           {/* Upgrade to Advanced Creator */}
           <Card className="border-2 border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-purple-700">
+              <CardTitle className="flex items-center gap-2 text-primary">
                 <Brain className="h-5 w-5 text-primary" />
-                Content Studio IA - Versión Avanzada
+                {t('marketing:creatorTab.advancedTitle')}
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Crea, guarda y gestiona insights personalizados con generación multimedia automática
+                {t('marketing:creatorTab.advancedSubtitle')}
               </p>
             </CardHeader>
             <CardContent>
@@ -263,22 +251,22 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Target className="h-4 w-4" />
-                    <span>Insights persistentes y organizados</span>
+                    <span>{t('marketing:creatorTab.feature1')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Sparkles className="h-4 w-4" />
-                    <span>Generación automática de imágenes y videos</span>
+                    <span>{t('marketing:creatorTab.feature2')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <TrendingUp className="h-4 w-4" />
-                    <span>Gestión completa de contenido multimedia</span>
+                    <span>{t('marketing:creatorTab.feature3')}</span>
                   </div>
                 </div>
                 <Button 
                   onClick={() => setShowAdvancedCreator(true)}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 >
-                  Probar Ahora <ArrowRight className="h-4 w-4 ml-2" />
+                  {t('marketing:creatorTab.tryNow')} <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
             </CardContent>
@@ -292,8 +280,8 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
               <PlusCircle className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-xl">Crear Contenido</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">Elige tu método preferido</p>
+              <CardTitle className="text-xl">{t('marketing:creatorTab.createContent')}</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">{t('marketing:creatorTab.chooseMethod')}</p>
             </div>
           </div>
         </CardHeader>
@@ -305,14 +293,14 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                 className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300"
               >
                 <Sparkles className="h-4 w-4" />
-                <span className="font-medium">Generación IA</span>
+                <span className="font-medium">{t('marketing:creatorTab.aiGeneration')}</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="manual" 
                 className="flex items-center gap-2 py-3 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300"
               >
                 <Edit3 className="h-4 w-4" />
-                <span className="font-medium">Escribir Manual</span>
+                <span className="font-medium">{t('marketing:creatorTab.writeManual')}</span>
               </TabsTrigger>
             </TabsList>
 
@@ -320,12 +308,12 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
               <div className="space-y-3">
                 <label className="block text-sm font-semibold flex items-center gap-2">
                   <Brain className="h-4 w-4 text-primary" />
-                  Describe el contenido que quieres crear
+                  {t('marketing:creatorTab.describeContent')}
                 </label>
                 <Textarea
                   value={contentPrompt}
                   onChange={(e) => setContentPrompt(e.target.value)}
-                  placeholder="Ej: Crea una publicación sobre los beneficios de la automatización empresarial, enfocada en ahorro de tiempo y costos..."
+                  placeholder={t('marketing:creatorTab.promptPlaceholder')}
                   className="h-28 resize-none border-2 focus:border-primary transition-colors"
                 />
               </div>
@@ -338,12 +326,12 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                 {generatingContent ? (
                   <>
                     <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Generando contenido...
+                    {t('marketing:creatorTab.generating')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="h-5 w-5 mr-2" />
-                    Generar Contenido con IA
+                    {t('marketing:creatorTab.generateWithAI')}
                   </>
                 )}
               </Button>
@@ -353,12 +341,12 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
               <div className="space-y-3">
                 <label className="block text-sm font-semibold flex items-center gap-2">
                   <Edit3 className="h-4 w-4 text-primary" />
-                  Escribe tu contenido
+                  {t('marketing:creatorTab.writeYourContent')}
                 </label>
                 <Textarea
                   value={manualContent}
                   onChange={(e) => setManualContent(e.target.value)}
-                  placeholder="Escribe tu publicación aquí..."
+                  placeholder={t('marketing:creatorTab.manualPlaceholder')}
                   className="h-36 resize-none border-2 focus:border-primary transition-colors"
                 />
               </div>
@@ -376,12 +364,12 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                   {isOptimizing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Optimizando...
+                      {t('marketing:creatorTab.optimizing')}
                     </>
                   ) : (
                     <>
                       <Sparkles className="h-4 w-4 mr-2" />
-                      Optimizar con Era
+                      {t('marketing:creatorTab.optimizeWithEra')}
                     </>
                   )}
                 </Button>
@@ -395,12 +383,12 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                   {generatingImage ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generando...
+                      {t('marketing:creatorTab.generatingImage')}
                     </>
                   ) : (
                     <>
                       <Image className="h-4 w-4 mr-2" />
-                      Generar Imagen
+                      {t('marketing:creatorTab.generateImage')}
                     </>
                   )}
                 </Button>
@@ -409,13 +397,13 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
 
             {/* Generated/Manual Content Display */}
             {(generatedContent || manualContent) && (
-              <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50/30 to-blue-50/30 animate-scale-in">
+              <Card className="border-2 border-green-500/20 bg-gradient-to-br from-green-500/5 to-blue-500/5 animate-scale-in">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-green-100">
+                    <div className="p-2 rounded-lg bg-green-500/10">
                       <Sparkles className="h-5 w-5 text-green-600" />
                     </div>
-                    {manualContent ? 'Tu Contenido' : 'Contenido Generado'}
+                    {manualContent ? t('marketing:creatorTab.yourContent') : t('marketing:creatorTab.generatedContent')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -431,7 +419,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                       <div className="p-4 bg-card/80 backdrop-blur-sm rounded-xl border-2 border-blue-500/20 shadow-sm">
                         <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
                           <Image className="h-4 w-4" />
-                          Imagen Generada
+                          {t('marketing:creatorTab.generatedImageTitle')}
                         </h4>
                         <img 
                           src={generatedImage} 
@@ -451,14 +439,14 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                         }}
                         className="hover-scale"
                       >
-                        <Copy className="h-4 w-4 mr-1" />Copiar
+                        <Copy className="h-4 w-4 mr-1" />{t('marketing:creatorTab.copy')}
                       </Button>
                       <Button 
                         size="sm" 
                         onClick={() => handlePublish(manualContent || generatedContent)}
                         className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-md hover:shadow-lg transition-all duration-300 hover-scale"
                       >
-                        <Send className="h-4 w-4 mr-1" />Publicar Ahora
+                        <Send className="h-4 w-4 mr-1" />{t('marketing:creatorTab.publishNow')}
                       </Button>
                       <Button 
                         size="sm" 
@@ -473,7 +461,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                         }}
                         className="hover:bg-destructive/10 hover:text-destructive"
                       >
-                        Limpiar
+                        {t('marketing:creatorTab.clear')}
                       </Button>
                     </div>
                   </div>
@@ -494,14 +482,14 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                   <TrendingUp className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl">Análisis de Contenido Histórico</CardTitle>
+                  <CardTitle className="text-xl">{t('marketing:creatorTab.historicalTitle')}</CardTitle>
                   <p className="text-sm text-muted-foreground">
-                    Aprende de tu contenido más exitoso
+                    {t('marketing:creatorTab.historicalSubtitle')}
                   </p>
                 </div>
               </div>
               <Badge variant="secondary" className="px-3 py-1">
-                {topPosts.length} posts analizados
+                {topPosts.length} {t('marketing:creatorTab.postsAnalyzed')}
               </Badge>
             </div>
           </CardHeader>
@@ -511,7 +499,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
               <div className="space-y-3 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-primary/10 hover:border-primary/30 transition-colors duration-300">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  <h4 className="font-semibold text-primary">Hashtags Exitosos</h4>
+                  <h4 className="font-semibold text-primary">{t('marketing:creatorTab.successfulHashtags')}</h4>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {Array.from(new Set(topPosts.flatMap(post => post.hashTags || []))).slice(0, 10).map((tag, index) => (
@@ -529,7 +517,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  💡 Click para copiar cualquier hashtag
+                  💡 {t('marketing:creatorTab.clickToCopy')}
                 </p>
               </div>
               
@@ -537,7 +525,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
               <div className="space-y-3 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-colors duration-300">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-                  <h4 className="font-semibold text-foreground">Formatos Populares</h4>
+                  <h4 className="font-semibold text-foreground">{t('marketing:creatorTab.popularFormats')}</h4>
                 </div>
                 <div className="space-y-2">
                   {Array.from(new Set(topPosts.map(post => post.type || 'POST'))).slice(0, 5).map((type, index) => {
@@ -549,7 +537,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                           <span className="capitalize font-medium">{type.toLowerCase()}</span>
                           <span className="text-xs text-muted-foreground">{Math.round(percentage)}%</span>
                         </div>
-                        <div className="w-full bg-purple-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-purple-500/10 rounded-full h-1.5 overflow-hidden">
                           <div 
                             className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-500"
                             style={{ width: `${percentage}%` }}
@@ -565,7 +553,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
               <div className="space-y-3 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-orange-500/10 hover:border-orange-500/30 transition-colors duration-300">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                  <h4 className="font-semibold text-foreground">Estadísticas Clave</h4>
+                  <h4 className="font-semibold text-foreground">{t('marketing:creatorTab.keyStats')}</h4>
                 </div>
                 <div className="space-y-4">
                   <div>
@@ -573,9 +561,9 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                       <span className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
                         {Math.round(topPosts.reduce((acc, post) => acc + ((post.likes || 0) + (post.comments || 0)), 0) / topPosts.length)}
                       </span>
-                      <span className="text-xs text-muted-foreground">interacciones</span>
+                      <span className="text-xs text-muted-foreground">{t('marketing:creatorTab.interactions')}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">por post en promedio</p>
+                    <p className="text-xs text-muted-foreground">{t('marketing:creatorTab.perPostAvg')}</p>
                   </div>
                   
                   <div className="pt-3 border-t border-border/50">
@@ -591,7 +579,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                     <div className="flex items-center justify-between text-sm">
                       <span className="flex items-center gap-1">
                         <MessageCircle className="h-3 w-3 text-blue-500" />
-                        Comentarios
+                        {t('marketing:creatorTab.comments')}
                       </span>
                       <span className="font-semibold">
                         {Math.round(topPosts.reduce((acc, post) => acc + (post.comments || 0), 0) / topPosts.length)}
@@ -608,11 +596,10 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                 <Lightbulb className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-foreground mb-1">
-                    💡 Consejo: Usa estos datos para tu próximo contenido
+                    💡 {t('marketing:creatorTab.tipTitle')}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Los hashtags y formatos mostrados aquí son los que han generado mayor engagement.
-                    Considera incorporarlos en tu siguiente publicación para maximizar el alcance.
+                    {t('marketing:creatorTab.tipDescription')}
                   </p>
                 </div>
               </div>
@@ -639,7 +626,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
           isOpen={showPublisher}
           onClose={() => setShowPublisher(false)}
           content={{
-            title: 'Contenido Simple',
+            title: t('marketing:creatorTab.simpleContent'),
             content: publisherContent,
             generatedImage: generatedImage || undefined
           }}
@@ -653,21 +640,21 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
       <SmartLoader
         isVisible={generatingContent}
         type="content-generation"
-        message="Creando contenido personalizado para tu audiencia..."
+        message={t('marketing:creatorTab.loaderContent')}
         size="md"
       />
       
       <SmartLoader
         isVisible={generatingImage}
         type="image-generation"
-        message="Generando imagen profesional para tu contenido..."
+        message={t('marketing:creatorTab.loaderImage')}
         size="md"
       />
       
       <SmartLoader
         isVisible={isOptimizing}
         type="optimization"
-        message="Era está optimizando tu contenido..."
+        message={t('marketing:creatorTab.loaderOptimize')}
         size="md"
       />
     </div>

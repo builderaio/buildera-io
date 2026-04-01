@@ -156,7 +156,7 @@ const AudienciasManager = ({ profile }: AudienciasManagerProps) => {
     } catch (error) {
       console.error('Error deleting audience:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudo eliminar la audiencia",
         variant: "destructive"
       });

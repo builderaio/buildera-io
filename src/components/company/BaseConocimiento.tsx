@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,7 +57,7 @@ const MisArchivos = () => {
     } catch (error) {
       console.error('Error fetching files:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudieron cargar los archivos",
         variant: "destructive",
       });
@@ -125,7 +126,7 @@ const MisArchivos = () => {
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudo subir el archivo",
         variant: "destructive",
       });
@@ -160,7 +161,7 @@ const MisArchivos = () => {
     } catch (error) {
       console.error('Error deleting file:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudo eliminar el archivo",
         variant: "destructive",
       });

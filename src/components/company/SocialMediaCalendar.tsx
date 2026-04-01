@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, TrendingUp, MapPin, Hash, Users, BarChart3, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,7 +73,7 @@ export function SocialMediaCalendar() {
     } catch (error: any) {
       console.error('Error loading calendar data:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudieron cargar los datos del calendario",
         variant: "destructive",
       });
@@ -219,7 +220,7 @@ export function SocialMediaCalendar() {
     } catch (error: any) {
       console.error('Error processing calendar data:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudieron procesar los datos del calendario",
         variant: "destructive",
       });

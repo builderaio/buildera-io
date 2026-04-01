@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -117,7 +118,7 @@ export const ContentEnhancementDialog = ({
     } catch (error) {
       console.error('Error generando imagen:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudo generar la imagen. Intenta de nuevo.",
         variant: "destructive"
       });
@@ -192,7 +193,7 @@ export const ContentEnhancementDialog = ({
     } catch (error) {
       console.error('Error generando video:', error);
       toast({
-        title: "Error", 
+        title: t('errors:general.title'), 
         description: "No se pudo generar el video. Intenta de nuevo.",
         variant: "destructive"
       });
@@ -296,7 +297,7 @@ export const ContentEnhancementDialog = ({
       }
       
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: errorMessage,
         variant: "destructive"
       });
@@ -611,7 +612,7 @@ export const ContentEnhancementDialog = ({
                           document.body.removeChild(a);
                         } catch (error) {
                           toast({
-                            title: "Error",
+                            title: t('errors:general.title'),
                             description: "No se pudo descargar el archivo",
                             variant: "destructive"
                           });

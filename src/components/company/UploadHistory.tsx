@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -123,7 +124,7 @@ export const UploadHistory = ({ profile }: UploadHistoryProps) => {
     } catch (error) {
       console.error('Error loading history:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudo cargar el historial de uploads",
         variant: "destructive"
       });

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -101,7 +102,7 @@ const InteligenciaCompetitiva = () => {
     } catch (error) {
       console.error('Error loading competitive data:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudo cargar la información competitiva",
         variant: "destructive"
       });
@@ -144,7 +145,7 @@ const InteligenciaCompetitiva = () => {
     } catch (error) {
       console.error('Error analyzing competitor:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudo analizar el competidor. Intenta nuevamente.",
         variant: "destructive"
       });
@@ -183,7 +184,7 @@ const InteligenciaCompetitiva = () => {
     } catch (error) {
       console.error('Error removing competitor:', error);
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudo eliminar el competidor",
         variant: "destructive"
       });

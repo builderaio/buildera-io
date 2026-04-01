@@ -218,7 +218,7 @@ const SidebarLogoHeader = ({
           {company?.name || companyName}
         </span>
         <span className="text-xs font-medium text-sidebar-muted-foreground tracking-wide">
-          {t('common:sidebar.platformTagline', 'Marketing Autopilot')}
+          {t('common:sidebar.platformTagline', 'Agentic Enterprise')}
         </span>
       </div>
     </div>

@@ -9,10 +9,15 @@ import { useTranslation } from "react-i18next";
 
 const PrivacyPolicy = () => {
   useGTM();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation('legal');
+
+  const personalInfoItems = t('privacy.personalInfoItems', { returnObjects: true }) as string[];
+  const usageInfoItems = t('privacy.usageInfoItems', { returnObjects: true }) as string[];
+  const allowedUsesItems = t('privacy.allowedUsesItems', { returnObjects: true }) as string[];
+  const neverDoItems = t('privacy.neverDoItems', { returnObjects: true }) as string[];
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -20,7 +25,7 @@ const PrivacyPolicy = () => {
               <Link to="/">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <ArrowLeft className="w-4 h-4" />
-                  Volver a Inicio
+                  {t('backToHome')}
                 </Button>
               </Link>
               <div className="flex items-center gap-3">
@@ -32,14 +37,13 @@ const PrivacyPolicy = () => {
             </div>
             <Badge variant="secondary" className="gap-2">
               <Shield className="w-3 h-3" />
-              Última actualización: Enero 2025
+              {t('lastUpdated')}
             </Badge>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-6 py-12 max-w-4xl">
-        {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="flex justify-center mb-6">
             <div className="p-4 bg-primary/10 rounded-full">
@@ -47,264 +51,233 @@ const PrivacyPolicy = () => {
             </div>
           </div>
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Política de Privacidad y Seguridad
+            {t('privacy.title')}
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            En Buildera, tu privacidad y la seguridad de tus datos son fundamentales. 
-            Construimos con los más altos estándares de protección y confidencialidad.
+            {t('privacy.subtitle')}
           </p>
         </div>
 
-        {/* Security Highlights */}
         <Card className="mb-8 border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <Lock className="w-6 h-6 text-primary" />
-              Compromisos de Seguridad de Buildera
+              {t('privacy.securityCommitments')}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <Database className="w-5 h-5 text-green-600 mt-1" />
+                <Database className="w-5 h-5 text-primary mt-1" />
                 <div>
-                  <h4 className="font-semibold">Encriptación End-to-End</h4>
-                  <p className="text-sm text-muted-foreground">Todos tus datos están protegidos con encriptación AES-256</p>
+                  <h4 className="font-semibold">{t('privacy.encryption')}</h4>
+                  <p className="text-sm text-muted-foreground">{t('privacy.encryptionDesc')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <UserCheck className="w-5 h-5 text-blue-600 mt-1" />
+                <UserCheck className="w-5 h-5 text-primary mt-1" />
                 <div>
-                  <h4 className="font-semibold">Autenticación Segura</h4>
-                  <p className="text-sm text-muted-foreground">OAuth 2.0 y autenticación multifactor disponible</p>
+                  <h4 className="font-semibold">{t('privacy.secureAuth')}</h4>
+                  <p className="text-sm text-muted-foreground">{t('privacy.secureAuthDesc')}</p>
                 </div>
               </div>
             </div>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <Globe className="w-5 h-5 text-purple-600 mt-1" />
+                <Globe className="w-5 h-5 text-primary mt-1" />
                 <div>
-                  <h4 className="font-semibold">Cumplimiento GDPR</h4>
-                  <p className="text-sm text-muted-foreground">Totalmente conforme con regulaciones europeas</p>
+                  <h4 className="font-semibold">{t('privacy.gdprCompliance')}</h4>
+                  <p className="text-sm text-muted-foreground">{t('privacy.gdprComplianceDesc')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <FileCheck className="w-5 h-5 text-orange-600 mt-1" />
+                <FileCheck className="w-5 h-5 text-primary mt-1" />
                 <div>
-                  <h4 className="font-semibold">Auditorías Regulares</h4>
-                  <p className="text-sm text-muted-foreground">Evaluaciones de seguridad independientes trimestrales</p>
+                  <h4 className="font-semibold">{t('privacy.regularAudits')}</h4>
+                  <p className="text-sm text-muted-foreground">{t('privacy.regularAuditsDesc')}</p>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Main Content */}
         <div className="space-y-8">
-          {/* Information Collection */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
                 <Eye className="w-5 h-5" />
-                1. Información que Recopilamos
+                {t('privacy.section1Title')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-semibold mb-2">Información Personal</h4>
+                <h4 className="font-semibold mb-2">{t('privacy.personalInfo')}</h4>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Nombre completo y dirección de correo electrónico (requeridos para la cuenta)</li>
-                  <li>Información de la empresa (nombre, sector, tamaño)</li>
-                  <li>Información profesional (cargo, años de experiencia, habilidades)</li>
-                  <li>URL del sitio web de la empresa (opcional)</li>
+                  {Array.isArray(personalInfoItems) && personalInfoItems.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
                 </ul>
               </div>
               <div>
-                <h4 className="font-semibold mb-2">Información de Uso</h4>
+                <h4 className="font-semibold mb-2">{t('privacy.usageInfo')}</h4>
                 <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Datos de navegación y uso de la plataforma (anonimizados)</li>
-                  <li>Métricas de rendimiento para mejorar el servicio</li>
-                  <li>Logs de seguridad (sin información personal identificable)</li>
+                  {Array.isArray(usageInfoItems) && usageInfoItems.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
                 </ul>
               </div>
               <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
                 <p className="text-sm font-medium text-primary">
-                  🔒 <strong>Garantía de Privacidad:</strong> Nunca accedemos al contenido de tus proyectos o datos empresariales sin tu consentimiento explícito.
+                  🔒 <strong>{t('privacy.privacyGuarantee')}</strong>
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Data Usage */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
                 <Database className="w-5 h-5" />
-                2. Cómo Utilizamos tu Información
+                {t('privacy.section2Title')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-semibold mb-3 text-green-700">✅ Usos Permitidos</h4>
+                  <h4 className="font-semibold mb-3 text-primary">✅ {t('privacy.allowedUses')}</h4>
                   <ul className="space-y-2 text-sm">
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></span>
-                      Proporcionar y mejorar nuestros servicios
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></span>
-                      Personalizar tu experiencia en la plataforma
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></span>
-                      Comunicaciones sobre actualizaciones del servicio
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2"></span>
-                      Soporte técnico y atención al cliente
-                    </li>
+                    {Array.isArray(allowedUsesItems) && allowedUsesItems.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full mt-2"></span>
+                        {item}
+                      </li>
+                    ))}
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-3 text-red-700">❌ Nunca Hacemos</h4>
+                  <h4 className="font-semibold mb-3 text-destructive">❌ {t('privacy.neverDo')}</h4>
                   <ul className="space-y-2 text-sm">
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></span>
-                      Vender tu información a terceros
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></span>
-                      Usar tus datos para publicidad externa
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></span>
-                      Acceder a tus proyectos sin autorización
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2"></span>
-                      Compartir datos con competidores
-                    </li>
+                    {Array.isArray(neverDoItems) && neverDoItems.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 bg-destructive rounded-full mt-2"></span>
+                        {item}
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Data Protection */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
                 <Shield className="w-5 h-5" />
-                3. Protección y Almacenamiento de Datos
+                {t('privacy.section3Title')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h4 className="font-semibold mb-3">Medidas de Seguridad Técnicas</h4>
+                <h4 className="font-semibold mb-3">{t('privacy.technicalMeasures')}</h4>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="p-4 bg-muted rounded-lg">
-                    <h5 className="font-medium mb-2">Encriptación</h5>
-                    <p className="text-sm text-muted-foreground">TLS 1.3 en tránsito y AES-256 en reposo</p>
+                    <h5 className="font-medium mb-2">{t('privacy.encryptionDetail')}</h5>
+                    <p className="text-sm text-muted-foreground">{t('privacy.encryptionDetailDesc')}</p>
                   </div>
                   <div className="p-4 bg-muted rounded-lg">
-                    <h5 className="font-medium mb-2">Infraestructura</h5>
-                    <p className="text-sm text-muted-foreground">Servidores en centros de datos SOC 2 certificados</p>
+                    <h5 className="font-medium mb-2">{t('privacy.infrastructure')}</h5>
+                    <p className="text-sm text-muted-foreground">{t('privacy.infrastructureDesc')}</p>
                   </div>
                   <div className="p-4 bg-muted rounded-lg">
-                    <h5 className="font-medium mb-2">Acceso</h5>
-                    <p className="text-sm text-muted-foreground">Control de acceso basado en roles (RBAC)</p>
+                    <h5 className="font-medium mb-2">{t('privacy.access')}</h5>
+                    <p className="text-sm text-muted-foreground">{t('privacy.accessDesc')}</p>
                   </div>
                   <div className="p-4 bg-muted rounded-lg">
-                    <h5 className="font-medium mb-2">Monitoreo</h5>
-                    <p className="text-sm text-muted-foreground">Detección de amenazas 24/7</p>
+                    <h5 className="font-medium mb-2">{t('privacy.monitoring')}</h5>
+                    <p className="text-sm text-muted-foreground">{t('privacy.monitoringDesc')}</p>
                   </div>
                 </div>
               </div>
-              
               <div>
-                <h4 className="font-semibold mb-3">Ubicación de Datos</h4>
+                <h4 className="font-semibold mb-3">{t('privacy.dataLocation')}</h4>
                 <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
                   <p className="text-sm">
-                    <strong>Servidores principales:</strong> Unión Europea (Frankfurt, Alemania)<br/>
-                    <strong>Respaldos:</strong> Múltiples regiones dentro de la UE<br/>
-                    <strong>Cumplimiento:</strong> GDPR, ISO 27001, SOC 2 Type II
+                    <strong>{t('privacy.mainServers')}</strong><br/>
+                    <strong>{t('privacy.backups')}</strong><br/>
+                    <strong>{t('privacy.compliance')}</strong>
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* User Rights */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
                 <UserCheck className="w-5 h-5" />
-                4. Tus Derechos sobre los Datos
+                {t('privacy.section4Title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-semibold text-blue-700">Derecho de Acceso</h4>
-                    <p className="text-sm text-muted-foreground">Puedes solicitar una copia completa de tus datos almacenados</p>
+                    <h4 className="font-semibold text-primary">{t('privacy.rightAccess')}</h4>
+                    <p className="text-sm text-muted-foreground">{t('privacy.rightAccessDesc')}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-green-700">Derecho de Rectificación</h4>
-                    <p className="text-sm text-muted-foreground">Puedes corregir información incorrecta o incompleta</p>
+                    <h4 className="font-semibold text-primary">{t('privacy.rightRectification')}</h4>
+                    <p className="text-sm text-muted-foreground">{t('privacy.rightRectificationDesc')}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-orange-700">Derecho de Eliminación</h4>
-                    <p className="text-sm text-muted-foreground">Puedes solicitar la eliminación total de tu cuenta y datos</p>
+                    <h4 className="font-semibold text-primary">{t('privacy.rightDeletion')}</h4>
+                    <p className="text-sm text-muted-foreground">{t('privacy.rightDeletionDesc')}</p>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-semibold text-purple-700">Derecho de Portabilidad</h4>
-                    <p className="text-sm text-muted-foreground">Puedes exportar tus datos en formato estándar</p>
+                    <h4 className="font-semibold text-primary">{t('privacy.rightPortability')}</h4>
+                    <p className="text-sm text-muted-foreground">{t('privacy.rightPortabilityDesc')}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-red-700">Derecho de Oposición</h4>
-                    <p className="text-sm text-muted-foreground">Puedes oponerte al procesamiento de ciertos datos</p>
+                    <h4 className="font-semibold text-primary">{t('privacy.rightOpposition')}</h4>
+                    <p className="text-sm text-muted-foreground">{t('privacy.rightOppositionDesc')}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-700">Derecho de Limitación</h4>
-                    <p className="text-sm text-muted-foreground">Puedes solicitar restringir el procesamiento</p>
+                    <h4 className="font-semibold text-primary">{t('privacy.rightLimitation')}</h4>
+                    <p className="text-sm text-muted-foreground">{t('privacy.rightLimitationDesc')}</p>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Contact & Updates */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
                 <Bell className="w-5 h-5" />
-                5. Contacto y Actualizaciones
+                {t('privacy.section5Title')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-semibold mb-2">Oficial de Protección de Datos</h4>
+                <h4 className="font-semibold mb-2">{t('privacy.dpo')}</h4>
                 <div className="bg-muted p-4 rounded-lg">
                   <p className="text-sm">
-                    <strong>Email:</strong> privacy@buildera.io<br/>
-                    <strong>Respuesta garantizada:</strong> Dentro de 72 horas<br/>
-                    <strong>Resolución:</strong> Máximo 30 días calendario
+                    <strong>{t('privacy.email')}</strong><br/>
+                    <strong>{t('privacy.responseTime')}</strong><br/>
+                    <strong>{t('privacy.resolution')}</strong>
                   </p>
                 </div>
               </div>
-              
               <div>
-                <h4 className="font-semibold mb-2">Actualizaciones de Política</h4>
+                <h4 className="font-semibold mb-2">{t('privacy.policyUpdates')}</h4>
                 <p className="text-sm text-muted-foreground mb-3">
-                  Te notificaremos por email sobre cambios significativos en esta política al menos 30 días antes de su implementación.
+                  {t('privacy.policyUpdatesDesc')}
                 </p>
                 <Badge variant="outline" className="gap-2">
                   <FileCheck className="w-3 h-3" />
-                  Versión 2.1 - Vigente desde Enero 2025
+                  {t('privacy.version')}
                 </Badge>
               </div>
             </CardContent>
@@ -313,18 +286,16 @@ const PrivacyPolicy = () => {
 
         <Separator className="my-8" />
 
-        {/* Footer */}
         <div className="text-center space-y-4">
           <p className="text-sm text-muted-foreground">
-            Esta política de privacidad ha sido elaborada en cumplimiento del Reglamento General de Protección de Datos (GDPR) 
-            y la Ley Orgánica de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD).
+            {t('privacy.footerNote')}
           </p>
           <div className="flex justify-center gap-4">
             <Link to="/">
-              <Button variant="outline">Volver al Inicio</Button>
+              <Button variant="outline">{t('backToHome')}</Button>
             </Link>
             <Link to="/company-dashboard">
-              <Button>Ir al Dashboard</Button>
+              <Button>{t('goToDashboard')}</Button>
             </Link>
           </div>
         </div>

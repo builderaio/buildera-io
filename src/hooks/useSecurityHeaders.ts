@@ -74,7 +74,7 @@ export const useSecurityHeaders = (config: SecurityHeadersConfig = {}) => {
  */
 export const useSecureErrorHandler = () => {
   const handleError = useCallback((error: any, context?: string) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.error('Secure Error Handler:', { error, context });
     }
     
@@ -108,7 +108,7 @@ export const useSecureErrorHandler = () => {
  * HTTPS validation in production
  */
 export const validateSecureConnection = () => {
-  if (process.env.NODE_ENV === 'production' && location.protocol !== 'https:') {
+  if (import.meta.env.PROD && location.protocol !== 'https:') {
     logSecurityEvent({
       type: 'suspicious_activity',
       details: { 

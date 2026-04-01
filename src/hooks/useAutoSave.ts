@@ -11,7 +11,7 @@ export const useAutoSave = ({
   onSave, 
   enabled = true 
 }: UseAutoSaveOptions) => {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dataRef = useRef<any>(null);
 
   const triggerSave = (data: any) => {

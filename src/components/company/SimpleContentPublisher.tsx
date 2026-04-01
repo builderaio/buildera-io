@@ -104,7 +104,7 @@ export default function SimpleContentPublisher({
   generatedContentId,
   source = 'manual'
 }: Props) {
-  const { t } = useTranslation('marketing');
+  const { t } = useTranslation(['marketing', 'errors']);
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
@@ -285,7 +285,7 @@ export default function SimpleContentPublisher({
     } catch (error) {
       console.error('Error generating content:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: t('publisher.errorGenerating', 'No se pudo generar el contenido'),
         variant: "destructive"
       });
@@ -360,7 +360,7 @@ export default function SimpleContentPublisher({
     } catch (error) {
       console.error("Error uploading media:", error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: t('publisher.uploadError', 'No se pudo cargar el archivo'),
         variant: "destructive",
       });
@@ -373,7 +373,7 @@ export default function SimpleContentPublisher({
   const handleGenerateImage = async () => {
     if (!editingContent) {
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: t('publisher.noContentForImage', 'No hay contenido para generar la imagen'),
         variant: "destructive",
       });
@@ -404,7 +404,7 @@ export default function SimpleContentPublisher({
     } catch (error) {
       console.error("Error generating image:", error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: t('publisher.imageError', 'No se pudo generar la imagen'),
         variant: "destructive",
       });
@@ -416,7 +416,7 @@ export default function SimpleContentPublisher({
   const handlePublish = async () => {
     if (selectedPlatforms.length === 0) {
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: t('publisher.selectPlatform', 'Selecciona al menos una plataforma'),
         variant: "destructive"
       });
@@ -425,7 +425,7 @@ export default function SimpleContentPublisher({
 
     if (publishMode === 'scheduled' && (!scheduledDate || !scheduledTime)) {
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: t('publisher.selectDateTime', 'Selecciona fecha y hora para la publicación programada'),
         variant: "destructive"
       });

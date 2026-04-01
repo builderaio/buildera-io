@@ -21,7 +21,7 @@ export const SecurityProvider = ({ children }: SecurityProviderProps) => {
     applySecurityHeaders();
     
     // Detectar herramientas de desarrollo abiertas (solo en producción)
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.PROD) {
       const detectDevTools = () => {
         const threshold = 160;
         const isDevToolsOpen = 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation(['auth', 'errors']);
 
   useEffect(() => {
     // Verificar si hay tokens en la URL
@@ -31,10 +33,10 @@ export default function ResetPassword() {
         refresh_token: refreshToken,
       }).then(({ data, error }) => {
         if (error) {
-          console.error('Error estableciendo sesión:', error);
+          if (import.meta.env.DEV) console.error('Error setting session:', error);
           setIsValidToken(false);
         } else {
-          console.log('Sesión establecida para reset:', data);
+          setIsValidToken(true);
           setIsValidToken(true);
         }
       });
@@ -50,8 +52,8 @@ export default function ResetPassword() {
     try {
       if (password.length < 6) {
         toast({
-          title: "Error",
-          description: "La contraseña debe tener al menos 6 caracteres",
+          title: t('errors:general.title'),
+          description: t('auth:resetPassword.minLength', 'La contraseña debe tener al menos 6 caracteres'),
           variant: "destructive",
         });
         return;
@@ -59,8 +61,8 @@ export default function ResetPassword() {
 
       if (password !== confirmPassword) {
         toast({
-          title: "Error", 
-          description: "Las contraseñas no coinciden",
+          title: t('errors:general.title'), 
+          description: t('auth:resetPassword.mismatch', 'Las contraseñas no coinciden'),
           variant: "destructive",
         });
         return;
@@ -75,8 +77,8 @@ export default function ResetPassword() {
       }
 
       toast({
-        title: "¡Contraseña restablecida!",
-        description: "Tu contraseña ha sido actualizada correctamente",
+        title: t('auth:resetPassword.successTitle', '¡Contraseña restablecida!'),
+        description: t('auth:resetPassword.successDesc', 'Tu contraseña ha sido actualizada correctamente'),
       });
 
       // Redirigir al login después de un momento
@@ -85,10 +87,10 @@ export default function ResetPassword() {
       }, 2000);
 
     } catch (error: any) {
-      console.error("Error restableciendo contraseña:", error);
+      if (import.meta.env.DEV) console.error("Error resetting password:", error);
       toast({
-        title: "Error",
-        description: error.message || "No se pudo restablecer la contraseña",
+        title: t('errors:general.title'),
+        description: error.message || t('auth:resetPassword.error', 'No se pudo restablecer la contraseña'),
         variant: "destructive",
       });
     } finally {

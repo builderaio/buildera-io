@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles, Edit3, Loader2, Wand2, RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ContentIdeaCard } from "./ContentIdeaCard";
 import SimpleContentPublisher from "./SimpleContentPublisher";
 import { useEraOptimizer } from "@/hooks/useEraOptimizer";
@@ -20,6 +21,7 @@ interface ContentCreatorHubProps {
 
 export default function ContentCreatorHub({ profile, onContentPublished }: ContentCreatorHubProps) {
   const { toast } = useToast();
+  const { t } = useTranslation(['errors', 'marketing']);
   const [contentIdeas, setContentIdeas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [creationMode, setCreationMode] = useState<'ai' | 'manual'>('ai');
@@ -73,7 +75,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     } catch (error) {
       console.error('Error loading content ideas:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "No se pudieron cargar las ideas de contenido",
         variant: "destructive"
       });
@@ -111,7 +113,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     } catch (error) {
       console.error('Error generating ideas:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "No se pudieron generar las ideas",
         variant: "destructive"
       });
@@ -123,7 +125,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
   const handleQuickCreateWithAI = async () => {
     if (!aiPrompt.trim()) {
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "Describe tu idea de contenido",
         variant: "destructive"
       });
@@ -159,7 +161,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     } catch (error) {
       console.error('Error generating content:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "No se pudo generar el contenido",
         variant: "destructive"
       });
@@ -171,7 +173,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
   const handleCreateManual = () => {
     if (!manualContent.trim()) {
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "Escribe el contenido que deseas publicar",
         variant: "destructive"
       });
@@ -226,7 +228,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     } catch (error) {
       console.error('Error completing idea:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "No se pudo completar la idea",
         variant: "destructive"
       });
@@ -249,7 +251,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     } catch (error) {
       console.error('Error dismissing idea:', error);
       toast({
-        title: "Error",
+        title: t("errors:general.title"),
         description: "No se pudo descartar la idea",
         variant: "destructive"
       });

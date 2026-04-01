@@ -52,34 +52,34 @@ const CompanyDashboard = () => {
     initializedRef.current = true;
     
     const checkAuth = async () => {
-      console.group('🔐 [CompanyDashboard] checkAuth');
-      console.log('Timestamp:', new Date().toISOString());
+      if (import.meta.env.DEV) console.group('🔐 [CompanyDashboard] checkAuth');
+      if (import.meta.env.DEV) console.log('Timestamp:', new Date().toISOString());
       
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
-        console.log('❌ No session found');
-        console.groupEnd();
+        if (import.meta.env.DEV) console.log('❌ No session found');
+        if (import.meta.env.DEV) console.groupEnd();
         navigate('/auth');
         return;
       }
 
-      console.log('✅ Session found for user:', session.user.id);
+      if (import.meta.env.DEV) console.log('✅ Session found for user:', session.user.id);
       setUser(session.user);
 
       const viewParam = searchParams.get('view');
       const onboardingCompletedParam = searchParams.get('onboarding_completed');
       
-      console.log('📍 URL params:', { viewParam, onboardingCompletedParam });
+      if (import.meta.env.DEV) console.log('📍 URL params:', { viewParam, onboardingCompletedParam });
       
       if (viewParam === 'onboarding') {
-        console.log('🔄 Showing onboarding orchestrator');
+        if (import.meta.env.DEV) console.log('🔄 Showing onboarding orchestrator');
         setActiveView('onboarding');
         setLoading(false);
-        console.groupEnd();
+        if (import.meta.env.DEV) console.groupEnd();
         return;
       } else if (viewParam) {
-        console.log('🎯 Setting activeView from URL:', viewParam);
+        if (import.meta.env.DEV) console.log('🎯 Setting activeView from URL:', viewParam);
         setActiveView(viewParam);
         
         const { data: profileData } = await supabase
@@ -95,11 +95,11 @@ const CompanyDashboard = () => {
         }
         
         setLoading(false);
-        console.groupEnd();
+        if (import.meta.env.DEV) console.groupEnd();
         return;
       }
 
-      console.log('🔍 Checking onboarding status');
+      if (import.meta.env.DEV) console.log('🔍 Checking onboarding status');
       
       const { data: onboardingStatus } = await supabase
         .from('user_onboarding_status')
@@ -108,7 +108,7 @@ const CompanyDashboard = () => {
         .maybeSingle();
 
       if (onboardingStatus?.onboarding_completed_at) {
-        console.log('✅ Usuario ya completó onboarding, cargando perfil y continuando');
+        if (import.meta.env.DEV) console.log('✅ Usuario ya completó onboarding, cargando perfil y continuando');
         
         // Check if user should see activation wizard (journey_current_step <= 2)
         const { data: companyData } = await supabase
@@ -126,18 +126,14 @@ const CompanyDashboard = () => {
           .maybeSingle();
         
         if (profileError) {
-          console.error('⚠️ Error cargando perfil:', profileError);
+          if (import.meta.env.DEV) console.error('⚠️ Error cargando perfil:', profileError);
         }
         
         if (profileData) {
-          console.log('✅ Perfil cargado:', {
-            userId: profileData.user_id,
-            email: profileData.email,
-            userType: profileData.user_type
-          });
+          if (import.meta.env.DEV) console.log('✅ Perfil cargado');
           setProfile(profileData);
         } else {
-          console.log('⚠️ No se encontró perfil, usando fallback mínimo');
+          if (import.meta.env.DEV) console.log('⚠️ No se encontró perfil, usando fallback mínimo');
           setProfile({ 
             user_id: session.user.id, 
             email: session.user.email,
@@ -148,12 +144,12 @@ const CompanyDashboard = () => {
         
         // Auto-redirect to activation wizard for new users (no view param specified)
         if (!viewParam && journeyStep <= 2) {
-          console.log('🚀 Nuevo usuario post-onboarding, mostrando activation wizard');
+          if (import.meta.env.DEV) console.log('🚀 Nuevo usuario post-onboarding, mostrando activation wizard');
           setActiveView('activation-wizard');
         }
         
         setLoading(false);
-        console.groupEnd();
+        if (import.meta.env.DEV) console.groupEnd();
         return;
       } else {
         const { data: companies } = await supabase
@@ -163,12 +159,9 @@ const CompanyDashboard = () => {
 
         const hasCompany = companies && companies.length > 0;
 
-        console.log('🔍 CompanyDashboard onboarding check:', {
+        if (import.meta.env.DEV) console.log('🔍 CompanyDashboard onboarding check:', {
           hasCompany,
           companiesLength: companies?.length,
-          userId: session.user.id,
-          viewParam,
-          onboardingCompleted: !!onboardingStatus?.onboarding_completed_at
         });
 
         // Solo redirigir a complete-profile si NO tiene empresa Y no está intentando hacer onboarding
@@ -182,21 +175,21 @@ const CompanyDashboard = () => {
             .maybeSingle();
           
           if (!fullOnboarding?.first_login_completed) {
-            console.log('❌ Usuario sin empresa ni first_login completado, redirigir a complete-profile');
+            if (import.meta.env.DEV) console.log('❌ Usuario sin empresa, redirigir a complete-profile');
             navigate('/complete-profile');
           } else {
             // Ya pasó por complete-profile pero algo falló en la creación de empresa
             // Mostrar el onboarding para que pueda reintentar
-            console.log('⚠️ Usuario completó first_login pero sin empresa, mostrar onboarding');
+            if (import.meta.env.DEV) console.log('⚠️ Usuario completó first_login pero sin empresa');
             setActiveView('onboarding');
           }
-          console.groupEnd();
+          if (import.meta.env.DEV) console.groupEnd();
           setLoading(false);
           return;
         }
       }
       
-      console.log('🔍 Buscando perfil de empresa existente...');
+      if (import.meta.env.DEV) console.log('🔍 Buscando perfil de empresa existente...');
       let { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
@@ -204,7 +197,7 @@ const CompanyDashboard = () => {
         .maybeSingle();
 
       if (!profileData) {
-        console.log('⚠️ No se encontró perfil, creando uno nuevo para empresa...');
+        if (import.meta.env.DEV) console.log('⚠️ No se encontró perfil, creando uno nuevo...');
         
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
@@ -220,7 +213,7 @@ const CompanyDashboard = () => {
           .single();
 
         if (insertError) {
-          console.error('❌ Error creando perfil:', insertError);
+          if (import.meta.env.DEV) console.error('❌ Error creando perfil:', insertError);
           toast({
             title: t('common:status.error'),
             description: t('company:errors.profileCreate'),
@@ -232,13 +225,13 @@ const CompanyDashboard = () => {
         }
 
         profileData = newProfile;
-        console.log('✅ Perfil creado exitosamente');
+        if (import.meta.env.DEV) console.log('✅ Perfil creado exitosamente');
         toast({
           title: t('company:toast.profileCreated'),
           description: t('company:toast.profileCreatedDesc'),
         });
       } else if (error) {
-        console.error('❌ Error obteniendo perfil:', error);
+        if (import.meta.env.DEV) console.error('❌ Error obteniendo perfil:', error);
         toast({
           title: t('company:errors.accessDenied'),
           description: t('company:errors.profileAccess'),
@@ -250,7 +243,7 @@ const CompanyDashboard = () => {
       }
 
       if (profileData && profileData.user_type !== 'company') {
-        console.log('❌ Usuario no es de tipo empresa, redirigiendo');
+        if (import.meta.env.DEV) console.log('❌ Usuario no es de tipo empresa, redirigiendo');
         toast({
           title: t('company:errors.accessDenied'),
           description: t('company:errors.companyOnly'),
@@ -261,7 +254,7 @@ const CompanyDashboard = () => {
         return;
       }
 
-      console.log('✅ Perfil validado y establecido');
+      if (import.meta.env.DEV) console.log('✅ Perfil validado y establecido');
       setProfile(profileData);
       
       const isProfileIncomplete = !profileData?.full_name;
@@ -274,7 +267,7 @@ const CompanyDashboard = () => {
         }
         
         if (Object.keys(updateData).length > 0) {
-          console.log('Actualizando campos faltantes:', updateData);
+          if (import.meta.env.DEV) console.log('Actualizando campos faltantes:', updateData);
           const { data: updatedProfile, error: updateError } = await supabase
             .from('profiles')
             .update(updateData)
@@ -299,8 +292,8 @@ const CompanyDashboard = () => {
         });
       }
       
-      console.log('✅ Auth check complete');
-      console.groupEnd();
+      if (import.meta.env.DEV) console.log('✅ Auth check complete');
+      if (import.meta.env.DEV) console.groupEnd();
       setLoading(false);
     };
 
@@ -320,7 +313,7 @@ const CompanyDashboard = () => {
   useEffect(() => {
     const viewParam = searchParams.get('view');
     if (viewParam && viewParam !== activeView) {
-      console.log('🔄 URL changed, updating activeView from:', activeView, 'to:', viewParam);
+      if (import.meta.env.DEV) console.log('🔄 URL changed, updating activeView from:', activeView, 'to:', viewParam);
       setActiveView(viewParam);
     }
   }, [searchParams]);
@@ -335,7 +328,7 @@ const CompanyDashboard = () => {
   };
 
   const handleNavigate = (section: string, params?: Record<string, string>) => {
-    console.log('🎯 Navegando a:', section, 'con params:', params);
+    if (import.meta.env.DEV) console.log('🎯 Navegando a:', section);
     setActiveView(section);
     
     const nextParams = new URLSearchParams(window.location.search);
@@ -347,12 +340,12 @@ const CompanyDashboard = () => {
       });
     }
     
-    console.log('🧭 [CompanyDashboard] Navegando con React Router:', `?${nextParams.toString()}`);
+    if (import.meta.env.DEV) console.log('🧭 Navegando:', `?${nextParams.toString()}`);
     navigate(`?${nextParams.toString()}`);
   };
 
   const renderContent = () => {
-    console.log('🔄 Rendering content for activeView:', activeView);
+    if (import.meta.env.DEV) console.log('🔄 Rendering content for activeView:', activeView);
     switch (activeView) {
       // Onboarding
       case "onboarding":

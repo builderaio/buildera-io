@@ -13,7 +13,7 @@ import esErrors from '../../public/locales/es/errors.json';
 import esValidation from '../../public/locales/es/validation.json';
 import esNotifications from '../../public/locales/es/notifications.json';
 import esCreatify from '../../public/locales/es/creatify.json';
-
+import esLegal from '../../public/locales/es/legal.json';
 // EN
 import enCommon from '../../public/locales/en/common.json';
 import enCompany from '../../public/locales/en/company.json';
@@ -28,7 +28,7 @@ import enErrors from '../../public/locales/en/errors.json';
 import enValidation from '../../public/locales/en/validation.json';
 import enNotifications from '../../public/locales/en/notifications.json';
 import enCreatify from '../../public/locales/en/creatify.json';
-
+import enLegal from '../../public/locales/en/legal.json';
 // PT
 import ptCommon from '../../public/locales/pt/common.json';
 import ptCompany from '../../public/locales/pt/company.json';
@@ -43,7 +43,7 @@ import ptErrors from '../../public/locales/pt/errors.json';
 import ptValidation from '../../public/locales/pt/validation.json';
 import ptNotifications from '../../public/locales/pt/notifications.json';
 import ptCreatify from '../../public/locales/pt/creatify.json';
-
+import ptLegal from '../../public/locales/pt/legal.json';
 export const resources = {
   es: {
     common: esCommon,
@@ -59,6 +59,7 @@ export const resources = {
     validation: esValidation,
     notifications: esNotifications,
     creatify: esCreatify,
+    legal: esLegal,
   },
   en: {
     common: enCommon,
@@ -74,6 +75,7 @@ export const resources = {
     validation: enValidation,
     notifications: enNotifications,
     creatify: enCreatify,
+    legal: enLegal,
   },
   pt: {
     common: ptCommon,
@@ -89,5 +91,6 @@ export const resources = {
     validation: ptValidation,
     notifications: ptNotifications,
     creatify: ptCreatify,
+    legal: ptLegal,
   },
 };

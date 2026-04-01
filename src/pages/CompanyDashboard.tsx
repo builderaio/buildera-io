@@ -189,7 +189,7 @@ const CompanyDashboard = () => {
         }
       }
       
-      console.log('🔍 Buscando perfil de empresa existente...');
+      if (import.meta.env.DEV) console.log('🔍 Buscando perfil de empresa existente...');
       let { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')

@@ -48,7 +48,7 @@ const ApprovalsPanel = ({ approvals, onRefresh }: ApprovalsPanelProps) => {
       toast.success(t(`governance.approvals.${action}Success`, action === "approved" ? "Aprobado" : "Rechazado"));
       onRefresh();
     } catch (err: any) {
-      toast.error(err.message || "Error");
+      toast.error(t("governance.approvals.error", "Error al procesar la aprobación"));
     } finally {
       setProcessingId(null);
     }

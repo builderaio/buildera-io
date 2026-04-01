@@ -33,6 +33,7 @@ interface Props {
 
 export default function ContentImageSelector({ isOpen, onClose, onSelectImage, profile }: Props) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [savedContent, setSavedContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string>('');

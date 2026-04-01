@@ -471,6 +471,10 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
         <p className="text-muted-foreground text-sm text-center max-w-md">
           {t('autopilot.emptyDescription', 'Aún no tienes configuración de Autopilot. Activa el piloto automático para que la IA gestione tus publicaciones y decisiones de marketing.')}
         </p>
+        <Button onClick={toggleAutopilot} disabled={saving} className="mt-2">
+          <Zap className="w-4 h-4 mr-2" />
+          {t('autopilot.activateNow', 'Activar Autopilot')}
+        </Button>
       </div>
     );
   }
@@ -533,7 +537,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-0 shadow-md">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-blue-100"><Activity className="w-5 h-5 text-blue-600" /></div>
+            <div className="p-2 rounded-full bg-blue-500/10"><Activity className="w-5 h-5 text-blue-500" /></div>
             <div>
               <p className="text-2xl font-bold">{config?.total_cycles_run || 0}</p>
               <p className="text-xs text-muted-foreground">{t('autopilot.totalCycles')}</p>
@@ -542,7 +546,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
         </Card>
         <Card className="border-0 shadow-md">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-green-100"><CheckCircle className="w-5 h-5 text-green-600" /></div>
+            <div className="p-2 rounded-full bg-green-500/10"><CheckCircle className="w-5 h-5 text-green-500" /></div>
             <div>
               <p className="text-2xl font-bold">{passedDecisions}</p>
               <p className="text-xs text-muted-foreground">{t('autopilot.approved')}</p>
@@ -551,7 +555,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
         </Card>
         <Card className="border-0 shadow-md">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-red-100"><XCircle className="w-5 h-5 text-red-600" /></div>
+            <div className="p-2 rounded-full bg-red-500/10"><XCircle className="w-5 h-5 text-red-500" /></div>
             <div>
               <p className="text-2xl font-bold">{blockedDecisions}</p>
               <p className="text-xs text-muted-foreground">{t('autopilot.blocked')}</p>
@@ -560,7 +564,7 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
         </Card>
         <Card className="border-0 shadow-md">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-full bg-yellow-100"><Clock className="w-5 h-5 text-yellow-600" /></div>
+            <div className="p-2 rounded-full bg-yellow-500/10"><Clock className="w-5 h-5 text-yellow-500" /></div>
             <div>
               <p className="text-2xl font-bold">{pendingDecisions}</p>
               <p className="text-xs text-muted-foreground">{t('autopilot.pendingReview')}</p>
@@ -624,9 +628,9 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
                               <Badge variant="outline" className="text-xs">{decision.decision_type}</Badge>
                               {decision.guardrail_result && (
                                 <Badge className={`text-xs ${
-                                  decision.guardrail_result === 'passed' ? 'bg-green-100 text-green-700' :
-                                  decision.guardrail_result === 'blocked' ? 'bg-red-100 text-red-700' :
-                                  'bg-yellow-100 text-yellow-700'
+                                  decision.guardrail_result === 'passed' ? 'bg-green-500/10 text-green-500' :
+                                  decision.guardrail_result === 'blocked' ? 'bg-red-500/10 text-red-500' :
+                                  'bg-yellow-500/10 text-yellow-500'
                                 }`}>
                                   {decision.guardrail_result === 'passed' && <CheckCircle className="w-3 h-3 mr-1" />}
                                   {decision.guardrail_result === 'blocked' && <XCircle className="w-3 h-3 mr-1" />}
@@ -684,8 +688,8 @@ export function AutopilotDashboard({ companyId, profile }: AutopilotDashboardPro
                               const Icon = PHASE_ICONS[phase] || Eye;
                               return (
                                 <div key={phase} className={`flex items-center gap-1 px-2 py-1 rounded text-xs ${
-                                  phaseLog?.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                  phaseLog?.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                  phaseLog?.status === 'completed' ? 'bg-green-500/10 text-green-500' :
+                                  phaseLog?.status === 'failed' ? 'bg-red-500/10 text-red-500' :
                                   'bg-muted text-muted-foreground'
                                 }`}>
                                   <Icon className="w-3 h-3" />

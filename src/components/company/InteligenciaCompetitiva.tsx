@@ -30,6 +30,7 @@ interface CompetitiveAnalysis {
 }
 
 const InteligenciaCompetitiva = () => {
+  const { t } = useTranslation();
   const [competitorUrl, setCompetitorUrl] = useState("");
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [analyses, setAnalyses] = useState<CompetitiveAnalysis[]>([]);

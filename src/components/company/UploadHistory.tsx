@@ -60,6 +60,7 @@ const platformConfig = {
 };
 
 export const UploadHistory = ({ profile }: UploadHistoryProps) => {
+  const { t } = useTranslation();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);

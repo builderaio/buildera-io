@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Megaphone, TrendingUp, Scale, Users, HeadphonesIcon, BarChart3
+  Megaphone, TrendingUp, Scale, Users, Settings2, BarChart3
 } from "lucide-react";
 
 interface DeptInfo {
@@ -19,7 +19,7 @@ const DEPT_ICONS: Record<string, any> = {
   sales: TrendingUp,
   legal: Scale,
   hr: Users,
-  customer_service: HeadphonesIcon,
+  operations: Settings2,
   finance: BarChart3,
 };
 
@@ -31,7 +31,7 @@ const DepartmentsPanel = ({ departments }: DepartmentsPanelProps) => {
     { key: "sales", enabled: false, tasksToday: 0 },
     { key: "legal", enabled: false, tasksToday: 0 },
     { key: "hr", enabled: false, tasksToday: 0 },
-    { key: "customer_service", enabled: false, tasksToday: 0 },
+    { key: "operations", enabled: false, tasksToday: 0 },
     { key: "finance", enabled: false, tasksToday: 0 },
   ];
 

@@ -261,7 +261,7 @@ const EnterpriseAutopilotDashboard = ({ profile, companyId }: EnterpriseAutopilo
   const activatedCaps = capabilities.filter(c => c.is_active).length;
   const totalCaps = capabilities.length;
   const proposedCaps = capabilities.filter(c => (c as any).status === 'proposed' || (c as any).status === 'trial');
-  const iqScore = Math.min(100, Math.round((totalCycles * 2 + totalLessons * 5 + activatedCaps * 10)));
+  const iqScore = Math.min(999, Math.round((totalCycles * 2 + totalLessons * 5 + activatedCaps * 10)));
 
   const handleActivateCapability = async (capId: string, mode: 'trial' | 'active') => {
     try {

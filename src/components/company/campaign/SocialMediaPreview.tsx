@@ -42,6 +42,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
   const [isSaving, setIsSaving] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Debug logging to see what's being passed
   console.log('SocialMediaPreview - contentItem:', contentItem);

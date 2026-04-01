@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { SmartLoader } from "@/components/ui/smart-loader";
 import { Image, Heart, MessageCircle, Copy, Eye, RefreshCw } from "lucide-react";
@@ -11,6 +12,7 @@ interface Profile { user_id?: string }
 
 export default function ContentLibraryTab({ profile }: { profile: Profile }) {
   const { toast } = useToast();
+  const { t } = useTranslation(['marketing', 'errors']);
   const [libraryLoading, setLibraryLoading] = useState(true);
   const [savedContent, setSavedContent] = useState<any[]>([]);
 
@@ -25,7 +27,7 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
       if (error) throw error;
       setSavedContent(data || []);
     } catch (error) {
-      console.error('Error cargando contenido guardado:', error);
+      console.error('Error loading saved content:', error);
     }
   };
 
@@ -42,11 +44,11 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
         .delete()
         .eq('id', id);
       if (error) throw error;
-      toast({ title: "Contenido eliminado", description: "El contenido se ha eliminado de tu biblioteca" });
+      toast({ title: t('marketing:contentLibrary.deleted'), description: t('marketing:contentLibrary.deletedDesc') });
       loadSavedContent();
     } catch (error) {
-      console.error('Error eliminando contenido:', error);
-      toast({ title: "Error", description: "No se pudo eliminar el contenido", variant: "destructive" });
+      console.error('Error deleting content:', error);
+      toast({ title: t('errors:general.title'), description: t('marketing:contentLibrary.deleteError'), variant: "destructive" });
     }
   };
 
@@ -54,7 +56,7 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
     setLibraryLoading(true);
     await loadSavedContent();
     setLibraryLoading(false);
-    toast({ title: "Biblioteca actualizada", description: "Se ha actualizado el contenido de tu biblioteca" });
+    toast({ title: t('marketing:contentLibrary.refreshed'), description: t('marketing:contentLibrary.refreshedDesc') });
   };
 
   if (libraryLoading) {
@@ -62,7 +64,7 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
       <SmartLoader
         isVisible={true}
         type="generic"
-        message="Cargando tu biblioteca de contenidos..."
+        message={t('marketing:contentLibrary.loading')}
         size="md"
       />
     );
@@ -75,8 +77,8 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Image className="h-5 w-5 text-primary" />
-              Biblioteca de Contenidos
-              <Badge variant="secondary" className="ml-2">{savedContent.length} elementos</Badge>
+              {t('marketing:contentLibrary.title')}
+              <Badge variant="secondary" className="ml-2">{savedContent.length} {t('marketing:contentLibrary.items')}</Badge>
             </div>
             <Button
               variant="outline"
@@ -85,10 +87,10 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
               className="flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />
-              Actualizar
+              {t('marketing:contentLibrary.refresh')}
             </Button>
           </CardTitle>
-          <p className="text-sm text-muted-foreground">Tu colección personal de contenido exitoso. Guarda imágenes, videos y textos de tus mejores publicaciones para reutilizarlos fácilmente en futuras campañas.</p>
+          <p className="text-sm text-muted-foreground">{t('marketing:contentLibrary.subtitle')}</p>
         </CardHeader>
         <CardContent>
           {savedContent.length === 0 ? (
@@ -96,13 +98,13 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-full flex items-center justify-center">
                 <Image className="w-12 h-12 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Tu biblioteca está vacía</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">Comienza a guardar tu mejor contenido desde la pestaña "Mis Post". Filtra por rendimiento y guarda las publicaciones más exitosas para reutilizarlas.</p>
+              <h3 className="text-xl font-semibold mb-2">{t('marketing:contentLibrary.emptyTitle')}</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">{t('marketing:contentLibrary.emptyDesc')}</p>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p>📱 Guarda posts exitosos desde "Mis Post"</p>
-                <p>🎨 Reutiliza imágenes y videos en nuevas campañas</p>
-                <p>📋 Copia URLs de archivos fácilmente</p>
-                <p>📊 Mantén el contenido con mejor rendimiento a mano</p>
+                <p>{t('marketing:contentLibrary.tip1')}</p>
+                <p>{t('marketing:contentLibrary.tip2')}</p>
+                <p>{t('marketing:contentLibrary.tip3')}</p>
+                <p>{t('marketing:contentLibrary.tip4')}</p>
               </div>
             </div>
           ) : (
@@ -115,7 +117,6 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
                       <span className="text-xs text-muted-foreground">{new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
                     
-                    {/* Media preview */}
                     {item.file_url && (
                       <div className="relative">
                         {item.file_type === 'video' ? (
@@ -140,11 +141,11 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
                     )}
                     
                     <div>
-                      <h4 className="font-medium text-sm mb-1">{item.title || 'Sin título'}</h4>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{item.description || 'Sin descripción'}</p>
+                      <h4 className="font-medium text-sm mb-1">{item.title || t('marketing:contentLibrary.untitled')}</h4>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{item.description || t('marketing:contentLibrary.noDescription')}</p>
                       {item.tags && item.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {item.tags.slice(0, 3).map((tag, index) => (
+                          {item.tags.slice(0, 3).map((tag: string, index: number) => (
                             <Badge key={index} variant="secondary" className="text-xs">
                               #{tag}
                             </Badge>
@@ -153,7 +154,6 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
                       )}
                     </div>
                     
-                    {/* Metadata metrics if available */}
                     {item.metadata?.metrics && (
                       <div className="flex items-center gap-3 text-xs">
                         <span className="flex items-center gap-1">
@@ -170,9 +170,9 @@ export default function ContentLibraryTab({ profile }: { profile: Profile }) {
                     <div className="flex items-center gap-2">
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => {
                         navigator.clipboard.writeText(item.file_url);
-                        toast({ title: "URL copiada", description: "La URL del archivo se ha copiado al portapapeles" });
+                        toast({ title: t('marketing:contentLibrary.urlCopied'), description: t('marketing:contentLibrary.urlCopiedDesc') });
                       }}>
-                        <Copy className="h-3 w-3 mr-1" />Copiar URL
+                        <Copy className="h-3 w-3 mr-1" />{t('marketing:contentLibrary.copyUrl')}
                       </Button>
                       
                       <Button size="sm" variant="outline" onClick={() => {

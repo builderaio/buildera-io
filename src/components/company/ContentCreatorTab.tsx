@@ -214,26 +214,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
     });
   };
 
-  if (showAdvancedCreator) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowAdvancedCreator(false)}
-            size="sm"
-          >
-            ← Volver a Creador Simple
-          </Button>
-        </div>
-        <AdvancedContentCreator 
-          profile={profile}
-          topPosts={topPosts}
-          selectedPlatform={selectedPlatform}
-        />
-      </div>
-    );
-  }
+  // Removed duplicate early return for showAdvancedCreator - handled in main render below
 
   return (
     <div className="space-y-6">
@@ -267,28 +248,28 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
       ) : (
         <>
           {/* Upgrade to Advanced Creator */}
-          <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+          <Card className="border-2 border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-purple-700">
-                <Brain className="h-5 w-5" />
+                <Brain className="h-5 w-5 text-primary" />
                 Content Studio IA - Versión Avanzada
               </CardTitle>
-              <p className="text-sm text-purple-600">
+              <p className="text-sm text-muted-foreground">
                 Crea, guarda y gestiona insights personalizados con generación multimedia automática
               </p>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-purple-600">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Target className="h-4 w-4" />
                     <span>Insights persistentes y organizados</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-purple-600">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Sparkles className="h-4 w-4" />
                     <span>Generación automática de imágenes y videos</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-purple-600">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <TrendingUp className="h-4 w-4" />
                     <span>Gestión completa de contenido multimedia</span>
                   </div>
@@ -390,7 +371,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                   disabled={isOptimizing || !manualContent.trim()}
                   size="lg"
                   variant="outline"
-                  className="border-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-400 transition-all duration-300"
+                  className="border-2 border-purple-500/20 text-foreground hover:bg-purple-500/10 hover:border-purple-500/40 transition-all duration-300"
                 >
                   {isOptimizing ? (
                     <>
@@ -439,7 +420,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="p-5 bg-white/80 backdrop-blur-sm rounded-xl border-2 border-green-200/50 shadow-sm">
+                    <div className="p-5 bg-card/80 backdrop-blur-sm rounded-xl border-2 border-green-500/20 shadow-sm">
                       <div className="prose prose-sm max-w-none text-foreground leading-relaxed whitespace-pre-wrap">
                         {manualContent || generatedContent}
                       </div>
@@ -447,8 +428,8 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                     
                     {/* Generated Image */}
                     {generatedImage && (
-                      <div className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border-2 border-blue-200/50 shadow-sm">
-                        <h4 className="font-semibold mb-3 flex items-center gap-2 text-blue-900">
+                      <div className="p-4 bg-card/80 backdrop-blur-sm rounded-xl border-2 border-blue-500/20 shadow-sm">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2 text-foreground">
                           <Image className="h-4 w-4" />
                           Imagen Generada
                         </h4>
@@ -527,7 +508,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Hashtags Section */}
-              <div className="space-y-3 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-primary/10 hover:border-primary/30 transition-colors duration-300">
+              <div className="space-y-3 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-primary/10 hover:border-primary/30 transition-colors duration-300">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
                   <h4 className="font-semibold text-primary">Hashtags Exitosos</h4>
@@ -553,10 +534,10 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
               </div>
               
               {/* Formats Section */}
-              <div className="space-y-3 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-colors duration-300">
+              <div className="space-y-3 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-colors duration-300">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-                  <h4 className="font-semibold text-purple-700">Formatos Populares</h4>
+                  <h4 className="font-semibold text-foreground">Formatos Populares</h4>
                 </div>
                 <div className="space-y-2">
                   {Array.from(new Set(topPosts.map(post => post.type || 'POST'))).slice(0, 5).map((type, index) => {
@@ -581,10 +562,10 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
               </div>
 
               {/* Engagement Stats Section */}
-              <div className="space-y-3 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-orange-500/10 hover:border-orange-500/30 transition-colors duration-300">
+              <div className="space-y-3 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-orange-500/10 hover:border-orange-500/30 transition-colors duration-300">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                  <h4 className="font-semibold text-orange-700">Estadísticas Clave</h4>
+                  <h4 className="font-semibold text-foreground">Estadísticas Clave</h4>
                 </div>
                 <div className="space-y-4">
                   <div>
@@ -622,15 +603,15 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
             </div>
 
             {/* Additional Insight */}
-            <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-blue-50/50 to-purple-50/50 border border-blue-200/30">
+            <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-blue-500/5 to-purple-500/5 border border-blue-500/10">
               <div className="flex items-start gap-3">
-                <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <Lightbulb className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-blue-900 mb-1">
+                  <p className="text-sm font-medium text-foreground mb-1">
                     💡 Consejo: Usa estos datos para tu próximo contenido
                   </p>
-                  <p className="text-xs text-blue-700">
-                    Los hashtags y formatos mostrados aquí son los que han generado mayor engagement. 
+                  <p className="text-xs text-muted-foreground">
+                    Los hashtags y formatos mostrados aquí son los que han generado mayor engagement.
                     Considera incorporarlos en tu siguiente publicación para maximizar el alcance.
                   </p>
                 </div>

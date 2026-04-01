@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   PenTool, Megaphone, Video, ArrowLeft, Sparkles, Link2, Mail
 } from "lucide-react";
@@ -73,6 +74,12 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
     );
   }
 
+  // email-sequence has no implementation yet — show Coming Soon toast
+  if (activePath === "email-sequence") {
+    // Reset immediately since there's no view to show
+    setActivePath(null);
+  }
+
   const paths = [
     {
       id: "quick-post" as CreationPath,
@@ -118,6 +125,7 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
       features: ["hub.crear.emailSequence.f1", "hub.crear.emailSequence.f2", "hub.crear.emailSequence.f3"],
       gradient: "from-cyan-500/10 to-blue-500/10",
       iconBg: "bg-cyan-500/10 text-cyan-600",
+      comingSoon: true,
     },
   ];
 
@@ -137,14 +145,22 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
           return (
             <Card
               key={path.id}
-              className={`group cursor-pointer border-2 hover:border-primary/40 hover:shadow-lg transition-all duration-300 bg-gradient-to-br ${path.gradient}`}
-              onClick={() => setActivePath(path.id)}
+              className={`group cursor-pointer border-2 hover:border-primary/40 hover:shadow-lg transition-all duration-300 bg-gradient-to-br ${path.gradient} ${(path as any).comingSoon ? 'opacity-75' : ''}`}
+              onClick={() => {
+                if ((path as any).comingSoon) return;
+                setActivePath(path.id);
+              }}
             >
               <CardHeader>
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${path.iconBg} mb-3`}>
                   <Icon className="h-6 w-6" />
                 </div>
-                <CardTitle className="text-lg">{t(path.titleKey)}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">{t(path.titleKey)}</CardTitle>
+                  {(path as any).comingSoon && (
+                    <Badge variant="secondary" className="text-xs">{t("hub.crear.comingSoon", "Próximamente")}</Badge>
+                  )}
+                </div>
                 <CardDescription>{t(path.descKey)}</CardDescription>
               </CardHeader>
               <CardContent>
@@ -159,8 +175,9 @@ export const CrearContentHub = ({ profile, selectedPlatform, onNavigateTab }: Cr
                 <Button
                   variant="outline"
                   className="w-full mt-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  disabled={(path as any).comingSoon}
                 >
-                  {t("hub.crear.start")}
+                  {(path as any).comingSoon ? t("hub.crear.comingSoon", "Próximamente") : t("hub.crear.start")}
                 </Button>
               </CardContent>
             </Card>

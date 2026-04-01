@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Calendar, 
@@ -19,6 +20,7 @@ import {
   Type,
   ExternalLink
 } from "lucide-react";
+import { FaFacebook, FaInstagram, FaLinkedin, FaTiktok, FaYoutube, FaXTwitter } from 'react-icons/fa6';
 
 interface ScheduledPostsManagerProps {
   profile: any;
@@ -48,13 +50,13 @@ interface UploadPostJob {
   preview_url?: string;
 }
 
-const platformConfig = {
-  facebook: { name: 'Facebook', icon: '📘', color: 'bg-blue-600' },
-  instagram: { name: 'Instagram', icon: '📷', color: 'bg-pink-600' },
-  linkedin: { name: 'LinkedIn', icon: '💼', color: 'bg-blue-700' },
-  tiktok: { name: 'TikTok', icon: '🎵', color: 'bg-black' },
-  youtube: { name: 'YouTube', icon: '📺', color: 'bg-red-600' },
-  twitter: { name: 'X (Twitter)', icon: '🐦', color: 'bg-gray-900' },
+const platformConfig: Record<string, { name: string; icon: React.ComponentType<any>; color: string }> = {
+  facebook: { name: 'Facebook', icon: FaFacebook, color: 'text-[#1877F2]' },
+  instagram: { name: 'Instagram', icon: FaInstagram, color: 'text-[#E4405F]' },
+  linkedin: { name: 'LinkedIn', icon: FaLinkedin, color: 'text-[#0077B5]' },
+  tiktok: { name: 'TikTok', icon: FaTiktok, color: 'text-foreground' },
+  youtube: { name: 'YouTube', icon: FaYoutube, color: 'text-[#FF0000]' },
+  twitter: { name: 'X (Twitter)', icon: FaXTwitter, color: 'text-foreground' },
 };
 
 export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPostsManagerProps) => {
@@ -64,6 +66,7 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
   const [companyUsername, setCompanyUsername] = useState('');
   const [userId, setUserId] = useState<string | null>(profile?.user_id ?? null);
   const { toast } = useToast();
+  const { t } = useTranslation(['marketing', 'errors']);
 
   // Resolver userId y luego cargar datos
   useEffect(() => {
@@ -132,8 +135,8 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
     } catch (error) {
       console.error('Error loading scheduled posts:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar los posts programados",
+        title: t('errors:general.title'),
+        description: t('marketing:scheduled.loadError'),
         variant: "destructive"
       });
     } finally {
@@ -175,8 +178,8 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
       }
 
       toast({
-        title: "Post cancelado",
-        description: "La publicación programada ha sido cancelada",
+        title: t('marketing:scheduled.cancelled'),
+        description: t('marketing:scheduled.cancelledDesc'),
       });
 
       await loadScheduledPosts();
@@ -185,8 +188,8 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
     } catch (error) {
       console.error('Error canceling post:', error);
       toast({
-        title: "Error",
-        description: "No se pudo cancelar la publicación",
+        title: t('errors:general.title'),
+        description: t('marketing:scheduled.cancelError'),
         variant: "destructive"
       });
     } finally {
@@ -197,8 +200,8 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
   const refreshPosts = async () => {
     await loadScheduledPosts();
     toast({
-      title: "Actualizado",
-      description: "Lista de posts programados actualizada",
+      title: t('marketing:scheduled.updated'),
+      description: t('marketing:scheduled.updatedDesc'),
     });
   };
 
@@ -341,14 +344,16 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
 
                           {post.platforms?.length > 0 && (
                             <div className="flex flex-wrap gap-1 ml-11">
-                              {post.platforms.map(platformId => {
+                          {post.platforms.map(platformId => {
                                 const platform = platformConfig[platformId as keyof typeof platformConfig];
-                                return platform ? (
+                                if (!platform) return null;
+                                const PlatformIcon = platform.icon;
+                                return (
                                   <Badge key={platformId} variant="outline" className="text-xs">
-                                    <span className="mr-1">{platform.icon}</span>
+                                    <PlatformIcon className={`h-3 w-3 mr-1 ${platform.color}`} />
                                     {platform.name}
                                   </Badge>
-                                ) : null;
+                                );
                               })}
                             </div>
                           )}

@@ -504,7 +504,7 @@ export default function SimpleContentPublisher({
 
       if (error) throw error;
 
-      console.log('Successfully published via edge function:', data);
+      if (import.meta.env.DEV) console.log('Successfully published via edge function:', data);
       
       if (publishMode === 'scheduled' && scheduledISO) {
         try {
@@ -570,7 +570,7 @@ export default function SimpleContentPublisher({
         }
       }
       
-      console.log('📊 Content tracking:', { source, contentIdeaId, generatedContentId, publishMode });
+      if (import.meta.env.DEV) console.log('📊 Content tracking:', { source, contentIdeaId, generatedContentId, publishMode });
       
       onSuccess?.();
       onClose();
@@ -599,7 +599,7 @@ export default function SimpleContentPublisher({
     } catch (error: any) {
       console.error('Error publishing content:', error);
       toast({
-        title: 'Error',
+        title: t("errors:general.title"),
         description: error.message || t('publisher.publishError', 'No se pudo publicar el contenido'),
         variant: 'destructive'
       });

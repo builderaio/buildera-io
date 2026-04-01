@@ -356,12 +356,12 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
                 {isOptimizing ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Optimizando...
+                    {t('marketing:creator.optimizing')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Optimizar con Era
+                    {t('marketing:creator.optimizeWithEra')}
                   </>
                 )}
               </Button>

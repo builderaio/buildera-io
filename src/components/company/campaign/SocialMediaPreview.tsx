@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent } from '@/components/ui/card';
@@ -282,7 +283,7 @@ export const SocialMediaPreview = ({ isOpen, onClose, contentItem, companyProfil
   const handleSaveToLibrary = async () => {
     if (!companyProfile?.user_id) {
       toast({
-        title: "Error",
+        title: t('errors:general.title'),
         description: "No se pudo identificar el usuario",
         variant: "destructive"
       });

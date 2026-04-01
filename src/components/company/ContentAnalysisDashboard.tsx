@@ -1178,7 +1178,7 @@ export const ContentAnalysisDashboard: React.FC<ContentAnalysisDashboardProps> =
       } catch (error) {
         console.error('Error saving content:', error);
         toast({
-          title: "Error",
+          title: t('errors:general.title'),
           description: "No se pudo guardar el contenido",
           variant: "destructive"
         });

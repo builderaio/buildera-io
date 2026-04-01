@@ -74,7 +74,7 @@ export const useSecurityHeaders = (config: SecurityHeadersConfig = {}) => {
  */
 export const useSecureErrorHandler = () => {
   const handleError = useCallback((error: any, context?: string) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.error('Secure Error Handler:', { error, context });
     }
     

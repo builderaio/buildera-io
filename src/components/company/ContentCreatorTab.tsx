@@ -273,7 +273,7 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
                 <Brain className="h-5 w-5 text-primary" />
                 Content Studio IA - Versión Avanzada
               </CardTitle>
-              <p className="text-sm text-purple-600">
+              <p className="text-sm text-muted-foreground">
                 Crea, guarda y gestiona insights personalizados con generación multimedia automática
               </p>
             </CardHeader>

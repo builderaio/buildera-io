@@ -64,7 +64,7 @@ const CompanyDashboard = () => {
         return;
       }
 
-      console.log('✅ Session found for user:', session.user.id);
+      if (import.meta.env.DEV) console.log('✅ Session found for user:', session.user.id);
       setUser(session.user);
 
       const viewParam = searchParams.get('view');

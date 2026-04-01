@@ -135,8 +135,8 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
     } catch (error) {
       console.error('Error loading scheduled posts:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar los posts programados",
+        title: t('errors:general.title'),
+        description: t('marketing:scheduled.loadError'),
         variant: "destructive"
       });
     } finally {

@@ -126,7 +126,7 @@ const CompanyDashboard = () => {
           .maybeSingle();
         
         if (profileError) {
-          console.error('⚠️ Error cargando perfil:', profileError);
+          if (import.meta.env.DEV) console.error('⚠️ Error cargando perfil:', profileError);
         }
         
         if (profileData) {

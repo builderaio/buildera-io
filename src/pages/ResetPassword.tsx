@@ -33,10 +33,10 @@ export default function ResetPassword() {
         refresh_token: refreshToken,
       }).then(({ data, error }) => {
         if (error) {
-          console.error('Error estableciendo sesión:', error);
+          if (import.meta.env.DEV) console.error('Error setting session:', error);
           setIsValidToken(false);
         } else {
-          console.log('Sesión establecida para reset:', data);
+          setIsValidToken(true);
           setIsValidToken(true);
         }
       });

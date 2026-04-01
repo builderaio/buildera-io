@@ -553,10 +553,10 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
               </div>
               
               {/* Formats Section */}
-              <div className="space-y-3 p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-colors duration-300">
+              <div className="space-y-3 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-colors duration-300">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-                  <h4 className="font-semibold text-purple-700">Formatos Populares</h4>
+                  <h4 className="font-semibold text-foreground">Formatos Populares</h4>
                 </div>
                 <div className="space-y-2">
                   {Array.from(new Set(topPosts.map(post => post.type || 'POST'))).slice(0, 5).map((type, index) => {

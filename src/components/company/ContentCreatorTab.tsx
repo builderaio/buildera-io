@@ -280,15 +280,15 @@ export default function ContentCreatorTab({ profile, topPosts, selectedPlatform,
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-purple-600">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Target className="h-4 w-4" />
                     <span>Insights persistentes y organizados</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-purple-600">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Sparkles className="h-4 w-4" />
                     <span>Generación automática de imágenes y videos</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-purple-600">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <TrendingUp className="h-4 w-4" />
                     <span>Gestión completa de contenido multimedia</span>
                   </div>

@@ -200,8 +200,8 @@ export const ScheduledPostsManager = ({ profile, onPostsUpdated }: ScheduledPost
   const refreshPosts = async () => {
     await loadScheduledPosts();
     toast({
-      title: "Actualizado",
-      description: "Lista de posts programados actualizada",
+      title: t('marketing:scheduled.updated'),
+      description: t('marketing:scheduled.updatedDesc'),
     });
   };
 

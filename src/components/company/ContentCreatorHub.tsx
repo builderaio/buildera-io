@@ -286,7 +286,7 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Plataforma</label>
+                  <label className="text-sm font-medium">{t('marketing:creator.platform')}</label>
                   <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
                     <SelectTrigger>
                       <SelectValue />

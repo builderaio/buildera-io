@@ -99,7 +99,7 @@ const CompanyDashboard = () => {
         return;
       }
 
-      console.log('🔍 Checking onboarding status');
+      if (import.meta.env.DEV) console.log('🔍 Checking onboarding status');
       
       const { data: onboardingStatus } = await supabase
         .from('user_onboarding_status')

@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Megaphone, TrendingUp, Scale, Users, HeadphonesIcon, BarChart3
+  Megaphone, TrendingUp, Scale, Users, Settings2, BarChart3
 } from "lucide-react";
 
 interface DeptInfo {

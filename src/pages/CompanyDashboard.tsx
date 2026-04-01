@@ -313,7 +313,7 @@ const CompanyDashboard = () => {
   useEffect(() => {
     const viewParam = searchParams.get('view');
     if (viewParam && viewParam !== activeView) {
-      console.log('🔄 URL changed, updating activeView from:', activeView, 'to:', viewParam);
+      if (import.meta.env.DEV) console.log('🔄 URL changed, updating activeView from:', activeView, 'to:', viewParam);
       setActiveView(viewParam);
     }
   }, [searchParams]);

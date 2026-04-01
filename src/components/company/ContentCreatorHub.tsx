@@ -207,8 +207,8 @@ export default function ContentCreatorHub({ profile, onContentPublished }: Conte
     setShowPublisher(true);
     
     toast({
-      title: "Preparando contenido",
-      description: "Usa 'Generar contenido con IA' en el modal para crear tu publicación",
+      title: t('marketing:creator.preparingContent'),
+      description: t('marketing:creator.preparingContentDesc'),
     });
   };
 

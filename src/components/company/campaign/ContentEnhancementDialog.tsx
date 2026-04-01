@@ -43,6 +43,7 @@ export const ContentEnhancementDialog = ({
   const [uploadingFile, setUploadingFile] = useState(false);
   const [generatedMedia, setGeneratedMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const contentType = contentItem?.calendar_item?.tipo_contenido?.toLowerCase() || '';
   const needsImage = contentType.includes('imagen') || contentType.includes('carrusel') || contentType.includes('historia');

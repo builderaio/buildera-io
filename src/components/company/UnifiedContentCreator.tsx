@@ -551,22 +551,24 @@ export default function UnifiedContentCreator({ profile, topPosts = [], selected
 
         {/* Tab 3: Biblioteca */}
         <TabsContent value="library">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground">Biblioteca de contenido generado (próximamente)</p>
-            </CardContent>
-          </Card>
+          <UnifiedLibrary profile={profile} />
         </TabsContent>
       </Tabs>
 
-      {/* Image Selector Dialog - Temporalmente deshabilitado */}
+      {/* Image Selector Dialog */}
       {showImageSelector && (
-        <div className="fixed inset-0 z-50 bg-background/80 flex items-center justify-center">
-          <Card className="w-full max-w-2xl">
+        <div className="fixed inset-0 z-50 bg-background/80 flex items-center justify-center p-4">
+          <Card className="w-full max-w-4xl max-h-[80vh] overflow-y-auto">
             <CardContent className="pt-6">
-              <p className="text-center">Selector de imágenes (próximamente)</p>
-              <Button onClick={() => setShowImageSelector(false)} className="mt-4 w-full">
-                Cerrar
+              <ContentImageSelector
+                onSelectImage={(url) => {
+                  setSelectedContentImage(url);
+                  setShowImageSelector(false);
+                }}
+                companyId={profile?.user_id}
+              />
+              <Button variant="outline" onClick={() => setShowImageSelector(false)} className="mt-4 w-full">
+                {t('common:common.close', 'Cerrar')}
               </Button>
             </CardContent>
           </Card>
